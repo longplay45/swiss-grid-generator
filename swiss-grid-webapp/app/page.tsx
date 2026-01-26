@@ -117,7 +117,10 @@ export default function Home() {
       "  ✓ Grid modules maintain proportional relationships",
       "  ✓ System scales across A-series formats",
       "",
-      "=".repeat(70)
+      "=".repeat(70),
+      "",
+      "Copyleft & -right 2026 by https://lp45.net",
+      "License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator"
     )
 
     const blob = new Blob([lines.join("\n")], { type: "text/plain" })
@@ -289,7 +292,7 @@ export default function Home() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Baseline className="w-4 h-4" />
-              Baseline Grid
+              Baseline Grid ({result.grid.gridUnit.toFixed(3)}pt)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

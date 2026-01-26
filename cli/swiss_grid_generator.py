@@ -759,6 +759,9 @@ def generate_text_format(summary: Dict[str, Any]) -> str:
     lines.append("")
 
     lines.append("=" * 70)
+    lines.append("")
+    lines.append("Copyleft & -right 2026 by https://lp45.net")
+    lines.append("License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator")
 
     return "\n".join(lines)
 
