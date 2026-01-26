@@ -1,0 +1,36 @@
+# AI
+.claude/
+CLAUDE.md
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node
+node_modules/
+*.log
+*.tgz
+
+# Next.js
+.next/
+out/
+*.tar.gz
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output
+*_grid.json
+*_grid.txt
+*_grid.pdf
