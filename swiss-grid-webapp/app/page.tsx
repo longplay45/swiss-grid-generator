@@ -165,6 +165,22 @@ export default function Home() {
       currentY += gridUnit
     }
 
+    // Draw footer text (always 7pt) - positioned at bottom with margin
+    pdf.setFontSize(7)
+    pdf.setTextColor(77, 77, 77)  // Dark gray for better readability (#4d4d4d)
+
+    const footerLineHeight = 10  // 7pt + 3pt leading
+    const footerYStart = height - margins.bottom + 15  // Start 15pt from bottom margin edge (Y is from top in jsPDF)
+
+    // Line 1 (top line of footer)
+    pdf.text("Based on Müller-Brockmann's Grid Systems in Graphic Design (1981).", margins.left, footerYStart)
+
+    // Line 2
+    pdf.text("Copyleft & -right 2026 by https://lp45.net", margins.left, footerYStart + footerLineHeight)
+
+    // Line 3 (bottom line of footer)
+    pdf.text("License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator", margins.left, footerYStart + footerLineHeight * 2)
+
     pdf.save(`${baseFilename}_grid.pdf`)
   }
 
@@ -183,7 +199,7 @@ export default function Home() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className="text-sm text-gray-600">
-            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>
+            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>&gt;. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>&gt;.
           </p>
         </div>
 

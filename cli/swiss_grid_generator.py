@@ -547,7 +547,25 @@ def generate_baseline_grid_pdf(
             pdf.line(0, current_y, w, current_y)  # Full width of page
             current_y -= grid_unit
 
-        # Note: Text removed - only grid and baseline shown
+        # Draw footer text (always 7pt) - positioned at bottom with margin
+        footer_size = 7
+        footer_line_height = 10  # 7pt + 3pt leading
+        footer_y_start = margin_bottom - 25  # Start 25pt from bottom margin edge
+
+        pdf.setFont("Helvetica", footer_size)
+        pdf.setFillColorRGB(0.3, 0.3, 0.3)  # Dark gray for better readability
+
+        # Line 1 (top line of footer)
+        line1 = "Based on Muller-Brockmann's Grid Systems in Graphic Design (1981)."
+        pdf.drawString(margin_left, footer_y_start, line1)
+
+        # Line 2
+        line2 = "Copyleft & -right 2026 by https://lp45.net"
+        pdf.drawString(margin_left, footer_y_start - footer_line_height, line2)
+
+        # Line 3 (bottom line of footer)
+        line3 = "License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator"
+        pdf.drawString(margin_left, footer_y_start - footer_line_height * 2, line3)
 
         pdf.save()
         return True
