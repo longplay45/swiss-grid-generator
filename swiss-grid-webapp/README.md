@@ -2,6 +2,8 @@
 
 Interactive web application for generating and visualizing Swiss Style typographic grid systems based on Josef Müller-Brockmann's *Grid Systems in Graphic Design* (1981).
 
+**Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
+
 ![Web App Screenshot](./swiss-grid-generator-webapp-screenshot.png)
 
 ## Features

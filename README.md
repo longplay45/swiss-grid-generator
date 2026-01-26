@@ -18,8 +18,9 @@ This repository contains two implementations:
 ### CLI Interface
 ![CLI Screenshot](./cli/swiss-grid-generator-cli-screenshot.png)
 
-### Web Application
+### Web Application 
 ![Web App Screenshot](./swiss-grid-webapp/swiss-grid-generator-webapp-screenshot.png)
+**Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
 
 ## Features
 
@@ -51,6 +52,10 @@ python swiss_grid_generator.py --format A4 --grid 2x4 --method 1
 ```
 
 ### Web App
+
+**Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
+
+Or run locally:
 
 ```bash
 cd swiss-grid-webapp
