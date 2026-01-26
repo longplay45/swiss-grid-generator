@@ -183,7 +183,7 @@ export default function Home() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className="text-sm text-gray-600">
-            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>
+            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>
           </p>
         </div>
 

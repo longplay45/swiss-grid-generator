@@ -1157,7 +1157,9 @@ def interactive_mode() -> Tuple[str, int, str, int, int]:
     console.print(
         Panel(
             "[bold cyan]Swiss Grid Generator[/bold cyan]\n\n"
-            "Based on Müller-Brockmann's [italic]Grid Systems in Graphic Design[/italic]\n"
+            "Based on Müller-Brockmann's [italic]Grid Systems in Graphic Design[/italic] (1981)\n"
+            "Copyleft & -right 2026 by https://lp45.net\n"
+            "License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator\n\n"
             "Generate professional Swiss-style grid PDF, JSON, and TXT\n\n"
             "[dim]Navigate with arrow keys • Select with Enter[/dim]",
             border_style="cyan",
