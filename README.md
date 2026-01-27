@@ -2,6 +2,8 @@
 
 A toolkit for generating typographic grid systems based on Josef Müller-Brockmann's *Grid Systems in Graphic Design* (1981). Implements International Typographic Style (Swiss Style) principles for print and digital design.
 
+**Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
+
 ## Overview
 
 The Swiss Grid Generator provides tools for creating modular grid systems with baseline-aligned typography. It supports A-series paper formats (A0-A6) in portrait and landscape orientations, with customizable grid configurations and margin calculation methods.
