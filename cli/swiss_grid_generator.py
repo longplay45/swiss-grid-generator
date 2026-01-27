@@ -81,16 +81,21 @@ def calculate_progressive_margins(
     h: float,
     grid_cols: int,
     grid_rows: int,
+    baseline_multiple: float = 1.0,
 ) -> Tuple[float, float, float, float, float, float]:
     """
-    Method 1: Progressive Margins (1:2:3 ratio)
+    Method 1: Progressive Margins (1:2:2:3 ratio - Swiss modern)
 
-    Müller-Brockmann shows that margins using simple ratios (1:2:3) create
-    visual harmony. The inner margin is typically smaller than outer margins,
-    with top margin smallest and bottom margin largest.
+    A modern Swiss-inspired approach using gentle progressive ratios.
+    Top is smallest, left/right are equal (symmetric), bottom is largest.
+    Creates visual weight shift downward for better flow.
 
-    This method uses the baseline unit as the foundation, ensuring all
-    elements align to the grid.
+    All margins are multiples of the baseline grid unit.
+    Example with 12pt baseline:
+      1x = 12:24:24:36pt (1:2:2:3)
+      2x = 24:48:48:72pt (2:4:4:6)
+
+    Reference: Müller-Brockmann-inspired contemporary practice
 
     Args:
         grid_unit: Baseline grid unit in points
@@ -98,23 +103,20 @@ def calculate_progressive_margins(
         h: Page height in points
         grid_cols: Number of horizontal modules (columns)
         grid_rows: Number of vertical modules (rows)
+        baseline_multiple: Multiplier for baseline ratios (default 1.0)
 
     Returns:
         Tuple of (top, bottom, left, right, gutter_h, gutter_v) margins in points
     """
-    # Use grid unit as base - ensures alignment with baseline
-    unit = grid_unit
+    # Progressive 1:2:2:3 ratio scaled by baseline_multiple
+    margin_top = grid_unit * 1.0 * baseline_multiple
+    margin_bottom = grid_unit * 3.0 * baseline_multiple
+    margin_left = grid_unit * 2.0 * baseline_multiple
+    margin_right = grid_unit * 2.0 * baseline_multiple
 
-    # 1:2:3 progressive ratio (Müller-Brockmann, p. 92-93)
-    # Top is smallest (1 unit), bottom largest (3 units) for visual balance
-    margin_top    = 1.0 * unit
-    margin_bottom = 3.0 * unit
-    margin_left   = 2.0 * unit
-    margin_right  = 2.0 * unit
-
-    # Horizontal gutter equals 1 baseline unit
-    grid_margin_horizontal = unit
-    grid_margin_vertical = unit  # Vertical gutter equals baseline
+    # Gutters equal 1 baseline unit
+    grid_margin_horizontal = grid_unit
+    grid_margin_vertical = grid_unit
 
     return (
         margin_top,
@@ -132,18 +134,19 @@ def calculate_vandegraaf_margins(
     h: float,
     grid_cols: int,
     grid_rows: int,
+    baseline_multiple: float = 1.0,
 ) -> Tuple[float, float, float, float, float, float]:
     """
-    Method 2: Van de Graaf Canon Ratios (2:3:4:6)
+    Method 2: Van de Graaf Canon (page/9 - adapted for modern Swiss design)
 
-    The Van de Graaf canon is a historical method for determining margins
-    that creates harmonious page proportions. Müller-Brockmann references
-    this classical approach as a foundation for modern grid systems.
+    The Van de Graaf canon divides the page into ninths to create harmonious
+    proportions. Inner margin ≈ page width / 9, with outer ≈ 2×, top ≈ 1.5×,
+    bottom ≈ 3× (adapted from pure 2:3:4:6 for modern use).
 
-    The ratio 2:3:4:6 produces content areas that align with golden section
-    proportions - a key principle in Swiss design.
+    This adapted version gives generous white space while maintaining classical
+    harmony, as used by Tschichold and Müller-Brockmann in Swiss book design.
 
-    Reference: Van de Graaf canon, as discussed in Müller-Brockmann p. 84-87
+    Reference: Van de Graaf canon, Müller-Brockmann p. 84-87
 
     Args:
         grid_unit: Baseline grid unit in points
@@ -155,18 +158,23 @@ def calculate_vandegraaf_margins(
     Returns:
         Tuple of (top, bottom, left, right, gutter_h, gutter_v) margins in points
     """
-    unit = grid_unit
+    # Van de Graaf Canon adapted for modern Swiss design
+    # Based on page width / 9 for inner margin, then 1:1.5:2:3 proportions
+    # Adapted to be less extreme than pure Van de Graaf for modern use
 
-    # Van de Graaf-inspired ratios (2:3:4:6)
-    # These create a content area positioned according to classical canons
-    margin_left   = 2.0 * unit
-    margin_top    = 3.0 * unit
-    margin_right  = 4.0 * unit
-    margin_bottom = 6.0 * unit
+    # Inner margin ≈ page width / 9 (classic canon)
+    unit = w / 9
+
+    # Adapted Swiss version scaled by baseline_multiple
+    # Inner: 1/9, top: 1.5/9, outer: 2/9, bottom: 3/9 of page width
+    margin_left = unit * 1.0 * baseline_multiple
+    margin_top = unit * 1.5 * baseline_multiple
+    margin_right = unit * 2.0 * baseline_multiple
+    margin_bottom = unit * 3.0 * baseline_multiple
 
     # Horizontal gutter equals 1 baseline unit
-    grid_margin_horizontal = unit
-    grid_margin_vertical = unit
+    grid_margin_horizontal = grid_unit
+    grid_margin_vertical = grid_unit
 
     return (
         margin_top,
@@ -184,21 +192,20 @@ def calculate_grid_based_margins(
     h: float,
     grid_cols: int,
     grid_rows: int,
+    baseline_multiple: float = 1.0,
 ) -> Tuple[float, float, float, float, float, float]:
     """
-    Method 3: Grid-Based Margins (Using Module Width/Height)
+    Method 3: Grid-Based Margins (baseline multiples - pure Müller-Brockmann)
 
-    This method derives margins directly from the grid modules themselves,
-    ensuring perfect alignment with the grid structure. Müller-Brockmann
-    emphasizes this approach for its precision and modular consistency.
+    Pure Müller-Brockmann approach: margins as baseline multiples for perfect
+    grid harmony. All margins are multiples of the baseline unit, ensuring
+    the entire layout—including gutters—feels unified.
 
-    The page is divided into:
-    - N grid modules (separate cols/rows)
-    - 1 module margin on each side (can be adjusted)
-    - Gutters between modules (1/4 module width)
+    Uses symmetric margins (common for single sheets/posters in Swiss style).
+    User-defined baselines all around = clean, balanced, and grid-aligned.
 
-    This creates a self-referential system where all proportions relate
-    to the grid module unit.
+    This is the purest Swiss approach, where margins relate directly to
+    the vertical rhythm of the typography system.
 
     Reference: Müller-Brockmann, p. 102-107 (Module-based construction)
 
@@ -208,32 +215,18 @@ def calculate_grid_based_margins(
         h: Page height in points
         grid_cols: Number of horizontal modules (columns)
         grid_rows: Number of vertical modules (rows)
+        baseline_multiple: Multiplier for baseline (default 1.0)
 
     Returns:
         Tuple of (top, bottom, left, right, gutter_h, gutter_v) margins in points
     """
-    # Margins expressed in module count (typically 1 module on each side)
-    # Müller-Brockmann shows 1-2 module margins as optimal for balance
-    margin_modules_left   = 1
-    margin_modules_right  = 1
-    margin_modules_top    = 1
-    margin_modules_bottom = 1
+    # Pure Müller-Brockmann approach: margins as baseline multiples
+    # All margins equal baseline_multiple × grid_unit
 
-    # Calculate module width based on total width including margins and gutters
-    total_h_margin_modules = margin_modules_left + margin_modules_right
-    gutter_factor_h = (grid_cols - 1) / 4.0
-
-    module_w = w / (grid_cols + total_h_margin_modules + gutter_factor_h)
-
-    # Calculate module height based on total height
-    total_v_margin_modules = margin_modules_top + margin_modules_bottom
-    module_h = h / (grid_rows + total_v_margin_modules + (grid_rows - 1))
-
-    # Convert module margins to points
-    margin_left   = margin_modules_left   * module_w
-    margin_right  = margin_modules_right  * module_w
-    margin_top    = margin_modules_top    * module_h
-    margin_bottom = margin_modules_bottom * module_h
+    margin_top = baseline_multiple * grid_unit
+    margin_bottom = baseline_multiple * grid_unit
+    margin_left = baseline_multiple * grid_unit
+    margin_right = baseline_multiple * grid_unit
 
     # Gutters equal 1 baseline unit (Müller-Brockmann's recommendation)
     grid_margin_horizontal = grid_unit
@@ -257,9 +250,9 @@ MARGIN_CALCULATORS = {
 }
 
 MARGIN_METHOD_LABELS = {
-    1: "Progressive margins (1:2:3)",
-    2: "Van de Graaf ratios (2:3:4:6)",
-    3: "Grid-based margins (modules)",
+    1: "Progressive (1:2:2:3)",
+    2: "Van de Graaf (page/9)",
+    3: "Grid-based (baseline multiples)",
 }
 
 # ============================================================================

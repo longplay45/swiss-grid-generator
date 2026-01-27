@@ -13,6 +13,7 @@ export interface GridSettings {
   gridCols: number;
   gridRows: number;
   baseline?: number;
+  baselineMultiple?: number;
 }
 
 export interface GridResult {
@@ -23,6 +24,8 @@ export interface GridResult {
     marginMethodId: number;
     gridCols: number;
     gridRows: number;
+    baselineMultiple: number;
+    customBaseline: number | undefined;
   };
   pageSizePt: {
     width: number;
@@ -100,9 +103,9 @@ const A4_TYPOGRAPHY: Record<string, { size: number; leading: number; baselineMul
 };
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
-  1: "Progressive margins (1:2:3)",
-  2: "Van de Graaf ratios (2:3:4:6)",
-  3: "Grid-based margins (modules)",
+  1: "Progressive (1:2:2:3)",
+  2: "Van de Graaf (page/9)",
+  3: "Grid-based (baseline multiples)",
 };
 
 // Margin calculation methods
@@ -117,70 +120,84 @@ interface MarginResult {
 
 function calculateProgressiveMargins(
   gridUnit: number,
-  _w: number,
-  _h: number,
-  _gridCols: number,
-  _gridRows: number
-): MarginResult {
-  const unit = gridUnit;
-  return {
-    top: 1.0 * unit,
-    bottom: 3.0 * unit,
-    left: 2.0 * unit,
-    right: 2.0 * unit,
-    gutterH: unit,
-    gutterV: unit,
-  };
-}
-
-function calculateVandegraafMargins(
-  gridUnit: number,
-  _w: number,
-  _h: number,
-  _gridCols: number,
-  _gridRows: number
-): MarginResult {
-  const unit = gridUnit;
-  return {
-    top: 3.0 * unit,
-    bottom: 6.0 * unit,
-    left: 2.0 * unit,
-    right: 4.0 * unit,
-    gutterH: unit,
-    gutterV: unit,
-  };
-}
-
-function calculateGridBasedMargins(
-  gridUnit: number,
   w: number,
-  h: number,
-  gridCols: number,
-  gridRows: number
+  _h: number,
+  _gridCols: number,
+  _gridRows: number,
+  baselineMultiple: number = 1.0
 ): MarginResult {
-  const marginModulesLeft = 1;
-  const marginModulesRight = 1;
-  const marginModulesTop = 1;
-  const marginModulesBottom = 1;
+  // Progressive 1:2:2:3 ratio (Swiss modern approach for single pages)
+  // Top is smallest, left/right are equal (symmetric), bottom is largest
+  // Creates gentle visual weight shift downward for better flow
+  // All margins are multiples of the baseline grid unit
 
-  const totalHMarginModules = marginModulesLeft + marginModulesRight;
-  const gutterFactorH = (gridCols - 1) / 4.0;
-  const moduleW = w / (gridCols + totalHMarginModules + gutterFactorH);
-
-  const totalVMarginModules = marginModulesTop + marginModulesBottom;
-  const moduleH = h / (gridRows + totalVMarginModules + (gridRows - 1));
+  // The baselineMultiple slider scales the base ratios
+  // Example with 12pt baseline:
+  //   1x = 12:24:24:36pt (1:2:2:3)
+  //   2x = 24:48:48:72pt (2:4:4:6)
+  //   3x = 36:72:72:108pt (3:6:6:9)
 
   return {
-    top: marginModulesTop * moduleH,
-    bottom: marginModulesBottom * moduleH,
-    left: marginModulesLeft * moduleW,
-    right: marginModulesRight * moduleW,
+    top: gridUnit * 1.0 * baselineMultiple,     // 1× baseline × multiplier
+    bottom: gridUnit * 3.0 * baselineMultiple,  // 3× baseline × multiplier
+    left: gridUnit * 2.0 * baselineMultiple,    // 2× baseline × multiplier
+    right: gridUnit * 2.0 * baselineMultiple,   // 2× baseline × multiplier (same as left)
     gutterH: gridUnit,
     gutterV: gridUnit,
   };
 }
 
-const MARGIN_CALCULATORS: Record<number, (gridUnit: number, w: number, h: number, gridCols: number, gridRows: number) => MarginResult> = {
+function calculateVandegraafMargins(
+  gridUnit: number,
+  w: number,
+  _h: number,
+  _gridCols: number,
+  _gridRows: number,
+  baselineMultiple: number = 1.0
+): MarginResult {
+  // Van de Graaf Canon adapted for modern Swiss design
+  // Based on page width / 9 for inner margin, with baseline multiplier scaling
+  // The baselineMultiple scales all margins proportionally
+
+  // Inner margin ≈ page width / 9 (classic canon)
+  const unit = w / 9;
+
+  // Adapted Swiss version scaled by baselineMultiple
+  // Inner: 1/9, top: 1.5/9, outer: 2/9, bottom: 3/9 of page width
+  // Then scaled by baselineMultiple
+  return {
+    top: unit * 1.5 * baselineMultiple,      // ~1.5/9 scaled
+    bottom: unit * 3.0 * baselineMultiple,   // ~3/9 scaled
+    left: unit * 1.0 * baselineMultiple,     // 1/9 scaled
+    right: unit * 2.0 * baselineMultiple,    // 2/9 scaled
+    gutterH: gridUnit,
+    gutterV: gridUnit,
+  };
+}
+
+function calculateGridBasedMargins(
+  gridUnit: number,
+  _w: number,
+  _h: number,
+  _gridCols: number,
+  _gridRows: number,
+  baselineMultiple: number = 1.0
+): MarginResult {
+  // Pure Müller-Brockmann approach: margins as baseline multiples
+  // All margins are multiples of the baseline unit for grid harmony
+  // Symmetric margins (common for single sheets/posters in Swiss style)
+
+  return {
+    top: baselineMultiple * gridUnit,
+    bottom: baselineMultiple * gridUnit,
+    left: baselineMultiple * gridUnit,
+    right: baselineMultiple * gridUnit,
+    gutterH: gridUnit,
+    gutterV: gridUnit,
+  };
+}
+
+const MARGIN_CALCULATORS: Record<number, (gridUnit: number, w: number, h: number, gridCols: number, gridRows: number, baselineMultiple?: number) => MarginResult> = {
   1: calculateProgressiveMargins,
   2: calculateVandegraafMargins,
   3: calculateGridBasedMargins,
@@ -229,7 +246,7 @@ function generateTypographyStyles(
 }
 
 export function generateSwissGrid(settings: GridSettings): GridResult {
-  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline } = settings;
+  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0 } = settings;
 
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
@@ -248,7 +265,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   const scale_factor = formatScaleFactor;
 
   const marginCalculator = MARGIN_CALCULATORS[marginMethod];
-  const margins = marginCalculator(gridUnit, w, h, gridCols, gridRows);
+  const margins = marginCalculator(gridUnit, w, h, gridCols, gridRows, baselineMultiple);
 
   let { top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight, gutterH: gridMarginHorizontal, gutterV: gridMarginVertical } = margins;
 
@@ -291,6 +308,8 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
       marginMethodId: marginMethod,
       gridCols,
       gridRows,
+      baselineMultiple,
+      customBaseline,
     },
     pageSizePt: {
       width: Math.round(w * 1000) / 1000,

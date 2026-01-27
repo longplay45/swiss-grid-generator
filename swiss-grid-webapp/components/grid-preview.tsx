@@ -187,7 +187,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
         className="max-w-full max-h-full shadow-lg"
       />
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
-        Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
+        Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
     </div>
   )

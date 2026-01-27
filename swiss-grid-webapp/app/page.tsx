@@ -35,6 +35,7 @@ export default function Home() {
   const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(1)
   const [gridCols, setGridCols] = useState(9)
   const [gridRows, setGridRows] = useState(9)
+  const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [customBaseline, setCustomBaseline] = useState<number | undefined>(undefined)
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
@@ -49,8 +50,43 @@ export default function Home() {
       gridCols,
       gridRows,
       baseline: customBaseline,
+      baselineMultiple,
     })
-  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline])
+  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple])
+
+  // Calculate maximum baseline that fits in the document
+  const maxBaseline = useMemo(() => {
+    const formatDim = FORMATS_PT[format]
+    const pageHeight = orientation === "landscape" ? formatDim.width : formatDim.height
+
+    // Minimum margins at 1x baseline multiple (method 1: 1:2:2:3 ratios)
+    // Top: 1x, Bottom: 3x, Left/Right: 2x
+    const minMarginTop = 1.0 * 12  // Using 12pt as reference baseline
+    const minMarginBottom = 3.0 * 12
+    const minMargins = minMarginTop + minMarginBottom
+
+    // Each row needs at least 2 baseline units (enforced in grid calculator)
+    const minBaselineUnitsPerCell = 2
+
+    // Maximum baseline = available height / (rows × min units per cell)
+    const maxBaselineValue = (pageHeight - minMargins) / (gridRows * minBaselineUnitsPerCell)
+
+    return Math.round(maxBaselineValue * 1000) / 1000  // Round to 3 decimals
+  }, [format, orientation, gridRows, marginMethod])
+
+  // Predefined baseline values that make sense for Swiss design
+  const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
+
+  // Filter available options based on max baseline
+  const availableBaselineOptions = useMemo(() => {
+    return BASELINE_OPTIONS.filter(val => val <= maxBaseline)
+  }, [maxBaseline])
+
+  // Get the largest available baseline option (rounded max)
+  const roundedMaxBaseline = useMemo(() => {
+    const available = availableBaselineOptions.filter(val => val <= maxBaseline)
+    return available.length > 0 ? available[available.length - 1] : maxBaseline
+  }, [availableBaselineOptions, maxBaseline])
 
   // Generate base filename with baseline info
   const baseFilename = useMemo(() => {
@@ -81,6 +117,8 @@ export default function Home() {
       `  Orientation:     ${result.settings.orientation}`,
       `  Margin Method:   ${result.settings.marginMethod}`,
       `  Grid:            ${result.settings.gridCols} cols × ${result.settings.gridRows} rows`,
+      `  Baseline Multiple: ${result.settings.baselineMultiple.toFixed(1)}×`,
+      `  Custom Baseline:  ${result.settings.customBaseline ? result.settings.customBaseline.toFixed(3) + " pt" : "Auto"}`,
       "",
       "PAGE DIMENSIONS",
       "-".repeat(70),
@@ -267,7 +305,7 @@ export default function Home() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Progressive (1:2:3)</SelectItem>
+                  <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
                   <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
                   <SelectItem value="3">Grid-Based (Modules)</SelectItem>
                 </SelectContent>
@@ -288,6 +326,14 @@ export default function Home() {
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
               </div>
               <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Baseline Multiple</Label>
+                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
+              </div>
+              <Slider value={[baselineMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
             </div>
           </CardContent>
         </Card>
@@ -311,17 +357,25 @@ export default function Home() {
               </div>
               {customBaseline !== undefined && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Grid Unit</span>
-                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{formatValue(customBaseline, displayUnit)} {displayUnit}</span>
+                  <div className="space-y-2">
+                    <Label>Grid Unit</Label>
+                    <Select value={customBaseline.toString()} onValueChange={(v) => setCustomBaseline(parseFloat(v))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableBaselineOptions.map((val) => (
+                          <SelectItem key={val} value={val.toString()}>
+                            {val} pt
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Slider
-                    value={[customBaseline]}
-                    min={6}
-                    max={24}
-                    step={1}
-                    onValueChange={([v]) => setCustomBaseline(v)}
-                  />
+                  <div className="text-xs text-gray-500">
+                    Max: {formatValue(roundedMaxBaseline, displayUnit)} {displayUnit}
+                    {displayUnit !== "pt" && ` (${roundedMaxBaseline.toFixed(3)} pt)`}
+                  </div>
                 </div>
               )}
             </div>
@@ -413,11 +467,11 @@ export default function Home() {
         <div className="text-xs text-gray-500 space-y-1 pt-4 border-t">
           <div className="flex justify-between">
             <span>Page Size:</span>
-            <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}</span>
+            <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}</span>
           </div>
           <div className="flex justify-between">
             <span>Module:</span>
-            <span className="font-mono">{formatValue(result.module.width, displayUnit)}×{formatValue(result.module.height, displayUnit)} {displayUnit}</span>
+            <span className="font-mono">{formatValue(result.module.width, displayUnit)} × {formatValue(result.module.height, displayUnit)} {displayUnit}</span>
           </div>
           <div className="flex justify-between">
             <span>Baseline:</span>

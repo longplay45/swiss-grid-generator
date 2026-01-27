@@ -1,3 +1,6 @@
+# Git
+.gitignore
+
 # AI
 .claude/
 CLAUDE.md
