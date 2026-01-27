@@ -9,18 +9,23 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Type, Ruler, Baseline, FileJson, FileText } from "lucide-react"
+import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText } from "lucide-react"
 import jsPDF from "jspdf"
 
-// Conversion factor: 1 point = 0.352778 mm
-const PT_TO_MM = 0.352778
+// Conversion factors
+const PT_TO_MM = 0.352778  // 1 point = 0.352778 mm
+const PT_TO_PX = 96 / 72   // 1 point = 1.333... px (at 96dpi: 1in = 72pt = 96px)
 
 function ptToMm(pt: number): number {
   return pt * PT_TO_MM
 }
 
-function formatValue(value: number, unit: "pt" | "mm"): string {
-  const converted = unit === "mm" ? ptToMm(value) : value
+function ptToPx(pt: number): number {
+  return pt * PT_TO_PX
+}
+
+function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
+  const converted = unit === "mm" ? ptToMm(value) : unit === "px" ? ptToPx(value) : value
   return converted.toFixed(3)
 }
 
@@ -34,7 +39,7 @@ export default function Home() {
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
   const [showMargins, setShowMargins] = useState(true)
-  const [displayUnit, setDisplayUnit] = useState<"pt" | "mm">("pt")
+  const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
 
   const result = useMemo(() => {
     return generateSwissGrid({
@@ -50,7 +55,7 @@ export default function Home() {
   // Generate base filename with baseline info
   const baseFilename = useMemo(() => {
     const baselineStr = customBaseline ? customBaseline.toFixed(3) : result.grid.gridUnit.toFixed(3)
-    return `${format.toLowerCase()}_${orientation}_${gridCols}x${gridRows}_method${marginMethod}_${baselineStr}pt`
+    return `${format}_${orientation}_${gridCols}x${gridRows}_method${marginMethod}_${baselineStr}pt`
   }, [format, orientation, gridCols, gridRows, marginMethod, customBaseline, result.grid.gridUnit])
 
   const exportJSON = () => {
@@ -91,7 +96,7 @@ export default function Home() {
       `  H. Gutter:       ${formatValue(result.grid.gridMarginHorizontal, unit)} ${unit}`,
       `  V. Gutter:       ${formatValue(result.grid.gridMarginVertical, unit)} ${unit}`,
       `  Cell Height:     ${formatValue(result.grid.baselineUnitsPerCell * result.grid.gridUnit, unit)} ${unit} (${result.grid.baselineUnitsPerCell} baseline units)`,
-      `  Margins:         T:${formatValue(result.grid.margins.top, unit)} B:${formatValue(result.grid.margins.bottom, unit)} L:${formatValue(result.grid.margins.left, unit)} R:${formatValue(result.grid.margins.right, unit)}`,
+      `  Margins:         T:${formatValue(result.grid.margins.top, unit)} ${unit} B:${formatValue(result.grid.margins.bottom, unit)} ${unit} L:${formatValue(result.grid.margins.left, unit)} ${unit} R:${formatValue(result.grid.margins.right, unit)} ${unit}`,
       "",
       "TYPOGRAPHY SYSTEM",
       "-".repeat(70),
@@ -190,7 +195,7 @@ export default function Home() {
   const formatOptions = useMemo(() => {
     return Object.entries(FORMATS_PT).map(([name, dims]) => ({
       value: name,
-      label: `${name} (${formatValue(dims.width, displayUnit)}×${formatValue(dims.height, displayUnit)}${displayUnit})`,
+      label: `${name} (${formatValue(dims.width, displayUnit)}×${formatValue(dims.height, displayUnit)} ${displayUnit})`,
     }))
   }, [displayUnit])
 
@@ -291,8 +296,8 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Baseline className="w-4 h-4" />
-              Baseline Grid ({result.grid.gridUnit.toFixed(3)}pt)
+              <Menu className="w-4 h-4" />
+              Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -308,7 +313,7 @@ export default function Home() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Grid Unit</span>
-                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{formatValue(customBaseline, displayUnit)}{displayUnit}</span>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{formatValue(customBaseline, displayUnit)} {displayUnit}</span>
                   </div>
                   <Slider
                     value={[customBaseline]}
@@ -327,7 +332,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Type className="w-4 h-4" />
+              <Eye className="w-4 h-4" />
               Display Options
             </CardTitle>
           </CardHeader>
@@ -363,18 +368,17 @@ export default function Home() {
               />
             </div>
             <div className="flex items-center justify-between pt-2 border-t">
-              <Label htmlFor="display-unit" className="cursor-pointer">
-                Display Unit
-              </Label>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium ${displayUnit === "pt" ? "text-gray-900" : "text-gray-400"}`}>pt</span>
-                <Switch
-                  id="display-unit"
-                  checked={displayUnit === "mm"}
-                  onCheckedChange={(checked) => setDisplayUnit(checked ? "mm" : "pt")}
-                />
-                <span className={`text-xs font-medium ${displayUnit === "mm" ? "text-gray-900" : "text-gray-400"}`}>mm</span>
-              </div>
+              <Label>Display Unit</Label>
+              <Select value={displayUnit} onValueChange={(v: "pt" | "mm" | "px") => setDisplayUnit(v)}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pt">pt</SelectItem>
+                  <SelectItem value="mm">mm</SelectItem>
+                  <SelectItem value="px">px</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -409,15 +413,15 @@ export default function Home() {
         <div className="text-xs text-gray-500 space-y-1 pt-4 border-t">
           <div className="flex justify-between">
             <span>Page Size:</span>
-            <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)}{displayUnit}</span>
+            <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}</span>
           </div>
           <div className="flex justify-between">
             <span>Module:</span>
-            <span className="font-mono">{formatValue(result.module.width, displayUnit)}×{formatValue(result.module.height, displayUnit)}{displayUnit}</span>
+            <span className="font-mono">{formatValue(result.module.width, displayUnit)}×{formatValue(result.module.height, displayUnit)} {displayUnit}</span>
           </div>
           <div className="flex justify-between">
             <span>Baseline:</span>
-            <span className="font-mono">{formatValue(result.grid.gridUnit, displayUnit)}{displayUnit}</span>
+            <span className="font-mono">{formatValue(result.grid.gridUnit, displayUnit)} {displayUnit}</span>
           </div>
         </div>
       </div>

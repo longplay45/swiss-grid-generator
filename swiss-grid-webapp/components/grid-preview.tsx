@@ -3,15 +3,20 @@
 import { GridResult } from "@/lib/grid-calculator"
 import { useEffect, useRef, useState } from "react"
 
-// Conversion factor: 1 point = 0.352778 mm
-const PT_TO_MM = 0.352778
+// Conversion factors
+const PT_TO_MM = 0.352778  // 1 point = 0.352778 mm
+const PT_TO_PX = 96 / 72   // 1 point = 1.333... px (at 96dpi: 1in = 72pt = 96px)
 
 function ptToMm(pt: number): number {
   return pt * PT_TO_MM
 }
 
-function formatValue(value: number, unit: "pt" | "mm"): string {
-  const converted = unit === "mm" ? ptToMm(value) : value
+function ptToPx(pt: number): number {
+  return pt * PT_TO_PX
+}
+
+function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
+  const converted = unit === "mm" ? ptToMm(value) : unit === "px" ? ptToPx(value) : value
   return converted.toFixed(3)
 }
 
@@ -20,7 +25,7 @@ interface GridPreviewProps {
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
-  displayUnit: "pt" | "mm"
+  displayUnit: "pt" | "mm" | "px"
 }
 
 export function GridPreview({ result, showBaselines, showModules, showMargins, displayUnit }: GridPreviewProps) {
@@ -66,17 +71,17 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
       ctx.font = "10px Inter, system-ui, sans-serif"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText(`${formatValue(margins.top, displayUnit)}${displayUnit}`, canvas.width / 2, margins.top * scale / 2)
-      ctx.fillText(`${formatValue(margins.bottom, displayUnit)}${displayUnit}`, canvas.width / 2, canvas.height - margins.bottom * scale / 2)
+      ctx.fillText(`${formatValue(margins.top, displayUnit)} ${displayUnit}`, canvas.width / 2, margins.top * scale / 2)
+      ctx.fillText(`${formatValue(margins.bottom, displayUnit)} ${displayUnit}`, canvas.width / 2, canvas.height - margins.bottom * scale / 2)
       ctx.save()
       ctx.translate(margins.left * scale / 2, canvas.height / 2)
       ctx.rotate(-Math.PI / 2)
-      ctx.fillText(`${formatValue(margins.left, displayUnit)}${displayUnit}`, 0, 0)
+      ctx.fillText(`${formatValue(margins.left, displayUnit)} ${displayUnit}`, 0, 0)
       ctx.restore()
       ctx.save()
       ctx.translate(canvas.width - margins.right * scale / 2, canvas.height / 2)
       ctx.rotate(Math.PI / 2)
-      ctx.fillText(`${formatValue(margins.right, displayUnit)}${displayUnit}`, 0, 0)
+      ctx.fillText(`${formatValue(margins.right, displayUnit)} ${displayUnit}`, 0, 0)
       ctx.restore()
     }
 
@@ -182,7 +187,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
         className="max-w-full max-h-full shadow-lg"
       />
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
-        Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)}{displayUnit}
+        Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)}×{formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
     </div>
   )
