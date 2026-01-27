@@ -195,9 +195,9 @@ export default function Home() {
   }, [displayUnit])
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
       {/* Left Panel - Controls */}
-      <div className="w-96 overflow-y-auto border-r bg-white p-6 space-y-6">
+      <div className="w-full md:w-96 overflow-y-auto border-r border-b md:border-b-0 bg-white p-4 md:p-6 space-y-4 md:space-y-6 max-h-[50vh] md:max-h-full">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
@@ -423,7 +423,7 @@ export default function Home() {
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 md:p-6 min-h-[50vh] md:min-h-full">
         <GridPreview
           result={result}
           showBaselines={showBaselines}

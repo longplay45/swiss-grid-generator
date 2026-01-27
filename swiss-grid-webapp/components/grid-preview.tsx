@@ -26,6 +26,7 @@ interface GridPreviewProps {
 export function GridPreview({ result, showBaselines, showModules, showMargins, displayUnit }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -121,6 +122,9 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
       const endY = canvas.height - margins.bottom * scale
       const baselineSpacing = gridUnit * scale
 
+      // Mobile optimization: skip every other line on small screens
+      const baselineStep = isMobile ? 2 : 1
+
       let currentY = startY
 
       ctx.strokeStyle = "#ec4899"
@@ -133,11 +137,11 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
         ctx.lineTo(canvas.width - margins.right * scale, currentY)
         ctx.stroke()
 
-        currentY += baselineSpacing
+        currentY += baselineSpacing * baselineStep
       }
       ctx.globalAlpha = 1
     }
-  }, [result, scale, showBaselines, showModules, showMargins, displayUnit])
+  }, [result, scale, showBaselines, showModules, showMargins, displayUnit, isMobile])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -157,6 +161,17 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
     window.addEventListener("resize", calculateScale)
     return () => window.removeEventListener("resize", calculateScale)
   }, [result])
+
+  // Detect mobile state and update on resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
