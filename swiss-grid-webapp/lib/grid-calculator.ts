@@ -155,21 +155,17 @@ function calculateVandegraafMargins(
   _gridRows: number,
   baselineMultiple: number = 1.0
 ): MarginResult {
-  // Van de Graaf Canon adapted for modern Swiss design
-  // Based on page width / 9 for inner margin, with baseline multiplier scaling
-  // The baselineMultiple scales all margins proportionally
+  // Van de Graaf-inspired ratios as baseline multiples
+  // Left:top:right:bottom ratios scale with baselineMultiple
+  // Example with 12pt baseline and 1x:
+  //   Left: 1×12 = 12pt, Top: 2×12 = 24pt, Right: 1.5×12 = 18pt, Bottom: 3×12 = 36pt
+  // With 2x multiple: all values double
 
-  // Inner margin ≈ page width / 9 (classic canon)
-  const unit = w / 9;
-
-  // Adapted Swiss version scaled by baselineMultiple
-  // Inner: 1/9, top: 1.5/9, outer: 2/9, bottom: 3/9 of page width
-  // Then scaled by baselineMultiple
   return {
-    top: unit * 1.5 * baselineMultiple,      // ~1.5/9 scaled
-    bottom: unit * 3.0 * baselineMultiple,   // ~3/9 scaled
-    left: unit * 1.0 * baselineMultiple,     // 1/9 scaled
-    right: unit * 2.0 * baselineMultiple,    // 2/9 scaled
+    top: gridUnit * 2.0 * baselineMultiple,     // 2× baseline × multiplier
+    bottom: gridUnit * 3.0 * baselineMultiple,  // 3× baseline × multiplier
+    left: gridUnit * 1.0 * baselineMultiple,    // 1× baseline × multiplier
+    right: gridUnit * 1.5 * baselineMultiple,   // 1.5× baseline × multiplier
     gutterH: gridUnit,
     gutterV: gridUnit,
   };

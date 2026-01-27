@@ -137,14 +137,14 @@ def calculate_vandegraaf_margins(
     baseline_multiple: float = 1.0,
 ) -> Tuple[float, float, float, float, float, float]:
     """
-    Method 2: Van de Graaf Canon (page/9 - adapted for modern Swiss design)
+    Method 2: Van de Graaf Canon (2:3:4:6 as baseline multiples)
 
-    The Van de Graaf canon divides the page into ninths to create harmonious
-    proportions. Inner margin ≈ page width / 9, with outer ≈ 2×, top ≈ 1.5×,
-    bottom ≈ 3× (adapted from pure 2:3:4:6 for modern use).
+    Van de Graaf ratios adapted as baseline multiples for Swiss consistency.
+    Left:top:right:bottom ratios scale with baselineMultiple.
 
-    This adapted version gives generous white space while maintaining classical
-    harmony, as used by Tschichold and Müller-Brockmann in Swiss book design.
+    Example with 12pt baseline and 1x:
+      Left: 1×12 = 12pt, Top: 2×12 = 24pt, Right: 1.5×12 = 18pt, Bottom: 3×12 = 36pt
+    With 2x multiple: all values double
 
     Reference: Van de Graaf canon, Müller-Brockmann p. 84-87
 
@@ -154,25 +154,18 @@ def calculate_vandegraaf_margins(
         h: Page height in points
         grid_cols: Number of horizontal modules (columns)
         grid_rows: Number of vertical modules (rows)
+        baseline_multiple: Multiplier for baseline ratios (default 1.0)
 
     Returns:
         Tuple of (top, bottom, left, right, gutter_h, gutter_v) margins in points
     """
-    # Van de Graaf Canon adapted for modern Swiss design
-    # Based on page width / 9 for inner margin, then 1:1.5:2:3 proportions
-    # Adapted to be less extreme than pure Van de Graaf for modern use
+    # Van de Graaf-inspired ratios as baseline multiples
+    margin_left = grid_unit * 1.0 * baseline_multiple
+    margin_top = grid_unit * 2.0 * baseline_multiple
+    margin_right = grid_unit * 1.5 * baseline_multiple
+    margin_bottom = grid_unit * 3.0 * baseline_multiple
 
-    # Inner margin ≈ page width / 9 (classic canon)
-    unit = w / 9
-
-    # Adapted Swiss version scaled by baseline_multiple
-    # Inner: 1/9, top: 1.5/9, outer: 2/9, bottom: 3/9 of page width
-    margin_left = unit * 1.0 * baseline_multiple
-    margin_top = unit * 1.5 * baseline_multiple
-    margin_right = unit * 2.0 * baseline_multiple
-    margin_bottom = unit * 3.0 * baseline_multiple
-
-    # Horizontal gutter equals 1 baseline unit
+    # Gutters equal 1 baseline unit
     grid_margin_horizontal = grid_unit
     grid_margin_vertical = grid_unit
 

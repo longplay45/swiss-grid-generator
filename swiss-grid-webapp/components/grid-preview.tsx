@@ -60,7 +60,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
 
     // Draw margins if enabled
     if (showMargins) {
-      ctx.fillStyle = "#f9fafb"
+      ctx.fillStyle = "#fffdec"  // Subtle yellow
       ctx.fillRect(0, 0, margins.left * scale, canvas.height)
       ctx.fillRect(canvas.width - margins.right * scale, 0, margins.right * scale, canvas.height)
       ctx.fillRect(0, 0, canvas.width, margins.top * scale)
