@@ -10,17 +10,17 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 
 This repository contains two implementations:
 
-- **[CLI Tool](./cli/)** - Python command-line interface for generating grid specifications and exporting to JSON, TXT, and PDF formats
 - **[Web App](./swiss-grid-webapp/)** - Next.js web application with interactive grid visualization and live preview
+- **[CLI Tool](./cli/)** - Python command-line interface for generating grid specifications and exporting to JSON, TXT, and PDF formats
 
 ## Screenshots
-
-### CLI Interface
-![CLI Screenshot](./cli/swiss-grid-generator-cli-screenshot.png)
 
 ### Web Application 
 ![Web App Screenshot](./swiss-grid-webapp/swiss-grid-generator-webapp-screenshot.png)
 **Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
+
+### CLI Interface
+![CLI Screenshot](./cli/swiss-grid-generator-cli-screenshot.png)
 
 ## Features
 
@@ -44,13 +44,6 @@ The Swiss Grid Generator implements Müller-Brockmann's core teachings:
 
 ## Quick Start
 
-### CLI Tool
-
-```bash
-cd cli
-python swiss_grid_generator.py --format A4 --grid 2x4 --method 1
-```
-
 ### Web App
 
 **Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
@@ -65,9 +58,19 @@ npm run dev
 
 Visit `http://localhost:3000` to use the interactive web interface.
 
+### CLI Tool
+
+```bash
+cd cli
+python swiss_grid_generator.py --format A4 --grid 2x4 --method 1
+```
+
 ## Reference
 
 *Müller-Brockmann, Josef. "Grid Systems in Graphic Design." Arthur Niggli Ltd, Teufen, 1981.*
+
+## Copyleft & -right
+[https://lp45.net/](https://lp45.net/)
 
 ## License
 
