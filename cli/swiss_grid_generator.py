@@ -56,6 +56,10 @@ FORMATS_PT: Dict[str, Tuple[float, float]] = {
 BASE_GRID_UNIT = 12.0     # Baseline grid unit (pt) for A4
 BASE_GUTTER = 6.0         # Gutter width (pt) - half the baseline for rhythm
 
+# Unit conversion constants (DTP point = 1/72 inch)
+PT_TO_MM = 0.352778       # 1 point = 0.352778 mm
+PT_TO_PX = 1.333333       # 1 point = 1.333333 pixels (96 DPI)
+
 # A4 Typography System - all sizes and leading relate to 12pt baseline
 # Format: (size_pt, leading_pt, baseline_multiplier, body_line_multiplier)
 A4_TYPOGRAPHY = {
@@ -247,6 +251,29 @@ MARGIN_METHOD_LABELS = {
     2: "Van de Graaf (page/9)",
     3: "Grid-based (baseline multiples)",
 }
+
+# ============================================================================
+# UNIT CONVERSION
+# ============================================================================
+
+def pt_to_mm(pt: float) -> float:
+    """Convert points to millimeters."""
+    return pt * PT_TO_MM
+
+
+def pt_to_px(pt: float) -> float:
+    """Convert points to pixels (96 DPI)."""
+    return pt * PT_TO_PX
+
+
+def convert_value(pt: float, unit: str) -> float:
+    """Convert point value to specified unit."""
+    if unit == "mm":
+        return pt_to_mm(pt)
+    elif unit == "px":
+        return pt_to_px(pt)
+    return pt  # Default to pt
+
 
 # ============================================================================
 # TYPOGRAPHY SCALING (Müller-Brockmann Principles)
@@ -663,12 +690,16 @@ def build_summary(
     }
 
 
-def generate_text_format(summary: Dict[str, Any]) -> str:
+def generate_text_format(summary: Dict[str, Any], unit: str = "pt") -> str:
     """
     Generate human-readable text format of grid parameters.
 
     Creates a plain text representation suitable for reference or
     inclusion in documentation.
+
+    Args:
+        summary: Grid summary dictionary
+        unit: Unit for display ("pt", "mm", or "px")
     """
     lines = []
     lines.append("=" * 70)
@@ -683,32 +714,33 @@ def generate_text_format(summary: Dict[str, Any]) -> str:
     lines.append(f"  Orientation:     {summary['settings']['orientation']}")
     lines.append(f"  Margin Method:   {summary['settings']['margin_method']}")
     lines.append(f"  Grid:            {summary['settings']['grid_cols']} cols × {summary['settings']['grid_rows']} rows")
+    lines.append(f"  Display Unit:    {unit}")
     lines.append("")
 
     # Page Dimensions
     lines.append("PAGE DIMENSIONS")
     lines.append("-" * 70)
-    lines.append(f"  Page Size:       {summary['page_size_pt']['width']:.3f} × {summary['page_size_pt']['height']:.3f} pt")
-    lines.append(f"  Content Area:    {summary['content_area']['width']:.3f} × {summary['content_area']['height']:.3f} pt")
-    lines.append(f"  Module Size:     {summary['module']['width']:.3f} × {summary['module']['height']:.3f} pt")
+    lines.append(f"  Page Size:       {convert_value(summary['page_size_pt']['width'], unit):.3f} × {convert_value(summary['page_size_pt']['height'], unit):.3f} {unit}")
+    lines.append(f"  Content Area:    {convert_value(summary['content_area']['width'], unit):.3f} × {convert_value(summary['content_area']['height'], unit):.3f} {unit}")
+    lines.append(f"  Module Size:     {convert_value(summary['module']['width'], unit):.3f} × {convert_value(summary['module']['height'], unit):.3f} {unit}")
     lines.append(f"  Aspect Ratio:    {summary['module']['aspect_ratio']:.3f}")
-    lines.append(f"  Scale Factor:    {summary['grid']['scale_factor']:.3f}× (relative to A4)")
+    lines.append(f"  Scale Factor:    {summary['grid']['scale_factor']:.3f} × (relative to A4)")
     lines.append("")
 
     # Gutter Configuration
     lines.append("GUTTER CONFIGURATION")
     lines.append("-" * 70)
-    lines.append(f"  Baseline Grid:   {summary['grid']['grid_unit']:.3f} pt")
-    lines.append(f"  H. Gutter:       {summary['grid']['grid_margin_horizontal']:.3f} pt")
-    lines.append(f"  V. Gutter:       {summary['grid']['grid_margin_vertical']:.3f} pt")
+    lines.append(f"  Baseline Grid:   {convert_value(summary['grid']['grid_unit'], unit):.3f} {unit}")
+    lines.append(f"  H. Gutter:       {convert_value(summary['grid']['grid_margin_horizontal'], unit):.3f} {unit}")
+    lines.append(f"  V. Gutter:       {convert_value(summary['grid']['grid_margin_vertical'], unit):.3f} {unit}")
 
     if "baseline_units_per_cell" in summary["grid"]:
         baseline_units = summary["grid"]["baseline_units_per_cell"]
-        cell_height = baseline_units * summary["grid"]["grid_unit"]
-        lines.append(f"  Cell Height:     {cell_height:.3f} pt ({baseline_units} baseline units)")
+        cell_height = baseline_units * summary['grid']['grid_unit']
+        lines.append(f"  Cell Height:     {convert_value(cell_height, unit):.3f} {unit} ({baseline_units} baseline units)")
 
     margins = summary["grid"]["margins"]
-    lines.append(f"  Margins:         T:{margins['top']:.3f} B:{margins['bottom']:.3f} L:{margins['left']:.3f} R:{margins['right']:.3f}")
+    lines.append(f"  Margins:         T:{convert_value(margins['top'], unit):.3f} B:{convert_value(margins['bottom'], unit):.3f} L:{convert_value(margins['left'], unit):.3f} R:{convert_value(margins['right'], unit):.3f}")
     lines.append("")
 
     # Typography System
@@ -718,8 +750,8 @@ def generate_text_format(summary: Dict[str, Any]) -> str:
     lines.append(f"  {'-'*12} {'-'*12} {'-'*12} {'-'*10} {'-'*10}")
 
     for style_name, style_vals in summary["typography"]["styles"].items():
-        size_str = f"{style_vals['size']:.3f} pt"
-        leading_str = f"{style_vals['leading']:.3f} pt"
+        size_str = f"{convert_value(style_vals['size'], unit):.3f} {unit}"
+        leading_str = f"{convert_value(style_vals['leading'], unit):.3f} {unit}"
         weight = style_vals['weight']
         alignment = style_vals['alignment']
         lines.append(f"  {style_name.capitalize():<12} {size_str:<12} {leading_str:<12} {weight:<10} {alignment}")
@@ -752,12 +784,16 @@ def generate_text_format(summary: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def pretty_print_summary(summary: Dict[str, Any]) -> None:
+def pretty_print_summary(summary: Dict[str, Any], unit: str = "pt") -> None:
     """
     Display formatted summary using Rich tables.
 
     Provides clear, organized output showing all grid parameters,
     following the Swiss design principle of clarity and order.
+
+    Args:
+        summary: Grid summary dictionary
+        unit: Unit for display ("pt", "mm", or "px")
     """
     console = Console()
 
@@ -765,6 +801,7 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
     settings_table = Table(show_header=False, box=None)
     settings_table.add_column("Parameter", style="dim")
     settings_table.add_column("Value")
+    settings_table.add_row("Display unit", unit)
     settings_table.add_row("Orientation", summary["settings"]["orientation"])
     settings_table.add_row("Margin method", summary["settings"]["margin_method"])
     settings_table.add_row(
@@ -779,20 +816,20 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
     page_table.add_row("Format", summary["format"])
     page_table.add_row(
         "Page size",
-        f'{summary["page_size_pt"]["width"]:.1f} × {summary["page_size_pt"]["height"]:.1f} pt',
+        f'{convert_value(summary["page_size_pt"]["width"], unit):.3f} × {convert_value(summary["page_size_pt"]["height"], unit):.3f} {unit}',
     )
     page_table.add_row(
         "Content area",
-        f'{summary["content_area"]["width"]:.3f} × {summary["content_area"]["height"]:.3f} pt',
+        f'{convert_value(summary["content_area"]["width"], unit):.3f} × {convert_value(summary["content_area"]["height"], unit):.3f} {unit}',
     )
     page_table.add_row(
         "Module size",
-        f'{summary["module"]["width"]:.3f} × {summary["module"]["height"]:.3f} pt '
+        f'{convert_value(summary["module"]["width"], unit):.3f} × {convert_value(summary["module"]["height"], unit):.3f} {unit} '
         f'(ratio: {summary["module"]["aspect_ratio"]:.2f})',
     )
     page_table.add_row(
         "Scale factor",
-        f'{summary["grid"]["scale_factor"]:.3f}× (relative to A4)',
+        f'{summary["grid"]["scale_factor"]:.3f} × (relative to A4)',
     )
 
     # Gutter and margins table
@@ -801,15 +838,15 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
     grid_table.add_column("Value")
     grid_table.add_row(
         "Baseline grid",
-        f'{summary["grid"]["grid_unit"]:.3f} pt',
+        f'{convert_value(summary["grid"]["grid_unit"], unit):.3f} {unit}',
     )
     grid_table.add_row(
         "Horizontal gutter",
-        f'{summary["grid"]["grid_margin_horizontal"]:.3f} pt',
+        f'{convert_value(summary["grid"]["grid_margin_horizontal"], unit):.3f} {unit}',
     )
     grid_table.add_row(
         "Vertical gutter",
-        f'{summary["grid"]["grid_margin_vertical"]:.3f} pt',
+        f'{convert_value(summary["grid"]["grid_margin_vertical"], unit):.3f} {unit}',
     )
 
     # Show baseline units per cell for alignment verification
@@ -818,11 +855,11 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
         cell_height = baseline_units * summary["grid"]["grid_unit"]
         grid_table.add_row(
             "Cell height",
-            f'{cell_height:.3f} pt ({baseline_units} baseline units)',
+            f'{convert_value(cell_height, unit):.3f} {unit} ({baseline_units} baseline units)',
         )
 
     margins = summary["grid"]["margins"]
-    grid_table.add_row("Margins", f'T: {margins["top"]:.3f} | B: {margins["bottom"]:.3f} | L: {margins["left"]:.3f} | R: {margins["right"]:.3f}')
+    grid_table.add_row("Margins", f'T: {convert_value(margins["top"], unit):.3f} | B: {convert_value(margins["bottom"], unit):.3f} | L: {convert_value(margins["left"], unit):.3f} | R: {convert_value(margins["right"], unit):.3f}')
     grid_table.add_row(
         "Margin ratio",
         f'{margins["left"]/margins["top"]:.1f}:{margins["bottom"]/margins["top"]:.1f}:{margins["top"]/margins["top"]:.1f}'
@@ -839,8 +876,8 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
     for name, values in summary["typography"]["styles"].items():
         typo_table.add_row(
             name.capitalize(),
-            f'{values["size"]:.3f} pt',
-            f'{values["leading"]:.3f} pt',
+            f'{convert_value(values["size"], unit):.3f} {unit}',
+            f'{convert_value(values["leading"], unit):.3f} {unit}',
             values["weight"],
             values["alignment"],
         )
@@ -890,6 +927,7 @@ def generate_swiss_grid_assets(
     grid_cols: int = 9,
     grid_rows: int = 9,
     custom_baseline: float = None,
+    unit: str = "pt",
 ) -> Tuple[Dict[str, Any], Dict[str, bytes], str, Dict[str, Any]]:
     """
     Generate complete Swiss grid system assets.
@@ -904,6 +942,7 @@ def generate_swiss_grid_assets(
         grid_cols: Number of horizontal modules (columns)
         grid_rows: Number of vertical modules (rows)
         custom_baseline: Custom baseline unit in points (None for auto)
+        unit: Unit for display in text output ("pt", "mm", or "px")
 
     Returns:
         Tuple of (summary_dict, outputs_dict, pdf_path)
@@ -1021,7 +1060,7 @@ def generate_swiss_grid_assets(
 
     # Generate outputs - complete summary as JSON and TXT
     json_content = json.dumps(summary, indent=2)
-    txt_content = generate_text_format(summary)
+    txt_content = generate_text_format(summary, unit)
 
     # Prepare outputs dictionary
     outputs = {
@@ -1039,6 +1078,7 @@ def export_swiss_assets(
     grid_cols: int = 9,
     grid_rows: int = 9,
     custom_baseline: float = None,
+    unit: str = "pt",
 ) -> Tuple[Dict[str, Any], Dict[str, bytes]]:
     """
     Generate and export Swiss grid assets to files.
@@ -1050,12 +1090,13 @@ def export_swiss_assets(
         grid_cols: Number of columns
         grid_rows: Number of rows
         custom_baseline: Custom baseline unit in points (None for auto)
+        unit: Unit for display ("pt", "mm", or "px")
 
     Returns:
         Tuple of (summary_dict, outputs_dict)
     """
     summary, outputs, pdf_path, typo_settings = generate_swiss_grid_assets(
-        format_name, margin_method, orientation, grid_cols, grid_rows, custom_baseline
+        format_name, margin_method, orientation, grid_cols, grid_rows, custom_baseline, unit
     )
 
     # Write JSON output file
@@ -1150,12 +1191,15 @@ def select_option(title: str, options: List[str], default_index: int = 0) -> str
             raise KeyboardInterrupt()
 
 
-def interactive_mode() -> Tuple[str, int, str, int, int]:
+def interactive_mode() -> Tuple[str, int, str, int, int, str]:
     """
     Run interactive TUI for parameter selection.
 
     Provides user-friendly selection of all grid parameters with
     clear explanations following Swiss design principles.
+
+    Returns:
+        Tuple of (format_name, margin_method, orientation, grid_cols, grid_rows, unit)
     """
     console = Console()
 
@@ -1177,9 +1221,20 @@ def interactive_mode() -> Tuple[str, int, str, int, int]:
     console.print("[dim]Press any key to continue...[/dim]")
     read_single_key()
 
+    # Select unit (NEW - First question)
+    unit = select_option(
+        "Select Display Unit",
+        ["pt - Points (DTP)", "mm - Millimeters", "px - Pixels (96 DPI)"],
+        0,
+    )
+    unit = unit.split()[0]  # Extract "pt", "mm", or "px"
+
     # Select format
     formats = sorted(FORMATS_PT.keys())
-    format_display = [f"{f} - {FORMATS_PT[f][0]/28.3465:.0f}×{FORMATS_PT[f][1]/28.3465:.0f}mm" for f in formats]
+    format_display = [
+        f"{f} - {convert_value(FORMATS_PT[f][0], unit):.3f} × {convert_value(FORMATS_PT[f][1], unit):.3f} {unit}"
+        for f in formats
+    ]
     selected = select_option("Select Page Format", format_display, formats.index("A4"))
     format_name = formats[format_display.index(selected)]
 
@@ -1212,7 +1267,7 @@ def interactive_mode() -> Tuple[str, int, str, int, int]:
     # Split by space, get second element "1:", remove trailing ":"
     margin_method = int(selected.split()[1].rstrip(":"))
 
-    return format_name, margin_method, orientation, grid_cols, grid_rows
+    return format_name, margin_method, orientation, grid_cols, grid_rows, unit
 
 
 # ============================================================================
@@ -1321,6 +1376,7 @@ def main() -> int:
     grid_cols = args.grid_cols
     grid_rows = args.grid_rows
     custom_baseline = args.baseline  # Can be None
+    unit = "pt"  # Default unit for non-interactive mode
 
     # Determine if interactive mode is needed
     # Only need format and grid dimensions - others have defaults
@@ -1333,7 +1389,7 @@ def main() -> int:
             return 1
 
         try:
-            format_name, margin_method, orientation, grid_cols, grid_rows = interactive_mode()
+            format_name, margin_method, orientation, grid_cols, grid_rows, unit = interactive_mode()
             custom_baseline = None  # Interactive mode uses default baseline
         except KeyboardInterrupt:
             print("\n\nCancelled by user", file=sys.stderr)
@@ -1348,18 +1404,19 @@ def main() -> int:
             grid_cols=grid_cols,
             grid_rows=grid_rows,
             custom_baseline=custom_baseline,
+            unit=unit,
         )
 
-        # Display summary
+        # Display summary with selected unit
         print()
-        pretty_print_summary(summary)
+        pretty_print_summary(summary, unit)
 
         # Success message
         console = Console()
         console.print()
         console.print(
             f"[green]✓[/green] Generated [bold]{format_name}[/bold] "
-            f"([dim]{orientation}[/dim], [cyan]{grid_cols}×{grid_rows}[/cyan] grid) "
+            f"([dim]{orientation}[/dim], [cyan]{grid_cols} × {grid_rows}[/cyan] grid) "
             f"with grid PDF, JSON, and TXT parameters"
         )
 
