@@ -294,7 +294,7 @@ export default function Home() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Grid3x3 className="w-4 h-4" />
-              Grid Configuration
+              Gutter Configuration
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

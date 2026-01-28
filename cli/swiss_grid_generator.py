@@ -695,8 +695,8 @@ def generate_text_format(summary: Dict[str, Any]) -> str:
     lines.append(f"  Scale Factor:    {summary['grid']['scale_factor']:.3f}× (relative to A4)")
     lines.append("")
 
-    # Grid & Margins
-    lines.append("GRID & MARGINS")
+    # Gutter Configuration
+    lines.append("GUTTER CONFIGURATION")
     lines.append("-" * 70)
     lines.append(f"  Baseline Grid:   {summary['grid']['grid_unit']:.3f} pt")
     lines.append(f"  H. Gutter:       {summary['grid']['grid_margin_horizontal']:.3f} pt")
@@ -795,7 +795,7 @@ def pretty_print_summary(summary: Dict[str, Any]) -> None:
         f'{summary["grid"]["scale_factor"]:.3f}× (relative to A4)',
     )
 
-    # Grid and margins table
+    # Gutter and margins table
     grid_table = Table(show_header=False, box=None)
     grid_table.add_column("Parameter", style="dim")
     grid_table.add_column("Value")
@@ -980,8 +980,8 @@ def generate_swiss_grid_assets(
     total_vertical_units = round(net_h / grid_unit)
     units_per_cell = total_vertical_units / grid_rows
 
-    # Ensure integer units per cell (round to nearest)
-    baseline_units_per_cell = round(units_per_cell)
+    # Ensure integer units per cell (floor to prevent overflow)
+    baseline_units_per_cell = int(units_per_cell)
     if baseline_units_per_cell < 2:
         baseline_units_per_cell = 2  # Minimum 2 units per cell
 

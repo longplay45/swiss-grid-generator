@@ -279,7 +279,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   // Height: Calculate baseline units per cell for alignment
   const totalVerticalUnits = Math.round(netH / gridUnit);
   let unitsPerCell = totalVerticalUnits / gridRows;
-  let baselineUnitsPerCell = Math.round(unitsPerCell);
+  let baselineUnitsPerCell = Math.floor(unitsPerCell);
 
   if (baselineUnitsPerCell < 2) {
     baselineUnitsPerCell = 2;
