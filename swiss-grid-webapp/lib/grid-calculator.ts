@@ -214,10 +214,13 @@ function generateTypographyStyles(
   formatName: string
 ): GridResult["typography"] {
   const scaledStyles: GridResult["typography"]["styles"] = {};
+  const baselineRatio = gridUnit / BASE_GRID_UNIT;
 
   for (const [styleName, a4Style] of Object.entries(A4_TYPOGRAPHY)) {
-    const scaledSize = a4Style.size * scaleFactor;
-    const scaledLeading = a4Style.leading * (gridUnit / BASE_GRID_UNIT);
+    // Scale font size by both format factor AND baseline ratio
+    const scaledSize = a4Style.size * scaleFactor * baselineRatio;
+    // Scale leading by baseline ratio to maintain baseline alignment
+    const scaledLeading = a4Style.leading * baselineRatio;
 
     scaledStyles[styleName] = {
       size: Math.round(scaledSize * 1000) / 1000,

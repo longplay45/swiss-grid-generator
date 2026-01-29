@@ -25,10 +25,11 @@ interface GridPreviewProps {
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
+  showTypography: boolean
   displayUnit: "pt" | "mm" | "px"
 }
 
-export function GridPreview({ result, showBaselines, showModules, showMargins, displayUnit }: GridPreviewProps) {
+export function GridPreview({ result, showBaselines, showModules, showMargins, showTypography, displayUnit }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -146,7 +147,191 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, d
       }
       ctx.globalAlpha = 1
     }
-  }, [result, scale, showBaselines, showModules, showMargins, displayUnit, isMobile])
+
+    // Draw typography preview if enabled
+    if (showTypography) {
+      const { styles } = result.typography
+      const contentTop = margins.top * scale
+      const contentLeft = margins.left * scale
+      const contentWidth = (result.pageSizePt.width - margins.left - margins.right) * scale
+      const baselinePx = gridUnit * scale
+
+      // Text colors
+      ctx.fillStyle = "#1f2937" // gray-800
+
+      // Calculate minimum offset for each style to prevent top clipping
+      // Text extends above baseline by approximately 0.8-0.9 of font size
+      const getMinOffset = (fontSizePt: number): number => {
+        const ascentRatio = 0.85 // Approximate text height above baseline
+        const textAboveBaseline = fontSizePt * ascentRatio
+        const baselineUnitsNeeded = Math.ceil(textAboveBaseline / gridUnit)
+        return Math.max(baselineUnitsNeeded, 1) // At least 1 baseline unit
+      }
+
+      // Define text blocks with relative offsets (additional space beyond minimum)
+      const textBlocks: Array<{
+        styleKey: string
+        extraOffset: number
+        lines: string[]
+      }> = [
+        { styleKey: "headline_1", extraOffset: 0, lines: ["Swiss Design"] },
+        { styleKey: "headline_2", extraOffset: 0, lines: ["Grid Systems"] },
+        { styleKey: "lead", extraOffset: 0, lines: ["A grid system creates coherent visual", "structure for organized communication."] },
+        { styleKey: "body", extraOffset: 0, lines: [
+          "The modular grid allows designers to organize content",
+          "hierarchically and rhythmically. All typography aligns",
+          "to the baseline grid, ensuring harmony across the page."
+        ]},
+        { styleKey: "subhead_medium", extraOffset: 3, lines: ["Typographic Hierarchy"] },
+      ]
+
+      let currentBaselineOffset = 0
+
+      // Draw each text block
+      for (const block of textBlocks) {
+        const style = styles[block.styleKey]
+        if (!style) continue
+
+        const fontSize = style.size * scale
+        const leading = style.leading * scale
+        const baselineMult = style.baselineMultiplier
+        const lineSpacing = baselinePx * baselineMult
+
+        // Calculate position: ensure no clipping, add extra spacing
+        const minOffset = getMinOffset(style.size)
+        // Ensure at least 1 baseline unit spacing from previous block
+        const spacingAfterPrev = currentBaselineOffset > 0 ? 1 : 0
+        const blockStartOffset = Math.max(currentBaselineOffset + spacingAfterPrev, minOffset) + block.extraOffset
+
+        // Set font
+        ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
+        ctx.textAlign = "left"
+        ctx.textBaseline = "alphabetic"
+
+        // Draw each line
+        block.lines.forEach((line, lineIndex) => {
+          const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+          const x = contentLeft // Start exactly at content area (after left margin)
+
+          // Ensure text doesn't go below content area
+          if (y < canvas.height - margins.bottom * scale) {
+            ctx.fillText(line, x, y)
+          }
+        })
+
+        // Update current position for next block (end of last line)
+        currentBaselineOffset = blockStartOffset + block.lines.length * baselineMult
+      }
+
+      // Draw typography overview table
+      // Table aligned to baseline grid - starts 2 baseline units after last text block
+      const tableStartY = contentTop + (currentBaselineOffset + 2) * baselinePx
+      const tableX = contentLeft
+      // Calculate column widths as percentages of content width
+      const contentWidthPt = result.pageSizePt.width - result.grid.margins.left - result.grid.margins.right
+      const contentWidthPx = contentWidthPt * scale
+      // Column ratios: Style 35%, Size 25%, Leading 25%, Weight 15%
+      const colRatios = [0.35, 0.25, 0.25, 0.15]
+      const colWidths = colRatios.map(r => contentWidthPx * r)
+      const rowHeight = baselinePx // Each row is exactly 1 baseline unit
+      // Use body style font for the table
+      const bodyStyle = styles.body
+      const tableFontSize = Math.max(bodyStyle?.size ?? 10, 7) * scale
+      const headerFont = `700 ${tableFontSize}px Inter, system-ui, sans-serif`
+      const rowFont = `400 ${tableFontSize}px Inter, system-ui, sans-serif`
+
+      // Table headers
+      ctx.fillStyle = "#374151" // gray-700
+      ctx.font = headerFont
+      ctx.textBaseline = "alphabetic"
+
+      const headers = ["Style", "Size (pt)", "Leading (pt)", "Weight"]
+      let headerX = tableX
+      headers.forEach((header, i) => {
+        // First column (Style) left aligned, rest right aligned
+        ctx.textAlign = i === 0 ? "left" : "right"
+        const xPos = i === 0 ? headerX : headerX + colWidths[i]
+        ctx.fillText(header, xPos, tableStartY)
+        headerX += colWidths[i]
+      })
+
+      // Table rows - sorted by size (largest to smallest) with human-readable names
+      const styleOrder = [
+        { key: "display", name: "Display" },
+        { key: "headline_1", name: "Headline 1" },
+        { key: "headline_2", name: "Headline 2" },
+        { key: "headline_3", name: "Headline 3" },
+        { key: "subhead_medium", name: "Subhead Medium" },
+        { key: "subhead_small", name: "Subhead Small" },
+        { key: "lead", name: "Lead" },
+        { key: "body", name: "Body" },
+        { key: "caption", name: "Caption" },
+        { key: "footnote", name: "Footnote" }
+      ]
+
+      let rowY = tableStartY
+      ctx.fillStyle = "#4b5563" // gray-600
+
+      // Get body font for consistent size in numeric columns
+      const bodyFont = bodyStyle ? `400 ${bodyStyle.size * scale}px Inter, system-ui, sans-serif` : rowFont
+
+      for (const { key: styleKey, name: styleName } of styleOrder) {
+        const style = styles[styleKey]
+        if (!style) continue
+
+        // Calculate row height based on the style's leading
+        const rowLeading = style.leading * scale
+        const nextRowY = rowY + rowLeading
+
+        // Account for text height above baseline (ascent ~0.85 of font size)
+        // Position baseline so text fits properly within the row
+        const ascentRatio = 0.85
+        const textAscent = style.size * scale * ascentRatio
+        const textY = rowY + textAscent
+
+        let colX = tableX
+        // Style name - use the actual font size for this row, left aligned
+        // No padding - text starts exactly at tableX (contentLeft)
+        ctx.textAlign = "left"
+        ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${style.size * scale}px Inter, system-ui, -apple-system, sans-serif`
+        ctx.fillText(styleName, colX, textY)
+        colX += colWidths[0]
+
+        // Rest of columns - use body font size, right aligned
+        ctx.font = bodyFont
+        ctx.textAlign = "right"
+        // Size
+        ctx.fillText(style.size.toFixed(1), colX + colWidths[1], textY)
+        colX += colWidths[1]
+        // Leading
+        ctx.fillText(style.leading.toFixed(1), colX + colWidths[2], textY)
+        colX += colWidths[2]
+        // Weight
+        ctx.fillText(style.weight, colX + colWidths[3], textY)
+
+        rowY = nextRowY
+
+        // Stop if we're running out of space
+        if (rowY > canvas.height - margins.bottom * scale - baselinePx) {
+          break
+        }
+      }
+
+      // Draw caption below table
+      const captionStyle = styles.caption
+      if (captionStyle) {
+        ctx.font = `400 ${captionStyle.size * scale}px Inter, system-ui, sans-serif`
+        ctx.fillStyle = "#6b7280" // gray-500
+        ctx.textAlign = "left"
+        ctx.textBaseline = "alphabetic"
+        const captionY = rowY + baselinePx * 2 // 2 baseline units after table
+        ctx.fillText("Table 1: Typography system with scaled sizes and leadings", tableX, captionY)
+
+        // Update currentBaselineOffset for footnote
+        currentBaselineOffset = (captionY - contentTop) / baselinePx + captionStyle.baselineMultiplier
+      }
+    }
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile])
 
   useEffect(() => {
     const calculateScale = () => {

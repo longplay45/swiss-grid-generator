@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText } from "lucide-react"
+import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText, Type } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -40,6 +40,7 @@ export default function Home() {
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
   const [showMargins, setShowMargins] = useState(true)
+  const [showTypography, setShowTypography] = useState(false)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
 
   const result = useMemo(() => {
@@ -392,36 +393,6 @@ export default function Home() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="show-baselines" className="cursor-pointer">
-                Show Baseline Grid
-              </Label>
-              <Switch
-                id="show-baselines"
-                checked={showBaselines}
-                onCheckedChange={setShowBaselines}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-modules" className="cursor-pointer">
-                Show Modules
-              </Label>
-              <Switch
-                id="show-modules"
-                checked={showModules}
-                onCheckedChange={setShowModules}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-margins" className="cursor-pointer">
-                Show Margins
-              </Label>
-              <Switch
-                id="show-margins"
-                checked={showMargins}
-                onCheckedChange={setShowMargins}
-              />
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t">
               <Label>Display Unit</Label>
               <Select value={displayUnit} onValueChange={(v: "pt" | "mm" | "px") => setDisplayUnit(v)}>
                 <SelectTrigger className="w-[100px]">
@@ -433,6 +404,47 @@ export default function Home() {
                   <SelectItem value="px">px</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-baselines" className="cursor-pointer">
+                Show Baseline Grid
+              </Label>
+              <Switch
+                id="show-baselines"
+                checked={showBaselines}
+                onCheckedChange={setShowBaselines}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-margins" className="cursor-pointer">
+                Show Page Margins
+              </Label>
+              <Switch
+                id="show-margins"
+                checked={showMargins}
+                onCheckedChange={setShowMargins}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-modules" className="cursor-pointer">
+                Show Gutter
+              </Label>
+              <Switch
+                id="show-modules"
+                checked={showModules}
+                onCheckedChange={setShowModules}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-typography" className="cursor-pointer flex items-center gap-2">
+                <Type className="w-3.5 h-3.5" />
+                Typography Preview
+              </Label>
+              <Switch
+                id="show-typography"
+                checked={showTypography}
+                onCheckedChange={setShowTypography}
+              />
             </div>
           </CardContent>
         </Card>
@@ -487,6 +499,7 @@ export default function Home() {
           showBaselines={showBaselines}
           showModules={showModules}
           showMargins={showMargins}
+          showTypography={showTypography}
           displayUnit={displayUnit}
         />
       </div>
