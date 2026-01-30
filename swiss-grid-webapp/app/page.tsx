@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { GridResult, generateSwissGrid, FORMATS_PT } from "@/lib/grid-calculator"
+import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -290,6 +290,50 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* Baseline Grid Settings */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Menu className="w-4 h-4" />
+              Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Custom Baseline</Label>
+                <Switch
+                  checked={customBaseline !== undefined}
+                  onCheckedChange={(checked) => setCustomBaseline(checked ? FORMAT_BASELINES[format] : undefined)}
+                />
+              </div>
+              {customBaseline !== undefined && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Grid Unit</Label>
+                    <Select value={customBaseline.toString()} onValueChange={(v) => setCustomBaseline(parseFloat(v))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableBaselineOptions.map((val) => (
+                          <SelectItem key={val} value={val.toString()}>
+                            {val} pt
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Max: {formatValue(roundedMaxBaseline, displayUnit)} {displayUnit}
+                    {displayUnit !== "pt" && ` (${roundedMaxBaseline.toFixed(3)} pt)`}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Grid Settings */}
         <Card>
           <CardHeader className="pb-3">
@@ -335,50 +379,6 @@ export default function Home() {
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
               </div>
               <Slider value={[baselineMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Typography Settings */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Menu className="w-4 h-4" />
-              Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Custom Baseline</Label>
-                <Switch
-                  checked={customBaseline !== undefined}
-                  onCheckedChange={(checked) => setCustomBaseline(checked ? 12 : undefined)}
-                />
-              </div>
-              {customBaseline !== undefined && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label>Grid Unit</Label>
-                    <Select value={customBaseline.toString()} onValueChange={(v) => setCustomBaseline(parseFloat(v))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableBaselineOptions.map((val) => (
-                          <SelectItem key={val} value={val.toString()}>
-                            {val} pt
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Max: {formatValue(roundedMaxBaseline, displayUnit)} {displayUnit}
-                    {displayUnit !== "pt" && ` (${roundedMaxBaseline.toFixed(3)} pt)`}
-                  </div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

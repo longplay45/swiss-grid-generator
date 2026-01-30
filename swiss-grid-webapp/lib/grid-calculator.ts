@@ -199,6 +199,17 @@ const MARGIN_CALCULATORS: Record<number, (gridUnit: number, w: number, h: number
   3: calculateGridBasedMargins,
 };
 
+// Format-specific baselines: A0:18, A1:16, A2:14, A3:13, A4:12, A5:10, A6:9
+export const FORMAT_BASELINES: Record<string, number> = {
+  A0: 18.0,
+  A1: 16.0,
+  A2: 14.0,
+  A3: 13.0,
+  A4: 12.0,
+  A5: 10.0,
+  A6: 9.0,
+};
+
 function calculateScaleFactor(formatName: string, orientation: "portrait" | "landscape"): number {
   const a4 = FORMATS_PT.A4;
   const format = FORMATS_PT[formatName];
@@ -260,7 +271,9 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   }
 
   const formatScaleFactor = calculateScaleFactor(format, orientation);
-  const gridUnit = customBaseline ?? BASE_GRID_UNIT * formatScaleFactor;
+  // When customBaseline is set (manual mode), use that value
+  // When undefined (auto mode), use format-specific baseline from table
+  const gridUnit = customBaseline ?? FORMAT_BASELINES[format] ?? BASE_GRID_UNIT;
   const scale_factor = formatScaleFactor;
 
   const marginCalculator = MARGIN_CALCULATORS[marginMethod];
