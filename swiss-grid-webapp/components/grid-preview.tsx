@@ -174,15 +174,15 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         extraOffset: number
         lines: string[]
       }> = [
-        { styleKey: "headline_1", extraOffset: 0, lines: ["Swiss Design"] },
-        { styleKey: "headline_2", extraOffset: 0, lines: ["Grid Systems"] },
-        { styleKey: "lead", extraOffset: 0, lines: ["A grid system creates coherent visual", "structure for organized communication."] },
+        { styleKey: "display", extraOffset: 0, lines: ["Swiss Design"] },
+        { styleKey: "headline", extraOffset: 0, lines: ["Grid Systems"] },
+        { styleKey: "subhead", extraOffset: 0, lines: ["A grid creates coherent visual structure"] },
         { styleKey: "body", extraOffset: 0, lines: [
           "The modular grid allows designers to organize content",
           "hierarchically and rhythmically. All typography aligns",
           "to the baseline grid, ensuring harmony across the page."
         ]},
-        { styleKey: "subhead_medium", extraOffset: 3, lines: ["Typographic Hierarchy"] },
+        { styleKey: "caption", extraOffset: 3, lines: ["Figure 5: Baseline alignment demonstrates harmony"] },
       ]
 
       let currentBaselineOffset = 0
@@ -230,8 +230,8 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       // Calculate column widths as percentages of content width
       const contentWidthPt = result.pageSizePt.width - result.grid.margins.left - result.grid.margins.right
       const contentWidthPx = contentWidthPt * scale
-      // Column ratios: Style 35%, Size 25%, Leading 25%, Weight 15%
-      const colRatios = [0.35, 0.25, 0.25, 0.15]
+      // Column ratios: Style 30%, Size 20%, Leading 20%, Multiple 15%, Weight 15%
+      const colRatios = [0.30, 0.20, 0.20, 0.15, 0.15]
       const colWidths = colRatios.map(r => contentWidthPx * r)
       const rowHeight = baselinePx // Each row is exactly 1 baseline unit
       // Use body style font for the table
@@ -245,7 +245,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       ctx.font = headerFont
       ctx.textBaseline = "alphabetic"
 
-      const headers = ["Style", "Size (pt)", "Leading (pt)", "Weight"]
+      const headers = ["Style", "Size (pt)", "Leading (pt)", "Multiple", "Weight"]
       let headerX = tableX
       headers.forEach((header, i) => {
         // First column (Style) left aligned, rest right aligned
@@ -258,15 +258,10 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       // Table rows - sorted by size (largest to smallest) with human-readable names
       const styleOrder = [
         { key: "display", name: "Display" },
-        { key: "headline_1", name: "Headline 1" },
-        { key: "headline_2", name: "Headline 2" },
-        { key: "headline_3", name: "Headline 3" },
-        { key: "subhead_medium", name: "Subhead Medium" },
-        { key: "subhead_small", name: "Subhead Small" },
-        { key: "lead", name: "Lead" },
+        { key: "headline", name: "Headline" },
+        { key: "subhead", name: "Subhead" },
         { key: "body", name: "Body" },
         { key: "caption", name: "Caption" },
-        { key: "footnote", name: "Footnote" }
       ]
 
       let rowY = tableStartY
@@ -306,8 +301,11 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         // Leading
         ctx.fillText(style.leading.toFixed(1), colX + colWidths[2], textY)
         colX += colWidths[2]
+        // Multiple
+        ctx.fillText(style.baselineMultiplier.toFixed(1) + "×", colX + colWidths[3], textY)
+        colX += colWidths[3]
         // Weight
-        ctx.fillText(style.weight, colX + colWidths[3], textY)
+        ctx.fillText(style.weight, colX + colWidths[4], textY)
 
         rowY = nextRowY
 
@@ -325,7 +323,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         ctx.textAlign = "left"
         ctx.textBaseline = "alphabetic"
         const captionY = rowY + baselinePx * 2 // 2 baseline units after table
-        ctx.fillText("Table 1: Typography system with scaled sizes and leadings", tableX, captionY)
+        ctx.fillText("Table 1: Strict baseline multiples – Müller-Brockmann style", tableX, captionY)
 
         // Update currentBaselineOffset for footnote
         currentBaselineOffset = (captionY - contentTop) / baselinePx + captionStyle.baselineMultiplier
