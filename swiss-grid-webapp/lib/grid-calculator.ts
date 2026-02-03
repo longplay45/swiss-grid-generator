@@ -14,6 +14,7 @@ export interface GridSettings {
   gridRows: number;
   baseline?: number;
   baselineMultiple?: number;
+  customMargins?: { top: number; bottom: number; left: number; right: number };
 }
 
 export interface GridResult {
@@ -276,10 +277,21 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   const gridUnit = customBaseline ?? FORMAT_BASELINES[format] ?? BASE_GRID_UNIT;
   const scale_factor = formatScaleFactor;
 
-  const marginCalculator = MARGIN_CALCULATORS[marginMethod];
-  const margins = marginCalculator(gridUnit, w, h, gridCols, gridRows, baselineMultiple);
+  let marginTop: number, marginBottom: number, marginLeft: number, marginRight: number;
+  let gridMarginHorizontal: number, gridMarginVertical: number;
 
-  let { top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight, gutterH: gridMarginHorizontal, gutterV: gridMarginVertical } = margins;
+  if (settings.customMargins) {
+    marginTop = settings.customMargins.top;
+    marginBottom = settings.customMargins.bottom;
+    marginLeft = settings.customMargins.left;
+    marginRight = settings.customMargins.right;
+    gridMarginHorizontal = gridUnit;
+    gridMarginVertical = gridUnit;
+  } else {
+    const marginCalculator = MARGIN_CALCULATORS[marginMethod];
+    const margins = marginCalculator(gridUnit, w, h, gridCols, gridRows, baselineMultiple);
+    ({ top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight, gutterH: gridMarginHorizontal, gutterV: gridMarginVertical } = margins);
+  }
 
   // Snap margins to baseline grid
   marginTop = Math.round(marginTop / gridUnit) * gridUnit;
@@ -307,8 +319,11 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   // Recalculate actual net_h to match aligned modules
   const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;
 
-  // Adjust bottom margin
-  marginBottom = h - marginTop - netHAligned;
+  // Adjust bottom margin to absorb remaining space (Progressive & Van de Graaf)
+  // Grid-Based and custom margins keep their explicit bottom value
+  if (!settings.customMargins && marginMethod !== 3) {
+    marginBottom = h - marginTop - netHAligned;
+  }
 
   const typoSettings = generateTypographyStyles(scale_factor, gridUnit, format);
 

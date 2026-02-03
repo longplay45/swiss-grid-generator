@@ -42,8 +42,20 @@ export default function Home() {
   const [showMargins, setShowMargins] = useState(true)
   const [showTypography, setShowTypography] = useState(false)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
+  const [useCustomMargins, setUseCustomMargins] = useState(false)
+  const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
+
+  const gridUnit = useMemo(() => {
+    return customBaseline ?? FORMAT_BASELINES[format] ?? 12.0
+  }, [customBaseline, format])
 
   const result = useMemo(() => {
+    const customMargins = useCustomMargins ? {
+      top: customMarginMultipliers.top * gridUnit,
+      bottom: customMarginMultipliers.bottom * gridUnit,
+      left: customMarginMultipliers.left * gridUnit,
+      right: customMarginMultipliers.right * gridUnit,
+    } : undefined
     return generateSwissGrid({
       format,
       orientation,
@@ -52,8 +64,9 @@ export default function Home() {
       gridRows,
       baseline: customBaseline,
       baselineMultiple,
+      customMargins,
     })
-  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple])
+  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, useCustomMargins, customMarginMultipliers, gridUnit])
 
   // Calculate maximum baseline that fits in the document
   const maxBaseline = useMemo(() => {
@@ -334,29 +347,102 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Grid Settings */}
+        {/* Margins */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Ruler className="w-4 h-4" />
+              Margins
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Custom Margins</Label>
+              <Switch
+                checked={useCustomMargins}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    const methodBottomRatio: Record<number, number> = { 1: 3.0, 2: 3.0, 3: 1.0 }
+                    setCustomMarginMultipliers({
+                      top: Math.max(1, Math.min(9, Math.round(result.grid.margins.top / gridUnit))),
+                      left: Math.max(1, Math.min(9, Math.round(result.grid.margins.left / gridUnit))),
+                      right: Math.max(1, Math.min(9, Math.round(result.grid.margins.right / gridUnit))),
+                      bottom: Math.max(1, Math.min(9, Math.round(methodBottomRatio[marginMethod] * baselineMultiple))),
+                    })
+                  }
+                  setUseCustomMargins(checked)
+                }}
+              />
+            </div>
+
+            {!useCustomMargins ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Margin Method</Label>
+                  <Select value={marginMethod.toString()} onValueChange={(v) => setMarginMethod(parseInt(v) as 1 | 2 | 3)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
+                      <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
+                      <SelectItem value="3">Grid-Based (Modules)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Baseline Multiple</Label>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
+                  </div>
+                  <Slider value={[baselineMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                {(["top", "left", "right"] as const).map((side) => (
+                  <div key={side} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="capitalize">{side}</Label>
+                      <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers[side]}</span>
+                    </div>
+                    <Slider
+                      value={[customMarginMultipliers[side]]}
+                      min={1}
+                      max={9}
+                      step={1}
+                      onValueChange={([v]) => setCustomMarginMultipliers(prev => ({ ...prev, [side]: v }))}
+                    />
+                  </div>
+                ))}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="capitalize">Bottom</Label>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers.bottom}</span>
+                  </div>
+                  <Slider
+                    value={[customMarginMultipliers.bottom]}
+                    min={1}
+                    max={9}
+                    step={1}
+                    onValueChange={([v]) => setCustomMarginMultipliers(prev => ({ ...prev, bottom: v }))}
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gutter */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Grid3x3 className="w-4 h-4" />
-              Gutter Configuration
+              Gutter
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Margin Method</Label>
-              <Select value={marginMethod.toString()} onValueChange={(v) => setMarginMethod(parseInt(v) as 1 | 2 | 3)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
-                  <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
-                  <SelectItem value="3">Grid-Based (Modules)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Columns</Label>
@@ -371,14 +457,6 @@ export default function Home() {
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
               </div>
               <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Baseline Multiple</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
-              </div>
-              <Slider value={[baselineMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
             </div>
           </CardContent>
         </Card>
