@@ -105,7 +105,7 @@ const A4_TYPOGRAPHY: Record<string, { size: number; leading: number; baselineMul
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
   1: "Progressive (1:2:2:3)",
-  2: "Van de Graaf (page/9)",
+  2: "Van de Graaf (2:3:4:6)",
   3: "Grid-based (baseline multiples)",
 };
 
@@ -156,17 +156,17 @@ function calculateVandegraafMargins(
   _gridRows: number,
   baselineMultiple: number = 1.0
 ): MarginResult {
-  // Van de Graaf-inspired ratios as baseline multiples
-  // Left:top:right:bottom ratios scale with baselineMultiple
+  // Van de Graaf-inspired 2:3:4:6 ratio (top:left:right:bottom)
+  // All margins are multiples of the baseline grid unit
   // Example with 12pt baseline and 1x:
-  //   Left: 1×12 = 12pt, Top: 2×12 = 24pt, Right: 1.5×12 = 18pt, Bottom: 3×12 = 36pt
+  //   Top: 2×12 = 24pt, Left: 3×12 = 36pt, Right: 4×12 = 48pt, Bottom: 6×12 = 72pt
   // With 2x multiple: all values double
 
   return {
     top: gridUnit * 2.0 * baselineMultiple,     // 2× baseline × multiplier
-    bottom: gridUnit * 3.0 * baselineMultiple,  // 3× baseline × multiplier
-    left: gridUnit * 1.0 * baselineMultiple,    // 1× baseline × multiplier
-    right: gridUnit * 1.5 * baselineMultiple,   // 1.5× baseline × multiplier
+    bottom: gridUnit * 6.0 * baselineMultiple,  // 6× baseline × multiplier
+    left: gridUnit * 3.0 * baselineMultiple,    // 3× baseline × multiplier
+    right: gridUnit * 4.0 * baselineMultiple,   // 4× baseline × multiplier
     gutterH: gridUnit,
     gutterV: gridUnit,
   };
@@ -319,11 +319,6 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   // Recalculate actual net_h to match aligned modules
   const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;
 
-  // Adjust bottom margin to absorb remaining space (Progressive & Van de Graaf)
-  // Grid-Based and custom margins keep their explicit bottom value
-  if (!settings.customMargins && marginMethod !== 3) {
-    marginBottom = h - marginTop - netHAligned;
-  }
 
   const typoSettings = generateTypographyStyles(scale_factor, gridUnit, format);
 

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText, Type } from "lucide-react"
+import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -396,7 +396,7 @@ export default function Home() {
                     <Label>Baseline Multiple</Label>
                     <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
                   </div>
-                  <Slider value={[baselineMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
+                  <Slider value={[baselineMultiple]} min={1} max={7} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
                 </div>
               </>
             ) : (
@@ -405,7 +405,7 @@ export default function Home() {
                   <div key={side} className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="capitalize">{side}</Label>
-                      <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers[side]}</span>
+                      <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers[side]}×</span>
                     </div>
                     <Slider
                       value={[customMarginMultipliers[side]]}
@@ -419,7 +419,7 @@ export default function Home() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="capitalize">Bottom</Label>
-                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers.bottom}</span>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customMarginMultipliers.bottom}×</span>
                   </div>
                   <Slider
                     value={[customMarginMultipliers.bottom]}
@@ -515,7 +515,6 @@ export default function Home() {
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="show-typography" className="cursor-pointer flex items-center gap-2">
-                <Type className="w-3.5 h-3.5" />
                 Typography Preview
               </Label>
               <Switch
