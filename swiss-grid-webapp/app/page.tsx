@@ -98,12 +98,6 @@ export default function Home() {
     return BASELINE_OPTIONS.filter(val => val <= maxBaseline)
   }, [maxBaseline])
 
-  // Get the largest available baseline option (rounded max)
-  const roundedMaxBaseline = useMemo(() => {
-    const available = availableBaselineOptions.filter(val => val <= maxBaseline)
-    return available.length > 0 ? available[available.length - 1] : maxBaseline
-  }, [availableBaselineOptions, maxBaseline])
-
   // Generate base filename with baseline info
   const baseFilename = useMemo(() => {
     const baselineStr = customBaseline ? customBaseline.toFixed(3) : result.grid.gridUnit.toFixed(3)
@@ -322,27 +316,19 @@ export default function Home() {
                   onCheckedChange={(checked) => setCustomBaseline(checked ? FORMAT_BASELINES[format] : undefined)}
                 />
               </div>
-              {customBaseline !== undefined && (
+              {customBaseline !== undefined && availableBaselineOptions.length > 0 && (
                 <div className="space-y-3">
-                  <div className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <Label>Grid Unit</Label>
-                    <Select value={customBaseline.toString()} onValueChange={(v) => setCustomBaseline(parseFloat(v))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableBaselineOptions.map((val) => (
-                          <SelectItem key={val} value={val.toString()}>
-                            {val} pt
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customBaseline} pt</span>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    Max: {formatValue(roundedMaxBaseline, displayUnit)} {displayUnit}
-                    {displayUnit !== "pt" && ` (${roundedMaxBaseline.toFixed(3)} pt)`}
-                  </div>
+                  <Slider
+                    value={[availableBaselineOptions.indexOf(customBaseline) >= 0 ? availableBaselineOptions.indexOf(customBaseline) : 0]}
+                    min={0}
+                    max={availableBaselineOptions.length - 1}
+                    step={1}
+                    onValueChange={([v]) => setCustomBaseline(availableBaselineOptions[v])}
+                  />
                 </div>
               )}
             </div>
