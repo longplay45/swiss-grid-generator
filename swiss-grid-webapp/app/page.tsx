@@ -40,7 +40,7 @@ export default function Home() {
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
   const [showMargins, setShowMargins] = useState(true)
-  const [showTypography, setShowTypography] = useState(false)
+  const [showTypography, setShowTypography] = useState(true)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
