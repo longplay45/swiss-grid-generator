@@ -14,6 +14,7 @@ export interface GridSettings {
   gridRows: number;
   baseline?: number;
   baselineMultiple?: number;
+  gutterMultiple?: number;
   customMargins?: { top: number; bottom: number; left: number; right: number };
 }
 
@@ -257,7 +258,7 @@ function generateTypographyStyles(
 }
 
 export function generateSwissGrid(settings: GridSettings): GridResult {
-  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0 } = settings;
+  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0, gutterMultiple = 1.0 } = settings;
 
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
@@ -285,12 +286,14 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     marginBottom = settings.customMargins.bottom;
     marginLeft = settings.customMargins.left;
     marginRight = settings.customMargins.right;
-    gridMarginHorizontal = gridUnit;
-    gridMarginVertical = gridUnit;
+    gridMarginHorizontal = gridUnit * gutterMultiple;
+    gridMarginVertical = gridUnit * gutterMultiple;
   } else {
     const marginCalculator = MARGIN_CALCULATORS[marginMethod];
     const margins = marginCalculator(gridUnit, w, h, gridCols, gridRows, baselineMultiple);
-    ({ top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight, gutterH: gridMarginHorizontal, gutterV: gridMarginVertical } = margins);
+    ({ top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight } = margins);
+    gridMarginHorizontal = gridUnit * gutterMultiple;
+    gridMarginVertical = gridUnit * gutterMultiple;
   }
 
   // Snap margins to baseline grid

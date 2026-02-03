@@ -36,6 +36,7 @@ export default function Home() {
   const [gridCols, setGridCols] = useState(9)
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
+  const [gutterMultiple, setGutterMultiple] = useState(1.0)
   const [customBaseline, setCustomBaseline] = useState<number | undefined>(undefined)
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
@@ -64,9 +65,10 @@ export default function Home() {
       gridRows,
       baseline: customBaseline,
       baselineMultiple,
+      gutterMultiple,
       customMargins,
     })
-  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, useCustomMargins, customMarginMultipliers, gridUnit])
+  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, gutterMultiple, useCustomMargins, customMarginMultipliers, gridUnit])
 
   // Calculate maximum baseline that fits in the document
   const maxBaseline = useMemo(() => {
@@ -457,6 +459,14 @@ export default function Home() {
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
               </div>
               <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Baseline Multiple</Label>
+                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple.toFixed(1)}×</span>
+              </div>
+              <Slider value={[gutterMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setGutterMultiple(v)} />
             </div>
           </CardContent>
         </Card>
