@@ -450,9 +450,9 @@ export default function Home() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Baseline Multiple</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple.toFixed(1)}×</span>
+                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple}×</span>
               </div>
-              <Slider value={[gutterMultiple]} min={1} max={4} step={0.5} onValueChange={([v]) => setGutterMultiple(v)} />
+              <Slider value={[gutterMultiple]} min={1} max={4} step={1} onValueChange={([v]) => setGutterMultiple(v)} />
             </div>
           </CardContent>
         </Card>
