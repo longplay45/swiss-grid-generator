@@ -90,24 +90,24 @@ export const FORMATS_PT: Record<string, FormatDimensions> = {
 const BASE_GRID_UNIT = 12.0;
 const BASE_GUTTER = 6.0;
 
-// A4 Typography System
+// A4 Typography System (5-level hierarchy based on 12pt baseline)
+// 1. Display: 64pt/72pt (6× baseline)
+// 2. Headline: 30pt/36pt (3× baseline)
+// 3. Subhead: 20pt/24pt (2× baseline)
+// 4. Body: 10pt/12pt (1× baseline)
+// 5. Caption: 7pt/12pt (1× baseline)
 const A4_TYPOGRAPHY: Record<string, { size: number; leading: number; baselineMult: number; bodyLines: number; weight: string }> = {
-  caption: { size: 7.0, leading: 8.0, baselineMult: 0.67, bodyLines: 0.67, weight: "Regular" },
-  footnote: { size: 6.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
+  caption: { size: 7.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
   body: { size: 10.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
-  lead: { size: 12.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
-  subhead_small: { size: 14.0, leading: 24.0, baselineMult: 2.0, bodyLines: 2.0, weight: "Bold" },
-  subhead_medium: { size: 18.0, leading: 24.0, baselineMult: 2.0, bodyLines: 2.0, weight: "Bold" },
-  headline_3: { size: 20.0, leading: 24.0, baselineMult: 2.0, bodyLines: 2.0, weight: "Bold" },
-  headline_2: { size: 28.0, leading: 36.0, baselineMult: 3.0, bodyLines: 3.0, weight: "Bold" },
-  headline_1: { size: 48.0, leading: 48.0, baselineMult: 4.0, bodyLines: 4.0, weight: "Bold" },
-  display: { size: 72.0, leading: 72.0, baselineMult: 6.0, bodyLines: 6.0, weight: "Bold" },
+  subhead: { size: 20.0, leading: 24.0, baselineMult: 2.0, bodyLines: 2.0, weight: "Regular" },
+  headline: { size: 30.0, leading: 36.0, baselineMult: 3.0, bodyLines: 3.0, weight: "Bold" },
+  display: { size: 64.0, leading: 72.0, baselineMult: 6.0, bodyLines: 6.0, weight: "Bold" },
 };
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
   1: "Progressive (1:2:2:3)",
   2: "Van de Graaf (2:3:4:6)",
-  3: "Grid-based (baseline multiples)",
+  3: "Baseline (1:1:1:1)",
 };
 
 // Margin calculation methods

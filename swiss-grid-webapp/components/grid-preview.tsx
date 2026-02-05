@@ -169,19 +169,20 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       }
 
       // Define text blocks with relative offsets (additional space beyond minimum)
+      // Caption is handled separately (positioned from bottom)
       const textBlocks: Array<{
         styleKey: string
         extraOffset: number
         spaceBefore: number
         lines: string[]
       }> = [
-        { styleKey: "display", extraOffset: 0, spaceBefore: 0, lines: [
+        { styleKey: "display", extraOffset: 0, spaceBefore: 6, lines: [
           "Swiss Design"
         ]},
-        { styleKey: "headline_1", extraOffset: 0, spaceBefore: 0, lines: [
+        { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
           "Grid Systems"
         ]},
-        { styleKey: "subhead_medium", extraOffset: 0, spaceBefore: 0, lines: [
+        { styleKey: "subhead", extraOffset: 0, spaceBefore: 1, lines: [
           "A grid creates coherent visual structure",
           "and establishes a consistent spatial rhythm"
         ]},
@@ -190,28 +191,30 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
           "hierarchically and rhythmically. All typography aligns",
           "to the baseline grid, ensuring harmony across the page."
         ]},
-        { styleKey: "caption", extraOffset: 0, spaceBefore: 1, lines: [
+      ]
+
+      // Caption block - positioned from bottom
+      const captionBlock = {
+        styleKey: "caption",
+        lines: [
           "Figure 5: Baseline alignment demonstrates visual harmony",
           "across all typographic levels of the design system."
-        ]},
-      ]
+        ]
+      }
 
       let currentBaselineOffset = 0
 
-      // Draw each text block
+      // Draw each text block (top-aligned)
       for (const block of textBlocks) {
         const style = styles[block.styleKey]
         if (!style) continue
 
         const fontSize = style.size * scale
-        const leading = style.leading * scale
         const baselineMult = style.baselineMultiplier
-        const lineSpacing = baselinePx * baselineMult
 
-        // Calculate position: ensure no clipping, add extra spacing
-        const minOffset = getMinOffset(style.size)
-        const spacingAfterPrev = currentBaselineOffset > 0 ? block.spaceBefore : 0
-        const blockStartOffset = Math.max(currentBaselineOffset + spacingAfterPrev, minOffset) + block.extraOffset
+        // Calculate position: font height + spaceBefore baselines
+        const fontHeight = getMinOffset(style.size)
+        const blockStartOffset = currentBaselineOffset + block.spaceBefore + fontHeight + block.extraOffset
 
         // Set font
         ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
@@ -221,16 +224,43 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         // Draw each line
         block.lines.forEach((line, lineIndex) => {
           const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-          const x = contentLeft // Start exactly at content area (after left margin)
+          const x = contentLeft
 
-          // Ensure text doesn't go below content area
           if (y < canvas.height - margins.bottom * scale) {
             ctx.fillText(line, x, y)
           }
         })
 
-        // Update current position for next block (end of last line)
         currentBaselineOffset = blockStartOffset + block.lines.length * baselineMult
+      }
+
+      // Draw caption at the last available baseline just inside the bottom margin
+      const captionStyle = styles[captionBlock.styleKey]
+      if (captionStyle) {
+        const captionFontSize = captionStyle.size * scale
+        const captionBaselineMult = captionStyle.baselineMultiplier
+        const captionLineCount = captionBlock.lines.length
+
+        // Calculate last baseline: from margins.top to (pageHeight - margins.bottom)
+        const pageHeight = result.pageSizePt.height
+        const availableHeight = pageHeight - margins.top - margins.bottom
+        const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
+
+        // Last baseline position (in baseline units from content top)
+        const lastBaselineUnit = totalBaselinesFromTop
+
+        // Position: last line on the last baseline, work backwards for previous lines
+        const firstLineBaselineUnit = lastBaselineUnit - (captionLineCount - 1) * captionBaselineMult
+
+        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px Inter, system-ui, -apple-system, sans-serif`
+        ctx.textAlign = "left"
+        ctx.textBaseline = "alphabetic"
+
+        captionBlock.lines.forEach((line, lineIndex) => {
+          const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
+          const y = contentTop + baselineUnit * baselinePx
+          ctx.fillText(line, contentLeft, y)
+        })
       }
 
     }

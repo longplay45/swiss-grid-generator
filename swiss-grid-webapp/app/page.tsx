@@ -374,7 +374,7 @@ export default function Home() {
                     <SelectContent>
                       <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
                       <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
-                      <SelectItem value="3">Grid-Based (Modules)</SelectItem>
+                      <SelectItem value="3">Baseline (1:1:1:1)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
