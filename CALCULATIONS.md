@@ -92,7 +92,7 @@ marginRight  = 1.5 × baseline × baselineMultiple
 - Left: 12pt
 - Right: 18pt
 
-#### Method 3: Grid-based (Symmetric)
+#### Method 3: Baseline (1:1:1:1)
 
 Pure Müller-Brockmann approach: all margins equal to baseline × multiple.
 
@@ -213,17 +213,16 @@ The typography system uses **pure baseline multiples** for all leading values, e
 
 | Style | Font Size | Leading | Baseline Multiple | Weight |
 |-------|-----------|---------|-------------------|--------|
-| Display | 60pt | 72pt | 6× | Bold |
+| Display | 64pt | 72pt | 6× | Bold |
 | Headline | 30pt | 36pt | 3× | Bold |
-| Subhead | 18pt | 24pt | 2× | Bold |
+| Subhead | 20pt | 24pt | 2× | Regular |
 | Body | 10pt | 12pt | 1× | Regular |
 | Caption | 7pt | 12pt | 1× | Regular |
 
 **Key principles:**
 - All leading values are **exact integer multiples** of the baseline
-- Font sizes are **75-90% of leading** for readability
 - Body and Caption share the same leading (1×) for tight rhythm
-- Each level creates clear separation through baseline multiples
+- Each level creates clear visual separation through baseline multiples
 
 ### Scaling to Other Formats
 
@@ -239,7 +238,7 @@ scaledFontSize = a4FontSize × scaleFactor
 **Example for A3 (scale factor ≈ 1.4):**
 - Body: 10pt × 1.4 = 14pt
 - Headline: 30pt × 1.4 = 42pt
-- Display: 60pt × 1.4 = 84pt
+- Display: 64pt × 1.4 = 90pt
 
 #### Leading Calculation
 

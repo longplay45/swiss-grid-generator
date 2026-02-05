@@ -21,10 +21,10 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 - Three margin calculation methods:
   - Method 1: Progressive margins (1:2:2:3 — top:left:right:bottom)
   - Method 2: Van de Graaf ratios (2:3:4:6 — top:left:right:bottom)
-  - Method 3: Grid-based margins (symmetric baseline multiples)
+  - Method 3: Baseline margins (1:1:1:1 — symmetric)
 - Custom margin overrides with per-side baseline multipliers
 - Adjustable gutter spacing (1×–4× baseline)
-- 10-style typography system aligned to baseline grid
+- 5-level typography system aligned to baseline grid
 - Real-time canvas preview with toggleable layers
 - Multiple export formats (JSON, TXT, PDF)
 
@@ -84,7 +84,7 @@ Choose from three calculation methods:
 
 1. **Progressive (1:2:2:3)** - Top: 1×, Left: 2×, Right: 2×, Bottom: 3× baseline
 2. **Van de Graaf (2:3:4:6)** - Top: 2×, Left: 3×, Right: 4×, Bottom: 6× baseline
-3. **Grid-Based** - Symmetric margins as baseline multiples
+3. **Baseline (1:1:1:1)** - Symmetric margins as baseline multiples
 
 All margin methods support a baseline multiple slider (1×–7×) for scaling.
 Custom margins allow per-side control (1×–9× baseline).
@@ -100,20 +100,15 @@ Adjust the baseline unit from 6 to 72 points. Format-specific defaults are provi
 
 ## Typography System
 
-The app includes 10 styles aligned to the baseline grid:
+The app includes a 5-level hierarchy aligned to the baseline grid (A4 reference, 12pt baseline):
 
-| Style | Use Case |
-|-------|----------|
-| caption | Small captions, photo credits |
-| footnote | Footnotes, references |
-| body | Body text, paragraphs |
-| lead | Lead paragraphs, pull quotes |
-| subhead_small | Small subheadings |
-| subhead_medium | Medium subheadings |
-| headline_3 | Level 3 headlines |
-| headline_2 | Level 2 headlines |
-| headline_1 | Level 1 headlines |
-| display | Display titles, cover text |
+| Style | Size | Leading | Baseline | Weight | Use Case |
+|-------|------|---------|----------|--------|----------|
+| display | 64pt | 72pt | 6× | Bold | Display titles, cover text |
+| headline | 30pt | 36pt | 3× | Bold | Main headlines |
+| subhead | 20pt | 24pt | 2× | Regular | Subheadings |
+| body | 10pt | 12pt | 1× | Regular | Body text, paragraphs |
+| caption | 7pt | 12pt | 1× | Regular | Captions, photo credits |
 
 ## Component Structure
 
