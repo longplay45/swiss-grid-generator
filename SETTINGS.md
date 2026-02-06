@@ -41,6 +41,17 @@ Font sizes and leading scale automatically by format (relative to A4) and baseli
 
 **Default:** portrait
 
+### Rotation
+
+Preview-only rotation of the page.
+
+| Parameter | Value |
+|-----------|-------|
+| Min       | -80°  |
+| Max       | 80°   |
+| Step      | 1°    |
+| **Default** | **0°** |
+
 ## Baseline Grid
 
 ### Custom Baseline
@@ -172,10 +183,14 @@ Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0
 
 | Value        | Description                                    |
 |--------------|------------------------------------------------|
-| **original** | **Scale capped at 100% (default)**             |
-| fit          | Scale to fill available preview area           |
+| original     | Scale capped at 100%                           |
+| **fit**      | **Scale to fill available preview area (default)** |
 
-**Default:** original
+**Default:** fit
+
+### Typography Preview Layout
+
+If `Rows` is 2 or more, the preview positions the `display` line on the last baseline of row 1, and starts `headline`, `subhead`, and `body` inside row 2. If `Columns` is 2 or more, `subhead` and `body` flow into two columns.
 
 ## Export
 

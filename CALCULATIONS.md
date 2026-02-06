@@ -339,6 +339,26 @@ scaleY = (containerHeight - 40) / pageHeight
 
 All drawing coordinates are multiplied by `scale` for rendering.
 
+## Canvas Preview Rotation
+
+The preview applies a centered rotation transform before drawing all page elements:
+
+```
+ctx.translate(canvasWidth / 2, canvasHeight / 2)
+ctx.rotate((rotation * Math.PI) / 180)
+ctx.translate(-pageWidth / 2, -pageHeight / 2)
+```
+
+All modules, baselines, margins, and typography are drawn in the rotated coordinate space.
+
+## Typography Preview Layout Rules
+
+Preview-only layout rules for the sample text blocks:
+
+- If `gridRows >= 2`, the `display` line is placed on the last baseline of row 1.
+- `headline`, `subhead`, and `body` start inside row 2, respecting the minimum baseline offset for the font size.
+- If `gridCols >= 2`, `subhead` and `body` flow into two columns using half the available module columns.
+
 ---
 
 ## Reference

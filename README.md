@@ -11,13 +11,14 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 ## Screenshots
 
 ### Web Application 
-![Web App Screenshot](./swiss-grid-webapp/swiss-grid-generator-webapp-screenshot.png)
+![Web App Screenshot](./assets/swiss-grid-generator-webapp-screenshot.png)
 **Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
 
 ## Features
 
 - A-series paper formats (A0-A6) in portrait/landscape
 - Modular grids (1×1 to 13×13)
+- Preview rotation slider (−80° to +80°)
 - Three margin calculation methods:
   - Method 1: Progressive margins (1:2:2:3 — top:left:right:bottom)
   - Method 2: Van de Graaf ratios (2:3:4:6 — top:left:right:bottom)
@@ -25,7 +26,7 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 - Custom margin overrides with per-side baseline multipliers
 - Adjustable gutter spacing (1×–4× baseline)
 - 5-level typography system aligned to baseline grid
-- Real-time canvas preview with toggleable layers
+- Real-time canvas preview with toggleable layers, rotation, and column-aware text flow
 - Multiple export formats (JSON, TXT, PDF)
 
 ## Design Principles
@@ -78,6 +79,14 @@ Static files are exported to the `out/` directory.
 
 Select from A0 through A6 formats in either portrait or landscape orientation.
 
+### Orientation
+
+Choose portrait or landscape orientation for the selected format.
+
+### Rotation
+
+Rotate the preview from −80° to +80° in 1° steps.
+
 ### Margin Method
 
 Choose from three calculation methods:
@@ -98,6 +107,10 @@ Gutter spacing is adjustable from 0.5× to 4× baseline, keeping gutters aligned
 
 Adjust the baseline unit from 6 to 72 points. Format-specific defaults are provided (A4: 12pt, A3: 13pt, etc.). All typography scales accordingly.
 
+### Display Options
+
+Toggle baselines, margins, gutter, and typography overlays. Choose display units (pt, mm, px) and preview zoom. Default zoom is Fit.
+
 ## Typography System
 
 The app includes a 5-level hierarchy aligned to the baseline grid (A4 reference, 12pt baseline):
@@ -109,6 +122,11 @@ The app includes a 5-level hierarchy aligned to the baseline grid (A4 reference,
 | subhead | 20pt | 24pt | 2× | Regular | Subheadings |
 | body | 10pt | 12pt | 1× | Regular | Body text, paragraphs |
 | caption | 7pt | 12pt | 1× | Regular | Captions, photo credits |
+
+Preview layout rules:
+- If grid rows are 2 or more, the display line sits on the last baseline of row 1.
+- Headline, subhead, and body start inside row 2.
+- Subhead and body flow into two columns when there are 2 or more columns.
 
 ## Component Structure
 
