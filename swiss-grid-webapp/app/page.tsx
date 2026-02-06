@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, ZoomIn, File } from "lucide-react"
+import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, ZoomIn, File, Moon } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -44,6 +44,7 @@ export default function Home() {
   const [showTypography, setShowTypography] = useState(true)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [zoom, setZoom] = useState<"original" | "fit">("original")
+  const [darkMode, setDarkMode] = useState(false)
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
 
@@ -547,6 +548,10 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2">
+              <Moon className="w-4 h-4 text-gray-500" />
+              <Switch id="dark-mode" checked={darkMode} onCheckedChange={setDarkMode} />
+            </div>
           </div>
         </div>
         <div className="flex-1 p-4 md:p-6 overflow-auto">
@@ -558,6 +563,7 @@ export default function Home() {
             showTypography={showTypography}
             displayUnit={displayUnit}
             zoom={zoom}
+            darkMode={darkMode}
           />
         </div>
       </div>
