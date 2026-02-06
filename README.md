@@ -92,7 +92,7 @@ Custom margins allow per-side control (1×–9× baseline).
 ### Gutter
 
 Configure columns (1–13) and rows (1–13) for your modular grid.
-Gutter spacing is adjustable from 1× to 4× baseline, keeping gutters aligned to the baseline grid.
+Gutter spacing is adjustable from 0.5× to 4× baseline, keeping gutters aligned to the baseline grid.
 
 ### Baseline Grid
 

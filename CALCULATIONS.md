@@ -145,16 +145,15 @@ margin_bottom = round(margin_bottom / gridUnit) × gridUnit
 
 Left and right margins are not snapped (they don't affect vertical baseline alignment).
 
-### Bottom Margin Adjustment
+### Content Area Height
 
-After calculating module heights (which are baseline-aligned), the bottom margin is recalculated to consume remaining space:
+After calculating module heights (which are baseline-aligned), the actual content area height is computed from the aligned modules:
 
 ```
-netHAligned   = gridRows × modH + (gridRows - 1) × gridMarginVertical
-margin_bottom = pageHeight - margin_top - netHAligned
+netHAligned = gridRows × modH + (gridRows - 1) × gridMarginVertical
 ```
 
-This guarantees the grid fills the content area perfectly.
+This value is used as `contentArea.height` in the output. The bottom margin remains the baseline-snapped value from the initial calculation.
 
 ---
 
