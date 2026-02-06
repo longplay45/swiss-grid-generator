@@ -434,7 +434,7 @@ export default function Home() {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Columns</Label>
+                <Label>Vertical Fields</Label>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridCols}</span>
               </div>
               <Slider value={[gridCols]} min={1} max={13} step={1} onValueChange={([v]) => setGridCols(v)} />
@@ -442,7 +442,7 @@ export default function Home() {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Rows</Label>
+                <Label>Horizontal Fields</Label>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
               </div>
               <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
