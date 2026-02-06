@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText, ZoomIn } from "lucide-react"
+import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, ZoomIn, File } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -264,7 +264,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Ruler className="w-4 h-4" />
+              <File className="w-4 h-4" />
               Format & Layout
             </CardTitle>
           </CardHeader>
@@ -385,7 +385,7 @@ export default function Home() {
                     <Label>Baseline Multiple</Label>
                     <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{baselineMultiple.toFixed(1)}×</span>
                   </div>
-                  <Slider value={[baselineMultiple]} min={1} max={7} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
+                  <Slider value={[baselineMultiple]} min={0.5} max={7} step={0.5} onValueChange={([v]) => setBaselineMultiple(v)} />
                 </div>
               </>
             ) : (
@@ -453,72 +453,7 @@ export default function Home() {
                 <Label>Baseline Multiple</Label>
                 <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple}×</span>
               </div>
-              <Slider value={[gutterMultiple]} min={1} max={4} step={1} onValueChange={([v]) => setGutterMultiple(v)} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* View Options */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              Display Options
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Display Unit</Label>
-              <Select value={displayUnit} onValueChange={(v: "pt" | "mm" | "px") => setDisplayUnit(v)}>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pt">pt</SelectItem>
-                  <SelectItem value="mm">mm</SelectItem>
-                  <SelectItem value="px">px</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-baselines" className="cursor-pointer">
-                Show Baseline Grid
-              </Label>
-              <Switch
-                id="show-baselines"
-                checked={showBaselines}
-                onCheckedChange={setShowBaselines}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-margins" className="cursor-pointer">
-                Show Page Margins
-              </Label>
-              <Switch
-                id="show-margins"
-                checked={showMargins}
-                onCheckedChange={setShowMargins}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-modules" className="cursor-pointer">
-                Show Gutter
-              </Label>
-              <Switch
-                id="show-modules"
-                checked={showModules}
-                onCheckedChange={setShowModules}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-typography" className="cursor-pointer flex items-center gap-2">
-                Typography Preview
-              </Label>
-              <Switch
-                id="show-typography"
-                checked={showTypography}
-                onCheckedChange={setShowTypography}
-              />
+              <Slider value={[gutterMultiple]} min={0.5} max={4} step={0.5} onValueChange={([v]) => setGutterMultiple(v)} />
             </div>
           </CardContent>
         </Card>
@@ -569,18 +504,49 @@ export default function Home() {
       {/* Right Panel - Preview */}
       <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-full">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
-          <h2 className="text-sm font-medium text-gray-700">Preview</h2>
-          <div className="flex items-center gap-2">
-          <ZoomIn className="w-4 h-4 text-gray-500" />
-          <Select value={zoom} onValueChange={(v: "original" | "fit") => setZoom(v)}>
-            <SelectTrigger className="w-[100px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="original">Original</SelectItem>
-              <SelectItem value="fit">Fit</SelectItem>
-            </SelectContent>
-          </Select>
+          <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="show-baselines" className="cursor-pointer text-xs text-gray-600">Baselines</Label>
+              <Switch id="show-baselines" checked={showBaselines} onCheckedChange={setShowBaselines} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="show-margins" className="cursor-pointer text-xs text-gray-600">Margins</Label>
+              <Switch id="show-margins" checked={showMargins} onCheckedChange={setShowMargins} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="show-modules" className="cursor-pointer text-xs text-gray-600">Gutter</Label>
+              <Switch id="show-modules" checked={showModules} onCheckedChange={setShowModules} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="show-typography" className="cursor-pointer text-xs text-gray-600">Type</Label>
+              <Switch id="show-typography" checked={showTypography} onCheckedChange={setShowTypography} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Ruler className="w-4 h-4 text-gray-500" />
+              <Select value={displayUnit} onValueChange={(v: "pt" | "mm" | "px") => setDisplayUnit(v)}>
+                <SelectTrigger className="w-[70px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mm">mm</SelectItem>
+                  <SelectItem value="pt">pt</SelectItem>
+                  <SelectItem value="px">px</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <ZoomIn className="w-4 h-4 text-gray-500" />
+              <Select value={zoom} onValueChange={(v: "original" | "fit") => setZoom(v)}>
+                <SelectTrigger className="w-[100px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="original">Original</SelectItem>
+                  <SelectItem value="fit">Fit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         <div className="flex-1 p-4 md:p-6 overflow-auto">

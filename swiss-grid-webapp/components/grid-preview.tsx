@@ -177,17 +177,17 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         spaceBefore: number
         lines: string[]
       }> = [
-        { styleKey: "display", extraOffset: 0, spaceBefore: 6, lines: [
+        { styleKey: "display", extraOffset: 0, spaceBefore: 0, lines: [
           "Swiss Design"
         ]},
         { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
           "Grid Systems"
         ]},
-        { styleKey: "subhead", extraOffset: 0, spaceBefore: 1, lines: [
+        { styleKey: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
           "A grid creates coherent visual structure",
           "and establishes a consistent spatial rhythm"
         ]},
-        { styleKey: "body", extraOffset: 0, spaceBefore: 1, lines: [
+        { styleKey: "body", extraOffset: 0, spaceBefore: 0, lines: [
           "The modular grid allows designers to organize content",
           "hierarchically and rhythmically. All typography aligns",
           "to the baseline grid, ensuring harmony across the page."
