@@ -28,10 +28,9 @@ interface GridPreviewProps {
   showTypography: boolean
   displayUnit: "pt" | "mm" | "px"
   zoom?: "original" | "fit"
-  darkMode?: boolean
 }
 
-export function GridPreview({ result, showBaselines, showModules, showMargins, showTypography, displayUnit, zoom = "original", darkMode = false }: GridPreviewProps) {
+export function GridPreview({ result, showBaselines, showModules, showMargins, showTypography, displayUnit, zoom = "original" }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -53,24 +52,24 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     // Draw page background
-    ctx.fillStyle = darkMode ? "#1a1a1a" : "#ffffff"
+    ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw page border
-    ctx.strokeStyle = darkMode ? "#333333" : "#e5e5e5"
+    ctx.strokeStyle = "#e5e5e5"
     ctx.lineWidth = 1
     ctx.strokeRect(0, 0, canvas.width, canvas.height)
 
     // Draw margins if enabled
     if (showMargins) {
-      ctx.fillStyle = darkMode ? "#2a2520" : "#fffdec"
+      ctx.fillStyle = "#fffdec"  // Subtle yellow
       ctx.fillRect(0, 0, margins.left * scale, canvas.height)
       ctx.fillRect(canvas.width - margins.right * scale, 0, margins.right * scale, canvas.height)
       ctx.fillRect(0, 0, canvas.width, margins.top * scale)
       ctx.fillRect(0, canvas.height - margins.bottom * scale, canvas.width, margins.bottom * scale)
 
       // Draw margin labels
-      ctx.fillStyle = darkMode ? "#6b7280" : "#9ca3af"
+      ctx.fillStyle = "#9ca3af"
       ctx.font = "10px Inter, system-ui, sans-serif"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
@@ -89,7 +88,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
     }
 
     // Draw content area boundary
-    ctx.strokeStyle = darkMode ? "#60a5fa" : "#3b82f6"
+    ctx.strokeStyle = "#3b82f6"
     ctx.lineWidth = 0.5
     ctx.setLineDash([4, 4])
     ctx.strokeRect(
@@ -116,7 +115,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
 
           // Alternate shading
           if ((row + col) % 2 === 0) {
-            ctx.fillStyle = darkMode ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)"
+            ctx.fillStyle = "rgba(0, 0, 0, 0.02)"
             ctx.fillRect(x, y, w, h)
           }
         }
@@ -159,7 +158,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       const baselinePx = gridUnit * scale
 
       // Text colors
-      ctx.fillStyle = darkMode ? "#e5e7eb" : "#1f2937"
+      ctx.fillStyle = "#1f2937" // gray-800
 
       // Calculate minimum offset for each style to prevent top clipping
       // Text extends above baseline by approximately 0.8-0.9 of font size
@@ -266,7 +265,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       }
 
     }
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, darkMode])
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -304,14 +303,14 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
   }, [])
 
   return (
-    <div className={`relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
       <canvas
         ref={canvasRef}
         width={result.pageSizePt.width * scale}
         height={result.pageSizePt.height * scale}
         className="max-w-full max-h-full shadow-lg"
       />
-      <div className={`absolute bottom-4 left-4 backdrop-blur-sm rounded-lg px-3 py-2 text-xs ${darkMode ? "bg-black/70 text-gray-400" : "bg-white/90 text-gray-600"}`}>
+      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
         Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
     </div>
