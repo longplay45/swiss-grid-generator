@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText } from "lucide-react"
+import { Download, Grid3x3, Eye, Ruler, Menu, FileJson, FileText, ZoomIn } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -43,6 +43,7 @@ export default function Home() {
   const [showMargins, setShowMargins] = useState(true)
   const [showTypography, setShowTypography] = useState(true)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
+  const [zoom, setZoom] = useState<"original" | "fit">("original")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
 
@@ -566,15 +567,33 @@ export default function Home() {
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 p-4 md:p-6 min-h-[50vh] md:min-h-full">
-        <GridPreview
-          result={result}
-          showBaselines={showBaselines}
-          showModules={showModules}
-          showMargins={showMargins}
-          showTypography={showTypography}
-          displayUnit={displayUnit}
-        />
+      <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-full">
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
+          <h2 className="text-sm font-medium text-gray-700">Preview</h2>
+          <div className="flex items-center gap-2">
+          <ZoomIn className="w-4 h-4 text-gray-500" />
+          <Select value={zoom} onValueChange={(v: "original" | "fit") => setZoom(v)}>
+            <SelectTrigger className="w-[100px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="original">Original</SelectItem>
+              <SelectItem value="fit">Fit</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
+        </div>
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <GridPreview
+            result={result}
+            showBaselines={showBaselines}
+            showModules={showModules}
+            showMargins={showMargins}
+            showTypography={showTypography}
+            displayUnit={displayUnit}
+            zoom={zoom}
+          />
+        </div>
       </div>
     </div>
   )
