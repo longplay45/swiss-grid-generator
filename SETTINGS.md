@@ -123,7 +123,7 @@ Initial values when enabled are derived from the current margin method.
 | Min       | 1               |
 | Max       | 13              |
 | Step      | 1               |
-| **Default** | **9**         |
+| **Default** | **4**         |
 
 ### Rows
 

@@ -33,7 +33,7 @@ export default function Home() {
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
   const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(1)
-  const [gridCols, setGridCols] = useState(9)
+  const [gridCols, setGridCols] = useState(4)
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [gutterMultiple, setGutterMultiple] = useState(1.0)

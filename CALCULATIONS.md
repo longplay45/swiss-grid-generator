@@ -2,13 +2,41 @@
 
 This document describes the mathematical calculations used in the Swiss Grid Generator, based on Josef Müller-Brockmann's *Grid Systems in Graphic Design* (1981).
 
+All formulas reference `swiss-grid-webapp/lib/grid-calculator.ts`.
+
 ## Table of Contents
 
-1. [Baseline Grid](#baseline-grid)
-2. [Margins](#margins)
-3. [Gutters](#gutters)
-4. [Modules](#modules)
-5. [Typography](#typography)
+1. [Scale Factor](#scale-factor)
+2. [Baseline Grid](#baseline-grid)
+3. [Margins](#margins)
+4. [Gutters](#gutters)
+5. [Modules](#modules)
+6. [Typography](#typography)
+7. [Unit Conversions](#unit-conversions)
+8. [Decimal Precision](#decimal-precision)
+9. [Canvas Preview Scale](#canvas-preview-scale)
+
+---
+
+## Scale Factor
+
+All calculations are relative to A4 as the reference format.
+
+```
+scale_factor = min(format_width / A4_width, format_height / A4_height)
+```
+
+Where A4 = 595.276 × 841.890 pt.
+
+| Format | Scale Factor |
+|--------|-------------|
+| A6     | 0.500       |
+| A5     | 0.707       |
+| A4     | 1.000       |
+| A3     | 1.414       |
+| A2     | 2.000       |
+| A1     | 2.828       |
+| A0     | 4.000       |
 
 ---
 
@@ -18,7 +46,7 @@ The baseline grid is the foundation of the entire system. All vertical measureme
 
 ### Auto Mode (Default)
 
-When "Custom Baseline" is OFF (auto mode), each format uses a format-specific baseline optimized for its size:
+When "Custom Baseline" is OFF, each format uses a format-specific baseline:
 
 | Format | Baseline | Rationale |
 |--------|----------|-----------|
@@ -30,17 +58,17 @@ When "Custom Baseline" is OFF (auto mode), each format uses a format-specific ba
 | A1 | 16pt | Large format displays |
 | A0 | 18pt | Poster scale |
 
-```typescript
-const FORMAT_BASELINES = {
-  A0: 18.0, A1: 16.0, A2: 14.0, A3: 13.0,
-  A4: 12.0, A5: 10.0, A6: 9.0
-};
+```
 gridUnit = FORMAT_BASELINES[format]  // Auto mode
 ```
 
 ### Custom Mode
 
-When "Custom Baseline" is ON, you can manually select any baseline value that fits the format. The default selection matches the format's auto baseline (shown above), but you can choose from predefined values (6-72pt).
+When "Custom Baseline" is ON, the user selects from predefined values. Available options are filtered to only include values that fit the current format and grid configuration.
+
+```
+gridUnit = customBaseline ?? FORMAT_BASELINES[format] ?? 12.0
+```
 
 ### Landscape Orientation
 
@@ -50,7 +78,7 @@ Baseline value remains the same in landscape; only page dimensions swap.
 
 ## Margins
 
-Margins are calculated as **baseline multiples** and then **snapped to the baseline grid** for precise alignment.
+Margins are calculated as **baseline multiples** and then **snapped to the baseline grid**.
 
 ### Three Calculation Methods
 
@@ -58,69 +86,72 @@ Margins are calculated as **baseline multiples** and then **snapped to the basel
 
 Swiss modern approach for single pages. Creates gentle visual weight shift downward.
 
-```typescript
-marginTop    = 1.0 × baseline × baselineMultiple
-marginBottom = 3.0 × baseline × baselineMultiple
-marginLeft   = 2.0 × baseline × baselineMultiple
-marginRight  = 2.0 × baseline × baselineMultiple
+```
+margin_top    = gridUnit × 1.0 × baselineMultiple
+margin_left   = gridUnit × 2.0 × baselineMultiple
+margin_right  = gridUnit × 2.0 × baselineMultiple
+margin_bottom = gridUnit × 3.0 × baselineMultiple
 ```
 
 **Example with 12pt baseline, 1× multiple:**
-- Top: 12pt
-- Bottom: 36pt
-- Left/Right: 24pt
+- Top: 12pt, Left/Right: 24pt, Bottom: 36pt
 
 **With 2× multiple:**
-- Top: 24pt
-- Bottom: 72pt
-- Left/Right: 48pt
+- Top: 24pt, Left/Right: 48pt, Bottom: 72pt
 
-#### Method 2: Van de Graaf-inspired (1:2:1.5:3)
+#### Method 2: Van de Graaf (2:3:4:6)
 
 Asymmetric margins inspired by the Van de Graaf canon, adapted to baseline multiples.
 
-```typescript
-marginTop    = 2.0 × baseline × baselineMultiple
-marginBottom = 3.0 × baseline × baselineMultiple
-marginLeft   = 1.0 × baseline × baselineMultiple
-marginRight  = 1.5 × baseline × baselineMultiple
+```
+margin_top    = gridUnit × 2.0 × baselineMultiple
+margin_left   = gridUnit × 3.0 × baselineMultiple
+margin_right  = gridUnit × 4.0 × baselineMultiple
+margin_bottom = gridUnit × 6.0 × baselineMultiple
 ```
 
 **Example with 12pt baseline, 1× multiple:**
-- Top: 24pt
-- Bottom: 36pt
-- Left: 12pt
-- Right: 18pt
+- Top: 24pt, Left: 36pt, Right: 48pt, Bottom: 72pt
 
 #### Method 3: Baseline (1:1:1:1)
 
-Pure Müller-Brockmann approach: all margins equal to baseline × multiple.
+Pure Müller-Brockmann approach: all margins equal.
 
-```typescript
-margin = baseline × baselineMultiple  // All sides
+```
+margin = gridUnit × baselineMultiple  // All sides
 ```
 
 **Example with 12pt baseline, 2× multiple:**
 - All margins: 24pt
 
-### Snapping to Baseline Grid
+### Custom Margins
 
-After initial calculation, top and bottom margins are **snapped** to align with baseline grid:
+Bypasses the method selection. Each side is set independently as an integer multiplier of the grid unit:
 
-```typescript
-marginTop = Math.round(marginTop / baseline) × baseline
-marginBottom = Math.round(marginBottom / baseline) × baseline
+```
+margin_[side] = multiplier_[side] × gridUnit
 ```
 
-This ensures margins always land on baseline grid lines.
+Multiplier range: 1–9 (integer steps).
+
+### Baseline Snapping
+
+After initial calculation, top and bottom margins are snapped to the nearest baseline grid line:
+
+```
+margin_top    = round(margin_top / gridUnit) × gridUnit
+margin_bottom = round(margin_bottom / gridUnit) × gridUnit
+```
+
+Left and right margins are not snapped (they don't affect vertical baseline alignment).
 
 ### Bottom Margin Adjustment
 
-After calculating module heights (which are baseline-aligned), the bottom margin is adjusted to consume remaining space:
+After calculating module heights (which are baseline-aligned), the bottom margin is recalculated to consume remaining space:
 
-```typescript
-netHAligned = gridRows × moduleHeight + (gridRows - 1) × gutterVertical
-marginBottom = pageHeight - marginTop - netHAligned
+```
+netHAligned   = gridRows × modH + (gridRows - 1) × gridMarginVertical
+margin_bottom = pageHeight - margin_top - netHAligned
 ```
 
 This guarantees the grid fills the content area perfectly.
@@ -129,78 +160,76 @@ This guarantees the grid fills the content area perfectly.
 
 ## Gutters
 
-Gutters are the spacing between modules. They are **always equal to 1 baseline unit** (unscaled).
+Gutters are the spacing between modules. They scale by the gutter baseline multiple slider.
 
-```typescript
-gutterHorizontal = baseline
-gutterVertical = baseline
+```
+gridMarginHorizontal = gridUnit × gutterMultiple
+gridMarginVertical   = gridUnit × gutterMultiple
 ```
 
-**Example with 12pt baseline:**
-- Horizontal gutter: 12pt
-- Vertical gutter: 12pt
+Where `gutterMultiple` defaults to 1.0 (range 0.5–4.0, step 0.5).
 
-This ensures gutters align to the baseline grid, maintaining vertical rhythm.
+**Example with 12pt baseline:**
+
+| Gutter Multiple | Gutter Size |
+|-----------------|-------------|
+| 0.5×            | 6pt         |
+| 1.0× (default)  | 12pt        |
+| 1.5×            | 18pt        |
+| 2.0×            | 24pt        |
 
 ---
 
 ## Modules
 
-Modules are the individual grid cells. Their dimensions are calculated to perfectly fill the content area.
+Modules are the individual grid cells. Their dimensions are calculated to fill the content area.
 
 ### Module Width
 
-```typescript
-netWidth = pageWidth - marginLeft - marginRight
-moduleWidth = (netWidth - (gridCols - 1) × gutterHorizontal) / gridCols
+```
+netW = pageWidth - margin_left - margin_right
+modW = (netW - (gridCols - 1) × gridMarginHorizontal) / gridCols
 ```
 
-**Example:** A4 portrait (595.276pt width) with 2× margins (24pt each), 4 columns, 12pt gutters:
+**Example:** A4 portrait with 24pt left/right margins, 4 columns, 12pt gutters:
 
 ```
-netWidth = 595.276 - 24 - 24 = 547.276pt
-moduleWidth = (547.276 - 3 × 12) / 4 = 127.819pt
+netW = 595.276 - 24 - 24 = 547.276pt
+modW = (547.276 - 3 × 12) / 4 = 127.819pt
 ```
 
-### Module Height
+### Module Height (Baseline-Aligned)
 
-Module height is **baseline-aligned** to ensure grid harmony:
-
-```typescript
-netHeight = pageHeight - marginTop - marginBottom
-totalVerticalUnits = Math.round(netHeight / baseline)
-unitsPerCell = totalVerticalUnits / gridRows
-baselineUnitsPerCell = Math.floor(unitsPerCell)  // Must be integer
-```
-
-**Minimum 2 baseline units per cell:**
-```typescript
-if (baselineUnitsPerCell < 2) {
-  baselineUnitsPerCell = 2
-}
-```
-
-**Cell height calculation:**
-```typescript
-cellHeight = baselineUnitsPerCell × baseline
-moduleHeight = cellHeight - gutterVertical
-```
-
-**Example:** A4 portrait (841.890pt height) with 12pt baseline, 6 rows:
+Module height must span an **integer number of baseline units**:
 
 ```
-netHeight = 841.890 - 12 - 36 = 793.890pt
-totalVerticalUnits = Math.round(793.890 / 12) = 66
+netH                 = pageHeight - margin_top - margin_bottom
+totalVerticalUnits   = round(netH / gridUnit)
+unitsPerCell         = totalVerticalUnits / gridRows
+baselineUnitsPerCell = floor(unitsPerCell)
+
+if baselineUnitsPerCell < 2:
+    baselineUnitsPerCell = 2    # minimum 2 baseline units per cell
+
+cellHeight = baselineUnitsPerCell × gridUnit
+modH       = cellHeight - gridMarginVertical
+```
+
+**Example:** A4 portrait, 12pt baseline, 6 rows, margins 12pt top / 36pt bottom:
+
+```
+netH = 841.890 - 12 - 36 = 793.890pt
+totalVerticalUnits = round(793.890 / 12) = 66
 unitsPerCell = 66 / 6 = 11
 baselineUnitsPerCell = 11
 cellHeight = 11 × 12 = 132pt
-moduleHeight = 132 - 12 = 120pt
+modH = 132 - 12 = 120pt
 ```
 
 ### Aspect Ratio
 
-```typescript
-aspectRatio = moduleWidth / moduleHeight
+```
+aspectRatio = modW / modH
 ```
 
 ---
@@ -209,98 +238,107 @@ aspectRatio = moduleWidth / moduleHeight
 
 The typography system uses **pure baseline multiples** for all leading values, ensuring perfect alignment to the baseline grid.
 
-### Base System (for A4, 12pt baseline)
+### Base System (A4, 12pt baseline)
 
-| Style | Font Size | Leading | Baseline Multiple | Weight |
-|-------|-----------|---------|-------------------|--------|
-| Display | 64pt | 72pt | 6× | Bold |
-| Headline | 30pt | 36pt | 3× | Bold |
-| Subhead | 20pt | 24pt | 2× | Regular |
-| Body | 10pt | 12pt | 1× | Regular |
-| Caption | 7pt | 12pt | 1× | Regular |
+| Style    | Font Size | Leading | Baseline Multiple | Body Lines | Weight  |
+|----------|-----------|---------|-------------------|------------|---------|
+| Display  | 64pt      | 72pt    | 6×                | 6.0        | Bold    |
+| Headline | 30pt      | 36pt    | 3×                | 3.0        | Bold    |
+| Subhead  | 20pt      | 24pt    | 2×                | 2.0        | Regular |
+| Body     | 10pt      | 12pt    | 1×                | 1.0        | Regular |
+| Caption  | 7pt       | 12pt    | 1×                | 1.0        | Regular |
 
-**Key principles:**
-- All leading values are **exact integer multiples** of the baseline
-- Body and Caption share the same leading (1×) for tight rhythm
-- Each level creates clear visual separation through baseline multiples
+All styles use Left alignment.
 
 ### Scaling to Other Formats
 
+#### Baseline Ratio
+
+```
+baselineRatio = gridUnit / 12.0
+```
+
 #### Font Size Scaling
 
-Font sizes scale by the **format scale factor** (relative to A4):
+Font sizes scale by both the format scale factor and the baseline ratio:
 
-```typescript
-scaleFactor = min(formatWidth / A4_width, formatHeight / A4_height)
-scaledFontSize = a4FontSize × scaleFactor
+```
+scaledSize = a4Size × scaleFactor × baselineRatio
 ```
 
-**Example for A3 (scale factor ≈ 1.4):**
-- Body: 10pt × 1.4 = 14pt
-- Headline: 30pt × 1.4 = 42pt
-- Display: 64pt × 1.4 = 90pt
+#### Leading Scaling
 
-#### Leading Calculation
+Leading scales only by the baseline ratio (not the format factor), preserving baseline alignment:
 
-Leading is always **baseline multiple × current baseline**:
-
-```typescript
-leading = baselineMultiple × gridUnit
+```
+scaledLeading = a4Leading × baselineRatio
 ```
 
-This ensures typography snaps to the baseline grid regardless of format or baseline value.
+The baseline multiplier relationship is preserved across all formats:
 
-**Example with different baselines:**
+```
+baselineMultiplier = scaledLeading / gridUnit  // constant per style
+```
 
-| Format | Baseline | Body Leading (1×) | Subhead (2×) | Headline (3×) | Display (6×) |
-|--------|----------|-------------------|--------------|---------------|--------------|
-| A6 | 9pt | 9pt | 18pt | 27pt | 54pt |
-| A5 | 10pt | 10pt | 20pt | 30pt | 60pt |
-| A4 | 12pt | 12pt | 24pt | 36pt | 72pt |
-| A3 | 13pt | 13pt | 26pt | 39pt | 78pt |
-| A2 | 14pt | 14pt | 28pt | 42pt | 84pt |
-| A1 | 16pt | 16pt | 32pt | 48pt | 96pt |
-| A0 | 18pt | 18pt | 36pt | 54pt | 108pt |
+#### Example: A3 with 13pt Baseline
 
-### Alignment
+```
+scaleFactor   = 1.414
+baselineRatio = 13.0 / 12.0 = 1.0833
 
-All typography uses:
-- **Text align:** Left (flush-left, ragged-right)
-- **Font:** System sans-serif stack (Inter, Helvetica Neue, Helvetica, Arial, system-ui)
-- **Baseline:** Alphabetic (text sits on baseline)
+Body:    size = 10 × 1.414 × 1.0833 = 15.318pt,  leading = 12 × 1.0833 = 13.0pt  (1× baseline)
+Subhead: size = 20 × 1.414 × 1.0833 = 30.636pt,  leading = 24 × 1.0833 = 26.0pt  (2× baseline)
+Display: size = 64 × 1.414 × 1.0833 = 98.034pt,  leading = 72 × 1.0833 = 78.0pt  (6× baseline)
+```
+
+### Leading Across All Formats
+
+| Format | Baseline | Body (1×) | Subhead (2×) | Headline (3×) | Display (6×) |
+|--------|----------|-----------|--------------|---------------|--------------|
+| A6     | 9pt      | 9pt       | 18pt         | 27pt          | 54pt         |
+| A5     | 10pt     | 10pt      | 20pt         | 30pt          | 60pt         |
+| A4     | 12pt     | 12pt      | 24pt         | 36pt          | 72pt         |
+| A3     | 13pt     | 13pt      | 26pt         | 39pt          | 78pt         |
+| A2     | 14pt     | 14pt      | 28pt         | 42pt          | 84pt         |
+| A1     | 16pt     | 16pt      | 32pt         | 48pt          | 96pt         |
+| A0     | 18pt     | 18pt      | 36pt         | 54pt          | 108pt        |
 
 ---
 
-## Design Principles
+## Unit Conversions
 
-### 1. Baseline Alignment (Critical)
+All internal calculations use points (pt). Display conversions:
 
-All measurements align to the baseline grid:
-- Margins snap to baseline multiples
-- Module heights are integer baseline units
-- Typography leading is exact baseline multiples
-- Gutters equal 1 baseline unit
+```
+mm = pt × 0.352778        # 1pt = 0.352778mm (1mm = 2.835pt)
+px = pt × (96 / 72)       # 1pt = 1.333px at 96dpi
+```
 
-### 2. Format Hierarchy
+---
 
-Larger formats get proportionally larger:
-- Baseline increases stepwise (A6→A0)
-- Font sizes scale by format factor
-- Leading maintains baseline relationship
+## Decimal Precision
 
-### 3. Mathematical Harmony
+All output values are rounded to 3 decimal places to prevent floating-point drift:
 
-All relationships are mathematical, not arbitrary:
-- Margins use simple ratios (1:2:2:3, 1:2:1.5:3)
-- Modules divide content area evenly
-- Typography uses integer multiples
+```
+rounded = round(value × 1000) / 1000
+```
 
-### 4. Swiss Style Characteristics
+---
 
-- **Objective order** through mathematical ratios
-- **Visual harmony** through consistent proportions
-- **Modular rhythm** through baseline alignment
-- **Clear hierarchy** through baseline multiples
+## Canvas Preview Scale
+
+The preview calculates a display scale from the container size:
+
+```
+scaleX = (containerWidth - 40) / pageWidth
+scaleY = (containerHeight - 40) / pageHeight
+```
+
+- **Original mode:** `scale = min(scaleX, scaleY, 1.0)` — never exceeds 100%
+- **Fit mode:** `scale = min(scaleX, scaleY)` — fills available space
+
+All drawing coordinates are multiplied by `scale` for rendering.
 
 ---
 
