@@ -1,0 +1,60 @@
+{
+  "id": "36-square-complex",
+  "name": "36-Square Modular Grid (Ruder Typographie Example)",
+  "description": "Inspired by Emil Ruder's 'Typographie' (1967): 6×6 square grid for complex pages with variable images, captions, and text. Enables ~70 illustration sizes via combinations.",
+  "recommendedRotation": 0,
+  "grid": {
+    "format": "A4",
+    "orientation": "portrait",
+    "baseline": 12,
+    "marginMethod": "equal",
+    "equalMarginMultiplier": 1.5,
+    "gutterMultiplier": 0.5,
+    "verticalFields": 6,
+    "horizontalFields": 6,
+    "baselineMultiple": 1,
+    "squareModules": true,
+    "typography": [
+      { "level": 1, "size": 36, "leading": 42, "weight": "bold" },
+      { "level": 2, "size": 24, "leading": 30, "weight": "bold" },
+      { "level": 3, "size": 18, "leading": 24, "weight": "medium" },
+      { "level": 4, "size": 12, "leading": 18, "weight": "normal" },
+      { "level": 5, "size": 10, "leading": 14, "weight": "normal" }
+    ]
+  },
+  "elements": [
+    {
+      "type": "rect",
+      "fill": "#cccccc",
+      "position": { "colStart": 1, "colEnd": 3, "rowStart": 1, "rowEnd": 4 }
+    },
+    {
+      "type": "text",
+      "content": "Main Illustration Title",
+      "style": { "fontSize": 24, "leading": 30, "weight": "bold", "align": "center" },
+      "position": { "colStart": 1, "colEnd": 3, "rowStart": 5, "rowEnd": 5 }
+    },
+    {
+      "type": "rect",
+      "fill": "#dddddd",
+      "position": { "colStart": 4, "colEnd": 6, "rowStart": 1, "rowEnd": 3 }
+    },
+    {
+      "type": "text",
+      "content": "Subtitle or Caption",
+      "style": { "fontSize": 12, "leading": 18, "weight": "medium", "align": "left" },
+      "position": { "colStart": 4, "colEnd": 6, "rowStart": 4, "rowEnd": 4 }
+    },
+    {
+      "type": "rect",
+      "fill": "#bbbbbb",
+      "position": { "colStart": 2, "colEnd": 5, "rowStart": 5, "rowEnd": 6 }
+    },
+    {
+      "type": "text",
+      "content": "Body text block aligned to grid and baseline rhythm. This demonstrates how elements span multiple squares for flexibility and order.",
+      "style": { "fontSize": 10, "leading": 14, "weight": "normal", "align": "left" },
+      "position": { "colStart": 1, "colEnd": 6, "rowStart": 7, "rowEnd": 6 }  // Adjust row if needed for overflow
+    }
+  ]
+}

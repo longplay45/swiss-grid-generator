@@ -1,0 +1,53 @@
+{
+  "id": "36-square-two-illustrations",
+  "name": "36-Square with Two Illustrations (Ruder Variant)",
+  "description": "Adapted from Ruder's right example: Two illustrations with subtitle and text on square grid for ordered variability.",
+  "recommendedRotation": -76,
+  "grid": {
+    "format": "A4",
+    "orientation": "portrait",
+    "baseline": 10,
+    "marginMethod": "equal",
+    "equalMarginMultiplier": 2,
+    "gutterMultiplier": 0.75,
+    "verticalFields": 6,
+    "horizontalFields": 6,
+    "baselineMultiple": 1,
+    "squareModules": true,
+    "typography": [
+      { "level": 1, "size": 28, "leading": 36, "weight": "bold" },
+      { "level": 2, "size": 14, "leading": 20, "weight": "normal" },
+      { "level": 3, "size": 10, "leading": 14, "weight": "normal" }
+    ]
+  },
+  "elements": [
+    {
+      "type": "rect",
+      "fill": "#e0e0e0",
+      "position": { "colStart": 1, "colEnd": 3, "rowStart": 1, "rowEnd": 3 }
+    },
+    {
+      "type": "rect",
+      "fill": "#d0d0d0",
+      "position": { "colStart": 4, "colEnd": 6, "rowStart": 1, "rowEnd": 4 }
+    },
+    {
+      "type": "text",
+      "content": "Illustration 1",
+      "style": { "fontSize": 14, "leading": 20, "weight": "medium", "align": "center" },
+      "position": { "colStart": 1, "colEnd": 3, "rowStart": 4, "rowEnd": 4 }
+    },
+    {
+      "type": "text",
+      "content": "Illustration 2 – Larger span",
+      "style": { "fontSize": 14, "leading": 20, "weight": "medium", "align": "center" },
+      "position": { "colStart": 4, "colEnd": 6, "rowStart": 5, "rowEnd": 5 }
+    },
+    {
+      "type": "text",
+      "content": "Explanatory body text below illustrations, flush left, aligned to baseline grid for typographic harmony.",
+      "style": { "fontSize": 10, "leading": 14, "weight": "normal", "align": "left" },
+      "position": { "colStart": 1, "colEnd": 6, "rowStart": 6, "rowEnd": 6 }
+    }
+  ]
+}

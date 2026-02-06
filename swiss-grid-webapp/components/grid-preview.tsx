@@ -28,9 +28,19 @@ interface GridPreviewProps {
   showTypography: boolean
   displayUnit: "pt" | "mm" | "px"
   zoom?: "original" | "fit"
+  rotation?: number
 }
 
-export function GridPreview({ result, showBaselines, showModules, showMargins, showTypography, displayUnit, zoom = "original" }: GridPreviewProps) {
+export function GridPreview({
+  result,
+  showBaselines,
+  showModules,
+  showMargins,
+  showTypography,
+  displayUnit,
+  zoom = "original",
+  rotation = 0,
+}: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -47,41 +57,50 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
     const { gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
     const { width: modW, height: modH } = result.module
     const { gridCols, gridRows } = result.settings
+    const pageWidth = width * scale
+    const pageHeight = height * scale
+    const canvasWidth = canvas.width
+    const canvasHeight = canvas.height
 
     // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
     // Draw page background
     ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+    ctx.save()
+    ctx.translate(canvasWidth / 2, canvasHeight / 2)
+    ctx.rotate((rotation * Math.PI) / 180)
+    ctx.translate(-pageWidth / 2, -pageHeight / 2)
 
     // Draw page border
     ctx.strokeStyle = "#e5e5e5"
     ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, canvas.width, canvas.height)
+    ctx.strokeRect(0, 0, pageWidth, pageHeight)
 
     // Draw margins if enabled
     if (showMargins) {
       ctx.fillStyle = "#fffdec"  // Subtle yellow
-      ctx.fillRect(0, 0, margins.left * scale, canvas.height)
-      ctx.fillRect(canvas.width - margins.right * scale, 0, margins.right * scale, canvas.height)
-      ctx.fillRect(0, 0, canvas.width, margins.top * scale)
-      ctx.fillRect(0, canvas.height - margins.bottom * scale, canvas.width, margins.bottom * scale)
+      ctx.fillRect(0, 0, margins.left * scale, pageHeight)
+      ctx.fillRect(pageWidth - margins.right * scale, 0, margins.right * scale, pageHeight)
+      ctx.fillRect(0, 0, pageWidth, margins.top * scale)
+      ctx.fillRect(0, pageHeight - margins.bottom * scale, pageWidth, margins.bottom * scale)
 
       // Draw margin labels
       ctx.fillStyle = "#9ca3af"
       ctx.font = "10px Inter, system-ui, sans-serif"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText(`${formatValue(margins.top, displayUnit)} ${displayUnit}`, canvas.width / 2, margins.top * scale / 2)
-      ctx.fillText(`${formatValue(margins.bottom, displayUnit)} ${displayUnit}`, canvas.width / 2, canvas.height - margins.bottom * scale / 2)
+      ctx.fillText(`${formatValue(margins.top, displayUnit)} ${displayUnit}`, pageWidth / 2, margins.top * scale / 2)
+      ctx.fillText(`${formatValue(margins.bottom, displayUnit)} ${displayUnit}`, pageWidth / 2, pageHeight - margins.bottom * scale / 2)
       ctx.save()
-      ctx.translate(margins.left * scale / 2, canvas.height / 2)
+      ctx.translate(margins.left * scale / 2, pageHeight / 2)
       ctx.rotate(-Math.PI / 2)
       ctx.fillText(`${formatValue(margins.left, displayUnit)} ${displayUnit}`, 0, 0)
       ctx.restore()
       ctx.save()
-      ctx.translate(canvas.width - margins.right * scale / 2, canvas.height / 2)
+      ctx.translate(pageWidth - margins.right * scale / 2, pageHeight / 2)
       ctx.rotate(Math.PI / 2)
       ctx.fillText(`${formatValue(margins.right, displayUnit)} ${displayUnit}`, 0, 0)
       ctx.restore()
@@ -94,8 +113,8 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
     ctx.strokeRect(
       margins.left * scale,
       margins.top * scale,
-      canvas.width - (margins.left + margins.right) * scale,
-      canvas.height - (margins.top + margins.bottom) * scale
+      pageWidth - (margins.left + margins.right) * scale,
+      pageHeight - (margins.top + margins.bottom) * scale
     )
     ctx.setLineDash([])
 
@@ -126,7 +145,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
     // Draw baseline grid if enabled
     if (showBaselines) {
       const startY = margins.top * scale
-      const endY = canvas.height - margins.bottom * scale
+      const endY = pageHeight - margins.bottom * scale
       const baselineSpacing = gridUnit * scale
 
       // Mobile optimization: skip every other line on small screens
@@ -141,7 +160,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       while (currentY <= endY) {
         ctx.beginPath()
         ctx.moveTo(margins.left * scale, currentY)
-        ctx.lineTo(canvas.width - margins.right * scale, currentY)
+        ctx.lineTo(pageWidth - margins.right * scale, currentY)
         ctx.stroke()
 
         currentY += baselineSpacing * baselineStep
@@ -227,7 +246,7 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
           const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
           const x = contentLeft
 
-          if (y < canvas.height - margins.bottom * scale) {
+          if (y < pageHeight - margins.bottom * scale) {
             ctx.fillText(line, x, y)
           }
         })
@@ -243,9 +262,9 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
         const captionLineCount = captionBlock.lines.length
 
         // Calculate last baseline: from margins.top to (pageHeight - margins.bottom)
-        const pageHeight = result.pageSizePt.height
-        const availableHeight = pageHeight - margins.top - margins.bottom
-        const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
+      const pageHeightPt = result.pageSizePt.height
+      const availableHeight = pageHeightPt - margins.top - margins.bottom
+      const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
 
         // Last baseline position (in baseline units from content top)
         const lastBaselineUnit = totalBaselinesFromTop
@@ -265,7 +284,8 @@ export function GridPreview({ result, showBaselines, showModules, showMargins, s
       }
 
     }
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile])
+    ctx.restore()
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation])
 
   useEffect(() => {
     const calculateScale = () => {

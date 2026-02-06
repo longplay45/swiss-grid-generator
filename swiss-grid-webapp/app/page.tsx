@@ -32,6 +32,7 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
 export default function Home() {
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
+  const [rotation, setRotation] = useState(0)
   const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(1)
   const [gridCols, setGridCols] = useState(4)
   const [gridRows, setGridRows] = useState(9)
@@ -297,6 +298,14 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Rotation</Label>
+                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{rotation}°</span>
+              </div>
+              <Slider value={[rotation]} min={-80} max={80} step={1} onValueChange={([v]) => setRotation(v)} />
+            </div>
           </CardContent>
         </Card>
 
@@ -558,6 +567,7 @@ export default function Home() {
             showTypography={showTypography}
             displayUnit={displayUnit}
             zoom={zoom}
+            rotation={rotation}
           />
         </div>
       </div>
