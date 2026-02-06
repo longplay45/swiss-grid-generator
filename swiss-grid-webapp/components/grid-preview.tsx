@@ -222,7 +222,8 @@ export function GridPreview({
         ]
       }
 
-      let currentBaselineOffset = 0
+      // Ensure the first block clears the top edge; subsequent blocks use spacing only.
+      let currentBaselineOffset = getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
 
       // Draw each text block (top-aligned)
       for (const block of textBlocks) {
@@ -232,9 +233,8 @@ export function GridPreview({
         const fontSize = style.size * scale
         const baselineMult = style.baselineMultiplier
 
-        // Calculate position: font height + spaceBefore baselines
-        const fontHeight = getMinOffset(style.size)
-        const blockStartOffset = currentBaselineOffset + block.spaceBefore + fontHeight + block.extraOffset
+        // Calculate position: spaceBefore baselines plus any extra offset
+        const blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
 
         // Set font
         ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
