@@ -196,7 +196,14 @@ export function GridPreview({
       const baselinePx = gridUnit * scale
       const isMultiCol = gridCols >= 2
       const halfCols = Math.max(1, Math.floor(gridCols / 2))
-      const textColumnWidth = isMultiCol ? contentWidth * (halfCols / gridCols) : contentWidth
+      const columnGroupWidth = isMultiCol
+        ? (halfCols * modW + Math.max(halfCols - 1, 0) * gridMarginHorizontal) * scale
+        : contentWidth
+      const textColumnWidth = columnGroupWidth
+      const columnGap = isMultiCol ? gridMarginHorizontal * scale : 0
+      const columnXs = isMultiCol
+        ? [contentLeft, contentLeft + columnGroupWidth + columnGap]
+        : [contentLeft]
 
       // Text colors
       ctx.fillStyle = "#1f2937" // gray-800
@@ -224,14 +231,18 @@ export function GridPreview({
         { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
           "Grid Systems"
         ]},
-        { styleKey: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
+        { styleKey: "subhead", extraOffset: 0, spaceBefore: 1, lines: [
           "A grid creates coherent visual structure",
           "and establishes a consistent spatial rhythm"
         ]},
         { styleKey: "body", extraOffset: 0, spaceBefore: 0, lines: [
           "The modular grid allows designers to organize content",
           "hierarchically and rhythmically. All typography aligns",
-          "to the baseline grid, ensuring harmony across the page."
+          "to the baseline grid, ensuring harmony across the page.",
+          "Modular proportions guide rhythm, contrast, and emphasis",
+          "while preserving clarity across complex layouts.",
+          "Structure becomes a tool for expression rather than",
+          "a constraint, enabling flexible yet coherent systems."
         ]},
       ]
 
@@ -244,8 +255,17 @@ export function GridPreview({
         ]
       }
 
+      const useRowPlacement = gridRows >= 2
+      const rowHeightBaselines = modH / gridUnit
+      const gutterBaselines = gridMarginVertical / gridUnit
+      const row2TopBaselines = rowHeightBaselines + gutterBaselines
+
+      const row2StartOffset = row2TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
+
       // Ensure the first block clears the top edge; subsequent blocks use spacing only.
-      let currentBaselineOffset = getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
+      let currentBaselineOffset = useRowPlacement
+        ? row2StartOffset
+        : getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
 
       // Draw each text block (top-aligned)
       for (const block of textBlocks) {
@@ -256,28 +276,69 @@ export function GridPreview({
         const baselineMult = style.baselineMultiplier
 
         // Calculate position: spaceBefore baselines plus any extra offset
-        const blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
+        const blockStartOffset = (useRowPlacement && block.styleKey === "display")
+          ? rowHeightBaselines + block.extraOffset
+          : currentBaselineOffset + block.spaceBefore + block.extraOffset
 
         // Set font
         ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
         ctx.textAlign = "left"
         ctx.textBaseline = "alphabetic"
 
-        const textLines = (isMultiCol && (block.styleKey === "subhead" || block.styleKey === "body"))
+        const useColumns = isMultiCol && (block.styleKey === "subhead" || block.styleKey === "body")
+        const textLines = useColumns
           ? wrapText(ctx, block.lines.join(" "), textColumnWidth)
           : block.lines
 
-        // Draw each line
-        textLines.forEach((line, lineIndex) => {
-          const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-          const x = contentLeft
-
+        if (useRowPlacement && block.styleKey === "display") {
+          const y = contentTop + blockStartOffset * baselinePx
           if (y < pageHeight - margins.bottom * scale) {
-            ctx.fillText(line, x, y)
+            ctx.fillText(textLines[0] ?? "", contentLeft, y)
           }
-        })
+          // Keep the rest of the blocks anchored to the top of row 2.
+          currentBaselineOffset = row2StartOffset
+          continue
+        }
 
-        currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
+        if (!useColumns) {
+          // Draw each line
+          textLines.forEach((line, lineIndex) => {
+            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+            const x = contentLeft
+
+            if (y < pageHeight - margins.bottom * scale) {
+              ctx.fillText(line, x, y)
+            }
+          })
+
+          currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
+        } else {
+          const availableHeightPx = pageHeight - margins.bottom * scale - contentTop
+          const availableBaselines = Math.floor(availableHeightPx / baselinePx)
+          const remainingBaselines = Math.max(availableBaselines - blockStartOffset, 0)
+          const maxLinesPerColumn = Math.max(Math.floor(remainingBaselines / baselineMult), 1)
+
+          let lineIndex = 0
+          let maxUsedLines = 0
+
+          for (let colIndex = 0; colIndex < columnXs.length && lineIndex < textLines.length; colIndex += 1) {
+            const x = columnXs[colIndex]
+            let usedInColumn = 0
+
+            while (usedInColumn < maxLinesPerColumn && lineIndex < textLines.length) {
+              const y = contentTop + (blockStartOffset + usedInColumn * baselineMult) * baselinePx
+              if (y < pageHeight - margins.bottom * scale) {
+                ctx.fillText(textLines[lineIndex], x, y)
+              }
+              usedInColumn += 1
+              lineIndex += 1
+            }
+
+            maxUsedLines = Math.max(maxUsedLines, usedInColumn)
+          }
+
+          currentBaselineOffset = blockStartOffset + maxUsedLines * baselineMult
+        }
       }
 
       // Draw caption at the last available baseline just inside the bottom margin

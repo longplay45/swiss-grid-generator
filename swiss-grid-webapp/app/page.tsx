@@ -44,7 +44,7 @@ export default function Home() {
   const [showMargins, setShowMargins] = useState(true)
   const [showTypography, setShowTypography] = useState(true)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
-  const [zoom, setZoom] = useState<"original" | "fit">("original")
+  const [zoom, setZoom] = useState<"original" | "fit">("fit")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
 
