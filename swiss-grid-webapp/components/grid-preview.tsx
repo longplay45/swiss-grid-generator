@@ -20,6 +20,25 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
   return converted.toFixed(3)
 }
 
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let current = ""
+
+  for (const word of words) {
+    const testLine = current ? `${current} ${word}` : word
+    if (ctx.measureText(testLine).width <= maxWidth || current.length === 0) {
+      current = testLine
+    } else {
+      lines.push(current)
+      current = word
+    }
+  }
+  if (current) lines.push(current)
+
+  return lines
+}
+
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -175,6 +194,9 @@ export function GridPreview({
       const contentLeft = margins.left * scale
       const contentWidth = (result.pageSizePt.width - margins.left - margins.right) * scale
       const baselinePx = gridUnit * scale
+      const isMultiCol = gridCols >= 2
+      const halfCols = Math.max(1, Math.floor(gridCols / 2))
+      const textColumnWidth = isMultiCol ? contentWidth * (halfCols / gridCols) : contentWidth
 
       // Text colors
       ctx.fillStyle = "#1f2937" // gray-800
@@ -241,8 +263,12 @@ export function GridPreview({
         ctx.textAlign = "left"
         ctx.textBaseline = "alphabetic"
 
+        const textLines = (isMultiCol && (block.styleKey === "subhead" || block.styleKey === "body"))
+          ? wrapText(ctx, block.lines.join(" "), textColumnWidth)
+          : block.lines
+
         // Draw each line
-        block.lines.forEach((line, lineIndex) => {
+        textLines.forEach((line, lineIndex) => {
           const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
           const x = contentLeft
 
@@ -251,7 +277,7 @@ export function GridPreview({
           }
         })
 
-        currentBaselineOffset = blockStartOffset + block.lines.length * baselineMult
+        currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
       }
 
       // Draw caption at the last available baseline just inside the bottom margin
