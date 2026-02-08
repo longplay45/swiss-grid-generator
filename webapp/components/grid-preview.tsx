@@ -96,44 +96,21 @@ export function GridPreview({
     ctx.lineWidth = 1
     ctx.strokeRect(0, 0, pageWidth, pageHeight)
 
-    // Draw margins if enabled
+    // Draw margins if enabled (outline only)
     if (showMargins) {
-      ctx.fillStyle = "#fffdec"  // Subtle yellow
-      ctx.fillRect(0, 0, margins.left * scale, pageHeight)
-      ctx.fillRect(pageWidth - margins.right * scale, 0, margins.right * scale, pageHeight)
-      ctx.fillRect(0, 0, pageWidth, margins.top * scale)
-      ctx.fillRect(0, pageHeight - margins.bottom * scale, pageWidth, margins.bottom * scale)
-
-      // Draw margin labels
-      ctx.fillStyle = "#9ca3af"
-      ctx.font = "10px Inter, system-ui, sans-serif"
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      ctx.fillText(`${formatValue(margins.top, displayUnit)} ${displayUnit}`, pageWidth / 2, margins.top * scale / 2)
-      ctx.fillText(`${formatValue(margins.bottom, displayUnit)} ${displayUnit}`, pageWidth / 2, pageHeight - margins.bottom * scale / 2)
-      ctx.save()
-      ctx.translate(margins.left * scale / 2, pageHeight / 2)
-      ctx.rotate(-Math.PI / 2)
-      ctx.fillText(`${formatValue(margins.left, displayUnit)} ${displayUnit}`, 0, 0)
-      ctx.restore()
-      ctx.save()
-      ctx.translate(pageWidth - margins.right * scale / 2, pageHeight / 2)
-      ctx.rotate(Math.PI / 2)
-      ctx.fillText(`${formatValue(margins.right, displayUnit)} ${displayUnit}`, 0, 0)
-      ctx.restore()
+      ctx.strokeStyle = "#3b82f6"
+      ctx.lineWidth = 0.5
+      ctx.setLineDash([4, 4])
+      ctx.strokeRect(
+        margins.left * scale,
+        margins.top * scale,
+        pageWidth - (margins.left + margins.right) * scale,
+        pageHeight - (margins.top + margins.bottom) * scale
+      )
+      ctx.setLineDash([])
     }
 
-    // Draw content area boundary
-    ctx.strokeStyle = "#3b82f6"
-    ctx.lineWidth = 0.5
-    ctx.setLineDash([4, 4])
-    ctx.strokeRect(
-      margins.left * scale,
-      margins.top * scale,
-      pageWidth - (margins.left + margins.right) * scale,
-      pageHeight - (margins.top + margins.bottom) * scale
-    )
-    ctx.setLineDash([])
+    // Draw content area boundary handled above when margins are shown
 
     // Draw modules if enabled
     if (showModules) {
@@ -176,8 +153,8 @@ export function GridPreview({
 
       while (currentY <= endY) {
         ctx.beginPath()
-        ctx.moveTo(margins.left * scale, currentY)
-        ctx.lineTo(pageWidth - margins.right * scale, currentY)
+        ctx.moveTo(0, currentY)
+        ctx.lineTo(pageWidth, currentY)
         ctx.stroke()
 
         currentY += baselineSpacing * baselineStep
