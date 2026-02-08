@@ -46,7 +46,6 @@ interface GridPreviewProps {
   showMargins: boolean
   showTypography: boolean
   displayUnit: "pt" | "mm" | "px"
-  zoom?: "original" | "fit"
   rotation?: number
 }
 
@@ -57,7 +56,6 @@ export function GridPreview({
   showMargins,
   showTypography,
   displayUnit,
-  zoom = "original",
   rotation = 0,
 }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -386,17 +384,13 @@ export function GridPreview({
       const scaleX = containerWidth / width
       const scaleY = containerHeight / height
 
-      if (zoom === "fit") {
-        setScale(Math.min(scaleX, scaleY))
-      } else {
-        setScale(Math.min(scaleX, scaleY, 1))
-      }
+      setScale(Math.min(scaleX, scaleY))
     }
 
     calculateScale()
     window.addEventListener("resize", calculateScale)
     return () => window.removeEventListener("resize", calculateScale)
-  }, [result, zoom])
+  }, [result])
 
   // Detect mobile state and update on resize
   useEffect(() => {

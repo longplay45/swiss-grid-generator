@@ -44,7 +44,6 @@ export default function Home() {
   const [showMargins, setShowMargins] = useState(true)
   const [showTypography, setShowTypography] = useState(true)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
-  const [zoom, setZoom] = useState<"original" | "fit">("fit")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, export: true })
@@ -560,18 +559,6 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-gray-600">Zoom</Label>
-              <Select value={zoom} onValueChange={(v: "original" | "fit") => setZoom(v)}>
-                <SelectTrigger className="w-[100px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="original">Original</SelectItem>
-                  <SelectItem value="fit">Fit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
         <div className="flex-1 p-4 md:p-6 overflow-auto">
@@ -582,7 +569,6 @@ export default function Home() {
             showMargins={showMargins}
             showTypography={showTypography}
             displayUnit={displayUnit}
-            zoom={zoom}
             rotation={rotation}
           />
         </div>
