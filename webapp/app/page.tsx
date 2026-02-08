@@ -248,15 +248,16 @@ export default function Home() {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
       {/* Left Panel - Controls */}
-      <div className="w-full md:w-96 overflow-y-auto border-r border-b md:border-b-0 bg-white p-4 md:p-6 space-y-4 md:space-y-6 max-h-[50vh] md:max-h-full">
-        {/* Header */}
-        <div className="space-y-2">
+      <div className="w-full md:w-96 flex flex-col border-r border-b md:border-b-0 bg-white max-h-[50vh] md:max-h-full">
+        {/* Header - always visible */}
+        <div className="shrink-0 space-y-2 p-4 md:px-6 md:pt-6 border-b">
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className="text-sm text-gray-600">
             Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>&gt;. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>&gt;.
           </p>
         </div>
 
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Format Settings */}
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("format")}>
@@ -493,19 +494,57 @@ export default function Home() {
           )}
         </Card>
 
-        {/* Stats */}
-        <div className="text-xs text-gray-500 space-y-1 pt-4 border-t">
+      </div>
+
+        {/* Stats - always visible */}
+        <div className="shrink-0 text-xs text-gray-500 space-y-1 p-4 md:px-6 border-t">
+          <div className="flex justify-between">
+            <span>Format:</span>
+            <span className="font-mono">{result.format} {result.settings.orientation}</span>
+          </div>
           <div className="flex justify-between">
             <span>Page Size:</span>
             <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Scale Factor:</span>
+            <span className="font-mono">{result.grid.scaleFactor.toFixed(3)}×</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Baseline:</span>
+            <span className="font-mono">{formatValue(result.grid.gridUnit, displayUnit)} {displayUnit}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Margin Method:</span>
+            <span className="font-mono">{result.settings.marginMethod}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Margins:</span>
+            <span className="font-mono">T:{formatValue(result.grid.margins.top, displayUnit)} L:{formatValue(result.grid.margins.left, displayUnit)} R:{formatValue(result.grid.margins.right, displayUnit)} B:{formatValue(result.grid.margins.bottom, displayUnit)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Content Area:</span>
+            <span className="font-mono">{formatValue(result.contentArea.width, displayUnit)} × {formatValue(result.contentArea.height, displayUnit)} {displayUnit}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Gutter:</span>
+            <span className="font-mono">{result.settings.gridCols} × {result.settings.gridRows}</span>
           </div>
           <div className="flex justify-between">
             <span>Module:</span>
             <span className="font-mono">{formatValue(result.module.width, displayUnit)} × {formatValue(result.module.height, displayUnit)} {displayUnit}</span>
           </div>
           <div className="flex justify-between">
-            <span>Baseline:</span>
-            <span className="font-mono">{formatValue(result.grid.gridUnit, displayUnit)} {displayUnit}</span>
+            <span>Aspect Ratio:</span>
+            <span className="font-mono">{result.module.aspectRatio.toFixed(3)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Baselines/Cell:</span>
+            <span className="font-mono">{result.grid.baselineUnitsPerCell}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Gutter:</span>
+            <span className="font-mono">{formatValue(result.grid.gutter, displayUnit)} {displayUnit}</span>
           </div>
         </div>
       </div>
