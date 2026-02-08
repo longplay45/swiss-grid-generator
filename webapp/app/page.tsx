@@ -40,7 +40,7 @@ export default function Home() {
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [gutterMultiple, setGutterMultiple] = useState(1.0)
-  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth">("swiss")
+  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci">("swiss")
   const [customBaseline, setCustomBaseline] = useState<number>(() => {
     const defaultVal = FORMAT_BASELINES["A4"] ?? 12
     return BASELINE_OPTIONS.reduce((prev, curr) =>
@@ -475,7 +475,7 @@ export default function Home() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Font Hierarchie Method</Label>
-                <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth") => setTypographyScale(v)}>
+                <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci") => setTypographyScale(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

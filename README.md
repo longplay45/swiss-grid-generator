@@ -25,7 +25,7 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
   - Method 3: Baseline margins (1:1:1:1 — symmetric)
 - Custom margin overrides with per-side baseline multipliers
 - Adjustable gutter spacing (1×–4× baseline)
-- 5-level typography system aligned to baseline grid
+- 5-level typography system aligned to baseline grid with multiple hierarchy methods
 - Real-time canvas preview with toggleable layers, rotation, and column-aware text flow
 - Multiple export formats (JSON, TXT, PDF)
 
@@ -113,7 +113,28 @@ Toggle baselines, margins, gutter, and typography overlays. Choose display units
 
 ## Typography System
 
-The app includes a 5-level hierarchy aligned to the baseline grid (A4 reference, 12pt baseline):
+The app includes a 5-level hierarchy aligned to the baseline grid (A4 reference, 12pt baseline). Swiss (Hand-tuned) is the default.
+
+Available hierarchy methods:
+- Swiss (Hand-tuned)
+- Golden Ratio (φ)
+- Fibonacci (5, 8, 13, 21, 34)
+- Perfect Fourth (4:3)
+- Perfect Fifth (3:2)
+- Major Third (5:4)
+- Minor Third (6:5)
+
+Compact formulas (A4 pt sizes, divide by 12 for ratios):
+
+| Method | A4 Sizes (pt) (Caption → Display) |
+|--------|---------------|
+| Swiss | 7, 10, 20, 30, 64 |
+| Golden Ratio (φ) | 10/φ, 10, 10φ, 10φ^2, 10φ^4 |
+| Perfect Fourth (P4=4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6 |
+| Perfect Fifth (P5=3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4 |
+| Major Third (M3=5/4) | 10/M3, 10, 10M3, 10M3^2, 10M3^4 |
+| Minor Third (m3=6/5) | 10/m3, 10, 10m3, 10m3^2, 10m3^4 |
+| Fibonacci | 5, 8, 13, 21, 34 |
 
 | Style | Size | Leading | Baseline | Weight | Use Case |
 |-------|------|---------|----------|--------|----------|

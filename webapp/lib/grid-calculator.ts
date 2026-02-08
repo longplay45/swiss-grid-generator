@@ -16,7 +16,7 @@ export interface GridSettings {
   baselineMultiple?: number;
   gutterMultiple?: number;
   customMargins?: { top: number; bottom: number; left: number; right: number };
-  typographyScale?: "swiss" | "golden" | "fourth";
+  typographyScale?: "swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci";
 }
 
 export interface GridResult {
@@ -124,16 +124,63 @@ const TYPOGRAPHY_RATIOS_FOURTH: TypographyRatios = {
   display:  { sizeRatio: (10 * P4 ** 6) / 12,   leadingMult: 6, bodyLines: 6, weight: "Bold" },
 };
 
+// Perfect Fifth (3:2) — steps from body: -1, 0, +1, +2, +4
+const P5 = 3 / 2;
+const TYPOGRAPHY_RATIOS_FIFTH: TypographyRatios = {
+  caption:  { sizeRatio: (10 / P5) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 10 / 12,               leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: (10 * P5) / 12,        leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: (10 * P5 ** 2) / 12,   leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: (10 * P5 ** 4) / 12,   leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
+// Major Third (5:4) — steps from body: -1, 0, +1, +2, +4
+const M3 = 5 / 4;
+const TYPOGRAPHY_RATIOS_MAJOR_THIRD: TypographyRatios = {
+  caption:  { sizeRatio: (10 / M3) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 10 / 12,              leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: (10 * M3) / 12,       leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: (10 * M3 ** 2) / 12,  leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: (10 * M3 ** 4) / 12,  leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
+// Minor Third (6:5) — steps from body: -1, 0, +1, +2, +4
+const m3 = 6 / 5;
+const TYPOGRAPHY_RATIOS_MINOR_THIRD: TypographyRatios = {
+  caption:  { sizeRatio: (10 / m3) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 10 / 12,              leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: (10 * m3) / 12,       leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: (10 * m3 ** 2) / 12,  leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: (10 * m3 ** 4) / 12,  leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
+// Fibonacci sizes (A4 baseline reference): 5, 8, 13, 21, 34 pt
+const TYPOGRAPHY_RATIOS_FIBONACCI: TypographyRatios = {
+  caption:  { sizeRatio: 5 / 12,   leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 8 / 12,   leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: 13 / 12,  leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: 21 / 12,  leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: 34 / 12,  leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
 const TYPOGRAPHY_SCALE_MAP: Record<string, TypographyRatios> = {
   swiss: TYPOGRAPHY_RATIOS_SWISS,
   golden: TYPOGRAPHY_RATIOS_GOLDEN,
   fourth: TYPOGRAPHY_RATIOS_FOURTH,
+  fifth: TYPOGRAPHY_RATIOS_FIFTH,
+  majorThird: TYPOGRAPHY_RATIOS_MAJOR_THIRD,
+  minorThird: TYPOGRAPHY_RATIOS_MINOR_THIRD,
+  fibonacci: TYPOGRAPHY_RATIOS_FIBONACCI,
 };
 
 export const TYPOGRAPHY_SCALE_LABELS: Record<string, string> = {
   swiss: "Swiss (Hand-tuned)",
   golden: "Golden Ratio (φ)",
-  fourth: "Perfect Fourth (4:3)",
+  fibonacci: "Fibonacci (5, 8, 13, 21, 34)",
+  fourth: "Perfect Fourth (4:3 ♪)",
+  fifth: "Perfect Fifth (3:2 ♪)",
+  majorThird: "Major Third (5:4 ♪)",
+  minorThird: "Minor Third (6:5 ♪)",
 };
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
@@ -289,7 +336,7 @@ function generateTypographyStyles(
   scaleFactor: number,
   gridUnit: number,
   formatName: string,
-  typographyScale: "swiss" | "golden" | "fourth" = "swiss"
+  typographyScale: "swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci" = "swiss"
 ): GridResult["typography"] {
   const scaledStyles: GridResult["typography"]["styles"] = {};
   const ratios = TYPOGRAPHY_SCALE_MAP[typographyScale] ?? TYPOGRAPHY_RATIOS_SWISS;

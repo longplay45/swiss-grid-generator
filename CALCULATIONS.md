@@ -237,7 +237,7 @@ aspectRatio = modW / modH
 
 The typography system uses **pure baseline multiples** for all leading values, ensuring perfect alignment to the baseline grid.
 
-### Base System (A4, 12pt baseline)
+### Base System (Swiss, A4, 12pt baseline)
 
 | Style    | Font Size | Leading | Baseline Multiple | Body Lines | Weight  |
 |----------|-----------|---------|-------------------|------------|---------|
@@ -249,45 +249,56 @@ The typography system uses **pure baseline multiples** for all leading values, e
 
 All styles use Left alignment.
 
+### Font Hierarchy Methods
+
+The hierarchy method selects the **size ratios** used for each style. All leading values remain pure baseline multiples.
+
+Available methods:
+- Swiss (Hand-tuned)
+- Golden Ratio (φ)
+- Fibonacci (5, 8, 13, 21, 34)
+- Perfect Fourth (4:3)
+- Perfect Fifth (3:2)
+- Major Third (5:4)
+- Minor Third (6:5)
+
+Formulas below are expressed as A4 reference sizes (pt) and converted to ratios by dividing by 12.
+
+| Method | A4 Sizes (pt) (Caption → Display) |
+|--------|---------------|
+| Swiss (Hand-tuned) | 7, 10, 20, 30, 64 |
+| Golden Ratio (φ = 1.618) | 10/φ, 10, 10φ, 10φ^2, 10φ^4 |
+| Perfect Fourth (P4 = 4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6 |
+| Perfect Fifth (P5 = 3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4 |
+| Major Third (M3 = 5/4) | 10/M3, 10, 10M3, 10M3^2, 10M3^4 |
+| Minor Third (m3 = 6/5) | 10/m3, 10, 10m3, 10m3^2, 10m3^4 |
+| Fibonacci | 5, 8, 13, 21, 34 |
+
 ### Scaling to Other Formats
 
-#### Baseline Ratio
+#### Scaling
+
+Font sizes scale only by the baseline grid (no separate format factor):
 
 ```
-baselineRatio = gridUnit / 12.0
+scaledSize = gridUnit × sizeRatio
 ```
 
-#### Font Size Scaling
-
-Font sizes scale by both the format scale factor and the baseline ratio:
+Leading is always an integer multiple of the baseline:
 
 ```
-scaledSize = a4Size × scaleFactor × baselineRatio
+scaledLeading = gridUnit × leadingMult
+baselineMultiplier = leadingMult  // constant per style
 ```
 
-#### Leading Scaling
-
-Leading scales only by the baseline ratio (not the format factor), preserving baseline alignment:
+#### Example: A3 with 13pt Baseline (Swiss)
 
 ```
-scaledLeading = a4Leading × baselineRatio
-```
+gridUnit = 13pt
 
-The baseline multiplier relationship is preserved across all formats:
-
-```
-baselineMultiplier = scaledLeading / gridUnit  // constant per style
-```
-
-#### Example: A3 with 13pt Baseline
-
-```
-scaleFactor   = 1.414
-baselineRatio = 13.0 / 12.0 = 1.0833
-
-Body:    size = 10 × 1.414 × 1.0833 = 15.318pt,  leading = 12 × 1.0833 = 13.0pt  (1× baseline)
-Subhead: size = 20 × 1.414 × 1.0833 = 30.636pt,  leading = 24 × 1.0833 = 26.0pt  (2× baseline)
-Display: size = 64 × 1.414 × 1.0833 = 98.034pt,  leading = 72 × 1.0833 = 78.0pt  (6× baseline)
+Body:    size = 13 × (10/12) = 10.833pt,  leading = 13 × 1 = 13pt  (1× baseline)
+Subhead: size = 13 × (20/12) = 21.667pt,  leading = 13 × 2 = 26pt  (2× baseline)
+Display: size = 13 × (64/12) = 69.333pt,  leading = 13 × 6 = 78pt  (6× baseline)
 ```
 
 ### Leading Across All Formats
