@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline, TYPOGRAPHY_SCALE_LABELS } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
@@ -32,6 +32,7 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
 
 export default function Home() {
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
   const [rotation, setRotation] = useState(0)
@@ -193,49 +194,10 @@ export default function Home() {
       format: [width, height],
     })
 
-    const { margins } = result.grid
-    const { gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-    const { width: modW, height: modH } = result.module
-    const { gridCols, gridRows } = result.settings
-
-    // Draw module outlines (cyan color to match canvas #06b6d4)
-    pdf.setLineWidth(0.5)
-    pdf.setDrawColor(6, 188, 212)  // #06b6d4 in RGB (0-255 range)
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridCols; col++) {
-        const x = margins.left + col * (modW + gridMarginHorizontal)
-        const y = margins.top + row * (modH + gridMarginVertical)
-        pdf.rect(x, y, modW, modH, "S")
-      }
-    }
-
-    // Draw baseline grid (magenta/pink color to match canvas #ec4899)
-    pdf.setLineWidth(0.15)
-    pdf.setDrawColor(236, 72, 153)  // #ec4899 in RGB (0-255 range)
-    const startY = margins.top
-    const endY = height - margins.bottom
-    let currentY = startY
-
-    while (currentY <= endY) {
-      pdf.line(margins.left, currentY, width - margins.right, currentY)
-      currentY += gridUnit
-    }
-
-    // Draw footer text (always 7pt) - positioned at bottom with margin
-    pdf.setFontSize(7)
-    pdf.setTextColor(77, 77, 77)  // Dark gray for better readability (#4d4d4d)
-
-    const footerLineHeight = 10  // 7pt + 3pt leading
-    const footerYStart = height - margins.bottom + 15  // Start 15pt from bottom margin edge (Y is from top in jsPDF)
-
-    // Line 1 (top line of footer)
-    pdf.text("Based on Müller-Brockmann's Grid Systems in Graphic Design (1981).", margins.left, footerYStart)
-
-    // Line 2
-    pdf.text("Copyleft & -right 2026 by https://lp45.net", margins.left, footerYStart + footerLineHeight)
-
-    // Line 3 (bottom line of footer)
-    pdf.text("License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator", margins.left, footerYStart + footerLineHeight * 2)
+    const canvas = previewCanvasRef.current
+    if (!canvas) return
+    const imageData = canvas.toDataURL("image/png")
+    pdf.addImage(imageData, "PNG", 0, 0, width, height)
 
     pdf.save(`${baseFilename}_grid.pdf`)
   }
@@ -609,15 +571,18 @@ export default function Home() {
           </div>
         </div>
         <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <GridPreview
-            result={result}
-            showBaselines={showBaselines}
-            showModules={showModules}
-            showMargins={showMargins}
-            showTypography={showTypography}
-            displayUnit={displayUnit}
-            rotation={rotation}
-          />
+        <GridPreview
+          result={result}
+          showBaselines={showBaselines}
+          showModules={showModules}
+          showMargins={showMargins}
+          showTypography={showTypography}
+          displayUnit={displayUnit}
+          rotation={rotation}
+          onCanvasReady={(canvas) => {
+            previewCanvasRef.current = canvas
+          }}
+        />
         </div>
       </div>
     </div>

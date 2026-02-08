@@ -125,6 +125,7 @@ interface GridPreviewProps {
   showTypography: boolean
   displayUnit: "pt" | "mm" | "px"
   rotation?: number
+  onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
 }
 
 export function GridPreview({
@@ -135,6 +136,7 @@ export function GridPreview({
   showTypography,
   displayUnit,
   rotation = 0,
+  onCanvasReady,
 }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
@@ -153,6 +155,8 @@ export function GridPreview({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+
+    onCanvasReady?.(canvas)
 
     const ctx = canvas.getContext("2d")
     if (!ctx) return
@@ -504,7 +508,7 @@ export function GridPreview({
       }
     }
     ctx.restore()
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent])
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent, onCanvasReady])
 
   useEffect(() => {
     const calculateScale = () => {
