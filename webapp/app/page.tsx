@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline } from "@/lib/grid-calculator"
+import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline, TYPOGRAPHY_SCALE_LABELS } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, File, ChevronDown } from "lucide-react"
+import { ChevronDown, Download, FileJson, FileText } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -40,6 +40,7 @@ export default function Home() {
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [gutterMultiple, setGutterMultiple] = useState(1.0)
+  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth">("swiss")
   const [customBaseline, setCustomBaseline] = useState<number>(() => {
     const defaultVal = FORMAT_BASELINES["A4"] ?? 12
     return BASELINE_OPTIONS.reduce((prev, curr) =>
@@ -53,7 +54,7 @@ export default function Home() {
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, export: true })
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
   const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
 
   const gridUnit = useMemo(() => {
@@ -77,8 +78,9 @@ export default function Home() {
       baselineMultiple,
       gutterMultiple,
       customMargins,
+      typographyScale,
     })
-  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, gutterMultiple, useCustomMargins, customMarginMultipliers, gridUnit])
+  }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, gutterMultiple, useCustomMargins, customMarginMultipliers, gridUnit, typographyScale])
 
   // Dynamic maximum baseline: ensures at least 24 baselines fit in usable height
   const maxBaseline = useMemo(() => {
@@ -262,7 +264,6 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("format")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              <File className="w-4 h-4" />
               Format & Layout
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.format ? "-rotate-90" : ""}`} />
             </CardTitle>
@@ -313,7 +314,6 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("baseline")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Menu className="w-4 h-4" />
               Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.baseline ? "-rotate-90" : ""}`} />
             </CardTitle>
@@ -343,7 +343,6 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("margins")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Ruler className="w-4 h-4" />
               Margins
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.margins ? "-rotate-90" : ""}`} />
             </CardTitle>
@@ -431,7 +430,6 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("gutter")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Grid3x3 className="w-4 h-4" />
               Gutter
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.gutter ? "-rotate-90" : ""}`} />
             </CardTitle>
@@ -465,11 +463,37 @@ export default function Home() {
           )}
         </Card>
 
+        {/* Typo */}
+        <Card>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("typo")}>
+            <CardTitle className="text-sm flex items-center gap-2">
+              Typo
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.typo ? "-rotate-90" : ""}`} />
+            </CardTitle>
+          </CardHeader>
+          {!collapsed.typo && (
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Font Hierarchie Method</Label>
+                <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth") => setTypographyScale(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TYPOGRAPHY_SCALE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
         {/* Export */}
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("export")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Download className="w-4 h-4" />
               Export
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.export ? "-rotate-90" : ""}`} />
             </CardTitle>

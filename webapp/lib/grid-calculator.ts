@@ -16,6 +16,7 @@ export interface GridSettings {
   baselineMultiple?: number;
   gutterMultiple?: number;
   customMargins?: { top: number; bottom: number; left: number; right: number };
+  typographyScale?: "swiss" | "golden" | "fourth";
 }
 
 export interface GridResult {
@@ -92,12 +93,47 @@ const BASE_GRID_UNIT = 12.0;
 // Typography defined as baseline ratios (A4 reference: size/12pt)
 // Font sizes scale proportionally with baseline across all formats
 // Leading is always an integer multiple of baseline (Swiss baseline alignment)
-const TYPOGRAPHY_RATIOS: Record<string, { sizeRatio: number; leadingMult: number; bodyLines: number; weight: string }> = {
+type TypographyRatios = Record<string, { sizeRatio: number; leadingMult: number; bodyLines: number; weight: string }>;
+
+// Swiss (hand-tuned) — original ratios from Müller-Brockmann reference
+const TYPOGRAPHY_RATIOS_SWISS: TypographyRatios = {
   caption:  { sizeRatio:  7 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.583× baseline
   body:     { sizeRatio: 10 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.833× baseline
   subhead:  { sizeRatio: 20 / 12, leadingMult: 2, bodyLines: 2, weight: "Regular" },  // 1.667× baseline
   headline: { sizeRatio: 30 / 12, leadingMult: 3, bodyLines: 3, weight: "Bold" },     // 2.500× baseline
   display:  { sizeRatio: 64 / 12, leadingMult: 6, bodyLines: 6, weight: "Bold" },     // 5.333× baseline
+};
+
+// Golden Ratio (φ=1.618) — steps from body: -1, 0, +1, +2, +4
+const PHI = 1.618;
+const TYPOGRAPHY_RATIOS_GOLDEN: TypographyRatios = {
+  caption:  { sizeRatio: (10 / PHI) / 12,          leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 10 / 12,                   leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: (10 * PHI) / 12,           leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: (10 * PHI ** 2) / 12,      leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: (10 * PHI ** 4) / 12,      leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
+// Perfect Fourth (4:3) — steps from body: -1, 0, +2, +3, +6
+const P4 = 4 / 3;
+const TYPOGRAPHY_RATIOS_FOURTH: TypographyRatios = {
+  caption:  { sizeRatio: (10 / P4) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  body:     { sizeRatio: 10 / 12,                leadingMult: 1, bodyLines: 1, weight: "Regular" },
+  subhead:  { sizeRatio: (10 * P4 ** 2) / 12,   leadingMult: 2, bodyLines: 2, weight: "Regular" },
+  headline: { sizeRatio: (10 * P4 ** 3) / 12,   leadingMult: 3, bodyLines: 3, weight: "Bold" },
+  display:  { sizeRatio: (10 * P4 ** 6) / 12,   leadingMult: 6, bodyLines: 6, weight: "Bold" },
+};
+
+const TYPOGRAPHY_SCALE_MAP: Record<string, TypographyRatios> = {
+  swiss: TYPOGRAPHY_RATIOS_SWISS,
+  golden: TYPOGRAPHY_RATIOS_GOLDEN,
+  fourth: TYPOGRAPHY_RATIOS_FOURTH,
+};
+
+export const TYPOGRAPHY_SCALE_LABELS: Record<string, string> = {
+  swiss: "Swiss (Hand-tuned)",
+  golden: "Golden Ratio (φ)",
+  fourth: "Perfect Fourth (4:3)",
 };
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
@@ -252,11 +288,13 @@ function calculateScaleFactor(formatName: string, orientation: "portrait" | "lan
 function generateTypographyStyles(
   scaleFactor: number,
   gridUnit: number,
-  formatName: string
+  formatName: string,
+  typographyScale: "swiss" | "golden" | "fourth" = "swiss"
 ): GridResult["typography"] {
   const scaledStyles: GridResult["typography"]["styles"] = {};
+  const ratios = TYPOGRAPHY_SCALE_MAP[typographyScale] ?? TYPOGRAPHY_RATIOS_SWISS;
 
-  for (const [styleName, style] of Object.entries(TYPOGRAPHY_RATIOS)) {
+  for (const [styleName, style] of Object.entries(ratios)) {
     // Font size = baseline × ratio (proportional across all formats)
     const scaledSize = gridUnit * style.sizeRatio;
     // Leading = baseline × multiplier (always baseline-aligned)
@@ -285,7 +323,7 @@ function generateTypographyStyles(
 }
 
 export function generateSwissGrid(settings: GridSettings): GridResult {
-  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0, gutterMultiple = 1.0 } = settings;
+  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0, gutterMultiple = 1.0, typographyScale = "swiss" } = settings;
 
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
@@ -350,7 +388,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;
 
 
-  const typoSettings = generateTypographyStyles(scale_factor, gridUnit, format);
+  const typoSettings = generateTypographyStyles(scale_factor, gridUnit, format, typographyScale);
 
   return {
     format,
