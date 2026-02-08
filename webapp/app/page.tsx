@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, File } from "lucide-react"
+import { Download, Grid3x3, Ruler, Menu, FileJson, FileText, File, ChevronDown } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -47,6 +47,8 @@ export default function Home() {
   const [zoom, setZoom] = useState<"original" | "fit">("fit")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
 
   const gridUnit = useMemo(() => {
     return customBaseline ?? FORMAT_BASELINES[format] ?? 12.0
@@ -253,108 +255,115 @@ export default function Home() {
 
         {/* Format Settings */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("format")}>
             <CardTitle className="text-sm flex items-center gap-2">
               <File className="w-4 h-4" />
               Format & Layout
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.format ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Page Format</Label>
-              <Select value={format} onValueChange={setFormat}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {formatOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Orientation</Label>
-              <Select value={orientation} onValueChange={(v: "portrait" | "landscape") => setOrientation(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="portrait">Portrait</SelectItem>
-                  <SelectItem value="landscape">Landscape</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Rotation</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{rotation}°</span>
+          {!collapsed.format && (
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Page Format</Label>
+                <Select value={format} onValueChange={setFormat}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formatOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Slider value={[rotation]} min={-80} max={80} step={1} onValueChange={([v]) => setRotation(v)} />
-            </div>
-          </CardContent>
+
+              <div className="space-y-2">
+                <Label>Orientation</Label>
+                <Select value={orientation} onValueChange={(v: "portrait" | "landscape") => setOrientation(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="portrait">Portrait</SelectItem>
+                    <SelectItem value="landscape">Landscape</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Rotation</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{rotation}°</span>
+                </div>
+                <Slider value={[rotation]} min={-80} max={80} step={1} onValueChange={([v]) => setRotation(v)} />
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Baseline Grid Settings */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("baseline")}>
             <CardTitle className="text-sm flex items-center gap-2">
               <Menu className="w-4 h-4" />
               Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.baseline ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Custom Baseline</Label>
-                <Switch
-                  checked={customBaseline !== undefined}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      // Snap √2-scaled default to nearest available option
-                      const defaultVal = FORMAT_BASELINES[format] ?? 12
-                      const nearest = BASELINE_OPTIONS.reduce((prev, curr) =>
-                        Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
-                      )
-                      setCustomBaseline(nearest)
-                    } else {
-                      setCustomBaseline(undefined)
-                    }
-                  }}
-                />
-              </div>
-              {customBaseline !== undefined && availableBaselineOptions.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Grid Unit</Label>
-                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customBaseline} pt</span>
-                  </div>
-                  <Slider
-                    value={[availableBaselineOptions.indexOf(customBaseline) >= 0 ? availableBaselineOptions.indexOf(customBaseline) : 0]}
-                    min={0}
-                    max={availableBaselineOptions.length - 1}
-                    step={1}
-                    onValueChange={([v]) => setCustomBaseline(availableBaselineOptions[v])}
+          {!collapsed.baseline && (
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Custom Baseline</Label>
+                  <Switch
+                    checked={customBaseline !== undefined}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        // Snap √2-scaled default to nearest available option
+                        const defaultVal = FORMAT_BASELINES[format] ?? 12
+                        const nearest = BASELINE_OPTIONS.reduce((prev, curr) =>
+                          Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
+                        )
+                        setCustomBaseline(nearest)
+                      } else {
+                        setCustomBaseline(undefined)
+                      }
+                    }}
                   />
                 </div>
-              )}
-            </div>
-          </CardContent>
+                {customBaseline !== undefined && availableBaselineOptions.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Grid Unit</Label>
+                      <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customBaseline} pt</span>
+                    </div>
+                    <Slider
+                      value={[availableBaselineOptions.indexOf(customBaseline) >= 0 ? availableBaselineOptions.indexOf(customBaseline) : 0]}
+                      min={0}
+                      max={availableBaselineOptions.length - 1}
+                      step={1}
+                      onValueChange={([v]) => setCustomBaseline(availableBaselineOptions[v])}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Margins */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("margins")}>
             <CardTitle className="text-sm flex items-center gap-2">
               <Ruler className="w-4 h-4" />
               Margins
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.margins ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          {!collapsed.margins && <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Custom Margins</Label>
               <Switch
@@ -430,68 +439,74 @@ export default function Home() {
                 </div>
               </div>
             )}
-          </CardContent>
+          </CardContent>}
         </Card>
 
         {/* Gutter */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("gutter")}>
             <CardTitle className="text-sm flex items-center gap-2">
               <Grid3x3 className="w-4 h-4" />
               Gutter
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.gutter ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Vertical Fields</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridCols}</span>
+          {!collapsed.gutter && (
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Vertical Fields</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridCols}</span>
+                </div>
+                <Slider value={[gridCols]} min={1} max={13} step={1} onValueChange={([v]) => setGridCols(v)} />
               </div>
-              <Slider value={[gridCols]} min={1} max={13} step={1} onValueChange={([v]) => setGridCols(v)} />
-            </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Horizontal Fields</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Horizontal Fields</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gridRows}</span>
+                </div>
+                <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
               </div>
-              <Slider value={[gridRows]} min={1} max={13} step={1} onValueChange={([v]) => setGridRows(v)} />
-            </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Baseline Multiple</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple}×</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Baseline Multiple</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{gutterMultiple}×</span>
+                </div>
+                <Slider value={[gutterMultiple]} min={0.5} max={4} step={0.5} onValueChange={([v]) => setGutterMultiple(v)} />
               </div>
-              <Slider value={[gutterMultiple]} min={0.5} max={4} step={0.5} onValueChange={([v]) => setGutterMultiple(v)} />
-            </div>
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
 
         {/* Export */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("export")}>
             <CardTitle className="text-sm flex items-center gap-2">
               <Download className="w-4 h-4" />
               Export
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.export ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button onClick={exportPDF} className="w-full" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
-            <div className="flex gap-2">
-              <Button onClick={exportJSON} variant="outline" className="flex-1" size="sm">
-                <FileJson className="w-4 h-4 mr-2" />
-                JSON
+          {!collapsed.export && (
+            <CardContent className="space-y-2">
+              <Button onClick={exportPDF} className="w-full" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Export PDF
               </Button>
-              <Button onClick={exportTXT} variant="outline" className="flex-1" size="sm">
-                <FileText className="w-4 h-4 mr-2" />
-                TXT
-              </Button>
-            </div>
-          </CardContent>
+              <div className="flex gap-2">
+                <Button onClick={exportJSON} variant="outline" className="flex-1" size="sm">
+                  <FileJson className="w-4 h-4 mr-2" />
+                  JSON
+                </Button>
+                <Button onClick={exportTXT} variant="outline" className="flex-1" size="sm">
+                  <FileText className="w-4 h-4 mr-2" />
+                  TXT
+                </Button>
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Stats */}
