@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES } from "@/lib/grid-calculator"
+import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -72,25 +72,15 @@ export default function Home() {
     })
   }, [format, orientation, marginMethod, gridCols, gridRows, customBaseline, baselineMultiple, gutterMultiple, useCustomMargins, customMarginMultipliers, gridUnit])
 
-  // Calculate maximum baseline that fits in the document
+  // Dynamic maximum baseline: ensures at least 24 baselines fit in usable height
   const maxBaseline = useMemo(() => {
     const formatDim = FORMATS_PT[format]
     const pageHeight = orientation === "landscape" ? formatDim.width : formatDim.height
-
-    // Minimum margins at 1x baseline multiple (method 1: 1:2:2:3 ratios)
-    // Top: 1x, Bottom: 3x, Left/Right: 2x
-    const minMarginTop = 1.0 * 12  // Using 12pt as reference baseline
-    const minMarginBottom = 3.0 * 12
-    const minMargins = minMarginTop + minMarginBottom
-
-    // Each row needs at least 2 baseline units (enforced in grid calculator)
-    const minBaselineUnitsPerCell = 2
-
-    // Maximum baseline = available height / (rows × min units per cell)
-    const maxBaselineValue = (pageHeight - minMargins) / (gridRows * minBaselineUnitsPerCell)
-
-    return Math.round(maxBaselineValue * 1000) / 1000  // Round to 3 decimals
-  }, [format, orientation, gridRows, marginMethod])
+    const customMarginUnits = useCustomMargins
+      ? customMarginMultipliers.top + customMarginMultipliers.bottom
+      : undefined
+    return getMaxBaseline(pageHeight, marginMethod, baselineMultiple, customMarginUnits)
+  }, [format, orientation, marginMethod, baselineMultiple, useCustomMargins, customMarginMultipliers])
 
   // Predefined baseline values that make sense for Swiss design
   const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
@@ -323,7 +313,18 @@ export default function Home() {
                 <Label>Custom Baseline</Label>
                 <Switch
                   checked={customBaseline !== undefined}
-                  onCheckedChange={(checked) => setCustomBaseline(checked ? FORMAT_BASELINES[format] : undefined)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      // Snap √2-scaled default to nearest available option
+                      const defaultVal = FORMAT_BASELINES[format] ?? 12
+                      const nearest = BASELINE_OPTIONS.reduce((prev, curr) =>
+                        Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
+                      )
+                      setCustomBaseline(nearest)
+                    } else {
+                      setCustomBaseline(undefined)
+                    }
+                  }}
                 />
               </div>
               {customBaseline !== undefined && availableBaselineOptions.length > 0 && (

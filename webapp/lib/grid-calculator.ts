@@ -88,20 +88,16 @@ export const FORMATS_PT: Record<string, FormatDimensions> = {
 
 // Base typographic values for A4
 const BASE_GRID_UNIT = 12.0;
-const BASE_GUTTER = 6.0;
 
-// A4 Typography System (5-level hierarchy based on 12pt baseline)
-// 1. Display: 64pt/72pt (6× baseline)
-// 2. Headline: 30pt/36pt (3× baseline)
-// 3. Subhead: 20pt/24pt (2× baseline)
-// 4. Body: 10pt/12pt (1× baseline)
-// 5. Caption: 7pt/12pt (1× baseline)
-const A4_TYPOGRAPHY: Record<string, { size: number; leading: number; baselineMult: number; bodyLines: number; weight: string }> = {
-  caption: { size: 7.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
-  body: { size: 10.0, leading: 12.0, baselineMult: 1.0, bodyLines: 1.0, weight: "Regular" },
-  subhead: { size: 20.0, leading: 24.0, baselineMult: 2.0, bodyLines: 2.0, weight: "Regular" },
-  headline: { size: 30.0, leading: 36.0, baselineMult: 3.0, bodyLines: 3.0, weight: "Bold" },
-  display: { size: 64.0, leading: 72.0, baselineMult: 6.0, bodyLines: 6.0, weight: "Bold" },
+// Typography defined as baseline ratios (A4 reference: size/12pt)
+// Font sizes scale proportionally with baseline across all formats
+// Leading is always an integer multiple of baseline (Swiss baseline alignment)
+const TYPOGRAPHY_RATIOS: Record<string, { sizeRatio: number; leadingMult: number; bodyLines: number; weight: string }> = {
+  caption:  { sizeRatio:  7 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.583× baseline
+  body:     { sizeRatio: 10 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.833× baseline
+  subhead:  { sizeRatio: 20 / 12, leadingMult: 2, bodyLines: 2, weight: "Regular" },  // 1.667× baseline
+  headline: { sizeRatio: 30 / 12, leadingMult: 3, bodyLines: 3, weight: "Bold" },     // 2.500× baseline
+  display:  { sizeRatio: 64 / 12, leadingMult: 6, bodyLines: 6, weight: "Bold" },     // 5.333× baseline
 };
 
 const MARGIN_METHOD_LABELS: Record<number, string> = {
@@ -201,16 +197,48 @@ const MARGIN_CALCULATORS: Record<number, (gridUnit: number, w: number, h: number
   3: calculateGridBasedMargins,
 };
 
-// Format-specific baselines: A0:18, A1:16, A2:14, A3:13, A4:12, A5:10, A6:9
+// Baseline defaults scale by √2 steps (matching A-series paper scaling)
+// A4 = 12pt reference; each format step multiplies/divides by √2
+const SQRT2 = Math.SQRT2;
 export const FORMAT_BASELINES: Record<string, number> = {
-  A0: 18.0,
-  A1: 16.0,
-  A2: 14.0,
-  A3: 13.0,
-  A4: 12.0,
-  A5: 10.0,
-  A6: 9.0,
+  A0: Math.round(BASE_GRID_UNIT * 4 * 1000) / 1000,               // 48.000
+  A1: Math.round(BASE_GRID_UNIT * 2 * SQRT2 * 1000) / 1000,       // 33.941
+  A2: Math.round(BASE_GRID_UNIT * 2 * 1000) / 1000,               // 24.000
+  A3: Math.round(BASE_GRID_UNIT * SQRT2 * 1000) / 1000,           // 16.971
+  A4: BASE_GRID_UNIT,                                               // 12.000
+  A5: Math.round(BASE_GRID_UNIT / SQRT2 * 1000) / 1000,           //  8.485
+  A6: Math.round(BASE_GRID_UNIT / 2 * 1000) / 1000,               //  6.000
 };
+
+// Minimum baselines in usable height for typographic flexibility
+const MIN_BASELINES = 24;
+const BASELINE_HARD_CAP = 72;
+
+// Top+bottom margin ratios per method (at 1× multiple)
+const MARGIN_VERTICAL_UNITS: Record<number, number> = {
+  1: 4,  // Progressive: 1+3
+  2: 8,  // Van de Graaf: 2+6
+  3: 2,  // Baseline: 1+1
+};
+
+/**
+ * Dynamic maximum baseline: ensures at least MIN_BASELINES (24) fit in
+ * the usable height after subtracting top+bottom margins.
+ *
+ * Solves: (pageHeight - marginUnits × B) / B >= 24
+ *       → B <= pageHeight / (24 + marginUnits)
+ */
+export function getMaxBaseline(
+  pageHeight: number,
+  marginMethod: number,
+  baselineMultiple: number,
+  customMarginUnits?: number,
+): number {
+  const marginUnits = customMarginUnits
+    ?? (MARGIN_VERTICAL_UNITS[marginMethod] ?? 4) * baselineMultiple;
+  const maxDynamic = Math.floor(pageHeight / (MIN_BASELINES + marginUnits));
+  return Math.min(BASELINE_HARD_CAP, maxDynamic);
+}
 
 function calculateScaleFactor(formatName: string, orientation: "portrait" | "landscape"): number {
   const a4 = FORMATS_PT.A4;
@@ -227,21 +255,20 @@ function generateTypographyStyles(
   formatName: string
 ): GridResult["typography"] {
   const scaledStyles: GridResult["typography"]["styles"] = {};
-  const baselineRatio = gridUnit / BASE_GRID_UNIT;
 
-  for (const [styleName, a4Style] of Object.entries(A4_TYPOGRAPHY)) {
-    // Scale font size by both format factor AND baseline ratio
-    const scaledSize = a4Style.size * scaleFactor * baselineRatio;
-    // Scale leading by baseline ratio to maintain baseline alignment
-    const scaledLeading = a4Style.leading * baselineRatio;
+  for (const [styleName, style] of Object.entries(TYPOGRAPHY_RATIOS)) {
+    // Font size = baseline × ratio (proportional across all formats)
+    const scaledSize = gridUnit * style.sizeRatio;
+    // Leading = baseline × multiplier (always baseline-aligned)
+    const scaledLeading = gridUnit * style.leadingMult;
 
     scaledStyles[styleName] = {
       size: Math.round(scaledSize * 1000) / 1000,
       leading: Math.round(scaledLeading * 1000) / 1000,
-      weight: a4Style.weight,
+      weight: style.weight,
       alignment: "Left",
-      baselineMultiplier: a4Style.baselineMult,
-      bodyLines: a4Style.bodyLines,
+      baselineMultiplier: style.leadingMult,
+      bodyLines: style.bodyLines,
     };
   }
 
