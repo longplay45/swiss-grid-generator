@@ -145,9 +145,12 @@ Compact formulas (A4 pt sizes, divide by 12 for ratios):
 | caption | 7pt | 12pt | 1× | Regular | Captions, photo credits |
 
 Preview layout rules:
-- If grid rows are 2 or more, the display line sits on the last baseline of row 1.
-- Headline, subhead, and body start inside row 2.
-- Subhead and body flow into two columns when there are 2 or more columns.
+- If `gridRows === 1`, text flows sequentially from the top with baseline spacing.
+- If `gridRows` is 2–6, `display` starts at the top of row 1 and the rest starts in row 2.
+- If `gridRows > 6`, one full row is left empty between `display` and the rest (rest starts in row 3).
+- `subhead` and `body` always wrap to available width. If `gridCols >= 2`, they wrap to half-width columns.
+- `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
+- `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.
 
 ## Component Structure
 

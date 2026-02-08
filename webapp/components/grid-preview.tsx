@@ -198,6 +198,10 @@ export function GridPreview({
         ? (halfCols * modW + Math.max(halfCols - 1, 0) * gridMarginHorizontal) * scale
         : contentWidth
       const textColumnWidth = columnGroupWidth
+      const headlineCols = gridCols >= 3 ? Math.min(gridCols, halfCols + 1) : gridCols
+      const headlineWidth = gridCols >= 3
+        ? (headlineCols * modW + Math.max(headlineCols - 1, 0) * gridMarginHorizontal) * scale
+        : contentWidth
       const columnGap = isMultiCol ? gridMarginHorizontal * scale : 0
       const columnXs = isMultiCol
         ? [contentLeft, contentLeft + columnGroupWidth + columnGap]
@@ -224,23 +228,16 @@ export function GridPreview({
         lines: string[]
       }> = [
         { styleKey: "display", extraOffset: 0, spaceBefore: 0, lines: [
-          "Swiss Design"
+          "Swiss Design",
         ]},
         { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
-          "Grid Systems"
+          "Modular Grid Systems",
         ]},
-        { styleKey: "subhead", extraOffset: 0, spaceBefore: 1, lines: [
-          "A grid creates coherent visual structure",
-          "and establishes a consistent spatial rhythm"
+        { styleKey: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
+          "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
         ]},
-        { styleKey: "body", extraOffset: 0, spaceBefore: 0, lines: [
-          "The modular grid allows designers to organize content",
-          "hierarchically and rhythmically. All typography aligns",
-          "to the baseline grid, ensuring harmony across the page.",
-          "Modular proportions guide rhythm, contrast, and emphasis",
-          "while preserving clarity across complex layouts.",
-          "Structure becomes a tool for expression rather than",
-          "a constraint, enabling flexible yet coherent systems."
+        { styleKey: "body", extraOffset: 0, spaceBefore: 1, lines: [
+          "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
         ]},
       ]
 
@@ -248,8 +245,7 @@ export function GridPreview({
       const captionBlock = {
         styleKey: "caption",
         lines: [
-          "Figure 5: Baseline alignment demonstrates visual harmony",
-          "across all typographic levels of the design system."
+          "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
         ]
       }
 
@@ -257,13 +253,17 @@ export function GridPreview({
       const rowHeightBaselines = modH / gridUnit
       const gutterBaselines = gridMarginVertical / gridUnit
       const row2TopBaselines = rowHeightBaselines + gutterBaselines
+      const row3TopBaselines = row2TopBaselines + rowHeightBaselines + gutterBaselines
 
-      const row2StartOffset = row2TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
+      const displayStartOffset = getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
+      const restStartOffset = gridRows > 6
+        ? row3TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
+        : row2TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
 
       // Ensure the first block clears the top edge; subsequent blocks use spacing only.
       let currentBaselineOffset = useRowPlacement
-        ? row2StartOffset
-        : getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
+        ? restStartOffset
+        : displayStartOffset
 
       // Draw each text block (top-aligned)
       for (const block of textBlocks) {
@@ -275,7 +275,7 @@ export function GridPreview({
 
         // Calculate position: spaceBefore baselines plus any extra offset
         const blockStartOffset = (useRowPlacement && block.styleKey === "display")
-          ? rowHeightBaselines + block.extraOffset
+          ? displayStartOffset + block.extraOffset
           : currentBaselineOffset + block.spaceBefore + block.extraOffset
 
         // Set font
@@ -284,17 +284,27 @@ export function GridPreview({
         ctx.textBaseline = "alphabetic"
 
         const useColumns = isMultiCol && (block.styleKey === "subhead" || block.styleKey === "body")
-        const textLines = useColumns
-          ? wrapText(ctx, block.lines.join(" "), textColumnWidth)
+        const shouldWrap = (block.styleKey === "subhead" || block.styleKey === "body")
+          ? true
+          : true
+        const wrapWidth = (block.styleKey === "subhead" || block.styleKey === "body")
+          ? (isMultiCol ? textColumnWidth : contentWidth)
+          : block.styleKey === "headline"
+            ? headlineWidth
+            : contentWidth
+        const textLines = shouldWrap
+          ? wrapText(ctx, block.lines.join(" "), wrapWidth)
           : block.lines
 
         if (useRowPlacement && block.styleKey === "display") {
-          const y = contentTop + blockStartOffset * baselinePx
-          if (y < pageHeight - margins.bottom * scale) {
-            ctx.fillText(textLines[0] ?? "", contentLeft, y)
-          }
-          // Keep the rest of the blocks anchored to the top of row 2.
-          currentBaselineOffset = row2StartOffset
+          textLines.forEach((line, lineIndex) => {
+            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+            if (y < pageHeight - margins.bottom * scale) {
+              ctx.fillText(line, contentLeft, y)
+            }
+          })
+          // Continue sequentially after the display block.
+          currentBaselineOffset = restStartOffset
           continue
         }
 
@@ -344,7 +354,14 @@ export function GridPreview({
       if (captionStyle) {
         const captionFontSize = captionStyle.size * scale
         const captionBaselineMult = captionStyle.baselineMultiplier
-        const captionLineCount = captionBlock.lines.length
+
+        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px Inter, system-ui, -apple-system, sans-serif`
+        ctx.textAlign = "left"
+        ctx.textBaseline = "alphabetic"
+
+        const captionWidth = isMultiCol ? textColumnWidth : contentWidth
+        const captionLines = wrapText(ctx, captionBlock.lines.join(" "), captionWidth)
+        const captionLineCount = captionLines.length
 
         // Calculate last baseline: from margins.top to (pageHeight - margins.bottom)
       const pageHeightPt = result.pageSizePt.height
@@ -357,11 +374,7 @@ export function GridPreview({
         // Position: last line on the last baseline, work backwards for previous lines
         const firstLineBaselineUnit = lastBaselineUnit - (captionLineCount - 1) * captionBaselineMult
 
-        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px Inter, system-ui, -apple-system, sans-serif`
-        ctx.textAlign = "left"
-        ctx.textBaseline = "alphabetic"
-
-        captionBlock.lines.forEach((line, lineIndex) => {
+        captionLines.forEach((line, lineIndex) => {
           const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
           const y = contentTop + baselineUnit * baselinePx
           ctx.fillText(line, contentLeft, y)

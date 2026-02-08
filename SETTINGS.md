@@ -193,7 +193,7 @@ Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0
 | Baselines  | Baseline grid lines      | On      |
 | Margins    | Margin area highlight    | On      |
 | Gutter     | Module outlines          | On      |
-| Type       | Typography preview       | On      |
+| Typo       | Typography preview       | On      |
 
 ### Display Unit
 
@@ -216,7 +216,12 @@ Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0
 
 ### Typography Preview Layout
 
-If `Rows` is 2 or more, the preview positions the `display` line on the last baseline of row 1, and starts `headline`, `subhead`, and `body` inside row 2. If `Columns` is 2 or more, `subhead` and `body` flow into two columns.
+- If `gridRows === 1`, text flows sequentially from the top with baseline spacing.
+- If `gridRows` is 2–6, `display` starts at the top of row 1 and the rest starts in row 2.
+- If `gridRows > 6`, one full row is left empty between `display` and the rest (rest starts in row 3).
+- `subhead` and `body` always wrap to available width. If `gridCols >= 2`, they wrap to half-width columns.
+- `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
+- `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.
 
 ## Export
 

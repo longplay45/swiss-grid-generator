@@ -54,7 +54,7 @@ export default function Home() {
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: false, baseline: false, margins: false, gutter: false, typo: false, export: false })
   const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
 
   const gridUnit = useMemo(() => {
@@ -474,7 +474,6 @@ export default function Home() {
           {!collapsed.typo && (
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Font Hierarchie Method</Label>
                 <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci") => setTypographyScale(v)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -591,7 +590,7 @@ export default function Home() {
               <Switch id="show-modules" checked={showModules} onCheckedChange={setShowModules} />
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="show-typography" className="cursor-pointer text-xs text-gray-600">Type</Label>
+              <Label htmlFor="show-typography" className="cursor-pointer text-xs text-gray-600">Typo</Label>
               <Switch id="show-typography" checked={showTypography} onCheckedChange={setShowTypography} />
             </div>
             <div className="flex items-center gap-2">
