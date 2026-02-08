@@ -7,7 +7,7 @@ Does:
 2) Delete all files/subdirs inside:
    /home/i/www/dev.lp45.net/www/swiss-grid-generator
 3) Upload all files from:
-   /Users/i/Docs/Dev/swiss-grid-generator/swiss-grid-webapp/out/
+   /Users/i/Docs/Dev/swiss-grid-generator/webapp/out/
    to the remote directory above
 
 Usage examples:
@@ -44,7 +44,7 @@ except ImportError:
 
 HOST = "artificial-interactions.com"
 REMOTE_ROOT = "/home/i/www/dev.lp45.net/www/swiss-grid-generator"
-LOCAL_ROOT = "/Users/i/Docs/Dev/swiss-grid-generator/swiss-grid-webapp/out"
+LOCAL_ROOT = "/Users/i/Docs/Dev/swiss-grid-generator/webapp/out"
 
 # Common deploy excludes; edit as needed.
 EXCLUDE_GLOBS = [

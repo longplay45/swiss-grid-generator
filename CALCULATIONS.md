@@ -2,7 +2,7 @@
 
 This document describes the mathematical calculations used in the Swiss Grid Generator, based on Josef Müller-Brockmann's *Grid Systems in Graphic Design* (1981).
 
-All formulas reference `swiss-grid-webapp/lib/grid-calculator.ts`.
+All formulas reference `webapp/lib/grid-calculator.ts`.
 
 ## Table of Contents
 

@@ -22,7 +22,7 @@ out/
 *.tar.gz
 
 # Python
-.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -40,5 +40,3 @@ __pycache__/
 *_grid.pdf
 assets/
 
-# Reference
-Mueller-Brockmann_Josef_Grid_Systems_in_Graphic_Design_*.pdf

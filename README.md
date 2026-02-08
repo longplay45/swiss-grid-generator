@@ -50,7 +50,7 @@ The Swiss Grid Generator implements Müller-Brockmann's core teachings:
 ## Installation
 
 ```bash
-cd swiss-grid-webapp
+cd webapp
 ```
 
 ```bash
