@@ -102,6 +102,21 @@ function wrapText(
   return lines
 }
 
+type TextContent = {
+  display: string
+  headline: string
+  subhead: string
+  body: string
+  caption: string
+}
+
+type BlockRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -124,6 +139,16 @@ export function GridPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
+  const [textContent, setTextContent] = useState<TextContent>({
+    display: "Swiss Design",
+    headline: "Modular Grid Systems",
+    subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+    body: "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
+    caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+  })
+  const [editingKey, setEditingKey] = useState<keyof TextContent | null>(null)
+  const [blockRects, setBlockRects] = useState<Record<string, BlockRect>>({})
+  const blockRectsRef = useRef<Record<string, BlockRect>>({})
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -268,16 +293,16 @@ export function GridPreview({
         lines: string[]
       }> = [
         { styleKey: "display", extraOffset: 0, spaceBefore: 0, lines: [
-          "Swiss Design",
+          textContent.display,
         ]},
         { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
-          "Modular Grid Systems",
+          textContent.headline,
         ]},
         { styleKey: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
-          "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+          textContent.subhead,
         ]},
         { styleKey: "body", extraOffset: 0, spaceBefore: 1, lines: [
-          "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
+          textContent.body,
         ]},
       ]
 
@@ -285,7 +310,7 @@ export function GridPreview({
       const captionBlock = {
         styleKey: "caption",
         lines: [
-          "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+          textContent.caption,
         ]
       }
 
@@ -306,6 +331,8 @@ export function GridPreview({
         : displayStartOffset
 
       // Draw each text block (top-aligned)
+      const nextRects: Record<string, BlockRect> = {}
+
       for (const block of textBlocks) {
         const style = styles[block.styleKey]
         if (!style) continue
@@ -335,6 +362,15 @@ export function GridPreview({
         const textLines = shouldWrap
           ? wrapText(ctx, block.lines.join(" "), wrapWidth, { hyphenate: block.styleKey === "body" })
           : block.lines
+
+        const blockY = contentTop + (blockStartOffset - 1) * baselinePx
+        const blockHeight = (textLines.length * baselineMult + 1) * baselinePx
+        nextRects[block.styleKey] = {
+          x: contentLeft,
+          y: blockY,
+          width: wrapWidth,
+          height: blockHeight,
+        }
 
         if (useRowPlacement && block.styleKey === "display") {
           textLines.forEach((line, lineIndex) => {
@@ -419,11 +455,39 @@ export function GridPreview({
           const y = contentTop + baselineUnit * baselinePx
           ctx.fillText(line, contentLeft, y)
         })
+
+        const captionY = contentTop + (firstLineBaselineUnit - 1) * baselinePx
+        const captionHeight = (captionLineCount * captionBaselineMult + 1) * baselinePx
+        nextRects.caption = {
+          x: contentLeft,
+          y: captionY,
+          width: captionWidth,
+          height: captionHeight,
+        }
       }
 
+      const prevRects = blockRectsRef.current
+      const rectKeys = Object.keys(nextRects)
+      const prevKeys = Object.keys(prevRects)
+      let rectsChanged = rectKeys.length !== prevKeys.length
+      if (!rectsChanged) {
+        for (const key of rectKeys) {
+          const a = prevRects[key]
+          const b = nextRects[key]
+          if (!a || !b || a.x !== b.x || a.y !== b.y || a.width !== b.width || a.height !== b.height) {
+            rectsChanged = true
+            break
+          }
+        }
+      }
+
+      if (rectsChanged) {
+        blockRectsRef.current = nextRects
+        setBlockRects(nextRects)
+      }
     }
     ctx.restore()
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation])
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -456,6 +520,22 @@ export function GridPreview({
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
+  const handleDoubleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    for (const [key, block] of Object.entries(blockRects)) {
+      if (x >= block.x && x <= block.x + block.width && y >= block.y && y <= block.y + block.height) {
+        setEditingKey(key as keyof TextContent)
+        return
+      }
+    }
+  }
+
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
       <canvas
@@ -463,9 +543,29 @@ export function GridPreview({
         width={result.pageSizePt.width * scale}
         height={result.pageSizePt.height * scale}
         className="max-w-full max-h-full shadow-lg"
+        onDoubleClick={handleDoubleClick}
       />
+      {editingKey && blockRects[editingKey] ? (
+        <textarea
+          value={textContent[editingKey]}
+          onChange={(event) => setTextContent({ ...textContent, [editingKey]: event.target.value })}
+          onBlur={() => setEditingKey(null)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setEditingKey(null)
+            }
+          }}
+          style={{
+            left: blockRects[editingKey].x,
+            top: blockRects[editingKey].y,
+            width: blockRects[editingKey].width,
+            height: blockRects[editingKey].height,
+          }}
+          className="absolute resize-none border border-blue-500 bg-white/95 px-2 py-1 text-xs text-gray-900 shadow focus:outline-none"
+        />
+      ) : null}
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
-        Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
+        Tip: Doubleclick to edit • Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
     </div>
   )
