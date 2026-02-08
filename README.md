@@ -14,6 +14,9 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 ![Web App Screenshot](swiss-grid-generator-webapp-screenshot.png)
 **Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
 
+### PDF Export
+![Web App Screenshot](swiss-grid-generator-pdf-screenshot.png)
+
 ## Features
 
 - A-series paper formats (A0-A6) in portrait/landscape
