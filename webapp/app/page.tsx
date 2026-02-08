@@ -29,6 +29,8 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
   return converted.toFixed(3)
 }
 
+const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
+
 export default function Home() {
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
@@ -38,7 +40,12 @@ export default function Home() {
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [gutterMultiple, setGutterMultiple] = useState(1.0)
-  const [customBaseline, setCustomBaseline] = useState<number | undefined>(undefined)
+  const [customBaseline, setCustomBaseline] = useState<number>(() => {
+    const defaultVal = FORMAT_BASELINES["A4"] ?? 12
+    return BASELINE_OPTIONS.reduce((prev, curr) =>
+      Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
+    )
+  })
   const [showBaselines, setShowBaselines] = useState(true)
   const [showModules, setShowModules] = useState(true)
   const [showMargins, setShowMargins] = useState(true)
@@ -83,8 +90,6 @@ export default function Home() {
     return getMaxBaseline(pageHeight, marginMethod, baselineMultiple, customMarginUnits)
   }, [format, orientation, marginMethod, baselineMultiple, useCustomMargins, customMarginMultipliers])
 
-  // Predefined baseline values that make sense for Swiss design
-  const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
 
   // Filter available options based on max baseline
   const availableBaselineOptions = useMemo(() => {
@@ -314,41 +319,21 @@ export default function Home() {
           </CardHeader>
           {!collapsed.baseline && (
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Custom Baseline</Label>
-                  <Switch
-                    checked={customBaseline !== undefined}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        // Snap √2-scaled default to nearest available option
-                        const defaultVal = FORMAT_BASELINES[format] ?? 12
-                        const nearest = BASELINE_OPTIONS.reduce((prev, curr) =>
-                          Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
-                        )
-                        setCustomBaseline(nearest)
-                      } else {
-                        setCustomBaseline(undefined)
-                      }
-                    }}
+              {availableBaselineOptions.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Grid Unit</Label>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customBaseline} pt</span>
+                  </div>
+                  <Slider
+                    value={[availableBaselineOptions.indexOf(customBaseline) >= 0 ? availableBaselineOptions.indexOf(customBaseline) : 0]}
+                    min={0}
+                    max={availableBaselineOptions.length - 1}
+                    step={1}
+                    onValueChange={([v]) => setCustomBaseline(availableBaselineOptions[v])}
                   />
                 </div>
-                {customBaseline !== undefined && availableBaselineOptions.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Grid Unit</Label>
-                      <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">{customBaseline} pt</span>
-                    </div>
-                    <Slider
-                      value={[availableBaselineOptions.indexOf(customBaseline) >= 0 ? availableBaselineOptions.indexOf(customBaseline) : 0]}
-                      min={0}
-                      max={availableBaselineOptions.length - 1}
-                      step={1}
-                      onValueChange={([v]) => setCustomBaseline(availableBaselineOptions[v])}
-                    />
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           )}
         </Card>
