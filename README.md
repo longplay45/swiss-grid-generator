@@ -11,11 +11,11 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 ## Screenshots
 
 ### Web Application 
-![Web App Screenshot](swiss-grid-generator-webapp-screenshot.png)
+![Web App Screenshot](swiss-grid-generator-webapp-screenshot.png?v1)
 **Live Preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
 
 ### PDF Export
-![Web App Screenshot](swiss-grid-generator-pdf-screenshot.png)
+![Web App Screenshot](swiss-grid-generator-pdf-screenshot.png?v1)
 
 ## Features
 
