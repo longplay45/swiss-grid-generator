@@ -24,11 +24,9 @@ Selects the ratio set used for the 5-level hierarchy (Swiss is default).
 |-------|-------|-------|
 | `swiss` | Swiss (Hand-tuned) | Original Müller-Brockmann inspired sizes |
 | `golden` | Golden Ratio (φ) | Body anchored at 10pt, ratio φ across steps |
-| `fibonacci` | Fibonacci (5, 8, 13, 21, 34) | A4 sizes derived from the Fibonacci sequence |
+| `fibonacci` | Fibonacci (8, 13, 21, 34, 55) | A4 sizes derived from the Fibonacci sequence |
 | `fourth` | Perfect Fourth (4:3 ♪) | Musical ratio 4:3 |
 | `fifth` | Perfect Fifth (3:2 ♪) | Musical ratio 3:2 |
-| `majorThird` | Major Third (5:4 ♪) | Musical ratio 5:4 |
-| `minorThird` | Minor Third (6:5 ♪) | Musical ratio 6:5 |
 
 Compact formulas (A4 pt sizes, divide by 12 for ratios):
 
@@ -38,9 +36,7 @@ Compact formulas (A4 pt sizes, divide by 12 for ratios):
 | Golden Ratio (φ) | 10/φ, 10, 10φ, 10φ^2, 10φ^4 |
 | Perfect Fourth (P4=4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6 |
 | Perfect Fifth (P5=3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4 |
-| Major Third (M3=5/4) | 10/M3, 10, 10M3, 10M3^2, 10M3^4 |
-| Minor Third (m3=6/5) | 10/m3, 10, 10m3, 10m3^2, 10m3^4 |
-| Fibonacci | 5, 8, 13, 21, 34 |
+| Fibonacci | 8, 13, 21, 34, 55 |
 
 ## Format & Layout
 

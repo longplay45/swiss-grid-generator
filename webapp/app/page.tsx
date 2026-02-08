@@ -40,7 +40,7 @@ export default function Home() {
   const [gridRows, setGridRows] = useState(9)
   const [baselineMultiple, setBaselineMultiple] = useState(1.0)
   const [gutterMultiple, setGutterMultiple] = useState(1.0)
-  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci">("swiss")
+  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "fibonacci">("swiss")
   const [customBaseline, setCustomBaseline] = useState<number>(() => {
     const defaultVal = FORMAT_BASELINES["A4"] ?? 12
     return BASELINE_OPTIONS.reduce((prev, curr) =>
@@ -474,7 +474,7 @@ export default function Home() {
           {!collapsed.typo && (
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "majorThird" | "minorThird" | "fibonacci") => setTypographyScale(v)}>
+                <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci") => setTypographyScale(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
