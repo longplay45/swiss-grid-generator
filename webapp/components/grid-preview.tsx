@@ -20,7 +20,44 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
   return converted.toFixed(3)
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+function hyphenateWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
+  const parts: string[] = []
+  let start = 0
+
+  while (start < word.length) {
+    let end = start + 1
+    let lastGood = start
+
+    while (end <= word.length) {
+      const slice = word.slice(start, end)
+      const withHyphen = end < word.length ? `${slice}-` : slice
+      if (ctx.measureText(withHyphen).width <= maxWidth) {
+        lastGood = end
+        end += 1
+      } else {
+        break
+      }
+    }
+
+    if (lastGood === start) {
+      // Fallback: force at least one character to avoid infinite loop.
+      lastGood = Math.min(start + 1, word.length)
+    }
+
+    const chunk = word.slice(start, lastGood)
+    parts.push(lastGood < word.length ? `${chunk}-` : chunk)
+    start = lastGood
+  }
+
+  return parts
+}
+
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  { hyphenate = false }: { hyphenate?: boolean } = {}
+): string[] {
   const words = text.split(/\s+/).filter(Boolean)
   const lines: string[] = []
   let current = ""
@@ -28,10 +65,36 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   for (const word of words) {
     const testLine = current ? `${current} ${word}` : word
     if (ctx.measureText(testLine).width <= maxWidth || current.length === 0) {
-      current = testLine
+      if (ctx.measureText(word).width > maxWidth && hyphenate) {
+        if (current) {
+          lines.push(current)
+          current = ""
+        }
+        const parts = hyphenateWord(ctx, word, maxWidth)
+        for (let i = 0; i < parts.length; i += 1) {
+          if (i === parts.length - 1) {
+            current = parts[i]
+          } else {
+            lines.push(parts[i])
+          }
+        }
+      } else {
+        current = testLine
+      }
     } else {
       lines.push(current)
-      current = word
+      if (ctx.measureText(word).width > maxWidth && hyphenate) {
+        const parts = hyphenateWord(ctx, word, maxWidth)
+        for (let i = 0; i < parts.length; i += 1) {
+          if (i === parts.length - 1) {
+            current = parts[i]
+          } else {
+            lines.push(parts[i])
+          }
+        }
+      } else {
+        current = word
+      }
     }
   }
   if (current) lines.push(current)
@@ -270,7 +333,7 @@ export function GridPreview({
             ? headlineWidth
             : contentWidth
         const textLines = shouldWrap
-          ? wrapText(ctx, block.lines.join(" "), wrapWidth)
+          ? wrapText(ctx, block.lines.join(" "), wrapWidth, { hyphenate: block.styleKey === "body" })
           : block.lines
 
         if (useRowPlacement && block.styleKey === "display") {
