@@ -363,8 +363,8 @@ All modules, baselines, margins, and typography are drawn in the rotated coordin
 Preview-only layout rules for the sample text blocks:
 
 - If `gridRows === 1`, text flows sequentially from the top with baseline spacing.
-- If `gridRows` is 2–6, `display` starts at the top of row 1 and the rest starts in row 2.
-- If `gridRows > 6`, one full row is left empty between `display` and the rest (rest starts in row 3).
+- If `gridRows` is 2–4, `display` starts at the top of row 1 and the rest starts in row 2.
+- If `gridRows >= 5`, each paragraph starts at the top of the next available module row (dynamic, based on wrapped height).
 - `subhead` and `body` always wrap to available width. If `gridCols >= 2`, they wrap to half-width columns.
 - `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
 - `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.

@@ -315,10 +315,12 @@ export function GridPreview({
       }
 
       const useRowPlacement = gridRows >= 2
+      const useParagraphRows = gridRows >= 5
       const rowHeightBaselines = modH / gridUnit
       const gutterBaselines = gridMarginVertical / gridUnit
-      const row2TopBaselines = rowHeightBaselines + gutterBaselines
-      const row3TopBaselines = row2TopBaselines + rowHeightBaselines + gutterBaselines
+      const rowStepBaselines = rowHeightBaselines + gutterBaselines
+      const row2TopBaselines = rowStepBaselines
+      const row3TopBaselines = rowStepBaselines * 2
 
       const displayStartOffset = getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
       const restStartOffset = gridRows > 6
@@ -329,6 +331,7 @@ export function GridPreview({
       let currentBaselineOffset = useRowPlacement
         ? restStartOffset
         : displayStartOffset
+      let currentRowIndex = 0
 
       // Draw each text block (top-aligned)
       const nextRects: Record<string, BlockRect> = {}
@@ -341,9 +344,13 @@ export function GridPreview({
         const baselineMult = style.baselineMultiplier
 
         // Calculate position: spaceBefore baselines plus any extra offset
-        const blockStartOffset = (useRowPlacement && block.styleKey === "display")
-          ? displayStartOffset + block.extraOffset
-          : currentBaselineOffset + block.spaceBefore + block.extraOffset
+        let blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
+        if (useParagraphRows) {
+          const minOffset = getMinOffset(style.size ?? gridUnit)
+          blockStartOffset = currentRowIndex * rowStepBaselines + minOffset + block.extraOffset
+        } else if (useRowPlacement && block.styleKey === "display") {
+          blockStartOffset = displayStartOffset + block.extraOffset
+        }
 
         // Set font
         ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
@@ -372,7 +379,7 @@ export function GridPreview({
           height: blockHeight,
         }
 
-        if (useRowPlacement && block.styleKey === "display") {
+        if (!useParagraphRows && useRowPlacement && block.styleKey === "display") {
           textLines.forEach((line, lineIndex) => {
             const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
             if (y < pageHeight - margins.bottom * scale) {
@@ -395,7 +402,12 @@ export function GridPreview({
             }
           })
 
-          currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
+          if (!useParagraphRows) {
+            currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
+          } else {
+            const blockEnd = blockStartOffset + textLines.length * baselineMult
+            currentRowIndex = Math.ceil(blockEnd / rowStepBaselines)
+          }
         } else {
           const availableHeightPx = pageHeight - margins.bottom * scale - contentTop
           const availableBaselines = Math.floor(availableHeightPx / baselinePx)
@@ -421,7 +433,12 @@ export function GridPreview({
             maxUsedLines = Math.max(maxUsedLines, usedInColumn)
           }
 
-          currentBaselineOffset = blockStartOffset + maxUsedLines * baselineMult
+          if (!useParagraphRows) {
+            currentBaselineOffset = blockStartOffset + maxUsedLines * baselineMult
+          } else {
+            const blockEnd = blockStartOffset + maxUsedLines * baselineMult
+            currentRowIndex = Math.ceil(blockEnd / rowStepBaselines)
+          }
         }
       }
 
