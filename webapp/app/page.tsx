@@ -47,7 +47,7 @@ export default function Home() {
   const [zoom, setZoom] = useState<"original" | "fit">("fit")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, export: true })
   const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
 
   const gridUnit = useMemo(() => {
