@@ -1,7 +1,7 @@
 "use client"
 
 import { GridResult } from "@/lib/grid-calculator"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // Conversion factors
 const PT_TO_MM = 0.352778  // 1 point = 0.352778 mm
@@ -149,6 +149,7 @@ export function GridPreview({
     caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
   })
   const [editingKey, setEditingKey] = useState<keyof TextContent | null>(null)
+  const editingRef = useRef<HTMLDivElement>(null)
   const [blockRects, setBlockRects] = useState<Record<string, BlockRect>>({})
   const blockRectsRef = useRef<Record<string, BlockRect>>({})
 
@@ -383,13 +384,17 @@ export function GridPreview({
           height: blockHeight,
         }
 
+        const skipDraw = block.styleKey === editingKey
+
         if (!useParagraphRows && useRowPlacement && block.styleKey === "display") {
-          textLines.forEach((line, lineIndex) => {
-            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-            if (y < pageHeight - margins.bottom * scale) {
-              ctx.fillText(line, contentLeft, y)
-            }
-          })
+          if (!skipDraw) {
+            textLines.forEach((line, lineIndex) => {
+              const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+              if (y < pageHeight - margins.bottom * scale) {
+                ctx.fillText(line, contentLeft, y)
+              }
+            })
+          }
           // Continue sequentially after the display block.
           currentBaselineOffset = restStartOffset
           continue
@@ -397,14 +402,16 @@ export function GridPreview({
 
         if (!useColumns) {
           // Draw each line
-          textLines.forEach((line, lineIndex) => {
-            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-            const x = contentLeft
+          if (!skipDraw) {
+            textLines.forEach((line, lineIndex) => {
+              const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+              const x = contentLeft
 
-            if (y < pageHeight - margins.bottom * scale) {
-              ctx.fillText(line, x, y)
-            }
-          })
+              if (y < pageHeight - margins.bottom * scale) {
+                ctx.fillText(line, x, y)
+              }
+            })
+          }
 
           if (!useParagraphRows) {
             currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
@@ -427,7 +434,7 @@ export function GridPreview({
 
             while (usedInColumn < maxLinesPerColumn && lineIndex < textLines.length) {
               const y = contentTop + (blockStartOffset + usedInColumn * baselineMult) * baselinePx
-              if (y < pageHeight - margins.bottom * scale) {
+              if (!skipDraw && y < pageHeight - margins.bottom * scale) {
                 ctx.fillText(textLines[lineIndex], x, y)
               }
               usedInColumn += 1
@@ -471,11 +478,13 @@ export function GridPreview({
         // Position: last line on the last baseline, work backwards for previous lines
         const firstLineBaselineUnit = lastBaselineUnit - (captionLineCount - 1) * captionBaselineMult
 
-        captionLines.forEach((line, lineIndex) => {
-          const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
-          const y = contentTop + baselineUnit * baselinePx
-          ctx.fillText(line, contentLeft, y)
-        })
+        if (editingKey !== "caption") {
+          captionLines.forEach((line, lineIndex) => {
+            const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
+            const y = contentTop + baselineUnit * baselinePx
+            ctx.fillText(line, contentLeft, y)
+          })
+        }
 
         const captionY = contentTop + (firstLineBaselineUnit - 1) * baselinePx
         const captionHeight = (captionLineCount * captionBaselineMult + 1) * baselinePx
@@ -508,7 +517,7 @@ export function GridPreview({
       }
     }
     ctx.restore()
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent, onCanvasReady])
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent, editingKey, onCanvasReady])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -541,6 +550,30 @@ export function GridPreview({
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
+  const commitEdit = useCallback(() => {
+    if (editingKey && editingRef.current) {
+      const newText = editingRef.current.innerText
+      setTextContent(prev => ({ ...prev, [editingKey]: newText }))
+    }
+    setEditingKey(null)
+  }, [editingKey])
+
+  // Focus and set content when inline editing starts
+  useEffect(() => {
+    if (editingKey && editingRef.current) {
+      const el = editingRef.current
+      el.innerText = textContent[editingKey]
+      el.focus()
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      range.collapse(false)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingKey])
+
   const handleDoubleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -557,34 +590,61 @@ export function GridPreview({
     }
   }
 
+  // Compute inline editor styles matching the canvas text
+  const editingStyle = editingKey ? result.typography.styles[editingKey] : null
+  const editingFontSize = editingStyle ? editingStyle.size * scale : 12
+  const editingFontWeight = editingStyle?.weight === "Bold" ? "700" : "400"
+  const baselinePx = result.grid.gridUnit * scale
+  const editingLineHeight = editingStyle
+    ? editingStyle.baselineMultiplier * baselinePx
+    : editingFontSize * 1.5
+  // Approximate padding to align CSS text baseline with canvas baseline position
+  const editingPaddingTop = editingStyle
+    ? baselinePx - (editingLineHeight - editingFontSize) / 2 - editingFontSize * 0.8
+    : 0
+
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
-      <canvas
-        ref={canvasRef}
-        width={result.pageSizePt.width * scale}
-        height={result.pageSizePt.height * scale}
-        className="max-w-full max-h-full shadow-lg"
-        onDoubleClick={handleDoubleClick}
-      />
-      {editingKey && blockRects[editingKey] ? (
-        <textarea
-          value={textContent[editingKey]}
-          onChange={(event) => setTextContent({ ...textContent, [editingKey]: event.target.value })}
-          onBlur={() => setEditingKey(null)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setEditingKey(null)
-            }
-          }}
-          style={{
-            left: blockRects[editingKey].x,
-            top: blockRects[editingKey].y,
-            width: blockRects[editingKey].width,
-            height: blockRects[editingKey].height,
-          }}
-          className="absolute resize-none border border-blue-500 bg-white/95 px-2 py-1 text-xs text-gray-900 shadow focus:outline-none"
+      <div className="relative" style={{ width: result.pageSizePt.width * scale, height: result.pageSizePt.height * scale }}>
+        <canvas
+          ref={canvasRef}
+          width={result.pageSizePt.width * scale}
+          height={result.pageSizePt.height * scale}
+          className="block shadow-lg"
+          onDoubleClick={handleDoubleClick}
         />
-      ) : null}
+        {editingKey && blockRects[editingKey] ? (
+          <div
+            ref={editingRef}
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault()
+                commitEdit()
+              } else if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                commitEdit()
+              }
+            }}
+            style={{
+              left: blockRects[editingKey].x,
+              top: blockRects[editingKey].y,
+              width: blockRects[editingKey].width,
+              minHeight: blockRects[editingKey].height,
+              fontSize: `${editingFontSize}px`,
+              fontWeight: editingFontWeight,
+              lineHeight: `${editingLineHeight}px`,
+              fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+              color: "#1f2937",
+              paddingTop: `${Math.max(0, editingPaddingTop)}px`,
+              caretColor: "#06b6d4",
+            }}
+            className="absolute bg-transparent p-0 outline-none cursor-text whitespace-pre-wrap break-words"
+          />
+        ) : null}
+      </div>
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
         Tip: Doubleclick to edit • Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
