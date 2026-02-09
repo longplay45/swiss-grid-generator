@@ -210,6 +210,18 @@ Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0
 
 **Default:** fit
 
+### Inline Text Editing
+
+Double-click any text block in the preview to edit it in place. The editor uses a `contentEditable` overlay that matches the block's typography (font size, weight, line-height). Canvas text for the edited block is hidden while the overlay is active.
+
+| Action | Behavior |
+|--------|----------|
+| Double-click | Start editing the clicked text block |
+| Type | Edit text inline |
+| Enter | Commit edit and close |
+| Escape | Commit edit and close |
+| Click outside | Commit edit and close (blur) |
+
 ### Typography Preview Layout
 
 - If `gridRows === 1`, text flows sequentially from the top with baseline spacing.

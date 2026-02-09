@@ -30,6 +30,7 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 - Adjustable gutter spacing (1×–4× baseline)
 - 5-level typography system aligned to baseline grid with multiple hierarchy methods
 - Real-time canvas preview with toggleable layers, rotation, and column-aware text flow
+- Inline text editing: double-click any text block to edit directly in the preview
 - Multiple export formats (JSON, TXT, PDF)
 
 ## Design Principles
