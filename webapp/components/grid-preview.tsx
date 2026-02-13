@@ -177,6 +177,11 @@ function wrapText(
   return lines
 }
 
+function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
+  const metrics = ctx.measureText("Hg")
+  return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
+}
+
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -416,12 +421,8 @@ export function GridPreview({
         ctx.fillStyle = "#1f2937"
       }
 
-      const getMinOffset = (fontSizePt: number): number => {
-        const ascentRatio = 0.85
-        const textAboveBaseline = fontSizePt * ascentRatio
-        const baselineUnitsNeeded = Math.ceil(textAboveBaseline / gridUnit)
-        return Math.max(baselineUnitsNeeded, 1)
-      }
+      // Swiss book-style placement: line top sits on baseline rows.
+      const getMinOffset = (): number => 1
 
       const textBlocks: Array<{ key: BlockKey; extraOffset: number; spaceBefore: number; lines: string[] }> = [
         { key: "display", extraOffset: 0, spaceBefore: 0, lines: [textContent.display] },
@@ -440,10 +441,10 @@ export function GridPreview({
       const row2TopBaselines = rowStepBaselines
       const row3TopBaselines = rowStepBaselines * 2
 
-      const displayStartOffset = getMinOffset(styles[styleAssignments[textBlocks[0].key]]?.size ?? gridUnit)
+      const displayStartOffset = getMinOffset()
       const restStartOffset = gridRows > 6
-        ? row3TopBaselines + getMinOffset(styles[styleAssignments[textBlocks[1].key]]?.size ?? gridUnit)
-        : row2TopBaselines + getMinOffset(styles[styleAssignments[textBlocks[1].key]]?.size ?? gridUnit)
+        ? row3TopBaselines + getMinOffset()
+        : row2TopBaselines + getMinOffset()
 
       let currentBaselineOffset = useRowPlacement ? restStartOffset : displayStartOffset
       let currentRowIndex = 0
@@ -476,7 +477,7 @@ export function GridPreview({
 
         let blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
         if (useParagraphRows) {
-          const minOffset = getMinOffset(style.size ?? gridUnit)
+          const minOffset = getMinOffset()
           blockStartOffset = currentRowIndex * rowStepBaselines + minOffset + block.extraOffset
         } else if (useRowPlacement && block.key === "display") {
           blockStartOffset = displayStartOffset + block.extraOffset
@@ -495,7 +496,8 @@ export function GridPreview({
         const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
         ctx.textAlign = textAlign
         ctx.textBaseline = "alphabetic"
-        const hitTopPadding = Math.max(baselinePx, fontSize * 0.9)
+        const textAscentPx = getTextAscentPx(ctx, fontSize)
+        const hitTopPadding = Math.max(baselinePx, textAscentPx)
 
         nextRects[block.key] = {
           x: origin.x,
@@ -505,8 +507,9 @@ export function GridPreview({
         }
 
         textLines.forEach((line, lineIndex) => {
-          const y = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
-          if (y < pageHeight - margins.bottom * scale) {
+          const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
+          const y = lineTopY + textAscentPx
+          if (lineTopY < pageHeight - margins.bottom * scale) {
             ctx.fillText(line, textAnchorX, y)
           }
         })
@@ -546,11 +549,13 @@ export function GridPreview({
         const captionOrigin = getOriginForBlock("caption", contentLeft, autoCaptionY)
         const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
         ctx.textAlign = captionAlign
-        const captionHitTopPadding = Math.max(baselinePx, captionFontSize * 0.9)
+        const captionAscentPx = getTextAscentPx(ctx, captionFontSize)
+        const captionHitTopPadding = Math.max(baselinePx, captionAscentPx)
 
         captionLines.forEach((line, lineIndex) => {
-          const y = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
-          if (y < pageHeight - margins.bottom * scale) {
+          const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
+          const y = lineTopY + captionAscentPx
+          if (lineTopY < pageHeight - margins.bottom * scale) {
             ctx.fillText(line, captionAnchorX, y)
           }
         })
