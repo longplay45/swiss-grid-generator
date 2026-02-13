@@ -216,7 +216,9 @@ Double-click any preview text block to open the popup editor.
 
 Header controls:
 - Font hierarchy selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size shown for each option
-- `Save` button (disabled until text or style changes)
+- Horizontal span selector (`1..gridCols` columns used by the paragraph)
+- Text alignment selector (`left` or `right`)
+- `Save` button (disabled until text/style/span/alignment changes)
 
 Keyboard behavior:
 - `Esc`: Close and discard unsaved edits
@@ -224,6 +226,14 @@ Keyboard behavior:
 
 Pointer behavior:
 - Click outside popup: Close and discard unsaved edits
+- Hover over text: Show style/size/span/alignment tooltip and interaction hints
+
+### Drag & Snap
+
+- Dragging is enabled on typography blocks.
+- Horizontal movement snaps to module columns.
+- Vertical movement snaps to baseline rows (not only module rows).
+- Interactive pick area extends above text to include ascenders/upper baseline zone for easier selection.
 
 ### Typography Preview Layout
 
@@ -234,14 +244,23 @@ Pointer behavior:
 - `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
 - `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.
 
-## Export
+## Layout Files
 
-Three export formats available:
+Available actions:
+
+| Action | Description |
+|--------|-------------|
+| Load | Import previously saved JSON layout |
+| Save | Export JSON layout (filename can be edited before download) |
+| Export PDF | Visual grid reference with modules and baselines |
+
+## Export Formats
+
+Two file formats available:
 
 | Format | Description                                         |
 |--------|-----------------------------------------------------|
 | PDF    | Visual grid reference with modules and baselines    |
-| JSON   | Complete GridResult object (machine-readable)       |
-| TXT    | Human-readable text with all parameters             |
+| JSON   | Complete grid and editable preview layout state     |
 
 Filename pattern: `{format}_{orientation}_{cols}x{rows}_method{id}_{baseline}pt_grid.{ext}`

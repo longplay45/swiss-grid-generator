@@ -30,8 +30,10 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 - Adjustable gutter spacing (1×–4× baseline)
 - 5-level typography system aligned to baseline grid with multiple hierarchy methods
 - Real-time canvas preview with toggleable layers, rotation, and column-aware text flow
-- Popup text editor on double-click with hierarchy selector (shows style `pt` sizes)
-- Multiple export formats (JSON, TXT, PDF)
+- Popup text editor on double-click with hierarchy, span, and alignment controls
+- Drag-and-snap text placement (horizontal: module columns, vertical: baseline rows)
+- Hover tooltips showing active paragraph style/span/alignment and interaction hints
+- Multiple export formats (JSON, PDF)
 
 ## Design Principles
 
@@ -121,10 +123,25 @@ Double-click any typography block in the preview to open a popup editor.
 
 - Header controls:
   - Font hierarchy selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size per option
+  - Horizontal span selector (number of columns used by the paragraph)
+  - Text alignment selector (`left` or `right`)
   - `Save` button (enabled only when changes are made)
 - Keyboard:
   - `Esc` closes the popup and discards unsaved changes
   - `Cmd/Ctrl + Enter` saves
+
+### Drag & Placement
+
+- Drag any text block to move it.
+- Horizontal placement snaps to module columns.
+- Vertical placement snaps to baseline rows.
+- Hit areas are expanded above ascenders to make picking text easier.
+
+### Layout Files
+
+- `Load`: Import a previously saved layout JSON.
+- `Save`: Export JSON (prompts for filename, prefilled with default naming).
+- `Export PDF`: Export current visual preview.
 
 ## Typography System
 

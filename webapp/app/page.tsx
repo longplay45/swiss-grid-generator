@@ -3,13 +3,14 @@
 import { useState, useMemo, useRef } from "react"
 import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline, TYPOGRAPHY_SCALE_LABELS } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
+import type { PreviewLayoutState } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { ChevronDown, Download, FileJson, FileText } from "lucide-react"
+import { ChevronDown, Download, FileJson, FolderOpen } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -33,6 +34,8 @@ const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36
 
 export default function Home() {
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const loadFileInputRef = useRef<HTMLInputElement | null>(null)
+  const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(null)
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
   const [rotation, setRotation] = useState(0)
@@ -106,82 +109,43 @@ export default function Home() {
   }, [format, orientation, gridCols, gridRows, marginMethod, customBaseline, result.grid.gridUnit])
 
   const exportJSON = () => {
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${baseFilename}_grid.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    const defaultFilename = `${baseFilename}_grid.json`
+    const userFilename = window.prompt("Save layout as:", defaultFilename)
+    if (userFilename === null) return
+    const trimmed = userFilename.trim()
+    if (!trimmed) return
+    const filename = trimmed.toLowerCase().endsWith(".json") ? trimmed : `${trimmed}.json`
 
-  const exportTXT = () => {
-    const unit = displayUnit
-    const lines = [
-      "=" .repeat(70),
-      "SWISS GRID SYSTEM - PARAMETERS",
-      "=" .repeat(70),
-      "",
-      "SETTINGS",
-      "-".repeat(70),
-      `  Format:          ${result.format}`,
-      `  Orientation:     ${result.settings.orientation}`,
-      `  Margin Method:   ${result.settings.marginMethod}`,
-      `  Grid:            ${result.settings.gridCols} cols × ${result.settings.gridRows} rows`,
-      `  Baseline Multiple: ${result.settings.baselineMultiple.toFixed(1)}×`,
-      `  Custom Baseline:  ${result.settings.customBaseline ? result.settings.customBaseline.toFixed(3) + " pt" : "Auto"}`,
-      "",
-      "PAGE DIMENSIONS",
-      "-".repeat(70),
-      `  Page Size:       ${formatValue(result.pageSizePt.width, unit)} × ${formatValue(result.pageSizePt.height, unit)} ${unit}`,
-      `  Content Area:    ${formatValue(result.contentArea.width, unit)} × ${formatValue(result.contentArea.height, unit)} ${unit}`,
-      `  Module Size:     ${formatValue(result.module.width, unit)} × ${formatValue(result.module.height, unit)} ${unit}`,
-      `  Aspect Ratio:    ${result.module.aspectRatio.toFixed(3)}`,
-      `  Scale Factor:    ${result.grid.scaleFactor.toFixed(3)}× (relative to A4)`,
-      "",
-      "GRID & MARGINS",
-      "-".repeat(70),
-      `  Baseline Grid:   ${formatValue(result.grid.gridUnit, unit)} ${unit}`,
-      `  H. Gutter:       ${formatValue(result.grid.gridMarginHorizontal, unit)} ${unit}`,
-      `  V. Gutter:       ${formatValue(result.grid.gridMarginVertical, unit)} ${unit}`,
-      `  Cell Height:     ${formatValue(result.grid.baselineUnitsPerCell * result.grid.gridUnit, unit)} ${unit} (${result.grid.baselineUnitsPerCell} baseline units)`,
-      `  Margins:         T:${formatValue(result.grid.margins.top, unit)} ${unit} B:${formatValue(result.grid.margins.bottom, unit)} ${unit} L:${formatValue(result.grid.margins.left, unit)} ${unit} R:${formatValue(result.grid.margins.right, unit)} ${unit}`,
-      "",
-      "TYPOGRAPHY SYSTEM",
-      "-".repeat(70),
-      `  ${"Style".padEnd(12)} ${"Size".padEnd(12)} ${"Leading".padEnd(12)} ${"Weight".padEnd(10)} Alignment`,
-      `  ${"-".repeat(12)} ${"-".repeat(12)} ${"-".repeat(12)} ${"-".repeat(10)} ${"-".repeat(10)}`,
-    ]
-
-    for (const [styleName, styleVals] of Object.entries(result.typography.styles)) {
-      lines.push(
-        `  ${styleName.charAt(0).toUpperCase() + styleName.slice(1).padEnd(11)} ` +
-        `${formatValue(styleVals.size, unit)} ${unit}   `.slice(0, 12) +
-        `${formatValue(styleVals.leading, unit)} ${unit}   `.slice(0, 12) +
-        `${styleVals.weight.padEnd(10)} ${styleVals.alignment}`
-      )
+    const payload = {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      gridResult: result,
+      uiSettings: {
+        format,
+        orientation,
+        rotation,
+        marginMethod,
+        gridCols,
+        gridRows,
+        baselineMultiple,
+        gutterMultiple,
+        typographyScale,
+        customBaseline,
+        displayUnit,
+        useCustomMargins,
+        customMarginMultipliers,
+        showBaselines,
+        showModules,
+        showMargins,
+        showTypography,
+      },
+      previewLayout,
     }
-
-    lines.push(
-      "",
-      "SWISS DESIGN PRINCIPLES",
-      "-".repeat(70),
-      "  Reference:  Müller-Brockmann, Grid Systems in Graphic Design (1981)",
-      "  ✓ All typography aligns to baseline grid",
-      "  ✓ Grid modules maintain proportional relationships",
-      "  ✓ System scales across A-series formats",
-      "",
-      "=".repeat(70),
-      "",
-      "Copyleft & -right 2026 by https://lp45.net",
-      "License MIT. Source Code: https://github.com/longplay45/swiss-grid-generator"
-    )
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" })
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${baseFilename}_grid.txt`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -200,6 +164,56 @@ export default function Home() {
     pdf.addImage(imageData, "PNG", 0, 0, width, height)
 
     pdf.save(`${baseFilename}_grid.pdf`)
+  }
+
+  const loadLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result))
+        const ui = parsed?.uiSettings
+        if (!ui || typeof ui !== "object") {
+          throw new Error("Invalid layout JSON: missing uiSettings.")
+        }
+
+        if (typeof ui.format === "string") setFormat(ui.format)
+        if (ui.orientation === "portrait" || ui.orientation === "landscape") setOrientation(ui.orientation)
+        if (typeof ui.rotation === "number") setRotation(ui.rotation)
+        if (ui.marginMethod === 1 || ui.marginMethod === 2 || ui.marginMethod === 3) setMarginMethod(ui.marginMethod)
+        if (typeof ui.gridCols === "number") setGridCols(ui.gridCols)
+        if (typeof ui.gridRows === "number") setGridRows(ui.gridRows)
+        if (typeof ui.baselineMultiple === "number") setBaselineMultiple(ui.baselineMultiple)
+        if (typeof ui.gutterMultiple === "number") setGutterMultiple(ui.gutterMultiple)
+        if (ui.typographyScale === "swiss" || ui.typographyScale === "golden" || ui.typographyScale === "fourth" || ui.typographyScale === "fifth" || ui.typographyScale === "fibonacci") {
+          setTypographyScale(ui.typographyScale)
+        }
+        if (typeof ui.customBaseline === "number") setCustomBaseline(ui.customBaseline)
+        if (ui.displayUnit === "pt" || ui.displayUnit === "mm" || ui.displayUnit === "px") setDisplayUnit(ui.displayUnit)
+        if (typeof ui.useCustomMargins === "boolean") setUseCustomMargins(ui.useCustomMargins)
+        if (ui.customMarginMultipliers && typeof ui.customMarginMultipliers === "object") {
+          const cm = ui.customMarginMultipliers
+          if (typeof cm.top === "number" && typeof cm.left === "number" && typeof cm.right === "number" && typeof cm.bottom === "number") {
+            setCustomMarginMultipliers({ top: cm.top, left: cm.left, right: cm.right, bottom: cm.bottom })
+          }
+        }
+        if (typeof ui.showBaselines === "boolean") setShowBaselines(ui.showBaselines)
+        if (typeof ui.showModules === "boolean") setShowModules(ui.showModules)
+        if (typeof ui.showMargins === "boolean") setShowMargins(ui.showMargins)
+        if (typeof ui.showTypography === "boolean") setShowTypography(ui.showTypography)
+        if (parsed?.previewLayout) {
+          setPreviewLayout(parsed.previewLayout as PreviewLayoutState)
+        }
+      } catch (error) {
+        console.error(error)
+        window.alert("Could not load layout JSON.")
+      } finally {
+        event.target.value = ""
+      }
+    }
+    reader.readAsText(file)
   }
 
   const formatOptions = useMemo(() => {
@@ -455,26 +469,31 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("export")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Export
+              Layout Files
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.export ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
           {!collapsed.export && (
             <CardContent className="space-y-2">
+              <input
+                ref={loadFileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={loadLayout}
+              />
+              <Button variant="outline" className="w-full" size="sm" onClick={() => loadFileInputRef.current?.click()}>
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Load
+              </Button>
+              <Button onClick={exportJSON} variant="outline" className="w-full" size="sm">
+                <FileJson className="w-4 h-4 mr-2" />
+                Save
+              </Button>
               <Button onClick={exportPDF} className="w-full" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Export PDF
               </Button>
-              <div className="flex gap-2">
-                <Button onClick={exportJSON} variant="outline" className="flex-1" size="sm">
-                  <FileJson className="w-4 h-4 mr-2" />
-                  JSON
-                </Button>
-                <Button onClick={exportTXT} variant="outline" className="flex-1" size="sm">
-                  <FileText className="w-4 h-4 mr-2" />
-                  TXT
-                </Button>
-              </div>
             </CardContent>
           )}
         </Card>
@@ -582,6 +601,7 @@ export default function Home() {
           onCanvasReady={(canvas) => {
             previewCanvasRef.current = canvas
           }}
+          onLayoutChange={setPreviewLayout}
         />
         </div>
       </div>
