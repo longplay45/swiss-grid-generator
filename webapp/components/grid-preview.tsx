@@ -1,6 +1,8 @@
 "use client"
 
 import { GridResult } from "@/lib/grid-calculator"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 // Conversion factors
@@ -110,11 +112,42 @@ type TextContent = {
   caption: string
 }
 
+type BlockKey = keyof TextContent
+type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+
 type BlockRect = {
   x: number
   y: number
   width: number
   height: number
+}
+
+const DEFAULT_TEXT_CONTENT: TextContent = {
+  display: "Swiss Design",
+  headline: "Modular Grid Systems",
+  subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+  body: "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
+  caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+}
+
+const DEFAULT_STYLE_ASSIGNMENTS: Record<BlockKey, TypographyStyleKey> = {
+  display: "display",
+  headline: "headline",
+  subhead: "subhead",
+  body: "body",
+  caption: "caption",
+}
+
+const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
+  { value: "display", label: "Display" },
+  { value: "headline", label: "Headline" },
+  { value: "subhead", label: "Subhead" },
+  { value: "body", label: "Body" },
+  { value: "caption", label: "Caption" },
+]
+
+function formatPtSize(size: number): string {
+  return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
 }
 
 interface GridPreviewProps {
@@ -139,19 +172,23 @@ export function GridPreview({
   onCanvasReady,
 }: GridPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const blockRectsRef = useRef<Record<BlockKey, BlockRect>>({
+    display: { x: 0, y: 0, width: 0, height: 0 },
+    headline: { x: 0, y: 0, width: 0, height: 0 },
+    subhead: { x: 0, y: 0, width: 0, height: 0 },
+    body: { x: 0, y: 0, width: 0, height: 0 },
+    caption: { x: 0, y: 0, width: 0, height: 0 },
+  })
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
-  const [textContent, setTextContent] = useState<TextContent>({
-    display: "Swiss Design",
-    headline: "Modular Grid Systems",
-    subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-    body: "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
-    caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
-  })
-  const [editingKey, setEditingKey] = useState<keyof TextContent | null>(null)
-  const editingRef = useRef<HTMLDivElement>(null)
-  const [blockRects, setBlockRects] = useState<Record<string, BlockRect>>({})
-  const blockRectsRef = useRef<Record<string, BlockRect>>({})
+  const [textContent, setTextContent] = useState<TextContent>(DEFAULT_TEXT_CONTENT)
+  const [styleAssignments, setStyleAssignments] = useState<Record<BlockKey, TypographyStyleKey>>(DEFAULT_STYLE_ASSIGNMENTS)
+  const [editorState, setEditorState] = useState<{
+    target: BlockKey
+    draftText: string
+    draftStyle: TypographyStyleKey
+  } | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -292,28 +329,28 @@ export function GridPreview({
       // Define text blocks with relative offsets (additional space beyond minimum)
       // Caption is handled separately (positioned from bottom)
       const textBlocks: Array<{
-        styleKey: string
+        key: BlockKey
         extraOffset: number
         spaceBefore: number
         lines: string[]
       }> = [
-        { styleKey: "display", extraOffset: 0, spaceBefore: 0, lines: [
+        { key: "display", extraOffset: 0, spaceBefore: 0, lines: [
           textContent.display,
         ]},
-        { styleKey: "headline", extraOffset: 0, spaceBefore: 0, lines: [
+        { key: "headline", extraOffset: 0, spaceBefore: 0, lines: [
           textContent.headline,
         ]},
-        { styleKey: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
+        { key: "subhead", extraOffset: 0, spaceBefore: 0, lines: [
           textContent.subhead,
         ]},
-        { styleKey: "body", extraOffset: 0, spaceBefore: 1, lines: [
+        { key: "body", extraOffset: 0, spaceBefore: 1, lines: [
           textContent.body,
         ]},
       ]
 
       // Caption block - positioned from bottom
       const captionBlock = {
-        styleKey: "caption",
+        key: "caption" as BlockKey,
         lines: [
           textContent.caption,
         ]
@@ -327,10 +364,10 @@ export function GridPreview({
       const row2TopBaselines = rowStepBaselines
       const row3TopBaselines = rowStepBaselines * 2
 
-      const displayStartOffset = getMinOffset(styles[textBlocks[0]?.styleKey]?.size ?? gridUnit)
+      const displayStartOffset = getMinOffset(styles[styleAssignments[textBlocks[0]?.key]]?.size ?? gridUnit)
       const restStartOffset = gridRows > 6
-        ? row3TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
-        : row2TopBaselines + getMinOffset(styles[textBlocks[1]?.styleKey]?.size ?? gridUnit)
+        ? row3TopBaselines + getMinOffset(styles[styleAssignments[textBlocks[1]?.key]]?.size ?? gridUnit)
+        : row2TopBaselines + getMinOffset(styles[styleAssignments[textBlocks[1]?.key]]?.size ?? gridUnit)
 
       // Ensure the first block clears the top edge; subsequent blocks use spacing only.
       let currentBaselineOffset = useRowPlacement
@@ -338,11 +375,16 @@ export function GridPreview({
         : displayStartOffset
       let currentRowIndex = 0
 
-      // Draw each text block (top-aligned)
-      const nextRects: Record<string, BlockRect> = {}
+      const nextRects: Record<BlockKey, BlockRect> = {
+        display: { x: 0, y: 0, width: 0, height: 0 },
+        headline: { x: 0, y: 0, width: 0, height: 0 },
+        subhead: { x: 0, y: 0, width: 0, height: 0 },
+        body: { x: 0, y: 0, width: 0, height: 0 },
+        caption: { x: 0, y: 0, width: 0, height: 0 },
+      }
 
       for (const block of textBlocks) {
-        const style = styles[block.styleKey]
+        const style = styles[styleAssignments[block.key]]
         if (!style) continue
 
         const fontSize = style.size * scale
@@ -353,7 +395,7 @@ export function GridPreview({
         if (useParagraphRows) {
           const minOffset = getMinOffset(style.size ?? gridUnit)
           blockStartOffset = currentRowIndex * rowStepBaselines + minOffset + block.extraOffset
-        } else if (useRowPlacement && block.styleKey === "display") {
+        } else if (useRowPlacement && block.key === "display") {
           blockStartOffset = displayStartOffset + block.extraOffset
         }
 
@@ -362,39 +404,35 @@ export function GridPreview({
         ctx.textAlign = "left"
         ctx.textBaseline = "alphabetic"
 
-        const useColumns = isMultiCol && (block.styleKey === "subhead" || block.styleKey === "body")
-        const shouldWrap = (block.styleKey === "subhead" || block.styleKey === "body")
+        const useColumns = isMultiCol && (block.key === "subhead" || block.key === "body")
+        const shouldWrap = (block.key === "subhead" || block.key === "body")
           ? true
           : true
-        const wrapWidth = (block.styleKey === "subhead" || block.styleKey === "body")
+        const wrapWidth = (block.key === "subhead" || block.key === "body")
           ? (isMultiCol ? textColumnWidth : contentWidth)
-          : block.styleKey === "headline"
+          : block.key === "headline"
             ? headlineWidth
             : contentWidth
         const textLines = shouldWrap
-          ? wrapText(ctx, block.lines.join(" "), wrapWidth, { hyphenate: block.styleKey === "body" })
+          ? wrapText(ctx, block.lines.join(" "), wrapWidth, { hyphenate: block.key === "body" })
           : block.lines
 
         const blockY = contentTop + (blockStartOffset - 1) * baselinePx
         const blockHeight = (textLines.length * baselineMult + 1) * baselinePx
-        nextRects[block.styleKey] = {
+        nextRects[block.key] = {
           x: contentLeft,
           y: blockY,
-          width: wrapWidth,
+          width: useColumns && columnXs.length > 1 ? textColumnWidth * columnXs.length + columnGap : wrapWidth,
           height: blockHeight,
         }
 
-        const skipDraw = block.styleKey === editingKey
-
-        if (!useParagraphRows && useRowPlacement && block.styleKey === "display") {
-          if (!skipDraw) {
-            textLines.forEach((line, lineIndex) => {
-              const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-              if (y < pageHeight - margins.bottom * scale) {
-                ctx.fillText(line, contentLeft, y)
-              }
-            })
-          }
+        if (!useParagraphRows && useRowPlacement && block.key === "display") {
+          textLines.forEach((line, lineIndex) => {
+            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+            if (y < pageHeight - margins.bottom * scale) {
+              ctx.fillText(line, contentLeft, y)
+            }
+          })
           // Continue sequentially after the display block.
           currentBaselineOffset = restStartOffset
           continue
@@ -402,16 +440,14 @@ export function GridPreview({
 
         if (!useColumns) {
           // Draw each line
-          if (!skipDraw) {
-            textLines.forEach((line, lineIndex) => {
-              const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
-              const x = contentLeft
+          textLines.forEach((line, lineIndex) => {
+            const y = contentTop + (blockStartOffset + lineIndex * baselineMult) * baselinePx
+            const x = contentLeft
 
-              if (y < pageHeight - margins.bottom * scale) {
-                ctx.fillText(line, x, y)
-              }
-            })
-          }
+            if (y < pageHeight - margins.bottom * scale) {
+              ctx.fillText(line, x, y)
+            }
+          })
 
           if (!useParagraphRows) {
             currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
@@ -434,7 +470,7 @@ export function GridPreview({
 
             while (usedInColumn < maxLinesPerColumn && lineIndex < textLines.length) {
               const y = contentTop + (blockStartOffset + usedInColumn * baselineMult) * baselinePx
-              if (!skipDraw && y < pageHeight - margins.bottom * scale) {
+              if (y < pageHeight - margins.bottom * scale) {
                 ctx.fillText(textLines[lineIndex], x, y)
               }
               usedInColumn += 1
@@ -454,7 +490,7 @@ export function GridPreview({
       }
 
       // Draw caption at the last available baseline just inside the bottom margin
-      const captionStyle = styles[captionBlock.styleKey]
+      const captionStyle = styles[styleAssignments[captionBlock.key]]
       if (captionStyle) {
         const captionFontSize = captionStyle.size * scale
         const captionBaselineMult = captionStyle.baselineMultiplier
@@ -478,13 +514,11 @@ export function GridPreview({
         // Position: last line on the last baseline, work backwards for previous lines
         const firstLineBaselineUnit = lastBaselineUnit - (captionLineCount - 1) * captionBaselineMult
 
-        if (editingKey !== "caption") {
-          captionLines.forEach((line, lineIndex) => {
-            const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
-            const y = contentTop + baselineUnit * baselinePx
-            ctx.fillText(line, contentLeft, y)
-          })
-        }
+        captionLines.forEach((line, lineIndex) => {
+          const baselineUnit = firstLineBaselineUnit + lineIndex * captionBaselineMult
+          const y = contentTop + baselineUnit * baselinePx
+          ctx.fillText(line, contentLeft, y)
+        })
 
         const captionY = contentTop + (firstLineBaselineUnit - 1) * baselinePx
         const captionHeight = (captionLineCount * captionBaselineMult + 1) * baselinePx
@@ -496,28 +530,10 @@ export function GridPreview({
         }
       }
 
-      const prevRects = blockRectsRef.current
-      const rectKeys = Object.keys(nextRects)
-      const prevKeys = Object.keys(prevRects)
-      let rectsChanged = rectKeys.length !== prevKeys.length
-      if (!rectsChanged) {
-        for (const key of rectKeys) {
-          const a = prevRects[key]
-          const b = nextRects[key]
-          if (!a || !b || a.x !== b.x || a.y !== b.y || a.width !== b.width || a.height !== b.height) {
-            rectsChanged = true
-            break
-          }
-        }
-      }
-
-      if (rectsChanged) {
-        blockRectsRef.current = nextRects
-        setBlockRects(nextRects)
-      }
+      blockRectsRef.current = nextRects
     }
     ctx.restore()
-  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent, editingKey, onCanvasReady])
+  }, [result, scale, showBaselines, showModules, showMargins, showTypography, displayUnit, isMobile, rotation, textContent, styleAssignments, onCanvasReady])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -550,58 +566,83 @@ export function GridPreview({
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  const commitEdit = useCallback(() => {
-    if (editingKey && editingRef.current) {
-      const newText = editingRef.current.innerText
-      setTextContent(prev => ({ ...prev, [editingKey]: newText }))
-    }
-    setEditingKey(null)
-  }, [editingKey])
-
-  // Focus and set content when inline editing starts
   useEffect(() => {
-    if (editingKey && editingRef.current) {
-      const el = editingRef.current
-      el.innerText = textContent[editingKey]
-      el.focus()
-      const range = document.createRange()
-      range.selectNodeContents(el)
-      range.collapse(false)
-      const sel = window.getSelection()
-      sel?.removeAllRanges()
-      sel?.addRange(range)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingKey])
+    if (!editorState) return
+    textareaRef.current?.focus()
+  }, [editorState])
 
-  const handleDoubleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  useEffect(() => {
+    if (!editorState) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        setEditorState(null)
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [editorState])
+
+  const closeEditor = useCallback(() => {
+    setEditorState(null)
+  }, [])
+
+  const saveEditor = useCallback(() => {
+    if (!editorState) return
+
+    setTextContent((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftText,
+    }))
+    setStyleAssignments((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftStyle,
+    }))
+    setEditorState(null)
+  }, [editorState])
+
+  const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!showTypography) return
+
     const canvas = canvasRef.current
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const canvasX = event.clientX - rect.left
+    const canvasY = event.clientY - rect.top
 
-    for (const [key, block] of Object.entries(blockRects)) {
-      if (x >= block.x && x <= block.x + block.width && y >= block.y && y <= block.y + block.height) {
-        setEditingKey(key as keyof TextContent)
-        return
+    const pageWidth = result.pageSizePt.width * scale
+    const pageHeight = result.pageSizePt.height * scale
+    const centerCanvasX = canvas.width / 2
+    const centerCanvasY = canvas.height / 2
+    const theta = (rotation * Math.PI) / 180
+    const cos = Math.cos(theta)
+    const sin = Math.sin(theta)
+    const dx = canvasX - centerCanvasX
+    const dy = canvasY - centerCanvasY
+
+    // Inverse rotation to map canvas coordinates back to unrotated page coordinates.
+    const pageX = dx * cos + dy * sin + pageWidth / 2
+    const pageY = -dx * sin + dy * cos + pageHeight / 2
+
+    for (const key of Object.keys(blockRectsRef.current) as BlockKey[]) {
+      const block = blockRectsRef.current[key]
+      if (pageX >= block.x && pageX <= block.x + block.width && pageY >= block.y && pageY <= block.y + block.height) {
+        setEditorState({
+          target: key,
+          draftText: textContent[key],
+          draftStyle: styleAssignments[key],
+        })
+        break
       }
     }
-  }
+  }, [result.pageSizePt.height, result.pageSizePt.width, rotation, scale, showTypography, styleAssignments, textContent])
 
-  // Compute inline editor styles matching the canvas text
-  const editingStyle = editingKey ? result.typography.styles[editingKey] : null
-  const editingFontSize = editingStyle ? editingStyle.size * scale : 12
-  const editingFontWeight = editingStyle?.weight === "Bold" ? "700" : "400"
-  const baselinePx = result.grid.gridUnit * scale
-  const editingLineHeight = editingStyle
-    ? editingStyle.baselineMultiplier * baselinePx
-    : editingFontSize * 1.5
-  // Approximate padding to align CSS text baseline with canvas baseline position
-  const editingPaddingTop = editingStyle
-    ? baselinePx - (editingLineHeight - editingFontSize) / 2 - editingFontSize * 0.8
-    : 0
+  const isDirty = editorState
+    ? editorState.draftText !== textContent[editorState.target] || editorState.draftStyle !== styleAssignments[editorState.target]
+    : false
 
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
@@ -611,42 +652,76 @@ export function GridPreview({
           width={result.pageSizePt.width * scale}
           height={result.pageSizePt.height * scale}
           className="block shadow-lg"
-          onDoubleClick={handleDoubleClick}
+          onDoubleClick={handleCanvasDoubleClick}
         />
-        {editingKey && blockRects[editingKey] ? (
-          <div
-            ref={editingRef}
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={commitEdit}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault()
-                commitEdit()
-              } else if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                commitEdit()
-              }
-            }}
-            style={{
-              left: blockRects[editingKey].x,
-              top: blockRects[editingKey].y,
-              width: blockRects[editingKey].width,
-              minHeight: blockRects[editingKey].height,
-              fontSize: `${editingFontSize}px`,
-              fontWeight: editingFontWeight,
-              lineHeight: `${editingLineHeight}px`,
-              fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-              color: "#1f2937",
-              paddingTop: `${Math.max(0, editingPaddingTop)}px`,
-              caretColor: "#06b6d4",
-            }}
-            className="absolute bg-transparent p-0 outline-none cursor-text whitespace-pre-wrap break-words"
-          />
-        ) : null}
       </div>
+      {editorState ? (
+        <div
+          className="absolute inset-0 bg-black/20 flex items-center justify-center p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeEditor()
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-md border border-gray-300 bg-white shadow-xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2">
+              <span className="text-xs text-gray-600 whitespace-nowrap">Font Hierarchie &gt;</span>
+              <Select
+                value={editorState.draftStyle}
+                onValueChange={(value) => {
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftStyle: value as TypographyStyleKey,
+                  } : prev)
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STYLE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label} ({formatPtSize(result.typography.styles[option.value].size)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" onClick={saveEditor} disabled={!isDirty}>
+                Save
+              </Button>
+            </div>
+            <div className="p-3">
+              <textarea
+                ref={textareaRef}
+                value={editorState.draftText}
+                onChange={(event) => {
+                  const value = event.target.value
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftText: value,
+                  } : prev)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault()
+                    closeEditor()
+                    return
+                  }
+                  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                    event.preventDefault()
+                    saveEditor()
+                  }
+                }}
+                className="min-h-40 w-full resize-y rounded-md border border-gray-200 bg-gray-50 p-3 text-gray-900 outline-none ring-0 focus:border-gray-300"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
-        Tip: Doubleclick to edit • Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
+        Hint: Double-click text to edit • Esc cancels • Cmd/Ctrl+Enter saves • Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
       </div>
     </div>
   )
