@@ -36,6 +36,7 @@ export default function Home() {
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(null)
+  const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{ key: number; layout: PreviewLayoutState } | null>(null)
   const [format, setFormat] = useState("A4")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
   const [rotation, setRotation] = useState(0)
@@ -138,6 +139,7 @@ export default function Home() {
         showModules,
         showMargins,
         showTypography,
+        collapsed,
       },
       previewLayout,
     }
@@ -203,8 +205,24 @@ export default function Home() {
         if (typeof ui.showModules === "boolean") setShowModules(ui.showModules)
         if (typeof ui.showMargins === "boolean") setShowMargins(ui.showMargins)
         if (typeof ui.showTypography === "boolean") setShowTypography(ui.showTypography)
+        if (ui.collapsed && typeof ui.collapsed === "object") {
+          const loadedCollapsed: Record<string, boolean> = {}
+          if (typeof ui.collapsed.format === "boolean") loadedCollapsed.format = ui.collapsed.format
+          if (typeof ui.collapsed.baseline === "boolean") loadedCollapsed.baseline = ui.collapsed.baseline
+          if (typeof ui.collapsed.margins === "boolean") loadedCollapsed.margins = ui.collapsed.margins
+          if (typeof ui.collapsed.gutter === "boolean") loadedCollapsed.gutter = ui.collapsed.gutter
+          if (typeof ui.collapsed.typo === "boolean") loadedCollapsed.typo = ui.collapsed.typo
+          if (typeof ui.collapsed.export === "boolean") loadedCollapsed.export = ui.collapsed.export
+          setCollapsed((prev) => ({ ...prev, ...loadedCollapsed }))
+        }
         if (parsed?.previewLayout) {
-          setPreviewLayout(parsed.previewLayout as PreviewLayoutState)
+          const nextKey = Date.now()
+          const layout = parsed.previewLayout as PreviewLayoutState
+          setPreviewLayout(layout)
+          setLoadedPreviewLayout({ key: nextKey, layout })
+        } else {
+          setPreviewLayout(null)
+          setLoadedPreviewLayout(null)
         }
       } catch (error) {
         console.error(error)
@@ -544,6 +562,8 @@ export default function Home() {
           showModules={showModules}
           showMargins={showMargins}
           showTypography={showTypography}
+          initialLayout={loadedPreviewLayout?.layout ?? null}
+          initialLayoutKey={loadedPreviewLayout?.key ?? 0}
           rotation={rotation}
           onCanvasReady={(canvas) => {
             previewCanvasRef.current = canvas

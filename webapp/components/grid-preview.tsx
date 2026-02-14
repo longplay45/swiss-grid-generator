@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
+import { AlignLeft, AlignRight } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 type TextContent = {
@@ -185,6 +186,8 @@ interface GridPreviewProps {
   showModules: boolean
   showMargins: boolean
   showTypography: boolean
+  initialLayout?: PreviewLayoutState | null
+  initialLayoutKey?: number
   rotation?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
@@ -204,6 +207,8 @@ export function GridPreview({
   showModules,
   showMargins,
   showTypography,
+  initialLayout = null,
+  initialLayoutKey = 0,
   rotation = 0,
   onCanvasReady,
   onLayoutChange,
@@ -302,6 +307,60 @@ export function GridPreview({
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.yStep)
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
+
+  useEffect(() => {
+    if (!initialLayout || initialLayoutKey === 0) return
+
+    const keys = Object.keys(DEFAULT_TEXT_CONTENT) as BlockKey[]
+    const validStyles = new Set(Object.keys(result.typography.styles))
+
+    const nextTextContent = keys.reduce((acc, key) => {
+      const value = initialLayout.textContent?.[key]
+      acc[key] = typeof value === "string" ? value : DEFAULT_TEXT_CONTENT[key]
+      return acc
+    }, {} as TextContent)
+
+    const nextStyleAssignments = keys.reduce((acc, key) => {
+      const value = initialLayout.styleAssignments?.[key]
+      acc[key] = validStyles.has(String(value)) ? value as TypographyStyleKey : DEFAULT_STYLE_ASSIGNMENTS[key]
+      return acc
+    }, {} as Record<BlockKey, TypographyStyleKey>)
+
+    const nextSpans = keys.reduce((acc, key) => {
+      const raw = initialLayout.blockColumnSpans?.[key]
+      const fallback = getDefaultColumnSpan(key, result.settings.gridCols)
+      const value = typeof raw === "number" ? raw : fallback
+      acc[key] = Math.max(1, Math.min(result.settings.gridCols, Math.round(value)))
+      return acc
+    }, {} as Record<BlockKey, number>)
+
+    const nextAlignments = keys.reduce((acc, key) => {
+      const raw = initialLayout.blockTextAlignments?.[key]
+      acc[key] = raw === "right" ? "right" : "left"
+      return acc
+    }, {} as Record<BlockKey, TextAlignMode>)
+
+    const metrics = getGridMetrics()
+    const nextPositions = keys.reduce((acc, key) => {
+      const raw = initialLayout.blockModulePositions?.[key]
+      if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
+      const maxCol = Math.max(0, result.settings.gridCols - nextSpans[key])
+      acc[key] = {
+        col: Math.max(0, Math.min(maxCol, Math.round(raw.col))),
+        row: Math.max(0, Math.min(metrics.maxBaselineRow, Math.round(raw.row))),
+      }
+      return acc
+    }, {} as Partial<Record<BlockKey, ModulePosition>>)
+
+    setTextContent(nextTextContent)
+    setStyleAssignments(nextStyleAssignments)
+    setBlockColumnSpans(nextSpans)
+    setBlockTextAlignments(nextAlignments)
+    setBlockModulePositions(nextPositions)
+    setDragState(null)
+    setHoverState(null)
+    setEditorState(null)
+  }, [getGridMetrics, initialLayout, initialLayoutKey, result.settings.gridCols, result.typography.styles])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -838,13 +897,6 @@ export function GridPreview({
     }
   }, [blockTextAlignments, getBlockSpan, showTypography, styleAssignments, textContent, toPagePoint])
 
-  const isDirty = editorState
-    ? editorState.draftText !== textContent[editorState.target]
-      || editorState.draftStyle !== styleAssignments[editorState.target]
-      || editorState.draftColumns !== getBlockSpan(editorState.target)
-      || editorState.draftAlign !== (blockTextAlignments[editorState.target] ?? "left")
-    : false
-
   const hoveredStyle = hoverState ? styleAssignments[hoverState.key] : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
   const hoveredAlign = hoverState ? (blockTextAlignments[hoverState.key] ?? "left") : null
@@ -917,7 +969,6 @@ export function GridPreview({
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2">
-              <span className="text-xs text-gray-600 whitespace-nowrap">Font Hierarchie &gt;</span>
               <Select
                 value={editorState.draftStyle}
                 onValueChange={(value) => {
@@ -958,24 +1009,33 @@ export function GridPreview({
                   ))}
                 </SelectContent>
               </Select>
-              <Select
-                value={editorState.draftAlign}
-                onValueChange={(value) => {
-                  setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftAlign: value as TextAlignMode,
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className="h-8 w-24 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" onClick={saveEditor} disabled={!isDirty}>
+              <div className="flex items-center rounded-md border border-gray-200">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editorState.draftAlign === "left" ? "secondary" : "ghost"}
+                  className="h-8 w-8 rounded-r-none"
+                  onClick={() => {
+                    setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
+                  }}
+                  aria-label="Align left"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editorState.draftAlign === "right" ? "secondary" : "ghost"}
+                  className="h-8 w-8 rounded-l-none border-l border-gray-200"
+                  onClick={() => {
+                    setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
+                  }}
+                  aria-label="Align right"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button size="sm" onClick={saveEditor}>
                 Save
               </Button>
             </div>
@@ -1003,6 +1063,9 @@ export function GridPreview({
                 }}
                 className="min-h-40 w-full resize-y rounded-md border border-gray-200 bg-gray-50 p-3 text-gray-900 outline-none ring-0 focus:border-gray-300"
               />
+            </div>
+            <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-gray-500">
+              Esc or click outside to close without saving.
             </div>
           </div>
         </div>

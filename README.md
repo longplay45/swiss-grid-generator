@@ -30,7 +30,7 @@ The Swiss Grid Generator provides tools for creating modular grid systems with b
 - Adjustable gutter spacing (1×–4× baseline)
 - 5-level typography system aligned to baseline grid with multiple hierarchy methods
 - Real-time canvas preview with toggleable layers, rotation, and column-aware text flow
-- Popup text editor on double-click with hierarchy, span, and alignment controls
+- Popup text editor on double-click with hierarchy, span, and left/right alignment icon controls
 - Drag-and-snap text placement (horizontal: module columns, vertical: baseline rows)
 - Hover tooltips showing active paragraph style/span/alignment and interaction hints
 - Multiple export formats (JSON, PDF)
@@ -115,7 +115,7 @@ Adjust the baseline unit from 6 to 72 points. Format-specific defaults are provi
 
 ### Display Options
 
-Toggle baselines, margins, gutter, and typography overlays. Choose display units (pt, mm, px) and preview zoom. Default zoom is Fit.
+Toggle baselines, margins, gutter, and typography overlays. Choose display units (pt, mm, px).
 
 ### Text Editing
 
@@ -124,11 +124,13 @@ Double-click any typography block in the preview to open a popup editor.
 - Header controls:
   - Font hierarchy selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size per option
   - Horizontal span selector (number of columns used by the paragraph)
-  - Text alignment selector (`left` or `right`)
-  - `Save` button (enabled only when changes are made)
+  - Text alignment icon buttons (`left` or `right`)
+  - `Save` button (always available)
 - Keyboard:
   - `Esc` closes the popup and discards unsaved changes
   - `Cmd/Ctrl + Enter` saves
+  - Clicking outside the popup closes and discards unsaved changes
+- Manual line breaks entered in the editor are preserved in rendering.
 
 ### Drag & Placement
 
@@ -139,8 +141,8 @@ Double-click any typography block in the preview to open a popup editor.
 
 ### Layout Files
 
-- `Load`: Import a previously saved layout JSON.
-- `Save`: Export JSON (prompts for filename, prefilled with default naming).
+- `Load`: Import a previously saved layout JSON and restore all saved UI and text layout state.
+- `Save`: Export JSON (prompts for filename, prefilled with default naming). Includes all GUI settings and preview layout data (text, styles, spans, alignments, positions).
 - `Export PDF`: Export current visual preview.
 
 ## Typography System
