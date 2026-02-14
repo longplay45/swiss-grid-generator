@@ -39,7 +39,7 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
 }
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
-const SECTION_KEYS = ["export", "format", "baseline", "margins", "gutter", "typo"] as const
+const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo"] as const
 type SectionKey = typeof SECTION_KEYS[number]
 
 export default function Home() {
@@ -72,11 +72,12 @@ export default function Home() {
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false)
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
   const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState("A4")
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
-  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
+  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true })
   const headerClickTimeoutRef = useRef<number | null>(null)
   const toggle = (key: SectionKey) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
   const toggleAllSections = () => {
@@ -365,7 +366,6 @@ export default function Home() {
           if (typeof ui.collapsed.margins === "boolean") loadedCollapsed.margins = ui.collapsed.margins
           if (typeof ui.collapsed.gutter === "boolean") loadedCollapsed.gutter = ui.collapsed.gutter
           if (typeof ui.collapsed.typo === "boolean") loadedCollapsed.typo = ui.collapsed.typo
-          if (typeof ui.collapsed.export === "boolean") loadedCollapsed.export = ui.collapsed.export
           setCollapsed((prev) => ({ ...prev, ...loadedCollapsed }))
         }
         if (parsed?.previewLayout) {
@@ -400,37 +400,7 @@ export default function Home() {
         </div>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Layout */}
-        <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("export")} onDoubleClick={handleSectionHeaderDoubleClick}>
-            <CardTitle className="text-sm flex items-center gap-2">
-              Layout
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.export ? "" : "rotate-90"}`}>&gt;</span>
-            </CardTitle>
-          </CardHeader>
-          {!collapsed.export && (
-            <CardContent className="space-y-3">
-              <input
-                ref={loadFileInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={loadLayout}
-              />
-              <Button variant="outline" className="w-full" size="sm" onClick={() => loadFileInputRef.current?.click()}>
-                Load
-              </Button>
-              <Button onClick={openSaveDialog} variant="outline" className="w-full" size="sm">
-                Save
-              </Button>
-              <div className="space-y-3">
-                <Button onClick={openExportDialog} className="w-full" size="sm">
-                  Export PDF
-                </Button>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+        <h2 className="text-sm font-semibold tracking-wide text-gray-700">Settings</h2>
 
         {/* Canvas Ratio Settings */}
         <Card>
@@ -666,8 +636,65 @@ export default function Home() {
 
       {/* Right Panel - Preview */}
       <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-full">
+        <input
+          ref={loadFileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={loadLayout}
+        />
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
-          <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
+          <div className="flex items-center">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLayoutMenuOpen((prev) => !prev)}
+              >
+                Layout/File
+                <span className="ml-2 text-xs leading-none">▾</span>
+              </Button>
+              {isLayoutMenuOpen && (
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-md border bg-white p-1 shadow-md z-10">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setIsLayoutMenuOpen(false)
+                      loadFileInputRef.current?.click()
+                    }}
+                  >
+                    Load
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setIsLayoutMenuOpen(false)
+                      openSaveDialog()
+                    }}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setIsLayoutMenuOpen(false)
+                      openExportDialog()
+                    }}
+                  >
+                    Export PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div className="mx-3 h-5 w-px bg-gray-300" />
+            <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Label htmlFor="show-baselines" className="cursor-pointer text-xs text-gray-600">Baselines</Label>
