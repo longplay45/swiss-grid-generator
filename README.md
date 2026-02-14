@@ -11,7 +11,9 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 ## Screenshots
 
 ### Web Application
-![Web App Screenshot](swiss-grid-generator-webapp-screenshot_001.png)
+![Web App Screenshot](swiss-grid-generator-app-screenshot_001.png)
+![Web App Screenshot](swiss-grid-generator-app-screenshot_002.png)
+![Web App Screenshot](swiss-grid-generator-app-screenshot_003.png)
 
 ### PDF Export
 ![PDF Screenshot](swiss-grid-generator-pdf-screenshot_001.png)
