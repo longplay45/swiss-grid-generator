@@ -122,7 +122,7 @@ Toggle baselines, margins, gutter, and typography overlays. Choose display units
 Double-click any typography block in the preview to open a popup editor.
 
 - Header controls:
-  - Font hierarchy selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size per option
+  - Style selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size per option
   - Horizontal span selector (number of columns used by the paragraph)
   - Text alignment icon buttons (`left` or `right`)
   - `Save` button (always available)
@@ -185,18 +185,17 @@ Preview layout rules:
 ## Component Structure
 
 ```
-app/
-├── layout.tsx              # Root layout with SEO metadata
-├── page.tsx                # Main grid generator interface
-├── globals.css             # Global styles and Tailwind directives
-
-components/
-├── grid-preview.tsx        # Canvas-based grid visualization
-└── ui/                     # Radix UI primitives (shadcn/ui style)
-
-lib/
-├── grid-calculator.ts      # Core grid computation engine
-└── utils.ts                # Utility functions (cn helper)
+webapp/
+├── app/
+│   ├── layout.tsx          # Root layout with SEO metadata
+│   ├── page.tsx            # Main grid generator interface
+│   └── globals.css         # Global styles and Tailwind directives
+├── components/
+│   ├── grid-preview.tsx    # Canvas-based grid visualization
+│   └── ui/                 # Radix UI primitives (shadcn/ui style)
+└── lib/
+    ├── grid-calculator.ts  # Core grid computation engine
+    └── utils.ts            # Utility functions (cn helper)
 ```
 
 ## Scripts
@@ -206,7 +205,7 @@ lib/
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
+| `npm run lint` | Run Next.js lint command (`next lint`) |
 
 ## Reference
 
