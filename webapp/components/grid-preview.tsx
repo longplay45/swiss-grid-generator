@@ -3,18 +3,10 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
-import { AlignLeft, AlignRight } from "lucide-react"
+import { AlignLeft, AlignRight, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-type TextContent = {
-  display: string
-  headline: string
-  subhead: string
-  body: string
-  caption: string
-}
-
-type BlockKey = keyof TextContent
+type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type TextAlignMode = "left" | "right"
 
@@ -31,7 +23,7 @@ type ModulePosition = {
 }
 
 type DragState = {
-  key: BlockKey
+  key: BlockId
   startPageX: number
   startPageY: number
   pointerOffsetX: number
@@ -41,12 +33,15 @@ type DragState = {
 }
 
 type HoverState = {
-  key: BlockKey
+  key: BlockId
   canvasX: number
   canvasY: number
 }
 
-const DEFAULT_TEXT_CONTENT: TextContent = {
+const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
+type BaseBlockId = typeof BASE_BLOCK_IDS[number]
+
+const DEFAULT_TEXT_CONTENT: Record<BaseBlockId, string> = {
   display: "Swiss Design",
   headline: "Modular Grid Systems",
   subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
@@ -54,13 +49,18 @@ const DEFAULT_TEXT_CONTENT: TextContent = {
   caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
 
-const DEFAULT_STYLE_ASSIGNMENTS: Record<BlockKey, TypographyStyleKey> = {
+const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
   display: "display",
   headline: "headline",
   subhead: "subhead",
   body: "body",
   caption: "caption",
 }
+
+const getDefaultTextContent = (): Record<BlockId, string> => ({ ...DEFAULT_TEXT_CONTENT })
+const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => ({ ...DEFAULT_STYLE_ASSIGNMENTS })
+const isBaseBlockId = (key: string): key is BaseBlockId => (BASE_BLOCK_IDS as readonly string[]).includes(key)
+const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "display", label: "Display" },
@@ -70,11 +70,23 @@ const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "caption", label: "Caption" },
 ]
 
+const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
+  display: "DISPLAY DUMMY TEXT",
+  headline: "Headline dummy text",
+  subhead: "Subhead dummy text for structured layouts.",
+  body: "Body dummy text. Replace this paragraph with your own copy.",
+  caption: "Caption dummy text.",
+}
+
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
 }
 
-function getDefaultColumnSpan(key: BlockKey, gridCols: number): number {
+function getDummyTextForStyle(style: TypographyStyleKey): string {
+  return DUMMY_TEXT_BY_STYLE[style] ?? DUMMY_TEXT_BY_STYLE.body
+}
+
+function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
   if (gridCols <= 1) return 1
   if (key === "display") return gridCols
   if (key === "headline") return gridCols >= 3 ? Math.min(gridCols, Math.floor(gridCols / 2) + 1) : gridCols
@@ -194,11 +206,13 @@ interface GridPreviewProps {
 }
 
 export interface PreviewLayoutState {
-  textContent: TextContent
-  styleAssignments: Record<BlockKey, TypographyStyleKey>
-  blockColumnSpans: Record<BlockKey, number>
-  blockTextAlignments: Record<BlockKey, TextAlignMode>
-  blockModulePositions: Partial<Record<BlockKey, ModulePosition>>
+  blockOrder: BlockId[]
+  textContent: Record<BlockId, string>
+  blockTextEdited: Record<BlockId, boolean>
+  styleAssignments: Record<BlockId, TypographyStyleKey>
+  blockColumnSpans: Record<BlockId, number>
+  blockTextAlignments: Record<BlockId, TextAlignMode>
+  blockModulePositions: Partial<Record<BlockId, ModulePosition>>
 }
 
 export function GridPreview({
@@ -216,33 +230,35 @@ export function GridPreview({
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const blockRectsRef = useRef<Record<BlockKey, BlockRect>>({
-    display: { x: 0, y: 0, width: 0, height: 0 },
-    headline: { x: 0, y: 0, width: 0, height: 0 },
-    subhead: { x: 0, y: 0, width: 0, height: 0 },
-    body: { x: 0, y: 0, width: 0, height: 0 },
-    caption: { x: 0, y: 0, width: 0, height: 0 },
-  })
+  const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const dragEndedAtRef = useRef<number>(0)
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
-  const [textContent, setTextContent] = useState<TextContent>(DEFAULT_TEXT_CONTENT)
-  const [styleAssignments, setStyleAssignments] = useState<Record<BlockKey, TypographyStyleKey>>(DEFAULT_STYLE_ASSIGNMENTS)
-  const [blockModulePositions, setBlockModulePositions] = useState<Partial<Record<BlockKey, ModulePosition>>>({})
-  const [blockColumnSpans, setBlockColumnSpans] = useState<Partial<Record<BlockKey, number>>>({})
-  const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockKey, TextAlignMode>>>({})
+  const [blockOrder, setBlockOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
+  const [textContent, setTextContent] = useState<Record<BlockId, string>>(getDefaultTextContent)
+  const [blockTextEdited, setBlockTextEdited] = useState<Record<BlockId, boolean>>(() =>
+    BASE_BLOCK_IDS.reduce((acc, key) => {
+      acc[key] = true
+      return acc
+    }, {} as Record<BlockId, boolean>)
+  )
+  const [styleAssignments, setStyleAssignments] = useState<Record<BlockId, TypographyStyleKey>>(getDefaultStyleAssignments)
+  const [blockModulePositions, setBlockModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
+  const [blockColumnSpans, setBlockColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
+  const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockId, TextAlignMode>>>({})
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [editorState, setEditorState] = useState<{
-    target: BlockKey
+    target: BlockId
     draftText: string
     draftStyle: TypographyStyleKey
     draftColumns: number
     draftAlign: TextAlignMode
+    draftTextEdited: boolean
   } | null>(null)
 
-  const getBlockSpan = useCallback((key: BlockKey) => {
+  const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
     return Math.max(1, Math.min(result.settings.gridCols, raw))
   }, [blockColumnSpans, result.settings.gridCols])
@@ -291,7 +307,7 @@ export function GridPreview({
     }
   }, [result.pageSizePt.height, result.pageSizePt.width, rotation, scale])
 
-  const clampModulePosition = useCallback((position: ModulePosition, key: BlockKey): ModulePosition => {
+  const clampModulePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
     const span = getBlockSpan(key)
     const maxCol = Math.max(0, metrics.gridCols - span)
@@ -301,7 +317,7 @@ export function GridPreview({
     }
   }, [getBlockSpan, getGridMetrics])
 
-  const snapToModule = useCallback((pageX: number, pageY: number, key: BlockKey): ModulePosition => {
+  const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
     const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.yStep)
@@ -311,37 +327,48 @@ export function GridPreview({
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
 
-    const keys = Object.keys(DEFAULT_TEXT_CONTENT) as BlockKey[]
+    const normalizedKeys = (Array.isArray(initialLayout.blockOrder) ? initialLayout.blockOrder : [])
+      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
+      .filter((key, idx, arr) => arr.indexOf(key) === idx)
+    if (!normalizedKeys.length) return
     const validStyles = new Set(Object.keys(result.typography.styles))
 
-    const nextTextContent = keys.reduce((acc, key) => {
+    const nextTextContent = normalizedKeys.reduce((acc, key) => {
       const value = initialLayout.textContent?.[key]
-      acc[key] = typeof value === "string" ? value : DEFAULT_TEXT_CONTENT[key]
+      acc[key] = typeof value === "string" ? value : (isBaseBlockId(key) ? DEFAULT_TEXT_CONTENT[key] : "")
       return acc
-    }, {} as TextContent)
+    }, {} as Record<BlockId, string>)
 
-    const nextStyleAssignments = keys.reduce((acc, key) => {
+    const nextTextEdited = normalizedKeys.reduce((acc, key) => {
+      const value = initialLayout.blockTextEdited?.[key]
+      acc[key] = typeof value === "boolean" ? value : true
+      return acc
+    }, {} as Record<BlockId, boolean>)
+
+    const nextStyleAssignments = normalizedKeys.reduce((acc, key) => {
       const value = initialLayout.styleAssignments?.[key]
-      acc[key] = validStyles.has(String(value)) ? value as TypographyStyleKey : DEFAULT_STYLE_ASSIGNMENTS[key]
+      acc[key] = validStyles.has(String(value))
+        ? value as TypographyStyleKey
+        : (isBaseBlockId(key) ? DEFAULT_STYLE_ASSIGNMENTS[key] : "body")
       return acc
-    }, {} as Record<BlockKey, TypographyStyleKey>)
+    }, {} as Record<BlockId, TypographyStyleKey>)
 
-    const nextSpans = keys.reduce((acc, key) => {
+    const nextSpans = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockColumnSpans?.[key]
       const fallback = getDefaultColumnSpan(key, result.settings.gridCols)
       const value = typeof raw === "number" ? raw : fallback
       acc[key] = Math.max(1, Math.min(result.settings.gridCols, Math.round(value)))
       return acc
-    }, {} as Record<BlockKey, number>)
+    }, {} as Record<BlockId, number>)
 
-    const nextAlignments = keys.reduce((acc, key) => {
+    const nextAlignments = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockTextAlignments?.[key]
       acc[key] = raw === "right" ? "right" : "left"
       return acc
-    }, {} as Record<BlockKey, TextAlignMode>)
+    }, {} as Record<BlockId, TextAlignMode>)
 
     const metrics = getGridMetrics()
-    const nextPositions = keys.reduce((acc, key) => {
+    const nextPositions = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockModulePositions?.[key]
       if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
       const maxCol = Math.max(0, result.settings.gridCols - nextSpans[key])
@@ -350,9 +377,11 @@ export function GridPreview({
         row: Math.max(0, Math.min(metrics.maxBaselineRow, Math.round(raw.row))),
       }
       return acc
-    }, {} as Partial<Record<BlockKey, ModulePosition>>)
+    }, {} as Partial<Record<BlockId, ModulePosition>>)
 
+    setBlockOrder(normalizedKeys)
     setTextContent(nextTextContent)
+    setBlockTextEdited(nextTextEdited)
     setStyleAssignments(nextStyleAssignments)
     setBlockColumnSpans(nextSpans)
     setBlockTextAlignments(nextAlignments)
@@ -479,14 +508,14 @@ export function GridPreview({
       // Swiss book-style placement: line top sits on baseline rows.
       const getMinOffset = (): number => 1
 
-      const textBlocks: Array<{ key: BlockKey; extraOffset: number; spaceBefore: number; lines: string[] }> = [
-        { key: "display", extraOffset: 0, spaceBefore: 0, lines: [textContent.display] },
-        { key: "headline", extraOffset: 0, spaceBefore: 0, lines: [textContent.headline] },
-        { key: "subhead", extraOffset: 0, spaceBefore: 0, lines: [textContent.subhead] },
-        { key: "body", extraOffset: 0, spaceBefore: 1, lines: [textContent.body] },
-      ]
-
-      const captionBlock = { key: "caption" as BlockKey, lines: [textContent.caption] }
+      const textBlocks = blockOrder
+        .filter((key) => key !== "caption")
+        .map((key) => ({
+          key,
+          extraOffset: 0,
+          spaceBefore: key === "body" ? 1 : 0,
+          lines: [textContent[key] ?? ""],
+        }))
 
       const useRowPlacement = gridRows >= 2
       const useParagraphRows = gridRows >= 5
@@ -504,15 +533,12 @@ export function GridPreview({
       let currentBaselineOffset = useRowPlacement ? restStartOffset : displayStartOffset
       let currentRowIndex = 0
 
-      const nextRects: Record<BlockKey, BlockRect> = {
-        display: { x: 0, y: 0, width: 0, height: 0 },
-        headline: { x: 0, y: 0, width: 0, height: 0 },
-        subhead: { x: 0, y: 0, width: 0, height: 0 },
-        body: { x: 0, y: 0, width: 0, height: 0 },
-        caption: { x: 0, y: 0, width: 0, height: 0 },
+      const nextRects: Record<BlockId, BlockRect> = {}
+      for (const key of blockOrder) {
+        nextRects[key] = { x: 0, y: 0, width: 0, height: 0 }
       }
 
-      const getOriginForBlock = (key: BlockKey, fallbackX: number, fallbackY: number) => {
+      const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
         const dragged = dragState?.key === key ? dragState.preview : undefined
         const manual = dragged ?? blockModulePositions[key]
         if (!manual) return { x: fallbackX, y: fallbackY }
@@ -524,7 +550,11 @@ export function GridPreview({
       }
 
       for (const block of textBlocks) {
-        const style = styles[styleAssignments[block.key]]
+        const blockText = block.lines.join(" ")
+        if (!blockText.trim()) continue
+
+        const styleKey = styleAssignments[block.key] ?? "body"
+        const style = styles[styleKey]
         if (!style) continue
 
         const fontSize = style.size * scale
@@ -542,7 +572,7 @@ export function GridPreview({
 
         const span = getBlockSpan(block.key)
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
-        const textLines = wrapText(ctx, block.lines.join(" "), wrapWidth, { hyphenate: block.key === "body" })
+        const textLines = wrapText(ctx, blockText, wrapWidth, { hyphenate: block.key === "body" })
 
         const autoBlockX = contentLeft
         const autoBlockY = contentTop + (blockStartOffset - 1) * baselinePx
@@ -581,8 +611,11 @@ export function GridPreview({
         }
       }
 
-      const captionStyle = styles[styleAssignments[captionBlock.key]]
-      if (captionStyle) {
+      const hasCaptionBlock = blockOrder.includes("caption")
+      const captionStyleKey = styleAssignments.caption ?? "caption"
+      const captionStyle = styles[captionStyleKey]
+      const captionText = textContent.caption ?? ""
+      if (hasCaptionBlock && captionStyle && captionText.trim()) {
         const captionFontSize = captionStyle.size * scale
         const captionBaselineMult = captionStyle.baselineMultiplier
 
@@ -590,9 +623,9 @@ export function GridPreview({
         const captionAlign = blockTextAlignments.caption ?? "left"
         ctx.textBaseline = "alphabetic"
 
-        const captionSpan = getBlockSpan(captionBlock.key)
+        const captionSpan = getBlockSpan("caption")
         const captionWidth = captionSpan * modW * scale + Math.max(captionSpan - 1, 0) * gutterX
-        const captionLines = wrapText(ctx, captionBlock.lines.join(" "), captionWidth)
+        const captionLines = wrapText(ctx, captionText, captionWidth)
         const captionLineCount = captionLines.length
 
         const pageHeightPt = result.pageSizePt.height
@@ -680,8 +713,8 @@ export function GridPreview({
     )
     setBlockColumnSpans((prev) => {
       let changed = false
-      const next: Partial<Record<BlockKey, number>> = { ...prev }
-      for (const key of Object.keys(DEFAULT_TEXT_CONTENT) as BlockKey[]) {
+      const next: Partial<Record<BlockId, number>> = { ...prev }
+      for (const key of blockOrder) {
         const value = prev[key]
         if (value == null) continue
         const clamped = Math.max(1, Math.min(gridCols, value))
@@ -695,8 +728,8 @@ export function GridPreview({
 
     setBlockModulePositions((prev) => {
       let changed = false
-      const next: Partial<Record<BlockKey, ModulePosition>> = { ...prev }
-      for (const key of Object.keys(prev) as BlockKey[]) {
+      const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
+      for (const key of Object.keys(prev) as BlockId[]) {
         const pos = prev[key]
         if (!pos) continue
         const span = Math.max(1, Math.min(gridCols, blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)))
@@ -712,7 +745,7 @@ export function GridPreview({
       }
       return changed ? next : prev
     })
-  }, [blockColumnSpans, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.pageSizePt.height, result.settings])
+  }, [blockColumnSpans, blockOrder, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.pageSizePt.height, result.settings])
 
   useEffect(() => {
     if (!editorState) return
@@ -783,6 +816,10 @@ export function GridPreview({
       ...prev,
       [editorState.target]: editorState.draftText,
     }))
+    setBlockTextEdited((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftTextEdited,
+    }))
     setStyleAssignments((prev) => ({
       ...prev,
       [editorState.target]: editorState.draftStyle,
@@ -808,6 +845,51 @@ export function GridPreview({
     setEditorState(null)
   }, [clampModulePosition, editorState])
 
+  const deleteEditorBlock = useCallback(() => {
+    if (!editorState) return
+
+    const target = editorState.target
+    if (isBaseBlockId(target)) {
+      setTextContent((prev) => ({
+        ...prev,
+        [target]: "",
+      }))
+    } else {
+      setBlockOrder((prev) => prev.filter((key) => key !== target))
+      setTextContent((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockTextEdited((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setStyleAssignments((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockColumnSpans((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockTextAlignments((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+    }
+    setBlockModulePositions((prev) => {
+      const next = { ...prev }
+      delete next[target]
+      return next
+    })
+    setEditorState(null)
+  }, [editorState])
+
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState) return
 
@@ -818,8 +900,9 @@ export function GridPreview({
     const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!pagePoint) return
 
-    for (const key of Object.keys(blockRectsRef.current) as BlockKey[]) {
+    for (const key of blockOrder) {
       const block = blockRectsRef.current[key]
+      if (!block || block.width <= 0 || block.height <= 0) continue
       if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
         event.preventDefault()
         const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
@@ -836,7 +919,7 @@ export function GridPreview({
         break
       }
     }
-  }, [blockModulePositions, editorState, showTypography, snapToModule, toPagePoint])
+  }, [blockModulePositions, blockOrder, editorState, showTypography, snapToModule, toPagePoint])
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState || dragState) {
@@ -856,8 +939,9 @@ export function GridPreview({
       return
     }
 
-    for (const key of Object.keys(blockRectsRef.current) as BlockKey[]) {
+    for (const key of blockOrder) {
       const block = blockRectsRef.current[key]
+      if (!block || block.width <= 0 || block.height <= 0) continue
       if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
         setHoverState((prev) => {
           if (prev && prev.key === key && Math.abs(prev.canvasX - canvasX) < 1 && Math.abs(prev.canvasY - canvasY) < 1) {
@@ -870,7 +954,7 @@ export function GridPreview({
     }
 
     if (hoverState) setHoverState(null)
-  }, [dragState, editorState, hoverState, showTypography, toPagePoint])
+  }, [blockOrder, dragState, editorState, hoverState, showTypography, toPagePoint])
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
@@ -882,46 +966,95 @@ export function GridPreview({
     const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!pagePoint) return
 
-    for (const key of Object.keys(blockRectsRef.current) as BlockKey[]) {
+    for (const key of blockOrder) {
       const block = blockRectsRef.current[key]
+      if (!block || block.width <= 0 || block.height <= 0) continue
       if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
         setEditorState({
           target: key,
-          draftText: textContent[key],
-          draftStyle: styleAssignments[key],
+          draftText: textContent[key] ?? "",
+          draftStyle: styleAssignments[key] ?? "body",
           draftColumns: getBlockSpan(key),
           draftAlign: blockTextAlignments[key] ?? "left",
+          draftTextEdited: blockTextEdited[key] ?? true,
         })
-        break
+        return
       }
     }
-  }, [blockTextAlignments, getBlockSpan, showTypography, styleAssignments, textContent, toPagePoint])
 
-  const hoveredStyle = hoverState ? styleAssignments[hoverState.key] : null
+    const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
+    const activeParagraphCount = blockOrder.filter((key) => (textContent[key] ?? "").trim().length > 0).length
+    if (activeParagraphCount >= maxParagraphCount) {
+      window.alert(`Maximum paragraphs reached (${maxParagraphCount}).`)
+      return
+    }
+
+    const newKey = getNextCustomBlockId()
+    const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
+    setBlockOrder((prev) => [...prev, newKey])
+    setTextContent((prev) => ({
+      ...prev,
+      [newKey]: getDummyTextForStyle("body"),
+    }))
+    setBlockTextEdited((prev) => ({
+      ...prev,
+      [newKey]: false,
+    }))
+    setStyleAssignments((prev) => ({
+      ...prev,
+      [newKey]: "body",
+    }))
+    const defaultSpan = getDefaultColumnSpan(newKey, result.settings.gridCols)
+    setBlockColumnSpans((prev) => ({
+      ...prev,
+      [newKey]: defaultSpan,
+    }))
+    setBlockTextAlignments((prev) => ({
+      ...prev,
+      [newKey]: "left",
+    }))
+    setBlockModulePositions((prev) => ({
+      ...prev,
+      [newKey]: snapped,
+    }))
+    setEditorState({
+      target: newKey,
+      draftText: getDummyTextForStyle("body"),
+      draftStyle: "body",
+      draftColumns: defaultSpan,
+      draftAlign: "left",
+      draftTextEdited: false,
+    })
+  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+
+  const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
   const hoveredAlign = hoverState ? (blockTextAlignments[hoverState.key] ?? "left") : null
 
   useEffect(() => {
     if (!onLayoutChange) return
 
-    const keys = Object.keys(DEFAULT_TEXT_CONTENT) as BlockKey[]
-    const resolvedSpans = keys.reduce((acc, key) => {
+    const resolvedSpans = blockOrder.reduce((acc, key) => {
       acc[key] = getBlockSpan(key)
       return acc
-    }, {} as Record<BlockKey, number>)
-    const resolvedAlignments = keys.reduce((acc, key) => {
+    }, {} as Record<BlockId, number>)
+    const resolvedAlignments = blockOrder.reduce((acc, key) => {
       acc[key] = blockTextAlignments[key] ?? "left"
       return acc
-    }, {} as Record<BlockKey, TextAlignMode>)
+    }, {} as Record<BlockId, TextAlignMode>)
 
     onLayoutChange({
+      blockOrder,
       textContent,
+      blockTextEdited,
       styleAssignments,
       blockColumnSpans: resolvedSpans,
       blockTextAlignments: resolvedAlignments,
       blockModulePositions,
     })
-  }, [blockModulePositions, blockTextAlignments, getBlockSpan, onLayoutChange, styleAssignments, textContent])
+  }, [blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, onLayoutChange, styleAssignments, textContent])
+
+  const canvasCursorClass = dragState ? "cursor-grabbing" : hoverState ? "cursor-grab" : "cursor-default"
 
   return (
     <div ref={previewContainerRef} className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
@@ -930,7 +1063,7 @@ export function GridPreview({
           ref={canvasRef}
           width={result.pageSizePt.width * scale}
           height={result.pageSizePt.height * scale}
-          className="block shadow-lg cursor-grab active:cursor-grabbing"
+          className={`block shadow-lg ${canvasCursorClass}`}
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseLeave={() => setHoverState(null)}
@@ -972,9 +1105,11 @@ export function GridPreview({
               <Select
                 value={editorState.draftStyle}
                 onValueChange={(value) => {
+                  const nextStyle = value as TypographyStyleKey
                   setEditorState((prev) => prev ? {
                     ...prev,
-                    draftStyle: value as TypographyStyleKey,
+                    draftStyle: nextStyle,
+                    draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
                   } : prev)
                 }}
               >
@@ -1038,6 +1173,9 @@ export function GridPreview({
               <Button size="sm" onClick={saveEditor}>
                 Save
               </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph">
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
             <div className="p-3">
               <textarea
@@ -1048,6 +1186,7 @@ export function GridPreview({
                   setEditorState((prev) => prev ? {
                     ...prev,
                     draftText: value,
+                    draftTextEdited: true,
                   } : prev)
                 }}
                 onKeyDown={(event) => {
