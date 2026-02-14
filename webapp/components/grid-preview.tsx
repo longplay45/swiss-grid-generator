@@ -5,9 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GridResult } from "@/lib/grid-calculator"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-const PT_TO_MM = 0.352778
-const PT_TO_PX = 96 / 72
-
 type TextContent = {
   display: string
   headline: string
@@ -72,19 +69,6 @@ const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "caption", label: "Caption" },
 ]
 
-function ptToMm(pt: number): number {
-  return pt * PT_TO_MM
-}
-
-function ptToPx(pt: number): number {
-  return pt * PT_TO_PX
-}
-
-function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
-  const converted = unit === "mm" ? ptToMm(value) : unit === "px" ? ptToPx(value) : value
-  return converted.toFixed(3)
-}
-
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
 }
@@ -133,48 +117,61 @@ function wrapText(
   maxWidth: number,
   { hyphenate = false }: { hyphenate?: boolean } = {}
 ): string[] {
-  const words = text.split(/\s+/).filter(Boolean)
-  const lines: string[] = []
-  let current = ""
+  const wrapSingleLine = (input: string): string[] => {
+    const words = input.split(/\s+/).filter(Boolean)
+    if (!words.length) return [""]
 
-  for (const word of words) {
-    const testLine = current ? `${current} ${word}` : word
-    if (ctx.measureText(testLine).width <= maxWidth || current.length === 0) {
-      if (ctx.measureText(word).width > maxWidth && hyphenate) {
-        if (current) {
-          lines.push(current)
-          current = ""
-        }
-        const parts = hyphenateWord(ctx, word, maxWidth)
-        for (let i = 0; i < parts.length; i += 1) {
-          if (i === parts.length - 1) {
-            current = parts[i]
-          } else {
-            lines.push(parts[i])
+    const lines: string[] = []
+    let current = ""
+
+    for (const word of words) {
+      const testLine = current ? `${current} ${word}` : word
+      if (ctx.measureText(testLine).width <= maxWidth || current.length === 0) {
+        if (ctx.measureText(word).width > maxWidth && hyphenate) {
+          if (current) {
+            lines.push(current)
+            current = ""
           }
+          const parts = hyphenateWord(ctx, word, maxWidth)
+          for (let i = 0; i < parts.length; i += 1) {
+            if (i === parts.length - 1) {
+              current = parts[i]
+            } else {
+              lines.push(parts[i])
+            }
+          }
+        } else {
+          current = testLine
         }
       } else {
-        current = testLine
-      }
-    } else {
-      lines.push(current)
-      if (ctx.measureText(word).width > maxWidth && hyphenate) {
-        const parts = hyphenateWord(ctx, word, maxWidth)
-        for (let i = 0; i < parts.length; i += 1) {
-          if (i === parts.length - 1) {
-            current = parts[i]
-          } else {
-            lines.push(parts[i])
+        lines.push(current)
+        if (ctx.measureText(word).width > maxWidth && hyphenate) {
+          const parts = hyphenateWord(ctx, word, maxWidth)
+          for (let i = 0; i < parts.length; i += 1) {
+            if (i === parts.length - 1) {
+              current = parts[i]
+            } else {
+              lines.push(parts[i])
+            }
           }
+        } else {
+          current = word
         }
-      } else {
-        current = word
       }
     }
+
+    if (current) lines.push(current)
+    return lines
   }
 
-  if (current) lines.push(current)
-  return lines
+  const hardBreakLines = text.replace(/\r\n/g, "\n").split("\n")
+  const wrapped: string[] = []
+
+  for (const line of hardBreakLines) {
+    wrapped.push(...wrapSingleLine(line))
+  }
+
+  return wrapped
 }
 
 function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
@@ -188,7 +185,6 @@ interface GridPreviewProps {
   showModules: boolean
   showMargins: boolean
   showTypography: boolean
-  displayUnit: "pt" | "mm" | "px"
   rotation?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
@@ -208,7 +204,6 @@ export function GridPreview({
   showModules,
   showMargins,
   showTypography,
-  displayUnit,
   rotation = 0,
   onCanvasReady,
   onLayoutChange,
@@ -413,10 +408,11 @@ export function GridPreview({
         const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gutterX
         ctx.save()
         ctx.strokeStyle = "#f97316"
-        ctx.fillStyle = "rgba(249, 115, 22, 0.15)"
-        ctx.lineWidth = 1.2
-        ctx.fillRect(snapX, snapY, snapWidth, baselineStep)
-        ctx.strokeRect(snapX, snapY, snapWidth, baselineStep)
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.moveTo(snapX, snapY + baselineStep)
+        ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
+        ctx.stroke()
         ctx.restore()
         ctx.fillStyle = "#1f2937"
       }
@@ -1012,9 +1008,6 @@ export function GridPreview({
         </div>
       ) : null}
 
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-600">
-        Hint: Drag text to snap to modules • Double-click text to edit • Esc cancels • Cmd/Ctrl+Enter saves • Scale: {(scale * 100).toFixed(0)}% • {formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}
-      </div>
     </div>
   )
 }

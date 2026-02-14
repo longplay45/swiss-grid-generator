@@ -58,7 +58,7 @@ export default function Home() {
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: false, baseline: false, margins: false, gutter: false, typo: false, export: false })
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
   const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
 
   const gridUnit = useMemo(() => {
@@ -240,7 +240,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("format")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Format & Layout
+              I. Format & Layout
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.format ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -290,7 +290,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("baseline")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
+              II. Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.baseline ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -319,7 +319,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("margins")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Margins
+              III. Margins
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.margins ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -406,7 +406,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("gutter")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Gutter
+              IV. Gutter
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.gutter ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -443,7 +443,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("typo")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Typo
+              V. Typo
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.typo ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -469,7 +469,7 @@ export default function Home() {
         <Card>
           <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("export")}>
             <CardTitle className="text-sm flex items-center gap-2">
-              Layout Files
+              VI. Layout Files
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.export ? "-rotate-90" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -499,58 +499,6 @@ export default function Home() {
         </Card>
 
       </div>
-
-        {/* Stats - always visible */}
-        <div className="shrink-0 text-xs text-gray-500 space-y-1 p-4 md:px-6 border-t">
-          <div className="flex justify-between">
-            <span>Format:</span>
-            <span className="font-mono">{result.format} {result.settings.orientation}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Page Size:</span>
-            <span className="font-mono">{formatValue(result.pageSizePt.width, displayUnit)} × {formatValue(result.pageSizePt.height, displayUnit)} {displayUnit}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Scale Factor:</span>
-            <span className="font-mono">{result.grid.scaleFactor.toFixed(3)}×</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Baseline:</span>
-            <span className="font-mono">{formatValue(result.grid.gridUnit, displayUnit)} {displayUnit}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Margin Method:</span>
-            <span className="font-mono">{result.settings.marginMethod}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Margins:</span>
-            <span className="font-mono">T:{formatValue(result.grid.margins.top, displayUnit)} L:{formatValue(result.grid.margins.left, displayUnit)} R:{formatValue(result.grid.margins.right, displayUnit)} B:{formatValue(result.grid.margins.bottom, displayUnit)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Content Area:</span>
-            <span className="font-mono">{formatValue(result.contentArea.width, displayUnit)} × {formatValue(result.contentArea.height, displayUnit)} {displayUnit}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Gutter:</span>
-            <span className="font-mono">{result.settings.gridCols} × {result.settings.gridRows}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Module:</span>
-            <span className="font-mono">{formatValue(result.module.width, displayUnit)} × {formatValue(result.module.height, displayUnit)} {displayUnit}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Aspect Ratio:</span>
-            <span className="font-mono">{result.module.aspectRatio.toFixed(3)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Baselines/Cell:</span>
-            <span className="font-mono">{result.grid.baselineUnitsPerCell}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Gutter:</span>
-            <span className="font-mono">{formatValue(result.grid.gutter, displayUnit)} {displayUnit}</span>
-          </div>
-        </div>
       </div>
 
       {/* Right Panel - Preview */}
@@ -596,7 +544,6 @@ export default function Home() {
           showModules={showModules}
           showMargins={showMargins}
           showTypography={showTypography}
-          displayUnit={displayUnit}
           rotation={rotation}
           onCanvasReady={(canvas) => {
             previewCanvasRef.current = canvas
