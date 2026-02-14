@@ -76,7 +76,26 @@ export interface GridResult {
   };
 }
 
-// A-series formats in points (ISO 216)
+export type CanvasRatioKey =
+  | "din_ab"
+  | "letter_ansi_ab"
+  | "balanced_3_4"
+  | "photo_2_3"
+  | "screen_16_9"
+  | "square_1_1"
+  | "editorial_4_5"
+  | "wide_2_1";
+
+export interface CanvasRatioOption {
+  key: CanvasRatioKey;
+  category: "Universal";
+  label: string;
+  ratioLabel: string;
+  ratioDecimal: number;
+  paperSizes: string[];
+}
+
+// Paper formats in points (1in = 72pt)
 export const FORMATS_PT: Record<string, FormatDimensions> = {
   A6: { width: 297.638, height: 419.528 },
   A5: { width: 419.528, height: 595.276 },
@@ -85,7 +104,93 @@ export const FORMATS_PT: Record<string, FormatDimensions> = {
   A2: { width: 1190.551, height: 1683.780 },
   A1: { width: 1683.780, height: 2383.937 },
   A0: { width: 2383.937, height: 3370.394 },
+  B6: { width: 354.331, height: 498.898 },
+  B5: { width: 498.898, height: 708.661 },
+  B4: { width: 708.661, height: 1000.630 },
+  B3: { width: 1000.630, height: 1417.323 },
+  B2: { width: 1417.323, height: 2004.094 },
+  B1: { width: 2004.094, height: 2834.646 },
+  B0: { width: 2834.646, height: 4008.189 },
+  LETTER: { width: 612.0, height: 792.0 },      // 8.5" × 11"
+  LEGAL: { width: 612.0, height: 1008.0 },      // 8.5" × 14"
+  ANSI_B: { width: 792.0, height: 1224.0 },     // 11" × 17"
+  ANSI_C: { width: 1224.0, height: 1584.0 },    // 17" × 22"
+  ANSI_D: { width: 1584.0, height: 2448.0 },    // 22" × 34"
+  ANSI_E: { width: 2448.0, height: 3168.0 },    // 34" × 44"
+  BALANCED_3_4: { width: 600.0, height: 800.0 },   // 3:4
+  PHOTO_2_3: { width: 600.0, height: 900.0 },      // 2:3
+  SCREEN_16_9: { width: 540.0, height: 960.0 },    // 9:16 portrait base
+  SQUARE_1_1: { width: 700.0, height: 700.0 },     // 1:1
+  EDITORIAL_4_5: { width: 640.0, height: 800.0 },  // 4:5
+  WIDE_2_1: { width: 500.0, height: 1000.0 },      // 1:2 portrait base
 };
+
+export const CANVAS_RATIOS: CanvasRatioOption[] = [
+  {
+    key: "din_ab",
+    category: "Universal",
+    label: "DIN",
+    ratioLabel: "1:√2",
+    ratioDecimal: Math.SQRT2,
+    paperSizes: ["A6", "A5", "A4", "A3", "A2", "A1", "A0", "B6", "B5", "B4", "B3", "B2", "B1", "B0"],
+  },
+  {
+    key: "letter_ansi_ab",
+    category: "Universal",
+    label: "ANSI",
+    ratioLabel: "1:1.294",
+    ratioDecimal: 1.294,
+    paperSizes: ["LETTER", "LEGAL", "ANSI_B", "ANSI_C", "ANSI_D", "ANSI_E"],
+  },
+  {
+    key: "balanced_3_4",
+    category: "Universal",
+    label: "Balanced",
+    ratioLabel: "3:4",
+    ratioDecimal: 1.333,
+    paperSizes: ["BALANCED_3_4"],
+  },
+  {
+    key: "photo_2_3",
+    category: "Universal",
+    label: "Photo",
+    ratioLabel: "2:3",
+    ratioDecimal: 1.5,
+    paperSizes: ["PHOTO_2_3"],
+  },
+  {
+    key: "screen_16_9",
+    category: "Universal",
+    label: "Screen",
+    ratioLabel: "16:9",
+    ratioDecimal: 1.778,
+    paperSizes: ["SCREEN_16_9"],
+  },
+  {
+    key: "square_1_1",
+    category: "Universal",
+    label: "Square",
+    ratioLabel: "1:1",
+    ratioDecimal: 1.0,
+    paperSizes: ["SQUARE_1_1"],
+  },
+  {
+    key: "editorial_4_5",
+    category: "Universal",
+    label: "Editorial",
+    ratioLabel: "4:5",
+    ratioDecimal: 1.25,
+    paperSizes: ["EDITORIAL_4_5"],
+  },
+  {
+    key: "wide_2_1",
+    category: "Universal",
+    label: "Wide Impact",
+    ratioLabel: "2:1",
+    ratioDecimal: 2.0,
+    paperSizes: ["WIDE_2_1"],
+  },
+];
 
 // Base typographic values for A4
 const BASE_GRID_UNIT = 12.0;
@@ -267,6 +372,7 @@ export const FORMAT_BASELINES: Record<string, number> = {
   A4: BASE_GRID_UNIT,                                               // 12.000
   A5: Math.round(BASE_GRID_UNIT / SQRT2 * 1000) / 1000,           //  8.485
   A6: Math.round(BASE_GRID_UNIT / 2 * 1000) / 1000,               //  6.000
+  LETTER: BASE_GRID_UNIT,                                           // 12.000
 };
 
 // Minimum baselines in usable height for typographic flexibility
