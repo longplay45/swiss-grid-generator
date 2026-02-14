@@ -39,6 +39,7 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
 }
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
+const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo"] as const
 type SectionKey = typeof SECTION_KEYS[number]
 
@@ -58,7 +59,7 @@ export default function Home() {
   const [gutterMultiple, setGutterMultiple] = useState(1.0)
   const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "fibonacci">("swiss")
   const [customBaseline, setCustomBaseline] = useState<number>(() => {
-    const defaultVal = FORMAT_BASELINES["A4"] ?? 12
+    const defaultVal = DEFAULT_A4_BASELINE
     return BASELINE_OPTIONS.reduce((prev, curr) =>
       Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
     )
@@ -122,12 +123,22 @@ export default function Home() {
   }, [canvasRatio])
 
   const previewFormat = useMemo(() => {
-    return selectedCanvasRatio.paperSizes[0] ?? "A4"
-  }, [selectedCanvasRatio])
+    const previewDefaults: Record<CanvasRatioKey, string> = {
+      din_ab: "A4",
+      letter_ansi_ab: "LETTER",
+      balanced_3_4: "BALANCED_3_4",
+      photo_2_3: "PHOTO_2_3",
+      screen_16_9: "SCREEN_16_9",
+      square_1_1: "SQUARE_1_1",
+      editorial_4_5: "EDITORIAL_4_5",
+      wide_2_1: "WIDE_2_1",
+    }
+    return previewDefaults[canvasRatio] ?? (selectedCanvasRatio.paperSizes[0] ?? "A4")
+  }, [canvasRatio, selectedCanvasRatio])
 
   const gridUnit = useMemo(() => {
-    return customBaseline ?? FORMAT_BASELINES[previewFormat] ?? 12.0
-  }, [customBaseline, previewFormat])
+    return customBaseline ?? DEFAULT_A4_BASELINE
+  }, [customBaseline])
 
   const paperSizeOptions = useMemo(() => {
     return selectedCanvasRatio.paperSizes
@@ -161,7 +172,7 @@ export default function Home() {
       marginMethod,
       gridCols,
       gridRows,
-      baseline: customBaseline,
+      baseline: customBaseline ?? DEFAULT_A4_BASELINE,
       baselineMultiple,
       gutterMultiple,
       customMargins,
