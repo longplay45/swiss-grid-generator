@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, FolderOpen, Save } from "lucide-react"
+import { Download, FolderOpen, LayoutGrid, Rows3, Save, SquareDashed, Type } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -434,11 +434,14 @@ export default function Home() {
 
         {/* Canvas Ratio Settings */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("format")} onDoubleClick={handleSectionHeaderDoubleClick}>
+          <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("format")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               I. Canvas Ratio
               <span className={`ml-auto text-base leading-none transition-transform ${collapsed.format ? "" : "rotate-90"}`}>&gt;</span>
             </CardTitle>
+            <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+              Ratio, orientation, and preview rotation
+            </div>
           </CardHeader>
           {!collapsed.format && (
             <CardContent className="space-y-4">
@@ -484,11 +487,14 @@ export default function Home() {
 
         {/* Baseline Grid Settings */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("baseline")} onDoubleClick={handleSectionHeaderDoubleClick}>
+          <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("baseline")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               II. Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
               <span className={`ml-auto text-base leading-none transition-transform ${collapsed.baseline ? "" : "rotate-90"}`}>&gt;</span>
             </CardTitle>
+            <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+              Baseline unit for grid and typography
+            </div>
           </CardHeader>
           {!collapsed.baseline && (
             <CardContent className="space-y-4">
@@ -513,11 +519,14 @@ export default function Home() {
 
         {/* Margins */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("margins")} onDoubleClick={handleSectionHeaderDoubleClick}>
+          <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("margins")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               III. Margins
               <span className={`ml-auto text-base leading-none transition-transform ${collapsed.margins ? "" : "rotate-90"}`}>&gt;</span>
             </CardTitle>
+            <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+              Margin method and custom margin controls
+            </div>
           </CardHeader>
           {!collapsed.margins && <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -600,11 +609,14 @@ export default function Home() {
 
         {/* Gutter */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("gutter")} onDoubleClick={handleSectionHeaderDoubleClick}>
+          <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("gutter")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               IV. Gutter
               <span className={`ml-auto text-base leading-none transition-transform ${collapsed.gutter ? "" : "rotate-90"}`}>&gt;</span>
             </CardTitle>
+            <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+              Grid columns, rows, and gutter multiple
+            </div>
           </CardHeader>
           {!collapsed.gutter && (
             <CardContent className="space-y-4">
@@ -637,11 +649,14 @@ export default function Home() {
 
         {/* Typo */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("typo")} onDoubleClick={handleSectionHeaderDoubleClick}>
+          <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("typo")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               V. Typo
               <span className={`ml-auto text-base leading-none transition-transform ${collapsed.typo ? "" : "rotate-90"}`}>&gt;</span>
             </CardTitle>
+            <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+              Typography scale and hierarchy preset
+            </div>
           </CardHeader>
           {!collapsed.typo && (
             <CardContent className="space-y-4">
@@ -676,35 +691,93 @@ export default function Home() {
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
           <div className="flex items-center">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" aria-label="Load" title="Load" onClick={() => loadFileInputRef.current?.click()}>
-                <FolderOpen className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" aria-label="Save" title="Save" onClick={openSaveDialog}>
-                <Save className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" aria-label="Export PDF" title="Export PDF" onClick={openExportDialog}>
-                <Download className="h-4 w-4" />
-              </Button>
+              <div className="group relative">
+                <Button variant="outline" size="icon" aria-label="Load" onClick={() => loadFileInputRef.current?.click()}>
+                  <FolderOpen className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                  Load layout JSON
+                </div>
+              </div>
+              <div className="group relative">
+                <Button variant="outline" size="icon" aria-label="Save" onClick={openSaveDialog}>
+                  <Save className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                  Save layout JSON
+                </div>
+              </div>
+              <div className="group relative">
+                <Button variant="outline" size="icon" aria-label="Export PDF" onClick={openExportDialog}>
+                  <Download className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                  Export PDF
+                </div>
+              </div>
             </div>
-            <div className="mx-3 h-5 w-px bg-gray-300" />
-            <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="show-baselines" className="cursor-pointer text-xs text-gray-600">Baselines</Label>
-              <Switch id="show-baselines" checked={showBaselines} onCheckedChange={setShowBaselines} />
+            <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={showBaselines ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Toggle baselines"
+                aria-pressed={showBaselines}
+                onClick={() => setShowBaselines((prev) => !prev)}
+              >
+                <Rows3 className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Toggle baselines
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="show-margins" className="cursor-pointer text-xs text-gray-600">Margins</Label>
-              <Switch id="show-margins" checked={showMargins} onCheckedChange={setShowMargins} />
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={showMargins ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Toggle margins"
+                aria-pressed={showMargins}
+                onClick={() => setShowMargins((prev) => !prev)}
+              >
+                <SquareDashed className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Toggle margin frame
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="show-modules" className="cursor-pointer text-xs text-gray-600">Gutter</Label>
-              <Switch id="show-modules" checked={showModules} onCheckedChange={setShowModules} />
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={showModules ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Toggle gutter grid"
+                aria-pressed={showModules}
+                onClick={() => setShowModules((prev) => !prev)}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Toggle modules and gutter
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="show-typography" className="cursor-pointer text-xs text-gray-600">Typo</Label>
-              <Switch id="show-typography" checked={showTypography} onCheckedChange={setShowTypography} />
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={showTypography ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Toggle typography"
+                aria-pressed={showTypography}
+                onClick={() => setShowTypography((prev) => !prev)}
+              >
+                <Type className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Toggle type preview
+              </div>
             </div>
           </div>
         </div>
