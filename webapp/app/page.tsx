@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
+import { Download, FolderOpen, Save } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -33,9 +34,28 @@ function ptToPx(pt: number): number {
   return pt * PT_TO_PX
 }
 
+function mmToPt(mm: number): number {
+  return mm / PT_TO_MM
+}
+
+function pxToPt(px: number): number {
+  return px / PT_TO_PX
+}
+
+function fromPt(valuePt: number, unit: "pt" | "mm" | "px"): number {
+  if (unit === "mm") return ptToMm(valuePt)
+  if (unit === "px") return ptToPx(valuePt)
+  return valuePt
+}
+
+function toPt(value: number, unit: "pt" | "mm" | "px"): number {
+  if (unit === "mm") return mmToPt(value)
+  if (unit === "px") return pxToPt(value)
+  return value
+}
+
 function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
-  const converted = unit === "mm" ? ptToMm(value) : unit === "px" ? ptToPx(value) : value
-  return converted.toFixed(3)
+  return fromPt(value, unit).toFixed(3)
 }
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
@@ -73,7 +93,6 @@ export default function Home() {
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
-  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false)
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
   const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState("A4")
   const [exportWidthDraft, setExportWidthDraft] = useState("")
@@ -291,7 +310,7 @@ export default function Home() {
     const dims = getOrientedDimensions(exportPaperSize)
     setExportPaperSizeDraft(exportPaperSize)
     setExportFilenameDraft(defaultPdfFilename)
-    setExportWidthDraft(dims.width.toFixed(3))
+    setExportWidthDraft(formatValue(dims.width, displayUnit))
     setIsExportDialogOpen(true)
   }
 
@@ -302,7 +321,7 @@ export default function Home() {
     const baseDims = getOrientedDimensions(exportPaperSizeDraft)
     const aspectRatio = baseDims.height / baseDims.width
     const parsedWidth = Number(exportWidthDraft)
-    const width = Number.isFinite(parsedWidth) && parsedWidth > 0 ? parsedWidth : baseDims.width
+    const width = Number.isFinite(parsedWidth) && parsedWidth > 0 ? toPt(parsedWidth, displayUnit) : baseDims.width
     const height = width * aspectRatio
     setExportPaperSize(exportPaperSizeDraft)
     exportPDF(width, height, filename)
@@ -656,52 +675,16 @@ export default function Home() {
         />
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
           <div className="flex items-center">
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsLayoutMenuOpen((prev) => !prev)}
-              >
-                Layout/File
-                <span className="ml-2 text-xs leading-none">▾</span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" aria-label="Load" title="Load" onClick={() => loadFileInputRef.current?.click()}>
+                <FolderOpen className="h-4 w-4" />
               </Button>
-              {isLayoutMenuOpen && (
-                <div className="absolute left-0 top-full mt-2 w-44 rounded-md border bg-white p-1 shadow-md z-10">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setIsLayoutMenuOpen(false)
-                      loadFileInputRef.current?.click()
-                    }}
-                  >
-                    Load
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setIsLayoutMenuOpen(false)
-                      openSaveDialog()
-                    }}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setIsLayoutMenuOpen(false)
-                      openExportDialog()
-                    }}
-                  >
-                    Export PDF
-                  </Button>
-                </div>
-              )}
+              <Button variant="outline" size="icon" aria-label="Save" title="Save" onClick={openSaveDialog}>
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" aria-label="Export PDF" title="Export PDF" onClick={openExportDialog}>
+                <Download className="h-4 w-4" />
+              </Button>
             </div>
             <div className="mx-3 h-5 w-px bg-gray-300" />
             <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
@@ -722,19 +705,6 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Label htmlFor="show-typography" className="cursor-pointer text-xs text-gray-600">Typo</Label>
               <Switch id="show-typography" checked={showTypography} onCheckedChange={setShowTypography} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-gray-600">Units</Label>
-              <Select value={displayUnit} onValueChange={(v: "pt" | "mm" | "px") => setDisplayUnit(v)}>
-                <SelectTrigger className="w-[70px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mm">mm</SelectItem>
-                  <SelectItem value="pt">pt</SelectItem>
-                  <SelectItem value="px">px</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
@@ -770,7 +740,7 @@ export default function Home() {
                 onValueChange={(value) => {
                   setExportPaperSizeDraft(value)
                   const dims = getOrientedDimensions(value)
-                  setExportWidthDraft(dims.width.toFixed(3))
+                  setExportWidthDraft(formatValue(dims.width, displayUnit))
                 }}
               >
                 <SelectTrigger>
@@ -786,7 +756,30 @@ export default function Home() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Width (pt)</Label>
+              <Label>Units</Label>
+              <Select
+                value={displayUnit}
+                onValueChange={(nextUnit: "pt" | "mm" | "px") => {
+                  const currentNumeric = Number(exportWidthDraft)
+                  const currentWidthPt = Number.isFinite(currentNumeric) && currentNumeric > 0
+                    ? toPt(currentNumeric, displayUnit)
+                    : getOrientedDimensions(exportPaperSizeDraft).width
+                  setDisplayUnit(nextUnit)
+                  setExportWidthDraft(formatValue(currentWidthPt, nextUnit))
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mm">mm</SelectItem>
+                  <SelectItem value="pt">pt</SelectItem>
+                  <SelectItem value="px">px</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Width ({displayUnit})</Label>
               <input
                 type="number"
                 min={1}
