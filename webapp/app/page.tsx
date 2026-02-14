@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, FolderOpen, LayoutGrid, Rows3, Save, SquareDashed, Type } from "lucide-react"
+import { Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, SquareDashed, Type, Undo2 } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -62,6 +62,27 @@ const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo"] as const
 type SectionKey = typeof SECTION_KEYS[number]
+type UiSettingsSnapshot = {
+  canvasRatio: CanvasRatioKey
+  exportPaperSize: string
+  orientation: "portrait" | "landscape"
+  rotation: number
+  marginMethod: 1 | 2 | 3
+  gridCols: number
+  gridRows: number
+  baselineMultiple: number
+  gutterMultiple: number
+  typographyScale: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci"
+  customBaseline: number
+  displayUnit: "pt" | "mm" | "px"
+  useCustomMargins: boolean
+  customMarginMultipliers: { top: number; left: number; right: number; bottom: number }
+  showBaselines: boolean
+  showModules: boolean
+  showMargins: boolean
+  showTypography: boolean
+  collapsed: Record<SectionKey, boolean>
+}
 
 export default function Home() {
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -97,8 +118,19 @@ export default function Home() {
   const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState("A4")
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
+  const [undoNonce, setUndoNonce] = useState(0)
+  const [redoNonce, setRedoNonce] = useState(0)
+  const [settingsPast, setSettingsPast] = useState<UiSettingsSnapshot[]>([])
+  const [settingsFuture, setSettingsFuture] = useState<UiSettingsSnapshot[]>([])
+  const [canUndoPreview, setCanUndoPreview] = useState(false)
+  const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true })
+  const uiSnapshotRef = useRef<UiSettingsSnapshot | null>(null)
+  const skipUiHistoryRef = useRef(false)
+  const SETTINGS_HISTORY_LIMIT = 100
   const headerClickTimeoutRef = useRef<number | null>(null)
+  const canUndo = settingsPast.length > 0 || canUndoPreview
+  const canRedo = settingsFuture.length > 0 || canRedoPreview
   const toggle = (key: SectionKey) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
   const toggleAllSections = () => {
     setCollapsed((prev) => {
@@ -129,6 +161,72 @@ export default function Home() {
     toggleAllSections()
   }
 
+  const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ({
+    canvasRatio,
+    exportPaperSize,
+    orientation,
+    rotation,
+    marginMethod,
+    gridCols,
+    gridRows,
+    baselineMultiple,
+    gutterMultiple,
+    typographyScale,
+    customBaseline,
+    displayUnit,
+    useCustomMargins,
+    customMarginMultipliers: { ...customMarginMultipliers },
+    showBaselines,
+    showModules,
+    showMargins,
+    showTypography,
+    collapsed: { ...collapsed },
+  }), [
+    baselineMultiple,
+    canvasRatio,
+    collapsed,
+    customBaseline,
+    customMarginMultipliers,
+    displayUnit,
+    exportPaperSize,
+    gridCols,
+    gridRows,
+    gutterMultiple,
+    marginMethod,
+    orientation,
+    rotation,
+    showBaselines,
+    showMargins,
+    showModules,
+    showTypography,
+    typographyScale,
+    useCustomMargins,
+  ])
+
+  const applyUiSnapshot = useCallback((snapshot: UiSettingsSnapshot) => {
+    skipUiHistoryRef.current = true
+    setCanvasRatio(snapshot.canvasRatio)
+    setExportPaperSize(snapshot.exportPaperSize)
+    setOrientation(snapshot.orientation)
+    setRotation(snapshot.rotation)
+    setMarginMethod(snapshot.marginMethod)
+    setGridCols(snapshot.gridCols)
+    setGridRows(snapshot.gridRows)
+    setBaselineMultiple(snapshot.baselineMultiple)
+    setGutterMultiple(snapshot.gutterMultiple)
+    setTypographyScale(snapshot.typographyScale)
+    setCustomBaseline(snapshot.customBaseline)
+    setDisplayUnit(snapshot.displayUnit)
+    setUseCustomMargins(snapshot.useCustomMargins)
+    setCustomMarginMultipliers({ ...snapshot.customMarginMultipliers })
+    setShowBaselines(snapshot.showBaselines)
+    setShowModules(snapshot.showModules)
+    setShowMargins(snapshot.showMargins)
+    setShowTypography(snapshot.showTypography)
+    setCollapsed({ ...snapshot.collapsed })
+    uiSnapshotRef.current = snapshot
+  }, [])
+
   useEffect(() => {
     return () => {
       if (headerClickTimeoutRef.current !== null) {
@@ -136,6 +234,29 @@ export default function Home() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!uiSnapshotRef.current) {
+      uiSnapshotRef.current = buildUiSnapshot()
+      return
+    }
+    const current = buildUiSnapshot()
+    const previous = uiSnapshotRef.current
+    if (JSON.stringify(current) === JSON.stringify(previous)) return
+
+    if (skipUiHistoryRef.current) {
+      skipUiHistoryRef.current = false
+      uiSnapshotRef.current = current
+      return
+    }
+
+    setSettingsPast((past) => {
+      const next = [...past, previous]
+      return next.length > SETTINGS_HISTORY_LIMIT ? next.slice(next.length - SETTINGS_HISTORY_LIMIT) : next
+    })
+    setSettingsFuture([])
+    uiSnapshotRef.current = current
+  }, [buildUiSnapshot])
 
   const selectedCanvasRatio = useMemo(() => {
     return CANVAS_RATIOS.find((option) => option.key === canvasRatio) ?? CANVAS_RATIOS[0]
@@ -282,6 +403,55 @@ export default function Home() {
     saveJSON(trimmedName)
     setIsSaveDialogOpen(false)
   }
+
+  const undoAny = useCallback(() => {
+    if (settingsPast.length > 0) {
+      const current = buildUiSnapshot()
+      const previous = settingsPast[settingsPast.length - 1]
+      setSettingsPast((past) => past.slice(0, -1))
+      setSettingsFuture((future) => [current, ...future].slice(0, SETTINGS_HISTORY_LIMIT))
+      applyUiSnapshot(previous)
+      return
+    }
+    setUndoNonce((n) => n + 1)
+  }, [applyUiSnapshot, buildUiSnapshot, settingsPast])
+
+  const redoAny = useCallback(() => {
+    if (settingsFuture.length > 0) {
+      const current = buildUiSnapshot()
+      const next = settingsFuture[0]
+      setSettingsFuture((future) => future.slice(1))
+      setSettingsPast((past) => {
+        const withCurrent = [...past, current]
+        return withCurrent.length > SETTINGS_HISTORY_LIMIT ? withCurrent.slice(withCurrent.length - SETTINGS_HISTORY_LIMIT) : withCurrent
+      })
+      applyUiSnapshot(next)
+      return
+    }
+    setRedoNonce((n) => n + 1)
+  }, [applyUiSnapshot, buildUiSnapshot, settingsFuture])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey)) return
+      const key = event.key.toLowerCase()
+      if (key === "z" && !event.shiftKey) {
+        if (settingsPast.length > 0) {
+          event.preventDefault()
+          undoAny()
+        }
+        return
+      }
+      if (key === "y" || (key === "z" && event.shiftKey)) {
+        if (settingsFuture.length > 0) {
+          event.preventDefault()
+          redoAny()
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [redoAny, settingsFuture.length, settingsPast.length, undoAny])
 
   const getOrientedDimensions = useCallback((paperSize: string) => {
     const base = FORMATS_PT[paperSize] ?? FORMATS_PT[previewFormat]
@@ -716,6 +886,37 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            <div className="mx-3 h-5 w-px bg-gray-300" />
+            <div className="flex items-center gap-2">
+              <div className="group relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Undo"
+                  disabled={!canUndo}
+                  onClick={undoAny}
+                >
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                  Undo (Cmd/Ctrl+Z)
+                </div>
+              </div>
+              <div className="group relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Redo"
+                  disabled={!canRedo}
+                  onClick={redoAny}
+                >
+                  <Redo2 className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                  Redo (Cmd/Ctrl+Shift+Z)
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
@@ -791,6 +992,17 @@ export default function Home() {
           initialLayout={loadedPreviewLayout?.layout ?? null}
           initialLayoutKey={loadedPreviewLayout?.key ?? 0}
           rotation={rotation}
+          undoNonce={undoNonce}
+          redoNonce={redoNonce}
+          onHistoryAvailabilityChange={(undoAvailable, redoAvailable) => {
+            setCanUndoPreview(undoAvailable)
+            setCanRedoPreview(redoAvailable)
+          }}
+          onRequestGridRestore={(cols, rows) => {
+            skipUiHistoryRef.current = true
+            setGridCols(cols)
+            setGridRows(rows)
+          }}
           onCanvasReady={(canvas) => {
             previewCanvasRef.current = canvas
           }}

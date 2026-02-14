@@ -1,266 +1,192 @@
 # SETTINGS.md
 
-All configurable parameters of the Swiss Grid Generator with their possible values and defaults.
+Current, implementation-accurate reference for all user-facing options and defaults.
 
-## Font Hierarchy Table
+## Typography System
 
-5-level typography system based on A4 with 12pt baseline grid.
+5-level hierarchy, baseline-aligned.
 
-| Level      | Size  | Leading | Baseline Multiple | Body Lines | Weight  | Alignment |
-|------------|-------|---------|-------------------|------------|---------|-----------|
-| `display`  | 64pt  | 72pt    | 6×                | 6.0        | Bold    | Left      |
-| `headline` | 30pt  | 36pt    | 3×                | 3.0        | Bold    | Left      |
-| `subhead`  | 20pt  | 24pt    | 2×                | 2.0        | Regular | Left      |
-| `body`     | 10pt  | 12pt    | 1×                | 1.0        | Regular | Left      |
-| `caption`  | 7pt   | 12pt    | 1×                | 1.0        | Regular | Left      |
+| Level | A4 Size | A4 Leading | Baseline Multiple | Weight |
+|---|---:|---:|---:|---|
+| `display` | 64pt | 72pt | 6x | Bold |
+| `headline` | 30pt | 36pt | 3x | Bold |
+| `subhead` | 20pt | 24pt | 2x | Regular |
+| `body` | 10pt | 12pt | 1x | Regular |
+| `caption` | 7pt | 12pt | 1x | Regular |
 
-Font sizes and leading scale automatically by the baseline grid (no separate format factor).
+### Typography Scale Presets
 
-## Font Hierarchie Method
+| Value | Label |
+|---|---|
+| `swiss` | Swiss (Hand-tuned) |
+| `golden` | Golden Ratio (phi) |
+| `fibonacci` | Fibonacci (8, 13, 21, 34, 55) |
+| `fourth` | Perfect Fourth (4:3) |
+| `fifth` | Perfect Fifth (3:2) |
 
-Selects the ratio set used for the 5-level hierarchy (Swiss is default).
+Default: `swiss`
 
-| Value | Label | Notes |
-|-------|-------|-------|
-| `swiss` | Swiss (Hand-tuned) | Original Müller-Brockmann inspired sizes |
-| `golden` | Golden Ratio (φ) | Body anchored at 10pt, ratio φ across steps |
-| `fibonacci` | Fibonacci (8, 13, 21, 34, 55) | A4 sizes derived from the Fibonacci sequence |
-| `fourth` | Perfect Fourth (4:3 ♪) | Musical ratio 4:3 |
-| `fifth` | Perfect Fifth (3:2 ♪) | Musical ratio 3:2 |
+## Settings Panel (Left)
 
-Compact formulas (A4 pt sizes, divide by 12 for ratios):
+### I. Canvas Ratio
 
-| Method | A4 Sizes (pt) (Caption → Display) |
-|--------|---------------|
-| Swiss | 7, 10, 20, 30, 64 |
-| Golden Ratio (φ) | 10/φ, 10, 10φ, 10φ^2, 10φ^4 |
-| Perfect Fourth (P4=4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6 |
-| Perfect Fifth (P5=3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4 |
-| Fibonacci | 8, 13, 21, 34, 55 |
+#### Ratio options
 
-## Format & Layout
+| Label | Ratio | Decimal |
+|---|---|---:|
+| `DIN` | 1:sqrt(2) | 1.414 |
+| `ANSI` | 1:1.294 | 1.294 |
+| `Balanced` | 3:4 | 1.333 |
+| `Photo` | 2:3 | 1.500 |
+| `Screen` | 16:9 | 1.778 |
+| `Square` | 1:1 | 1.000 |
+| `Editorial` | 4:5 | 1.250 |
+| `Wide Impact` | 2:1 | 2.000 |
 
-### Page Format
+#### Orientation
 
-| Value | Width (pt) | Height (pt) |
-|-------|------------|-------------|
-| A6    | 297.638    | 419.528     |
-| A5    | 419.528    | 595.276     |
-| **A4**| **595.276**| **841.890** |
-| A3    | 841.890    | 1190.551    |
-| A2    | 1190.551   | 1683.780    |
-| A1    | 1683.780   | 2383.937    |
-| A0    | 2383.937   | 3370.394    |
+- `portrait` (default)
+- `landscape`
 
-**Default:** A4
+#### Rotation
 
-### Orientation
+- min: `-80`
+- max: `80`
+- step: `1`
+- default: `0`
 
-| Value       | Description                |
-|-------------|----------------------------|
-| **portrait**| Height > Width (default)   |
-| landscape   | Width > Height             |
+### II. Baseline Grid
 
-**Default:** portrait
+- Grid unit options: `6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72`
+- Default baseline in UI: **A4 baseline (12pt)**
+- Dynamic max baseline protection remains active (ensures usable line count)
 
-### Rotation
+### III. Margins
 
-Preview-only rotation of the page.
+#### Margin method (when Custom Margins is off)
 
-| Parameter | Value |
-|-----------|-------|
-| Min       | -80°  |
-| Max       | 80°   |
-| Step      | 1°    |
-| **Default** | **0°** |
+| ID | Label | Top | Left | Right | Bottom |
+|---:|---|---:|---:|---:|---:|
+| `1` | Progressive (1:2:2:3) | 1x | 2x | 2x | 3x |
+| `2` | Van de Graaf (2:3:4:6) | 2x | 3x | 4x | 6x |
+| `3` | Baseline (1:1:1:1) | 1x | 1x | 1x | 1x |
 
-## Baseline Grid
+#### Baseline Multiple (Margins)
 
-### Custom Baseline
+- min: `0.5`
+- max: `7.0`
+- step: `0.5`
+- default: `1.0`
 
-Toggle to override auto-calculated baseline with a manual value.
+#### Custom Margins
 
-**Default:** Off (auto)
+- toggle: on/off
+- per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
 
-When auto, each format uses a preset baseline:
+### IV. Gutter
 
-| Format | Baseline (pt) |
-|--------|---------------|
-| A0     | 18.0          |
-| A1     | 16.0          |
-| A2     | 14.0          |
-| A3     | 13.0          |
-| A4     | 12.0          |
-| A5     | 10.0          |
-| A6     | 9.0           |
+- Columns (`gridCols`): min `1`, max `13`, step `1`, default `4`
+- Rows (`gridRows`): min `1`, max `13`, step `1`, default `9`
+- Gutter multiple: min `0.5`, max `4.0`, step `0.5`, default `1.0`
 
-### Grid Unit (Custom Baseline enabled)
+### V. Typo
 
-Available values: 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72 pt
+- Select typography scale preset (see Typography Scale Presets).
 
-Values are filtered to only show options that fit the current format and grid configuration.
+## Preview Header
 
-**Default:** Format-specific baseline (e.g. 12 pt for A4)
+### File Actions (icon buttons)
 
-## Margins
+- `Load` (folder icon): load layout JSON
+- `Save` (save icon): opens Save JSON popup
+- `Export PDF` (download icon): opens Export PDF popup
 
-### Custom Margins
+### Undo / Redo (icon buttons)
 
-Toggle to override margin method with individual per-side multipliers.
+- `Undo` and `Redo` live in header
+- keyboard:
+  - `Cmd/Ctrl+Z` undo
+  - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` redo
 
-**Default:** Off
+### Display Options (icon toggles)
 
-### Margin Method (Custom Margins off)
+- Baselines
+- Margins
+- Gutter/modules
+- Typo
 
-| Value | Label                   | Top   | Left  | Right | Bottom |
-|-------|-------------------------|-------|-------|-------|--------|
-| **1** | **Progressive (1:2:2:3)** | 1× BL | 2× BL | 2× BL | 3× BL |
-| 2     | Van de Graaf (2:3:4:6)  | 2× BL | 3× BL | 4× BL | 6× BL |
-| 3     | Baseline (1:1:1:1)      | 1× BL | 1× BL | 1× BL | 1× BL |
+All header icons use styled rollover help tooltips.
 
-BL = baseline unit × baseline multiple
+## Popups
 
-**Default:** 1 (Progressive)
+### Save JSON popup
 
-### Baseline Multiple (Margins)
+- Filename input
+- Confirm/Cancel
 
-Scales all margin ratios.
+### Export PDF popup
 
-| Parameter | Value           |
-|-----------|-----------------|
-| Min       | 0.5             |
-| Max       | 7.0             |
-| Step      | 0.5             |
-| **Default** | **1.0**       |
+- Paper Size dropdown (filtered by selected ratio family)
+- Units dropdown: `pt`, `mm`, `px`
+- Width input in selected unit
+- Height is derived automatically from aspect ratio
+- Filename input
+- Confirm/Cancel
 
-Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0
+## Paper Size Sets
 
-### Custom Margin Multipliers (Custom Margins on)
+### DIN ratio family
 
-Per-side baseline multipliers for top, left, right, bottom.
+- A6, A5, A4, A3, A2, A1, A0
+- B6, B5, B4, B3, B2, B1, B0
 
-| Parameter | Value           |
-|-----------|-----------------|
-| Min       | 1               |
-| Max       | 9               |
-| Step      | 1               |
+### ANSI ratio family
 
-Initial values when enabled are derived from the current margin method.
+- LETTER, LEGAL, ANSI_B, ANSI_C, ANSI_D, ANSI_E
 
-## Gutter
+### Single-size ratio families
 
-### Columns
+- BALANCED_3_4
+- PHOTO_2_3
+- SCREEN_16_9
+- SQUARE_1_1
+- EDITORIAL_4_5
+- WIDE_2_1
 
-| Parameter | Value           |
-|-----------|-----------------|
-| Min       | 1               |
-| Max       | 13              |
-| Step      | 1               |
-| **Default** | **4**         |
+## Text Editing + Placement
 
-### Rows
+- Double-click text block to open editor
+- Drag to move (snaps to module columns + baseline rows)
+- Hover shows style/span/alignment tooltip
 
-| Parameter | Value           |
-|-----------|-----------------|
-| Min       | 1               |
-| Max       | 13              |
-| Step      | 1               |
-| **Default** | **9**         |
+Editor controls:
+- style
+- span (1..gridCols)
+- align left/right
+- Save
+- Delete paragraph (custom blocks)
 
-### Baseline Multiple (Gutter)
+## Grid Change Reflow Logic
 
-Scales gutter size (horizontal and vertical gutters).
+When structural grid changes would force relocation:
 
-| Parameter | Value           |
-|-----------|-----------------|
-| Min       | 0.5             |
-| Max       | 4.0             |
-| Step      | 0.5             |
-| **Default** | **1.0**       |
+1. Keep row if possible; clamp col for span.
+2. Resolve collisions row-major (same row then following rows).
+3. If no module slot exists, fallback to baseline stack placement.
+4. If `gridRows === 1`, all blocks use baseline stack placement.
+5. Placement priority:
+   - display, headline, subhead, body, caption, then custom paragraphs.
 
-Possible values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0
+UX safeguards:
+- Pre-apply warning dialog before rearrange.
+- Cancel restores previous grid values.
+- After apply: toast with one-click Undo.
 
-## Display Options
+## Export Format Notes
 
-### Layer Toggles
+- JSON: full UI + preview layout state.
+- PDF: current implementation places rendered preview image into a PDF page (not pure vector primitives yet).
 
-| Toggle     | Description              | Default |
-|------------|--------------------------|---------|
-| Baselines  | Baseline grid lines      | On      |
-| Margins    | Margin area highlight    | On      |
-| Gutter     | Module outlines          | On      |
-| Typo       | Typography preview       | On      |
+## JSON UI Fields (current)
 
-### Display Unit
-
-| Value  | Description          |
-|--------|----------------------|
-| mm     | Millimeters          |
-| **pt** | **Points (default)** |
-| px     | Pixels (at 96 dpi)   |
-
-**Default:** pt
-
-### Zoom
-
-| Value        | Description                                    |
-|--------------|------------------------------------------------|
-| original     | Scale capped at 100%                           |
-| **fit**      | **Scale to fill available preview area (default)** |
-
-**Default:** fit
-
-### Popup Text Editing
-
-Double-click any preview text block to open the popup editor.
-
-Header controls:
-- Font hierarchy selector (`display`, `headline`, `subhead`, `body`, `caption`) with current `pt` size shown for each option
-- Horizontal span selector (`1..gridCols` columns used by the paragraph)
-- Text alignment selector (`left` or `right`)
-- `Save` button (disabled until text/style/span/alignment changes)
-
-Keyboard behavior:
-- `Esc`: Close and discard unsaved edits
-- `Cmd/Ctrl + Enter`: Save and close
-
-Pointer behavior:
-- Click outside popup: Close and discard unsaved edits
-- Hover over text: Show style/size/span/alignment tooltip and interaction hints
-
-### Drag & Snap
-
-- Dragging is enabled on typography blocks.
-- Horizontal movement snaps to module columns.
-- Vertical movement snaps to baseline rows (not only module rows).
-- Interactive pick area extends above text to include ascenders/upper baseline zone for easier selection.
-
-### Typography Preview Layout
-
-- If `gridRows === 1`, text flows sequentially from the top with baseline spacing.
-- If `gridRows` is 2–4, `display` starts at the top of row 1 and the rest starts in row 2.
-- If `gridRows >= 5`, each paragraph starts at the top of the next available module row (dynamic, based on wrapped height).
-- `subhead` and `body` always wrap to available width. If `gridCols >= 2`, they wrap to half-width columns.
-- `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
-- `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.
-
-## Layout Files
-
-Available actions:
-
-| Action | Description |
-|--------|-------------|
-| Load | Import previously saved JSON layout |
-| Save | Export JSON layout (filename can be edited before download) |
-| Export PDF | Visual grid reference with modules and baselines |
-
-## Export Formats
-
-Two file formats available:
-
-| Format | Description                                         |
-|--------|-----------------------------------------------------|
-| PDF    | Visual grid reference with modules and baselines    |
-| JSON   | Complete grid and editable preview layout state     |
-
-Filename pattern: `{format}_{orientation}_{cols}x{rows}_method{id}_{baseline}pt_grid.{ext}`
+`canvasRatio`, `format`, `exportPaperSize`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`

@@ -202,8 +202,12 @@ interface GridPreviewProps {
   initialLayout?: PreviewLayoutState | null
   initialLayoutKey?: number
   rotation?: number
+  undoNonce?: number
+  redoNonce?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
+  onRequestGridRestore?: (cols: number, rows: number) => void
+  onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
 }
 
 export interface PreviewLayoutState {
@@ -225,14 +229,19 @@ export function GridPreview({
   initialLayout = null,
   initialLayoutKey = 0,
   rotation = 0,
+  undoNonce = 0,
+  redoNonce = 0,
   onCanvasReady,
   onLayoutChange,
+  onRequestGridRestore,
+  onHistoryAvailabilityChange,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const dragEndedAtRef = useRef<number>(0)
+  const lastAppliedLayoutKeyRef = useRef(0)
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -250,6 +259,16 @@ export function GridPreview({
   const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockId, TextAlignMode>>>({})
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
+  const [historyPast, setHistoryPast] = useState<PreviewLayoutState[]>([])
+  const [historyFuture, setHistoryFuture] = useState<PreviewLayoutState[]>([])
+  const [reflowToast, setReflowToast] = useState<{ movedCount: number } | null>(null)
+  const [pendingReflow, setPendingReflow] = useState<{
+    previousGrid: { cols: number; rows: number }
+    nextGrid: { cols: number; rows: number }
+    movedCount: number
+    resolvedSpans: Record<BlockId, number>
+    nextPositions: Partial<Record<BlockId, ModulePosition>>
+  } | null>(null)
   const [editorState, setEditorState] = useState<{
     target: BlockId
     draftText: string
@@ -258,11 +277,123 @@ export function GridPreview({
     draftAlign: TextAlignMode
     draftTextEdited: boolean
   } | null>(null)
+  const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
+  const lastUndoNonceRef = useRef(undoNonce)
+  const lastRedoNonceRef = useRef(redoNonce)
+  const HISTORY_LIMIT = 50
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
     return Math.max(1, Math.min(result.settings.gridCols, raw))
   }, [blockColumnSpans, result.settings.gridCols])
+
+  const buildSnapshot = useCallback((): PreviewLayoutState => {
+    const resolvedSpans = blockOrder.reduce((acc, key) => {
+      const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
+      acc[key] = Math.max(1, Math.min(result.settings.gridCols, raw))
+      return acc
+    }, {} as Record<BlockId, number>)
+    const resolvedAlignments = blockOrder.reduce((acc, key) => {
+      acc[key] = blockTextAlignments[key] ?? "left"
+      return acc
+    }, {} as Record<BlockId, TextAlignMode>)
+    return {
+      blockOrder: [...blockOrder],
+      textContent: { ...textContent },
+      blockTextEdited: { ...blockTextEdited },
+      styleAssignments: { ...styleAssignments },
+      blockColumnSpans: resolvedSpans,
+      blockTextAlignments: resolvedAlignments,
+      blockModulePositions: { ...blockModulePositions },
+    }
+  }, [blockColumnSpans, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, result.settings.gridCols, styleAssignments, textContent])
+
+  const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    setBlockOrder([...snapshot.blockOrder])
+    setTextContent({ ...snapshot.textContent })
+    setBlockTextEdited({ ...snapshot.blockTextEdited })
+    setStyleAssignments({ ...snapshot.styleAssignments })
+    setBlockColumnSpans({ ...snapshot.blockColumnSpans })
+    setBlockTextAlignments({ ...snapshot.blockTextAlignments })
+    setBlockModulePositions({ ...snapshot.blockModulePositions })
+  }, [])
+
+  const pushHistory = useCallback((snapshot: PreviewLayoutState) => {
+    setHistoryPast((prev) => {
+      const next = [...prev, snapshot]
+      return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next
+    })
+    setHistoryFuture([])
+  }, [])
+
+  const recordHistoryBeforeChange = useCallback(() => {
+    pushHistory(buildSnapshot())
+    setPendingReflow(null)
+    setReflowToast(null)
+  }, [buildSnapshot, pushHistory])
+
+  const undo = useCallback(() => {
+    setHistoryPast((prev) => {
+      if (!prev.length) return prev
+      const current = buildSnapshot()
+      const nextPast = prev.slice(0, -1)
+      const previous = prev[prev.length - 1]
+      setHistoryFuture((future) => [current, ...future].slice(0, HISTORY_LIMIT))
+      applySnapshot(previous)
+      setPendingReflow(null)
+      setReflowToast(null)
+      return nextPast
+    })
+  }, [applySnapshot, buildSnapshot])
+
+  const redo = useCallback(() => {
+    setHistoryFuture((future) => {
+      if (!future.length) return future
+      const current = buildSnapshot()
+      const [nextSnapshot, ...rest] = future
+      setHistoryPast((prev) => {
+        const next = [...prev, current]
+        return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next
+      })
+      applySnapshot(nextSnapshot)
+      setPendingReflow(null)
+      setReflowToast(null)
+      return rest
+    })
+  }, [applySnapshot, buildSnapshot])
+
+  const applyPendingReflow = useCallback(() => {
+    if (!pendingReflow) return
+    pushHistory(buildSnapshot())
+    setBlockColumnSpans((prev) => ({ ...prev, ...pendingReflow.resolvedSpans }))
+    setBlockModulePositions((prev) => ({ ...prev, ...pendingReflow.nextPositions }))
+    previousGridRef.current = pendingReflow.nextGrid
+    setReflowToast({ movedCount: pendingReflow.movedCount })
+    setPendingReflow(null)
+  }, [buildSnapshot, pendingReflow, pushHistory])
+
+  const cancelPendingReflow = useCallback(() => {
+    if (!pendingReflow) return
+    previousGridRef.current = pendingReflow.previousGrid
+    setPendingReflow(null)
+    onRequestGridRestore?.(pendingReflow.previousGrid.cols, pendingReflow.previousGrid.rows)
+  }, [onRequestGridRestore, pendingReflow])
+
+  useEffect(() => {
+    onHistoryAvailabilityChange?.(historyPast.length > 0, historyFuture.length > 0)
+  }, [historyFuture.length, historyPast.length, onHistoryAvailabilityChange])
+
+  useEffect(() => {
+    if (undoNonce === lastUndoNonceRef.current) return
+    lastUndoNonceRef.current = undoNonce
+    undo()
+  }, [undo, undoNonce])
+
+  useEffect(() => {
+    if (redoNonce === lastRedoNonceRef.current) return
+    lastRedoNonceRef.current = redoNonce
+    redo()
+  }, [redo, redoNonce])
 
   const getGridMetrics = useCallback(() => {
     const { margins, gridMarginHorizontal, gridMarginVertical, gridUnit } = result.grid
@@ -325,8 +456,109 @@ export function GridPreview({
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
+  const computeReflowPlan = useCallback((gridCols: number, gridRows: number) => {
+    const maxBaselineRow = Math.max(
+      0,
+      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit)
+    )
+    const resolvedSpans = blockOrder.reduce((acc, key) => {
+      const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
+      acc[key] = Math.max(1, Math.min(gridCols, Math.round(raw)))
+      return acc
+    }, {} as Record<BlockId, number>)
+
+    const priority = new Map<BaseBlockId, number>([
+      ["display", 0],
+      ["headline", 1],
+      ["subhead", 2],
+      ["body", 3],
+      ["caption", 4],
+    ])
+    const sortedKeys = [...blockOrder].sort((a, b) => {
+      const pa = isBaseBlockId(a) ? (priority.get(a) ?? 100) : 100
+      const pb = isBaseBlockId(b) ? (priority.get(b) ?? 100) : 100
+      if (pa !== pb) return pa - pb
+      return blockOrder.indexOf(a) - blockOrder.indexOf(b)
+    })
+
+    const occupied = new Set<string>()
+    const markOccupied = (row: number, col: number, span: number) => {
+      for (let c = col; c < col + span; c += 1) occupied.add(`${row}:${c}`)
+    }
+    const canPlace = (row: number, col: number, span: number) => {
+      if (col < 0 || row < 0) return false
+      if (col + span > gridCols) return false
+      for (let c = col; c < col + span; c += 1) {
+        if (occupied.has(`${row}:${c}`)) return false
+      }
+      return true
+    }
+
+    const nextPositions: Partial<Record<BlockId, ModulePosition>> = {}
+    let movedCount = 0
+    let maxPlacedRow = 0
+
+    if (gridRows === 1) {
+      let rowCursor = 1
+      for (const key of sortedKeys) {
+        const next = { col: 0, row: rowCursor }
+        const current = blockModulePositions[key]
+        if (!current || current.col !== next.col || current.row !== next.row) movedCount += 1
+        nextPositions[key] = next
+        markOccupied(next.row, next.col, resolvedSpans[key])
+        maxPlacedRow = Math.max(maxPlacedRow, next.row)
+        rowCursor += 2
+      }
+      return { movedCount, resolvedSpans, nextPositions }
+    }
+
+    for (const key of sortedKeys) {
+      const span = resolvedSpans[key]
+      const maxCol = Math.max(0, gridCols - span)
+      const current = blockModulePositions[key]
+      const desired: ModulePosition = current
+        ? {
+            col: Math.max(0, Math.min(maxCol, Math.round(current.col))),
+            row: Math.max(0, Math.min(maxBaselineRow, Math.round(current.row))),
+          }
+        : { col: 0, row: 1 }
+
+      let placed: ModulePosition | null = null
+      if (canPlace(desired.row, desired.col, span)) {
+        placed = desired
+      } else {
+        for (let row = desired.row; row <= maxBaselineRow && !placed; row += 1) {
+          const startCol = row === desired.row ? Math.min(maxCol, desired.col + 1) : 0
+          for (let col = startCol; col <= maxCol; col += 1) {
+            if (canPlace(row, col, span)) {
+              placed = { col, row }
+              break
+            }
+          }
+        }
+      }
+
+      if (!placed) {
+        let stackRow = Math.max(maxPlacedRow + 1, 1)
+        while (!canPlace(stackRow, 0, span)) stackRow += 1
+        placed = { col: 0, row: stackRow }
+      }
+
+      if (!current || current.col !== placed.col || current.row !== placed.row) movedCount += 1
+      nextPositions[key] = placed
+      markOccupied(placed.row, placed.col, span)
+      maxPlacedRow = Math.max(maxPlacedRow, placed.row)
+    }
+
+    return { movedCount, resolvedSpans, nextPositions }
+  }, [blockColumnSpans, blockModulePositions, blockOrder, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.pageSizePt.height])
+
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
+    if (lastAppliedLayoutKeyRef.current !== 0 && lastAppliedLayoutKeyRef.current !== initialLayoutKey) {
+      pushHistory(buildSnapshot())
+    }
+    lastAppliedLayoutKeyRef.current = initialLayoutKey
 
     const normalizedKeys = (Array.isArray(initialLayout.blockOrder) ? initialLayout.blockOrder : [])
       .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
@@ -390,7 +622,7 @@ export function GridPreview({
     setDragState(null)
     setHoverState(null)
     setEditorState(null)
-  }, [getGridMetrics, initialLayout, initialLayoutKey, result.settings.gridCols, result.typography.styles])
+  }, [buildSnapshot, getGridMetrics, initialLayout, initialLayoutKey, pushHistory, result.settings.gridCols, result.typography.styles])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -707,46 +939,51 @@ export function GridPreview({
   }, [])
 
   useEffect(() => {
-    const { gridCols } = result.settings
-    const maxBaselineRow = Math.max(
-      0,
-      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit)
-    )
-    setBlockColumnSpans((prev) => {
-      let changed = false
-      const next: Partial<Record<BlockId, number>> = { ...prev }
-      for (const key of blockOrder) {
-        const value = prev[key]
-        if (value == null) continue
-        const clamped = Math.max(1, Math.min(gridCols, value))
-        if (clamped !== value) {
-          next[key] = clamped
-          changed = true
-        }
-      }
-      return changed ? next : prev
+    const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
+    if (!previousGridRef.current) {
+      previousGridRef.current = currentGrid
+      return
+    }
+    if (pendingReflow) return
+
+    const previousGrid = previousGridRef.current
+    const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
+    if (!gridChanged) return
+
+    const plan = computeReflowPlan(currentGrid.cols, currentGrid.rows)
+    const spanChanged = blockOrder.some((key) => {
+      const currentSpan = blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols)
+      return plan.resolvedSpans[key] !== currentSpan
+    })
+    const positionChanged = blockOrder.some((key) => {
+      const a = blockModulePositions[key]
+      const b = plan.nextPositions[key]
+      if (!a && !b) return false
+      if (!a || !b) return true
+      return a.col !== b.col || a.row !== b.row
     })
 
-    setBlockModulePositions((prev) => {
-      let changed = false
-      const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
-      for (const key of Object.keys(prev) as BlockId[]) {
-        const pos = prev[key]
-        if (!pos) continue
-        const span = Math.max(1, Math.min(gridCols, blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)))
-        const maxCol = Math.max(0, gridCols - span)
-        const clamped = {
-          col: Math.max(0, Math.min(maxCol, pos.col)),
-          row: Math.max(0, Math.min(maxBaselineRow, pos.row)),
-        }
-        if (clamped.col !== pos.col || clamped.row !== pos.row) {
-          next[key] = clamped
-          changed = true
-        }
-      }
-      return changed ? next : prev
-    })
-  }, [blockColumnSpans, blockOrder, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.pageSizePt.height, result.settings])
+    if (!spanChanged && !positionChanged) {
+      previousGridRef.current = currentGrid
+      return
+    }
+
+    if (plan.movedCount > 0) {
+      setPendingReflow({
+        previousGrid,
+        nextGrid: currentGrid,
+        movedCount: plan.movedCount,
+        resolvedSpans: plan.resolvedSpans,
+        nextPositions: plan.nextPositions,
+      })
+      return
+    }
+
+    pushHistory(buildSnapshot())
+    setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
+    setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
+    previousGridRef.current = currentGrid
+  }, [blockColumnSpans, blockModulePositions, blockOrder, buildSnapshot, computeReflowPlan, pendingReflow, pushHistory, result.settings.gridCols, result.settings.gridRows])
 
   useEffect(() => {
     if (!editorState) return
@@ -766,6 +1003,25 @@ export function GridPreview({
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [editorState])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return
+      if (!(event.metaKey || event.ctrlKey)) return
+      if (editorState) return
+      if (event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault()
+        undo()
+        return
+      }
+      if ((event.key.toLowerCase() === "y") || (event.key.toLowerCase() === "z" && event.shiftKey)) {
+        event.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [editorState, redo, undo])
 
   useEffect(() => {
     if (!dragState) return
@@ -788,6 +1044,7 @@ export function GridPreview({
       setDragState((prev) => {
         if (!prev) return null
         if (prev.moved) {
+          recordHistoryBeforeChange()
           setBlockModulePositions((current) => ({
             ...current,
             [prev.key]: prev.preview,
@@ -804,7 +1061,7 @@ export function GridPreview({
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [dragState, snapToModule, toPagePoint])
+  }, [dragState, recordHistoryBeforeChange, snapToModule, toPagePoint])
 
   const closeEditor = useCallback(() => {
     setEditorState(null)
@@ -812,6 +1069,7 @@ export function GridPreview({
 
   const saveEditor = useCallback(() => {
     if (!editorState) return
+    recordHistoryBeforeChange()
 
     setTextContent((prev) => ({
       ...prev,
@@ -844,10 +1102,11 @@ export function GridPreview({
       }
     })
     setEditorState(null)
-  }, [clampModulePosition, editorState])
+  }, [clampModulePosition, editorState, recordHistoryBeforeChange])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
+    recordHistoryBeforeChange()
 
     const target = editorState.target
     if (isBaseBlockId(target)) {
@@ -889,7 +1148,7 @@ export function GridPreview({
       return next
     })
     setEditorState(null)
-  }, [editorState])
+  }, [editorState, recordHistoryBeforeChange])
 
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState) return
@@ -991,6 +1250,7 @@ export function GridPreview({
     }
 
     const newKey = getNextCustomBlockId()
+    recordHistoryBeforeChange()
     const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
     setBlockOrder((prev) => [...prev, newKey])
     setTextContent((prev) => ({
@@ -1026,7 +1286,7 @@ export function GridPreview({
       draftAlign: "left",
       draftTextEdited: false,
     })
-  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
 
   const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
@@ -1090,6 +1350,40 @@ export function GridPreview({
           </div>
         ) : null}
       </div>
+
+      {pendingReflow ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-sm rounded-md border border-gray-300 bg-white p-4 shadow-xl">
+            <div className="text-sm font-semibold text-gray-900">Rearrange Layout?</div>
+            <div className="mt-2 text-xs text-gray-600">
+              This grid change will rearrange {pendingReflow.movedCount} block{pendingReflow.movedCount === 1 ? "" : "s"}.
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={cancelPendingReflow}>Cancel</Button>
+              <Button size="sm" onClick={applyPendingReflow}>Apply</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {reflowToast ? (
+        <div className="absolute bottom-3 right-3 z-30 rounded-md border border-gray-300 bg-white px-3 py-2 shadow-lg">
+          <div className="text-xs text-gray-700">Layout rearranged.</div>
+          <div className="mt-1 flex items-center justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                undo()
+                setReflowToast(null)
+              }}
+            >
+              Undo
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {editorState ? (
         <div
