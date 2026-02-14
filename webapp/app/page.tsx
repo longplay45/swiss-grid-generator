@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { GridResult, generateSwissGrid, FORMATS_PT, FORMAT_BASELINES, getMaxBaseline, TYPOGRAPHY_SCALE_LABELS } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import type { PreviewLayoutState } from "@/components/grid-preview"
@@ -31,6 +31,8 @@ function formatValue(value: number, unit: "pt" | "mm" | "px"): string {
 }
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
+const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "export"] as const
+type SectionKey = typeof SECTION_KEYS[number]
 
 export default function Home() {
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -59,8 +61,45 @@ export default function Home() {
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
   const [useCustomMargins, setUseCustomMargins] = useState(false)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
-  const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true, export: true })
+  const headerClickTimeoutRef = useRef<number | null>(null)
+  const toggle = (key: SectionKey) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  const toggleAllSections = () => {
+    setCollapsed((prev) => {
+      const allClosed = SECTION_KEYS.every((key) => prev[key])
+      const nextValue = allClosed ? false : true
+      return SECTION_KEYS.reduce((acc, key) => {
+        acc[key] = nextValue
+        return acc
+      }, {} as Record<SectionKey, boolean>)
+    })
+  }
+  const handleSectionHeaderClick = (key: SectionKey) => (event: React.MouseEvent) => {
+    if (event.detail > 1) return
+    if (headerClickTimeoutRef.current !== null) {
+      window.clearTimeout(headerClickTimeoutRef.current)
+    }
+    headerClickTimeoutRef.current = window.setTimeout(() => {
+      toggle(key)
+      headerClickTimeoutRef.current = null
+    }, 180)
+  }
+  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    if (headerClickTimeoutRef.current !== null) {
+      window.clearTimeout(headerClickTimeoutRef.current)
+      headerClickTimeoutRef.current = null
+    }
+    toggleAllSections()
+  }
+
+  useEffect(() => {
+    return () => {
+      if (headerClickTimeoutRef.current !== null) {
+        window.clearTimeout(headerClickTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const gridUnit = useMemo(() => {
     return customBaseline ?? FORMAT_BASELINES[format] ?? 12.0
@@ -206,7 +245,7 @@ export default function Home() {
         if (typeof ui.showMargins === "boolean") setShowMargins(ui.showMargins)
         if (typeof ui.showTypography === "boolean") setShowTypography(ui.showTypography)
         if (ui.collapsed && typeof ui.collapsed === "object") {
-          const loadedCollapsed: Record<string, boolean> = {}
+          const loadedCollapsed: Partial<Record<SectionKey, boolean>> = {}
           if (typeof ui.collapsed.format === "boolean") loadedCollapsed.format = ui.collapsed.format
           if (typeof ui.collapsed.baseline === "boolean") loadedCollapsed.baseline = ui.collapsed.baseline
           if (typeof ui.collapsed.margins === "boolean") loadedCollapsed.margins = ui.collapsed.margins
@@ -256,7 +295,7 @@ export default function Home() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Format Settings */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("format")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("format")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               I. Format & Layout
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.format ? "-rotate-90" : ""}`} />
@@ -306,7 +345,7 @@ export default function Home() {
 
         {/* Baseline Grid Settings */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("baseline")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("baseline")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               II. Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.baseline ? "-rotate-90" : ""}`} />
@@ -335,7 +374,7 @@ export default function Home() {
 
         {/* Margins */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("margins")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("margins")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               III. Margins
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.margins ? "-rotate-90" : ""}`} />
@@ -422,7 +461,7 @@ export default function Home() {
 
         {/* Gutter */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("gutter")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("gutter")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               IV. Gutter
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.gutter ? "-rotate-90" : ""}`} />
@@ -459,7 +498,7 @@ export default function Home() {
 
         {/* Typo */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("typo")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("typo")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               V. Typo
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.typo ? "-rotate-90" : ""}`} />
@@ -485,7 +524,7 @@ export default function Home() {
 
         {/* Export */}
         <Card>
-          <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggle("export")}>
+          <CardHeader className="pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("export")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               VI. Layout Files
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${collapsed.export ? "-rotate-90" : ""}`} />
