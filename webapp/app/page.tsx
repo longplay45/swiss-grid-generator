@@ -11,8 +11,8 @@ import {
   CANVAS_RATIOS,
 } from "@/lib/grid-calculator"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import { GridPreview } from "@/components/grid-preview"
-import type { PreviewLayoutState } from "@/components/grid-preview"
+import { FONT_OPTIONS, GridPreview } from "@/components/grid-preview"
+import type { FontFamily, PreviewLayoutState } from "@/components/grid-preview"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import defaultPreset from "@/public/default_v001.json"
 import { Button } from "@/components/ui/button"
@@ -76,6 +76,12 @@ const DEFAULT_TYPOGRAPHY_SCALE: "swiss" | "golden" | "fourth" | "fifth" | "fibon
 const DEFAULT_DISPLAY_UNIT: "pt" | "mm" | "px" = (
   DEFAULT_UI.displayUnit === "mm" || DEFAULT_UI.displayUnit === "px"
 ) ? DEFAULT_UI.displayUnit : "pt"
+const DEFAULT_BASE_FONT: FontFamily = (() => {
+  const candidate = (DEFAULT_UI as { baseFont?: unknown }).baseFont
+  return typeof candidate === "string" && FONT_OPTIONS.some((option) => option.value === candidate)
+    ? (candidate as FontFamily)
+    : "Inter"
+})()
 
 function ptToMm(pt: number): number {
   return pt * PT_TO_MM
@@ -128,6 +134,7 @@ type UiSettingsSnapshot = {
   baselineMultiple: number
   gutterMultiple: number
   typographyScale: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci"
+  baseFont: FontFamily
   customBaseline: number
   displayUnit: "pt" | "mm" | "px"
   useCustomMargins: boolean
@@ -159,6 +166,7 @@ export default function Home() {
   const [baselineMultiple, setBaselineMultiple] = useState(DEFAULT_UI.baselineMultiple)
   const [gutterMultiple, setGutterMultiple] = useState(DEFAULT_UI.gutterMultiple)
   const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "fibonacci">(DEFAULT_TYPOGRAPHY_SCALE)
+  const [baseFont, setBaseFont] = useState<FontFamily>(DEFAULT_BASE_FONT)
   const [customBaseline, setCustomBaseline] = useState<number>(DEFAULT_UI.customBaseline ?? DEFAULT_A4_BASELINE)
   const [showBaselines, setShowBaselines] = useState(DEFAULT_UI.showBaselines)
   const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
@@ -237,6 +245,7 @@ export default function Home() {
     baselineMultiple,
     gutterMultiple,
     typographyScale,
+    baseFont,
     customBaseline,
     displayUnit,
     useCustomMargins,
@@ -269,6 +278,7 @@ export default function Home() {
     showModules,
     showTypography,
     typographyScale,
+    baseFont,
     useCustomMargins,
   ])
 
@@ -288,6 +298,7 @@ export default function Home() {
     setBaselineMultiple(snapshot.baselineMultiple)
     setGutterMultiple(snapshot.gutterMultiple)
     setTypographyScale(snapshot.typographyScale)
+    setBaseFont(snapshot.baseFont)
     setCustomBaseline(snapshot.customBaseline)
     setDisplayUnit(snapshot.displayUnit)
     setUseCustomMargins(snapshot.useCustomMargins)
@@ -449,6 +460,7 @@ export default function Home() {
         baselineMultiple,
         gutterMultiple,
         typographyScale,
+        baseFont,
         customBaseline,
         displayUnit,
         useCustomMargins,
@@ -723,6 +735,9 @@ export default function Home() {
         if (typeof ui.gutterMultiple === "number") setGutterMultiple(ui.gutterMultiple)
         if (ui.typographyScale === "swiss" || ui.typographyScale === "golden" || ui.typographyScale === "fourth" || ui.typographyScale === "fifth" || ui.typographyScale === "fibonacci") {
           setTypographyScale(ui.typographyScale)
+        }
+        if (typeof ui.baseFont === "string" && FONT_OPTIONS.some((option) => option.value === ui.baseFont)) {
+          setBaseFont(ui.baseFont as FontFamily)
         }
         if (typeof ui.customBaseline === "number") setCustomBaseline(ui.customBaseline)
         if (ui.displayUnit === "pt" || ui.displayUnit === "mm" || ui.displayUnit === "px") setDisplayUnit(ui.displayUnit)
@@ -1009,6 +1024,7 @@ export default function Home() {
           {!collapsed.typo && (
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label>Font Hierarchy</Label>
                 <Select value={typographyScale} onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci") => setTypographyScale(v)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -1016,6 +1032,21 @@ export default function Home() {
                   <SelectContent>
                     {Object.entries(TYPOGRAPHY_SCALE_LABELS).map(([key, label]) => (
                       <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Base Font</Label>
+                <Select value={baseFont} onValueChange={(value) => setBaseFont(value as FontFamily)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1201,6 +1232,7 @@ export default function Home() {
           showModules={showModules}
           showMargins={showMargins}
           showTypography={showTypography}
+          baseFont={baseFont}
           initialLayout={loadedPreviewLayout?.layout ?? null}
           initialLayoutKey={loadedPreviewLayout?.key ?? 0}
           rotation={rotation}

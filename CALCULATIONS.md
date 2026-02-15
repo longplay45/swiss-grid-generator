@@ -16,6 +16,7 @@ All formulas reference `webapp/lib/grid-calculator.ts`.
 8. [Decimal Precision](#decimal-precision)
 9. [Canvas Preview Scale](#canvas-preview-scale)
 10. [Preview Placement + Reflow](#preview-placement--reflow)
+11. [Font Assignment in Preview](#font-assignment-in-preview)
 
 ---
 
@@ -322,6 +323,46 @@ subhead_leading = gridUnit * 2
 headline_leading = gridUnit * 3
 display_leading = gridUnit * 6
 ```
+
+---
+
+## Font Assignment in Preview
+
+Typography size/leading is computed by the style system above. Font family selection for canvas rendering is resolved separately:
+
+```
+effectiveFont(block) = blockFontFamilies[block] ?? baseFont
+```
+
+Where:
+- `baseFont` is selected in `V. Typo` and saved in `uiSettings.baseFont`.
+- `blockFontFamilies` is stored in `previewLayout` as an override map.
+
+### Inheritance Rule
+
+When saving a paragraph edit:
+
+```
+if draftFont === baseFont:
+    remove blockFontFamilies[block]   # paragraph inherits baseFont
+else:
+    blockFontFamilies[block] = draftFont
+```
+
+Changing `baseFont` therefore updates all inherited paragraphs immediately, while explicit per-paragraph overrides remain unchanged.
+
+### Load Normalization Rule
+
+On JSON load, paragraph font overrides are validated against known fonts and normalized:
+
+```
+if font is unknown: discard override
+if override === baseFont: discard override (inherit)
+```
+
+This keeps inheritance stable across save/load and avoids persisting redundant overrides.
+
+Note: this affects only the rendered typography on the preview/export canvas; UI chrome fonts are unchanged.
 
 ---
 

@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -86,7 +86,7 @@ export type FontFamily =
   | "Space Grotesk"
   | "DM Serif Display"
 
-const FONT_OPTIONS: Array<{ value: FontFamily; label: string; category: string }> = [
+export const FONT_OPTIONS: Array<{ value: FontFamily; label: string; category: string }> = [
   // Sans-Serif (Grotesk)
   { value: "Inter", label: "Inter", category: "Sans-Serif" },
   { value: "Work Sans", label: "Work Sans", category: "Sans-Serif" },
@@ -104,6 +104,11 @@ const FONT_OPTIONS: Array<{ value: FontFamily; label: string; category: string }
   { value: "Space Grotesk", label: "Space Grotesk", category: "Display" },
   { value: "DM Serif Display", label: "DM Serif Display", category: "Display" },
 ]
+const FONT_FAMILY_SET = new Set<FontFamily>(FONT_OPTIONS.map((option) => option.value))
+
+function isFontFamily(value: unknown): value is FontFamily {
+  return typeof value === "string" && FONT_FAMILY_SET.has(value as FontFamily)
+}
 
 function getFontFamilyCss(fontFamily: FontFamily): string {
   const fontMap: Record<FontFamily, string> = {
@@ -145,6 +150,28 @@ const REPOSITION_OUTSIDE_GRID_ROW_PENALTY = 600
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
+}
+
+function EditorControlTooltip({
+  label,
+  children,
+  className = "",
+}: {
+  label: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`group relative inline-flex ${className}`.trim()}>
+      {children}
+      <div
+        role="tooltip"
+        className="pointer-events-none absolute -top-8 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-700 opacity-0 shadow-sm transition-all duration-75 group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-within:-translate-y-0.5 group-focus-within:opacity-100"
+      >
+        {label}
+      </div>
+    </div>
+  )
 }
 
 function getDummyTextForStyle(style: TypographyStyleKey): string {
@@ -273,6 +300,7 @@ interface GridPreviewProps {
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
+  baseFont?: FontFamily
 }
 
 export interface PreviewLayoutState {
@@ -280,10 +308,12 @@ export interface PreviewLayoutState {
   textContent: Record<BlockId, string>
   blockTextEdited: Record<BlockId, boolean>
   styleAssignments: Record<BlockId, TypographyStyleKey>
+  blockFontFamilies?: Partial<Record<BlockId, FontFamily>>
   blockColumnSpans: Record<BlockId, number>
   blockRowSpans?: Record<BlockId, number>
   blockTextAlignments: Record<BlockId, TextAlignMode>
   blockTextReflow?: Record<BlockId, boolean>
+  blockSyllableDivision?: Record<BlockId, boolean>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
 }
 
@@ -302,6 +332,7 @@ export function GridPreview({
   onLayoutChange,
   onRequestGridRestore,
   onHistoryAvailabilityChange,
+  baseFont = "Inter",
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -327,6 +358,7 @@ export function GridPreview({
   const [blockRowSpans, setBlockRowSpans] = useState<Partial<Record<BlockId, number>>>({})
   const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockId, TextAlignMode>>>({})
   const [blockTextReflow, setBlockTextReflow] = useState<Partial<Record<BlockId, boolean>>>({})
+  const [blockSyllableDivision, setBlockSyllableDivision] = useState<Partial<Record<BlockId, boolean>>>({})
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [historyPast, setHistoryPast] = useState<PreviewLayoutState[]>([])
@@ -339,12 +371,7 @@ export function GridPreview({
     resolvedSpans: Record<BlockId, number>
     nextPositions: Partial<Record<BlockId, ModulePosition>>
   } | null>(null)
-  const [blockFontFamilies, setBlockFontFamilies] = useState<Record<BlockId, FontFamily>>(() => 
-    BASE_BLOCK_IDS.reduce((acc, key) => {
-      acc[key] = "Inter"
-      return acc
-    }, {} as Record<BlockId, FontFamily>)
-  )
+  const [blockFontFamilies, setBlockFontFamilies] = useState<Partial<Record<BlockId, FontFamily>>>({})
   const [editorState, setEditorState] = useState<{
     target: BlockId
     draftText: string
@@ -354,6 +381,7 @@ export function GridPreview({
     draftRows: number
     draftAlign: TextAlignMode
     draftReflow: boolean
+    draftSyllableDivision: boolean
     draftTextEdited: boolean
   } | null>(null)
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
@@ -385,9 +413,14 @@ export function GridPreview({
     return blockTextReflow[key] ?? false
   }, [blockTextReflow])
 
+  const isSyllableDivisionEnabled = useCallback((key: BlockId) => {
+    if (blockSyllableDivision[key] !== undefined) return blockSyllableDivision[key] === true
+    return key === "body" || key === "caption"
+  }, [blockSyllableDivision])
+
   const getBlockFont = useCallback((key: BlockId): FontFamily => {
-    return blockFontFamilies[key] ?? "Inter"
-  }, [blockFontFamilies])
+    return blockFontFamilies[key] ?? baseFont
+  }, [baseFont, blockFontFamilies])
 
   const buildSnapshot = useCallback((): PreviewLayoutState => {
     const resolvedSpans = blockOrder.reduce((acc, key) => {
@@ -407,30 +440,43 @@ export function GridPreview({
       acc[key] = isTextReflowEnabled(key)
       return acc
     }, {} as Record<BlockId, boolean>)
+    const resolvedSyllableDivision = blockOrder.reduce((acc, key) => {
+      acc[key] = isSyllableDivisionEnabled(key)
+      return acc
+    }, {} as Record<BlockId, boolean>)
     return {
       blockOrder: [...blockOrder],
       textContent: { ...textContent },
       blockTextEdited: { ...blockTextEdited },
       styleAssignments: { ...styleAssignments },
+      blockFontFamilies: { ...blockFontFamilies },
       blockColumnSpans: resolvedSpans,
       blockRowSpans: resolvedRows,
       blockTextAlignments: resolvedAlignments,
       blockTextReflow: resolvedReflow,
+      blockSyllableDivision: resolvedSyllableDivision,
       blockModulePositions: { ...blockModulePositions },
     }
-  }, [blockColumnSpans, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, isTextReflowEnabled, result.settings.gridCols, styleAssignments, textContent])
+  }, [blockColumnSpans, blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, isSyllableDivisionEnabled, isTextReflowEnabled, result.settings.gridCols, styleAssignments, textContent])
 
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    const nextFonts = snapshot.blockOrder.reduce((acc, key) => {
+      const raw = snapshot.blockFontFamilies?.[key]
+      if (isFontFamily(raw) && raw !== baseFont) acc[key] = raw
+      return acc
+    }, {} as Partial<Record<BlockId, FontFamily>>)
     setBlockOrder([...snapshot.blockOrder])
     setTextContent({ ...snapshot.textContent })
     setBlockTextEdited({ ...snapshot.blockTextEdited })
     setStyleAssignments({ ...snapshot.styleAssignments })
+    setBlockFontFamilies(nextFonts)
     setBlockColumnSpans({ ...snapshot.blockColumnSpans })
     setBlockRowSpans({ ...(snapshot.blockRowSpans ?? {}) })
     setBlockTextAlignments({ ...snapshot.blockTextAlignments })
     setBlockTextReflow({ ...snapshot.blockTextReflow })
+    setBlockSyllableDivision({ ...snapshot.blockSyllableDivision })
     setBlockModulePositions({ ...snapshot.blockModulePositions })
-  }, [])
+  }, [baseFont])
 
   const pushHistory = useCallback((snapshot: PreviewLayoutState) => {
     setHistoryPast((prev) => {
@@ -578,6 +624,7 @@ export function GridPreview({
     styleKey,
     rowSpan,
     reflow,
+    syllableDivision,
     position,
   }: {
     key: BlockId
@@ -585,6 +632,7 @@ export function GridPreview({
     styleKey: TypographyStyleKey
     rowSpan: number
     reflow: boolean
+    syllableDivision: boolean
     position?: ModulePosition | null
   }): { span: number; position: ModulePosition | null } | null => {
     if (!reflow) return null
@@ -618,7 +666,7 @@ export function GridPreview({
     const fontSize = style.size * scale
     ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
     const columnWidth = result.module.width * scale
-    const lines = wrapText(ctx, trimmed, columnWidth, { hyphenate: styleKey === "body" })
+    const lines = wrapText(ctx, trimmed, columnWidth, { hyphenate: syllableDivision })
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
     const maxColsFromPlacement = position
@@ -643,11 +691,12 @@ export function GridPreview({
       styleKey,
       rowSpan: getBlockRows(key),
       reflow: isTextReflowEnabled(key),
+      syllableDivision: isSyllableDivisionEnabled(key),
       position: dropped,
     })
     if (!autoFit?.position) return null
     return { span: autoFit.span, position: autoFit.position }
-  }, [getAutoFitForPlacement, getBlockRows, getStyleKeyForBlock, isTextReflowEnabled, textContent])
+  }, [getAutoFitForPlacement, getBlockRows, getStyleKeyForBlock, isSyllableDivisionEnabled, isTextReflowEnabled, textContent])
 
   const computeReflowPlan = useCallback((
     gridCols: number,
@@ -827,6 +876,11 @@ export function GridPreview({
         : (isBaseBlockId(key) ? DEFAULT_STYLE_ASSIGNMENTS[key] : "body")
       return acc
     }, {} as Record<BlockId, TypographyStyleKey>)
+    const nextFontFamilies = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockFontFamilies?.[key]
+      if (isFontFamily(raw) && raw !== baseFont) acc[key] = raw
+      return acc
+    }, {} as Partial<Record<BlockId, FontFamily>>)
 
     const nextSpans = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockColumnSpans?.[key]
@@ -852,6 +906,13 @@ export function GridPreview({
       acc[key] = raw === true
       return acc
     }, {} as Record<BlockId, boolean>)
+    const nextSyllableDivision = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockSyllableDivision?.[key]
+      if (raw === true || raw === false) {
+        acc[key] = raw
+      }
+      return acc
+    }, {} as Record<BlockId, boolean>)
 
     const metrics = getGridMetrics()
     const nextPositions = normalizedKeys.reduce((acc, key) => {
@@ -869,15 +930,17 @@ export function GridPreview({
     setTextContent(nextTextContent)
     setBlockTextEdited(nextTextEdited)
     setStyleAssignments(nextStyleAssignments)
+    setBlockFontFamilies(nextFontFamilies)
     setBlockColumnSpans(nextSpans)
     setBlockRowSpans(nextRows)
     setBlockTextAlignments(nextAlignments)
     setBlockTextReflow(nextReflow)
+    setBlockSyllableDivision(nextSyllableDivision)
     setBlockModulePositions(nextPositions)
     setDragState(null)
     setHoverState(null)
     setEditorState(null)
-  }, [buildSnapshot, getGridMetrics, initialLayout, initialLayoutKey, pushHistory, result.settings.gridCols, result.typography.styles])
+  }, [baseFont, buildSnapshot, getGridMetrics, initialLayout, initialLayoutKey, pushHistory, result.settings.gridCols, result.typography.styles])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -1067,7 +1130,7 @@ export function GridPreview({
           ctx,
           blockText,
           columnReflow ? modW * scale : wrapWidth,
-          { hyphenate: block.key === "body" }
+          { hyphenate: isSyllableDivisionEnabled(block.key) }
         )
 
         const autoBlockX = contentLeft
@@ -1169,7 +1232,8 @@ export function GridPreview({
         const captionLines = wrapText(
           ctx,
           captionText,
-          captionColumnReflow ? modW * scale : captionWidth
+          captionColumnReflow ? modW * scale : captionWidth,
+          { hyphenate: isSyllableDivisionEnabled("caption") }
         )
         const captionLineCount = captionLines.length
 
@@ -1250,6 +1314,7 @@ export function GridPreview({
     blockModulePositions,
     clampModulePosition,
     dragState,
+    getBlockFont,
     getBlockSpan,
     getBlockRows,
     isMobile,
@@ -1263,6 +1328,7 @@ export function GridPreview({
     showTypography,
     styleAssignments,
     textContent,
+    isSyllableDivisionEnabled,
     isTextReflowEnabled,
   ])
 
@@ -1421,6 +1487,7 @@ export function GridPreview({
         styleKey: getStyleKeyForBlock(key),
         rowSpan: getBlockRows(key),
         reflow: true,
+        syllableDivision: isSyllableDivisionEnabled(key),
         position: currentPosition,
       })
       if (!autoFit?.position) continue
@@ -1448,6 +1515,7 @@ export function GridPreview({
     getBlockRows,
     getBlockSpan,
     getStyleKeyForBlock,
+    isSyllableDivisionEnabled,
     isTextReflowEnabled,
     pendingReflow,
     result.grid.gridMarginVertical,
@@ -1564,6 +1632,7 @@ export function GridPreview({
       styleKey: editorState.draftStyle,
       rowSpan: editorState.draftRows,
       reflow: editorState.draftReflow,
+      syllableDivision: editorState.draftSyllableDivision,
       position: existingPosition,
     })
     const nextSpan = autoFit?.span ?? editorState.draftColumns
@@ -1580,10 +1649,15 @@ export function GridPreview({
       ...prev,
       [editorState.target]: editorState.draftStyle,
     }))
-    setBlockFontFamilies((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftFont,
-    }))
+    setBlockFontFamilies((prev) => {
+      const next = { ...prev }
+      if (editorState.draftFont === baseFont) {
+        delete next[editorState.target]
+      } else {
+        next[editorState.target] = editorState.draftFont
+      }
+      return next
+    })
     setBlockColumnSpans((prev) => ({
       ...prev,
       [editorState.target]: nextSpan,
@@ -1599,6 +1673,10 @@ export function GridPreview({
     setBlockTextReflow((prev) => ({
       ...prev,
       [editorState.target]: editorState.draftReflow,
+    }))
+    setBlockSyllableDivision((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftSyllableDivision,
     }))
     setBlockModulePositions((prev) => {
       const pos = prev[editorState.target]
@@ -1618,7 +1696,7 @@ export function GridPreview({
       }
     })
     setEditorState(null)
-  }, [blockModulePositions, editorState, getAutoFitForPlacement, getGridMetrics, recordHistoryBeforeChange, result.settings.gridCols])
+  }, [baseFont, blockModulePositions, editorState, getAutoFitForPlacement, getGridMetrics, recordHistoryBeforeChange, result.settings.gridCols])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
@@ -1647,6 +1725,11 @@ export function GridPreview({
         delete next[target]
         return next
       })
+      setBlockFontFamilies((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
       setBlockColumnSpans((prev) => {
         const next = { ...prev }
         delete next[target]
@@ -1663,6 +1746,11 @@ export function GridPreview({
         return next
       })
       setBlockTextReflow((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockSyllableDivision((prev) => {
         const next = { ...prev }
         delete next[target]
         return next
@@ -1760,11 +1848,12 @@ export function GridPreview({
           target: key,
           draftText: textContent[key] ?? "",
           draftStyle: styleAssignments[key] ?? "body",
-          draftFont: blockFontFamilies[key] ?? "Inter",
+          draftFont: getBlockFont(key),
           draftColumns: getBlockSpan(key),
           draftRows: getBlockRows(key),
           draftAlign: blockTextAlignments[key] ?? "left",
           draftReflow: isTextReflowEnabled(key),
+          draftSyllableDivision: isSyllableDivisionEnabled(key),
           draftTextEdited: blockTextEdited[key] ?? true,
         })
         return
@@ -1811,14 +1900,15 @@ export function GridPreview({
       target: newKey,
       draftText: getDummyTextForStyle("body"),
       draftStyle: "body",
-      draftFont: "Inter",
+      draftFont: baseFont,
       draftColumns: defaultSpan,
       draftRows: 1,
       draftAlign: "left",
       draftReflow: false,
+      draftSyllableDivision: false,
       draftTextEdited: false,
     })
-  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+  }, [baseFont, blockOrder, blockTextAlignments, blockTextEdited, getBlockFont, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
 
   const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
@@ -1841,6 +1931,7 @@ export function GridPreview({
       textContent,
       blockTextEdited,
       styleAssignments,
+      blockFontFamilies: { ...blockFontFamilies },
       blockColumnSpans: resolvedSpans,
       blockRowSpans: blockOrder.reduce((acc, key) => {
         acc[key] = getBlockRows(key)
@@ -1851,9 +1942,13 @@ export function GridPreview({
         acc[key] = isTextReflowEnabled(key)
         return acc
       }, {} as Record<BlockId, boolean>),
+      blockSyllableDivision: blockOrder.reduce((acc, key) => {
+        acc[key] = isSyllableDivisionEnabled(key)
+        return acc
+      }, {} as Record<BlockId, boolean>),
       blockModulePositions,
     })
-  }, [blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
+  }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
   const canvasCursorClass = dragState ? "cursor-grabbing" : hoverState ? "cursor-grab" : "cursor-default"
 
@@ -1933,149 +2028,187 @@ export function GridPreview({
           }}
         >
           <div
-            className="w-full max-w-md rounded-md border border-gray-300 bg-white shadow-xl"
+            className="w-full max-w-[500px] rounded-md border border-gray-300 bg-white shadow-xl"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2">
-              {/* Font Dropdown - Second row */}
-              <Select
-                value={editorState.draftFont}
-                onValueChange={(value) => {
-                  setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftFont: value as FontFamily,
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className="h-8 w-40 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Inter">Inter</SelectItem>
-                  <SelectItem value="Work Sans">Work Sans</SelectItem>
-                  <SelectItem value="Nunito Sans">Nunito Sans</SelectItem>
-                  <SelectItem value="IBM Plex Sans">IBM Plex Sans</SelectItem>
-                  <SelectItem value="Libre Franklin">Libre Franklin</SelectItem>
-                  <SelectItem value="EB Garamond">EB Garamond</SelectItem>
-                  <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
-                  <SelectItem value="Bodoni Moda">Bodoni Moda</SelectItem>
-                  <SelectItem value="Besley">Besley</SelectItem>
-                  <SelectItem value="Fraunces">Fraunces</SelectItem>
-                  <SelectItem value="Playfair Display">Playfair Display</SelectItem>
-                  <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
-                  <SelectItem value="DM Serif Display">DM Serif Display</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* Style, columns, rows, etc */}
-              <Select
-                value={editorState.draftStyle}
-                onValueChange={(value) => {
-                  const nextStyle = value as TypographyStyleKey
-                  setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftStyle: nextStyle,
-                    draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className="h-8 text-xs flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STYLE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label} ({formatPtSize(result.typography.styles[option.value].size)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={String(editorState.draftColumns)}
-                onValueChange={(value) => {
-                  setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftColumns: Math.max(1, Math.min(result.settings.gridCols, Number(value))),
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className="h-8 w-28 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: result.settings.gridCols }, (_, index) => index + 1).map((count) => (
-                    <SelectItem key={count} value={String(count)}>
-                      {count} {count === 1 ? "col" : "cols"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={String(editorState.draftRows)}
-                onValueChange={(value) => {
-                  setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className="h-8 w-28 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
-                    <SelectItem key={count} value={String(count)}>
-                      {count} {count === 1 ? "row" : "rows"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center rounded-md border border-gray-200">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant={editorState.draftAlign === "left" ? "secondary" : "ghost"}
-                  className="h-8 w-8 rounded-r-none"
-                  onClick={() => {
-                    setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
-                  }}
-                  aria-label="Align left"
-                  title="Align left"
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant={editorState.draftAlign === "right" ? "secondary" : "ghost"}
-                  className="h-8 w-8 rounded-l-none border-l border-gray-200"
-                  onClick={() => {
-                    setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
-                  }}
-                  aria-label="Align right"
-                  title="Align right"
-                >
-                  <AlignRight className="h-4 w-4" />
-                </Button>
+            <div className="space-y-2 border-b border-gray-200 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <EditorControlTooltip label="Font family">
+                  <Select
+                    value={editorState.draftFont}
+                    onValueChange={(value) => {
+                      setEditorState((prev) => prev ? {
+                        ...prev,
+                        draftFont: value as FontFamily,
+                      } : prev)
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-40 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Inter">Inter</SelectItem>
+                      <SelectItem value="Work Sans">Work Sans</SelectItem>
+                      <SelectItem value="Nunito Sans">Nunito Sans</SelectItem>
+                      <SelectItem value="IBM Plex Sans">IBM Plex Sans</SelectItem>
+                      <SelectItem value="Libre Franklin">Libre Franklin</SelectItem>
+                      <SelectItem value="EB Garamond">EB Garamond</SelectItem>
+                      <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
+                      <SelectItem value="Bodoni Moda">Bodoni Moda</SelectItem>
+                      <SelectItem value="Besley">Besley</SelectItem>
+                      <SelectItem value="Fraunces">Fraunces</SelectItem>
+                      <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                      <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                      <SelectItem value="DM Serif Display">DM Serif Display</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </EditorControlTooltip>
+                <EditorControlTooltip label="Typography style" className="min-w-0 flex-1">
+                  <Select
+                    value={editorState.draftStyle}
+                    onValueChange={(value) => {
+                      const nextStyle = value as TypographyStyleKey
+                      setEditorState((prev) => prev ? {
+                        ...prev,
+                        draftStyle: nextStyle,
+                        draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
+                      } : prev)
+                    }}
+                  >
+                    <SelectTrigger className="h-8 min-w-0 w-full text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STYLE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label} ({formatPtSize(result.typography.styles[option.value].size)})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </EditorControlTooltip>
               </div>
-              <Button
-                type="button"
-                size="icon"
-                variant={editorState.draftReflow ? "secondary" : "ghost"}
-                className="h-8 w-8"
-                onClick={() => {
-                  setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)
-                }}
-                aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
-                title={editorState.draftReflow ? "Reflow: On" : "Reflow: Off"}
-              >
-                <Rows3 className="h-4 w-4" />
-              </Button>
-              <Button size="sm" onClick={saveEditor}>
-                Save
-              </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph" title="Delete paragraph">
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <EditorControlTooltip label="Paragraph row span">
+                  <Select
+                    value={String(editorState.draftRows)}
+                    onValueChange={(value) => {
+                      setEditorState((prev) => prev ? {
+                        ...prev,
+                        draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
+                      } : prev)
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-28 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
+                        <SelectItem key={count} value={String(count)}>
+                          {count} {count === 1 ? "row" : "rows"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </EditorControlTooltip>
+                <EditorControlTooltip label="Paragraph column span">
+                  <Select
+                    value={String(editorState.draftColumns)}
+                    onValueChange={(value) => {
+                      setEditorState((prev) => prev ? {
+                        ...prev,
+                        draftColumns: Math.max(1, Math.min(result.settings.gridCols, Number(value))),
+                      } : prev)
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-28 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: result.settings.gridCols }, (_, index) => index + 1).map((count) => (
+                        <SelectItem key={count} value={String(count)}>
+                          {count} {count === 1 ? "col" : "cols"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </EditorControlTooltip>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-md border border-gray-200">
+                    <EditorControlTooltip label="Align left">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={editorState.draftAlign === "left" ? "secondary" : "ghost"}
+                        className="h-8 w-8 rounded-r-none"
+                        onClick={() => {
+                          setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
+                        }}
+                        aria-label="Align left"
+                      >
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
+                    </EditorControlTooltip>
+                    <EditorControlTooltip label="Align right">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={editorState.draftAlign === "right" ? "secondary" : "ghost"}
+                        className="h-8 w-8 rounded-l-none border-l border-gray-200"
+                        onClick={() => {
+                          setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
+                        }}
+                        aria-label="Align right"
+                      >
+                        <AlignRight className="h-4 w-4" />
+                      </Button>
+                    </EditorControlTooltip>
+                  </div>
+                  <EditorControlTooltip label={editorState.draftReflow ? "Reflow: On" : "Reflow: Off"}>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={editorState.draftReflow ? "secondary" : "ghost"}
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)
+                      }}
+                      aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
+                    >
+                      <Rows3 className="h-4 w-4" />
+                    </Button>
+                  </EditorControlTooltip>
+                  <EditorControlTooltip label={editorState.draftSyllableDivision ? "Syllable division: On" : "Syllable division: Off"}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={editorState.draftSyllableDivision ? "secondary" : "ghost"}
+                      className="h-8 px-2 text-xs"
+                      onClick={() => {
+                        setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)
+                      }}
+                      aria-label={editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
+                    >
+                      Hy
+                    </Button>
+                  </EditorControlTooltip>
+                </div>
+                <div className="flex items-center gap-2">
+                  <EditorControlTooltip label="Delete paragraph">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </EditorControlTooltip>
+                  <div className="h-6 w-px bg-gray-200" aria-hidden="true" />
+                  <EditorControlTooltip label="Save changes">
+                    <Button size="sm" onClick={saveEditor}>
+                      Save
+                    </Button>
+                  </EditorControlTooltip>
+                </div>
+              </div>
             </div>
             <div className="p-3">
               <textarea

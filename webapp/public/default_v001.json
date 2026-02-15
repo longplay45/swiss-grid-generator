@@ -107,6 +107,7 @@
     "baselineMultiple": 1,
     "gutterMultiple": 1,
     "typographyScale": "swiss",
+    "baseFont": "Inter",
     "customBaseline": 12,
     "displayUnit": "pt",
     "useCustomMargins": false,

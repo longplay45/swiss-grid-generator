@@ -36,9 +36,15 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - drag-and-snap text blocks
   - double-click popup editor
   - hover info tooltips
+  - per-paragraph font selection
   - per-block `cols` and `rows`
   - per-block reflow toggle (newspaper-style column flow)
+  - per-block syllable-division toggle (`Hy`)
   - optical margin alignment (hanging punctuation)
+- Typography controls:
+  - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
+  - `Base Font` selector in `V. Typo`
+  - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
   - Load JSON, Save JSON, Export PDF
   - Undo/Redo
@@ -162,12 +168,16 @@ webapp/
 | `npm run build` | Production build |
 | `npm start` | Start production server |
 | `npm run lint` | Next lint command |
+| `npm run test:roundtrip` | Verify font-related JSON save/load roundtrip rules |
 
 ## Changelog (Recent Behavior Updates)
 
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
 - Added optical margin alignment (hanging punctuation) in preview and PDF export.
 - Reflow mode now supports newspaper-style multi-column flow constrained by selected row span.
+- Added base-font control in `V. Typo` with per-paragraph font override inheritance.
+- Added paragraph editor rollover tooltips and structured 3-row header layout.
+- Added per-paragraph syllable-division toggle with defaults enabled for `body` and `caption`.
 - Drag-and-drop and structural repositioning now use module-top row anchors.
 - Grid structural changes now use deterministic scored auto-repositioning.
 - Pure column increases keep existing layout positions (capacity is added to the right).

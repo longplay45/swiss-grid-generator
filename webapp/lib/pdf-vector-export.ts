@@ -339,6 +339,7 @@ export function renderSwissGridVectorPdf({
   const blockRowSpans = layout?.blockRowSpans ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
+  const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
 
   const contentTop = margins.top
@@ -373,6 +374,10 @@ export function renderSwissGridVectorPdf({
 
   const isTextReflowEnabled = (key: BlockId) => {
     return blockTextReflow[key] ?? false
+  }
+  const isSyllableDivisionEnabled = (key: BlockId) => {
+    if (blockSyllableDivision[key] === true || blockSyllableDivision[key] === false) return blockSyllableDivision[key]
+    return key === "body" || key === "caption"
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
@@ -435,7 +440,7 @@ export function renderSwissGridVectorPdf({
       pdf,
       value,
       columnReflow ? modW * scale : wrapWidth,
-      block.key === "body"
+      isSyllableDivisionEnabled(block.key)
     )
 
     const autoX = contentLeft
@@ -520,7 +525,7 @@ export function renderSwissGridVectorPdf({
     pdf,
     captionText,
     captionColumnReflow ? modW * scale : captionWidth,
-    false
+    isSyllableDivisionEnabled("caption")
   )
   const captionLineCount = captionLines.length
   const availableHeight = sourceHeight - margins.top - margins.bottom

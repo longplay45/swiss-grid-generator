@@ -91,7 +91,8 @@ Default: `swiss`
 
 ### V. Typo
 
-- Select typography scale preset (see Typography Scale Presets).
+- `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
+- `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 
 ## Preview Header
 
@@ -169,13 +170,26 @@ All header icons use styled rollover help tooltips.
 - Hover shows style/span/alignment tooltip
 
 Editor controls:
+- font family
 - style
 - cols (1..gridCols)
 - rows (1..gridRows)
 - reflow toggle (off = full-span wrap, on = newspaper columns)
+- syllable division toggle (`Hy`)
 - align left/right
 - Save
 - Delete paragraph (custom blocks)
+
+Font behavior:
+- If a paragraph font is set to the current `Base Font`, it is stored as inherited (no explicit override entry).
+- If a paragraph font differs from `Base Font`, it is stored as an explicit paragraph override.
+- Changing `Base Font` re-renders the preview immediately for inherited paragraphs only.
+
+Syllable division behavior:
+- Stored per paragraph in `blockSyllableDivision`.
+- Default is `true` for `body` and `caption`.
+- Default is `false` for other blocks unless explicitly enabled.
+- Applied in both canvas preview and PDF export wrapping.
 
 ## Grid Change Reflow Logic
 
@@ -207,4 +221,11 @@ UX:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `baseFont`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`
+
+## JSON Preview Layout Fields (current)
+
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockModulePositions`
+
+Notes:
+- `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.
