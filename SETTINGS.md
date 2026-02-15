@@ -45,7 +45,7 @@ Default: `swiss`
 
 #### Orientation
 
-- `portrait` (default)
+- `portrait` (default from `default_v001.json`)
 - `landscape`
 
 #### Rotation
@@ -85,8 +85,8 @@ Default: `swiss`
 
 ### IV. Gutter
 
-- Columns (`gridCols`): min `1`, max `13`, step `1`, default `4`
-- Rows (`gridRows`): min `1`, max `13`, step `1`, default `9`
+- Columns (`gridCols`): min `1`, max `13`, step `1`, default `3` (from `default_v001.json`)
+- Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
 - Gutter multiple: min `0.5`, max `4.0`, step `0.5`, default `1.0`
 
 ### V. Typo
@@ -126,12 +126,21 @@ All header icons use styled rollover help tooltips.
 
 ### Export PDF popup
 
-- Paper Size dropdown (filtered by selected ratio family)
-- Units dropdown: `pt`, `mm`, `px`
-- Width input in selected unit
+- DIN/ANSI ratios:
+  - Units dropdown: `pt`, `mm`, `px`
+  - Paper Size dropdown (filtered by ratio family)
+- Non-DIN/ANSI ratios:
+  - Width input in `mm`
 - Height is derived automatically from aspect ratio
 - Filename input
+- Print Pro:
+  - toggle on/off
+  - presets: Press Proof, Offset Final, Digital Print
+  - Bleed input (mm)
+  - Registration-style crop marks toggle
+  - Final-safe guide colors toggle
 - Confirm/Cancel
+- Esc closes popup
 
 ## Paper Size Sets
 
@@ -181,12 +190,13 @@ UX safeguards:
 - Pre-apply warning dialog before rearrange.
 - Cancel restores previous grid values.
 - After apply: toast with one-click Undo.
+- Reflow warning is suppressed during JSON layout loading.
 
 ## Export Format Notes
 
 - JSON: full UI + preview layout state.
-- PDF: current implementation places rendered preview image into a PDF page (not pure vector primitives yet).
+- PDF: vector output via jsPDF primitives with print-focused options (bleed/crop marks, CMYK guides/marks).
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`

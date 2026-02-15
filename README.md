@@ -44,13 +44,25 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - warning dialog before rearrange
   - apply/cancel
   - post-apply undo toast
+  - suppressed during JSON layout load
 - Export popups:
   - Save JSON filename prompt (custom modal)
-  - Export PDF with paper size, unit, width, filename
+  - Export PDF with filename + Print Pro controls
+  - DIN/ANSI ratios: Units + Paper Size controls
+  - Other ratios: Width (mm) control
+  - Print Pro presets: Press Proof, Offset Final, Digital Print
+  - Esc key closes export popup
 
-## Important Export Note
+## PDF Export
 
-Current PDF export embeds the rendered preview image into a PDF page. It is a PDF container, but page content is currently rasterized preview output (not fully vector drawing commands).
+PDF export is vector-based via jsPDF primitives (lines/text), not canvas raster embedding.
+
+Includes print-focused options:
+- CMYK color pipeline for guides/text/marks
+- Print Pro bleed + crop marks
+- Registration-style crop marks (optional)
+- Final-safe monochrome guides (optional)
+- PDF metadata + viewer print preferences
 
 ## Installation
 
@@ -79,10 +91,9 @@ See full reference in [`SETTINGS.md`](SETTINGS.md).
 
 Highlights:
 - Baseline options: `6,7,8,9,10,11,12,14,16,18,20,24,28,32,36,48,60,72`
-- Default baseline behavior in UI is anchored to A4 baseline (`12pt`)
+- Startup defaults are loaded from `webapp/public/default_v001.json`
 - Rotation: `-80..80`
 - Grid: cols/rows `1..13`
-- Units in export popup: `pt`, `mm`, `px`
 
 ## Ratio Families and Paper Sizes
 
@@ -134,6 +145,7 @@ webapp/
 │   └── ui/
 └── lib/
     ├── grid-calculator.ts
+    ├── pdf-vector-export.ts
     └── utils.ts
 ```
 

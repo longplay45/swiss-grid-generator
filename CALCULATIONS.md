@@ -48,15 +48,29 @@ The baseline grid is the foundation of the entire system. All vertical measureme
 
 When "Custom Baseline" is OFF, each format uses a format-specific baseline:
 
-| Format | Baseline | Rationale |
-|--------|----------|-----------|
-| A6 | 9pt | Small formats need tighter spacing |
-| A5 | 10pt | Portable booklet size |
-| A4 | 12pt | Standard document base |
-| A3 | 13pt | Mid-size posters |
-| A2 | 14pt | Larger posters |
-| A1 | 16pt | Large format displays |
-| A0 | 18pt | Poster scale |
+The implementation derives values from an A4 12pt reference:
+- A-series uses sqrt(2) steps.
+- B-series uses 2^(1/4) offsets between adjacent A sizes.
+
+Current `FORMAT_BASELINES` defaults:
+
+| Format | Baseline (pt) |
+|--------|---------------:|
+| A0 | 48.000 |
+| A1 | 33.941 |
+| A2 | 24.000 |
+| A3 | 16.971 |
+| A4 | 12.000 |
+| A5 | 8.485 |
+| A6 | 6.000 |
+| B0 | 57.064 |
+| B1 | 40.365 |
+| B2 | 28.541 |
+| B3 | 20.182 |
+| B4 | 14.270 |
+| B5 | 10.091 |
+| B6 | 7.135 |
+| LETTER | 12.000 |
 
 ```
 gridUnit = FORMAT_BASELINES[format]  // Auto mode
@@ -287,27 +301,26 @@ scaledLeading = gridUnit × leadingMult
 baselineMultiplier = leadingMult  // constant per style
 ```
 
-#### Example: A3 with 13pt Baseline (Swiss)
+#### Example: A3 with 16.971pt Baseline (Swiss)
 
 ```
-gridUnit = 13pt
+gridUnit = 16.971pt
 
-Body:    size = 13 × (10/12) = 10.833pt,  leading = 13 × 1 = 13pt  (1× baseline)
-Subhead: size = 13 × (20/12) = 21.667pt,  leading = 13 × 2 = 26pt  (2× baseline)
-Display: size = 13 × (64/12) = 69.333pt,  leading = 13 × 6 = 78pt  (6× baseline)
+Body:    size = 16.971 × (10/12) = 14.142pt, leading = 16.971 × 1 = 16.971pt  (1× baseline)
+Subhead: size = 16.971 × (20/12) = 28.285pt, leading = 16.971 × 2 = 33.942pt  (2× baseline)
+Display: size = 16.971 × (64/12) = 90.512pt, leading = 16.971 × 6 = 101.826pt (6× baseline)
 ```
 
 ### Leading Across All Formats
 
-| Format | Baseline | Body (1×) | Subhead (2×) | Headline (3×) | Display (6×) |
-|--------|----------|-----------|--------------|---------------|--------------|
-| A6     | 9pt      | 9pt       | 18pt         | 27pt          | 54pt         |
-| A5     | 10pt     | 10pt      | 20pt         | 30pt          | 60pt         |
-| A4     | 12pt     | 12pt      | 24pt         | 36pt          | 72pt         |
-| A3     | 13pt     | 13pt      | 26pt         | 39pt          | 78pt         |
-| A2     | 14pt     | 14pt      | 28pt         | 42pt          | 84pt         |
-| A1     | 16pt     | 16pt      | 32pt         | 48pt          | 96pt         |
-| A0     | 18pt     | 18pt      | 36pt         | 54pt          | 108pt        |
+Leading at any format is computed directly from the current baseline:
+
+```
+body_leading = gridUnit * 1
+subhead_leading = gridUnit * 2
+headline_leading = gridUnit * 3
+display_leading = gridUnit * 6
+```
 
 ---
 
@@ -334,17 +347,15 @@ rounded = round(value × 1000) / 1000
 
 ## Canvas Preview Scale
 
-The preview calculates a display scale from the container size:
+The preview uses fit scaling:
 
 ```
 scaleX = (containerWidth - 40) / pageWidth
 scaleY = (containerHeight - 40) / pageHeight
+scale  = min(scaleX, scaleY)
 ```
 
-- **Original mode:** `scale = min(scaleX, scaleY, 1.0)` — never exceeds 100%
-- **Fit mode:** `scale = min(scaleX, scaleY)` — fills available space
-
-All drawing coordinates are multiplied by `scale` for rendering.
+All drawing coordinates are multiplied by `scale`.
 
 ## Canvas Preview Rotation
 
