@@ -165,29 +165,37 @@ All header icons use styled rollover help tooltips.
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Drag to move (snaps to module columns + baseline rows)
+- Drag to move (snaps to module columns + nearest module-top row anchors)
 - Hover shows style/span/alignment tooltip
 
 Editor controls:
 - style
-- span (1..gridCols)
+- cols (1..gridCols)
+- rows (1..gridRows)
+- reflow toggle (off = full-span wrap, on = newspaper columns)
 - align left/right
 - Save
 - Delete paragraph (custom blocks)
 
 ## Grid Change Reflow Logic
 
-When structural grid changes would force relocation:
+Structural changes use a deterministic scored reposition planner.
 
-1. Keep row if possible; clamp col for span.
-2. Resolve collisions row-major (same row then following rows).
-3. If no module slot exists, fallback to baseline stack placement.
-4. If `gridRows === 1`, all blocks use baseline stack placement.
-5. Placement priority:
-   - display, headline, subhead, body, caption, then custom paragraphs.
+Behavior:
+1. Pure column increase (`gridCols` up, same row structure): keep current block positions.
+2. Row-structure changes (`gridRows` or effective module-row step changes): remap rows by module index and auto-apply reposition.
+3. Candidate rows are module-top anchors; collisions are resolved with scored placement.
+4. Priority order remains: display, headline, subhead, body, caption, then custom paragraphs.
 
-UX safeguards:
-- Pre-apply warning dialog before rearrange.
+Scoring uses weighted penalties for:
+- movement distance
+- overflow below content area
+- outside-grid row anchors
+- non-module-row anchors
+- reading-order violations
+
+UX:
+- Warning/apply/cancel flow is used for disruptive non-row structural reflows.
 - Cancel restores previous grid values.
 - After apply: toast with one-click Undo.
 - Reflow warning is suppressed during JSON layout loading.

@@ -15,6 +15,7 @@ All formulas reference `webapp/lib/grid-calculator.ts`.
 7. [Unit Conversions](#unit-conversions)
 8. [Decimal Precision](#decimal-precision)
 9. [Canvas Preview Scale](#canvas-preview-scale)
+10. [Preview Placement + Reflow](#preview-placement--reflow)
 
 ---
 
@@ -369,16 +370,65 @@ ctx.translate(-pageWidth / 2, -pageHeight / 2)
 
 All modules, baselines, margins, and typography are drawn in the rotated coordinate space.
 
-## Typography Preview Layout Rules
+## Preview Placement + Reflow
 
-Preview-only layout rules for the sample text blocks:
+Interactive placement is handled in `webapp/components/grid-preview.tsx` and mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`).
 
-- If `gridRows === 1`, text flows sequentially from the top with baseline spacing.
-- If `gridRows` is 2–4, `display` starts at the top of row 1 and the rest starts in row 2.
-- If `gridRows >= 5`, each paragraph starts at the top of the next available module row (dynamic, based on wrapped height).
-- `subhead` and `body` always wrap to available width. If `gridCols >= 2`, they wrap to half-width columns.
-- `headline` wraps to full width unless `gridCols >= 3`, in which case it uses `halfCols + 1` columns.
-- `caption` wraps to full width unless `gridCols >= 2`, in which case it wraps to half-width.
+### Row Anchor Model
+
+Rows are stored in baseline-row units but snapped/repositioned to module-top anchors:
+
+```
+moduleRowStep = (moduleHeight + verticalGutter) / gridUnit
+moduleRowStart(i) = i * moduleRowStep
+```
+
+Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
+
+### Per-Paragraph Span
+
+Each paragraph has:
+- `colSpan` (`1..gridCols`)
+- `rowSpan` (`1..gridRows`)
+- `reflow` (on/off)
+
+### Reflow Modes
+
+If `reflow = false`:
+- text wraps over full selected span width
+
+If `reflow = true`:
+- newspaper flow by columns inside selected span
+- width per text column = one module width
+- lines per column constrained by selected row span height
+
+```
+moduleHeightForBlock = rowSpan * moduleHeight + (rowSpan - 1) * verticalGutter
+maxLinesPerColumn = floor(moduleHeightForBlock / lineStep)
+neededCols = ceil(totalWrappedLines / maxLinesPerColumn)
+```
+
+### Grid/Baseline Structural Changes
+
+When horizontal fields (`gridRows`) or module row step change (e.g., baseline/gutter effects), existing rows remap by module index:
+
+```
+moduleIndex = round(oldRow / oldModuleRowStep)
+newRow = moduleIndex * newModuleRowStep
+```
+
+Then the scored planner resolves collisions/out-of-bounds.
+
+### Scored Reposition Planner
+
+Placement candidates are scored deterministically with penalties for:
+- movement from desired anchor
+- overflow below content area
+- positions outside current grid row structure
+- non-module-row anchors
+- reading-order violations
+
+Lowest score wins; ties prefer top-most, then left-most.
 
 ---
 

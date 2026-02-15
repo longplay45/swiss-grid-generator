@@ -336,7 +336,9 @@ export function renderSwissGridVectorPdf({
     ? { ...layout.styleAssignments }
     : { ...DEFAULT_STYLE_ASSIGNMENTS }
   const blockColumnSpans = layout?.blockColumnSpans ?? {}
+  const blockRowSpans = layout?.blockRowSpans ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
+  const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
 
   const contentTop = margins.top
@@ -364,6 +366,15 @@ export function renderSwissGridVectorPdf({
     return Math.max(1, Math.min(gridCols, Math.round(raw)))
   }
 
+  const getBlockRows = (key: BlockId) => {
+    const raw = blockRowSpans[key] ?? 1
+    return Math.max(1, Math.min(gridRows, Math.round(raw)))
+  }
+
+  const isTextReflowEnabled = (key: BlockId) => {
+    return blockTextReflow[key] ?? false
+  }
+
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
     const manual = blockModulePositions[key]
     if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") {
@@ -372,7 +383,7 @@ export function renderSwissGridVectorPdf({
     const span = getBlockSpan(key)
     const maxCol = Math.max(0, gridCols - span)
     const col = Math.max(0, Math.min(maxCol, Math.round(manual.col)))
-    const row = Math.max(0, Math.min(maxBaselineRow, Math.round(manual.row)))
+    const row = Math.max(0, Math.min(maxBaselineRow, manual.row))
     return {
       x: contentLeft + col * moduleXStep,
       y: baselineOriginTop + row * baselineStep,
@@ -397,9 +408,9 @@ export function renderSwissGridVectorPdf({
     if (!value) continue
 
     const styleKeyRaw = styleAssignments[block.key]
-    const styleKey = validStyles.has(String(styleKeyRaw))
+    const styleKey = (validStyles.has(String(styleKeyRaw))
       ? String(styleKeyRaw)
-      : (isBaseBlockId(block.key) ? DEFAULT_STYLE_ASSIGNMENTS[block.key] : "body")
+      : (isBaseBlockId(block.key) ? DEFAULT_STYLE_ASSIGNMENTS[block.key] : "body")) as TypographyStyleKey
     const style = styleDefinitions[styleKey]
     if (!style) continue
 
@@ -418,34 +429,69 @@ export function renderSwissGridVectorPdf({
 
     const span = getBlockSpan(block.key)
     const wrapWidth = (span * modW + Math.max(span - 1, 0) * gridMarginHorizontal) * scale
-    const lines = wrapText(pdf, value, wrapWidth, block.key === "body")
+    const rowSpan = getBlockRows(block.key)
+    const columnReflow = isTextReflowEnabled(block.key)
+    const lines = wrapText(
+      pdf,
+      value,
+      columnReflow ? modW * scale : wrapWidth,
+      block.key === "body"
+    )
 
     const autoX = contentLeft
     const autoY = contentTop + (blockStartOffset - 1) * baselineStep
     const origin = getOriginForBlock(block.key, autoX, autoY)
     const align: TextAlignMode = blockTextAlignments[block.key] === "right" ? "right" : "left"
-    const anchorX = align === "right"
-      ? origin.x + span * modW + Math.max(span - 1, 0) * gridMarginHorizontal
-      : origin.x
     const textAscent = estimateTextAscent(fontSize)
+    const lineStep = baselineMult * baselineStep
+    const moduleHeight = rowSpan * modH + Math.max(rowSpan - 1, 0) * gridMarginVertical
+    const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeight / lineStep))
+    let maxUsedRows = 0
 
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-      const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
-      if (lineTopY >= pageBottom) continue
-      const y = lineTopY + textAscent / scale
-      const line = lines[lineIndex]
-      const opticalOffsetX = getOpticalMarginAnchorOffset({
-        line,
-        align,
-        fontSize,
-        measureWidth: (text) => pdf.getTextWidth(text),
-      })
-      drawText(line, anchorX + opticalOffsetX, y, align)
+    if (!columnReflow) {
+      const anchorX = align === "right"
+        ? origin.x + span * modW + Math.max(span - 1, 0) * gridMarginHorizontal
+        : origin.x
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+        const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
+        if (lineTopY >= pageBottom) continue
+        maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
+        const y = lineTopY + textAscent / scale
+        const line = lines[lineIndex]
+        const opticalOffsetX = getOpticalMarginAnchorOffset({
+          line,
+          align,
+          fontSize,
+          measureWidth: (text) => pdf.getTextWidth(text),
+        })
+        drawText(line, anchorX + opticalOffsetX, y, align)
+      }
+    } else {
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+        const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
+        if (columnIndex >= span) break
+        const rowIndex = lineIndex % maxLinesPerColumn
+        const columnX = origin.x + columnIndex * moduleXStep
+        const anchorX = align === "right" ? columnX + modW : columnX
+        const lineTopY = origin.y + baselineStep + rowIndex * lineStep
+        if (lineTopY >= pageBottom) continue
+        maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
+        const y = lineTopY + textAscent / scale
+        const line = lines[lineIndex]
+        const opticalOffsetX = getOpticalMarginAnchorOffset({
+          line,
+          align,
+          fontSize,
+          measureWidth: (text) => pdf.getTextWidth(text),
+        })
+        drawText(line, anchorX + opticalOffsetX, y, align)
+      }
     }
 
     if (!useParagraphRows) {
+      const usedLineRows = maxUsedRows || lines.length
       if (!useRowPlacement || block.key !== "display") {
-        currentBaselineOffset = blockStartOffset + lines.length * baselineMult
+        currentBaselineOffset = blockStartOffset + usedLineRows * baselineMult
       } else {
         currentBaselineOffset = restStartOffset
       }
@@ -456,9 +502,9 @@ export function renderSwissGridVectorPdf({
   }
 
   const captionStyleRaw = styleAssignments.caption
-  const captionStyleKey = validStyles.has(String(captionStyleRaw))
+  const captionStyleKey = (validStyles.has(String(captionStyleRaw))
     ? String(captionStyleRaw)
-    : DEFAULT_STYLE_ASSIGNMENTS.caption
+    : DEFAULT_STYLE_ASSIGNMENTS.caption) as TypographyStyleKey
   const captionStyle = styleDefinitions[captionStyleKey]
   const captionText = (textContent.caption ?? "").trim()
   if (!captionStyle || !captionText) return
@@ -467,31 +513,62 @@ export function renderSwissGridVectorPdf({
   pdf.setFontSize(captionStyle.size * scale)
   const captionAlign: TextAlignMode = blockTextAlignments.caption === "right" ? "right" : "left"
   const captionSpan = getBlockSpan("caption")
+  const captionRowSpan = getBlockRows("caption")
   const captionWidth = (captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal) * scale
-  const captionLines = wrapText(pdf, captionText, captionWidth, false)
+  const captionColumnReflow = isTextReflowEnabled("caption")
+  const captionLines = wrapText(
+    pdf,
+    captionText,
+    captionColumnReflow ? modW * scale : captionWidth,
+    false
+  )
   const captionLineCount = captionLines.length
   const availableHeight = sourceHeight - margins.top - margins.bottom
   const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
   const firstLineBaselineUnit = totalBaselinesFromTop - (captionLineCount - 1) * captionStyle.baselineMultiplier
   const autoCaptionY = contentTop + (firstLineBaselineUnit - 1) * baselineStep
   const captionOrigin = getOriginForBlock("caption", contentLeft, autoCaptionY)
-  const captionAnchorX = captionAlign === "right"
-    ? captionOrigin.x + captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal
-    : captionOrigin.x
   const captionAscent = estimateTextAscent(captionStyle.size * scale)
   const captionFontSize = captionStyle.size * scale
+  const captionLineStep = captionStyle.baselineMultiplier * baselineStep
+  const captionModuleHeight = captionRowSpan * modH + Math.max(captionRowSpan - 1, 0) * gridMarginVertical
+  const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
 
-  for (let i = 0; i < captionLines.length; i += 1) {
-    const lineTopY = captionOrigin.y + baselineStep + i * captionStyle.baselineMultiplier * baselineStep
-    if (lineTopY >= pageBottom) continue
-    const y = lineTopY + captionAscent / scale
-    const line = captionLines[i]
-    const opticalOffsetX = getOpticalMarginAnchorOffset({
-      line,
-      align: captionAlign,
-      fontSize: captionFontSize,
-      measureWidth: (text) => pdf.getTextWidth(text),
-    })
-    drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
+  if (!captionColumnReflow) {
+    const captionAnchorX = captionAlign === "right"
+      ? captionOrigin.x + captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal
+      : captionOrigin.x
+    for (let i = 0; i < captionLines.length; i += 1) {
+      const lineTopY = captionOrigin.y + baselineStep + i * captionStyle.baselineMultiplier * baselineStep
+      if (lineTopY >= pageBottom) continue
+      const y = lineTopY + captionAscent / scale
+      const line = captionLines[i]
+      const opticalOffsetX = getOpticalMarginAnchorOffset({
+        line,
+        align: captionAlign,
+        fontSize: captionFontSize,
+        measureWidth: (text) => pdf.getTextWidth(text),
+      })
+      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
+    }
+  } else {
+    for (let i = 0; i < captionLines.length; i += 1) {
+      const columnIndex = Math.floor(i / captionMaxLinesPerColumn)
+      if (columnIndex >= captionSpan) break
+      const rowIndex = i % captionMaxLinesPerColumn
+      const columnX = captionOrigin.x + columnIndex * moduleXStep
+      const captionAnchorX = captionAlign === "right" ? columnX + modW : columnX
+      const lineTopY = captionOrigin.y + baselineStep + rowIndex * captionLineStep
+      if (lineTopY >= pageBottom) continue
+      const y = lineTopY + captionAscent / scale
+      const line = captionLines[i]
+      const opticalOffsetX = getOpticalMarginAnchorOffset({
+        line,
+        align: captionAlign,
+        fontSize: captionFontSize,
+        measureWidth: (text) => pdf.getTextWidth(text),
+      })
+      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
+    }
   }
 }

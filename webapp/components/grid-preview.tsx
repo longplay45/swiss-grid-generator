@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
-import { AlignLeft, AlignRight, Trash2 } from "lucide-react"
+import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 type BlockId = string
@@ -78,6 +78,17 @@ const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
   caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
+
+// Reflow planner scoring weights.
+const REPOSITION_COL_COST = 6
+const REPOSITION_ROW_COST = 3
+const REPOSITION_OVERFLOW_ROW_COST = 1000
+const REPOSITION_DESIRED_COL_BIAS = 2
+const REPOSITION_ORDER_VIOLATION_BASE = 250
+const REPOSITION_ORDER_VIOLATION_STEP = 0.5
+const REPOSITION_SEARCH_ROW_BUFFER = 60
+const REPOSITION_NON_MODULE_ROW_PENALTY = 80
+const REPOSITION_OUTSIDE_GRID_ROW_PENALTY = 600
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
@@ -217,7 +228,9 @@ export interface PreviewLayoutState {
   blockTextEdited: Record<BlockId, boolean>
   styleAssignments: Record<BlockId, TypographyStyleKey>
   blockColumnSpans: Record<BlockId, number>
+  blockRowSpans?: Record<BlockId, number>
   blockTextAlignments: Record<BlockId, TextAlignMode>
+  blockTextReflow?: Record<BlockId, boolean>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
 }
 
@@ -258,7 +271,9 @@ export function GridPreview({
   const [styleAssignments, setStyleAssignments] = useState<Record<BlockId, TypographyStyleKey>>(getDefaultStyleAssignments)
   const [blockModulePositions, setBlockModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
   const [blockColumnSpans, setBlockColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
+  const [blockRowSpans, setBlockRowSpans] = useState<Partial<Record<BlockId, number>>>({})
   const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockId, TextAlignMode>>>({})
+  const [blockTextReflow, setBlockTextReflow] = useState<Partial<Record<BlockId, boolean>>>({})
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [historyPast, setHistoryPast] = useState<PreviewLayoutState[]>([])
@@ -276,10 +291,14 @@ export function GridPreview({
     draftText: string
     draftStyle: TypographyStyleKey
     draftColumns: number
+    draftRows: number
     draftAlign: TextAlignMode
+    draftReflow: boolean
     draftTextEdited: boolean
   } | null>(null)
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
+  const previousModuleRowStepRef = useRef<number | null>(null)
+  const lastAutoFitSettingsRef = useRef<string>("")
   const lastUndoNonceRef = useRef(undoNonce)
   const lastRedoNonceRef = useRef(redoNonce)
   const HISTORY_LIMIT = 50
@@ -288,6 +307,23 @@ export function GridPreview({
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
     return Math.max(1, Math.min(result.settings.gridCols, raw))
   }, [blockColumnSpans, result.settings.gridCols])
+
+  const getBlockRows = useCallback((key: BlockId) => {
+    const raw = blockRowSpans[key] ?? 1
+    return Math.max(1, Math.min(result.settings.gridRows, raw))
+  }, [blockRowSpans, result.settings.gridRows])
+
+  const getStyleKeyForBlock = useCallback((key: BlockId): TypographyStyleKey => {
+    const assigned = styleAssignments[key]
+    if (assigned === "display" || assigned === "headline" || assigned === "subhead" || assigned === "body" || assigned === "caption") {
+      return assigned
+    }
+    return isBaseBlockId(key) ? DEFAULT_STYLE_ASSIGNMENTS[key] : "body"
+  }, [styleAssignments])
+
+  const isTextReflowEnabled = useCallback((key: BlockId) => {
+    return blockTextReflow[key] ?? false
+  }, [blockTextReflow])
 
   const buildSnapshot = useCallback((): PreviewLayoutState => {
     const resolvedSpans = blockOrder.reduce((acc, key) => {
@@ -299,16 +335,26 @@ export function GridPreview({
       acc[key] = blockTextAlignments[key] ?? "left"
       return acc
     }, {} as Record<BlockId, TextAlignMode>)
+    const resolvedRows = blockOrder.reduce((acc, key) => {
+      acc[key] = getBlockRows(key)
+      return acc
+    }, {} as Record<BlockId, number>)
+    const resolvedReflow = blockOrder.reduce((acc, key) => {
+      acc[key] = isTextReflowEnabled(key)
+      return acc
+    }, {} as Record<BlockId, boolean>)
     return {
       blockOrder: [...blockOrder],
       textContent: { ...textContent },
       blockTextEdited: { ...blockTextEdited },
       styleAssignments: { ...styleAssignments },
       blockColumnSpans: resolvedSpans,
+      blockRowSpans: resolvedRows,
       blockTextAlignments: resolvedAlignments,
+      blockTextReflow: resolvedReflow,
       blockModulePositions: { ...blockModulePositions },
     }
-  }, [blockColumnSpans, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, result.settings.gridCols, styleAssignments, textContent])
+  }, [blockColumnSpans, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, isTextReflowEnabled, result.settings.gridCols, styleAssignments, textContent])
 
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
     setBlockOrder([...snapshot.blockOrder])
@@ -316,7 +362,9 @@ export function GridPreview({
     setBlockTextEdited({ ...snapshot.blockTextEdited })
     setStyleAssignments({ ...snapshot.styleAssignments })
     setBlockColumnSpans({ ...snapshot.blockColumnSpans })
+    setBlockRowSpans({ ...(snapshot.blockRowSpans ?? {}) })
     setBlockTextAlignments({ ...snapshot.blockTextAlignments })
+    setBlockTextReflow({ ...snapshot.blockTextReflow })
     setBlockModulePositions({ ...snapshot.blockModulePositions })
   }, [])
 
@@ -454,11 +502,94 @@ export function GridPreview({
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
     const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
-    const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.yStep)
+    const rowStep = metrics.moduleYStep / metrics.baselineStep
+    const moduleIndex = Math.round((pageY - metrics.contentTop) / metrics.moduleYStep)
+    const rawRow = moduleIndex * rowStep
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
-  const computeReflowPlan = useCallback((gridCols: number, gridRows: number) => {
+  const getAutoFitForPlacement = useCallback(({
+    key,
+    text,
+    styleKey,
+    rowSpan,
+    reflow,
+    position,
+  }: {
+    key: BlockId
+    text: string
+    styleKey: TypographyStyleKey
+    rowSpan: number
+    reflow: boolean
+    position?: ModulePosition | null
+  }): { span: number; position: ModulePosition | null } | null => {
+    if (!reflow) return null
+    const trimmed = text.trim()
+    if (!trimmed) return null
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return null
+
+    const style = result.typography.styles[styleKey]
+    if (!style) return null
+
+    const { margins, gridUnit, gridMarginVertical } = result.grid
+    const baselinePx = gridUnit * scale
+    const lineStep = style.baselineMultiplier * baselinePx
+    const moduleHeightPx = rowSpan * result.module.height * scale + Math.max(rowSpan - 1, 0) * gridMarginVertical * scale
+    let maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
+
+    if (position) {
+      const contentTop = margins.top * scale
+      const baselineOriginTop = contentTop - baselinePx
+      const originY = baselineOriginTop + position.row * baselinePx
+      const pageBottomY = result.pageSizePt.height * scale - margins.bottom * scale
+      const firstLineTop = originY + baselinePx
+      const availableByPage = Math.max(0, Math.floor((pageBottomY - firstLineTop) / lineStep) + 1)
+      maxLinesPerColumn = Math.min(maxLinesPerColumn, availableByPage)
+    }
+    if (maxLinesPerColumn <= 0) return null
+
+    const fontSize = style.size * scale
+    ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
+    const columnWidth = result.module.width * scale
+    const lines = wrapText(ctx, trimmed, columnWidth, { hyphenate: styleKey === "body" })
+    const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
+
+    const maxColsFromPlacement = position
+      ? Math.max(1, result.settings.gridCols - Math.max(0, Math.min(result.settings.gridCols - 1, position.col)))
+      : result.settings.gridCols
+    const nextSpan = Math.max(1, Math.min(neededCols, maxColsFromPlacement))
+    const nextPosition = position
+      ? {
+          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - nextSpan), position.col)),
+          row: position.row,
+        }
+      : null
+
+    return { span: nextSpan, position: nextPosition }
+  }, [result.grid, result.module.height, result.module.width, result.pageSizePt.height, result.settings.gridCols, result.typography.styles, scale])
+
+  const getAutoFitDropUpdate = useCallback((key: BlockId, dropped: ModulePosition): { span: number; position: ModulePosition } | null => {
+    const styleKey = getStyleKeyForBlock(key)
+    const autoFit = getAutoFitForPlacement({
+      key,
+      text: textContent[key] ?? "",
+      styleKey,
+      rowSpan: getBlockRows(key),
+      reflow: isTextReflowEnabled(key),
+      position: dropped,
+    })
+    if (!autoFit?.position) return null
+    return { span: autoFit.span, position: autoFit.position }
+  }, [getAutoFitForPlacement, getBlockRows, getStyleKeyForBlock, isTextReflowEnabled, textContent])
+
+  const computeReflowPlan = useCallback((
+    gridCols: number,
+    gridRows: number,
+    sourcePositions: Partial<Record<BlockId, ModulePosition>> = blockModulePositions,
+  ) => {
     const maxBaselineRow = Math.max(
       0,
       Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit)
@@ -476,84 +607,127 @@ export function GridPreview({
       ["body", 3],
       ["caption", 4],
     ])
+    const orderIndex = new Map(blockOrder.map((key, index) => [key, index]))
     const sortedKeys = [...blockOrder].sort((a, b) => {
       const pa = isBaseBlockId(a) ? (priority.get(a) ?? 100) : 100
       const pb = isBaseBlockId(b) ? (priority.get(b) ?? 100) : 100
       if (pa !== pb) return pa - pb
-      return blockOrder.indexOf(a) - blockOrder.indexOf(b)
+      return (orderIndex.get(a) ?? 0) - (orderIndex.get(b) ?? 0)
     })
 
     const occupied = new Set<string>()
-    const markOccupied = (row: number, col: number, span: number) => {
-      for (let c = col; c < col + span; c += 1) occupied.add(`${row}:${c}`)
-    }
     const canPlace = (row: number, col: number, span: number) => {
+      const rowKey = row.toFixed(4)
       if (col < 0 || row < 0) return false
       if (col + span > gridCols) return false
       for (let c = col; c < col + span; c += 1) {
-        if (occupied.has(`${row}:${c}`)) return false
+        if (occupied.has(`${rowKey}:${c}`)) return false
       }
       return true
+    }
+    const getReadingIndex = (position: ModulePosition) => position.row * (gridCols + 1) + position.col
+    const moduleRowStep = Math.max(0.0001, (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit)
+    const moduleRowStarts = Array.from({ length: Math.max(1, gridRows) }, (_, index) =>
+      Math.max(0, index * moduleRowStep)
+    ).filter((row, index, arr) => arr.indexOf(row) === index)
+    const moduleRowSet = new Set(moduleRowStarts.map((row) => row.toFixed(4)))
+    const maxGridAnchorRow = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
+    const snapToNearestModuleTop = (row: number): number => {
+      const clamped = Math.max(0, row)
+      if (moduleRowStarts.length === 0) return clamped
+      if (clamped <= maxGridAnchorRow) {
+        let best = moduleRowStarts[0]
+        let bestDistance = Math.abs(best - clamped)
+        for (let i = 1; i < moduleRowStarts.length; i += 1) {
+          const candidate = moduleRowStarts[i]
+          const distance = Math.abs(candidate - clamped)
+          if (distance < bestDistance) {
+            best = candidate
+            bestDistance = distance
+          }
+        }
+        return best
+      }
+      const overflowSteps = Math.round((clamped - maxGridAnchorRow) / moduleRowStep)
+      return Math.max(0, maxGridAnchorRow + overflowSteps * moduleRowStep)
     }
 
     const nextPositions: Partial<Record<BlockId, ModulePosition>> = {}
     let movedCount = 0
-    let maxPlacedRow = 0
-
-    if (gridRows === 1) {
-      let rowCursor = 1
-      for (const key of sortedKeys) {
-        const next = { col: 0, row: rowCursor }
-        const current = blockModulePositions[key]
-        if (!current || current.col !== next.col || current.row !== next.row) movedCount += 1
-        nextPositions[key] = next
-        markOccupied(next.row, next.col, resolvedSpans[key])
-        maxPlacedRow = Math.max(maxPlacedRow, next.row)
-        rowCursor += 2
-      }
-      return { movedCount, resolvedSpans, nextPositions }
-    }
+    let previousPlaced: ModulePosition | null = null
 
     for (const key of sortedKeys) {
       const span = resolvedSpans[key]
       const maxCol = Math.max(0, gridCols - span)
-      const current = blockModulePositions[key]
+      const current = sourcePositions[key]
       const desired: ModulePosition = current
         ? {
             col: Math.max(0, Math.min(maxCol, Math.round(current.col))),
-            row: Math.max(0, Math.min(maxBaselineRow, Math.round(current.row))),
+            row: snapToNearestModuleTop(current.row),
           }
-        : { col: 0, row: 1 }
+        : { col: 0, row: 0 }
 
-      let placed: ModulePosition | null = null
-      if (canPlace(desired.row, desired.col, span)) {
-        placed = desired
-      } else {
-        for (let row = desired.row; row <= maxBaselineRow && !placed; row += 1) {
-          const startCol = row === desired.row ? Math.min(maxCol, desired.col + 1) : 0
-          for (let col = startCol; col <= maxCol; col += 1) {
-            if (canPlace(row, col, span)) {
-              placed = { col, row }
-              break
+      const searchMaxRow = Math.max(maxBaselineRow + REPOSITION_SEARCH_ROW_BUFFER, desired.row + REPOSITION_SEARCH_ROW_BUFFER)
+      let best: { position: ModulePosition; score: number } | null = null
+      const prioritizedRows = [...moduleRowStarts].sort((a, b) => {
+        const da = Math.abs(a - desired.row)
+        const db = Math.abs(b - desired.row)
+        return da - db
+      })
+      let overflowCursor = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
+      while (overflowCursor <= searchMaxRow) {
+        if (!moduleRowSet.has(overflowCursor.toFixed(4))) {
+          prioritizedRows.push(overflowCursor)
+        }
+        overflowCursor += moduleRowStep
+      }
+
+      for (const row of prioritizedRows) {
+        if (row > searchMaxRow) continue
+        for (let col = 0; col <= maxCol; col += 1) {
+          if (!canPlace(row, col, span)) continue
+          const candidate: ModulePosition = { col, row }
+          const movementScore = Math.abs(candidate.col - desired.col) * REPOSITION_COL_COST + Math.abs(candidate.row - desired.row) * REPOSITION_ROW_COST
+          const overflowRows = Math.max(0, candidate.row - maxBaselineRow)
+          const overflowScore = overflowRows * REPOSITION_OVERFLOW_ROW_COST
+          const outsideGridRows = Math.max(0, candidate.row - maxGridAnchorRow)
+          const outsideGridScore = outsideGridRows * REPOSITION_OUTSIDE_GRID_ROW_PENALTY
+          const moduleRowScore = moduleRowSet.has(candidate.row.toFixed(4)) ? 0 : REPOSITION_NON_MODULE_ROW_PENALTY
+          const desiredColBias = candidate.col === desired.col ? 0 : REPOSITION_DESIRED_COL_BIAS
+          let orderScore = 0
+          if (previousPlaced) {
+            const prevIndex = getReadingIndex(previousPlaced)
+            const candidateIndex = getReadingIndex(candidate)
+            if (candidateIndex < prevIndex) {
+              orderScore = REPOSITION_ORDER_VIOLATION_BASE + (prevIndex - candidateIndex) * REPOSITION_ORDER_VIOLATION_STEP
             }
+          }
+          const score = movementScore + overflowScore + outsideGridScore + moduleRowScore + desiredColBias + orderScore
+          if (!best || score < best.score || (score === best.score && (candidate.row < best.position.row || (candidate.row === best.position.row && candidate.col < best.position.col)))) {
+            best = { position: candidate, score }
           }
         }
       }
 
-      if (!placed) {
-        let stackRow = Math.max(maxPlacedRow + 1, 1)
-        while (!canPlace(stackRow, 0, span)) stackRow += 1
+      let placed: ModulePosition
+      if (best) {
+        placed = best.position
+      } else {
+        // Safety fallback: place on the first available stacked row.
+        let stackRow = Math.max(maxBaselineRow + moduleRowStep, desired.row)
+        stackRow = snapToNearestModuleTop(stackRow)
+        while (!canPlace(stackRow, 0, span)) stackRow += moduleRowStep
         placed = { col: 0, row: stackRow }
       }
 
-      if (!current || current.col !== placed.col || current.row !== placed.row) movedCount += 1
+      if (!current || current.col !== placed.col || Math.abs(current.row - placed.row) > 0.0001) movedCount += 1
       nextPositions[key] = placed
-      markOccupied(placed.row, placed.col, span)
-      maxPlacedRow = Math.max(maxPlacedRow, placed.row)
+      for (let c = placed.col; c < placed.col + span; c += 1) occupied.add(`${placed.row.toFixed(4)}:${c}`)
+      previousPlaced = placed
     }
 
     return { movedCount, resolvedSpans, nextPositions }
-  }, [blockColumnSpans, blockModulePositions, blockOrder, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.pageSizePt.height])
+  }, [blockColumnSpans, blockModulePositions, blockOrder, result.grid.gridMarginVertical, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.module.height, result.pageSizePt.height])
 
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
@@ -603,6 +777,17 @@ export function GridPreview({
       acc[key] = raw === "right" ? "right" : "left"
       return acc
     }, {} as Record<BlockId, TextAlignMode>)
+    const nextRows = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockRowSpans?.[key]
+      const value = typeof raw === "number" ? raw : 1
+      acc[key] = Math.max(1, Math.min(result.settings.gridRows, Math.round(value)))
+      return acc
+    }, {} as Record<BlockId, number>)
+    const nextReflow = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockTextReflow?.[key]
+      acc[key] = raw === true
+      return acc
+    }, {} as Record<BlockId, boolean>)
 
     const metrics = getGridMetrics()
     const nextPositions = normalizedKeys.reduce((acc, key) => {
@@ -611,7 +796,7 @@ export function GridPreview({
       const maxCol = Math.max(0, result.settings.gridCols - nextSpans[key])
       acc[key] = {
         col: Math.max(0, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(0, Math.min(metrics.maxBaselineRow, Math.round(raw.row))),
+        row: Math.max(0, Math.min(metrics.maxBaselineRow, raw.row)),
       }
       return acc
     }, {} as Partial<Record<BlockId, ModulePosition>>)
@@ -621,7 +806,9 @@ export function GridPreview({
     setBlockTextEdited(nextTextEdited)
     setStyleAssignments(nextStyleAssignments)
     setBlockColumnSpans(nextSpans)
+    setBlockRowSpans(nextRows)
     setBlockTextAlignments(nextAlignments)
+    setBlockTextReflow(nextReflow)
     setBlockModulePositions(nextPositions)
     setDragState(null)
     setHoverState(null)
@@ -809,29 +996,67 @@ export function GridPreview({
 
         const span = getBlockSpan(block.key)
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
-        const textLines = wrapText(ctx, blockText, wrapWidth, { hyphenate: block.key === "body" })
+        const rowSpan = getBlockRows(block.key)
+        const columnReflow = isTextReflowEnabled(block.key)
+        const textLines = wrapText(
+          ctx,
+          blockText,
+          columnReflow ? modW * scale : wrapWidth,
+          { hyphenate: block.key === "body" }
+        )
 
         const autoBlockX = contentLeft
         const autoBlockY = contentTop + (blockStartOffset - 1) * baselinePx
         const origin = getOriginForBlock(block.key, autoBlockX, autoBlockY)
         const textAlign = blockTextAlignments[block.key] ?? "left"
-        const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
         ctx.textAlign = textAlign
         ctx.textBaseline = "alphabetic"
         const textAscentPx = getTextAscentPx(ctx, fontSize)
         const hitTopPadding = Math.max(baselinePx, textAscentPx)
+        const lineStep = baselineMult * baselinePx
+        const pageBottomY = pageHeight - margins.bottom * scale
+        const moduleHeightPx = rowSpan * modH * scale + Math.max(rowSpan - 1, 0) * gridMarginVertical * scale
+        const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
+        let maxUsedRows = 0
 
         nextRects[block.key] = {
           x: origin.x,
           y: origin.y - hitTopPadding,
           width: wrapWidth,
-          height: (textLines.length * baselineMult + 1) * baselinePx + hitTopPadding,
+          height: columnReflow
+            ? moduleHeightPx + hitTopPadding
+            : (Math.max(textLines.length, 1) * baselineMult + 1) * baselinePx + hitTopPadding,
         }
 
-        textLines.forEach((line, lineIndex) => {
-          const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
-          const y = lineTopY + textAscentPx
-          if (lineTopY < pageHeight - margins.bottom * scale) {
+        if (!columnReflow) {
+          const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
+          textLines.forEach((line, lineIndex) => {
+            const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
+            const y = lineTopY + textAscentPx
+            if (lineTopY < pageBottomY) {
+              maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
+              const opticalOffsetX = getOpticalMarginAnchorOffset({
+                line,
+                align: textAlign,
+                fontSize,
+                measureWidth: (text) => ctx.measureText(text).width,
+              })
+              ctx.fillText(line, textAnchorX + opticalOffsetX, y)
+            }
+          })
+        } else {
+          const columnWidth = modW * scale
+          for (let lineIndex = 0; lineIndex < textLines.length; lineIndex += 1) {
+            const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
+            if (columnIndex >= span) break
+            const rowIndex = lineIndex % maxLinesPerColumn
+            const columnX = origin.x + columnIndex * (columnWidth + gutterX)
+            const textAnchorX = textAlign === "right" ? columnX + columnWidth : columnX
+            const line = textLines[lineIndex]
+            const lineTopY = origin.y + baselinePx + rowIndex * lineStep
+            const y = lineTopY + textAscentPx
+            if (lineTopY >= pageBottomY) continue
+            maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
             const opticalOffsetX = getOpticalMarginAnchorOffset({
               line,
               align: textAlign,
@@ -840,11 +1065,16 @@ export function GridPreview({
             })
             ctx.fillText(line, textAnchorX + opticalOffsetX, y)
           }
-        })
+        }
+
+        if (maxUsedRows > 0 && !columnReflow) {
+          nextRects[block.key].height = (maxUsedRows * baselineMult + 1) * baselinePx + hitTopPadding
+        }
 
         if (!useParagraphRows) {
+          const usedLineRows = maxUsedRows || textLines.length
           if (!useRowPlacement || block.key !== "display") {
-            currentBaselineOffset = blockStartOffset + textLines.length * baselineMult
+            currentBaselineOffset = blockStartOffset + usedLineRows * baselineMult
           } else {
             currentBaselineOffset = restStartOffset
           }
@@ -867,8 +1097,14 @@ export function GridPreview({
         ctx.textBaseline = "alphabetic"
 
         const captionSpan = getBlockSpan("caption")
+        const captionRowSpan = getBlockRows("caption")
         const captionWidth = captionSpan * modW * scale + Math.max(captionSpan - 1, 0) * gutterX
-        const captionLines = wrapText(ctx, captionText, captionWidth)
+        const captionColumnReflow = isTextReflowEnabled("caption")
+        const captionLines = wrapText(
+          ctx,
+          captionText,
+          captionColumnReflow ? modW * scale : captionWidth
+        )
         const captionLineCount = captionLines.length
 
         const pageHeightPt = result.pageSizePt.height
@@ -878,15 +1114,44 @@ export function GridPreview({
 
         const autoCaptionY = contentTop + (firstLineBaselineUnit - 1) * baselinePx
         const captionOrigin = getOriginForBlock("caption", contentLeft, autoCaptionY)
-        const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
         ctx.textAlign = captionAlign
         const captionAscentPx = getTextAscentPx(ctx, captionFontSize)
         const captionHitTopPadding = Math.max(baselinePx, captionAscentPx)
+        const captionLineStep = captionBaselineMult * baselinePx
+        const captionPageBottomY = pageHeight - margins.bottom * scale
+        const captionModuleHeightPx = captionRowSpan * modH * scale + Math.max(captionRowSpan - 1, 0) * gridMarginVertical * scale
+        const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeightPx / captionLineStep))
+        let captionMaxUsedRows = 0
 
-        captionLines.forEach((line, lineIndex) => {
-          const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
-          const y = lineTopY + captionAscentPx
-          if (lineTopY < pageHeight - margins.bottom * scale) {
+        if (!captionColumnReflow) {
+          const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
+          captionLines.forEach((line, lineIndex) => {
+            const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
+            const y = lineTopY + captionAscentPx
+            if (lineTopY < captionPageBottomY) {
+              captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
+              const opticalOffsetX = getOpticalMarginAnchorOffset({
+                line,
+                align: captionAlign,
+                fontSize: captionFontSize,
+                measureWidth: (text) => ctx.measureText(text).width,
+              })
+              ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
+            }
+          })
+        } else {
+          const columnWidth = modW * scale
+          for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
+            const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
+            if (columnIndex >= captionSpan) break
+            const rowIndex = lineIndex % captionMaxLinesPerColumn
+            const columnX = captionOrigin.x + columnIndex * (columnWidth + gutterX)
+            const captionAnchorX = captionAlign === "right" ? columnX + columnWidth : columnX
+            const line = captionLines[lineIndex]
+            const lineTopY = captionOrigin.y + baselinePx + rowIndex * captionLineStep
+            const y = lineTopY + captionAscentPx
+            if (lineTopY >= captionPageBottomY) continue
+            captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
             const opticalOffsetX = getOpticalMarginAnchorOffset({
               line,
               align: captionAlign,
@@ -895,13 +1160,15 @@ export function GridPreview({
             })
             ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
           }
-        })
+        }
 
         nextRects.caption = {
           x: captionOrigin.x,
           y: captionOrigin.y - captionHitTopPadding,
           width: captionWidth,
-          height: (captionLineCount * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
+          height: captionColumnReflow
+            ? captionModuleHeightPx + captionHitTopPadding
+            : ((captionMaxUsedRows || captionLineCount) * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
         }
       }
 
@@ -912,10 +1179,13 @@ export function GridPreview({
   }, [
     blockColumnSpans,
     blockTextAlignments,
+    blockTextReflow,
+    blockRowSpans,
     blockModulePositions,
     clampModulePosition,
     dragState,
     getBlockSpan,
+    getBlockRows,
     isMobile,
     onCanvasReady,
     result,
@@ -927,6 +1197,7 @@ export function GridPreview({
     showTypography,
     styleAssignments,
     textContent,
+    isTextReflowEnabled,
   ])
 
   useEffect(() => {
@@ -956,22 +1227,59 @@ export function GridPreview({
 
   useEffect(() => {
     const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
+    const currentModuleRowStep = Math.max(0.0001, (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit)
     if (!previousGridRef.current) {
       previousGridRef.current = currentGrid
+      previousModuleRowStepRef.current = currentModuleRowStep
       return
     }
     if (suppressReflowCheckRef.current) {
       previousGridRef.current = currentGrid
+      previousModuleRowStepRef.current = currentModuleRowStep
       suppressReflowCheckRef.current = false
       return
     }
     if (pendingReflow) return
 
     const previousGrid = previousGridRef.current
+    const previousModuleRowStep = previousModuleRowStepRef.current ?? currentModuleRowStep
     const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    if (!gridChanged) return
+    const moduleRowStepChanged = Math.abs(previousModuleRowStep - currentModuleRowStep) > 0.0001
+    if (!gridChanged && !moduleRowStepChanged) return
+    const isPureColIncrease = (
+      currentGrid.cols >= previousGrid.cols
+      && currentGrid.rows === previousGrid.rows
+      && currentGrid.cols > previousGrid.cols
+      && !moduleRowStepChanged
+    )
+    if (isPureColIncrease) {
+      // Expanding the grid appends capacity to the right/bottom; keep existing layout untouched.
+      previousGridRef.current = currentGrid
+      previousModuleRowStepRef.current = currentModuleRowStep
+      return
+    }
+    const rowsChanged = currentGrid.rows !== previousGrid.rows || moduleRowStepChanged
+    const maxBaselineRow = Math.max(
+      0,
+      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit)
+    )
+    const remapRowBetweenGrids = (row: number): number => {
+      const clamped = Math.max(0, Math.min(maxBaselineRow, row))
+      if (!rowsChanged) return clamped
+      const moduleIndex = Math.max(0, Math.round(clamped / previousModuleRowStep))
+      const next = moduleIndex * currentModuleRowStep
+      return Math.max(0, Math.min(maxBaselineRow, next))
+    }
+    const sourcePositions = rowsChanged
+      ? Object.keys(blockModulePositions).reduce((acc, key) => {
+          const position = blockModulePositions[key]
+          if (!position) return acc
+          acc[key] = { col: position.col, row: remapRowBetweenGrids(position.row) }
+          return acc
+        }, {} as Partial<Record<BlockId, ModulePosition>>)
+      : blockModulePositions
 
-    const plan = computeReflowPlan(currentGrid.cols, currentGrid.rows)
+    const plan = computeReflowPlan(currentGrid.cols, currentGrid.rows, sourcePositions)
     const spanChanged = blockOrder.some((key) => {
       const currentSpan = blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols)
       return plan.resolvedSpans[key] !== currentSpan
@@ -981,11 +1289,21 @@ export function GridPreview({
       const b = plan.nextPositions[key]
       if (!a && !b) return false
       if (!a || !b) return true
-      return a.col !== b.col || a.row !== b.row
+      return a.col !== b.col || Math.abs(a.row - b.row) > 0.0001
     })
 
     if (!spanChanged && !positionChanged) {
       previousGridRef.current = currentGrid
+      previousModuleRowStepRef.current = currentModuleRowStep
+      return
+    }
+
+    if (rowsChanged) {
+      pushHistory(buildSnapshot())
+      setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
+      setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
+      previousGridRef.current = currentGrid
+      previousModuleRowStepRef.current = currentModuleRowStep
       return
     }
 
@@ -1004,7 +1322,77 @@ export function GridPreview({
     setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
     setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
     previousGridRef.current = currentGrid
-  }, [blockColumnSpans, blockModulePositions, blockOrder, buildSnapshot, computeReflowPlan, pendingReflow, pushHistory, result.settings.gridCols, result.settings.gridRows])
+    previousModuleRowStepRef.current = currentModuleRowStep
+  }, [blockColumnSpans, blockModulePositions, blockOrder, buildSnapshot, computeReflowPlan, pendingReflow, pushHistory, result.grid.gridMarginVertical, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.module.height, result.pageSizePt.height, result.settings.gridCols, result.settings.gridRows])
+
+  useEffect(() => {
+    if (pendingReflow) return
+    const signature = [
+      result.settings.gridCols,
+      result.settings.gridRows,
+      result.module.width,
+      result.module.height,
+      result.grid.gridUnit,
+      result.grid.gridMarginVertical,
+      scale,
+    ].join("|")
+    if (lastAutoFitSettingsRef.current === signature) return
+    lastAutoFitSettingsRef.current = signature
+
+    const spanUpdates: Partial<Record<BlockId, number>> = {}
+    const positionUpdates: Partial<Record<BlockId, ModulePosition>> = {}
+    let hasSpanChanges = false
+    let hasPositionChanges = false
+
+    for (const key of blockOrder) {
+      if (!isTextReflowEnabled(key)) continue
+      const currentPosition = blockModulePositions[key]
+      if (!currentPosition) continue
+      const currentSpan = getBlockSpan(key)
+      const autoFit = getAutoFitForPlacement({
+        key,
+        text: textContent[key] ?? "",
+        styleKey: getStyleKeyForBlock(key),
+        rowSpan: getBlockRows(key),
+        reflow: true,
+        position: currentPosition,
+      })
+      if (!autoFit?.position) continue
+
+      if (autoFit.span !== currentSpan) {
+        spanUpdates[key] = autoFit.span
+        hasSpanChanges = true
+      }
+      if (autoFit.position.col !== currentPosition.col || autoFit.position.row !== currentPosition.row) {
+        positionUpdates[key] = autoFit.position
+        hasPositionChanges = true
+      }
+    }
+
+    if (hasSpanChanges) {
+      setBlockColumnSpans((prev) => ({ ...prev, ...spanUpdates }))
+    }
+    if (hasPositionChanges) {
+      setBlockModulePositions((prev) => ({ ...prev, ...positionUpdates }))
+    }
+  }, [
+    blockModulePositions,
+    blockOrder,
+    getAutoFitForPlacement,
+    getBlockRows,
+    getBlockSpan,
+    getStyleKeyForBlock,
+    isTextReflowEnabled,
+    pendingReflow,
+    result.grid.gridMarginVertical,
+    result.grid.gridUnit,
+    result.module.height,
+    result.module.width,
+    result.settings.gridCols,
+    result.settings.gridRows,
+    scale,
+    textContent,
+  ])
 
   useEffect(() => {
     if (!editorState) return
@@ -1066,10 +1454,22 @@ export function GridPreview({
         if (!prev) return null
         if (prev.moved) {
           recordHistoryBeforeChange()
-          setBlockModulePositions((current) => ({
-            ...current,
-            [prev.key]: prev.preview,
-          }))
+          const autoFit = getAutoFitDropUpdate(prev.key, prev.preview)
+          if (autoFit) {
+            setBlockColumnSpans((current) => ({
+              ...current,
+              [prev.key]: autoFit.span,
+            }))
+            setBlockModulePositions((current) => ({
+              ...current,
+              [prev.key]: autoFit.position,
+            }))
+          } else {
+            setBlockModulePositions((current) => ({
+              ...current,
+              [prev.key]: prev.preview,
+            }))
+          }
           dragEndedAtRef.current = Date.now()
         }
         return null
@@ -1082,7 +1482,7 @@ export function GridPreview({
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [dragState, recordHistoryBeforeChange, snapToModule, toPagePoint])
+  }, [dragState, getAutoFitDropUpdate, recordHistoryBeforeChange, snapToModule, toPagePoint])
 
   const closeEditor = useCallback(() => {
     setEditorState(null)
@@ -1091,6 +1491,16 @@ export function GridPreview({
   const saveEditor = useCallback(() => {
     if (!editorState) return
     recordHistoryBeforeChange()
+    const existingPosition = blockModulePositions[editorState.target]
+    const autoFit = getAutoFitForPlacement({
+      key: editorState.target,
+      text: editorState.draftText,
+      styleKey: editorState.draftStyle,
+      rowSpan: editorState.draftRows,
+      reflow: editorState.draftReflow,
+      position: existingPosition,
+    })
+    const nextSpan = autoFit?.span ?? editorState.draftColumns
 
     setTextContent((prev) => ({
       ...prev,
@@ -1106,24 +1516,39 @@ export function GridPreview({
     }))
     setBlockColumnSpans((prev) => ({
       ...prev,
-      [editorState.target]: editorState.draftColumns,
+      [editorState.target]: nextSpan,
+    }))
+    setBlockRowSpans((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftRows,
     }))
     setBlockTextAlignments((prev) => ({
       ...prev,
       [editorState.target]: editorState.draftAlign,
     }))
+    setBlockTextReflow((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftReflow,
+    }))
     setBlockModulePositions((prev) => {
       const pos = prev[editorState.target]
-      if (!pos) return prev
-      const clamped = clampModulePosition(pos, editorState.target)
-      if (clamped.col === pos.col && clamped.row === pos.row) return prev
+      if (!pos && !autoFit?.position) return prev
+      const desired = autoFit?.position ?? pos
+      if (!desired) return prev
+      const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
+      const clamped = {
+        col: Math.max(0, Math.min(maxCol, desired.col)),
+        row: Math.max(0, Math.min(getGridMetrics().maxBaselineRow, desired.row)),
+      }
+      const original = pos ?? desired
+      if (clamped.col === original.col && clamped.row === original.row) return prev
       return {
         ...prev,
         [editorState.target]: clamped,
       }
     })
     setEditorState(null)
-  }, [clampModulePosition, editorState, recordHistoryBeforeChange])
+  }, [blockModulePositions, editorState, getAutoFitForPlacement, getGridMetrics, recordHistoryBeforeChange, result.settings.gridCols])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
@@ -1157,7 +1582,17 @@ export function GridPreview({
         delete next[target]
         return next
       })
+      setBlockRowSpans((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
       setBlockTextAlignments((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockTextReflow((prev) => {
         const next = { ...prev }
         delete next[target]
         return next
@@ -1256,7 +1691,9 @@ export function GridPreview({
           draftText: textContent[key] ?? "",
           draftStyle: styleAssignments[key] ?? "body",
           draftColumns: getBlockSpan(key),
+          draftRows: getBlockRows(key),
           draftAlign: blockTextAlignments[key] ?? "left",
+          draftReflow: isTextReflowEnabled(key),
           draftTextEdited: blockTextEdited[key] ?? true,
         })
         return
@@ -1304,10 +1741,12 @@ export function GridPreview({
       draftText: getDummyTextForStyle("body"),
       draftStyle: "body",
       draftColumns: defaultSpan,
+      draftRows: 1,
       draftAlign: "left",
+      draftReflow: false,
       draftTextEdited: false,
     })
-  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+  }, [blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
 
   const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
@@ -1331,10 +1770,18 @@ export function GridPreview({
       blockTextEdited,
       styleAssignments,
       blockColumnSpans: resolvedSpans,
+      blockRowSpans: blockOrder.reduce((acc, key) => {
+        acc[key] = getBlockRows(key)
+        return acc
+      }, {} as Record<BlockId, number>),
       blockTextAlignments: resolvedAlignments,
+      blockTextReflow: blockOrder.reduce((acc, key) => {
+        acc[key] = isTextReflowEnabled(key)
+        return acc
+      }, {} as Record<BlockId, boolean>),
       blockModulePositions,
     })
-  }, [blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockSpan, onLayoutChange, styleAssignments, textContent])
+  }, [blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
   const canvasCursorClass = dragState ? "cursor-grabbing" : hoverState ? "cursor-grab" : "cursor-default"
 
@@ -1460,6 +1907,26 @@ export function GridPreview({
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={String(editorState.draftRows)}
+                onValueChange={(value) => {
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
+                  } : prev)
+                }}
+              >
+                <SelectTrigger className="h-8 w-28 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
+                    <SelectItem key={count} value={String(count)}>
+                      {count} {count === 1 ? "row" : "rows"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex items-center rounded-md border border-gray-200">
                 <Button
                   type="button"
@@ -1470,6 +1937,7 @@ export function GridPreview({
                     setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
                   }}
                   aria-label="Align left"
+                  title="Align left"
                 >
                   <AlignLeft className="h-4 w-4" />
                 </Button>
@@ -1482,14 +1950,28 @@ export function GridPreview({
                     setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
                   }}
                   aria-label="Align right"
+                  title="Align right"
                 >
                   <AlignRight className="h-4 w-4" />
                 </Button>
               </div>
+              <Button
+                type="button"
+                size="icon"
+                variant={editorState.draftReflow ? "secondary" : "ghost"}
+                className="h-8 w-8"
+                onClick={() => {
+                  setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)
+                }}
+                aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
+                title={editorState.draftReflow ? "Reflow: On" : "Reflow: Off"}
+              >
+                <Rows3 className="h-4 w-4" />
+              </Button>
               <Button size="sm" onClick={saveEditor}>
                 Save
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph">
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph" title="Delete paragraph">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>

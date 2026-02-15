@@ -36,15 +36,20 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - drag-and-snap text blocks
   - double-click popup editor
   - hover info tooltips
+  - per-block `cols` and `rows`
+  - per-block reflow toggle (newspaper-style column flow)
+  - optical margin alignment (hanging punctuation)
 - Header icon actions:
   - Load JSON, Save JSON, Export PDF
   - Undo/Redo
   - Display toggles (baselines, margins, gutter/modules, typo)
-- Reflow safety when grid changes:
-  - warning dialog before rearrange
-  - apply/cancel
+- Grid-change behavior:
+  - pure column increase keeps layout in place (adds capacity to the right)
+  - row and baseline-structure changes remap blocks to nearest module-top anchors
+  - scored auto-reposition model resolves collisions deterministically
+  - warning/apply/cancel flow is used for disruptive non-row structural moves
   - post-apply undo toast
-  - suppressed during JSON layout load
+  - warning flow suppressed during JSON layout load
 - Export popups:
   - Save JSON filename prompt (custom modal)
   - Export PDF with filename + Print Pro controls
@@ -157,6 +162,16 @@ webapp/
 | `npm run build` | Production build |
 | `npm start` | Start production server |
 | `npm run lint` | Next lint command |
+
+## Changelog (Recent Behavior Updates)
+
+- Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
+- Added optical margin alignment (hanging punctuation) in preview and PDF export.
+- Reflow mode now supports newspaper-style multi-column flow constrained by selected row span.
+- Drag-and-drop and structural repositioning now use module-top row anchors.
+- Grid structural changes now use deterministic scored auto-repositioning.
+- Pure column increases keep existing layout positions (capacity is added to the right).
+- Row-structure changes remap rows by module index before repositioning.
 
 ## Reference
 
