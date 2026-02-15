@@ -71,6 +71,59 @@ const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "caption", label: "Caption" },
 ]
 
+export type FontFamily = 
+  | "Inter"
+  | "EB Garamond"
+  | "Libre Baskerville"
+  | "Bodoni Moda"
+  | "Besley"
+  | "Work Sans"
+  | "Nunito Sans"
+  | "IBM Plex Sans"
+  | "Libre Franklin"
+  | "Fraunces"
+  | "Playfair Display"
+  | "Space Grotesk"
+  | "DM Serif Display"
+
+const FONT_OPTIONS: Array<{ value: FontFamily; label: string; category: string }> = [
+  // Sans-Serif (Grotesk)
+  { value: "Inter", label: "Inter", category: "Sans-Serif" },
+  { value: "Work Sans", label: "Work Sans", category: "Sans-Serif" },
+  { value: "Nunito Sans", label: "Nunito Sans", category: "Sans-Serif" },
+  { value: "IBM Plex Sans", label: "IBM Plex Sans", category: "Sans-Serif" },
+  { value: "Libre Franklin", label: "Libre Franklin", category: "Sans-Serif" },
+  // Serif (Antiqua)
+  { value: "EB Garamond", label: "EB Garamond", category: "Serif" },
+  { value: "Libre Baskerville", label: "Libre Baskerville", category: "Serif" },
+  { value: "Bodoni Moda", label: "Bodoni Moda", category: "Serif" },
+  { value: "Besley", label: "Besley", category: "Serif" },
+  // Display
+  { value: "Fraunces", label: "Fraunces", category: "Display" },
+  { value: "Playfair Display", label: "Playfair Display", category: "Display" },
+  { value: "Space Grotesk", label: "Space Grotesk", category: "Display" },
+  { value: "DM Serif Display", label: "DM Serif Display", category: "Display" },
+]
+
+function getFontFamilyCss(fontFamily: FontFamily): string {
+  const fontMap: Record<FontFamily, string> = {
+    "Inter": "Inter, system-ui, -apple-system, sans-serif",
+    "EB Garamond": "EB Garamond, serif",
+    "Libre Baskerville": "Libre Baskerville, serif",
+    "Bodoni Moda": "Bodoni Moda, serif",
+    "Besley": "Besley, serif",
+    "Work Sans": "Work Sans, sans-serif",
+    "Nunito Sans": "Nunito Sans, sans-serif",
+    "IBM Plex Sans": "IBM Plex Sans, sans-serif",
+    "Libre Franklin": "Libre Franklin, sans-serif",
+    "Fraunces": "Fraunces, serif",
+    "Playfair Display": "Playfair Display, serif",
+    "Space Grotesk": "Space Grotesk, sans-serif",
+    "DM Serif Display": "DM Serif Display, serif",
+  }
+  return fontMap[fontFamily] || fontMap["Inter"]
+}
+
 const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   display: "Swiss Design",
   headline: "Modular Grid Systems",
@@ -286,10 +339,17 @@ export function GridPreview({
     resolvedSpans: Record<BlockId, number>
     nextPositions: Partial<Record<BlockId, ModulePosition>>
   } | null>(null)
+  const [blockFontFamilies, setBlockFontFamilies] = useState<Record<BlockId, FontFamily>>(() => 
+    BASE_BLOCK_IDS.reduce((acc, key) => {
+      acc[key] = "Inter"
+      return acc
+    }, {} as Record<BlockId, FontFamily>)
+  )
   const [editorState, setEditorState] = useState<{
     target: BlockId
     draftText: string
     draftStyle: TypographyStyleKey
+    draftFont: FontFamily
     draftColumns: number
     draftRows: number
     draftAlign: TextAlignMode
@@ -324,6 +384,10 @@ export function GridPreview({
   const isTextReflowEnabled = useCallback((key: BlockId) => {
     return blockTextReflow[key] ?? false
   }, [blockTextReflow])
+
+  const getBlockFont = useCallback((key: BlockId): FontFamily => {
+    return blockFontFamilies[key] ?? "Inter"
+  }, [blockFontFamilies])
 
   const buildSnapshot = useCallback((): PreviewLayoutState => {
     const resolvedSpans = blockOrder.reduce((acc, key) => {
@@ -992,7 +1056,8 @@ export function GridPreview({
           blockStartOffset = displayStartOffset + block.extraOffset
         }
 
-        ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
+        const blockFont = getBlockFont(block.key)
+        ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px ${getFontFamilyCss(blockFont)}`
 
         const span = getBlockSpan(block.key)
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
@@ -1091,8 +1156,9 @@ export function GridPreview({
       if (hasCaptionBlock && captionStyle && captionText.trim()) {
         const captionFontSize = captionStyle.size * scale
         const captionBaselineMult = captionStyle.baselineMultiplier
+        const captionFont = getBlockFont("caption")
 
-        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px Inter, system-ui, -apple-system, sans-serif`
+        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px ${getFontFamilyCss(captionFont)}`
         const captionAlign = blockTextAlignments.caption ?? "left"
         ctx.textBaseline = "alphabetic"
 
@@ -1514,6 +1580,10 @@ export function GridPreview({
       ...prev,
       [editorState.target]: editorState.draftStyle,
     }))
+    setBlockFontFamilies((prev) => ({
+      ...prev,
+      [editorState.target]: editorState.draftFont,
+    }))
     setBlockColumnSpans((prev) => ({
       ...prev,
       [editorState.target]: nextSpan,
@@ -1690,6 +1760,7 @@ export function GridPreview({
           target: key,
           draftText: textContent[key] ?? "",
           draftStyle: styleAssignments[key] ?? "body",
+          draftFont: blockFontFamilies[key] ?? "Inter",
           draftColumns: getBlockSpan(key),
           draftRows: getBlockRows(key),
           draftAlign: blockTextAlignments[key] ?? "left",
@@ -1740,6 +1811,7 @@ export function GridPreview({
       target: newKey,
       draftText: getDummyTextForStyle("body"),
       draftStyle: "body",
+      draftFont: "Inter",
       draftColumns: defaultSpan,
       draftRows: 1,
       draftAlign: "left",
@@ -1865,6 +1937,36 @@ export function GridPreview({
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2">
+              {/* Font Dropdown - Second row */}
+              <Select
+                value={editorState.draftFont}
+                onValueChange={(value) => {
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftFont: value as FontFamily,
+                  } : prev)
+                }}
+              >
+                <SelectTrigger className="h-8 w-40 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Inter">Inter</SelectItem>
+                  <SelectItem value="Work Sans">Work Sans</SelectItem>
+                  <SelectItem value="Nunito Sans">Nunito Sans</SelectItem>
+                  <SelectItem value="IBM Plex Sans">IBM Plex Sans</SelectItem>
+                  <SelectItem value="Libre Franklin">Libre Franklin</SelectItem>
+                  <SelectItem value="EB Garamond">EB Garamond</SelectItem>
+                  <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
+                  <SelectItem value="Bodoni Moda">Bodoni Moda</SelectItem>
+                  <SelectItem value="Besley">Besley</SelectItem>
+                  <SelectItem value="Fraunces">Fraunces</SelectItem>
+                  <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                  <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                  <SelectItem value="DM Serif Display">DM Serif Display</SelectItem>
+                </SelectContent>
+              </Select>
+              {/* Style, columns, rows, etc */}
               <Select
                 value={editorState.draftStyle}
                 onValueChange={(value) => {
@@ -1998,6 +2100,7 @@ export function GridPreview({
                     saveEditor()
                   }
                 }}
+                style={{ fontFamily: getFontFamilyCss(editorState.draftFont) }}
                 className="min-h-40 w-full resize-y rounded-md border border-gray-200 bg-gray-50 p-3 text-gray-900 outline-none ring-0 focus:border-gray-300"
               />
             </div>

@@ -165,6 +165,7 @@ export default function Home() {
   const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
   const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
   const [showHelp, setShowHelp] = useState(false)
+  const [showImprint, setShowImprint] = useState(false)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
   const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState(DEFAULT_UI.customMarginMultipliers)
@@ -1170,7 +1171,24 @@ export default function Home() {
                 <CircleHelp className="h-4 w-4" />
               </Button>
               <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Help &amp; reference
+                Help & reference
+              </div>
+            </div>
+            <div className="group relative">
+              <button
+                type="button"
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8 ${showImprint ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'}`}
+                aria-label="Toggle imprint"
+                aria-pressed={showImprint}
+                onClick={() => setShowImprint((prev) => !prev)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Imprint
               </div>
             </div>
           </div>
@@ -1200,32 +1218,68 @@ export default function Home() {
           onLayoutChange={setPreviewLayout}
         />
         </div>
-        {showHelp && (
+        {(showHelp || showImprint) && (
           <div className="w-80 shrink-0 border-l bg-white overflow-y-auto p-4 md:p-6 space-y-4 text-sm text-gray-700">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">How to Use</h3>
-              <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
-                <li>Double-click the canvas to edit a text block or create a new one</li>
-                <li>Drag text blocks to reposition them on the grid</li>
-                <li>Use the display toggles above to show/hide baselines, margins, modules, and typography</li>
-                <li>Cmd/Ctrl+Z to undo, Cmd/Ctrl+Shift+Z to redo</li>
-                <li>Save/load layouts as JSON, export as vector PDF</li>
-                <li>Click a section header to collapse it; double-click to toggle all sections</li>
-              </ul>
-            </div>
-            <hr className="border-gray-200" />
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Grid Theory</h3>
-              <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
-                <li><span className="font-medium text-gray-700">Baseline alignment:</span> all typography leading is an integer multiple of the baseline unit</li>
-                <li><span className="font-medium text-gray-700">Margin methods:</span> Progressive (1:2:2:3), Van de Graaf (2:3:4:6), Baseline (1:1:1:1)</li>
-                <li><span className="font-medium text-gray-700">Typography scales:</span> Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci</li>
-                <li><span className="font-medium text-gray-700">Format scaling:</span> baseline defaults scale by {"\u221A"}2 steps (A4 = 12pt reference)</li>
-              </ul>
-              <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
-                Reference: Josef M{"\u00FC"}ller-Brockmann, <em>Grid Systems in Graphic Design</em> (1981)
-              </p>
-            </div>
+            {showHelp && (
+              <>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">How to Use</h3>
+                  <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
+                    <li> Double-click the canvas to edit a text block or create a new one</li>
+                    <li>Drag text blocks to reposition them on the grid</li>
+                    <li>Use the display toggles above to show/hide baselines, margins, modules, and typography</li>
+                    <li>Cmd/Ctrl+Z to undo, Cmd/Ctrl+Shift+Z to redo</li>
+                    <li>Save/load layouts as JSON, export as vector PDF</li>
+                    <li>Click a section header to collapse it; double-click to toggle all sections</li>
+                  </ul>
+                </div>
+                <hr className="border-gray-200" />
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Grid Theory</h3>
+                  <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
+                    <li><span className="font-medium text-gray-700">Baseline alignment:</span> all typography leading is an integer multiple of the baseline unit</li>
+                    <li><span className="font-medium text-gray-700">Margin methods:</span> Progressive (1:2:2:3), Van de Graaf (2:3:4:6), Baseline (1:1:1:1)</li>
+                    <li><span className="font-medium text-gray-700">Typography scales:</span> Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci</li>
+                    <li><span className="font-medium text-gray-700">Format scaling:</span> baseline defaults scale by {"\u221A"}2 steps (A4 = 12pt reference)</li>
+                  </ul>
+                  <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
+                    Reference: Josef M{"\u00FC"}ller-Brockmann, <em>Grid Systems in Graphic Design</em> (1981)
+                  </p>
+                </div>
+              </>
+            )}
+            {showImprint && (
+              <>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Imprint</h3>
+                  <div className="space-y-3 text-xs text-gray-600">
+                    <p>
+                      <strong>Swiss Grid Generator</strong><br />
+                      A web-based tool for generating modular typographic grids based on Josef Müller-Brockmann's "Grid Systems in Graphic Design" (1981).
+                    </p>
+                    <p>
+                      <strong>Developer:</strong><br />
+                      <a href="https://lp45.net" className="text-blue-600 hover:underline">lp45.net</a>
+                    </p>
+                    <p>
+                      <strong>License:</strong><br />
+                      Copyleft & -right 2026. All rights reserved.
+                    </p>
+                    <p>
+                      <strong>Source Code:</strong><br />
+                      <a href="https://github.com/longplay45/swiss-grid-generator" className="text-blue-600 hover:underline">github.com/longplay45/swiss-grid-generator</a>
+                    </p>
+                    <p>
+                      <strong>Technologies:</strong><br />
+                      Next.js, React, TypeScript, Tailwind CSS, jsPDF
+                    </p>
+                    <p className="pt-2 text-[11px] text-gray-400">
+                      This tool is inspired by the principles of Swiss Design and the International Typographic Style. The generated grids are intended for educational and design purposes.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
         </div>
