@@ -13,6 +13,8 @@ import {
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import type { PreviewLayoutState } from "@/components/grid-preview"
+import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
+import defaultPreset from "@/public/default_v001.json"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -25,6 +27,55 @@ import jsPDF from "jspdf"
 // Conversion factors
 const PT_TO_MM = 0.352778  // 1 point = 0.352778 mm
 const PT_TO_PX = 96 / 72   // 1 point = 1.333... px (CSS pixels at 96ppi reference)
+const PRINT_PRO_BLEED_MM = 3
+const PRINT_PRO_CROP_OFFSET_MM = 2
+const PRINT_PRO_CROP_LENGTH_MM = 5
+type PrintPresetKey = "press_proof" | "offset_final" | "digital_print"
+
+const PRINT_PRESETS: Array<{
+  key: PrintPresetKey
+  label: string
+  config: { enabled: boolean; bleedMm: number; registrationMarks: boolean; finalSafeGuides: boolean }
+}> = [
+  {
+    key: "press_proof",
+    label: "Press Proof",
+    config: { enabled: true, bleedMm: 3, registrationMarks: true, finalSafeGuides: false },
+  },
+  {
+    key: "offset_final",
+    label: "Offset Final",
+    config: { enabled: true, bleedMm: 3, registrationMarks: true, finalSafeGuides: true },
+  },
+  {
+    key: "digital_print",
+    label: "Digital Print",
+    config: { enabled: false, bleedMm: 0, registrationMarks: false, finalSafeGuides: true },
+  },
+]
+const DEFAULT_UI = defaultPreset.uiSettings
+const DEFAULT_PREVIEW_LAYOUT: PreviewLayoutState | null = defaultPreset.previewLayout as PreviewLayoutState
+const DEFAULT_CANVAS_RATIO: CanvasRatioKey = (
+  DEFAULT_UI.canvasRatio === "din_ab"
+  || DEFAULT_UI.canvasRatio === "letter_ansi_ab"
+  || DEFAULT_UI.canvasRatio === "balanced_3_4"
+  || DEFAULT_UI.canvasRatio === "photo_2_3"
+  || DEFAULT_UI.canvasRatio === "screen_16_9"
+  || DEFAULT_UI.canvasRatio === "square_1_1"
+  || DEFAULT_UI.canvasRatio === "editorial_4_5"
+  || DEFAULT_UI.canvasRatio === "wide_2_1"
+) ? DEFAULT_UI.canvasRatio : "din_ab"
+const DEFAULT_ORIENTATION: "portrait" | "landscape" = DEFAULT_UI.orientation === "landscape" ? "landscape" : "portrait"
+const DEFAULT_MARGIN_METHOD: 1 | 2 | 3 = DEFAULT_UI.marginMethod === 2 || DEFAULT_UI.marginMethod === 3 ? DEFAULT_UI.marginMethod : 1
+const DEFAULT_TYPOGRAPHY_SCALE: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" = (
+  DEFAULT_UI.typographyScale === "golden"
+  || DEFAULT_UI.typographyScale === "fourth"
+  || DEFAULT_UI.typographyScale === "fifth"
+  || DEFAULT_UI.typographyScale === "fibonacci"
+) ? DEFAULT_UI.typographyScale : "swiss"
+const DEFAULT_DISPLAY_UNIT: "pt" | "mm" | "px" = (
+  DEFAULT_UI.displayUnit === "mm" || DEFAULT_UI.displayUnit === "px"
+) ? DEFAULT_UI.displayUnit : "pt"
 
 function ptToMm(pt: number): number {
   return pt * PT_TO_MM
@@ -65,6 +116,10 @@ type SectionKey = typeof SECTION_KEYS[number]
 type UiSettingsSnapshot = {
   canvasRatio: CanvasRatioKey
   exportPaperSize: string
+  exportPrintPro: boolean
+  exportBleedMm: number
+  exportRegistrationMarks: boolean
+  exportFinalSafeGuides: boolean
   orientation: "portrait" | "landscape"
   rotation: number
   marginMethod: 1 | 2 | 3
@@ -85,37 +140,41 @@ type UiSettingsSnapshot = {
 }
 
 export default function Home() {
-  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
-  const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(null)
-  const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{ key: number; layout: PreviewLayoutState } | null>(null)
-  const [canvasRatio, setCanvasRatio] = useState<CanvasRatioKey>("din_ab")
-  const [exportPaperSize, setExportPaperSize] = useState("A4")
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
-  const [rotation, setRotation] = useState(0)
-  const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(1)
-  const [gridCols, setGridCols] = useState(4)
-  const [gridRows, setGridRows] = useState(9)
-  const [baselineMultiple, setBaselineMultiple] = useState(1.0)
-  const [gutterMultiple, setGutterMultiple] = useState(1.0)
-  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "fibonacci">("swiss")
-  const [customBaseline, setCustomBaseline] = useState<number>(() => {
-    const defaultVal = DEFAULT_A4_BASELINE
-    return BASELINE_OPTIONS.reduce((prev, curr) =>
-      Math.abs(curr - defaultVal) < Math.abs(prev - defaultVal) ? curr : prev
-    )
-  })
-  const [showBaselines, setShowBaselines] = useState(true)
-  const [showModules, setShowModules] = useState(true)
-  const [showMargins, setShowMargins] = useState(true)
-  const [showTypography, setShowTypography] = useState(true)
-  const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">("pt")
-  const [useCustomMargins, setUseCustomMargins] = useState(false)
-  const [customMarginMultipliers, setCustomMarginMultipliers] = useState({ top: 1, left: 2, right: 2, bottom: 3 })
+  const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(DEFAULT_PREVIEW_LAYOUT)
+  const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{ key: number; layout: PreviewLayoutState } | null>(() =>
+    DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT } : null
+  )
+  const [canvasRatio, setCanvasRatio] = useState<CanvasRatioKey>(DEFAULT_CANVAS_RATIO)
+  const [exportPaperSize, setExportPaperSize] = useState(DEFAULT_UI.exportPaperSize)
+  const [exportPrintPro, setExportPrintPro] = useState(DEFAULT_UI.exportPrintPro)
+  const [exportBleedMm, setExportBleedMm] = useState(DEFAULT_UI.exportBleedMm)
+  const [exportRegistrationMarks, setExportRegistrationMarks] = useState(DEFAULT_UI.exportRegistrationMarks)
+  const [exportFinalSafeGuides, setExportFinalSafeGuides] = useState(DEFAULT_UI.exportFinalSafeGuides)
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(DEFAULT_ORIENTATION)
+  const [rotation, setRotation] = useState(DEFAULT_UI.rotation)
+  const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(DEFAULT_MARGIN_METHOD)
+  const [gridCols, setGridCols] = useState(DEFAULT_UI.gridCols)
+  const [gridRows, setGridRows] = useState(DEFAULT_UI.gridRows)
+  const [baselineMultiple, setBaselineMultiple] = useState(DEFAULT_UI.baselineMultiple)
+  const [gutterMultiple, setGutterMultiple] = useState(DEFAULT_UI.gutterMultiple)
+  const [typographyScale, setTypographyScale] = useState<"swiss" | "golden" | "fourth" | "fifth" | "fibonacci">(DEFAULT_TYPOGRAPHY_SCALE)
+  const [customBaseline, setCustomBaseline] = useState<number>(DEFAULT_UI.customBaseline ?? DEFAULT_A4_BASELINE)
+  const [showBaselines, setShowBaselines] = useState(DEFAULT_UI.showBaselines)
+  const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
+  const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
+  const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
+  const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
+  const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
+  const [customMarginMultipliers, setCustomMarginMultipliers] = useState(DEFAULT_UI.customMarginMultipliers)
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
-  const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState("A4")
+  const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(DEFAULT_UI.exportPaperSize)
+  const [exportPrintProDraft, setExportPrintProDraft] = useState(DEFAULT_UI.exportPrintPro)
+  const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(DEFAULT_UI.exportBleedMm))
+  const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(DEFAULT_UI.exportRegistrationMarks)
+  const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(DEFAULT_UI.exportFinalSafeGuides)
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
   const [undoNonce, setUndoNonce] = useState(0)
@@ -124,7 +183,7 @@ export default function Home() {
   const [settingsFuture, setSettingsFuture] = useState<UiSettingsSnapshot[]>([])
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
-  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({ format: true, baseline: true, margins: true, gutter: true, typo: true })
+  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(DEFAULT_UI.collapsed)
   const uiSnapshotRef = useRef<UiSettingsSnapshot | null>(null)
   const skipUiHistoryRef = useRef(false)
   const SETTINGS_HISTORY_LIMIT = 100
@@ -164,6 +223,10 @@ export default function Home() {
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ({
     canvasRatio,
     exportPaperSize,
+    exportPrintPro,
+    exportBleedMm,
+    exportRegistrationMarks,
+    exportFinalSafeGuides,
     orientation,
     rotation,
     marginMethod,
@@ -189,6 +252,10 @@ export default function Home() {
     customMarginMultipliers,
     displayUnit,
     exportPaperSize,
+    exportPrintPro,
+    exportBleedMm,
+    exportRegistrationMarks,
+    exportFinalSafeGuides,
     gridCols,
     gridRows,
     gutterMultiple,
@@ -207,6 +274,10 @@ export default function Home() {
     skipUiHistoryRef.current = true
     setCanvasRatio(snapshot.canvasRatio)
     setExportPaperSize(snapshot.exportPaperSize)
+    setExportPrintPro(snapshot.exportPrintPro)
+    setExportBleedMm(snapshot.exportBleedMm)
+    setExportRegistrationMarks(snapshot.exportRegistrationMarks)
+    setExportFinalSafeGuides(snapshot.exportFinalSafeGuides)
     setOrientation(snapshot.orientation)
     setRotation(snapshot.rotation)
     setMarginMethod(snapshot.marginMethod)
@@ -261,6 +332,7 @@ export default function Home() {
   const selectedCanvasRatio = useMemo(() => {
     return CANVAS_RATIOS.find((option) => option.key === canvasRatio) ?? CANVAS_RATIOS[0]
   }, [canvasRatio])
+  const isDinOrAnsiRatio = canvasRatio === "din_ab" || canvasRatio === "letter_ansi_ab"
 
   const previewFormat = useMemo(() => {
     const previewDefaults: Record<CanvasRatioKey, string> = {
@@ -363,6 +435,10 @@ export default function Home() {
         canvasRatio,
         format: previewFormat,
         exportPaperSize,
+        exportPrintPro,
+        exportBleedMm,
+        exportRegistrationMarks,
+        exportFinalSafeGuides,
         orientation,
         rotation,
         marginMethod,
@@ -461,17 +537,73 @@ export default function Home() {
     return { width: base.width, height: base.height }
   }, [orientation, previewFormat])
 
-  const exportPDF = (width: number, height: number, filename: string) => {
-    const pdf = new jsPDF({
-      orientation: width > height ? "landscape" : "portrait",
-      unit: "pt",
-      format: [width, height],
-    })
+  const exportPDF = (
+    width: number,
+    height: number,
+    filename: string,
+    printProConfig: { enabled: boolean; bleedMm: number; registrationMarks: boolean; finalSafeGuides: boolean },
+  ) => {
+    const { enabled, bleedMm, registrationMarks, finalSafeGuides } = printProConfig
+    const bleedPt = mmToPt(bleedMm)
+    const cropOffsetPt = mmToPt(PRINT_PRO_CROP_OFFSET_MM)
+    const cropLengthPt = mmToPt(PRINT_PRO_CROP_LENGTH_MM)
+    const cropMarginPt = bleedPt + cropOffsetPt + cropLengthPt
+    const originX = enabled ? cropMarginPt : 0
+    const originY = enabled ? cropMarginPt : 0
+    const pageWidth = enabled ? width + cropMarginPt * 2 : width
+    const pageHeight = enabled ? height + cropMarginPt * 2 : height
 
-    const canvas = previewCanvasRef.current
-    if (!canvas) return
-    const imageData = canvas.toDataURL("image/png")
-    pdf.addImage(imageData, "PNG", 0, 0, width, height)
+    const pdf = new jsPDF({
+      orientation: pageWidth > pageHeight ? "landscape" : "portrait",
+      unit: "pt",
+      format: [pageWidth, pageHeight],
+      compress: true,
+      putOnlyUsedFonts: true,
+      precision: 12,
+      floatPrecision: "smart",
+      userUnit: 1,
+    })
+    pdf.setDocumentProperties({
+      title: filename,
+      author: "Generated by Swiss Grid Generator",
+      subject: "Swiss Grid Vector Export",
+      creator: "Swiss Grid Generator",
+      keywords: "swiss grid, typography, modular grid, vector pdf",
+    })
+    pdf.setCreationDate(new Date())
+    pdf.setLanguage("en-US")
+    pdf.viewerPreferences({
+      DisplayDocTitle: true,
+      PrintScaling: "None",
+      PickTrayByPDFSize: true,
+      PrintArea: "TrimBox",
+      PrintClip: "TrimBox",
+      ViewArea: "TrimBox",
+      ViewClip: "TrimBox",
+    })
+    renderSwissGridVectorPdf({
+      pdf,
+      width,
+      height,
+      result,
+      layout: previewLayout,
+      originX,
+      originY,
+      printPro: {
+        enabled,
+        bleedPt,
+        cropMarkOffsetPt: cropOffsetPt,
+        cropMarkLengthPt: cropLengthPt,
+        showBleedGuide: enabled,
+        registrationMarks,
+        monochromeGuides: finalSafeGuides,
+      },
+      rotation,
+      showBaselines,
+      showModules,
+      showMargins,
+      showTypography,
+    })
 
     pdf.save(filename)
   }
@@ -479,9 +611,22 @@ export default function Home() {
   const openExportDialog = () => {
     const dims = getOrientedDimensions(exportPaperSize)
     setExportPaperSizeDraft(exportPaperSize)
+    setExportPrintProDraft(exportPrintPro)
+    setExportBleedMmDraft(String(exportBleedMm))
+    setExportRegistrationMarksDraft(exportRegistrationMarks)
+    setExportFinalSafeGuidesDraft(exportFinalSafeGuides)
     setExportFilenameDraft(defaultPdfFilename)
-    setExportWidthDraft(formatValue(dims.width, displayUnit))
+    setExportWidthDraft(formatValue(dims.width, isDinOrAnsiRatio ? displayUnit : "mm"))
     setIsExportDialogOpen(true)
+  }
+
+  const applyPrintPreset = (presetKey: PrintPresetKey) => {
+    const preset = PRINT_PRESETS.find((entry) => entry.key === presetKey)
+    if (!preset) return
+    setExportPrintProDraft(preset.config.enabled)
+    setExportBleedMmDraft(String(preset.config.bleedMm))
+    setExportRegistrationMarksDraft(preset.config.registrationMarks)
+    setExportFinalSafeGuidesDraft(preset.config.finalSafeGuides)
   }
 
   const confirmExportPDF = () => {
@@ -491,12 +636,37 @@ export default function Home() {
     const baseDims = getOrientedDimensions(exportPaperSizeDraft)
     const aspectRatio = baseDims.height / baseDims.width
     const parsedWidth = Number(exportWidthDraft)
-    const width = Number.isFinite(parsedWidth) && parsedWidth > 0 ? toPt(parsedWidth, displayUnit) : baseDims.width
+    const parsedBleed = Number(exportBleedMmDraft)
+    const bleedMm = Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : exportBleedMm
+    const width = isDinOrAnsiRatio
+      ? baseDims.width
+      : (Number.isFinite(parsedWidth) && parsedWidth > 0 ? toPt(parsedWidth, "mm") : baseDims.width)
     const height = width * aspectRatio
     setExportPaperSize(exportPaperSizeDraft)
-    exportPDF(width, height, filename)
+    setExportPrintPro(exportPrintProDraft)
+    setExportBleedMm(bleedMm)
+    setExportRegistrationMarks(exportRegistrationMarksDraft)
+    setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
+    exportPDF(width, height, filename, {
+      enabled: exportPrintProDraft,
+      bleedMm,
+      registrationMarks: exportRegistrationMarksDraft,
+      finalSafeGuides: exportFinalSafeGuidesDraft,
+    })
     setIsExportDialogOpen(false)
   }
+
+  useEffect(() => {
+    if (!isExportDialogOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        setIsExportDialogOpen(false)
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [isExportDialogOpen])
 
   const loadLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -526,6 +696,12 @@ export default function Home() {
         if (typeof ui.exportPaperSize === "string" && FORMATS_PT[ui.exportPaperSize]) {
           setExportPaperSize(ui.exportPaperSize)
         }
+        if (typeof ui.exportPrintPro === "boolean") setExportPrintPro(ui.exportPrintPro)
+        if (typeof ui.exportBleedMm === "number" && Number.isFinite(ui.exportBleedMm) && ui.exportBleedMm >= 0) {
+          setExportBleedMm(ui.exportBleedMm)
+        }
+        if (typeof ui.exportRegistrationMarks === "boolean") setExportRegistrationMarks(ui.exportRegistrationMarks)
+        if (typeof ui.exportFinalSafeGuides === "boolean") setExportFinalSafeGuides(ui.exportFinalSafeGuides)
         if (typeof ui.format === "string" && FORMATS_PT[ui.format]) {
           if (/^[AB]/.test(ui.format)) {
             setCanvasRatio("din_ab")
@@ -1003,77 +1179,77 @@ export default function Home() {
             setGridCols(cols)
             setGridRows(rows)
           }}
-          onCanvasReady={(canvas) => {
-            previewCanvasRef.current = canvas
-          }}
           onLayoutChange={setPreviewLayout}
         />
         </div>
       </div>
 
       {isExportDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border bg-white p-4 shadow-xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-y-auto bg-black/40 p-4">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border bg-white p-4 shadow-xl space-y-4">
             <h3 className="text-base font-semibold">Export PDF</h3>
             <p className="text-xs text-gray-600">
               Ratio: {selectedCanvasRatio.label} | Orientation: {orientation} | Rotation: {rotation}°
             </p>
-            <div className="space-y-2">
-              <Label>Paper Size</Label>
-              <Select
-                value={exportPaperSizeDraft}
-                onValueChange={(value) => {
-                  setExportPaperSizeDraft(value)
-                  const dims = getOrientedDimensions(value)
-                  setExportWidthDraft(formatValue(dims.width, displayUnit))
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {paperSizeOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Units</Label>
-              <Select
-                value={displayUnit}
-                onValueChange={(nextUnit: "pt" | "mm" | "px") => {
-                  const currentNumeric = Number(exportWidthDraft)
-                  const currentWidthPt = Number.isFinite(currentNumeric) && currentNumeric > 0
-                    ? toPt(currentNumeric, displayUnit)
-                    : getOrientedDimensions(exportPaperSizeDraft).width
-                  setDisplayUnit(nextUnit)
-                  setExportWidthDraft(formatValue(currentWidthPt, nextUnit))
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mm">mm</SelectItem>
-                  <SelectItem value="pt">pt</SelectItem>
-                  <SelectItem value="px">px</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Width ({displayUnit})</Label>
-              <input
-                type="number"
-                min={1}
-                step="0.001"
-                value={exportWidthDraft}
-                onChange={(event) => setExportWidthDraft(event.target.value)}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-              />
-            </div>
+            {isDinOrAnsiRatio && (
+              <>
+                <div className="space-y-2">
+                  <Label>Units</Label>
+                  <Select
+                    value={displayUnit}
+                    onValueChange={(nextUnit: "pt" | "mm" | "px") => {
+                      const dims = getOrientedDimensions(exportPaperSizeDraft)
+                      setDisplayUnit(nextUnit)
+                      setExportWidthDraft(formatValue(dims.width, nextUnit))
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mm">mm</SelectItem>
+                      <SelectItem value="pt">pt</SelectItem>
+                      <SelectItem value="px">px</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Paper Size</Label>
+                  <Select
+                    value={exportPaperSizeDraft}
+                    onValueChange={(value) => {
+                      setExportPaperSizeDraft(value)
+                      const dims = getOrientedDimensions(value)
+                      setExportWidthDraft(formatValue(dims.width, displayUnit))
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paperSizeOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            {!isDinOrAnsiRatio && (
+              <div className="space-y-2">
+                <Label>Width (mm)</Label>
+                <input
+                  type="number"
+                  min={1}
+                  step="0.001"
+                  value={exportWidthDraft}
+                  onChange={(event) => setExportWidthDraft(event.target.value)}
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+            )}
             <p className="text-xs text-gray-600">
               Height will follow the selected aspect ratio automatically.
             </p>
@@ -1087,6 +1263,59 @@ export default function Home() {
                 placeholder={defaultPdfFilename}
               />
             </div>
+            <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
+              <div className="space-y-0.5">
+                <Label className="text-sm">Print Pro</Label>
+                <p className="text-[11px] text-gray-600">Adds bleed and crop marks as vectors.</p>
+              </div>
+              <Switch checked={exportPrintProDraft} onCheckedChange={setExportPrintProDraft} />
+            </div>
+            <div className="space-y-2">
+              <Label>Print Presets</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {PRINT_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-[11px]"
+                    onClick={() => applyPrintPreset(preset.key)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {exportPrintProDraft && (
+              <>
+                <div className="space-y-2">
+                  <Label>Bleed (mm)</Label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={exportBleedMmDraft}
+                    onChange={(event) => setExportBleedMmDraft(event.target.value)}
+                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Registration-Style Marks</Label>
+                    <p className="text-[11px] text-gray-600">Uses rich CMYK marks instead of black.</p>
+                  </div>
+                  <Switch checked={exportRegistrationMarksDraft} onCheckedChange={setExportRegistrationMarksDraft} />
+                </div>
+                <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Final-Safe Guide Colors</Label>
+                    <p className="text-[11px] text-gray-600">Neutral grayscale guides, no cyan/magenta accents.</p>
+                  </div>
+                  <Switch checked={exportFinalSafeGuidesDraft} onCheckedChange={setExportFinalSafeGuidesDraft} />
+                </div>
+              </>
+            )}
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setIsExportDialogOpen(false)}>
                 Cancel

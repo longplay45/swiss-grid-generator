@@ -242,6 +242,7 @@ export function GridPreview({
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const dragEndedAtRef = useRef<number>(0)
   const lastAppliedLayoutKeyRef = useRef(0)
+  const suppressReflowCheckRef = useRef(false)
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -555,10 +556,12 @@ export function GridPreview({
 
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
-    if (lastAppliedLayoutKeyRef.current !== 0 && lastAppliedLayoutKeyRef.current !== initialLayoutKey) {
+    if (lastAppliedLayoutKeyRef.current === initialLayoutKey) return
+    if (lastAppliedLayoutKeyRef.current !== 0) {
       pushHistory(buildSnapshot())
     }
     lastAppliedLayoutKeyRef.current = initialLayoutKey
+    suppressReflowCheckRef.current = true
 
     const normalizedKeys = (Array.isArray(initialLayout.blockOrder) ? initialLayout.blockOrder : [])
       .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
@@ -942,6 +945,11 @@ export function GridPreview({
     const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
     if (!previousGridRef.current) {
       previousGridRef.current = currentGrid
+      return
+    }
+    if (suppressReflowCheckRef.current) {
+      previousGridRef.current = currentGrid
+      suppressReflowCheckRef.current = false
       return
     }
     if (pendingReflow) return

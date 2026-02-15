@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-02-15T11:42:21.904Z",
+  "gridResult": {
+    "format": "A4",
+    "settings": {
+      "orientation": "portrait",
+      "marginMethod": "Progressive (1:2:2:3)",
+      "marginMethodId": 1,
+      "gridCols": 3,
+      "gridRows": 6,
+      "baselineMultiple": 1,
+      "customBaseline": 12
+    },
+    "pageSizePt": {
+      "width": 595.276,
+      "height": 841.89
+    },
+    "grid": {
+      "gridUnit": 12,
+      "gridMarginHorizontal": 12,
+      "gridMarginVertical": 12,
+      "margins": {
+        "top": 12,
+        "bottom": 36,
+        "left": 24,
+        "right": 24
+      },
+      "gutter": 12,
+      "scaleFactor": 1,
+      "baselineUnitsPerCell": 11
+    },
+    "contentArea": {
+      "width": 547.276,
+      "height": 780
+    },
+    "module": {
+      "width": 174.425,
+      "height": 120,
+      "aspectRatio": 1.454
+    },
+    "typography": {
+      "metadata": {
+        "format": "A4",
+        "unit": "pt",
+        "baselineGrid": 12,
+        "a4Baseline": 12,
+        "scaleFactor": 1
+      },
+      "styles": {
+        "caption": {
+          "size": 7,
+          "leading": 12,
+          "weight": "Regular",
+          "alignment": "Left",
+          "baselineMultiplier": 1,
+          "bodyLines": 1
+        },
+        "body": {
+          "size": 10,
+          "leading": 12,
+          "weight": "Regular",
+          "alignment": "Left",
+          "baselineMultiplier": 1,
+          "bodyLines": 1
+        },
+        "subhead": {
+          "size": 20,
+          "leading": 24,
+          "weight": "Regular",
+          "alignment": "Left",
+          "baselineMultiplier": 2,
+          "bodyLines": 2
+        },
+        "headline": {
+          "size": 30,
+          "leading": 36,
+          "weight": "Bold",
+          "alignment": "Left",
+          "baselineMultiplier": 3,
+          "bodyLines": 3
+        },
+        "display": {
+          "size": 64,
+          "leading": 72,
+          "weight": "Bold",
+          "alignment": "Left",
+          "baselineMultiplier": 6,
+          "bodyLines": 6
+        }
+      }
+    }
+  },
+  "uiSettings": {
+    "canvasRatio": "din_ab",
+    "format": "A4",
+    "exportPaperSize": "A4",
+    "exportPrintPro": true,
+    "exportBleedMm": 3,
+    "exportRegistrationMarks": true,
+    "exportFinalSafeGuides": true,
+    "orientation": "portrait",
+    "rotation": 0,
+    "marginMethod": 1,
+    "gridCols": 3,
+    "gridRows": 6,
+    "baselineMultiple": 1,
+    "gutterMultiple": 1,
+    "typographyScale": "swiss",
+    "customBaseline": 12,
+    "displayUnit": "pt",
+    "useCustomMargins": false,
+    "customMarginMultipliers": {
+      "top": 1,
+      "left": 2,
+      "right": 2,
+      "bottom": 3
+    },
+    "showBaselines": true,
+    "showModules": true,
+    "showMargins": true,
+    "showTypography": true,
+    "collapsed": {
+      "format": true,
+      "baseline": true,
+      "margins": true,
+      "gutter": true,
+      "typo": true
+    }
+  },
+  "previewLayout": {
+    "blockOrder": [
+      "display",
+      "headline",
+      "subhead",
+      "body",
+      "caption"
+    ],
+    "textContent": {
+      "display": "Swiss Design",
+      "headline": "Modular Grid Systems",
+      "subhead": "A grid creates coherent visual structure and establishes a \nconsistent spatial rhythm.",
+      "body": "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.\n\nThe modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
+      "caption": "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net"
+    },
+    "blockTextEdited": {
+      "display": true,
+      "headline": true,
+      "subhead": true,
+      "body": true,
+      "caption": true
+    },
+    "styleAssignments": {
+      "display": "headline",
+      "headline": "subhead",
+      "subhead": "subhead",
+      "body": "body",
+      "caption": "caption"
+    },
+    "blockColumnSpans": {
+      "display": 3,
+      "headline": 2,
+      "subhead": 2,
+      "body": 1,
+      "caption": 1
+    },
+    "blockTextAlignments": {
+      "display": "left",
+      "headline": "left",
+      "subhead": "left",
+      "body": "right",
+      "caption": "right"
+    },
+    "blockModulePositions": {
+      "display": {
+        "col": 0,
+        "row": 0
+      },
+      "headline": {
+        "col": 0,
+        "row": 11
+      },
+      "subhead": {
+        "col": 0,
+        "row": 22
+      },
+      "body": {
+        "col": 2,
+        "row": 22
+      },
+      "caption": {
+        "col": 2,
+        "row": 62
+      }
+    }
+  }
+}
