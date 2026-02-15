@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, SquareDashed, Type, Undo2 } from "lucide-react"
+import { CircleHelp, Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, SquareDashed, Type, Undo2 } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -164,6 +164,7 @@ export default function Home() {
   const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
   const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
   const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
+  const [showHelp, setShowHelp] = useState(false)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
   const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState(DEFAULT_UI.customMarginMultipliers)
@@ -1156,8 +1157,25 @@ export default function Home() {
                 Toggle type preview
               </div>
             </div>
+            <div className="mx-3 h-5 w-px bg-gray-300" />
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={showHelp ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Toggle help"
+                aria-pressed={showHelp}
+                onClick={() => setShowHelp((prev) => !prev)}
+              >
+                <CircleHelp className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Help &amp; reference
+              </div>
+            </div>
           </div>
         </div>
+        <div className="flex-1 flex flex-row overflow-hidden">
         <div className="flex-1 p-4 md:p-6 overflow-auto">
         <GridPreview
           result={result}
@@ -1181,6 +1199,35 @@ export default function Home() {
           }}
           onLayoutChange={setPreviewLayout}
         />
+        </div>
+        {showHelp && (
+          <div className="w-80 shrink-0 border-l bg-white overflow-y-auto p-4 md:p-6 space-y-4 text-sm text-gray-700">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">How to Use</h3>
+              <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
+                <li>Double-click the canvas to edit a text block or create a new one</li>
+                <li>Drag text blocks to reposition them on the grid</li>
+                <li>Use the display toggles above to show/hide baselines, margins, modules, and typography</li>
+                <li>Cmd/Ctrl+Z to undo, Cmd/Ctrl+Shift+Z to redo</li>
+                <li>Save/load layouts as JSON, export as vector PDF</li>
+                <li>Click a section header to collapse it; double-click to toggle all sections</li>
+              </ul>
+            </div>
+            <hr className="border-gray-200" />
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Grid Theory</h3>
+              <ul className="space-y-1.5 text-xs text-gray-600 list-disc pl-4">
+                <li><span className="font-medium text-gray-700">Baseline alignment:</span> all typography leading is an integer multiple of the baseline unit</li>
+                <li><span className="font-medium text-gray-700">Margin methods:</span> Progressive (1:2:2:3), Van de Graaf (2:3:4:6), Baseline (1:1:1:1)</li>
+                <li><span className="font-medium text-gray-700">Typography scales:</span> Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci</li>
+                <li><span className="font-medium text-gray-700">Format scaling:</span> baseline defaults scale by {"\u221A"}2 steps (A4 = 12pt reference)</li>
+              </ul>
+              <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
+                Reference: Josef M{"\u00FC"}ller-Brockmann, <em>Grid Systems in Graphic Design</em> (1981)
+              </p>
+            </div>
+          </div>
+        )}
         </div>
       </div>
 
