@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { CircleHelp, Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, Settings, SquareDashed, Type, Undo2 } from "lucide-react"
+import { CircleHelp, Download, FolderOpen, LayoutGrid, LayoutTemplate, Redo2, Rows3, Save, Settings, SquareDashed, Type, Undo2 } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -172,7 +172,7 @@ export default function Home() {
   const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
   const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
   const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
-  const [activeSidebarPanel, setActiveSidebarPanel] = useState<"settings" | "help" | "imprint" | null>(null)
+  const [activeSidebarPanel, setActiveSidebarPanel] = useState<"settings" | "help" | "imprint" | "example" | null>(null)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
   const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState(DEFAULT_UI.customMarginMultipliers)
@@ -1237,6 +1237,21 @@ export default function Home() {
                 Imprint
               </div>
             </div>
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={activeSidebarPanel === "example" ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Show examples"
+                aria-pressed={activeSidebarPanel === "example"}
+                onClick={() => setActiveSidebarPanel((prev) => prev === "example" ? null : "example")}
+              >
+                <LayoutTemplate className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Example layouts
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex-1 flex flex-row overflow-hidden">
@@ -1334,6 +1349,74 @@ export default function Home() {
                     <p className="pt-2 text-[11px] text-gray-400">
                       This tool is inspired by the principles of Swiss Design and the International Typographic Style. The generated grids are intended for educational and design purposes.
                     </p>
+                  </div>
+                </div>
+              </>
+            )}
+            {activeSidebarPanel === "example" && (
+              <>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Example Layouts</h3>
+                  <p className="text-xs text-gray-600 mb-4">
+                    Click a thumbnail to load a preset layout.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className="group relative aspect-[3/4] rounded-md border-2 border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setCanvasRatio("din_ab")
+                        setOrientation("portrait")
+                        setGridCols(6)
+                        setGridRows(8)
+                        setMarginMethod(1)
+                        setBaselineMultiple(2)
+                        setGutterMultiple(1)
+                        setShowModules(true)
+                        setShowBaselines(true)
+                        setShowMargins(true)
+                        setActiveSidebarPanel(null)
+                      }}
+                    >
+                      <div className="absolute inset-2 border border-gray-300 bg-white">
+                        <div className="h-full w-full grid grid-cols-6 grid-rows-8 gap-px bg-gray-200">
+                          {Array.from({ length: 48 }).map((_, i) => (
+                            <div key={i} className="bg-gray-100" />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-2 py-1 text-[10px] text-gray-600 text-center">
+                        6 × 8 Grid
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="group relative aspect-[3/4] rounded-md border-2 border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setCanvasRatio("din_ab")
+                        setOrientation("landscape")
+                        setGridCols(4)
+                        setGridRows(3)
+                        setMarginMethod(2)
+                        setBaselineMultiple(3)
+                        setGutterMultiple(0.5)
+                        setShowModules(true)
+                        setShowBaselines(true)
+                        setShowMargins(true)
+                        setActiveSidebarPanel(null)
+                      }}
+                    >
+                      <div className="absolute inset-2 border border-gray-300 bg-white">
+                        <div className="h-full w-full grid grid-cols-4 grid-rows-3 gap-px bg-gray-200">
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="bg-gray-100" />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-2 py-1 text-[10px] text-gray-600 text-center">
+                        4 × 3 Layout
+                      </div>
+                    </button>
                   </div>
                 </div>
               </>
