@@ -771,7 +771,7 @@ export default function Home() {
         <div className="shrink-0 space-y-2 p-4 md:px-6 md:pt-6 border-b">
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className="text-sm text-gray-600">
-            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>&gt;. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>&gt;.
+            Based on Müller-Brockmann's <em>Grid Systems in Graphic Design</em> (1981). Copyleft & -right 2026 by <a href="https://lp45.net">lp45.net</a>. License MIT. <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>.
           </p>
         </div>
 
@@ -783,7 +783,7 @@ export default function Home() {
           <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("format")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               I. Canvas Ratio
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.format ? "" : "rotate-90"}`}>&gt;</span>
+              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.format ? "-rotate-90" : "rotate-0"}`}>▼</span>
             </CardTitle>
             <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
               Ratio, orientation, and preview rotation
@@ -836,7 +836,7 @@ export default function Home() {
           <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("baseline")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               II. Baseline Grid ({result.grid.gridUnit.toFixed(3)} pt)
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.baseline ? "" : "rotate-90"}`}>&gt;</span>
+              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.baseline ? "-rotate-90" : "rotate-0"}`}>▼</span>
             </CardTitle>
             <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
               Baseline unit for grid and typography
@@ -868,7 +868,7 @@ export default function Home() {
           <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("margins")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               III. Margins
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.margins ? "" : "rotate-90"}`}>&gt;</span>
+              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.margins ? "-rotate-90" : "rotate-0"}`}>▼</span>
             </CardTitle>
             <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
               Margin method and custom margin controls
@@ -958,7 +958,7 @@ export default function Home() {
           <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("gutter")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               IV. Gutter
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.gutter ? "" : "rotate-90"}`}>&gt;</span>
+              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.gutter ? "-rotate-90" : "rotate-0"}`}>▼</span>
             </CardTitle>
             <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
               Grid columns, rows, and gutter multiple
@@ -998,7 +998,7 @@ export default function Home() {
           <CardHeader className="group relative pb-3 cursor-pointer select-none" onClick={handleSectionHeaderClick("typo")} onDoubleClick={handleSectionHeaderDoubleClick}>
             <CardTitle className="text-sm flex items-center gap-2">
               V. Typo
-              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.typo ? "" : "rotate-90"}`}>&gt;</span>
+              <span className={`ml-auto text-base leading-none transition-transform ${collapsed.typo ? "-rotate-90" : "rotate-0"}`}>▼</span>
             </CardTitle>
             <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
               Typography scale and hierarchy preset

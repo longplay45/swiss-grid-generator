@@ -364,6 +364,7 @@ const MARGIN_CALCULATORS: Record<number, (gridUnit: number, w: number, h: number
 // Baseline defaults scale by √2 steps (matching A-series paper scaling)
 // A4 = 12pt reference; each format step multiplies/divides by √2
 const SQRT2 = Math.SQRT2;
+const FOURTH_ROOT_2 = Math.sqrt(SQRT2);
 export const FORMAT_BASELINES: Record<string, number> = {
   A0: Math.round(BASE_GRID_UNIT * 4 * 1000) / 1000,               // 48.000
   A1: Math.round(BASE_GRID_UNIT * 2 * SQRT2 * 1000) / 1000,       // 33.941
@@ -372,6 +373,14 @@ export const FORMAT_BASELINES: Record<string, number> = {
   A4: BASE_GRID_UNIT,                                               // 12.000
   A5: Math.round(BASE_GRID_UNIT / SQRT2 * 1000) / 1000,           //  8.485
   A6: Math.round(BASE_GRID_UNIT / 2 * 1000) / 1000,               //  6.000
+  // B-series sits between adjacent A-series sizes; use 2^(1/4) offset from A4.
+  B0: Math.round(BASE_GRID_UNIT * 4 * FOURTH_ROOT_2 * 1000) / 1000, // 57.064
+  B1: Math.round(BASE_GRID_UNIT * 2 * SQRT2 * FOURTH_ROOT_2 * 1000) / 1000, // 40.365
+  B2: Math.round(BASE_GRID_UNIT * 2 * FOURTH_ROOT_2 * 1000) / 1000, // 28.541
+  B3: Math.round(BASE_GRID_UNIT * SQRT2 * FOURTH_ROOT_2 * 1000) / 1000, // 20.182
+  B4: Math.round(BASE_GRID_UNIT * FOURTH_ROOT_2 * 1000) / 1000,     // 14.270
+  B5: Math.round(BASE_GRID_UNIT / SQRT2 * FOURTH_ROOT_2 * 1000) / 1000, // 10.091
+  B6: Math.round(BASE_GRID_UNIT / 2 * FOURTH_ROOT_2 * 1000) / 1000, //  7.135
   LETTER: BASE_GRID_UNIT,                                           // 12.000
 };
 
