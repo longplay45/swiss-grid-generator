@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
+import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { AlignLeft, AlignRight, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
@@ -45,8 +46,8 @@ const DEFAULT_TEXT_CONTENT: Record<BaseBlockId, string> = {
   display: "Swiss Design",
   headline: "Modular Grid Systems",
   subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-  body: "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
-  caption: "Figure 5: Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
 
 const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
@@ -71,11 +72,11 @@ const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
 ]
 
 const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
-  display: "DISPLAY DUMMY TEXT",
-  headline: "Headline dummy text",
-  subhead: "Subhead dummy text for structured layouts.",
-  body: "Body dummy text. Replace this paragraph with your own copy.",
-  caption: "Caption dummy text.",
+  display: "Swiss Design",
+  headline: "Modular Grid Systems",
+  subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
 
 function formatPtSize(size: number): string {
@@ -831,7 +832,13 @@ export function GridPreview({
           const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
           const y = lineTopY + textAscentPx
           if (lineTopY < pageHeight - margins.bottom * scale) {
-            ctx.fillText(line, textAnchorX, y)
+            const opticalOffsetX = getOpticalMarginAnchorOffset({
+              line,
+              align: textAlign,
+              fontSize,
+              measureWidth: (text) => ctx.measureText(text).width,
+            })
+            ctx.fillText(line, textAnchorX + opticalOffsetX, y)
           }
         })
 
@@ -880,7 +887,13 @@ export function GridPreview({
           const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
           const y = lineTopY + captionAscentPx
           if (lineTopY < pageHeight - margins.bottom * scale) {
-            ctx.fillText(line, captionAnchorX, y)
+            const opticalOffsetX = getOpticalMarginAnchorOffset({
+              line,
+              align: captionAlign,
+              fontSize: captionFontSize,
+              measureWidth: (text) => ctx.measureText(text).width,
+            })
+            ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
           }
         })
 

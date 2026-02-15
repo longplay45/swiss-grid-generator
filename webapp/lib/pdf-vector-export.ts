@@ -1,6 +1,7 @@
 import jsPDF from "jspdf"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState } from "@/components/grid-preview"
+import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -432,7 +433,14 @@ export function renderSwissGridVectorPdf({
       const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
       if (lineTopY >= pageBottom) continue
       const y = lineTopY + textAscent / scale
-      drawText(lines[lineIndex], anchorX, y, align)
+      const line = lines[lineIndex]
+      const opticalOffsetX = getOpticalMarginAnchorOffset({
+        line,
+        align,
+        fontSize,
+        measureWidth: (text) => pdf.getTextWidth(text),
+      })
+      drawText(line, anchorX + opticalOffsetX, y, align)
     }
 
     if (!useParagraphRows) {
@@ -471,11 +479,19 @@ export function renderSwissGridVectorPdf({
     ? captionOrigin.x + captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal
     : captionOrigin.x
   const captionAscent = estimateTextAscent(captionStyle.size * scale)
+  const captionFontSize = captionStyle.size * scale
 
   for (let i = 0; i < captionLines.length; i += 1) {
     const lineTopY = captionOrigin.y + baselineStep + i * captionStyle.baselineMultiplier * baselineStep
     if (lineTopY >= pageBottom) continue
     const y = lineTopY + captionAscent / scale
-    drawText(captionLines[i], captionAnchorX, y, captionAlign)
+    const line = captionLines[i]
+    const opticalOffsetX = getOpticalMarginAnchorOffset({
+      line,
+      align: captionAlign,
+      fontSize: captionFontSize,
+      measureWidth: (text) => pdf.getTextWidth(text),
+    })
+    drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
   }
 }
