@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
+import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react"
@@ -187,34 +188,7 @@ function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
 }
 
 function hyphenateWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
-  const parts: string[] = []
-  let start = 0
-
-  while (start < word.length) {
-    let end = start + 1
-    let lastGood = start
-
-    while (end <= word.length) {
-      const slice = word.slice(start, end)
-      const withHyphen = end < word.length ? `${slice}-` : slice
-      if (ctx.measureText(withHyphen).width <= maxWidth) {
-        lastGood = end
-        end += 1
-      } else {
-        break
-      }
-    }
-
-    if (lastGood === start) {
-      lastGood = Math.min(start + 1, word.length)
-    }
-
-    const chunk = word.slice(start, lastGood)
-    parts.push(lastGood < word.length ? `${chunk}-` : chunk)
-    start = lastGood
-  }
-
-  return parts
+  return hyphenateWordEnglish(word, maxWidth, (text) => ctx.measureText(text).width)
 }
 
 function wrapText(

@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { CircleHelp, Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, SquareDashed, Type, Undo2 } from "lucide-react"
+import { CircleHelp, Download, FolderOpen, LayoutGrid, Redo2, Rows3, Save, Settings, SquareDashed, Type, Undo2 } from "lucide-react"
 import jsPDF from "jspdf"
 
 // Conversion factors
@@ -172,8 +172,7 @@ export default function Home() {
   const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
   const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
   const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
-  const [showHelp, setShowHelp] = useState(false)
-  const [showImprint, setShowImprint] = useState(false)
+  const [activeSidebarPanel, setActiveSidebarPanel] = useState<"settings" | "help" | "imprint" | null>(null)
   const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
   const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState(DEFAULT_UI.customMarginMultipliers)
@@ -1193,11 +1192,26 @@ export default function Home() {
             <div className="group relative">
               <Button
                 size="icon"
-                variant={showHelp ? "default" : "outline"}
+                variant={activeSidebarPanel === "settings" ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Show settings panel"
+                aria-pressed={activeSidebarPanel === "settings"}
+                onClick={() => setActiveSidebarPanel((prev) => prev === "settings" ? null : "settings")}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Settings panel
+              </div>
+            </div>
+            <div className="group relative">
+              <Button
+                size="icon"
+                variant={activeSidebarPanel === "help" ? "default" : "outline"}
                 className="h-8 w-8"
                 aria-label="Toggle help"
-                aria-pressed={showHelp}
-                onClick={() => setShowHelp((prev) => !prev)}
+                aria-pressed={activeSidebarPanel === "help"}
+                onClick={() => setActiveSidebarPanel((prev) => prev === "help" ? null : "help")}
               >
                 <CircleHelp className="h-4 w-4" />
               </Button>
@@ -1206,18 +1220,19 @@ export default function Home() {
               </div>
             </div>
             <div className="group relative">
-              <button
-                type="button"
-                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8 ${showImprint ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'}`}
-                aria-label="Toggle imprint"
-                aria-pressed={showImprint}
-                onClick={() => setShowImprint((prev) => !prev)}
+              <Button
+                size="icon"
+                variant={activeSidebarPanel === "imprint" ? "default" : "outline"}
+                className="h-8 w-8"
+                aria-label="Show imprint"
+                aria-pressed={activeSidebarPanel === "imprint"}
+                onClick={() => setActiveSidebarPanel((prev) => prev === "imprint" ? null : "imprint")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
-              </button>
+              </Button>
               <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
                 Imprint
               </div>
@@ -1250,9 +1265,20 @@ export default function Home() {
           onLayoutChange={setPreviewLayout}
         />
         </div>
-        {(showHelp || showImprint) && (
+        {activeSidebarPanel && (
           <div className="w-80 shrink-0 border-l bg-white overflow-y-auto p-4 md:p-6 space-y-4 text-sm text-gray-700">
-            {showHelp && (
+            {activeSidebarPanel === "settings" && (
+              <>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Settings</h3>
+                  <div className="space-y-2 text-xs text-gray-600">
+                    <p>This is a placeholder settings page.</p>
+                    <p>Future settings can be added here (profile, defaults, shortcuts, language, etc.).</p>
+                  </div>
+                </div>
+              </>
+            )}
+            {activeSidebarPanel === "help" && (
               <>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-2">How to Use</h3>
@@ -1280,7 +1306,7 @@ export default function Home() {
                 </div>
               </>
             )}
-            {showImprint && (
+            {activeSidebarPanel === "imprint" && (
               <>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-2">Imprint</h3>

@@ -49,6 +49,8 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Load JSON, Save JSON, Export PDF
   - Undo/Redo
   - Display toggles (baselines, margins, gutter/modules, typo)
+  - Sidebar selectors: Settings, Help, Imprint
+  - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
   - row and baseline-structure changes remap blocks to nearest module-top anchors

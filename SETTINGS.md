@@ -116,6 +116,13 @@ Default: `swiss`
 - Gutter/modules
 - Typo
 
+### Sidebar Panels (icon selectors)
+
+- `Settings` (gear icon): opens right sidebar settings placeholder panel
+- `Help` (help icon): opens help/reference panel
+- `Imprint` (document icon): opens imprint panel
+- Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
+
 All header icons use styled rollover help tooltips.
 
 ## Popups
