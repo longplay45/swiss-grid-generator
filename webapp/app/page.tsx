@@ -1049,13 +1049,23 @@ export default function Home() {
         <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">
             <span>Beta Version {APP_VERSION}</span>
-            <button
-              type="button"
-              className={uiTheme.link}
-              onClick={() => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))}
-            >
-              Imprint
-            </button>
+            <div className="flex items-center gap-3">
+              <a
+                href="/survey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={uiTheme.link}
+              >
+                Survey
+              </a>
+              <button
+                type="button"
+                className={uiTheme.link}
+                onClick={() => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))}
+              >
+                Imprint
+              </button>
+            </div>
           </div>
         </div>
       </div>
