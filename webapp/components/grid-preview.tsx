@@ -6,7 +6,7 @@ import { GridResult } from "@/lib/grid-calculator"
 import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react"
+import { ReactNode, useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -32,6 +32,39 @@ type DragState = {
   pointerOffsetY: number
   preview: ModulePosition
   moved: boolean
+}
+
+type Updater<T> = T | ((prev: T) => T)
+
+type BlockCollectionsState = {
+  blockOrder: BlockId[]
+  textContent: Record<BlockId, string>
+  blockTextEdited: Record<BlockId, boolean>
+  styleAssignments: Record<BlockId, TypographyStyleKey>
+  blockModulePositions: Partial<Record<BlockId, ModulePosition>>
+  blockColumnSpans: Partial<Record<BlockId, number>>
+  blockRowSpans: Partial<Record<BlockId, number>>
+  blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
+  blockTextReflow: Partial<Record<BlockId, boolean>>
+  blockSyllableDivision: Partial<Record<BlockId, boolean>>
+  blockFontFamilies: Partial<Record<BlockId, FontFamily>>
+}
+
+type BlockCollectionsAction = {
+  type: "merge"
+  updater: (prev: BlockCollectionsState) => BlockCollectionsState
+}
+
+function blockCollectionsReducer(
+  state: BlockCollectionsState,
+  action: BlockCollectionsAction,
+): BlockCollectionsState {
+  if (action.type === "merge") return action.updater(state)
+  return state
+}
+
+function resolveUpdater<T>(prev: T, next: Updater<T>): T {
+  return typeof next === "function" ? (next as (value: T) => T)(prev) : next
 }
 
 type HoverState = {
@@ -63,6 +96,25 @@ const getDefaultTextContent = (): Record<BlockId, string> => ({ ...DEFAULT_TEXT_
 const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => ({ ...DEFAULT_STYLE_ASSIGNMENTS })
 const isBaseBlockId = (key: string): key is BaseBlockId => (BASE_BLOCK_IDS as readonly string[]).includes(key)
 const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+function createInitialBlockCollectionsState(): BlockCollectionsState {
+  return {
+    blockOrder: [...BASE_BLOCK_IDS],
+    textContent: getDefaultTextContent(),
+    blockTextEdited: BASE_BLOCK_IDS.reduce((acc, key) => {
+      acc[key] = true
+      return acc
+    }, {} as Record<BlockId, boolean>),
+    styleAssignments: getDefaultStyleAssignments(),
+    blockModulePositions: {},
+    blockColumnSpans: {},
+    blockRowSpans: {},
+    blockTextAlignments: {},
+    blockTextReflow: {},
+    blockSyllableDivision: {},
+    blockFontFamilies: {},
+  }
+}
 
 const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "display", label: "Display" },
@@ -327,24 +379,29 @@ export function GridPreview({
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
+  const onLayoutChangeDebounceRef = useRef<number | null>(null)
+  const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
-  const [blockOrder, setBlockOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
-  const [textContent, setTextContent] = useState<Record<BlockId, string>>(getDefaultTextContent)
-  const [blockTextEdited, setBlockTextEdited] = useState<Record<BlockId, boolean>>(() =>
-    BASE_BLOCK_IDS.reduce((acc, key) => {
-      acc[key] = true
-      return acc
-    }, {} as Record<BlockId, boolean>)
+  const [blockCollectionsState, dispatchBlockCollections] = useReducer(
+    blockCollectionsReducer,
+    undefined,
+    createInitialBlockCollectionsState,
   )
-  const [styleAssignments, setStyleAssignments] = useState<Record<BlockId, TypographyStyleKey>>(getDefaultStyleAssignments)
-  const [blockModulePositions, setBlockModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
-  const [blockColumnSpans, setBlockColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
-  const [blockRowSpans, setBlockRowSpans] = useState<Partial<Record<BlockId, number>>>({})
-  const [blockTextAlignments, setBlockTextAlignments] = useState<Partial<Record<BlockId, TextAlignMode>>>({})
-  const [blockTextReflow, setBlockTextReflow] = useState<Partial<Record<BlockId, boolean>>>({})
-  const [blockSyllableDivision, setBlockSyllableDivision] = useState<Partial<Record<BlockId, boolean>>>({})
+  const {
+    blockOrder,
+    textContent,
+    blockTextEdited,
+    styleAssignments,
+    blockModulePositions,
+    blockColumnSpans,
+    blockRowSpans,
+    blockTextAlignments,
+    blockTextReflow,
+    blockSyllableDivision,
+    blockFontFamilies,
+  } = blockCollectionsState
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [historyPast, setHistoryPast] = useState<PreviewLayoutState[]>([])
@@ -357,7 +414,6 @@ export function GridPreview({
     resolvedSpans: Record<BlockId, number>
     nextPositions: Partial<Record<BlockId, ModulePosition>>
   } | null>(null)
-  const [blockFontFamilies, setBlockFontFamilies] = useState<Partial<Record<BlockId, FontFamily>>>({})
   const [editorState, setEditorState] = useState<{
     target: BlockId
     draftText: string
@@ -377,6 +433,7 @@ export function GridPreview({
   const lastRedoNonceRef = useRef(redoNonce)
   const HISTORY_LIMIT = 50
   const TEXT_CACHE_LIMIT = 5000
+  const LAYOUT_CHANGE_DEBOUNCE_MS = 120
 
   const makeCachedValue = useCallback(
     <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
@@ -389,6 +446,63 @@ export function GridPreview({
     },
     [],
   )
+
+  const setBlockCollections = useCallback((updater: (prev: BlockCollectionsState) => BlockCollectionsState) => {
+    dispatchBlockCollections({ type: "merge", updater })
+  }, [])
+
+  const setBlockOrder = useCallback((next: Updater<BlockId[]>) => {
+    setBlockCollections((prev) => ({ ...prev, blockOrder: resolveUpdater(prev.blockOrder, next) }))
+  }, [setBlockCollections])
+
+  const setTextContent = useCallback((next: Updater<Record<BlockId, string>>) => {
+    setBlockCollections((prev) => ({ ...prev, textContent: resolveUpdater(prev.textContent, next) }))
+  }, [setBlockCollections])
+
+  const setBlockTextEdited = useCallback((next: Updater<Record<BlockId, boolean>>) => {
+    setBlockCollections((prev) => ({ ...prev, blockTextEdited: resolveUpdater(prev.blockTextEdited, next) }))
+  }, [setBlockCollections])
+
+  const setStyleAssignments = useCallback((next: Updater<Record<BlockId, TypographyStyleKey>>) => {
+    setBlockCollections((prev) => ({ ...prev, styleAssignments: resolveUpdater(prev.styleAssignments, next) }))
+  }, [setBlockCollections])
+
+  const setBlockFontFamilies = useCallback((next: Updater<Partial<Record<BlockId, FontFamily>>>) => {
+    setBlockCollections((prev) => ({ ...prev, blockFontFamilies: resolveUpdater(prev.blockFontFamilies, next) }))
+  }, [setBlockCollections])
+
+  const setBlockColumnSpans = useCallback((next: Updater<Partial<Record<BlockId, number>>>) => {
+    setBlockCollections((prev) => ({ ...prev, blockColumnSpans: resolveUpdater(prev.blockColumnSpans, next) }))
+  }, [setBlockCollections])
+
+  const setBlockRowSpans = useCallback((next: Updater<Partial<Record<BlockId, number>>>) => {
+    setBlockCollections((prev) => ({ ...prev, blockRowSpans: resolveUpdater(prev.blockRowSpans, next) }))
+  }, [setBlockCollections])
+
+  const setBlockTextAlignments = useCallback((next: Updater<Partial<Record<BlockId, TextAlignMode>>>) => {
+    setBlockCollections((prev) => ({
+      ...prev,
+      blockTextAlignments: resolveUpdater(prev.blockTextAlignments, next),
+    }))
+  }, [setBlockCollections])
+
+  const setBlockTextReflow = useCallback((next: Updater<Partial<Record<BlockId, boolean>>>) => {
+    setBlockCollections((prev) => ({ ...prev, blockTextReflow: resolveUpdater(prev.blockTextReflow, next) }))
+  }, [setBlockCollections])
+
+  const setBlockSyllableDivision = useCallback((next: Updater<Partial<Record<BlockId, boolean>>>) => {
+    setBlockCollections((prev) => ({
+      ...prev,
+      blockSyllableDivision: resolveUpdater(prev.blockSyllableDivision, next),
+    }))
+  }, [setBlockCollections])
+
+  const setBlockModulePositions = useCallback((next: Updater<Partial<Record<BlockId, ModulePosition>>>) => {
+    setBlockCollections((prev) => ({
+      ...prev,
+      blockModulePositions: resolveUpdater(prev.blockModulePositions, next),
+    }))
+  }, [setBlockCollections])
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -464,18 +578,20 @@ export function GridPreview({
       if (isFontFamily(raw) && raw !== baseFont) acc[key] = raw
       return acc
     }, {} as Partial<Record<BlockId, FontFamily>>)
-    setBlockOrder([...snapshot.blockOrder])
-    setTextContent({ ...snapshot.textContent })
-    setBlockTextEdited({ ...snapshot.blockTextEdited })
-    setStyleAssignments({ ...snapshot.styleAssignments })
-    setBlockFontFamilies(nextFonts)
-    setBlockColumnSpans({ ...snapshot.blockColumnSpans })
-    setBlockRowSpans({ ...(snapshot.blockRowSpans ?? {}) })
-    setBlockTextAlignments({ ...snapshot.blockTextAlignments })
-    setBlockTextReflow({ ...snapshot.blockTextReflow })
-    setBlockSyllableDivision({ ...snapshot.blockSyllableDivision })
-    setBlockModulePositions({ ...snapshot.blockModulePositions })
-  }, [baseFont])
+    setBlockCollections(() => ({
+      blockOrder: [...snapshot.blockOrder],
+      textContent: { ...snapshot.textContent },
+      blockTextEdited: { ...snapshot.blockTextEdited },
+      styleAssignments: { ...snapshot.styleAssignments },
+      blockFontFamilies: nextFonts,
+      blockColumnSpans: { ...snapshot.blockColumnSpans },
+      blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
+      blockTextAlignments: { ...snapshot.blockTextAlignments },
+      blockTextReflow: { ...snapshot.blockTextReflow },
+      blockSyllableDivision: { ...snapshot.blockSyllableDivision },
+      blockModulePositions: { ...snapshot.blockModulePositions },
+    }))
+  }, [baseFont, setBlockCollections])
 
   const pushHistory = useCallback((snapshot: PreviewLayoutState) => {
     setHistoryPast((prev) => {
@@ -960,21 +1076,33 @@ export function GridPreview({
       return acc
     }, {} as Partial<Record<BlockId, ModulePosition>>)
 
-    setBlockOrder(normalizedKeys)
-    setTextContent(nextTextContent)
-    setBlockTextEdited(nextTextEdited)
-    setStyleAssignments(nextStyleAssignments)
-    setBlockFontFamilies(nextFontFamilies)
-    setBlockColumnSpans(nextSpans)
-    setBlockRowSpans(nextRows)
-    setBlockTextAlignments(nextAlignments)
-    setBlockTextReflow(nextReflow)
-    setBlockSyllableDivision(nextSyllableDivision)
-    setBlockModulePositions(nextPositions)
+    setBlockCollections(() => ({
+      blockOrder: normalizedKeys,
+      textContent: nextTextContent,
+      blockTextEdited: nextTextEdited,
+      styleAssignments: nextStyleAssignments,
+      blockFontFamilies: nextFontFamilies,
+      blockColumnSpans: nextSpans,
+      blockRowSpans: nextRows,
+      blockTextAlignments: nextAlignments,
+      blockTextReflow: nextReflow,
+      blockSyllableDivision: nextSyllableDivision,
+      blockModulePositions: nextPositions,
+    }))
     setDragState(null)
     setHoverState(null)
     setEditorState(null)
-  }, [baseFont, buildSnapshot, getGridMetrics, initialLayout, initialLayoutKey, pushHistory, result.settings.gridCols, result.typography.styles])
+  }, [
+    baseFont,
+    buildSnapshot,
+    getGridMetrics,
+    initialLayout,
+    initialLayoutKey,
+    pushHistory,
+    result.settings.gridCols,
+    result.typography.styles,
+    setBlockCollections,
+  ])
 
   useEffect(() => {
     const canvas = staticCanvasRef.current
@@ -1695,133 +1823,130 @@ export function GridPreview({
       position: existingPosition,
     })
     const nextSpan = autoFit?.span ?? editorState.draftColumns
-
-    setTextContent((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftText,
-    }))
-    setBlockTextEdited((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftTextEdited,
-    }))
-    setStyleAssignments((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftStyle,
-    }))
-    setBlockFontFamilies((prev) => {
-      const next = { ...prev }
+    setBlockCollections((prev) => {
+      const nextTextContent = {
+        ...prev.textContent,
+        [editorState.target]: editorState.draftText,
+      }
+      const nextTextEdited = {
+        ...prev.blockTextEdited,
+        [editorState.target]: editorState.draftTextEdited,
+      }
+      const nextStyles = {
+        ...prev.styleAssignments,
+        [editorState.target]: editorState.draftStyle,
+      }
+      const nextFonts = { ...prev.blockFontFamilies }
       if (editorState.draftFont === baseFont) {
-        delete next[editorState.target]
+        delete nextFonts[editorState.target]
       } else {
-        next[editorState.target] = editorState.draftFont
+        nextFonts[editorState.target] = editorState.draftFont
       }
-      return next
-    })
-    setBlockColumnSpans((prev) => ({
-      ...prev,
-      [editorState.target]: nextSpan,
-    }))
-    setBlockRowSpans((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftRows,
-    }))
-    setBlockTextAlignments((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftAlign,
-    }))
-    setBlockTextReflow((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftReflow,
-    }))
-    setBlockSyllableDivision((prev) => ({
-      ...prev,
-      [editorState.target]: editorState.draftSyllableDivision,
-    }))
-    setBlockModulePositions((prev) => {
-      const pos = prev[editorState.target]
-      if (!pos && !autoFit?.position) return prev
+      const nextColumnSpans = {
+        ...prev.blockColumnSpans,
+        [editorState.target]: nextSpan,
+      }
+      const nextRowSpans = {
+        ...prev.blockRowSpans,
+        [editorState.target]: editorState.draftRows,
+      }
+      const nextAlignments = {
+        ...prev.blockTextAlignments,
+        [editorState.target]: editorState.draftAlign,
+      }
+      const nextReflow = {
+        ...prev.blockTextReflow,
+        [editorState.target]: editorState.draftReflow,
+      }
+      const nextSyllableDivision = {
+        ...prev.blockSyllableDivision,
+        [editorState.target]: editorState.draftSyllableDivision,
+      }
+
+      const nextPositions = { ...prev.blockModulePositions }
+      const pos = nextPositions[editorState.target]
       const desired = autoFit?.position ?? pos
-      if (!desired) return prev
-      const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
-      const clamped = {
-        col: Math.max(0, Math.min(maxCol, desired.col)),
-        row: Math.max(0, Math.min(getGridMetrics().maxBaselineRow, desired.row)),
+      if (desired) {
+        const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
+        const clamped = {
+          col: Math.max(0, Math.min(maxCol, desired.col)),
+          row: Math.max(0, Math.min(getGridMetrics().maxBaselineRow, desired.row)),
+        }
+        const original = pos ?? desired
+        if (clamped.col !== original.col || clamped.row !== original.row) {
+          nextPositions[editorState.target] = clamped
+        }
       }
-      const original = pos ?? desired
-      if (clamped.col === original.col && clamped.row === original.row) return prev
+
       return {
         ...prev,
-        [editorState.target]: clamped,
+        textContent: nextTextContent,
+        blockTextEdited: nextTextEdited,
+        styleAssignments: nextStyles,
+        blockFontFamilies: nextFonts,
+        blockColumnSpans: nextColumnSpans,
+        blockRowSpans: nextRowSpans,
+        blockTextAlignments: nextAlignments,
+        blockTextReflow: nextReflow,
+        blockSyllableDivision: nextSyllableDivision,
+        blockModulePositions: nextPositions,
       }
     })
     setEditorState(null)
-  }, [baseFont, blockModulePositions, editorState, getAutoFitForPlacement, getGridMetrics, recordHistoryBeforeChange, result.settings.gridCols])
+  }, [
+    baseFont,
+    blockModulePositions,
+    editorState,
+    getAutoFitForPlacement,
+    getGridMetrics,
+    recordHistoryBeforeChange,
+    result.settings.gridCols,
+    setBlockCollections,
+  ])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
     recordHistoryBeforeChange()
 
     const target = editorState.target
-    if (isBaseBlockId(target)) {
-      setTextContent((prev) => ({
+    setBlockCollections((prev) => {
+      if (isBaseBlockId(target)) {
+        return {
+          ...prev,
+          textContent: {
+            ...prev.textContent,
+            [target]: "",
+          },
+          blockModulePositions: (() => {
+            const next = { ...prev.blockModulePositions }
+            delete next[target]
+            return next
+          })(),
+        }
+      }
+      const nextOrder = prev.blockOrder.filter((key) => key !== target)
+      const omitTarget = <T extends object>(source: T) => {
+        const next = { ...source } as Record<string, unknown>
+        delete next[target]
+        return next
+      }
+      return {
         ...prev,
-        [target]: "",
-      }))
-    } else {
-      setBlockOrder((prev) => prev.filter((key) => key !== target))
-      setTextContent((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockTextEdited((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setStyleAssignments((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockFontFamilies((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockColumnSpans((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockRowSpans((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockTextAlignments((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockTextReflow((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockSyllableDivision((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-    }
-    setBlockModulePositions((prev) => {
-      const next = { ...prev }
-      delete next[target]
-      return next
+        blockOrder: nextOrder,
+        textContent: omitTarget(prev.textContent) as Record<BlockId, string>,
+        blockTextEdited: omitTarget(prev.blockTextEdited) as Record<BlockId, boolean>,
+        styleAssignments: omitTarget(prev.styleAssignments) as Record<BlockId, TypographyStyleKey>,
+        blockFontFamilies: omitTarget(prev.blockFontFamilies) as Partial<Record<BlockId, FontFamily>>,
+        blockColumnSpans: omitTarget(prev.blockColumnSpans) as Partial<Record<BlockId, number>>,
+        blockRowSpans: omitTarget(prev.blockRowSpans) as Partial<Record<BlockId, number>>,
+        blockTextAlignments: omitTarget(prev.blockTextAlignments) as Partial<Record<BlockId, TextAlignMode>>,
+        blockTextReflow: omitTarget(prev.blockTextReflow) as Partial<Record<BlockId, boolean>>,
+        blockSyllableDivision: omitTarget(prev.blockSyllableDivision) as Partial<Record<BlockId, boolean>>,
+        blockModulePositions: omitTarget(prev.blockModulePositions) as Partial<Record<BlockId, ModulePosition>>,
+      }
     })
     setEditorState(null)
-  }, [editorState, recordHistoryBeforeChange])
+  }, [editorState, recordHistoryBeforeChange, setBlockCollections])
 
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState) return
@@ -1974,7 +2099,14 @@ export function GridPreview({
   const hoveredAlign = hoverState ? (blockTextAlignments[hoverState.key] ?? "left") : null
 
   useEffect(() => {
-    if (!onLayoutChange) return
+    if (!onLayoutChange) {
+      if (onLayoutChangeDebounceRef.current !== null) {
+        window.clearTimeout(onLayoutChangeDebounceRef.current)
+        onLayoutChangeDebounceRef.current = null
+      }
+      pendingLayoutEmissionRef.current = null
+      return
+    }
 
     const resolvedSpans = blockOrder.reduce((acc, key) => {
       acc[key] = getBlockSpan(key)
@@ -1985,7 +2117,7 @@ export function GridPreview({
       return acc
     }, {} as Record<BlockId, TextAlignMode>)
 
-    onLayoutChange({
+    pendingLayoutEmissionRef.current = {
       blockOrder,
       textContent,
       blockTextEdited,
@@ -2006,7 +2138,22 @@ export function GridPreview({
         return acc
       }, {} as Record<BlockId, boolean>),
       blockModulePositions,
-    })
+    }
+    if (onLayoutChangeDebounceRef.current !== null) {
+      window.clearTimeout(onLayoutChangeDebounceRef.current)
+    }
+    onLayoutChangeDebounceRef.current = window.setTimeout(() => {
+      if (!pendingLayoutEmissionRef.current) return
+      onLayoutChange(pendingLayoutEmissionRef.current)
+      pendingLayoutEmissionRef.current = null
+      onLayoutChangeDebounceRef.current = null
+    }, LAYOUT_CHANGE_DEBOUNCE_MS)
+    return () => {
+      if (onLayoutChangeDebounceRef.current !== null) {
+        window.clearTimeout(onLayoutChangeDebounceRef.current)
+        onLayoutChangeDebounceRef.current = null
+      }
+    }
   }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
   const canvasCursorClass = dragState ? "cursor-grabbing" : hoverState ? "cursor-grab" : "cursor-default"
