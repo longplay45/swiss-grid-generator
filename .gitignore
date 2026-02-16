@@ -1,6 +1,9 @@
 # Git
 .gitignore
 
+# Env
+.env
+
 # AI
 .claude/
 CLAUDE.md
