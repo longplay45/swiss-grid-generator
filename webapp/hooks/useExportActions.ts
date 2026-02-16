@@ -64,26 +64,53 @@ export type ExportActionsContext = {
 }
 
 export function useExportActions(ctx: ExportActionsContext) {
+  const {
+    result,
+    previewLayout,
+    orientation,
+    rotation,
+    showBaselines,
+    showModules,
+    showMargins,
+    showTypography,
+    isDinOrAnsiRatio,
+    displayUnit,
+    setDisplayUnit,
+    exportPaperSize,
+    setExportPaperSize,
+    exportPrintPro,
+    setExportPrintPro,
+    exportBleedMm,
+    setExportBleedMm,
+    exportRegistrationMarks,
+    setExportRegistrationMarks,
+    exportFinalSafeGuides,
+    setExportFinalSafeGuides,
+    previewFormat,
+    defaultPdfFilename,
+    defaultJsonFilename,
+    buildUiSettingsPayload,
+  } = ctx
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
-  const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(ctx.exportPaperSize)
-  const [exportPrintProDraft, setExportPrintProDraft] = useState(ctx.exportPrintPro)
-  const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(ctx.exportBleedMm))
-  const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(ctx.exportRegistrationMarks)
-  const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(ctx.exportFinalSafeGuides)
+  const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(exportPaperSize)
+  const [exportPrintProDraft, setExportPrintProDraft] = useState(exportPrintPro)
+  const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(exportBleedMm))
+  const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(exportRegistrationMarks)
+  const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(exportFinalSafeGuides)
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
 
   const getOrientedDimensions = useCallback(
     (paperSize: string) => {
-      const base = FORMATS_PT[paperSize] ?? FORMATS_PT[ctx.previewFormat]
-      if (ctx.orientation === "landscape") {
+      const base = FORMATS_PT[paperSize] ?? FORMATS_PT[previewFormat]
+      if (orientation === "landscape") {
         return { width: base.height, height: base.width }
       }
       return { width: base.width, height: base.height }
     },
-    [ctx.orientation, ctx.previewFormat],
+    [orientation, previewFormat],
   )
 
   const saveJSON = useCallback(
@@ -94,9 +121,9 @@ export function useExportActions(ctx: ExportActionsContext) {
       const payload = {
         schemaVersion: 1,
         exportedAt: new Date().toISOString(),
-        gridResult: ctx.result,
-        uiSettings: ctx.buildUiSettingsPayload(),
-        previewLayout: ctx.previewLayout,
+        gridResult: result,
+        uiSettings: buildUiSettingsPayload(),
+        previewLayout,
       }
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -106,13 +133,13 @@ export function useExportActions(ctx: ExportActionsContext) {
       a.click()
       URL.revokeObjectURL(url)
     },
-    [ctx],
+    [buildUiSettingsPayload, previewLayout, result],
   )
 
   const openSaveDialog = useCallback(() => {
-    setSaveFilenameDraft(ctx.defaultJsonFilename)
+    setSaveFilenameDraft(defaultJsonFilename)
     setIsSaveDialogOpen(true)
-  }, [ctx.defaultJsonFilename])
+  }, [defaultJsonFilename])
 
   const confirmSaveJSON = useCallback(() => {
     const trimmedName = saveFilenameDraft.trim()
@@ -170,8 +197,8 @@ export function useExportActions(ctx: ExportActionsContext) {
         pdf,
         width,
         height,
-        result: ctx.result,
-        layout: ctx.previewLayout,
+        result,
+        layout: previewLayout,
         originX,
         originY,
         printPro: {
@@ -183,28 +210,38 @@ export function useExportActions(ctx: ExportActionsContext) {
           registrationMarks,
           monochromeGuides: finalSafeGuides,
         },
-        rotation: ctx.rotation,
-        showBaselines: ctx.showBaselines,
-        showModules: ctx.showModules,
-        showMargins: ctx.showMargins,
-        showTypography: ctx.showTypography,
+        rotation,
+        showBaselines,
+        showModules,
+        showMargins,
+        showTypography,
       })
       pdf.save(filename)
     },
-    [ctx],
+    [previewLayout, result, rotation, showBaselines, showMargins, showModules, showTypography],
   )
 
   const openExportDialog = useCallback(() => {
-    const dims = getOrientedDimensions(ctx.exportPaperSize)
-    setExportPaperSizeDraft(ctx.exportPaperSize)
-    setExportPrintProDraft(ctx.exportPrintPro)
-    setExportBleedMmDraft(String(ctx.exportBleedMm))
-    setExportRegistrationMarksDraft(ctx.exportRegistrationMarks)
-    setExportFinalSafeGuidesDraft(ctx.exportFinalSafeGuides)
-    setExportFilenameDraft(ctx.defaultPdfFilename)
-    setExportWidthDraft(formatValue(dims.width, ctx.isDinOrAnsiRatio ? ctx.displayUnit : "mm"))
+    const dims = getOrientedDimensions(exportPaperSize)
+    setExportPaperSizeDraft(exportPaperSize)
+    setExportPrintProDraft(exportPrintPro)
+    setExportBleedMmDraft(String(exportBleedMm))
+    setExportRegistrationMarksDraft(exportRegistrationMarks)
+    setExportFinalSafeGuidesDraft(exportFinalSafeGuides)
+    setExportFilenameDraft(defaultPdfFilename)
+    setExportWidthDraft(formatValue(dims.width, isDinOrAnsiRatio ? displayUnit : "mm"))
     setIsExportDialogOpen(true)
-  }, [ctx, getOrientedDimensions])
+  }, [
+    defaultPdfFilename,
+    displayUnit,
+    exportBleedMm,
+    exportFinalSafeGuides,
+    exportPaperSize,
+    exportPrintPro,
+    exportRegistrationMarks,
+    getOrientedDimensions,
+    isDinOrAnsiRatio,
+  ])
 
   const applyPrintPreset = useCallback((presetKey: PrintPresetKey) => {
     const preset = PRINT_PRESETS.find((entry) => entry.key === presetKey)
@@ -224,18 +261,18 @@ export function useExportActions(ctx: ExportActionsContext) {
     const parsedWidth = Number(exportWidthDraft)
     const parsedBleed = Number(exportBleedMmDraft)
     const bleedMm =
-      Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : ctx.exportBleedMm
-    const width = ctx.isDinOrAnsiRatio
+      Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : exportBleedMm
+    const width = isDinOrAnsiRatio
       ? baseDims.width
       : Number.isFinite(parsedWidth) && parsedWidth > 0
         ? mmToPt(parsedWidth)
         : baseDims.width
     const height = width * aspectRatio
-    ctx.setExportPaperSize(exportPaperSizeDraft)
-    ctx.setExportPrintPro(exportPrintProDraft)
-    ctx.setExportBleedMm(bleedMm)
-    ctx.setExportRegistrationMarks(exportRegistrationMarksDraft)
-    ctx.setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
+    setExportPaperSize(exportPaperSizeDraft)
+    setExportPrintPro(exportPrintProDraft)
+    setExportBleedMm(bleedMm)
+    setExportRegistrationMarks(exportRegistrationMarksDraft)
+    setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
     exportPDF(width, height, filename, {
       enabled: exportPrintProDraft,
       bleedMm,
@@ -244,7 +281,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     })
     setIsExportDialogOpen(false)
   }, [
-    ctx,
+    exportBleedMm,
     exportBleedMmDraft,
     exportFinalSafeGuidesDraft,
     exportFilenameDraft,
@@ -254,6 +291,12 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportWidthDraft,
     exportPDF,
     getOrientedDimensions,
+    isDinOrAnsiRatio,
+    setExportBleedMm,
+    setExportFinalSafeGuides,
+    setExportPaperSize,
+    setExportPrintPro,
+    setExportRegistrationMarks,
   ])
 
   // Close export dialog on Escape

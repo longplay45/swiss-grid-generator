@@ -42,41 +42,74 @@ import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 
+const CANVAS_RATIO_SET = new Set<CanvasRatioKey>([
+  "din_ab",
+  "letter_ansi_ab",
+  "balanced_3_4",
+  "photo_2_3",
+  "screen_16_9",
+  "square_1_1",
+  "editorial_4_5",
+  "wide_2_1",
+])
+const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
+const TYPOGRAPHY_SCALE_SET = new Set(["swiss", "golden", "fourth", "fifth", "fibonacci"] as const)
+const DISPLAY_UNIT_SET = new Set(["pt", "mm", "px"] as const)
+const FONT_OPTION_SET = new Set(FONT_OPTIONS.map((option) => option.value))
+
+function isCanvasRatioKey(value: unknown): value is CanvasRatioKey {
+  return typeof value === "string" && CANVAS_RATIO_SET.has(value as CanvasRatioKey)
+}
+
+function isTypographyScale(
+  value: unknown,
+): value is "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" {
+  return typeof value === "string" && TYPOGRAPHY_SCALE_SET.has(value as "swiss" | "golden" | "fourth" | "fifth" | "fibonacci")
+}
+
+function isDisplayUnit(value: unknown): value is "pt" | "mm" | "px" {
+  return typeof value === "string" && DISPLAY_UNIT_SET.has(value as "pt" | "mm" | "px")
+}
+
+function isFontFamily(value: unknown): value is FontFamily {
+  return typeof value === "string" && FONT_OPTION_SET.has(value as FontFamily)
+}
+
 const DEFAULT_UI = defaultPreset.uiSettings
 const DEFAULT_PREVIEW_LAYOUT: PreviewLayoutState | null =
   defaultPreset.previewLayout as PreviewLayoutState
-const DEFAULT_CANVAS_RATIO: CanvasRatioKey = (
-  DEFAULT_UI.canvasRatio === "din_ab"
-  || DEFAULT_UI.canvasRatio === "letter_ansi_ab"
-  || DEFAULT_UI.canvasRatio === "balanced_3_4"
-  || DEFAULT_UI.canvasRatio === "photo_2_3"
-  || DEFAULT_UI.canvasRatio === "screen_16_9"
-  || DEFAULT_UI.canvasRatio === "square_1_1"
-  || DEFAULT_UI.canvasRatio === "editorial_4_5"
-  || DEFAULT_UI.canvasRatio === "wide_2_1"
-) ? DEFAULT_UI.canvasRatio : "din_ab"
+const DEFAULT_CANVAS_RATIO: CanvasRatioKey = isCanvasRatioKey(DEFAULT_UI.canvasRatio)
+  ? DEFAULT_UI.canvasRatio
+  : "din_ab"
 const DEFAULT_ORIENTATION: "portrait" | "landscape" =
   DEFAULT_UI.orientation === "landscape" ? "landscape" : "portrait"
 const DEFAULT_MARGIN_METHOD: 1 | 2 | 3 =
   DEFAULT_UI.marginMethod === 2 || DEFAULT_UI.marginMethod === 3 ? DEFAULT_UI.marginMethod : 1
-const DEFAULT_TYPOGRAPHY_SCALE: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" = (
-  DEFAULT_UI.typographyScale === "golden"
-  || DEFAULT_UI.typographyScale === "fourth"
-  || DEFAULT_UI.typographyScale === "fifth"
-  || DEFAULT_UI.typographyScale === "fibonacci"
-) ? DEFAULT_UI.typographyScale : "swiss"
-const DEFAULT_DISPLAY_UNIT: "pt" | "mm" | "px" = (
-  DEFAULT_UI.displayUnit === "mm" || DEFAULT_UI.displayUnit === "px"
-) ? DEFAULT_UI.displayUnit : "pt"
+const DEFAULT_TYPOGRAPHY_SCALE: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" = isTypographyScale(DEFAULT_UI.typographyScale)
+  ? DEFAULT_UI.typographyScale
+  : "swiss"
+const DEFAULT_DISPLAY_UNIT: "pt" | "mm" | "px" = isDisplayUnit(DEFAULT_UI.displayUnit)
+  ? DEFAULT_UI.displayUnit
+  : "pt"
 const DEFAULT_BASE_FONT: FontFamily = (() => {
   const candidate = (DEFAULT_UI as { baseFont?: unknown }).baseFont
-  return typeof candidate === "string" && FONT_OPTIONS.some((option) => option.value === candidate)
-    ? (candidate as FontFamily)
+  return isFontFamily(candidate)
+    ? candidate
     : "Inter"
 })()
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
+const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
+  din_ab: "A4",
+  letter_ansi_ab: "LETTER",
+  balanced_3_4: "BALANCED_3_4",
+  photo_2_3: "PHOTO_2_3",
+  screen_16_9: "SCREEN_16_9",
+  square_1_1: "SQUARE_1_1",
+  editorial_4_5: "EDITORIAL_4_5",
+  wide_2_1: "WIDE_2_1",
+}
 
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
@@ -133,23 +166,13 @@ export default function Home() {
   // ─── Derived values ───────────────────────────────────────────────────────
 
   const selectedCanvasRatio = useMemo(
-    () => CANVAS_RATIOS.find((option) => option.key === canvasRatio) ?? CANVAS_RATIOS[0],
+    () => CANVAS_RATIO_INDEX.get(canvasRatio) ?? CANVAS_RATIOS[0],
     [canvasRatio],
   )
   const isDinOrAnsiRatio = canvasRatio === "din_ab" || canvasRatio === "letter_ansi_ab"
 
   const previewFormat = useMemo(() => {
-    const previewDefaults: Record<CanvasRatioKey, string> = {
-      din_ab: "A4",
-      letter_ansi_ab: "LETTER",
-      balanced_3_4: "BALANCED_3_4",
-      photo_2_3: "PHOTO_2_3",
-      screen_16_9: "SCREEN_16_9",
-      square_1_1: "SQUARE_1_1",
-      editorial_4_5: "EDITORIAL_4_5",
-      wide_2_1: "WIDE_2_1",
-    }
-    return previewDefaults[canvasRatio] ?? (selectedCanvasRatio.paperSizes[0] ?? "A4")
+    return PREVIEW_DEFAULT_FORMAT_BY_RATIO[canvasRatio] ?? (selectedCanvasRatio.paperSizes[0] ?? "A4")
   }, [canvasRatio, selectedCanvasRatio])
 
   const gridUnit = customBaseline ?? DEFAULT_A4_BASELINE
@@ -465,34 +488,60 @@ export default function Home() {
     ],
   )
 
-  const exportActions = useExportActions({
-    result,
-    previewLayout,
-    orientation,
-    rotation,
-    showBaselines,
-    showModules,
-    showMargins,
-    showTypography,
-    isDinOrAnsiRatio,
-    displayUnit,
-    setDisplayUnit,
-    exportPaperSize,
-    setExportPaperSize,
-    exportPrintPro,
-    setExportPrintPro,
-    exportBleedMm,
-    setExportBleedMm,
-    exportRegistrationMarks,
-    setExportRegistrationMarks,
-    exportFinalSafeGuides,
-    setExportFinalSafeGuides,
-    paperSizeOptions,
-    previewFormat,
-    defaultPdfFilename,
-    defaultJsonFilename,
-    buildUiSettingsPayload,
-  })
+  const exportActionsContext = useMemo(
+    () => ({
+      result,
+      previewLayout,
+      orientation,
+      rotation,
+      showBaselines,
+      showModules,
+      showMargins,
+      showTypography,
+      isDinOrAnsiRatio,
+      displayUnit,
+      setDisplayUnit,
+      exportPaperSize,
+      setExportPaperSize,
+      exportPrintPro,
+      setExportPrintPro,
+      exportBleedMm,
+      setExportBleedMm,
+      exportRegistrationMarks,
+      setExportRegistrationMarks,
+      exportFinalSafeGuides,
+      setExportFinalSafeGuides,
+      paperSizeOptions,
+      previewFormat,
+      defaultPdfFilename,
+      defaultJsonFilename,
+      buildUiSettingsPayload,
+    }),
+    [
+      result,
+      previewLayout,
+      orientation,
+      rotation,
+      showBaselines,
+      showModules,
+      showMargins,
+      showTypography,
+      isDinOrAnsiRatio,
+      displayUnit,
+      exportPaperSize,
+      exportPrintPro,
+      exportBleedMm,
+      exportRegistrationMarks,
+      exportFinalSafeGuides,
+      paperSizeOptions,
+      previewFormat,
+      defaultPdfFilename,
+      defaultJsonFilename,
+      buildUiSettingsPayload,
+    ],
+  )
+
+  const exportActions = useExportActions(exportActionsContext)
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -509,16 +558,7 @@ export default function Home() {
           throw new Error("Invalid layout JSON: missing uiSettings.")
         }
 
-        if (
-          ui.canvasRatio === "din_ab"
-          || ui.canvasRatio === "letter_ansi_ab"
-          || ui.canvasRatio === "balanced_3_4"
-          || ui.canvasRatio === "photo_2_3"
-          || ui.canvasRatio === "screen_16_9"
-          || ui.canvasRatio === "square_1_1"
-          || ui.canvasRatio === "editorial_4_5"
-          || ui.canvasRatio === "wide_2_1"
-        ) {
+        if (isCanvasRatioKey(ui.canvasRatio)) {
           setCanvasRatio(ui.canvasRatio)
         }
         if (typeof ui.exportPaperSize === "string" && FORMATS_PT[ui.exportPaperSize]) {
@@ -555,23 +595,14 @@ export default function Home() {
         if (typeof ui.gridRows === "number") setGridRows(ui.gridRows)
         if (typeof ui.baselineMultiple === "number") setBaselineMultiple(ui.baselineMultiple)
         if (typeof ui.gutterMultiple === "number") setGutterMultiple(ui.gutterMultiple)
-        if (
-          ui.typographyScale === "swiss"
-          || ui.typographyScale === "golden"
-          || ui.typographyScale === "fourth"
-          || ui.typographyScale === "fifth"
-          || ui.typographyScale === "fibonacci"
-        ) {
+        if (isTypographyScale(ui.typographyScale)) {
           setTypographyScale(ui.typographyScale)
         }
-        if (
-          typeof ui.baseFont === "string"
-          && FONT_OPTIONS.some((option) => option.value === ui.baseFont)
-        ) {
-          setBaseFont(ui.baseFont as FontFamily)
+        if (isFontFamily(ui.baseFont)) {
+          setBaseFont(ui.baseFont)
         }
         if (typeof ui.customBaseline === "number") setCustomBaseline(ui.customBaseline)
-        if (ui.displayUnit === "pt" || ui.displayUnit === "mm" || ui.displayUnit === "px")
+        if (isDisplayUnit(ui.displayUnit))
           setDisplayUnit(ui.displayUnit)
         if (typeof ui.useCustomMargins === "boolean") setUseCustomMargins(ui.useCustomMargins)
         if (ui.customMarginMultipliers && typeof ui.customMarginMultipliers === "object") {

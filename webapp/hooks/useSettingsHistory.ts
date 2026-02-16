@@ -34,6 +34,42 @@ export type UiSettingsSnapshot = {
 
 const SETTINGS_HISTORY_LIMIT = 100
 
+function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolean {
+  return (
+    a.canvasRatio === b.canvasRatio
+    && a.exportPaperSize === b.exportPaperSize
+    && a.exportPrintPro === b.exportPrintPro
+    && a.exportBleedMm === b.exportBleedMm
+    && a.exportRegistrationMarks === b.exportRegistrationMarks
+    && a.exportFinalSafeGuides === b.exportFinalSafeGuides
+    && a.orientation === b.orientation
+    && a.rotation === b.rotation
+    && a.marginMethod === b.marginMethod
+    && a.gridCols === b.gridCols
+    && a.gridRows === b.gridRows
+    && a.baselineMultiple === b.baselineMultiple
+    && a.gutterMultiple === b.gutterMultiple
+    && a.typographyScale === b.typographyScale
+    && a.baseFont === b.baseFont
+    && a.customBaseline === b.customBaseline
+    && a.displayUnit === b.displayUnit
+    && a.useCustomMargins === b.useCustomMargins
+    && a.customMarginMultipliers.top === b.customMarginMultipliers.top
+    && a.customMarginMultipliers.left === b.customMarginMultipliers.left
+    && a.customMarginMultipliers.right === b.customMarginMultipliers.right
+    && a.customMarginMultipliers.bottom === b.customMarginMultipliers.bottom
+    && a.showBaselines === b.showBaselines
+    && a.showModules === b.showModules
+    && a.showMargins === b.showMargins
+    && a.showTypography === b.showTypography
+    && a.collapsed.format === b.collapsed.format
+    && a.collapsed.baseline === b.collapsed.baseline
+    && a.collapsed.margins === b.collapsed.margins
+    && a.collapsed.gutter === b.collapsed.gutter
+    && a.collapsed.typo === b.collapsed.typo
+  )
+}
+
 export function useSettingsHistory(
   buildSnapshot: () => UiSettingsSnapshot,
   canUndoPreview: boolean,
@@ -54,7 +90,7 @@ export function useSettingsHistory(
     }
     const current = buildSnapshot()
     const previous = uiSnapshotRef.current
-    if (JSON.stringify(current) === JSON.stringify(previous)) return
+    if (areSnapshotsEqual(current, previous)) return
 
     if (skipUiHistoryRef.current) {
       skipUiHistoryRef.current = false

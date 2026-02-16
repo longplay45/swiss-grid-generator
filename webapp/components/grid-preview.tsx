@@ -187,15 +187,21 @@ function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
   return Math.max(1, Math.floor(gridCols / 2))
 }
 
-function hyphenateWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
-  return hyphenateWordEnglish(word, maxWidth, (text) => ctx.measureText(text).width)
+function hyphenateWord(
+  ctx: CanvasRenderingContext2D,
+  word: string,
+  maxWidth: number,
+  measureWidth: (text: string) => number,
+): string[] {
+  return hyphenateWordEnglish(word, maxWidth, measureWidth)
 }
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
-  { hyphenate = false }: { hyphenate?: boolean } = {}
+  { hyphenate = false }: { hyphenate?: boolean } = {},
+  measureWidth: (text: string) => number = (input) => ctx.measureText(input).width,
 ): string[] {
   const wrapSingleLine = (input: string): string[] => {
     const words = input.split(/\s+/).filter(Boolean)
@@ -206,13 +212,13 @@ function wrapText(
 
     for (const word of words) {
       const testLine = current ? `${current} ${word}` : word
-      if (ctx.measureText(testLine).width <= maxWidth || current.length === 0) {
-        if (ctx.measureText(word).width > maxWidth && hyphenate) {
+      if (measureWidth(testLine) <= maxWidth || current.length === 0) {
+        if (measureWidth(word) > maxWidth && hyphenate) {
           if (current) {
             lines.push(current)
             current = ""
           }
-          const parts = hyphenateWord(ctx, word, maxWidth)
+          const parts = hyphenateWord(ctx, word, maxWidth, measureWidth)
           for (let i = 0; i < parts.length; i += 1) {
             if (i === parts.length - 1) {
               current = parts[i]
@@ -225,8 +231,8 @@ function wrapText(
         }
       } else {
         lines.push(current)
-        if (ctx.measureText(word).width > maxWidth && hyphenate) {
-          const parts = hyphenateWord(ctx, word, maxWidth)
+        if (measureWidth(word) > maxWidth && hyphenate) {
+          const parts = hyphenateWord(ctx, word, maxWidth, measureWidth)
           for (let i = 0; i < parts.length; i += 1) {
             if (i === parts.length - 1) {
               current = parts[i]
@@ -309,12 +315,18 @@ export function GridPreview({
   baseFont = "Inter",
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const dragEndedAtRef = useRef<number>(0)
   const lastAppliedLayoutKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
+  const dragRafRef = useRef<number | null>(null)
+  const pendingDragPreviewRef = useRef<{ preview: ModulePosition; moved: boolean } | null>(null)
+  const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
+  const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
+  const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -364,6 +376,19 @@ export function GridPreview({
   const lastUndoNonceRef = useRef(undoNonce)
   const lastRedoNonceRef = useRef(redoNonce)
   const HISTORY_LIMIT = 50
+  const TEXT_CACHE_LIMIT = 5000
+
+  const makeCachedValue = useCallback(
+    <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
+      const existing = cache.get(key)
+      if (existing !== undefined) return existing
+      const value = compute()
+      cache.set(key, value)
+      if (cache.size > TEXT_CACHE_LIMIT) cache.clear()
+      return value
+    },
+    [],
+  )
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -553,6 +578,41 @@ export function GridPreview({
     }
   }, [result.grid, result.module, result.pageSizePt.height, result.settings, scale])
 
+  const getMeasuredTextWidth = useCallback((ctx: CanvasRenderingContext2D, text: string): number => {
+    const key = `${ctx.font}::${text}`
+    return makeCachedValue(measureWidthCacheRef.current, key, () => ctx.measureText(text).width)
+  }, [makeCachedValue])
+
+  const getWrappedText = useCallback((
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxWidth: number,
+    hyphenate: boolean,
+  ): string[] => {
+    const key = `${ctx.font}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
+    const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
+      wrapText(ctx, text, maxWidth, { hyphenate }, (sample) => getMeasuredTextWidth(ctx, sample)),
+    )
+    return [...cached]
+  }, [getMeasuredTextWidth, makeCachedValue])
+
+  const getOpticalOffset = useCallback((
+    ctx: CanvasRenderingContext2D,
+    line: string,
+    align: TextAlignMode,
+    fontSize: number,
+  ): number => {
+    const key = `${ctx.font}::${line}::${align}::${fontSize.toFixed(4)}`
+    return makeCachedValue(opticalOffsetCacheRef.current, key, () =>
+      getOpticalMarginAnchorOffset({
+        line,
+        align,
+        fontSize,
+        measureWidth: (sample) => getMeasuredTextWidth(ctx, sample),
+      }),
+    )
+  }, [getMeasuredTextWidth, makeCachedValue])
+
   const toPagePoint = useCallback((canvasX: number, canvasY: number) => {
     const canvas = canvasRef.current
     if (!canvas) return null
@@ -640,7 +700,7 @@ export function GridPreview({
     const fontSize = style.size * scale
     ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
     const columnWidth = result.module.width * scale
-    const lines = wrapText(ctx, trimmed, columnWidth, { hyphenate: syllableDivision })
+    const lines = getWrappedText(ctx, trimmed, columnWidth, syllableDivision)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
     const maxColsFromPlacement = position
@@ -655,7 +715,7 @@ export function GridPreview({
       : null
 
     return { span: nextSpan, position: nextPosition }
-  }, [result.grid, result.module.height, result.module.width, result.pageSizePt.height, result.settings.gridCols, result.typography.styles, scale])
+  }, [getWrappedText, result.grid, result.module.height, result.module.width, result.pageSizePt.height, result.settings.gridCols, result.typography.styles, scale])
 
   const getAutoFitDropUpdate = useCallback((key: BlockId, dropped: ModulePosition): { span: number; position: ModulePosition } | null => {
     const styleKey = getStyleKeyForBlock(key)
@@ -917,95 +977,123 @@ export function GridPreview({
   }, [baseFont, buildSnapshot, getGridMetrics, initialLayout, initialLayoutKey, pushHistory, result.settings.gridCols, result.typography.styles])
 
   useEffect(() => {
-    const canvas = canvasRef.current
+    const canvas = staticCanvasRef.current
     if (!canvas) return
 
-    onCanvasReady?.(canvas)
+    const frame = window.requestAnimationFrame(() => {
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+      const { width, height } = result.pageSizePt
+      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+      const { width: modW, height: modH } = result.module
+      const { gridCols, gridRows } = result.settings
+      const pageWidth = width * scale
+      const pageHeight = height * scale
 
-    const { width, height } = result.pageSizePt
-    const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-    const { width: modW, height: modH } = result.module
-    const { gridCols, gridRows } = result.settings
-    const pageWidth = width * scale
-    const pageHeight = height * scale
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.save()
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate((rotation * Math.PI) / 180)
+      ctx.translate(-pageWidth / 2, -pageHeight / 2)
 
-    ctx.save()
-    ctx.translate(canvas.width / 2, canvas.height / 2)
-    ctx.rotate((rotation * Math.PI) / 180)
-    ctx.translate(-pageWidth / 2, -pageHeight / 2)
+      ctx.strokeStyle = "#e5e5e5"
+      ctx.lineWidth = 1
+      ctx.strokeRect(0, 0, pageWidth, pageHeight)
 
-    ctx.strokeStyle = "#e5e5e5"
-    ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, pageWidth, pageHeight)
+      if (showMargins) {
+        ctx.strokeStyle = "#3b82f6"
+        ctx.lineWidth = 0.5
+        ctx.setLineDash([4, 4])
+        ctx.strokeRect(
+          margins.left * scale,
+          margins.top * scale,
+          pageWidth - (margins.left + margins.right) * scale,
+          pageHeight - (margins.top + margins.bottom) * scale,
+        )
+        ctx.setLineDash([])
+      }
 
-    if (showMargins) {
-      ctx.strokeStyle = "#3b82f6"
-      ctx.lineWidth = 0.5
-      ctx.setLineDash([4, 4])
-      ctx.strokeRect(
-        margins.left * scale,
-        margins.top * scale,
-        pageWidth - (margins.left + margins.right) * scale,
-        pageHeight - (margins.top + margins.bottom) * scale
-      )
-      ctx.setLineDash([])
-    }
+      if (showModules) {
+        ctx.strokeStyle = "#06b6d4"
+        ctx.lineWidth = 0.5
+        ctx.globalAlpha = 0.7
 
-    if (showModules) {
-      ctx.strokeStyle = "#06b6d4"
-      ctx.lineWidth = 0.5
-      ctx.globalAlpha = 0.7
+        for (let row = 0; row < gridRows; row++) {
+          for (let col = 0; col < gridCols; col++) {
+            const x = margins.left * scale + col * (modW + gridMarginHorizontal) * scale
+            const y = margins.top * scale + row * (modH + gridMarginVertical) * scale
+            const w = modW * scale
+            const h = modH * scale
+            ctx.strokeRect(x, y, w, h)
 
-      for (let row = 0; row < gridRows; row++) {
-        for (let col = 0; col < gridCols; col++) {
-          const x = margins.left * scale + col * (modW + gridMarginHorizontal) * scale
-          const y = margins.top * scale + row * (modH + gridMarginVertical) * scale
-          const w = modW * scale
-          const h = modH * scale
-          ctx.strokeRect(x, y, w, h)
-
-          if ((row + col) % 2 === 0) {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.02)"
-            ctx.fillRect(x, y, w, h)
+            if ((row + col) % 2 === 0) {
+              ctx.fillStyle = "rgba(0, 0, 0, 0.02)"
+              ctx.fillRect(x, y, w, h)
+            }
           }
         }
+        ctx.globalAlpha = 1
       }
-      ctx.globalAlpha = 1
-    }
 
-    if (showBaselines) {
-      const startY = margins.top * scale
-      const endY = pageHeight - margins.bottom * scale
-      const baselineSpacing = gridUnit * scale
-      const baselineStep = isMobile ? 2 : 1
+      if (showBaselines) {
+        const startY = margins.top * scale
+        const endY = pageHeight - margins.bottom * scale
+        const baselineSpacing = gridUnit * scale
+        const baselineStep = isMobile ? 2 : 1
 
-      let currentY = startY
-      ctx.strokeStyle = "#ec4899"
-      ctx.lineWidth = 0.3
-      ctx.globalAlpha = 0.5
+        let currentY = startY
+        ctx.strokeStyle = "#ec4899"
+        ctx.lineWidth = 0.3
+        ctx.globalAlpha = 0.5
 
-      while (currentY <= endY) {
-        ctx.beginPath()
-        ctx.moveTo(0, currentY)
-        ctx.lineTo(pageWidth, currentY)
-        ctx.stroke()
-        currentY += baselineSpacing * baselineStep
+        while (currentY <= endY) {
+          ctx.beginPath()
+          ctx.moveTo(0, currentY)
+          ctx.lineTo(pageWidth, currentY)
+          ctx.stroke()
+          currentY += baselineSpacing * baselineStep
+        }
+        ctx.globalAlpha = 1
       }
-      ctx.globalAlpha = 1
-    }
 
-    if (showTypography) {
+      ctx.restore()
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [isMobile, result, rotation, scale, showBaselines, showMargins, showModules])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    onCanvasReady?.(canvas)
+
+    const frame = window.requestAnimationFrame(() => {
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+
+      const { width, height } = result.pageSizePt
+      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+      const { width: modW, height: modH } = result.module
+      const { gridRows } = result.settings
+      const pageWidth = width * scale
+      const pageHeight = height * scale
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      blockRectsRef.current = {}
+      if (!showTypography) return
+
+      ctx.save()
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate((rotation * Math.PI) / 180)
+      ctx.translate(-pageWidth / 2, -pageHeight / 2)
+
       const { styles } = result.typography
       const contentTop = margins.top * scale
       const contentLeft = margins.left * scale
-      const contentWidth = (result.pageSizePt.width - margins.left - margins.right) * scale
       const baselinePx = gridUnit * scale
       const moduleXStep = (modW + gridMarginHorizontal) * scale
       const baselineStep = gridUnit * scale
@@ -1030,7 +1118,6 @@ export function GridPreview({
         ctx.fillStyle = "#1f2937"
       }
 
-      // Swiss book-style placement: line top sits on baseline rows.
       const getMinOffset = (): number => 1
 
       const textBlocks = blockOrder
@@ -1100,11 +1187,11 @@ export function GridPreview({
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
         const rowSpan = getBlockRows(block.key)
         const columnReflow = isTextReflowEnabled(block.key)
-        const textLines = wrapText(
+        const textLines = getWrappedText(
           ctx,
           blockText,
           columnReflow ? modW * scale : wrapWidth,
-          { hyphenate: isSyllableDivisionEnabled(block.key) }
+          isSyllableDivisionEnabled(block.key),
         )
 
         const autoBlockX = contentLeft
@@ -1137,12 +1224,7 @@ export function GridPreview({
             const y = lineTopY + textAscentPx
             if (lineTopY < pageBottomY) {
               maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
-              const opticalOffsetX = getOpticalMarginAnchorOffset({
-                line,
-                align: textAlign,
-                fontSize,
-                measureWidth: (text) => ctx.measureText(text).width,
-              })
+              const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
               ctx.fillText(line, textAnchorX + opticalOffsetX, y)
             }
           })
@@ -1159,12 +1241,7 @@ export function GridPreview({
             const y = lineTopY + textAscentPx
             if (lineTopY >= pageBottomY) continue
             maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
-            const opticalOffsetX = getOpticalMarginAnchorOffset({
-              line,
-              align: textAlign,
-              fontSize,
-              measureWidth: (text) => ctx.measureText(text).width,
-            })
+            const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
             ctx.fillText(line, textAnchorX + opticalOffsetX, y)
           }
         }
@@ -1203,11 +1280,11 @@ export function GridPreview({
         const captionRowSpan = getBlockRows("caption")
         const captionWidth = captionSpan * modW * scale + Math.max(captionSpan - 1, 0) * gutterX
         const captionColumnReflow = isTextReflowEnabled("caption")
-        const captionLines = wrapText(
+        const captionLines = getWrappedText(
           ctx,
           captionText,
           captionColumnReflow ? modW * scale : captionWidth,
-          { hyphenate: isSyllableDivisionEnabled("caption") }
+          isSyllableDivisionEnabled("caption"),
         )
         const captionLineCount = captionLines.length
 
@@ -1234,12 +1311,7 @@ export function GridPreview({
             const y = lineTopY + captionAscentPx
             if (lineTopY < captionPageBottomY) {
               captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
-              const opticalOffsetX = getOpticalMarginAnchorOffset({
-                line,
-                align: captionAlign,
-                fontSize: captionFontSize,
-                measureWidth: (text) => ctx.measureText(text).width,
-              })
+              const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
               ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
             }
           })
@@ -1256,12 +1328,7 @@ export function GridPreview({
             const y = lineTopY + captionAscentPx
             if (lineTopY >= captionPageBottomY) continue
             captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
-            const opticalOffsetX = getOpticalMarginAnchorOffset({
-              line,
-              align: captionAlign,
-              fontSize: captionFontSize,
-              measureWidth: (text) => ctx.measureText(text).width,
-            })
+            const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
             ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
           }
         }
@@ -1277,33 +1344,31 @@ export function GridPreview({
       }
 
       blockRectsRef.current = nextRects
-    }
+      ctx.restore()
+    })
 
-    ctx.restore()
+    return () => window.cancelAnimationFrame(frame)
   }, [
-    blockColumnSpans,
-    blockTextAlignments,
-    blockTextReflow,
-    blockRowSpans,
     blockModulePositions,
+    blockOrder,
+    blockRowSpans,
+    blockTextAlignments,
     clampModulePosition,
     dragState,
     getBlockFont,
-    getBlockSpan,
     getBlockRows,
-    isMobile,
+    getBlockSpan,
+    getOpticalOffset,
+    getWrappedText,
+    isSyllableDivisionEnabled,
+    isTextReflowEnabled,
     onCanvasReady,
     result,
     rotation,
     scale,
-    showBaselines,
-    showMargins,
-    showModules,
     showTypography,
     styleAssignments,
     textContent,
-    isSyllableDivisionEnabled,
-    isTextReflowEnabled,
   ])
 
   useEffect(() => {
@@ -1553,16 +1618,31 @@ export function GridPreview({
 
       const snap = snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
       const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
-
-      setDragState((prev) => (prev ? { ...prev, preview: snap, moved } : prev))
+      pendingDragPreviewRef.current = { preview: snap, moved }
+      if (dragRafRef.current !== null) return
+      dragRafRef.current = window.requestAnimationFrame(() => {
+        dragRafRef.current = null
+        const pending = pendingDragPreviewRef.current
+        if (!pending) return
+        pendingDragPreviewRef.current = null
+        setDragState((prev) => (prev ? { ...prev, preview: pending.preview, moved: pending.moved } : prev))
+      })
     }
 
     const handleMouseUp = () => {
+      if (dragRafRef.current !== null) {
+        window.cancelAnimationFrame(dragRafRef.current)
+        dragRafRef.current = null
+      }
+      const pending = pendingDragPreviewRef.current
+      pendingDragPreviewRef.current = null
       setDragState((prev) => {
         if (!prev) return null
-        if (prev.moved) {
+        const nextPreview = pending?.preview ?? prev.preview
+        const nextMoved = pending?.moved ?? prev.moved
+        if (nextMoved) {
           recordHistoryBeforeChange()
-          const autoFit = getAutoFitDropUpdate(prev.key, prev.preview)
+          const autoFit = getAutoFitDropUpdate(prev.key, nextPreview)
           if (autoFit) {
             setBlockColumnSpans((current) => ({
               ...current,
@@ -1575,7 +1655,7 @@ export function GridPreview({
           } else {
             setBlockModulePositions((current) => ({
               ...current,
-              [prev.key]: prev.preview,
+              [prev.key]: nextPreview,
             }))
           }
           dragEndedAtRef.current = Date.now()
@@ -1587,6 +1667,11 @@ export function GridPreview({
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
     return () => {
+      if (dragRafRef.current !== null) {
+        window.cancelAnimationFrame(dragRafRef.current)
+        dragRafRef.current = null
+      }
+      pendingDragPreviewRef.current = null
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
     }
@@ -1930,10 +2015,16 @@ export function GridPreview({
     <div ref={previewContainerRef} className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
       <div className="relative" style={{ width: result.pageSizePt.width * scale, height: result.pageSizePt.height * scale }}>
         <canvas
+          ref={staticCanvasRef}
+          width={result.pageSizePt.width * scale}
+          height={result.pageSizePt.height * scale}
+          className="absolute inset-0 block shadow-lg"
+        />
+        <canvas
           ref={canvasRef}
           width={result.pageSizePt.width * scale}
           height={result.pageSizePt.height * scale}
-          className={`block shadow-lg ${canvasCursorClass}`}
+          className={`absolute inset-0 block ${canvasCursorClass}`}
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseLeave={() => setHoverState(null)}

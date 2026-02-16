@@ -6,6 +6,7 @@ import path from "node:path"
 const ROOT = process.cwd()
 const PAGE_PATH = path.join(ROOT, "app", "page.tsx")
 const PREVIEW_PATH = path.join(ROOT, "components", "grid-preview.tsx")
+const EXPORT_ACTIONS_PATH = path.join(ROOT, "hooks", "useExportActions.ts")
 const DEFAULT_PRESET_PATH = path.join(ROOT, "public", "default_v001.json")
 
 function readText(filePath) {
@@ -38,9 +39,11 @@ test("default preset contains baseFont", () => {
 
 test("page save/load wiring includes baseFont", () => {
   const pageSource = readText(PAGE_PATH)
-  assert.match(pageSource, /uiSettings:\s*{[\s\S]*baseFont,/)
-  assert.match(pageSource, /if \(typeof ui\.baseFont === "string"/)
-  assert.match(pageSource, /setBaseFont\(ui\.baseFont as FontFamily\)/)
+  const exportActionsSource = readText(EXPORT_ACTIONS_PATH)
+  assert.match(pageSource, /buildUiSettingsPayload[\s\S]*baseFont,/)
+  assert.match(exportActionsSource, /uiSettings:\s*buildUiSettingsPayload\(\)/)
+  assert.match(pageSource, /if \(isFontFamily\(ui\.baseFont\)\)/)
+  assert.match(pageSource, /setBaseFont\(ui\.baseFont\)/)
   assert.match(pageSource, /<GridPreview[\s\S]*baseFont=\{baseFont\}/)
 })
 
