@@ -1,0 +1,158 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
+
+type CustomMarginMultipliers = { top: number; left: number; right: number; bottom: number }
+
+type Props = {
+  collapsed: boolean
+  onHeaderClick: (event: React.MouseEvent) => void
+  onHeaderDoubleClick: (event: React.MouseEvent) => void
+  marginMethod: 1 | 2 | 3
+  onMarginMethodChange: (value: 1 | 2 | 3) => void
+  baselineMultiple: number
+  onBaselineMultipleChange: (value: number) => void
+  useCustomMargins: boolean
+  onUseCustomMarginsChange: (checked: boolean) => void
+  customMarginMultipliers: CustomMarginMultipliers
+  onCustomMarginMultipliersChange: (value: CustomMarginMultipliers) => void
+  /** Used when initializing custom margins from current method margins. */
+  currentMargins: { top: number; left: number; right: number; bottom: number }
+  gridUnit: number
+}
+
+export function MarginsPanel({
+  collapsed,
+  onHeaderClick,
+  onHeaderDoubleClick,
+  marginMethod,
+  onMarginMethodChange,
+  baselineMultiple,
+  onBaselineMultipleChange,
+  useCustomMargins,
+  onUseCustomMarginsChange,
+  customMarginMultipliers,
+  onCustomMarginMultipliersChange,
+  currentMargins,
+  gridUnit,
+}: Props) {
+  const handleCustomMarginsToggle = (checked: boolean) => {
+    if (checked) {
+      const methodBottomRatio: Record<number, number> = { 1: 3.0, 2: 3.0, 3: 1.0 }
+      onCustomMarginMultipliersChange({
+        top: Math.max(1, Math.min(9, Math.round(currentMargins.top / gridUnit))),
+        left: Math.max(1, Math.min(9, Math.round(currentMargins.left / gridUnit))),
+        right: Math.max(1, Math.min(9, Math.round(currentMargins.right / gridUnit))),
+        bottom: Math.max(1, Math.min(9, Math.round(methodBottomRatio[marginMethod] * baselineMultiple))),
+      })
+    }
+    onUseCustomMarginsChange(checked)
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        className="group relative pb-3 cursor-pointer select-none"
+        onClick={onHeaderClick}
+        onDoubleClick={onHeaderDoubleClick}
+      >
+        <CardTitle className="text-sm flex items-center gap-2">
+          III. Margins
+          <span
+            className={`ml-auto text-base leading-none transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`}
+          >
+            ▼
+          </span>
+        </CardTitle>
+        <div className="pointer-events-none absolute left-4 top-full z-20 mt-1 w-max rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+          Margin method and custom margin controls
+        </div>
+      </CardHeader>
+      {!collapsed && (
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>Custom Margins</Label>
+            <Switch checked={useCustomMargins} onCheckedChange={handleCustomMarginsToggle} />
+          </div>
+
+          {!useCustomMargins ? (
+            <>
+              <div className="space-y-2">
+                <Label>Margin Method</Label>
+                <Select
+                  value={marginMethod.toString()}
+                  onValueChange={(v) => onMarginMethodChange(parseInt(v) as 1 | 2 | 3)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
+                    <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
+                    <SelectItem value="3">Baseline (1:1:1:1)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Baseline Multiple</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
+                    {baselineMultiple.toFixed(1)}×
+                  </span>
+                </div>
+                <Slider
+                  value={[baselineMultiple]}
+                  min={0.5}
+                  max={7}
+                  step={0.5}
+                  onValueChange={([v]) => onBaselineMultipleChange(v)}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              {(["top", "left", "right"] as const).map((side) => (
+                <div key={side} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="capitalize">{side}</Label>
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
+                      {customMarginMultipliers[side]}×
+                    </span>
+                  </div>
+                  <Slider
+                    value={[customMarginMultipliers[side]]}
+                    min={1}
+                    max={9}
+                    step={1}
+                    onValueChange={([v]) =>
+                      onCustomMarginMultipliersChange({ ...customMarginMultipliers, [side]: v })
+                    }
+                  />
+                </div>
+              ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="capitalize">Bottom</Label>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
+                    {customMarginMultipliers.bottom}×
+                  </span>
+                </div>
+                <Slider
+                  value={[customMarginMultipliers.bottom]}
+                  min={1}
+                  max={9}
+                  step={1}
+                  onValueChange={([v]) =>
+                    onCustomMarginMultipliersChange({ ...customMarginMultipliers, bottom: v })
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  )
+}
