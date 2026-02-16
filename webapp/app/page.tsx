@@ -162,6 +162,8 @@ export default function Home() {
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(DEFAULT_UI.collapsed)
+  const [isSmartphone, setIsSmartphone] = useState(false)
+  const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
 
   // ─── Derived values ───────────────────────────────────────────────────────
 
@@ -427,6 +429,25 @@ export default function Home() {
     return () => {
       if (headerClickTimeoutRef.current !== null) window.clearTimeout(headerClickTimeoutRef.current)
     }
+  }, [])
+
+  useEffect(() => {
+    try {
+      setSmartphoneNoticeDismissed(window.sessionStorage.getItem("sgg-smartphone-notice-dismissed") === "1")
+    } catch {
+      setSmartphoneNoticeDismissed(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const checkSmartphone = () => {
+      const isSmallViewport = window.matchMedia("(max-width: 767px)").matches
+      setIsSmartphone(isSmallViewport)
+    }
+
+    checkSmartphone()
+    window.addEventListener("resize", checkSmartphone)
+    return () => window.removeEventListener("resize", checkSmartphone)
   }, [])
 
   // ─── Export / Save actions ────────────────────────────────────────────────
@@ -748,50 +769,48 @@ export default function Home() {
           className="hidden"
           onChange={loadLayout}
         />
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white">
-          <div className="flex items-center">
-            <div className="flex items-center gap-2">
-              <div className="group relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Load"
-                  onClick={() => loadFileInputRef.current?.click()}
-                >
-                  <FolderOpen className="h-4 w-4" />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  Load layout JSON
-                </div>
-              </div>
-              <div className="group relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Save"
-                  onClick={exportActions.openSaveDialog}
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  Save layout JSON
-                </div>
-              </div>
-              <div className="group relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Export PDF"
-                  onClick={exportActions.openExportDialog}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  Export PDF
-                </div>
+        <div className="px-4 py-3 md:px-6 border-b bg-white">
+          <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
+            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
+            <div className="group relative">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Load"
+                onClick={() => loadFileInputRef.current?.click()}
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Load layout JSON
               </div>
             </div>
-            <div className="mx-3 h-5 w-px bg-gray-300" />
+            <div className="group relative">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Save"
+                onClick={exportActions.openSaveDialog}
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Save layout JSON
+              </div>
+            </div>
+            <div className="group relative">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Export PDF"
+                onClick={exportActions.openExportDialog}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                Export PDF
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <div className="group relative">
                 <Button
@@ -822,9 +841,9 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium text-gray-700">Display Options</h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
             <div className="group relative">
               <Button
                 size="icon"
@@ -885,7 +904,9 @@ export default function Home() {
                 Toggle type preview
               </div>
             </div>
-            <div className="mx-3 h-5 w-px bg-gray-300" />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
             <div className="group relative">
               <Button
                 size="icon"
@@ -967,6 +988,7 @@ export default function Home() {
               <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
                 Example layouts
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -1076,6 +1098,32 @@ export default function Home() {
         orientation={orientation}
         rotation={rotation}
       />
+
+      {isSmartphone && !smartphoneNoticeDismissed ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 text-white">
+          <div className="w-full max-w-md rounded-lg border border-white/30 bg-black/40 p-6">
+            <h2 className="text-lg font-semibold">Best On Bigger Screens</h2>
+            <p className="mt-3 text-sm text-white/85">
+              Swiss Grid Generator is optimized for tablets, laptops, and desktop screens.
+              Smartphone screens offer a limited editing experience.
+            </p>
+            <div className="mt-5 flex justify-end">
+              <Button
+                onClick={() => {
+                  setSmartphoneNoticeDismissed(true)
+                  try {
+                    window.sessionStorage.setItem("sgg-smartphone-notice-dismissed", "1")
+                  } catch {
+                    // no-op
+                  }
+                }}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

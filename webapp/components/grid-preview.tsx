@@ -432,6 +432,14 @@ export function GridPreview({
   const suppressReflowCheckRef = useRef(false)
   const dragRafRef = useRef<number | null>(null)
   const pendingDragPreviewRef = useRef<{ preview: ModulePosition; moved: boolean } | null>(null)
+  const activeDragPointerIdRef = useRef<number | null>(null)
+  const touchLongPressTimerRef = useRef<number | null>(null)
+  const touchPendingDragRef = useRef<{
+    pointerId: number
+    dragState: DragState
+    startClientX: number
+    startClientY: number
+  } | null>(null)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
@@ -510,6 +518,8 @@ export function GridPreview({
   const TEXT_CACHE_LIMIT = 5000
   const REFLOW_PLAN_CACHE_LIMIT = 200
   const LAYOUT_CHANGE_DEBOUNCE_MS = 120
+  const TOUCH_LONG_PRESS_MS = 180
+  const TOUCH_CANCEL_DISTANCE_PX = 10
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
@@ -2081,77 +2091,61 @@ export function GridPreview({
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [editorState, redo, undo])
 
-  useEffect(() => {
-    if (!dragState) return
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-
-      const rect = canvas.getBoundingClientRect()
-      const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
-      if (!point) return
-
-      const snap = snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
-      const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
-      pendingDragPreviewRef.current = { preview: snap, moved }
-      if (dragRafRef.current !== null) return
-      dragRafRef.current = window.requestAnimationFrame(() => {
-        dragRafRef.current = null
-        const pending = pendingDragPreviewRef.current
-        if (!pending) return
-        pendingDragPreviewRef.current = null
-        setDragState((prev) => (prev ? { ...prev, preview: pending.preview, moved: pending.moved } : prev))
-      })
+  const clearPendingTouchLongPress = useCallback(() => {
+    if (touchLongPressTimerRef.current !== null) {
+      window.clearTimeout(touchLongPressTimerRef.current)
+      touchLongPressTimerRef.current = null
     }
+    touchPendingDragRef.current = null
+  }, [])
 
-    const handleMouseUp = () => {
-      if (dragRafRef.current !== null) {
-        window.cancelAnimationFrame(dragRafRef.current)
-        dragRafRef.current = null
-      }
-      const pending = pendingDragPreviewRef.current
-      pendingDragPreviewRef.current = null
-      setDragState((prev) => {
-        if (!prev) return null
-        const nextPreview = pending?.preview ?? prev.preview
-        const nextMoved = pending?.moved ?? prev.moved
-        if (nextMoved) {
-          recordHistoryBeforeChange()
-          const autoFit = getAutoFitDropUpdate(prev.key, nextPreview)
-          if (autoFit) {
-            setBlockColumnSpans((current) => ({
-              ...current,
-              [prev.key]: autoFit.span,
-            }))
-            setBlockModulePositions((current) => ({
-              ...current,
-              [prev.key]: autoFit.position,
-            }))
-          } else {
-            setBlockModulePositions((current) => ({
-              ...current,
-              [prev.key]: nextPreview,
-            }))
-          }
-          dragEndedAtRef.current = Date.now()
+  const finishDrag = useCallback(() => {
+    if (dragRafRef.current !== null) {
+      window.cancelAnimationFrame(dragRafRef.current)
+      dragRafRef.current = null
+    }
+    const pending = pendingDragPreviewRef.current
+    pendingDragPreviewRef.current = null
+    setDragState((prev) => {
+      if (!prev) return null
+      const nextPreview = pending?.preview ?? prev.preview
+      const nextMoved = pending?.moved ?? prev.moved
+      if (nextMoved) {
+        recordHistoryBeforeChange()
+        const autoFit = getAutoFitDropUpdate(prev.key, nextPreview)
+        if (autoFit) {
+          setBlockColumnSpans((current) => ({
+            ...current,
+            [prev.key]: autoFit.span,
+          }))
+          setBlockModulePositions((current) => ({
+            ...current,
+            [prev.key]: autoFit.position,
+          }))
+        } else {
+          setBlockModulePositions((current) => ({
+            ...current,
+            [prev.key]: nextPreview,
+          }))
         }
-        return null
-      })
-    }
+        dragEndedAtRef.current = Date.now()
+      }
+      return null
+    })
+    activeDragPointerIdRef.current = null
+  }, [getAutoFitDropUpdate, recordHistoryBeforeChange])
 
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
+  useEffect(() => {
     return () => {
+      clearPendingTouchLongPress()
       if (dragRafRef.current !== null) {
         window.cancelAnimationFrame(dragRafRef.current)
         dragRafRef.current = null
       }
       pendingDragPreviewRef.current = null
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("mouseup", handleMouseUp)
+      activeDragPointerIdRef.current = null
     }
-  }, [dragState, getAutoFitDropUpdate, recordHistoryBeforeChange, snapToModule, toPagePoint])
+  }, [clearPendingTouchLongPress])
 
   const closeEditor = useCallback(() => {
     setEditorState(null)
@@ -2296,8 +2290,9 @@ export function GridPreview({
     setEditorState(null)
   }, [editorState, recordHistoryBeforeChange, setBlockCollections])
 
-  const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasPointerDown = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState) return
+    if (event.pointerType === "mouse" && event.button !== 0) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -2312,7 +2307,7 @@ export function GridPreview({
       if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
         event.preventDefault()
         const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
-        setDragState({
+        const nextDragState: DragState = {
           key,
           startPageX: pagePoint.x,
           startPageY: pagePoint.y,
@@ -2320,12 +2315,116 @@ export function GridPreview({
           pointerOffsetY: pagePoint.y - block.y,
           preview: snapped,
           moved: false,
-        })
+        }
+        if (event.pointerType === "touch") {
+          clearPendingTouchLongPress()
+          touchPendingDragRef.current = {
+            pointerId: event.pointerId,
+            dragState: nextDragState,
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+          }
+          touchLongPressTimerRef.current = window.setTimeout(() => {
+            const pending = touchPendingDragRef.current
+            if (!pending || pending.pointerId !== event.pointerId) return
+            touchPendingDragRef.current = null
+            touchLongPressTimerRef.current = null
+            setDragState(pending.dragState)
+            activeDragPointerIdRef.current = pending.pointerId
+            const targetCanvas = canvasRef.current
+            if (targetCanvas) {
+              try {
+                targetCanvas.setPointerCapture(pending.pointerId)
+              } catch {
+                // Pointer may already be released; ignore.
+              }
+            }
+          }, TOUCH_LONG_PRESS_MS)
+          return
+        }
+        setDragState(nextDragState)
+        activeDragPointerIdRef.current = event.pointerId
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId)
+        } catch {
+          // Ignore unsupported pointer-capture failures.
+        }
         setHoverState(null)
         break
       }
     }
-  }, [blockModulePositions, blockOrder, editorState, showTypography, snapToModule, toPagePoint])
+  }, [
+    blockModulePositions,
+    blockOrder,
+    clearPendingTouchLongPress,
+    editorState,
+    showTypography,
+    snapToModule,
+    toPagePoint,
+    TOUCH_LONG_PRESS_MS,
+  ])
+
+  const handleCanvasPointerMove = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
+    const pendingTouchDrag = touchPendingDragRef.current
+    if (!dragState && pendingTouchDrag && event.pointerId === pendingTouchDrag.pointerId) {
+      const dx = event.clientX - pendingTouchDrag.startClientX
+      const dy = event.clientY - pendingTouchDrag.startClientY
+      if (Math.hypot(dx, dy) > TOUCH_CANCEL_DISTANCE_PX) {
+        clearPendingTouchLongPress()
+      }
+      return
+    }
+
+    if (!dragState || activeDragPointerIdRef.current !== event.pointerId) return
+    event.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
+    if (!point) return
+
+    const snap = snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+    const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
+    pendingDragPreviewRef.current = { preview: snap, moved }
+    if (dragRafRef.current !== null) return
+    dragRafRef.current = window.requestAnimationFrame(() => {
+      dragRafRef.current = null
+      const pending = pendingDragPreviewRef.current
+      if (!pending) return
+      pendingDragPreviewRef.current = null
+      setDragState((prev) => (prev ? { ...prev, preview: pending.preview, moved: pending.moved } : prev))
+    })
+  }, [TOUCH_CANCEL_DISTANCE_PX, clearPendingTouchLongPress, dragState, snapToModule, toPagePoint])
+
+  const handleCanvasPointerUp = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
+    const pendingTouchDrag = touchPendingDragRef.current
+    if (pendingTouchDrag && event.pointerId === pendingTouchDrag.pointerId) {
+      clearPendingTouchLongPress()
+      return
+    }
+    if (!dragState || activeDragPointerIdRef.current !== event.pointerId) return
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      // No-op.
+    }
+    finishDrag()
+  }, [clearPendingTouchLongPress, dragState, finishDrag])
+
+  const handleCanvasPointerCancel = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
+    const pendingTouchDrag = touchPendingDragRef.current
+    if (pendingTouchDrag && event.pointerId === pendingTouchDrag.pointerId) {
+      clearPendingTouchLongPress()
+      return
+    }
+    if (!dragState || activeDragPointerIdRef.current !== event.pointerId) return
+    finishDrag()
+  }, [clearPendingTouchLongPress, dragState, finishDrag])
+
+  const handleCanvasLostPointerCapture = useCallback(() => {
+    if (!dragState) return
+    finishDrag()
+  }, [dragState, finishDrag])
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || editorState || dragState) {
@@ -2519,8 +2618,12 @@ export function GridPreview({
           ref={canvasRef}
           width={result.pageSizePt.width * scale}
           height={result.pageSizePt.height * scale}
-          className={`absolute inset-0 block ${canvasCursorClass}`}
-          onMouseDown={handleCanvasMouseDown}
+          className={`absolute inset-0 block touch-none ${canvasCursorClass}`}
+          onPointerDown={handleCanvasPointerDown}
+          onPointerMove={handleCanvasPointerMove}
+          onPointerUp={handleCanvasPointerUp}
+          onPointerCancel={handleCanvasPointerCancel}
+          onLostPointerCapture={handleCanvasLostPointerCapture}
           onMouseMove={handleCanvasMouseMove}
           onMouseLeave={() => setHoverState(null)}
           onDoubleClick={handleCanvasDoubleClick}
@@ -2546,7 +2649,7 @@ export function GridPreview({
               Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
             </div>
             <div className="mt-1 text-[11px] text-gray-500">
-              Double-click to edit • Drag to move
+              Double-click to edit • Drag to move • Touch: long-press then drag
             </div>
           </div>
         ) : null}
