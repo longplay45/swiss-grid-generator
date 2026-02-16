@@ -934,6 +934,24 @@ export function GridPreview({
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
+  const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    // Hit-test in reverse draw order so visually top blocks win when overlaps happen.
+    for (let index = blockOrder.length - 1; index >= 0; index -= 1) {
+      const key = blockOrder[index]
+      const block = blockRectsRef.current[key]
+      if (!block || block.width <= 0 || block.height <= 0) continue
+      if (
+        pageX >= block.x
+        && pageX <= block.x + block.width
+        && pageY >= block.y
+        && pageY <= block.y + block.height
+      ) {
+        return key
+      }
+    }
+    return null
+  }, [blockOrder])
+
   const getAutoFitForPlacement = useCallback(({
     key,
     text,
@@ -2538,64 +2556,62 @@ export function GridPreview({
     const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!pagePoint) return
 
-    for (const key of blockOrder) {
+    const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
+    if (key) {
       const block = blockRectsRef.current[key]
-      if (!block || block.width <= 0 || block.height <= 0) continue
-      if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
-        event.preventDefault()
-        const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
-        const nextDragState: DragState = {
-          key,
-          startPageX: pagePoint.x,
-          startPageY: pagePoint.y,
-          pointerOffsetX: pagePoint.x - block.x,
-          pointerOffsetY: pagePoint.y - block.y,
-          preview: snapped,
-          moved: false,
-          copyOnDrop: event.pointerType !== "touch" && event.shiftKey,
-        }
-        if (event.pointerType === "touch") {
-          clearPendingTouchLongPress()
-          touchPendingDragRef.current = {
-            pointerId: event.pointerId,
-            dragState: nextDragState,
-            startClientX: event.clientX,
-            startClientY: event.clientY,
-          }
-          touchLongPressTimerRef.current = window.setTimeout(() => {
-            const pending = touchPendingDragRef.current
-            if (!pending || pending.pointerId !== event.pointerId) return
-            touchPendingDragRef.current = null
-            touchLongPressTimerRef.current = null
-            setDragState(pending.dragState)
-            activeDragPointerIdRef.current = pending.pointerId
-            const targetCanvas = canvasRef.current
-            if (targetCanvas) {
-              try {
-                targetCanvas.setPointerCapture(pending.pointerId)
-              } catch {
-                // Pointer may already be released; ignore.
-              }
-            }
-          }, TOUCH_LONG_PRESS_MS)
-          return
-        }
-        setDragState(nextDragState)
-        activeDragPointerIdRef.current = event.pointerId
-        try {
-          event.currentTarget.setPointerCapture(event.pointerId)
-        } catch {
-          // Ignore unsupported pointer-capture failures.
-        }
-        setHoverState(null)
-        break
+      if (!block) return
+      event.preventDefault()
+      const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
+      const nextDragState: DragState = {
+        key,
+        startPageX: pagePoint.x,
+        startPageY: pagePoint.y,
+        pointerOffsetX: pagePoint.x - block.x,
+        pointerOffsetY: pagePoint.y - block.y,
+        preview: snapped,
+        moved: false,
+        copyOnDrop: event.pointerType !== "touch" && event.shiftKey,
       }
+      if (event.pointerType === "touch") {
+        clearPendingTouchLongPress()
+        touchPendingDragRef.current = {
+          pointerId: event.pointerId,
+          dragState: nextDragState,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+        }
+        touchLongPressTimerRef.current = window.setTimeout(() => {
+          const pending = touchPendingDragRef.current
+          if (!pending || pending.pointerId !== event.pointerId) return
+          touchPendingDragRef.current = null
+          touchLongPressTimerRef.current = null
+          setDragState(pending.dragState)
+          activeDragPointerIdRef.current = pending.pointerId
+          const targetCanvas = canvasRef.current
+          if (targetCanvas) {
+            try {
+              targetCanvas.setPointerCapture(pending.pointerId)
+            } catch {
+              // Pointer may already be released; ignore.
+            }
+          }
+        }, TOUCH_LONG_PRESS_MS)
+        return
+      }
+      setDragState(nextDragState)
+      activeDragPointerIdRef.current = event.pointerId
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId)
+      } catch {
+        // Ignore unsupported pointer-capture failures.
+      }
+      setHoverState(null)
     }
   }, [
     blockModulePositions,
-    blockOrder,
     clearPendingTouchLongPress,
     editorState,
+    findTopmostBlockAtPoint,
     showTypography,
     snapToModule,
     toPagePoint,
@@ -2695,22 +2711,19 @@ export function GridPreview({
       return
     }
 
-    for (const key of blockOrder) {
-      const block = blockRectsRef.current[key]
-      if (!block || block.width <= 0 || block.height <= 0) continue
-      if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
-        setHoverState((prev) => {
-          if (prev && prev.key === key && Math.abs(prev.canvasX - canvasX) < 1 && Math.abs(prev.canvasY - canvasY) < 1) {
-            return prev
-          }
-          return { key, canvasX, canvasY }
-        })
-        return
-      }
+    const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
+    if (key) {
+      setHoverState((prev) => {
+        if (prev && prev.key === key && Math.abs(prev.canvasX - canvasX) < 1 && Math.abs(prev.canvasY - canvasY) < 1) {
+          return prev
+        }
+        return { key, canvasX, canvasY }
+      })
+      return
     }
 
     if (hoverState) setHoverState(null)
-  }, [blockOrder, dragState, editorState, hoverState, showTypography, toPagePoint])
+  }, [dragState, editorState, findTopmostBlockAtPoint, hoverState, showTypography, toPagePoint])
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
@@ -2722,26 +2735,23 @@ export function GridPreview({
     const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!pagePoint) return
 
-    for (const key of blockOrder) {
-      const block = blockRectsRef.current[key]
-      if (!block || block.width <= 0 || block.height <= 0) continue
-      if (pagePoint.x >= block.x && pagePoint.x <= block.x + block.width && pagePoint.y >= block.y && pagePoint.y <= block.y + block.height) {
-        setEditorState({
-          target: key,
-          draftText: textContent[key] ?? "",
-          draftStyle: styleAssignments[key] ?? "body",
-          draftFont: getBlockFont(key),
-          draftColumns: getBlockSpan(key),
-          draftRows: getBlockRows(key),
-          draftAlign: blockTextAlignments[key] ?? "left",
-          draftReflow: isTextReflowEnabled(key),
-          draftSyllableDivision: isSyllableDivisionEnabled(key),
-          draftItalic: isBlockItalic(key),
-          draftRotation: getBlockRotation(key),
-          draftTextEdited: blockTextEdited[key] ?? true,
-        })
-        return
-      }
+    const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
+    if (key) {
+      setEditorState({
+        target: key,
+        draftText: textContent[key] ?? "",
+        draftStyle: styleAssignments[key] ?? "body",
+        draftFont: getBlockFont(key),
+        draftColumns: getBlockSpan(key),
+        draftRows: getBlockRows(key),
+        draftAlign: blockTextAlignments[key] ?? "left",
+        draftReflow: isTextReflowEnabled(key),
+        draftSyllableDivision: isSyllableDivisionEnabled(key),
+        draftItalic: isBlockItalic(key),
+        draftRotation: getBlockRotation(key),
+        draftTextEdited: blockTextEdited[key] ?? true,
+      })
+      return
     }
 
     const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
@@ -2794,7 +2804,7 @@ export function GridPreview({
       draftRotation: 0,
       draftTextEdited: false,
     })
-  }, [baseFont, blockOrder, blockTextAlignments, blockTextEdited, getBlockFont, getBlockRotation, getBlockRows, getBlockSpan, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+  }, [baseFont, blockOrder, blockTextAlignments, blockTextEdited, findTopmostBlockAtPoint, getBlockFont, getBlockRotation, getBlockRows, getBlockSpan, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
 
   const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null

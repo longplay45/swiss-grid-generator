@@ -42,12 +42,12 @@ export function ExampleLayoutsPanel({ onLoadPreset, isDarkMode = false }: Props)
     <div>
       <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Example Layouts</h3>
       <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Click a thumbnail to load a preset layout.</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {EXAMPLE_PRESETS.map((preset) => (
           <button
             key={preset.label}
             type="button"
-            className={`group relative aspect-[3/4] rounded-md border-2 transition-colors cursor-pointer overflow-hidden ${isDarkMode ? "border-gray-700 bg-gray-800 hover:border-blue-400 hover:bg-gray-700" : "border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}
+            className={`group relative rounded-md border-2 transition-colors cursor-pointer overflow-hidden ${preset.orientation === "landscape" ? "aspect-[4/3]" : "aspect-[3/4]"} ${isDarkMode ? "border-gray-700 bg-gray-800 hover:border-blue-400 hover:bg-gray-700" : "border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}
             onClick={() => onLoadPreset(preset)}
           >
             <div className={`absolute inset-2 border ${isDarkMode ? "border-gray-600 bg-gray-900" : "border-gray-300 bg-white"}`}>
