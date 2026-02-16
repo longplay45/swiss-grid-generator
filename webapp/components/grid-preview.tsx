@@ -23,6 +23,13 @@ import {
   type ReflowPlan as PlannerReflowPlan,
   type ReflowPlannerInput,
 } from "@/lib/reflow-planner"
+import {
+  DEFAULT_BASE_FONT,
+  FONT_OPTIONS,
+  getFontFamilyCss,
+  isFontFamily,
+  type FontFamily,
+} from "@/lib/config/fonts"
 import { AlignLeft, AlignRight, Columns3, Italic, ListOrdered, RotateCw, Rows3, Trash2, Type } from "lucide-react"
 import { ReactNode, useCallback, useEffect, useReducer, useRef, useState } from "react"
 
@@ -204,64 +211,6 @@ const STYLE_OPTIONS: Array<{ value: TypographyStyleKey; label: string }> = [
   { value: "caption", label: "Caption" },
 ]
 
-export type FontFamily = 
-  | "Inter"
-  | "EB Garamond"
-  | "Libre Baskerville"
-  | "Bodoni Moda"
-  | "Besley"
-  | "Work Sans"
-  | "Nunito Sans"
-  | "IBM Plex Sans"
-  | "Libre Franklin"
-  | "Fraunces"
-  | "Playfair Display"
-  | "Space Grotesk"
-  | "DM Serif Display"
-
-export const FONT_OPTIONS: Array<{ value: FontFamily; label: string; category: string }> = [
-  // Sans-Serif (Grotesk)
-  { value: "Inter", label: "Inter", category: "Sans-Serif" },
-  { value: "Work Sans", label: "Work Sans", category: "Sans-Serif" },
-  { value: "Nunito Sans", label: "Nunito Sans", category: "Sans-Serif" },
-  { value: "IBM Plex Sans", label: "IBM Plex Sans", category: "Sans-Serif" },
-  { value: "Libre Franklin", label: "Libre Franklin", category: "Sans-Serif" },
-  // Serif (Antiqua)
-  { value: "EB Garamond", label: "EB Garamond", category: "Serif" },
-  { value: "Libre Baskerville", label: "Libre Baskerville", category: "Serif" },
-  { value: "Bodoni Moda", label: "Bodoni Moda", category: "Serif" },
-  { value: "Besley", label: "Besley", category: "Serif" },
-  // Display
-  { value: "Fraunces", label: "Fraunces", category: "Display" },
-  { value: "Playfair Display", label: "Playfair Display", category: "Display" },
-  { value: "Space Grotesk", label: "Space Grotesk", category: "Display" },
-  { value: "DM Serif Display", label: "DM Serif Display", category: "Display" },
-]
-const FONT_FAMILY_SET = new Set<FontFamily>(FONT_OPTIONS.map((option) => option.value))
-
-function isFontFamily(value: unknown): value is FontFamily {
-  return typeof value === "string" && FONT_FAMILY_SET.has(value as FontFamily)
-}
-
-function getFontFamilyCss(fontFamily: FontFamily): string {
-  const fontMap: Record<FontFamily, string> = {
-    "Inter": "Inter, system-ui, -apple-system, sans-serif",
-    "EB Garamond": "EB Garamond, serif",
-    "Libre Baskerville": "Libre Baskerville, serif",
-    "Bodoni Moda": "Bodoni Moda, serif",
-    "Besley": "Besley, serif",
-    "Work Sans": "Work Sans, sans-serif",
-    "Nunito Sans": "Nunito Sans, sans-serif",
-    "IBM Plex Sans": "IBM Plex Sans, sans-serif",
-    "Libre Franklin": "Libre Franklin, sans-serif",
-    "Fraunces": "Fraunces, serif",
-    "Playfair Display": "Playfair Display, serif",
-    "Space Grotesk": "Space Grotesk, sans-serif",
-    "DM Serif Display": "DM Serif Display, serif",
-  }
-  return fontMap[fontFamily] || fontMap["Inter"]
-}
-
 const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   display: "Swiss Design",
   headline: "Modular Grid Systems",
@@ -434,7 +383,7 @@ export function GridPreview({
   onLayoutChange,
   onRequestGridRestore,
   onHistoryAvailabilityChange,
-  baseFont = "Inter",
+  baseFont = DEFAULT_BASE_FONT,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)

@@ -378,6 +378,7 @@ if override === baseFont: discard override (inherit)
 ```
 
 This keeps inheritance stable across save/load and avoids persisting redundant overrides.
+Known font values are defined centrally in `webapp/lib/config/fonts.ts`.
 
 Note: this affects only the rendered typography on the preview/export canvas; UI chrome fonts are unchanged.
 

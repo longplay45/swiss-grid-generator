@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import type { FontFamily } from "@/components/grid-preview"
+import type { FontFamily } from "@/lib/config/fonts"
+import type { DisplayUnit, TypographyScale } from "@/lib/config/defaults"
 
 export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo"] as const
 export type SectionKey = typeof SECTION_KEYS[number]
@@ -19,10 +20,10 @@ export type UiSettingsSnapshot = {
   gridRows: number
   baselineMultiple: number
   gutterMultiple: number
-  typographyScale: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci"
+  typographyScale: TypographyScale
   baseFont: FontFamily
   customBaseline: number
-  displayUnit: "pt" | "mm" | "px"
+  displayUnit: DisplayUnit
   useCustomMargins: boolean
   customMarginMultipliers: { top: number; left: number; right: number; bottom: number }
   showBaselines: boolean

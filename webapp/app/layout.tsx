@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, EB_Garamond, Libre_Baskerville, Bodoni_Moda, Besley, Work_Sans, Nunito_Sans, IBM_Plex_Sans, Libre_Franklin, Fraunces, Playfair_Display, Space_Grotesk, DM_Serif_Display } from "next/font/google"
+import { Inter, EB_Garamond, Libre_Baskerville, Bodoni_Moda, Besley, Work_Sans, Nunito_Sans, IBM_Plex_Sans, Libre_Franklin, Playfair_Display } from "next/font/google"
 import "./globals.css"
+import { FONT_CSS_VARS } from "@/lib/config/fonts"
 
 const inter = Inter({ subsets: ["latin"] })
 const ebGaramond = EB_Garamond({ subsets: ["latin"] })
@@ -11,10 +12,7 @@ const workSans = Work_Sans({ subsets: ["latin"] })
 const nunitoSans = Nunito_Sans({ subsets: ["latin"] })
 const ibmPlexSans = IBM_Plex_Sans({ subsets: ["latin"] })
 const libreFranklin = Libre_Franklin({ subsets: ["latin"] })
-const fraunces = Fraunces({ subsets: ["latin"] })
 const playfairDisplay = Playfair_Display({ subsets: ["latin"] })
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] })
-const dmSerifDisplay = DM_Serif_Display({ weight: "400", subsets: ["latin"] })
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -69,20 +67,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className} style={{
-        "--font-eb-garamond": "EB Garamond, serif",
-        "--font-libre-baskerville": "Libre Baskerville, serif",
-        "--font-bodoni-moda": "Bodoni Moda, serif",
-        "--font-besley": "Besley, serif",
-        "--font-work-sans": "Work Sans, sans-serif",
-        "--font-nunito-sans": "Nunito Sans, sans-serif",
-        "--font-ibm-plex-sans": "IBM Plex Sans, sans-serif",
-        "--font-libre-franklin": "Libre Franklin, sans-serif",
-        "--font-fraunces": "Fraunces, serif",
-        "--font-playfair-display": "Playfair Display, serif",
-        "--font-space-grotesk": "Space Grotesk, sans-serif",
-        "--font-dm-serif-display": "DM Serif Display, serif",
-      } as React.CSSProperties}>{children}</body>
+      <body className={inter.className} style={FONT_CSS_VARS as React.CSSProperties}>{children}</body>
     </html>
   )
 }

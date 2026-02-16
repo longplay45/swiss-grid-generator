@@ -5,7 +5,7 @@ import path from "node:path"
 
 const ROOT = process.cwd()
 const PAGE_PATH = path.join(ROOT, "app", "page.tsx")
-const PREVIEW_PATH = path.join(ROOT, "components", "grid-preview.tsx")
+const FONT_CONFIG_PATH = path.join(ROOT, "lib", "config", "fonts.ts")
 const EXPORT_ACTIONS_PATH = path.join(ROOT, "hooks", "useExportActions.ts")
 const DEFAULT_PRESET_PATH = path.join(ROOT, "public", "default_v001.json")
 
@@ -13,10 +13,10 @@ function readText(filePath) {
   return fs.readFileSync(filePath, "utf8")
 }
 
-function extractFontFamilies(previewSource) {
-  const unionBlockMatch = previewSource.match(/export type FontFamily\s*=\s*([\s\S]*?)\n\s*export const FONT_OPTIONS:/)
-  assert.ok(unionBlockMatch, "Could not find FontFamily union in grid-preview.tsx")
-  const matches = [...unionBlockMatch[1].matchAll(/"([^"]+)"/g)]
+function extractFontFamilies(fontConfigSource) {
+  const definitionsBlockMatch = fontConfigSource.match(/export const FONT_DEFINITIONS = \[([\s\S]*?)\] as const/)
+  assert.ok(definitionsBlockMatch, "Could not find FONT_DEFINITIONS in lib/config/fonts.ts")
+  const matches = [...definitionsBlockMatch[1].matchAll(/value:\s*"([^"]+)"/g)]
   return matches.map((m) => m[1])
 }
 
@@ -48,8 +48,8 @@ test("page save/load wiring includes baseFont", () => {
 })
 
 test("font override round-trip: keep explicit override, inherit base font", () => {
-  const previewSource = readText(PREVIEW_PATH)
-  const fonts = extractFontFamilies(previewSource)
+  const fontConfigSource = readText(FONT_CONFIG_PATH)
+  const fonts = extractFontFamilies(fontConfigSource)
 
   const baseFont = "Work Sans"
   const saved = {

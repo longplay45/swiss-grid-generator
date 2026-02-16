@@ -1,11 +1,24 @@
+import { X } from "lucide-react"
+
 type Props = {
   isDarkMode?: boolean
+  onClose: () => void
 }
 
-export function ImprintPanel({ isDarkMode = false }: Props) {
+export function ImprintPanel({ isDarkMode = false, onClose }: Props) {
   return (
     <div>
-      <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Imprint</h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className={`text-sm font-semibold ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Imprint</h3>
+        <button
+          type="button"
+          aria-label="Close imprint panel"
+          onClick={onClose}
+          className={`rounded-sm p-1 transition-colors ${isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
       <div className={`space-y-3 text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
         <p>
           <strong>Swiss Grid Generator</strong>

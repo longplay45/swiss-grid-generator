@@ -49,6 +49,10 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 - Typography controls:
   - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
   - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`
+  - available base fonts:
+    - Sans-Serif: `Inter`, `Work Sans`, `Nunito Sans`, `IBM Plex Sans`, `Libre Franklin`
+    - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
+    - Poster: `Playfair Display`
   - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
   - Dark mode toggle
@@ -204,6 +208,10 @@ webapp/
 │   ├── useSettingsHistory.ts
 │   └── useExportActions.ts
 ├── lib/
+│   ├── config/
+│   │   ├── defaults.ts
+│   │   ├── fonts.ts
+│   │   └── ui-defaults.ts
 │   ├── autofit-planner.ts
 │   ├── grid-calculator.ts
 │   ├── reflow-planner.ts

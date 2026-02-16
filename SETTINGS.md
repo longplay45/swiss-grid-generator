@@ -94,6 +94,10 @@ Default: `swiss`
 - `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
+- Available fonts:
+  - Sans-Serif: `Inter`, `Work Sans`, `Nunito Sans`, `IBM Plex Sans`, `Libre Franklin`
+  - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
+  - Poster: `Playfair Display`
 
 ## Preview Header
 

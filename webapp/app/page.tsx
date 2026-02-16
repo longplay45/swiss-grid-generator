@@ -10,9 +10,8 @@ import {
   CANVAS_RATIOS,
 } from "@/lib/grid-calculator"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import { FONT_OPTIONS, GridPreview } from "@/components/grid-preview"
-import type { FontFamily, PreviewLayoutState } from "@/components/grid-preview"
-import defaultPreset from "@/public/default_v001.json"
+import { GridPreview } from "@/components/grid-preview"
+import type { PreviewLayoutState } from "@/components/grid-preview"
 import { Button } from "@/components/ui/button"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import {
@@ -32,6 +31,7 @@ import {
   Sun,
   Type,
   Undo2,
+  X,
 } from "lucide-react"
 import { formatValue } from "@/lib/units"
 import { useSettingsHistory, SECTION_KEYS } from "@/hooks/useSettingsHistory"
@@ -49,91 +49,44 @@ import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
+import {
+  isFontFamily,
+  type FontFamily,
+} from "@/lib/config/fonts"
+import {
+  BASELINE_OPTIONS,
+  isDisplayUnit,
+  isTypographyScale,
+  type DisplayUnit,
+  type TypographyScale
+} from "@/lib/config/defaults"
+import {
+  DEFAULT_PREVIEW_LAYOUT,
+  DEFAULT_UI,
+  PREVIEW_DEFAULT_FORMAT_BY_RATIO,
+  isCanvasRatioKey,
+  resolveUiDefaults,
+} from "@/lib/config/ui-defaults"
 
-const CANVAS_RATIO_SET = new Set<CanvasRatioKey>([
-  "din_ab",
-  "letter_ansi_ab",
-  "balanced_3_4",
-  "photo_2_3",
-  "screen_16_9",
-  "square_1_1",
-  "editorial_4_5",
-  "wide_2_1",
-])
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
-const TYPOGRAPHY_SCALE_SET = new Set(["swiss", "golden", "fourth", "fifth", "fibonacci"] as const)
-const DISPLAY_UNIT_SET = new Set(["pt", "mm", "px"] as const)
-const FONT_OPTION_SET = new Set(FONT_OPTIONS.map((option) => option.value))
-
-function isCanvasRatioKey(value: unknown): value is CanvasRatioKey {
-  return typeof value === "string" && CANVAS_RATIO_SET.has(value as CanvasRatioKey)
-}
-
-function isTypographyScale(
-  value: unknown,
-): value is "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" {
-  return typeof value === "string" && TYPOGRAPHY_SCALE_SET.has(value as "swiss" | "golden" | "fourth" | "fifth" | "fibonacci")
-}
-
-function isDisplayUnit(value: unknown): value is "pt" | "mm" | "px" {
-  return typeof value === "string" && DISPLAY_UNIT_SET.has(value as "pt" | "mm" | "px")
-}
-
-function isFontFamily(value: unknown): value is FontFamily {
-  return typeof value === "string" && FONT_OPTION_SET.has(value as FontFamily)
-}
-
-const DEFAULT_UI = defaultPreset.uiSettings
-const DEFAULT_PREVIEW_LAYOUT: PreviewLayoutState | null =
-  defaultPreset.previewLayout as PreviewLayoutState
-const DEFAULT_CANVAS_RATIO: CanvasRatioKey = isCanvasRatioKey(DEFAULT_UI.canvasRatio)
-  ? DEFAULT_UI.canvasRatio
-  : "din_ab"
-const DEFAULT_ORIENTATION: "portrait" | "landscape" =
-  DEFAULT_UI.orientation === "landscape" ? "landscape" : "portrait"
-const DEFAULT_MARGIN_METHOD: 1 | 2 | 3 =
-  DEFAULT_UI.marginMethod === 2 || DEFAULT_UI.marginMethod === 3 ? DEFAULT_UI.marginMethod : 1
-const DEFAULT_TYPOGRAPHY_SCALE: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci" = isTypographyScale(DEFAULT_UI.typographyScale)
-  ? DEFAULT_UI.typographyScale
-  : "swiss"
-const DEFAULT_DISPLAY_UNIT: "pt" | "mm" | "px" = isDisplayUnit(DEFAULT_UI.displayUnit)
-  ? DEFAULT_UI.displayUnit
-  : "pt"
-const DEFAULT_BASE_FONT: FontFamily = (() => {
-  const candidate = (DEFAULT_UI as { baseFont?: unknown }).baseFont
-  return isFontFamily(candidate)
-    ? candidate
-    : "Inter"
-})()
-
-const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
+const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.7.0"
-const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
-  din_ab: "A4",
-  letter_ansi_ab: "LETTER",
-  balanced_3_4: "BALANCED_3_4",
-  photo_2_3: "PHOTO_2_3",
-  screen_16_9: "SCREEN_16_9",
-  square_1_1: "SQUARE_1_1",
-  editorial_4_5: "EDITORIAL_4_5",
-  wide_2_1: "WIDE_2_1",
-}
 
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const previewPanelRef = useRef<HTMLDivElement | null>(null)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
-    DEFAULT_PREVIEW_LAYOUT,
+    DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
   )
   const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{
     key: number
     layout: PreviewLayoutState
   } | null>(() =>
-    DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT } : null,
+    DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
   )
-  const [canvasRatio, setCanvasRatio] = useState<CanvasRatioKey>(DEFAULT_CANVAS_RATIO)
+  const [canvasRatio, setCanvasRatio] = useState<CanvasRatioKey>(RESOLVED_DEFAULTS.canvasRatio)
   const [exportPaperSize, setExportPaperSize] = useState(DEFAULT_UI.exportPaperSize)
   const [exportPrintPro, setExportPrintPro] = useState(DEFAULT_UI.exportPrintPro)
   const [exportBleedMm, setExportBleedMm] = useState(DEFAULT_UI.exportBleedMm)
@@ -143,19 +96,17 @@ export default function Home() {
   const [exportFinalSafeGuides, setExportFinalSafeGuides] = useState(
     DEFAULT_UI.exportFinalSafeGuides,
   )
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(DEFAULT_ORIENTATION)
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(RESOLVED_DEFAULTS.orientation)
   const [rotation, setRotation] = useState(DEFAULT_UI.rotation)
-  const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(DEFAULT_MARGIN_METHOD)
+  const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(RESOLVED_DEFAULTS.marginMethod)
   const [gridCols, setGridCols] = useState(DEFAULT_UI.gridCols)
   const [gridRows, setGridRows] = useState(DEFAULT_UI.gridRows)
   const [baselineMultiple, setBaselineMultiple] = useState(DEFAULT_UI.baselineMultiple)
   const [gutterMultiple, setGutterMultiple] = useState(DEFAULT_UI.gutterMultiple)
-  const [typographyScale, setTypographyScale] = useState<
-    "swiss" | "golden" | "fourth" | "fifth" | "fibonacci"
-  >(DEFAULT_TYPOGRAPHY_SCALE)
-  const [baseFont, setBaseFont] = useState<FontFamily>(DEFAULT_BASE_FONT)
+  const [typographyScale, setTypographyScale] = useState<TypographyScale>(RESOLVED_DEFAULTS.typographyScale)
+  const [baseFont, setBaseFont] = useState<FontFamily>(RESOLVED_DEFAULTS.baseFont)
   const [customBaseline, setCustomBaseline] = useState<number>(
-    DEFAULT_UI.customBaseline ?? DEFAULT_A4_BASELINE,
+    RESOLVED_DEFAULTS.customBaseline,
   )
   const [showBaselines, setShowBaselines] = useState(DEFAULT_UI.showBaselines)
   const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
@@ -164,7 +115,7 @@ export default function Home() {
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
     "settings" | "help" | "imprint" | "example" | null
   >(null)
-  const [displayUnit, setDisplayUnit] = useState<"pt" | "mm" | "px">(DEFAULT_DISPLAY_UNIT)
+  const [displayUnit, setDisplayUnit] = useState<DisplayUnit>(RESOLVED_DEFAULTS.displayUnit)
   const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
   const [customMarginMultipliers, setCustomMarginMultipliers] = useState(
     DEFAULT_UI.customMarginMultipliers,
@@ -1101,7 +1052,7 @@ export default function Home() {
             <button
               type="button"
               className={uiTheme.link}
-              onClick={() => setActiveSidebarPanel("imprint")}
+              onClick={() => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))}
             >
               Imprint
             </button>
@@ -1176,7 +1127,17 @@ export default function Home() {
             <div className={`w-80 shrink-0 border-l overflow-y-auto p-4 md:p-6 space-y-4 text-sm ${uiTheme.sidebar}`}>
               {activeSidebarPanel === "settings" && (
                 <div>
-                  <h3 className={`text-sm font-semibold mb-2 ${uiTheme.sidebarHeading}`}>Settings</h3>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Settings</h3>
+                    <button
+                      type="button"
+                      aria-label="Close settings panel"
+                      onClick={() => setActiveSidebarPanel(null)}
+                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                   <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
                     <p>This is a placeholder settings page.</p>
                     <p>
@@ -1186,8 +1147,18 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              {activeSidebarPanel === "help" && <HelpPanel isDarkMode={isDarkUi} />}
-              {activeSidebarPanel === "imprint" && <ImprintPanel isDarkMode={isDarkUi} />}
+              {activeSidebarPanel === "help" && (
+                <HelpPanel
+                  isDarkMode={isDarkUi}
+                  onClose={() => setActiveSidebarPanel(null)}
+                />
+              )}
+              {activeSidebarPanel === "imprint" && (
+                <ImprintPanel
+                  isDarkMode={isDarkUi}
+                  onClose={() => setActiveSidebarPanel(null)}
+                />
+              )}
               {activeSidebarPanel === "example" && (
                 <ExampleLayoutsPanel
                   isDarkMode={isDarkUi}

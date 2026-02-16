@@ -1,10 +1,12 @@
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
+import { X } from "lucide-react"
 
 type Props = {
   isDarkMode?: boolean
+  onClose: () => void
 }
 
-export function HelpPanel({ isDarkMode = false }: Props) {
+export function HelpPanel({ isDarkMode = false, onClose }: Props) {
   const tone = isDarkMode
     ? {
         heading: "text-gray-100",
@@ -23,6 +25,18 @@ export function HelpPanel({ isDarkMode = false }: Props) {
 
   return (
     <>
+      <div className="flex items-center justify-between">
+        <h3 className={`text-sm font-semibold ${tone.heading}`}>Help</h3>
+        <button
+          type="button"
+          aria-label="Close help panel"
+          onClick={onClose}
+          className={`rounded-sm p-1 transition-colors ${isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <hr className={tone.divider} />
       <div>
         <h3 className={`text-sm font-semibold mb-2 ${tone.heading}`}>How to Use</h3>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>

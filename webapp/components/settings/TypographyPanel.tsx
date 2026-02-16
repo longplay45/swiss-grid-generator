@@ -8,16 +8,16 @@ import {
 } from "@/components/ui/select"
 import { FontSelect } from "@/components/ui/font-select"
 import { TYPOGRAPHY_SCALE_LABELS } from "@/lib/grid-calculator"
-import { FONT_OPTIONS } from "@/components/grid-preview"
-import type { FontFamily } from "@/components/grid-preview"
+import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
+import type { TypographyScale } from "@/lib/config/defaults"
 import { PanelCard } from "@/components/settings/PanelCard"
 
 type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
-  typographyScale: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci"
-  onTypographyScaleChange: (value: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci") => void
+  typographyScale: TypographyScale
+  onTypographyScaleChange: (value: TypographyScale) => void
   baseFont: FontFamily
   onBaseFontChange: (value: FontFamily) => void
   isDarkMode: boolean
@@ -46,7 +46,7 @@ export function TypographyPanel({
         <Label>Font Hierarchy</Label>
         <Select
           value={typographyScale}
-          onValueChange={(v: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci") =>
+          onValueChange={(v: TypographyScale) =>
             onTypographyScaleChange(v)
           }
         >
