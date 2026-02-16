@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
+import type { ReactNode } from "react"
 import {
   generateSwissGrid,
   FORMATS_PT,
@@ -13,17 +14,22 @@ import { FONT_OPTIONS, GridPreview } from "@/components/grid-preview"
 import type { FontFamily, PreviewLayoutState } from "@/components/grid-preview"
 import defaultPreset from "@/public/default_v001.json"
 import { Button } from "@/components/ui/button"
+import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import {
   CircleHelp,
   Download,
   FolderOpen,
   LayoutGrid,
   LayoutTemplate,
+  Maximize2,
+  Minimize2,
+  Moon,
   Redo2,
   Rows3,
   Save,
   Settings,
   SquareDashed,
+  Sun,
   Type,
   Undo2,
 } from "lucide-react"
@@ -41,6 +47,8 @@ import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
+import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
+import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
 const CANVAS_RATIO_SET = new Set<CanvasRatioKey>([
   "din_ab",
@@ -114,6 +122,7 @@ const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
+  const previewPanelRef = useRef<HTMLDivElement | null>(null)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
     DEFAULT_PREVIEW_LAYOUT,
   )
@@ -161,6 +170,8 @@ export default function Home() {
   )
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
+  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
+  const [isDarkUi, setIsDarkUi] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(DEFAULT_UI.collapsed)
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
@@ -365,28 +376,29 @@ export default function Home() {
     [history, applyUiSnapshot],
   )
 
-  // Global keyboard undo/redo
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey)) return
-      const key = event.key.toLowerCase()
-      if (key === "z" && !event.shiftKey) {
-        if (history.settingsPast.length > 0) {
-          event.preventDefault()
-          undoAny()
-        }
-        return
+  const togglePreviewFullscreen = useCallback(async () => {
+    const previewElement = previewPanelRef.current
+    if (!previewElement || typeof document === "undefined") return
+
+    try {
+      if (document.fullscreenElement === previewElement) {
+        await document.exitFullscreen()
+      } else {
+        await previewElement.requestFullscreen()
       }
-      if (key === "y" || (key === "z" && event.shiftKey)) {
-        if (history.settingsFuture.length > 0) {
-          event.preventDefault()
-          redoAny()
-        }
-      }
+    } catch {
+      // Ignore request/exit failures and keep current non-fullscreen UI usable.
     }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [history.settingsFuture.length, history.settingsPast.length, redoAny, undoAny])
+  }, [])
+
+  useEffect(() => {
+    const updateFullscreenState = () => {
+      setIsPreviewFullscreen(document.fullscreenElement === previewPanelRef.current)
+    }
+    updateFullscreenState()
+    document.addEventListener("fullscreenchange", updateFullscreenState)
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState)
+  }, [])
 
   // ─── Section collapse helpers ─────────────────────────────────────────────
 
@@ -564,6 +576,82 @@ export default function Home() {
 
   const exportActions = useExportActions(exportActionsContext)
 
+  // Global keyboard shortcuts for preview-header actions
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false
+      const tag = target.tagName
+      return target.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey)) return
+      const key = event.key.toLowerCase()
+      const shifted = event.shiftKey
+      const alted = event.altKey
+      const editable = isEditableTarget(event.target)
+      const shortcut = PREVIEW_HEADER_SHORTCUTS.find((item) =>
+        item.bindings.some(
+          (binding) =>
+            binding.key === key
+            && (binding.shift ?? false) === shifted
+            && (binding.alt ?? false) === alted,
+        ),
+      )
+      if (!shortcut || editable) return
+
+      event.preventDefault()
+      switch (shortcut.id) {
+        case "load_json":
+          loadFileInputRef.current?.click()
+          return
+        case "save_json":
+          exportActions.openSaveDialog()
+          return
+        case "export_pdf":
+          exportActions.openExportDialog()
+          return
+        case "undo":
+          if (history.canUndo) undoAny()
+          return
+        case "redo":
+          if (history.canRedo) redoAny()
+          return
+        case "toggle_dark_mode":
+          setIsDarkUi((prev) => !prev)
+          return
+        case "toggle_fullscreen":
+          togglePreviewFullscreen()
+          return
+        case "toggle_baselines":
+          setShowBaselines((prev) => !prev)
+          return
+        case "toggle_margins":
+          setShowMargins((prev) => !prev)
+          return
+        case "toggle_modules":
+          setShowModules((prev) => !prev)
+          return
+        case "toggle_typography":
+          setShowTypography((prev) => !prev)
+          return
+        case "toggle_settings_panel":
+          setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings"))
+          return
+        case "toggle_help_panel":
+          setActiveSidebarPanel((prev) => (prev === "help" ? null : "help"))
+          return
+        case "toggle_imprint_panel":
+          setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))
+          return
+        case "toggle_example_panel":
+          setActiveSidebarPanel((prev) => (prev === "example" ? null : "example"))
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [exportActions, history.canRedo, history.canUndo, redoAny, togglePreviewFullscreen, undoAny])
+
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
   const loadLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -678,23 +766,291 @@ export default function Home() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
+  const uiTheme = isDarkUi
+    ? {
+        root: "bg-gray-950",
+        leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
+        subtleBorder: "border-gray-700",
+        bodyText: "text-gray-300",
+        headingText: "text-gray-300",
+        link: "text-gray-100 underline",
+        previewShell: "bg-gray-950",
+        previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
+        divider: "bg-gray-700",
+        sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
+        sidebarHeading: "text-gray-100",
+        sidebarBody: "text-gray-400",
+      }
+    : {
+        root: "bg-gray-100",
+        leftPanel: "border-gray-200 bg-white",
+        subtleBorder: "border-gray-200",
+        bodyText: "text-gray-600",
+        headingText: "text-gray-700",
+        link: "underline",
+        previewShell: "bg-white",
+        previewHeader: "border-gray-200 bg-white",
+        divider: "bg-gray-200",
+        sidebar: "border-gray-200 bg-white text-gray-700",
+        sidebarHeading: "text-gray-900",
+        sidebarBody: "text-gray-600",
+      }
+
+  type HeaderAction = {
+    key: string
+    ariaLabel: string
+    tooltip: string
+    shortcutId?: PreviewHeaderShortcutId
+    icon: ReactNode
+    variant?: "default" | "outline"
+    pressed?: boolean
+    disabled?: boolean
+    onClick: () => void
+  }
+  type HeaderItem = { type: "action"; action: HeaderAction } | { type: "divider"; key: string }
+
+  const fileGroup: HeaderItem[] = [
+    {
+      type: "action",
+      action: {
+        key: "examples",
+        ariaLabel: "Show examples",
+        tooltip: "Example layouts",
+        shortcutId: "toggle_example_panel",
+        variant: activeSidebarPanel === "example" ? "default" : "outline",
+        pressed: activeSidebarPanel === "example",
+        onClick: () => setActiveSidebarPanel((prev) => (prev === "example" ? null : "example")),
+        icon: <LayoutTemplate className="h-4 w-4" />,
+      },
+    },
+    { type: "divider", key: "divider-examples-load" },
+    {
+      type: "action",
+      action: {
+        key: "load",
+        ariaLabel: "Load",
+        tooltip: "Load layout JSON",
+        shortcutId: "load_json",
+        onClick: () => loadFileInputRef.current?.click(),
+        icon: <FolderOpen className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "save",
+        ariaLabel: "Save",
+        tooltip: "Save layout JSON",
+        shortcutId: "save_json",
+        onClick: exportActions.openSaveDialog,
+        icon: <Save className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "export",
+        ariaLabel: "Export PDF",
+        tooltip: "Export PDF",
+        shortcutId: "export_pdf",
+        onClick: exportActions.openExportDialog,
+        icon: <Download className="h-4 w-4" />,
+      },
+    },
+    { type: "divider", key: "divider-export-undo" },
+    {
+      type: "action",
+      action: {
+        key: "undo",
+        ariaLabel: "Undo",
+        tooltip: "Undo",
+        shortcutId: "undo",
+        disabled: !history.canUndo,
+        onClick: undoAny,
+        icon: <Undo2 className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "redo",
+        ariaLabel: "Redo",
+        tooltip: "Redo",
+        shortcutId: "redo",
+        disabled: !history.canRedo,
+        onClick: redoAny,
+        icon: <Redo2 className="h-4 w-4" />,
+      },
+    },
+  ]
+
+  const displayGroup: HeaderItem[] = [
+    {
+      type: "action",
+      action: {
+        key: "dark-mode",
+        ariaLabel: isDarkUi ? "Disable dark mode" : "Enable dark mode",
+        tooltip: isDarkUi ? "Switch to light UI" : "Switch to dark UI",
+        shortcutId: "toggle_dark_mode",
+        variant: isDarkUi ? "default" : "outline",
+        pressed: isDarkUi,
+        onClick: () => setIsDarkUi((prev) => !prev),
+        icon: isDarkUi ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "fullscreen",
+        ariaLabel: isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
+        tooltip: isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
+        shortcutId: "toggle_fullscreen",
+        pressed: isPreviewFullscreen,
+        onClick: togglePreviewFullscreen,
+        icon: isPreviewFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />,
+      },
+    },
+    { type: "divider", key: "divider-fullscreen-baselines" },
+    {
+      type: "action",
+      action: {
+        key: "baselines",
+        ariaLabel: "Toggle baselines",
+        tooltip: "Toggle baselines",
+        shortcutId: "toggle_baselines",
+        variant: showBaselines ? "default" : "outline",
+        pressed: showBaselines,
+        onClick: () => setShowBaselines((prev) => !prev),
+        icon: <Rows3 className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "margins",
+        ariaLabel: "Toggle margins",
+        tooltip: "Toggle margin frame",
+        shortcutId: "toggle_margins",
+        variant: showMargins ? "default" : "outline",
+        pressed: showMargins,
+        onClick: () => setShowMargins((prev) => !prev),
+        icon: <SquareDashed className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "modules",
+        ariaLabel: "Toggle gutter grid",
+        tooltip: "Toggle modules and gutter",
+        shortcutId: "toggle_modules",
+        variant: showModules ? "default" : "outline",
+        pressed: showModules,
+        onClick: () => setShowModules((prev) => !prev),
+        icon: <LayoutGrid className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "typography",
+        ariaLabel: "Toggle typography",
+        tooltip: "Toggle type preview",
+        shortcutId: "toggle_typography",
+        variant: showTypography ? "default" : "outline",
+        pressed: showTypography,
+        onClick: () => setShowTypography((prev) => !prev),
+        icon: <Type className="h-4 w-4" />,
+      },
+    },
+  ]
+
+  const sidebarGroup: HeaderAction[] = [
+    {
+      key: "settings",
+      ariaLabel: "Show settings panel",
+      tooltip: "Settings panel",
+      shortcutId: "toggle_settings_panel",
+      variant: activeSidebarPanel === "settings" ? "default" : "outline",
+      pressed: activeSidebarPanel === "settings",
+      onClick: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
+      icon: <Settings className="h-4 w-4" />,
+    },
+    {
+      key: "help",
+      ariaLabel: "Toggle help",
+      tooltip: "Help & reference",
+      shortcutId: "toggle_help_panel",
+      variant: activeSidebarPanel === "help" ? "default" : "outline",
+      pressed: activeSidebarPanel === "help",
+      onClick: () => setActiveSidebarPanel((prev) => (prev === "help" ? null : "help")),
+      icon: <CircleHelp className="h-4 w-4" />,
+    },
+    {
+      key: "imprint",
+      ariaLabel: "Show imprint",
+      tooltip: "Imprint",
+      shortcutId: "toggle_imprint_panel",
+      variant: activeSidebarPanel === "imprint" ? "default" : "outline",
+      pressed: activeSidebarPanel === "imprint",
+      onClick: () => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint")),
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+      ),
+    },
+  ]
+
+  const renderHeaderAction = (action: HeaderAction) => {
+    const shortcut = action.shortcutId
+      ? PREVIEW_HEADER_SHORTCUTS.find((item) => item.id === action.shortcutId)?.combo
+      : null
+    const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
+    return (
+    <HeaderIconButton
+      key={action.key}
+      ariaLabel={action.ariaLabel}
+      tooltip={tooltip}
+      variant={action.variant ?? "outline"}
+      aria-pressed={action.pressed}
+      disabled={action.disabled}
+      onClick={action.onClick}
+    >
+      {action.icon}
+    </HeaderIconButton>
+    )
+  }
+
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
+    <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
       {/* Left Panel - Controls */}
-      <div className="w-full md:w-96 flex flex-col border-r border-b md:border-b-0 bg-white max-h-[50vh] md:max-h-full">
+      <div className={`w-full md:w-96 flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
         {/* Header - always visible */}
-        <div className="shrink-0 space-y-2 p-4 md:px-6 md:pt-6 border-b">
+        <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
-          <p className="text-sm text-gray-600">
+          <p className={`text-sm ${uiTheme.bodyText}`}>
             Based on Müller-Brockmann&apos;s <em>Grid Systems in Graphic Design</em> (1981).
             Copyleft &amp; -right 2026 by{" "}
-            <a href="https://lp45.net">lp45.net</a>.{" "}
-            <a href="https://github.com/longplay45/swiss-grid-generator">Source Code</a>.
+            <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.{" "}
+            <a href="https://github.com/longplay45/swiss-grid-generator" className={uiTheme.link}>Source Code</a>.
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
-          <h2 className="text-sm font-semibold tracking-wide text-gray-700">
+          <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
             Grid Generator Settings
           </h2>
 
@@ -708,6 +1064,7 @@ export default function Home() {
             onOrientationChange={setOrientation}
             rotation={rotation}
             onRotationChange={setRotation}
+            isDarkMode={isDarkUi}
           />
 
           <BaselineGridPanel
@@ -718,6 +1075,7 @@ export default function Home() {
             customBaseline={customBaseline}
             availableBaselineOptions={availableBaselineOptions}
             onCustomBaselineChange={setCustomBaseline}
+            isDarkMode={isDarkUi}
           />
 
           <MarginsPanel
@@ -734,6 +1092,7 @@ export default function Home() {
             onCustomMarginMultipliersChange={setCustomMarginMultipliers}
             currentMargins={result.grid.margins}
             gridUnit={gridUnit}
+            isDarkMode={isDarkUi}
           />
 
           <GutterPanel
@@ -746,6 +1105,7 @@ export default function Home() {
             onGridRowsChange={setGridRows}
             gutterMultiple={gutterMultiple}
             onGutterMultipleChange={setGutterMultiple}
+            isDarkMode={isDarkUi}
           />
 
           <TypographyPanel
@@ -756,12 +1116,16 @@ export default function Home() {
             onTypographyScaleChange={setTypographyScale}
             baseFont={baseFont}
             onBaseFontChange={setBaseFont}
+            isDarkMode={isDarkUi}
           />
         </div>
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-full">
+      <div
+        ref={previewPanelRef}
+        className={`flex-1 flex flex-col min-h-[50vh] md:min-h-full ${uiTheme.previewShell}`}
+      >
         <input
           ref={loadFileInputRef}
           type="file"
@@ -769,226 +1133,26 @@ export default function Home() {
           className="hidden"
           onChange={loadLayout}
         />
-        <div className="px-4 py-3 md:px-6 border-b bg-white">
+        <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
           <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
             <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
-            <div className="group relative">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Load"
-                onClick={() => loadFileInputRef.current?.click()}
-              >
-                <FolderOpen className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Load layout JSON
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Save"
-                onClick={exportActions.openSaveDialog}
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Save layout JSON
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Export PDF"
-                onClick={exportActions.openExportDialog}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Export PDF
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="group relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Undo"
-                  disabled={!history.canUndo}
-                  onClick={undoAny}
-                >
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  Undo (Cmd/Ctrl+Z)
-                </div>
-              </div>
-              <div className="group relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Redo"
-                  disabled={!history.canRedo}
-                  onClick={redoAny}
-                >
-                  <Redo2 className="h-4 w-4" />
-                </Button>
-                <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  Redo (Cmd/Ctrl+Shift+Z)
-                </div>
-              </div>
-            </div>
+              {fileGroup.map((item) =>
+                item.type === "divider"
+                  ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
+                  : renderHeaderAction(item.action),
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={showBaselines ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Toggle baselines"
-                aria-pressed={showBaselines}
-                onClick={() => setShowBaselines((prev) => !prev)}
-              >
-                <Rows3 className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Toggle baselines
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={showMargins ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Toggle margins"
-                aria-pressed={showMargins}
-                onClick={() => setShowMargins((prev) => !prev)}
-              >
-                <SquareDashed className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Toggle margin frame
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={showModules ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Toggle gutter grid"
-                aria-pressed={showModules}
-                onClick={() => setShowModules((prev) => !prev)}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Toggle modules and gutter
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={showTypography ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Toggle typography"
-                aria-pressed={showTypography}
-                onClick={() => setShowTypography((prev) => !prev)}
-              >
-                <Type className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Toggle type preview
-              </div>
-            </div>
+              {displayGroup.map((item) =>
+                item.type === "divider"
+                  ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
+                  : renderHeaderAction(item.action),
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={activeSidebarPanel === "settings" ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Show settings panel"
-                aria-pressed={activeSidebarPanel === "settings"}
-                onClick={() =>
-                  setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings"))
-                }
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Settings panel
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={activeSidebarPanel === "help" ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Toggle help"
-                aria-pressed={activeSidebarPanel === "help"}
-                onClick={() =>
-                  setActiveSidebarPanel((prev) => (prev === "help" ? null : "help"))
-                }
-              >
-                <CircleHelp className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Help &amp; reference
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={activeSidebarPanel === "imprint" ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Show imprint"
-                aria-pressed={activeSidebarPanel === "imprint"}
-                onClick={() =>
-                  setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))
-                }
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4"
-                >
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Imprint
-              </div>
-            </div>
-            <div className="group relative">
-              <Button
-                size="icon"
-                variant={activeSidebarPanel === "example" ? "default" : "outline"}
-                className="h-8 w-8"
-                aria-label="Show examples"
-                aria-pressed={activeSidebarPanel === "example"}
-                onClick={() =>
-                  setActiveSidebarPanel((prev) => (prev === "example" ? null : "example"))
-                }
-              >
-                <LayoutTemplate className="h-4 w-4" />
-              </Button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-md border border-gray-200 bg-white/95 px-2 py-1 text-[11px] text-gray-700 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                Example layouts
-              </div>
-            </div>
+              {sidebarGroup.map((action) => renderHeaderAction(action))}
             </div>
           </div>
         </div>
@@ -1016,15 +1180,16 @@ export default function Home() {
                 setGridCols(cols)
                 setGridRows(rows)
               }}
+              isDarkMode={isDarkUi}
               onLayoutChange={setPreviewLayout}
             />
           </div>
           {activeSidebarPanel && (
-            <div className="w-80 shrink-0 border-l bg-white overflow-y-auto p-4 md:p-6 space-y-4 text-sm text-gray-700">
+            <div className={`w-80 shrink-0 border-l overflow-y-auto p-4 md:p-6 space-y-4 text-sm ${uiTheme.sidebar}`}>
               {activeSidebarPanel === "settings" && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Settings</h3>
-                  <div className="space-y-2 text-xs text-gray-600">
+                  <h3 className={`text-sm font-semibold mb-2 ${uiTheme.sidebarHeading}`}>Settings</h3>
+                  <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
                     <p>This is a placeholder settings page.</p>
                     <p>
                       Future settings can be added here (profile, defaults, shortcuts, language,
@@ -1033,10 +1198,11 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              {activeSidebarPanel === "help" && <HelpPanel />}
-              {activeSidebarPanel === "imprint" && <ImprintPanel />}
+              {activeSidebarPanel === "help" && <HelpPanel isDarkMode={isDarkUi} />}
+              {activeSidebarPanel === "imprint" && <ImprintPanel isDarkMode={isDarkUi} />}
               {activeSidebarPanel === "example" && (
                 <ExampleLayoutsPanel
+                  isDarkMode={isDarkUi}
                   onLoadPreset={(preset) => {
                     setCanvasRatio(preset.canvasRatio)
                     setOrientation(preset.orientation)

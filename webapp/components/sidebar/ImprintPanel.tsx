@@ -1,8 +1,12 @@
-export function ImprintPanel() {
+type Props = {
+  isDarkMode?: boolean
+}
+
+export function ImprintPanel({ isDarkMode = false }: Props) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-900 mb-2">Imprint</h3>
-      <div className="space-y-3 text-xs text-gray-600">
+      <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Imprint</h3>
+      <div className={`space-y-3 text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
         <p>
           <strong>Swiss Grid Generator</strong>
           <br />A web-based tool for generating modular typographic grids based on Josef
@@ -11,7 +15,7 @@ export function ImprintPanel() {
         <p>
           <strong>Developer:</strong>
           <br />
-          <a href="https://lp45.net" className="text-blue-600 hover:underline">
+          <a href="https://lp45.net" className={isDarkMode ? "text-blue-400 hover:underline" : "text-blue-600 hover:underline"}>
             lp45.net
           </a>
         </p>
@@ -25,7 +29,7 @@ export function ImprintPanel() {
           <br />
           <a
             href="https://github.com/longplay45/swiss-grid-generator"
-            className="text-blue-600 hover:underline"
+            className={isDarkMode ? "text-blue-400 hover:underline" : "text-blue-600 hover:underline"}
           >
             github.com/longplay45/swiss-grid-generator
           </a>
@@ -35,7 +39,7 @@ export function ImprintPanel() {
           <br />
           Next.js, React, TypeScript, Tailwind CSS, jsPDF
         </p>
-        <p className="pt-2 text-[11px] text-gray-400">
+        <p className={`pt-2 text-[11px] ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
           This tool is inspired by the principles of Swiss Design and the International Typographic
           Style. The generated grids are intended for educational and design purposes.
         </p>

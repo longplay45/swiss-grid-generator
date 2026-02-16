@@ -441,6 +441,8 @@ moduleRowStart(i) = i * moduleRowStep
 
 Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
 
+Shift-duplicate behavior (`Shift` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
+
 ### Per-Paragraph Span
 
 Each paragraph has:

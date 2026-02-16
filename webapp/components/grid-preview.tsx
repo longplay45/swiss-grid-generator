@@ -1,7 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FontSelect } from "@/components/ui/font-select"
+import { HoverTooltip } from "@/components/ui/hover-tooltip"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
 import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
@@ -75,6 +83,7 @@ type DragState = {
   pointerOffsetY: number
   preview: ModulePosition
   moved: boolean
+  copyOnDrop: boolean
 }
 
 type Updater<T> = T | ((prev: T) => T)
@@ -270,15 +279,13 @@ function EditorControlTooltip({
   className?: string
 }) {
   return (
-    <div className={`group relative inline-flex ${className}`.trim()}>
+    <HoverTooltip
+      label={label}
+      className={`inline-flex ${className}`.trim()}
+      tooltipClassName="-top-8 left-1/2 -translate-x-1/2 whitespace-nowrap border-gray-300 bg-white text-gray-700 transition-all duration-75 group-hover:-translate-y-0.5 group-focus-within:-translate-y-0.5"
+    >
       {children}
-      <div
-        role="tooltip"
-        className="pointer-events-none absolute -top-8 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-700 opacity-0 shadow-sm transition-all duration-75 group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-within:-translate-y-0.5 group-focus-within:opacity-100"
-      >
-        {label}
-      </div>
-    </div>
+    </HoverTooltip>
   )
 }
 
@@ -388,6 +395,7 @@ interface GridPreviewProps {
   onRequestGridRestore?: (cols: number, rows: number) => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
   baseFont?: FontFamily
+  isDarkMode?: boolean
 }
 
 export interface PreviewLayoutState {
@@ -420,6 +428,7 @@ export function GridPreview({
   onRequestGridRestore,
   onHistoryAvailabilityChange,
   baseFont = "Inter",
+  isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -431,7 +440,7 @@ export function GridPreview({
   const lastAppliedLayoutKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const dragRafRef = useRef<number | null>(null)
-  const pendingDragPreviewRef = useRef<{ preview: ModulePosition; moved: boolean } | null>(null)
+  const pendingDragPreviewRef = useRef<{ preview: ModulePosition; moved: boolean; copyOnDrop: boolean } | null>(null)
   const activeDragPointerIdRef = useRef<number | null>(null)
   const touchLongPressTimerRef = useRef<number | null>(null)
   const touchPendingDragRef = useRef<{
@@ -2110,30 +2119,143 @@ export function GridPreview({
       if (!prev) return null
       const nextPreview = pending?.preview ?? prev.preview
       const nextMoved = pending?.moved ?? prev.moved
+      const nextCopyOnDrop = pending?.copyOnDrop ?? prev.copyOnDrop
       if (nextMoved) {
-        recordHistoryBeforeChange()
-        const autoFit = getAutoFitDropUpdate(prev.key, nextPreview)
-        if (autoFit) {
-          setBlockColumnSpans((current) => ({
-            ...current,
-            [prev.key]: autoFit.span,
-          }))
-          setBlockModulePositions((current) => ({
-            ...current,
-            [prev.key]: autoFit.position,
-          }))
+        if (nextCopyOnDrop) {
+          const sourceText = textContent[prev.key] ?? ""
+          const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
+          const activeParagraphCount = blockOrder.filter((key) => (textContent[key] ?? "").trim().length > 0).length
+          if (sourceText.trim().length > 0 && activeParagraphCount >= maxParagraphCount) {
+            window.alert(`Maximum paragraphs reached (${maxParagraphCount}).`)
+            return null
+          }
+
+          const styleKey = getStyleKeyForBlock(prev.key)
+          const sourceRows = getBlockRows(prev.key)
+          const sourceReflow = isTextReflowEnabled(prev.key)
+          const sourceSyllableDivision = isSyllableDivisionEnabled(prev.key)
+          const sourceSpan = getBlockSpan(prev.key)
+          const autoFit = getAutoFitForPlacement({
+            key: prev.key,
+            text: sourceText,
+            styleKey,
+            rowSpan: sourceRows,
+            reflow: sourceReflow,
+            syllableDivision: sourceSyllableDivision,
+            position: nextPreview,
+          })
+          const nextSpan = autoFit?.span ?? sourceSpan
+          const metrics = getGridMetrics()
+          const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
+          const resolvedPosition = autoFit?.position
+            ? {
+                col: Math.max(0, Math.min(maxCol, autoFit.position.col)),
+                row: Math.max(0, Math.min(metrics.maxBaselineRow, autoFit.position.row)),
+              }
+            : {
+                col: Math.max(0, Math.min(maxCol, nextPreview.col)),
+                row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
+              }
+          const newKey = getNextCustomBlockId()
+
+          recordHistoryBeforeChange()
+          setBlockCollections((current) => {
+            const sourceIndex = current.blockOrder.indexOf(prev.key)
+            const nextOrder = [...current.blockOrder]
+            if (sourceIndex >= 0) nextOrder.splice(sourceIndex + 1, 0, newKey)
+            else nextOrder.push(newKey)
+
+            const sourceFont = current.blockFontFamilies[prev.key] ?? baseFont
+            const nextFonts = { ...current.blockFontFamilies }
+            if (sourceFont === baseFont) {
+              delete nextFonts[newKey]
+            } else {
+              nextFonts[newKey] = sourceFont
+            }
+
+            return {
+              ...current,
+              blockOrder: nextOrder,
+              textContent: {
+                ...current.textContent,
+                [newKey]: current.textContent[prev.key] ?? "",
+              },
+              blockTextEdited: {
+                ...current.blockTextEdited,
+                [newKey]: current.blockTextEdited[prev.key] ?? true,
+              },
+              styleAssignments: {
+                ...current.styleAssignments,
+                [newKey]: styleKey,
+              },
+              blockFontFamilies: nextFonts,
+              blockColumnSpans: {
+                ...current.blockColumnSpans,
+                [newKey]: nextSpan,
+              },
+              blockRowSpans: {
+                ...current.blockRowSpans,
+                [newKey]: sourceRows,
+              },
+              blockTextAlignments: {
+                ...current.blockTextAlignments,
+                [newKey]: current.blockTextAlignments[prev.key] ?? "left",
+              },
+              blockTextReflow: {
+                ...current.blockTextReflow,
+                [newKey]: sourceReflow,
+              },
+              blockSyllableDivision: {
+                ...current.blockSyllableDivision,
+                [newKey]: sourceSyllableDivision,
+              },
+              blockModulePositions: {
+                ...current.blockModulePositions,
+                [newKey]: resolvedPosition,
+              },
+            }
+          })
         } else {
-          setBlockModulePositions((current) => ({
-            ...current,
-            [prev.key]: nextPreview,
-          }))
+          recordHistoryBeforeChange()
+          const autoFit = getAutoFitDropUpdate(prev.key, nextPreview)
+          if (autoFit) {
+            setBlockColumnSpans((current) => ({
+              ...current,
+              [prev.key]: autoFit.span,
+            }))
+            setBlockModulePositions((current) => ({
+              ...current,
+              [prev.key]: autoFit.position,
+            }))
+          } else {
+            setBlockModulePositions((current) => ({
+              ...current,
+              [prev.key]: nextPreview,
+            }))
+          }
         }
         dragEndedAtRef.current = Date.now()
       }
       return null
     })
     activeDragPointerIdRef.current = null
-  }, [getAutoFitDropUpdate, recordHistoryBeforeChange])
+  }, [
+    baseFont,
+    blockOrder,
+    getAutoFitDropUpdate,
+    getAutoFitForPlacement,
+    getBlockRows,
+    getBlockSpan,
+    getGridMetrics,
+    getStyleKeyForBlock,
+    isSyllableDivisionEnabled,
+    isTextReflowEnabled,
+    recordHistoryBeforeChange,
+    result.settings.gridCols,
+    result.settings.gridRows,
+    setBlockCollections,
+    textContent,
+  ])
 
   useEffect(() => {
     return () => {
@@ -2315,6 +2437,7 @@ export function GridPreview({
           pointerOffsetY: pagePoint.y - block.y,
           preview: snapped,
           moved: false,
+          copyOnDrop: event.pointerType !== "touch" && event.shiftKey,
         }
         if (event.pointerType === "touch") {
           clearPendingTouchLongPress()
@@ -2385,14 +2508,24 @@ export function GridPreview({
 
     const snap = snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
     const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
-    pendingDragPreviewRef.current = { preview: snap, moved }
+    const copyOnDrop = event.pointerType !== "touch" && event.shiftKey
+    pendingDragPreviewRef.current = { preview: snap, moved, copyOnDrop }
     if (dragRafRef.current !== null) return
     dragRafRef.current = window.requestAnimationFrame(() => {
       dragRafRef.current = null
       const pending = pendingDragPreviewRef.current
       if (!pending) return
       pendingDragPreviewRef.current = null
-      setDragState((prev) => (prev ? { ...prev, preview: pending.preview, moved: pending.moved } : prev))
+      setDragState((prev) => (
+        prev
+          ? {
+              ...prev,
+              preview: pending.preview,
+              moved: pending.moved,
+              copyOnDrop: pending.copyOnDrop,
+            }
+          : prev
+      ))
     })
   }, [TOUCH_CANCEL_DISTANCE_PX, clearPendingTouchLongPress, dragState, snapToModule, toPagePoint])
 
@@ -2603,10 +2736,22 @@ export function GridPreview({
     }
   }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
-  const canvasCursorClass = dragState ? "cursor-grabbing" : hoverState ? "cursor-grab" : "cursor-default"
+  const canvasCursorClass = dragState
+    ? (dragState.copyOnDrop ? "cursor-copy" : "cursor-grabbing")
+    : hoverState
+      ? "cursor-grab"
+      : "cursor-default"
+  const editorText = editorState?.draftText ?? ""
+  const editorCharacterCount = editorText.length
+  const editorWordCount = editorText.trim() ? editorText.trim().split(/\s+/).length : 0
 
   return (
-    <div ref={previewContainerRef} className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
+    <div
+      ref={previewContainerRef}
+      className={`relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden ${
+        isDarkMode ? "bg-gray-900" : "bg-gray-50"
+      }`}
+    >
       <div className="relative" style={{ width: result.pageSizePt.width * scale, height: result.pageSizePt.height * scale }}>
         <canvas
           ref={staticCanvasRef}
@@ -2649,7 +2794,7 @@ export function GridPreview({
               Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
             </div>
             <div className="mt-1 text-[11px] text-gray-500">
-              Double-click to edit • Drag to move • Touch: long-press then drag
+              Double-click to edit • Shift-drag to duplicate • Touch: long-press then drag
             </div>
           </div>
         ) : null}
@@ -2691,19 +2836,19 @@ export function GridPreview({
 
       {editorState ? (
         <div
-          className="absolute inset-0 bg-black/20 flex items-center justify-center p-4"
+          className={`absolute inset-0 flex items-center justify-center p-4 ${isDarkMode ? "bg-black/45" : "bg-black/20"}`}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeEditor()
           }}
         >
           <div
-            className="w-full max-w-[500px] rounded-md border border-gray-300 bg-white shadow-xl"
+            className={`w-full max-w-[500px] rounded-md border shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"}`}
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="space-y-2 border-b border-gray-200 px-3 py-2">
+            <div className={`space-y-2 border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
               <div className="flex items-center gap-2">
                 <EditorControlTooltip label="Font family">
-                  <Select
+                  <FontSelect
                     value={editorState.draftFont}
                     onValueChange={(value) => {
                       setEditorState((prev) => prev ? {
@@ -2711,26 +2856,9 @@ export function GridPreview({
                         draftFont: value as FontFamily,
                       } : prev)
                     }}
-                  >
-                    <SelectTrigger className="h-8 w-40 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Inter">Inter</SelectItem>
-                      <SelectItem value="Work Sans">Work Sans</SelectItem>
-                      <SelectItem value="Nunito Sans">Nunito Sans</SelectItem>
-                      <SelectItem value="IBM Plex Sans">IBM Plex Sans</SelectItem>
-                      <SelectItem value="Libre Franklin">Libre Franklin</SelectItem>
-                      <SelectItem value="EB Garamond">EB Garamond</SelectItem>
-                      <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
-                      <SelectItem value="Bodoni Moda">Bodoni Moda</SelectItem>
-                      <SelectItem value="Besley">Besley</SelectItem>
-                      <SelectItem value="Fraunces">Fraunces</SelectItem>
-                      <SelectItem value="Playfair Display">Playfair Display</SelectItem>
-                      <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
-                      <SelectItem value="DM Serif Display">DM Serif Display</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={FONT_OPTIONS}
+                    triggerClassName="h-8 w-40 text-xs"
+                  />
                 </EditorControlTooltip>
                 <EditorControlTooltip label="Typography style" className="min-w-0 flex-1">
                   <Select
@@ -2805,7 +2933,7 @@ export function GridPreview({
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center rounded-md border border-gray-200">
+                  <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
                     <EditorControlTooltip label="Align left">
                       <Button
                         type="button"
@@ -2825,7 +2953,7 @@ export function GridPreview({
                         type="button"
                         size="icon"
                         variant={editorState.draftAlign === "right" ? "secondary" : "ghost"}
-                        className="h-8 w-8 rounded-l-none border-l border-gray-200"
+                        className={`h-8 w-8 rounded-l-none border-l ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
                         onClick={() => {
                           setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
                         }}
@@ -2866,11 +2994,17 @@ export function GridPreview({
                 </div>
                 <div className="flex items-center gap-2">
                   <EditorControlTooltip label="Delete paragraph">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={deleteEditorBlock} aria-label="Delete paragraph">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={`h-8 w-8 ${isDarkMode ? "text-gray-300 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
+                      onClick={deleteEditorBlock}
+                      aria-label="Delete paragraph"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </EditorControlTooltip>
-                  <div className="h-6 w-px bg-gray-200" aria-hidden="true" />
+                  <div className={`h-6 w-px ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`} aria-hidden="true" />
                   <EditorControlTooltip label="Save changes">
                     <Button size="sm" onClick={saveEditor}>
                       Save
@@ -2903,11 +3037,21 @@ export function GridPreview({
                   }
                 }}
                 style={{ fontFamily: getFontFamilyCss(editorState.draftFont) }}
-                className="min-h-40 w-full resize-y rounded-md border border-gray-200 bg-gray-50 p-3 text-gray-900 outline-none ring-0 focus:border-gray-300"
+                className={`min-h-40 w-full resize-y rounded-md border p-3 outline-none ring-0 ${
+                  isDarkMode
+                    ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"
+                    : "border-gray-200 bg-gray-50 text-gray-900 focus:border-gray-300"
+                }`}
               />
             </div>
-            <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-gray-500">
-              Esc or click outside to close without saving.
+            <div className={`flex items-center justify-between gap-3 border-t px-3 py-2 text-[11px] ${
+              isDarkMode ? "border-gray-700 text-gray-400" : "border-gray-100 text-gray-500"
+            }`}>
+              <div className="flex items-center gap-3">
+                <span>Characters: {editorCharacterCount}</span>
+                <span>Words: {editorWordCount}</span>
+              </div>
+              <span className="text-right">Esc or click outside to close without saving.</span>
             </div>
           </div>
         </div>

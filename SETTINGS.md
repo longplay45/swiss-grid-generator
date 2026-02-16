@@ -93,11 +93,13 @@ Default: `swiss`
 
 - `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
+- Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 
 ## Preview Header
 
 ### File Actions (icon buttons)
 
+- `Examples` (layout-template icon): opens/closes example preset panel
 - `Load` (folder icon): load layout JSON
 - `Save` (save icon): opens Save JSON popup
 - `Export PDF` (download icon): opens Export PDF popup
@@ -108,6 +110,11 @@ Default: `swiss`
 - keyboard:
   - `Cmd/Ctrl+Z` undo
   - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` redo
+
+### UI + Preview Controls (icon toggles)
+
+- `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars and popup editor
+- `Fullscreen` (maximize/minimize icon): toggles fullscreen mode for the preview side
 
 ### Display Options (icon toggles)
 
@@ -124,7 +131,25 @@ Default: `swiss`
 - `Example layouts` (layout-template icon): opens example preset thumbnails panel
 - Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
 
-All header icons use styled rollover help tooltips.
+All header icons use styled rollover help tooltips with a second line showing the keyboard shortcut.
+
+### Header Keyboard Shortcuts
+
+- `Cmd/Ctrl+O`: Load JSON
+- `Cmd/Ctrl+S`: Save JSON
+- `Cmd/Ctrl+Shift+E`: Export PDF
+- `Cmd/Ctrl+Z`: Undo
+- `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
+- `Cmd/Ctrl+Shift+D`: Toggle dark mode
+- `Cmd/Ctrl+Shift+F`: Toggle fullscreen preview
+- `Cmd/Ctrl+Shift+B`: Toggle baselines
+- `Cmd/Ctrl+Shift+M`: Toggle margins
+- `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
+- `Cmd/Ctrl+Shift+T`: Toggle typography
+- `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
+- `Cmd/Ctrl+Shift+2`: Toggle help sidebar
+- `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
+- `Cmd/Ctrl+Shift+4`: Toggle example layouts
 
 ## Popups
 
@@ -187,6 +212,7 @@ Editor controls:
 - align left/right
 - Save
 - Delete paragraph (custom blocks)
+- live `Characters` + `Words` counts in footer
 
 Font behavior:
 - If a paragraph font is set to the current `Base Font`, it is stored as inherited (no explicit override entry).
@@ -198,6 +224,10 @@ Syllable division behavior:
 - Default is `true` for `body` and `caption`.
 - Default is `false` for other blocks unless explicitly enabled.
 - Applied in both canvas preview and PDF export wrapping.
+
+Drag behavior:
+- Default drag moves a paragraph.
+- `Shift` + drag duplicates a paragraph and drops the copy at the snapped position.
 
 ## Grid Change Reflow Logic
 

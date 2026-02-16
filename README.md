@@ -34,23 +34,28 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth
 - Interactive preview:
   - drag-and-snap text blocks
+  - `Shift` + drag duplicates a text block
   - double-click popup editor
   - hover info tooltips
   - per-paragraph font selection
+  - live character + word count in editor footer
   - per-block `cols` and `rows`
   - per-block reflow toggle (newspaper-style column flow)
   - per-block syllable-division toggle (`Hy`)
   - optical margin alignment (hanging punctuation)
 - Typography controls:
   - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
-  - `Base Font` selector in `V. Typo`
+  - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`
   - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
-  - Load JSON, Save JSON, Export PDF
+  - Dark mode toggle
+  - Presets/Examples, Load JSON, Save JSON, Export PDF
   - Undo/Redo
+  - Fullscreen preview toggle
   - Display toggles (baselines, margins, gutter/modules, typo)
   - Sidebar selectors: Settings, Help, Imprint, Example layouts
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
+  - Tooltips show action + keyboard shortcut (two lines)
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
   - row and baseline-structure changes remap blocks to nearest module-top anchors
@@ -127,11 +132,24 @@ Highlights:
 - EDITORIAL_4_5 (4:5)
 - WIDE_2_1 (2:1)
 
-## Undo / Redo
+## Keyboard Shortcuts
 
-Undo/redo is available via header icons and keyboard shortcuts:
-- `Cmd/Ctrl+Z`
-- `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`
+All preview-header actions are keyboard accessible:
+- `Cmd/Ctrl+O` Load JSON
+- `Cmd/Ctrl+S` Save JSON
+- `Cmd/Ctrl+Shift+E` Export PDF
+- `Cmd/Ctrl+Z` Undo
+- `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` Redo
+- `Cmd/Ctrl+Shift+D` Toggle dark mode
+- `Cmd/Ctrl+Shift+F` Toggle fullscreen preview
+- `Cmd/Ctrl+Shift+B` Toggle baselines
+- `Cmd/Ctrl+Shift+M` Toggle margins
+- `Cmd/Ctrl+Shift+G` Toggle modules/gutter
+- `Cmd/Ctrl+Shift+T` Toggle typography
+- `Cmd/Ctrl+Shift+1` Toggle settings sidebar
+- `Cmd/Ctrl+Shift+2` Toggle help sidebar
+- `Cmd/Ctrl+Shift+3` Toggle imprint sidebar
+- `Cmd/Ctrl+Shift+4` Toggle example layouts
 
 Includes:
 - settings changes (ratio, grid, margins, toggles, etc.)
@@ -165,12 +183,16 @@ webapp/
 │   │   ├── BaselineGridPanel.tsx
 │   │   ├── MarginsPanel.tsx
 │   │   ├── GutterPanel.tsx
-│   │   └── TypographyPanel.tsx
+│   │   ├── TypographyPanel.tsx
+│   │   └── PanelCard.tsx
 │   ├── sidebar/
 │   │   ├── HelpPanel.tsx
 │   │   ├── ImprintPanel.tsx
 │   │   └── ExampleLayoutsPanel.tsx
 │   └── ui/
+│       ├── font-select.tsx
+│       ├── header-icon-button.tsx
+│       └── hover-tooltip.tsx
 ├── hooks/
 │   ├── useSettingsHistory.ts
 │   └── useExportActions.ts
@@ -178,6 +200,7 @@ webapp/
 │   ├── autofit-planner.ts
 │   ├── grid-calculator.ts
 │   ├── reflow-planner.ts
+│   ├── preview-header-shortcuts.ts
 │   ├── pdf-vector-export.ts
 │   ├── units.ts
 │   └── utils.ts
@@ -203,6 +226,13 @@ webapp/
 ## Changelog (Recent Behavior Updates)
 
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
+- Added dark mode for control panels/headers/sidebars and editor popup (preview paper remains independent).
+- Added fullscreen preview toggle.
+- Added shift-drag duplication for preview paragraphs.
+- Added grouped font selectors (`Sans-Serif`, `Serif`, `Poster`) via shared component.
+- Added live character and word counts to the text editor footer.
+- Added complete keyboard coverage for preview-header actions and surfaced shortcut hints in icon tooltips.
+- Refactored UI primitives: shared `HeaderIconButton`, `HoverTooltip`, `PanelCard`, and centralized `preview-header-shortcuts`.
 - Added optical margin alignment (hanging punctuation) in preview and PDF export.
 - Reflow mode now supports newspaper-style multi-column flow constrained by selected row span.
 - Added base-font control in `V. Typo` with per-paragraph font override inheritance.
