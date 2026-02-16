@@ -445,6 +445,8 @@ Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
 
 Shift-duplicate behavior (`Shift` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
 
+Ctrl-drag behavior preserves column snapping while switching vertical snapping to nearest baseline row at the drop point.
+
 ### Per-Paragraph Span
 
 Each paragraph has:

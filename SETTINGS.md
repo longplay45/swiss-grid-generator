@@ -236,6 +236,7 @@ Syllable division behavior:
 
 Drag behavior:
 - Default drag moves a paragraph.
+- `Ctrl` + drag snaps to nearest baseline row at drop point.
 - `Shift` + drag duplicates a paragraph and drops the copy at the snapped position.
 
 ## Grid Change Reflow Logic

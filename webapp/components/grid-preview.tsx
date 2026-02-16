@@ -927,6 +927,13 @@ export function GridPreview({
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
+  const snapToBaseline = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
+    const metrics = getGridMetrics()
+    const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
+    const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
+    return clampModulePosition({ col: rawCol, row: rawRow }, key)
+  }, [clampModulePosition, getGridMetrics])
+
   const getAutoFitForPlacement = useCallback(({
     key,
     text,
@@ -2614,7 +2621,10 @@ export function GridPreview({
     const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!point) return
 
-    const snap = snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+    const useBaselineSnap = event.pointerType !== "touch" && event.ctrlKey
+    const snap = useBaselineSnap
+      ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+      : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
     const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
     const copyOnDrop = event.pointerType !== "touch" && event.shiftKey
     pendingDragPreviewRef.current = { preview: snap, moved, copyOnDrop }
@@ -2635,7 +2645,7 @@ export function GridPreview({
           : prev
       ))
     })
-  }, [TOUCH_CANCEL_DISTANCE_PX, clearPendingTouchLongPress, dragState, snapToModule, toPagePoint])
+  }, [TOUCH_CANCEL_DISTANCE_PX, clearPendingTouchLongPress, dragState, snapToBaseline, snapToModule, toPagePoint])
 
   const handleCanvasPointerUp = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
     const pendingTouchDrag = touchPendingDragRef.current
@@ -2914,7 +2924,7 @@ export function GridPreview({
               Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
             </div>
             <div className="mt-1 text-[11px] text-gray-500">
-              Double-click to edit • Shift-drag to duplicate • Touch: long-press then drag
+              Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap • Touch: long-press then drag
             </div>
           </div>
         ) : null}

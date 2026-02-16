@@ -3,25 +3,32 @@
 deploy.py
 
 Does:
-1) Connect via SFTP to artificial-interactions.com
+1) Connect via SFTP to configured FTP host
 2) Delete all files/subdirs inside:
-   /home/i/www/dev.lp45.net/www/swiss-grid-generator
+   configured remote directory
 3) Upload all files from:
-   /Users/i/Docs/Dev/swiss-grid-generator/webapp/out/
+   configured local directory
    to the remote directory above
 
-Usage examples:
-  # password auth (will prompt)
-  python3 deploy.py --user i
+Environment defaults (recommended via `source .env`):
+  FTP_DOMAIN
+  FTP_USER
+  FTP_PASS
+  FTP_REMOTE_ROOT
+  FTP_LOCAL_ROOT
 
-  # key auth
+Usage examples:
+  # use .env values
+  source .env && python3 deploy.py
+
+  # override user and use key auth
   python3 deploy.py --user i --key ~/.ssh/id_ed25519
 
-  # specify port
-  python3 deploy.py --user i --port 22
+  # specify host/port explicitly
+  python3 deploy.py --host lp45.net --port 22 --user i
 
   # dry run (no changes)
-  python3 deploy.py --user i --dry-run
+  python3 deploy.py --dry-run
 """
 
 from __future__ import annotations
@@ -31,9 +38,10 @@ import fnmatch
 import getpass
 import os
 import posixpath
+import re
 import stat
+import subprocess
 import sys
-import time
 from typing import Iterable, List, Optional, Tuple
 
 try:
@@ -42,9 +50,39 @@ except ImportError:
     print("Missing dependency: paramiko\nInstall with: python3 -m pip install paramiko", file=sys.stderr)
     sys.exit(1)
 
-HOST = "artificial-interactions.com"
-REMOTE_ROOT = "/home/i/www/dev.lp45.net/www/swiss-grid-generator"
-LOCAL_ROOT = "/Users/i/Docs/Dev/swiss-grid-generator/webapp/out"
+
+def load_env_file(path: str = ".env") -> None:
+    """
+    Load simple KEY=VALUE or `export KEY=VALUE` pairs into os.environ.
+    Existing environment variables are not overridden.
+    """
+    if not os.path.isfile(path):
+        return
+    line_pattern = re.compile(r"^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$")
+    with open(path, "r", encoding="utf-8") as handle:
+        for raw_line in handle:
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            match = line_pattern.match(line)
+            if not match:
+                continue
+            key, raw_value = match.groups()
+            value = raw_value.strip()
+            if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                value = value[1:-1]
+            if key not in os.environ:
+                os.environ[key] = value
+
+
+load_env_file()
+
+HOST = os.getenv("FTP_DOMAIN", "lp45.net")
+REMOTE_ROOT = os.getenv("FTP_REMOTE_ROOT", "/preview.swissgridgenerator.com/httpdocs")
+LOCAL_ROOT = os.getenv("FTP_LOCAL_ROOT", "/Users/i/Docs/Dev/swiss-grid-generator/webapp/out")
+WEBAPP_DIR = os.getenv("FTP_WEBAPP_DIR", "/Users/i/Docs/Dev/swiss-grid-generator/webapp")
+DEFAULT_USER = os.getenv("FTP_USER")
+DEFAULT_PASSWORD = os.getenv("FTP_PASS")
 
 # Common deploy excludes; edit as needed.
 EXCLUDE_GLOBS = [
@@ -270,23 +308,47 @@ def upload_tree(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--user", required=True, help="SSH username (e.g. i)")
+    p.add_argument("--host", default=HOST, help=f"SSH host (default: env FTP_DOMAIN or {HOST})")
+    p.add_argument("--user", default=DEFAULT_USER, help="SSH username (default: env FTP_USER)")
     p.add_argument("--port", type=int, default=22)
-    p.add_argument("--password", default=None, help="SSH password (optional; will prompt if needed)")
+    p.add_argument("--password", default=DEFAULT_PASSWORD, help="SSH password (default: env FTP_PASS; prompts if needed)")
     p.add_argument("--key", default=None, help="Path to SSH private key (optional)")
     p.add_argument("--key-passphrase", default=None, help="Passphrase for SSH key (optional; will prompt if needed)")
     p.add_argument("--dry-run", action="store_true", help="Print actions without changing remote")
     p.add_argument("--local", default=LOCAL_ROOT, help=f"Local source dir (default: {LOCAL_ROOT})")
     p.add_argument("--remote", default=REMOTE_ROOT, help=f"Remote target dir (default: {REMOTE_ROOT})")
     p.add_argument("--exclude", action="append", default=[], help="Additional exclude glob(s)")
+    p.add_argument("--skip-build", action="store_true", help="Skip npm build in webapp before deploy")
     return p.parse_args()
+
+
+def build_webapp(webapp_dir: str) -> None:
+    print(f"Building web app in: {webapp_dir}")
+    subprocess.run(["npm", "run", "build"], cwd=webapp_dir, check=True)
 
 
 def main() -> int:
     args = parse_args()
+    if not args.user:
+        entered_user = input(f"SSH username for {args.host}: ").strip()
+        if not entered_user:
+            print("Missing SSH username. Set FTP_USER, pass --user, or enter it at prompt.", file=sys.stderr)
+            return 2
+        args.user = entered_user
 
+    webapp_dir = os.path.expanduser(WEBAPP_DIR)
     local_root = os.path.expanduser(args.local)
     remote_root = args.remote
+
+    if not args.skip_build:
+        if not os.path.isdir(webapp_dir):
+            print(f"Webapp path is not a directory: {webapp_dir}", file=sys.stderr)
+            return 2
+        try:
+            build_webapp(webapp_dir)
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Build failed: {e}", file=sys.stderr)
+            return 1
 
     if not os.path.isdir(local_root):
         print(f"Local path is not a directory: {local_root}", file=sys.stderr)
@@ -304,13 +366,13 @@ def main() -> int:
         pass
 
     if not args.key and password is None:
-        password = getpass.getpass(f"Password for {args.user}@{HOST}: ")
+        password = getpass.getpass(f"Password for {args.user}@{args.host}: ")
 
     # Connect
     try:
         try:
             ssh, sftp = connect_sftp(
-                host=HOST,
+                host=args.host,
                 port=args.port,
                 username=args.user,
                 password=password,
@@ -322,7 +384,7 @@ def main() -> int:
             if args.key and ("password" in str(e).lower() or "private key file is encrypted" in str(e).lower()):
                 key_passphrase = getpass.getpass(f"Passphrase for key {args.key}: ")
                 ssh, sftp = connect_sftp(
-                    host=HOST,
+                    host=args.host,
                     port=args.port,
                     username=args.user,
                     password=None,
@@ -332,7 +394,7 @@ def main() -> int:
             else:
                 raise
 
-        print(f"Connected to {HOST} as {args.user}")
+        print(f"Connected to {args.host} as {args.user}")
 
         # Safety: show what will be wiped
         print(f"{'[dry-run] ' if args.dry_run else ''}Wiping remote contents: {remote_root}")
