@@ -167,7 +167,7 @@ test("typography styles stay baseline-aligned across all scales", () => {
   }
 })
 
-test("small page/high row count keeps baselineUnitsPerCell minimum at 2", () => {
+test("small page/high row count keeps module height minimum at 2 baselines", () => {
   const result = generateSwissGrid({
     format: "A6",
     orientation: "portrait",
@@ -177,7 +177,36 @@ test("small page/high row count keeps baselineUnitsPerCell minimum at 2", () => 
     baseline: 6,
   })
 
-  assert.equal(result.grid.baselineUnitsPerCell, 2)
+  assert.ok(result.module.height >= result.grid.gridUnit * 2)
+  assert.ok(result.grid.baselineUnitsPerCell >= 2)
+})
+
+test("adding one top-baseline custom margin does not collapse module height", () => {
+  const base = {
+    format: "A4",
+    orientation: "portrait",
+    marginMethod: 1,
+    gridCols: 3,
+    gridRows: 6,
+    baseline: 12,
+    baselineMultiple: 1,
+    gutterMultiple: 1,
+  }
+
+  const defaultMargins = generateSwissGrid({
+    ...base,
+    customMargins: { top: 12, left: 24, right: 24, bottom: 36 },
+  })
+  const topPlusOne = generateSwissGrid({
+    ...base,
+    customMargins: { top: 24, left: 24, right: 24, bottom: 36 },
+  })
+
+  assert.equal(defaultMargins.module.height, topPlusOne.module.height)
+  assert.ok(
+    topPlusOne.contentArea.height <=
+      topPlusOne.pageSizePt.height - topPlusOne.grid.margins.top - topPlusOne.grid.margins.bottom,
+  )
 })
 
 test("fuzz: valid settings maintain finite and coherent geometry", () => {

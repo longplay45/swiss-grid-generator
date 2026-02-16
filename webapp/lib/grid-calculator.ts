@@ -546,20 +546,22 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     throw new Error("Invalid vertical margins: content height must be > 0");
   }
 
-  // Height: Calculate baseline units per cell for alignment
-  const totalVerticalUnits = Math.round(netH / gridUnit);
-  let unitsPerCell = totalVerticalUnits / gridRows;
-  let baselineUnitsPerCell = Math.floor(unitsPerCell);
+  // Height: fit rows without reserving a trailing gutter below the last module.
+  // Available module height is net height minus inter-row gutters only.
+  const totalGutterHeight = Math.max(gridRows - 1, 0) * gridMarginVertical;
+  const moduleHeightBudget = netH - totalGutterHeight;
+  let moduleBaselineUnits = Math.floor(moduleHeightBudget / (gridRows * gridUnit));
 
-  if (baselineUnitsPerCell < 2) {
-    baselineUnitsPerCell = 2;
+  if (moduleBaselineUnits < 2) {
+    moduleBaselineUnits = 2;
   }
 
-  const cellHeight = baselineUnitsPerCell * gridUnit;
-  const modH = cellHeight - gridMarginVertical;
+  const modH = moduleBaselineUnits * gridUnit;
   if (modH <= 0) {
     throw new Error("Invalid grid settings: module height must be > 0");
   }
+
+  const baselineUnitsPerCell = Math.round((modH + gridMarginVertical) / gridUnit * 1000) / 1000;
 
   // Recalculate actual net_h to match aligned modules
   const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;
