@@ -23,7 +23,7 @@ import {
   type ReflowPlan as PlannerReflowPlan,
   type ReflowPlannerInput,
 } from "@/lib/reflow-planner"
-import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
+import { AlignLeft, AlignRight, Columns3, ListOrdered, Rows3, Trash2, Type } from "lucide-react"
 import { ReactNode, useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type BlockId = string
@@ -2846,89 +2846,102 @@ export function GridPreview({
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className={`space-y-2 border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-              <div className="flex items-center gap-2">
-                <EditorControlTooltip label="Font family">
-                  <FontSelect
-                    value={editorState.draftFont}
-                    onValueChange={(value) => {
-                      setEditorState((prev) => prev ? {
-                        ...prev,
-                        draftFont: value as FontFamily,
-                      } : prev)
-                    }}
-                    options={FONT_OPTIONS}
-                    triggerClassName="h-8 w-40 text-xs"
-                  />
+              <div className="grid grid-cols-3 items-center gap-2">
+                <EditorControlTooltip label="Font hierarchy" className="min-w-0 w-full">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <ListOrdered className="h-4 w-4 shrink-0 text-gray-500" />
+                    <Select
+                      value={editorState.draftStyle}
+                      onValueChange={(value) => {
+                        const nextStyle = value as TypographyStyleKey
+                        setEditorState((prev) => prev ? {
+                          ...prev,
+                          draftStyle: nextStyle,
+                          draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
+                        } : prev)
+                      }}
+                    >
+                      <SelectTrigger className="h-8 min-w-0 w-full text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STYLE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label} ({formatPtSize(result.typography.styles[option.value].size)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </EditorControlTooltip>
-                <EditorControlTooltip label="Typography style" className="min-w-0 flex-1">
-                  <Select
-                    value={editorState.draftStyle}
-                    onValueChange={(value) => {
-                      const nextStyle = value as TypographyStyleKey
-                      setEditorState((prev) => prev ? {
-                        ...prev,
-                        draftStyle: nextStyle,
-                        draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
-                      } : prev)
-                    }}
-                  >
-                    <SelectTrigger className="h-8 min-w-0 w-full text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STYLE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label} ({formatPtSize(result.typography.styles[option.value].size)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <EditorControlTooltip label="Font family" className="col-span-2 min-w-0 w-full">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <Type className="h-4 w-4 shrink-0 text-gray-500" />
+                    <FontSelect
+                      value={editorState.draftFont}
+                      onValueChange={(value) => {
+                        setEditorState((prev) => prev ? {
+                          ...prev,
+                          draftFont: value as FontFamily,
+                        } : prev)
+                      }}
+                      options={FONT_OPTIONS}
+                      fitToLongestOption
+                      triggerClassName="h-8 w-full text-xs"
+                    />
+                  </div>
                 </EditorControlTooltip>
               </div>
               <div className="flex items-center gap-2">
                 <EditorControlTooltip label="Paragraph row span">
-                  <Select
-                    value={String(editorState.draftRows)}
-                    onValueChange={(value) => {
-                      setEditorState((prev) => prev ? {
-                        ...prev,
-                        draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
-                      } : prev)
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-28 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
-                        <SelectItem key={count} value={String(count)}>
-                          {count} {count === 1 ? "row" : "rows"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Rows3 className="h-4 w-4 shrink-0 text-gray-500" />
+                    <Select
+                      value={String(editorState.draftRows)}
+                      onValueChange={(value) => {
+                        setEditorState((prev) => prev ? {
+                          ...prev,
+                          draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
+                        } : prev)
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-28 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
+                          <SelectItem key={count} value={String(count)}>
+                            {count} {count === 1 ? "row" : "rows"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </EditorControlTooltip>
                 <EditorControlTooltip label="Paragraph column span">
-                  <Select
-                    value={String(editorState.draftColumns)}
-                    onValueChange={(value) => {
-                      setEditorState((prev) => prev ? {
-                        ...prev,
-                        draftColumns: Math.max(1, Math.min(result.settings.gridCols, Number(value))),
-                      } : prev)
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-28 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: result.settings.gridCols }, (_, index) => index + 1).map((count) => (
-                        <SelectItem key={count} value={String(count)}>
-                          {count} {count === 1 ? "col" : "cols"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Columns3 className="h-4 w-4 shrink-0 text-gray-500" />
+                    <Select
+                      value={String(editorState.draftColumns)}
+                      onValueChange={(value) => {
+                        setEditorState((prev) => prev ? {
+                          ...prev,
+                          draftColumns: Math.max(1, Math.min(result.settings.gridCols, Number(value))),
+                        } : prev)
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-28 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: result.settings.gridCols }, (_, index) => index + 1).map((count) => (
+                          <SelectItem key={count} value={String(count)}>
+                            {count} {count === 1 ? "col" : "cols"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </EditorControlTooltip>
               </div>
               <div className="flex items-center justify-between gap-2">

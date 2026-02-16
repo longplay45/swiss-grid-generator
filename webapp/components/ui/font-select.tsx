@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { CSSProperties } from "react"
 
 export type FontOption = {
   value: string
@@ -20,6 +21,7 @@ type Props = {
   onValueChange: (value: string) => void
   options: FontOption[]
   triggerClassName?: string
+  fitToLongestOption?: boolean
 }
 
 const FONT_GROUPS = [
@@ -33,10 +35,15 @@ export function FontSelect({
   onValueChange,
   options,
   triggerClassName,
+  fitToLongestOption = false,
 }: Props) {
+  const triggerStyle: CSSProperties | undefined = fitToLongestOption
+    ? { minWidth: `${Math.max(10, options.reduce((max, option) => Math.max(max, option.label.length), 0) + 4)}ch` }
+    : undefined
+
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={triggerClassName}>
+      <SelectTrigger className={triggerClassName} style={triggerStyle}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
