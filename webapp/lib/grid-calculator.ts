@@ -466,6 +466,33 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
   }
+  if (orientation !== "portrait" && orientation !== "landscape") {
+    throw new Error(`Unsupported orientation: ${String(orientation)}`);
+  }
+  if (![1, 2, 3].includes(marginMethod)) {
+    throw new Error(`Unsupported margin method: ${String(marginMethod)}`);
+  }
+  if (!Number.isInteger(gridCols) || gridCols < 1) {
+    throw new Error(`gridCols must be an integer >= 1 (received ${String(gridCols)})`);
+  }
+  if (!Number.isInteger(gridRows) || gridRows < 1) {
+    throw new Error(`gridRows must be an integer >= 1 (received ${String(gridRows)})`);
+  }
+  if (customBaseline !== undefined && (!Number.isFinite(customBaseline) || customBaseline <= 0)) {
+    throw new Error(`baseline must be a finite number > 0 (received ${String(customBaseline)})`);
+  }
+  if (!Number.isFinite(baselineMultiple) || baselineMultiple <= 0) {
+    throw new Error(`baselineMultiple must be a finite number > 0 (received ${String(baselineMultiple)})`);
+  }
+  if (!Number.isFinite(gutterMultiple) || gutterMultiple <= 0) {
+    throw new Error(`gutterMultiple must be a finite number > 0 (received ${String(gutterMultiple)})`);
+  }
+  if (settings.customMargins) {
+    const { top, bottom, left, right } = settings.customMargins;
+    if (![top, bottom, left, right].every((value) => Number.isFinite(value) && value >= 0)) {
+      throw new Error("customMargins values must be finite numbers >= 0");
+    }
+  }
 
   const formatDim = FORMATS_PT[format];
   let w = formatDim.width;
@@ -506,9 +533,18 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   const gutter = gridMarginHorizontal;
 
   const netW = w - (marginLeft + marginRight);
+  if (netW <= 0) {
+    throw new Error("Invalid horizontal margins: content width must be > 0");
+  }
   const modW = (netW - (gridCols - 1) * gridMarginHorizontal) / gridCols;
+  if (modW <= 0) {
+    throw new Error("Invalid grid settings: module width must be > 0");
+  }
 
   let netH = h - (marginTop + marginBottom);
+  if (netH <= 0) {
+    throw new Error("Invalid vertical margins: content height must be > 0");
+  }
 
   // Height: Calculate baseline units per cell for alignment
   const totalVerticalUnits = Math.round(netH / gridUnit);
@@ -521,6 +557,9 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
 
   const cellHeight = baselineUnitsPerCell * gridUnit;
   const modH = cellHeight - gridMarginVertical;
+  if (modH <= 0) {
+    throw new Error("Invalid grid settings: module height must be > 0");
+  }
 
   // Recalculate actual net_h to match aligned modules
   const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;

@@ -2,12 +2,15 @@
   "name": "webapp",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:roundtrip": "node --test tests/font-roundtrip.test.mjs"
+    "test:roundtrip": "node --test tests/font-roundtrip.test.mjs",
+    "test:grid": "node --test tests/grid-calculator.test.mjs",
+    "test": "npm run test:roundtrip && npm run test:grid"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.1",
