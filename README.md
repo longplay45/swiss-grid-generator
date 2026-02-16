@@ -195,6 +195,10 @@ webapp/
 | `npm start` | Start production server |
 | `npm run lint` | Next lint command |
 | `npm run test:roundtrip` | Verify font-related JSON save/load roundtrip rules |
+| `npm run test:grid` | Validate grid calculator invariants, edge cases, and input guard rails |
+| `npm run test:reflow` | Validate reflow planner determinism + worker request/response contract rules |
+| `npm run test:perf` | Performance smoke tests for `generateSwissGrid` and `computeReflowPlan` |
+| `npm test` | Run all test suites (`roundtrip`, `grid`, `reflow`, `perf`) |
 
 ## Changelog (Recent Behavior Updates)
 
@@ -208,6 +212,8 @@ webapp/
 - Grid structural changes now use deterministic scored auto-repositioning.
 - Pure column increases keep existing layout positions (capacity is added to the right).
 - Row-structure changes remap rows by module index before repositioning.
+- Added runtime guard rails in `generateSwissGrid()` for invalid settings (invalid grid dimensions, non-positive baseline/multiples, invalid custom margins).
+- Added deterministic planner/worker contract tests and performance smoke tests to prevent UX regressions.
 
 ## Reference
 

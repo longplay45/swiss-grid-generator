@@ -243,6 +243,25 @@ modH = 132 - 12 = 120pt
 aspectRatio = modW / modH
 ```
 
+### Runtime Guardrails
+
+`generateSwissGrid()` now validates critical inputs before running layout math to prevent `NaN`/`Infinity` results and unstable preview behavior.
+
+Validated constraints:
+- `orientation` must be `portrait` or `landscape`
+- `marginMethod` must be `1`, `2`, or `3`
+- `gridCols` and `gridRows` must be integers `>= 1`
+- `baseline` (if provided), `baselineMultiple`, and `gutterMultiple` must be finite and `> 0`
+- `customMargins` values must be finite and `>= 0`
+
+Computed-dimension checks:
+- `netW > 0`
+- `netH > 0`
+- `modW > 0`
+- `modH > 0`
+
+If any constraint fails, the calculator throws an explicit error message.
+
 ---
 
 ## Typography

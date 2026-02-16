@@ -10,7 +10,9 @@
     "lint": "next lint",
     "test:roundtrip": "node --test tests/font-roundtrip.test.mjs",
     "test:grid": "node --test tests/grid-calculator.test.mjs",
-    "test": "npm run test:roundtrip && npm run test:grid"
+    "test:reflow": "node --test tests/reflow-worker-contract.test.mjs",
+    "test:perf": "node --test tests/perf-smoke.test.mjs",
+    "test": "npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:perf"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.1",
