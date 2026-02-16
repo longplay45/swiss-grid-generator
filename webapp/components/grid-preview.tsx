@@ -19,6 +19,21 @@ type BlockRect = {
   height: number
 }
 
+type TextDrawCommand = {
+  text: string
+  x: number
+  y: number
+}
+
+type BlockRenderPlan = {
+  key: BlockId
+  rect: BlockRect
+  signature: string
+  font: string
+  textAlign: TextAlignMode
+  commands: TextDrawCommand[]
+}
+
 type ModulePosition = {
   col: number
   row: number
@@ -71,6 +86,15 @@ type HoverState = {
   key: BlockId
   canvasX: number
   canvasY: number
+}
+
+function rectsIntersect(a: BlockRect, b: BlockRect): boolean {
+  return !(
+    a.x + a.width < b.x
+    || b.x + b.width < a.x
+    || a.y + a.height < b.y
+    || b.y + b.height < a.y
+  )
 }
 
 const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
@@ -369,6 +393,7 @@ export function GridPreview({
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const dragEndedAtRef = useRef<number>(0)
@@ -379,6 +404,9 @@ export function GridPreview({
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
+  const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
+  const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
+  const typographyBufferTransformRef = useRef("")
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
 
@@ -1214,11 +1242,6 @@ export function GridPreview({
       blockRectsRef.current = {}
       if (!showTypography) return
 
-      ctx.save()
-      ctx.translate(canvas.width / 2, canvas.height / 2)
-      ctx.rotate((rotation * Math.PI) / 180)
-      ctx.translate(-pageWidth / 2, -pageHeight / 2)
-
       const { styles } = result.typography
       const contentTop = margins.top * scale
       const contentLeft = margins.left * scale
@@ -1228,25 +1251,8 @@ export function GridPreview({
       const baselineOriginTop = contentTop - baselineStep
       const gutterX = gridMarginHorizontal * scale
 
-      ctx.fillStyle = "#1f2937"
-
-      if (dragState) {
-        const dragSpan = getBlockSpan(dragState.key)
-        const snapX = contentLeft + dragState.preview.col * moduleXStep
-        const snapY = baselineOriginTop + dragState.preview.row * baselineStep
-        const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gutterX
-        ctx.save()
-        ctx.strokeStyle = "#f97316"
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        ctx.moveTo(snapX, snapY + baselineStep)
-        ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
-        ctx.stroke()
-        ctx.restore()
-        ctx.fillStyle = "#1f2937"
-      }
-
       const getMinOffset = (): number => 1
+      const draftPlans = new Map<BlockId, BlockRenderPlan>()
 
       const textBlocks = blockOrder
         .filter((key) => key !== "caption")
@@ -1310,6 +1316,7 @@ export function GridPreview({
 
         const blockFont = getBlockFont(block.key)
         ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px ${getFontFamilyCss(blockFont)}`
+        const planFont = ctx.font
 
         const span = getBlockSpan(block.key)
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
@@ -1326,8 +1333,6 @@ export function GridPreview({
         const autoBlockY = contentTop + (blockStartOffset - 1) * baselinePx
         const origin = getOriginForBlock(block.key, autoBlockX, autoBlockY)
         const textAlign = blockTextAlignments[block.key] ?? "left"
-        ctx.textAlign = textAlign
-        ctx.textBaseline = "alphabetic"
         const textAscentPx = getTextAscentPx(ctx, fontSize)
         const hitTopPadding = Math.max(baselinePx, textAscentPx)
         const lineStep = baselineMult * baselinePx
@@ -1344,6 +1349,7 @@ export function GridPreview({
             ? moduleHeightPx + hitTopPadding
             : (Math.max(textLines.length, 1) * baselineMult + 1) * baselinePx + hitTopPadding,
         }
+        const commands: TextDrawCommand[] = []
 
         if (!columnReflow) {
           const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
@@ -1353,7 +1359,7 @@ export function GridPreview({
             if (lineTopY < pageBottomY) {
               maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
               const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
-              ctx.fillText(line, textAnchorX + opticalOffsetX, y)
+              commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
             }
           })
         } else {
@@ -1370,13 +1376,34 @@ export function GridPreview({
             if (lineTopY >= pageBottomY) continue
             maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
             const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
-            ctx.fillText(line, textAnchorX + opticalOffsetX, y)
+            commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
           }
         }
 
         if (maxUsedRows > 0 && !columnReflow) {
           nextRects[block.key].height = (maxUsedRows * baselineMult + 1) * baselinePx + hitTopPadding
         }
+
+        draftPlans.set(block.key, {
+          key: block.key,
+          rect: nextRects[block.key],
+          signature: [
+            styleKey,
+            blockFont,
+            textAlign,
+            span,
+            rowSpan,
+            columnReflow ? 1 : 0,
+            origin.x.toFixed(3),
+            origin.y.toFixed(3),
+            nextRects[block.key].width.toFixed(3),
+            nextRects[block.key].height.toFixed(3),
+            commands.map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`).join("||"),
+          ].join("|"),
+          font: planFont,
+          textAlign,
+          commands,
+        })
 
         if (!useParagraphRows) {
           const usedLineRows = maxUsedRows || textLines.length
@@ -1401,8 +1428,8 @@ export function GridPreview({
         const captionFont = getBlockFont("caption")
 
         ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px ${getFontFamilyCss(captionFont)}`
+        const captionPlanFont = ctx.font
         const captionAlign = blockTextAlignments.caption ?? "left"
-        ctx.textBaseline = "alphabetic"
 
         const captionSpan = getBlockSpan("caption")
         const captionRowSpan = getBlockRows("caption")
@@ -1431,6 +1458,7 @@ export function GridPreview({
         const captionModuleHeightPx = captionRowSpan * modH * scale + Math.max(captionRowSpan - 1, 0) * gridMarginVertical * scale
         const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeightPx / captionLineStep))
         let captionMaxUsedRows = 0
+        const captionCommands: TextDrawCommand[] = []
 
         if (!captionColumnReflow) {
           const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
@@ -1440,7 +1468,7 @@ export function GridPreview({
             if (lineTopY < captionPageBottomY) {
               captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
               const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
-              ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
+              captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
             }
           })
         } else {
@@ -1457,11 +1485,11 @@ export function GridPreview({
             if (lineTopY >= captionPageBottomY) continue
             captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
             const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
-            ctx.fillText(line, captionAnchorX + opticalOffsetX, y)
+            captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
           }
         }
 
-        nextRects.caption = {
+        const captionRect: BlockRect = {
           x: captionOrigin.x,
           y: captionOrigin.y - captionHitTopPadding,
           width: captionWidth,
@@ -1469,10 +1497,139 @@ export function GridPreview({
             ? captionModuleHeightPx + captionHitTopPadding
             : ((captionMaxUsedRows || captionLineCount) * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
         }
+        nextRects.caption = captionRect
+        draftPlans.set("caption", {
+          key: "caption",
+          rect: captionRect,
+          signature: [
+            captionStyleKey,
+            captionFont,
+            captionAlign,
+            captionSpan,
+            captionRowSpan,
+            captionColumnReflow ? 1 : 0,
+            captionOrigin.x.toFixed(3),
+            captionOrigin.y.toFixed(3),
+            captionRect.width.toFixed(3),
+            captionRect.height.toFixed(3),
+            captionCommands
+              .map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`)
+              .join("||"),
+          ].join("|"),
+          font: captionPlanFont,
+          textAlign: captionAlign,
+          commands: captionCommands,
+        })
       }
 
       blockRectsRef.current = nextRects
-      ctx.restore()
+
+      let typographyBuffer = typographyBufferRef.current
+      if (!typographyBuffer) {
+        typographyBuffer = document.createElement("canvas")
+        typographyBufferRef.current = typographyBuffer
+      }
+      const resized = typographyBuffer.width !== canvas.width || typographyBuffer.height !== canvas.height
+      if (resized) {
+        typographyBuffer.width = canvas.width
+        typographyBuffer.height = canvas.height
+        previousPlansRef.current.clear()
+      }
+      const transformSignature = `${rotation}|${pageWidth.toFixed(4)}|${pageHeight.toFixed(4)}`
+      const transformChanged = typographyBufferTransformRef.current !== transformSignature
+      if (transformChanged) {
+        typographyBufferTransformRef.current = transformSignature
+        previousPlansRef.current.clear()
+      }
+      const bufferCtx = typographyBuffer.getContext("2d")
+      if (!bufferCtx) return
+
+      const drawPlans = (plans: BlockRenderPlan[]) => {
+        bufferCtx.fillStyle = "#1f2937"
+        bufferCtx.textBaseline = "alphabetic"
+        for (const plan of plans) {
+          bufferCtx.font = plan.font
+          bufferCtx.textAlign = plan.textAlign
+          for (const command of plan.commands) {
+            bufferCtx.fillText(command.text, command.x, command.y)
+          }
+        }
+      }
+
+      const previousPlans = previousPlansRef.current
+      const fullRedraw = resized || transformChanged || previousPlans.size === 0
+      const allCurrentPlans = [...draftPlans.values()]
+
+      if (fullRedraw) {
+        bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
+        bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
+        bufferCtx.save()
+        bufferCtx.translate(typographyBuffer.width / 2, typographyBuffer.height / 2)
+        bufferCtx.rotate((rotation * Math.PI) / 180)
+        bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
+        drawPlans(allCurrentPlans)
+        bufferCtx.restore()
+      } else {
+        const dirtyKeys = new Set<BlockId>()
+        const mergedKeys = new Set<BlockId>([
+          ...Array.from(previousPlans.keys()),
+          ...Array.from(draftPlans.keys()),
+        ])
+        for (const key of mergedKeys) {
+          const prev = previousPlans.get(key)
+          const next = draftPlans.get(key)
+          if (!prev || !next) {
+            dirtyKeys.add(key)
+            continue
+          }
+          if (
+            prev.signature !== next.signature
+            || prev.rect.x !== next.rect.x
+            || prev.rect.y !== next.rect.y
+            || prev.rect.width !== next.rect.width
+            || prev.rect.height !== next.rect.height
+          ) {
+            dirtyKeys.add(key)
+          }
+        }
+        if (!dirtyKeys.size) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          ctx.drawImage(typographyBuffer, 0, 0)
+          previousPlansRef.current = draftPlans
+          return
+        }
+        const dirtyRegions: BlockRect[] = []
+        for (const key of dirtyKeys) {
+          const prev = previousPlans.get(key)
+          const next = draftPlans.get(key)
+          if (prev) dirtyRegions.push(prev.rect)
+          if (next) dirtyRegions.push(next.rect)
+        }
+        if (dirtyRegions.length > 0) {
+          const redrawPlans = allCurrentPlans.filter((plan) =>
+            dirtyRegions.some((region) => rectsIntersect(plan.rect, region)),
+          )
+          bufferCtx.save()
+          bufferCtx.translate(typographyBuffer.width / 2, typographyBuffer.height / 2)
+          bufferCtx.rotate((rotation * Math.PI) / 180)
+          bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
+          const clearPadding = 2
+          for (const region of dirtyRegions) {
+            bufferCtx.clearRect(
+              region.x - clearPadding,
+              region.y - clearPadding,
+              region.width + clearPadding * 2,
+              region.height + clearPadding * 2,
+            )
+          }
+          drawPlans(redrawPlans)
+          bufferCtx.restore()
+        }
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(typographyBuffer, 0, 0)
+      previousPlansRef.current = draftPlans
     })
 
     return () => window.cancelAnimationFrame(frame)
@@ -1482,7 +1639,6 @@ export function GridPreview({
     blockRowSpans,
     blockTextAlignments,
     clampModulePosition,
-    dragState,
     getBlockFont,
     getBlockRows,
     getBlockSpan,
@@ -1498,6 +1654,45 @@ export function GridPreview({
     styleAssignments,
     textContent,
   ])
+
+  useEffect(() => {
+    const canvas = overlayCanvasRef.current
+    if (!canvas) return
+    const frame = window.requestAnimationFrame(() => {
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      if (!showTypography || !dragState) return
+
+      const { width, height } = result.pageSizePt
+      const { margins, gridUnit, gridMarginHorizontal } = result.grid
+      const { width: modW } = result.module
+      const pageWidth = width * scale
+      const pageHeight = height * scale
+      const moduleXStep = (modW + gridMarginHorizontal) * scale
+      const baselineStep = gridUnit * scale
+      const baselineOriginTop = margins.top * scale - baselineStep
+      const contentLeft = margins.left * scale
+
+      const dragSpan = getBlockSpan(dragState.key)
+      const snapX = contentLeft + dragState.preview.col * moduleXStep
+      const snapY = baselineOriginTop + dragState.preview.row * baselineStep
+      const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
+
+      ctx.save()
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate((rotation * Math.PI) / 180)
+      ctx.translate(-pageWidth / 2, -pageHeight / 2)
+      ctx.strokeStyle = "#f97316"
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.moveTo(snapX, snapY + baselineStep)
+      ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
+      ctx.stroke()
+      ctx.restore()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [dragState, getBlockSpan, result, rotation, scale, showTypography])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -2176,6 +2371,12 @@ export function GridPreview({
           onMouseMove={handleCanvasMouseMove}
           onMouseLeave={() => setHoverState(null)}
           onDoubleClick={handleCanvasDoubleClick}
+        />
+        <canvas
+          ref={overlayCanvasRef}
+          width={result.pageSizePt.width * scale}
+          height={result.pageSizePt.height * scale}
+          className="pointer-events-none absolute inset-0 block"
         />
         {hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
           <div
