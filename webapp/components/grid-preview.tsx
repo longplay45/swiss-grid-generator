@@ -5,6 +5,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GridResult } from "@/lib/grid-calculator"
 import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
+import {
+  computeAutoFitBatch,
+  type AutoFitPlannerInput,
+} from "@/lib/autofit-planner"
+import {
+  computeReflowPlan as computeReflowPlanPure,
+  createReflowPlanSignature,
+  type ReflowPlan as PlannerReflowPlan,
+  type ReflowPlannerInput,
+} from "@/lib/reflow-planner"
 import { AlignLeft, AlignRight, Rows3, Trash2 } from "lucide-react"
 import { ReactNode, useCallback, useEffect, useReducer, useRef, useState } from "react"
 
@@ -32,6 +42,24 @@ type BlockRenderPlan = {
   font: string
   textAlign: TextAlignMode
   commands: TextDrawCommand[]
+}
+
+type ReflowPlan = PlannerReflowPlan
+type PerfMetricName = "drawMs" | "reflowMs" | "autofitMs"
+
+type PerfSnapshot = {
+  timestamp: number
+  sampleCount: number
+  p50: number
+  p95: number
+  avg: number
+}
+
+type PerfState = {
+  drawMs: number[]
+  reflowMs: number[]
+  autofitMs: number[]
+  lastLogAt: number
 }
 
 type ModulePosition = {
@@ -95,6 +123,20 @@ function rectsIntersect(a: BlockRect, b: BlockRect): boolean {
     || a.y + a.height < b.y
     || b.y + b.height < a.y
   )
+}
+
+function computePerfSnapshot(values: number[]): PerfSnapshot | null {
+  if (!values.length) return null
+  const sorted = [...values].sort((a, b) => a - b)
+  const pick = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))]
+  const sum = sorted.reduce((acc, value) => acc + value, 0)
+  return {
+    timestamp: Date.now(),
+    sampleCount: sorted.length,
+    p50: pick(0.5),
+    p95: pick(0.95),
+    avg: sum / sorted.length,
+  }
 }
 
 const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
@@ -213,17 +255,6 @@ const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
   caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
-
-// Reflow planner scoring weights.
-const REPOSITION_COL_COST = 6
-const REPOSITION_ROW_COST = 3
-const REPOSITION_OVERFLOW_ROW_COST = 1000
-const REPOSITION_DESIRED_COL_BIAS = 2
-const REPOSITION_ORDER_VIOLATION_BASE = 250
-const REPOSITION_ORDER_VIOLATION_STEP = 0.5
-const REPOSITION_SEARCH_ROW_BUFFER = 60
-const REPOSITION_NON_MODULE_ROW_PENALTY = 80
-const REPOSITION_OUTSIDE_GRID_ROW_PENALTY = 600
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
@@ -407,8 +438,24 @@ export function GridPreview({
   const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
   const typographyBufferTransformRef = useRef("")
+  const reflowPlanCacheRef = useRef<Map<string, ReflowPlan>>(new Map())
+  const reflowWorkerRef = useRef<Worker | null>(null)
+  const reflowWorkerResolversRef = useRef<Map<number, (plan: ReflowPlan) => void>>(new Map())
+  const reflowWorkerRequestIdRef = useRef(0)
+  const autoFitWorkerRef = useRef<Worker | null>(null)
+  const autoFitWorkerResolversRef = useRef<Map<number, (output: {
+    spanUpdates: Partial<Record<string, number>>
+    positionUpdates: Partial<Record<string, ModulePosition>>
+  }) => void>>(new Map())
+  const autoFitWorkerRequestIdRef = useRef(0)
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
+  const perfStateRef = useRef<PerfState>({
+    drawMs: [],
+    reflowMs: [],
+    autofitMs: [],
+    lastLogAt: 0,
+  })
 
   const [scale, setScale] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
@@ -461,7 +508,11 @@ export function GridPreview({
   const lastRedoNonceRef = useRef(redoNonce)
   const HISTORY_LIMIT = 50
   const TEXT_CACHE_LIMIT = 5000
+  const REFLOW_PLAN_CACHE_LIMIT = 200
   const LAYOUT_CHANGE_DEBOUNCE_MS = 120
+  const PERF_SAMPLE_LIMIT = 160
+  const PERF_LOG_INTERVAL_MS = 10000
+  const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const makeCachedValue = useCallback(
     <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
@@ -531,6 +582,23 @@ export function GridPreview({
       blockModulePositions: resolveUpdater(prev.blockModulePositions, next),
     }))
   }, [setBlockCollections])
+
+  const recordPerfMetric = useCallback((metric: PerfMetricName, valueMs: number) => {
+    if (!PERF_ENABLED || !Number.isFinite(valueMs)) return
+    const state = perfStateRef.current
+    const bucket = state[metric]
+    bucket.push(valueMs)
+    if (bucket.length > PERF_SAMPLE_LIMIT) bucket.shift()
+    const now = Date.now()
+    if (now - state.lastLogAt < PERF_LOG_INTERVAL_MS) return
+    state.lastLogAt = now
+    const draw = computePerfSnapshot(state.drawMs)
+    const reflow = computePerfSnapshot(state.reflowMs)
+    const autofit = computePerfSnapshot(state.autofitMs)
+    const payload = { draw, reflow, autofit }
+    ;(window as unknown as { __sggPerf?: typeof payload }).__sggPerf = payload
+    console.debug("[SGG perf]", payload)
+  }, [PERF_ENABLED, PERF_LOG_INTERVAL_MS, PERF_SAMPLE_LIMIT])
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -876,149 +944,142 @@ export function GridPreview({
     return { span: autoFit.span, position: autoFit.position }
   }, [getAutoFitForPlacement, getBlockRows, getStyleKeyForBlock, isSyllableDivisionEnabled, isTextReflowEnabled, textContent])
 
-  const computeReflowPlan = useCallback((
+  const buildReflowPlannerInput = useCallback((
     gridCols: number,
     gridRows: number,
     sourcePositions: Partial<Record<BlockId, ModulePosition>> = blockModulePositions,
-  ) => {
-    const maxBaselineRow = Math.max(
-      0,
-      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit)
-    )
-    const resolvedSpans = blockOrder.reduce((acc, key) => {
-      const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
-      acc[key] = Math.max(1, Math.min(gridCols, Math.round(raw)))
-      return acc
-    }, {} as Record<BlockId, number>)
+  ): ReflowPlannerInput => ({
+    gridCols,
+    gridRows,
+    blockOrder,
+    blockColumnSpans,
+    sourcePositions,
+    pageHeight: result.pageSizePt.height,
+    marginTop: result.grid.margins.top,
+    marginBottom: result.grid.margins.bottom,
+    gridUnit: result.grid.gridUnit,
+    moduleHeight: result.module.height,
+    gridMarginVertical: result.grid.gridMarginVertical,
+  }), [
+    blockColumnSpans,
+    blockModulePositions,
+    blockOrder,
+    result.grid.gridMarginVertical,
+    result.grid.gridUnit,
+    result.grid.margins.bottom,
+    result.grid.margins.top,
+    result.module.height,
+    result.pageSizePt.height,
+  ])
 
-    const priority = new Map<BaseBlockId, number>([
-      ["display", 0],
-      ["headline", 1],
-      ["subhead", 2],
-      ["body", 3],
-      ["caption", 4],
-    ])
-    const orderIndex = new Map(blockOrder.map((key, index) => [key, index]))
-    const sortedKeys = [...blockOrder].sort((a, b) => {
-      const pa = isBaseBlockId(a) ? (priority.get(a) ?? 100) : 100
-      const pb = isBaseBlockId(b) ? (priority.get(b) ?? 100) : 100
-      if (pa !== pb) return pa - pb
-      return (orderIndex.get(a) ?? 0) - (orderIndex.get(b) ?? 0)
+  const computeReflowPlan = useCallback((input: ReflowPlannerInput): ReflowPlan => {
+    const signature = createReflowPlanSignature(input)
+    const cached = reflowPlanCacheRef.current.get(signature)
+    if (cached) return cached
+    const plan = computeReflowPlanPure(input)
+    reflowPlanCacheRef.current.set(signature, plan)
+    if (reflowPlanCacheRef.current.size > REFLOW_PLAN_CACHE_LIMIT) {
+      const firstKey = reflowPlanCacheRef.current.keys().next().value
+      if (firstKey) reflowPlanCacheRef.current.delete(firstKey)
+    }
+    return plan
+  }, [])
+
+  useEffect(() => {
+    if (typeof Worker === "undefined") return
+    const worker = new Worker(new URL("../workers/reflowPlanner.worker.ts", import.meta.url))
+    reflowWorkerRef.current = worker
+    worker.onmessage = (event: MessageEvent<{ id: number; plan: ReflowPlan }>) => {
+      const { id, plan } = event.data
+      const resolve = reflowWorkerResolversRef.current.get(id)
+      if (!resolve) return
+      reflowWorkerResolversRef.current.delete(id)
+      resolve(plan)
+    }
+    worker.onerror = () => {
+      worker.terminate()
+      reflowWorkerRef.current = null
+      reflowWorkerResolversRef.current.clear()
+    }
+    return () => {
+      worker.terminate()
+      reflowWorkerRef.current = null
+      reflowWorkerResolversRef.current.clear()
+    }
+  }, [])
+
+  const postReflowPlanRequest = useCallback((input: ReflowPlannerInput) => {
+    const worker = reflowWorkerRef.current
+    if (!worker) {
+      return {
+        requestId: -1,
+        promise: Promise.resolve(computeReflowPlan(input)),
+      }
+    }
+    const requestId = reflowWorkerRequestIdRef.current + 1
+    reflowWorkerRequestIdRef.current = requestId
+    const promise = new Promise<ReflowPlan>((resolve) => {
+      reflowWorkerResolversRef.current.set(requestId, resolve)
+      worker.postMessage({ id: requestId, input })
     })
+    return { requestId, promise }
+  }, [computeReflowPlan])
 
-    const occupied = new Set<string>()
-    const canPlace = (row: number, col: number, span: number) => {
-      const rowKey = row.toFixed(4)
-      if (col < 0 || row < 0) return false
-      if (col + span > gridCols) return false
-      for (let c = col; c < col + span; c += 1) {
-        if (occupied.has(`${rowKey}:${c}`)) return false
+  useEffect(() => {
+    if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return
+    const worker = new Worker(new URL("../workers/autoFit.worker.ts", import.meta.url))
+    autoFitWorkerRef.current = worker
+    worker.onmessage = (event: MessageEvent<{
+      id: number
+      output: {
+        spanUpdates: Partial<Record<string, number>>
+        positionUpdates: Partial<Record<string, ModulePosition>>
       }
-      return true
+    }>) => {
+      const { id, output } = event.data
+      const resolve = autoFitWorkerResolversRef.current.get(id)
+      if (!resolve) return
+      autoFitWorkerResolversRef.current.delete(id)
+      resolve(output)
     }
-    const getReadingIndex = (position: ModulePosition) => position.row * (gridCols + 1) + position.col
-    const moduleRowStep = Math.max(0.0001, (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit)
-    const moduleRowStarts = Array.from({ length: Math.max(1, gridRows) }, (_, index) =>
-      Math.max(0, index * moduleRowStep)
-    ).filter((row, index, arr) => arr.indexOf(row) === index)
-    const moduleRowSet = new Set(moduleRowStarts.map((row) => row.toFixed(4)))
-    const maxGridAnchorRow = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
-    const snapToNearestModuleTop = (row: number): number => {
-      const clamped = Math.max(0, row)
-      if (moduleRowStarts.length === 0) return clamped
-      if (clamped <= maxGridAnchorRow) {
-        let best = moduleRowStarts[0]
-        let bestDistance = Math.abs(best - clamped)
-        for (let i = 1; i < moduleRowStarts.length; i += 1) {
-          const candidate = moduleRowStarts[i]
-          const distance = Math.abs(candidate - clamped)
-          if (distance < bestDistance) {
-            best = candidate
-            bestDistance = distance
-          }
-        }
-        return best
-      }
-      const overflowSteps = Math.round((clamped - maxGridAnchorRow) / moduleRowStep)
-      return Math.max(0, maxGridAnchorRow + overflowSteps * moduleRowStep)
+    worker.onerror = () => {
+      worker.terminate()
+      autoFitWorkerRef.current = null
+      autoFitWorkerResolversRef.current.clear()
     }
-
-    const nextPositions: Partial<Record<BlockId, ModulePosition>> = {}
-    let movedCount = 0
-    let previousPlaced: ModulePosition | null = null
-
-    for (const key of sortedKeys) {
-      const span = resolvedSpans[key]
-      const maxCol = Math.max(0, gridCols - span)
-      const current = sourcePositions[key]
-      const desired: ModulePosition = current
-        ? {
-            col: Math.max(0, Math.min(maxCol, Math.round(current.col))),
-            row: snapToNearestModuleTop(current.row),
-          }
-        : { col: 0, row: 0 }
-
-      const searchMaxRow = Math.max(maxBaselineRow + REPOSITION_SEARCH_ROW_BUFFER, desired.row + REPOSITION_SEARCH_ROW_BUFFER)
-      let best: { position: ModulePosition; score: number } | null = null
-      const prioritizedRows = [...moduleRowStarts].sort((a, b) => {
-        const da = Math.abs(a - desired.row)
-        const db = Math.abs(b - desired.row)
-        return da - db
-      })
-      let overflowCursor = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
-      while (overflowCursor <= searchMaxRow) {
-        if (!moduleRowSet.has(overflowCursor.toFixed(4))) {
-          prioritizedRows.push(overflowCursor)
-        }
-        overflowCursor += moduleRowStep
-      }
-
-      for (const row of prioritizedRows) {
-        if (row > searchMaxRow) continue
-        for (let col = 0; col <= maxCol; col += 1) {
-          if (!canPlace(row, col, span)) continue
-          const candidate: ModulePosition = { col, row }
-          const movementScore = Math.abs(candidate.col - desired.col) * REPOSITION_COL_COST + Math.abs(candidate.row - desired.row) * REPOSITION_ROW_COST
-          const overflowRows = Math.max(0, candidate.row - maxBaselineRow)
-          const overflowScore = overflowRows * REPOSITION_OVERFLOW_ROW_COST
-          const outsideGridRows = Math.max(0, candidate.row - maxGridAnchorRow)
-          const outsideGridScore = outsideGridRows * REPOSITION_OUTSIDE_GRID_ROW_PENALTY
-          const moduleRowScore = moduleRowSet.has(candidate.row.toFixed(4)) ? 0 : REPOSITION_NON_MODULE_ROW_PENALTY
-          const desiredColBias = candidate.col === desired.col ? 0 : REPOSITION_DESIRED_COL_BIAS
-          let orderScore = 0
-          if (previousPlaced) {
-            const prevIndex = getReadingIndex(previousPlaced)
-            const candidateIndex = getReadingIndex(candidate)
-            if (candidateIndex < prevIndex) {
-              orderScore = REPOSITION_ORDER_VIOLATION_BASE + (prevIndex - candidateIndex) * REPOSITION_ORDER_VIOLATION_STEP
-            }
-          }
-          const score = movementScore + overflowScore + outsideGridScore + moduleRowScore + desiredColBias + orderScore
-          if (!best || score < best.score || (score === best.score && (candidate.row < best.position.row || (candidate.row === best.position.row && candidate.col < best.position.col)))) {
-            best = { position: candidate, score }
-          }
-        }
-      }
-
-      let placed: ModulePosition
-      if (best) {
-        placed = best.position
-      } else {
-        // Safety fallback: place on the first available stacked row.
-        let stackRow = Math.max(maxBaselineRow + moduleRowStep, desired.row)
-        stackRow = snapToNearestModuleTop(stackRow)
-        while (!canPlace(stackRow, 0, span)) stackRow += moduleRowStep
-        placed = { col: 0, row: stackRow }
-      }
-
-      if (!current || current.col !== placed.col || Math.abs(current.row - placed.row) > 0.0001) movedCount += 1
-      nextPositions[key] = placed
-      for (let c = placed.col; c < placed.col + span; c += 1) occupied.add(`${placed.row.toFixed(4)}:${c}`)
-      previousPlaced = placed
+    return () => {
+      worker.terminate()
+      autoFitWorkerRef.current = null
+      autoFitWorkerResolversRef.current.clear()
     }
+  }, [])
 
-    return { movedCount, resolvedSpans, nextPositions }
-  }, [blockColumnSpans, blockModulePositions, blockOrder, result.grid.gridMarginVertical, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.module.height, result.pageSizePt.height])
+  const postAutoFitRequest = useCallback((input: AutoFitPlannerInput) => {
+    const worker = autoFitWorkerRef.current
+    if (!worker) {
+      return {
+        requestId: -1,
+        promise: Promise.resolve(computeAutoFitBatch(input, (font, text) => {
+          const canvas = canvasRef.current
+          if (!canvas) return 0
+          const ctx = canvas.getContext("2d")
+          if (!ctx) return 0
+          ctx.font = font
+          return ctx.measureText(text).width
+        })),
+      }
+    }
+    const requestId = autoFitWorkerRequestIdRef.current + 1
+    autoFitWorkerRequestIdRef.current = requestId
+    const promise = new Promise<{
+      spanUpdates: Partial<Record<string, number>>
+      positionUpdates: Partial<Record<string, ModulePosition>>
+    }>((resolve) => {
+      autoFitWorkerResolversRef.current.set(requestId, resolve)
+      worker.postMessage({ id: requestId, input })
+    })
+    return { requestId, promise }
+  }, [])
 
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
@@ -1228,8 +1289,12 @@ export function GridPreview({
     onCanvasReady?.(canvas)
 
     const frame = window.requestAnimationFrame(() => {
+      const drawStartedAt = performance.now()
       const ctx = canvas.getContext("2d")
-      if (!ctx) return
+      if (!ctx) {
+        recordPerfMetric("drawMs", performance.now() - drawStartedAt)
+        return
+      }
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -1240,7 +1305,10 @@ export function GridPreview({
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       blockRectsRef.current = {}
-      if (!showTypography) return
+      if (!showTypography) {
+        recordPerfMetric("drawMs", performance.now() - drawStartedAt)
+        return
+      }
 
       const { styles } = result.typography
       const contentTop = margins.top * scale
@@ -1542,7 +1610,10 @@ export function GridPreview({
         previousPlansRef.current.clear()
       }
       const bufferCtx = typographyBuffer.getContext("2d")
-      if (!bufferCtx) return
+      if (!bufferCtx) {
+        recordPerfMetric("drawMs", performance.now() - drawStartedAt)
+        return
+      }
 
       const drawPlans = (plans: BlockRenderPlan[]) => {
         bufferCtx.fillStyle = "#1f2937"
@@ -1596,6 +1667,7 @@ export function GridPreview({
           ctx.clearRect(0, 0, canvas.width, canvas.height)
           ctx.drawImage(typographyBuffer, 0, 0)
           previousPlansRef.current = draftPlans
+          recordPerfMetric("drawMs", performance.now() - drawStartedAt)
           return
         }
         const dirtyRegions: BlockRect[] = []
@@ -1630,6 +1702,7 @@ export function GridPreview({
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(typographyBuffer, 0, 0)
       previousPlansRef.current = draftPlans
+      recordPerfMetric("drawMs", performance.now() - drawStartedAt)
     })
 
     return () => window.cancelAnimationFrame(frame)
@@ -1653,6 +1726,7 @@ export function GridPreview({
     showTypography,
     styleAssignments,
     textContent,
+    recordPerfMetric,
   ])
 
   useEffect(() => {
@@ -1773,51 +1847,91 @@ export function GridPreview({
         }, {} as Partial<Record<BlockId, ModulePosition>>)
       : blockModulePositions
 
-    const plan = computeReflowPlan(currentGrid.cols, currentGrid.rows, sourcePositions)
-    const spanChanged = blockOrder.some((key) => {
-      const currentSpan = blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols)
-      return plan.resolvedSpans[key] !== currentSpan
-    })
-    const positionChanged = blockOrder.some((key) => {
-      const a = blockModulePositions[key]
-      const b = plan.nextPositions[key]
-      if (!a && !b) return false
-      if (!a || !b) return true
-      return a.col !== b.col || Math.abs(a.row - b.row) > 0.0001
-    })
+    const applyComputedPlan = (plan: ReflowPlan) => {
+      const spanChanged = blockOrder.some((key) => {
+        const currentSpan = blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols)
+        return plan.resolvedSpans[key] !== currentSpan
+      })
+      const positionChanged = blockOrder.some((key) => {
+        const a = blockModulePositions[key]
+        const b = plan.nextPositions[key]
+        if (!a && !b) return false
+        if (!a || !b) return true
+        return a.col !== b.col || Math.abs(a.row - b.row) > 0.0001
+      })
 
-    if (!spanChanged && !positionChanged) {
-      previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
-      return
-    }
+      if (!spanChanged && !positionChanged) {
+        previousGridRef.current = currentGrid
+        previousModuleRowStepRef.current = currentModuleRowStep
+        return
+      }
 
-    if (rowsChanged) {
+      if (rowsChanged) {
+        pushHistory(buildSnapshot())
+        setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
+        setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
+        previousGridRef.current = currentGrid
+        previousModuleRowStepRef.current = currentModuleRowStep
+        return
+      }
+
+      if (plan.movedCount > 0) {
+        setPendingReflow({
+          previousGrid,
+          nextGrid: currentGrid,
+          movedCount: plan.movedCount,
+          resolvedSpans: plan.resolvedSpans,
+          nextPositions: plan.nextPositions,
+        })
+        return
+      }
+
       pushHistory(buildSnapshot())
       setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
       setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
       previousGridRef.current = currentGrid
       previousModuleRowStepRef.current = currentModuleRowStep
-      return
     }
 
-    if (plan.movedCount > 0) {
-      setPendingReflow({
-        previousGrid,
-        nextGrid: currentGrid,
-        movedCount: plan.movedCount,
-        resolvedSpans: plan.resolvedSpans,
-        nextPositions: plan.nextPositions,
+    const plannerInput = buildReflowPlannerInput(currentGrid.cols, currentGrid.rows, sourcePositions)
+    const reflowStartedAt = performance.now()
+    const { requestId, promise } = postReflowPlanRequest(plannerInput)
+    let cancelled = false
+    promise
+      .then((plan) => {
+        if (cancelled) return
+        recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
+        applyComputedPlan(plan)
       })
-      return
+      .catch(() => {
+        if (cancelled) return
+        recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
+        applyComputedPlan(computeReflowPlan(plannerInput))
+      })
+    return () => {
+      cancelled = true
+      if (requestId > 0) reflowWorkerResolversRef.current.delete(requestId)
     }
-
-    pushHistory(buildSnapshot())
-    setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
-    setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
-    previousGridRef.current = currentGrid
-    previousModuleRowStepRef.current = currentModuleRowStep
-  }, [blockColumnSpans, blockModulePositions, blockOrder, buildSnapshot, computeReflowPlan, pendingReflow, pushHistory, result.grid.gridMarginVertical, result.grid.gridUnit, result.grid.margins.bottom, result.grid.margins.top, result.module.height, result.pageSizePt.height, result.settings.gridCols, result.settings.gridRows])
+  }, [
+    blockColumnSpans,
+    blockModulePositions,
+    blockOrder,
+    buildReflowPlannerInput,
+    buildSnapshot,
+    computeReflowPlan,
+    pendingReflow,
+    postReflowPlanRequest,
+    pushHistory,
+    recordPerfMetric,
+    result.grid.gridMarginVertical,
+    result.grid.gridUnit,
+    result.grid.margins.bottom,
+    result.grid.margins.top,
+    result.module.height,
+    result.pageSizePt.height,
+    result.settings.gridCols,
+    result.settings.gridRows,
+  ])
 
   useEffect(() => {
     if (pendingReflow) return
@@ -1833,47 +1947,82 @@ export function GridPreview({
     if (lastAutoFitSettingsRef.current === signature) return
     lastAutoFitSettingsRef.current = signature
 
-    const spanUpdates: Partial<Record<BlockId, number>> = {}
-    const positionUpdates: Partial<Record<BlockId, ModulePosition>> = {}
-    let hasSpanChanges = false
-    let hasPositionChanges = false
-
+    const items: AutoFitPlannerInput["items"] = []
     for (const key of blockOrder) {
       if (!isTextReflowEnabled(key)) continue
       const currentPosition = blockModulePositions[key]
       if (!currentPosition) continue
-      const currentSpan = getBlockSpan(key)
-      const autoFit = getAutoFitForPlacement({
+      const styleKey = getStyleKeyForBlock(key)
+      const style = result.typography.styles[styleKey]
+      if (!style) continue
+      items.push({
         key,
         text: textContent[key] ?? "",
-        styleKey: getStyleKeyForBlock(key),
+        style: {
+          size: style.size,
+          baselineMultiplier: style.baselineMultiplier,
+          weight: style.weight,
+        },
         rowSpan: getBlockRows(key),
-        reflow: true,
         syllableDivision: isSyllableDivisionEnabled(key),
         position: currentPosition,
+        currentSpan: getBlockSpan(key),
       })
-      if (!autoFit?.position) continue
+    }
+    if (!items.length) return
 
-      if (autoFit.span !== currentSpan) {
-        spanUpdates[key] = autoFit.span
-        hasSpanChanges = true
-      }
-      if (autoFit.position.col !== currentPosition.col || autoFit.position.row !== currentPosition.row) {
-        positionUpdates[key] = autoFit.position
-        hasPositionChanges = true
-      }
+    const input: AutoFitPlannerInput = {
+      items,
+      scale,
+      gridCols: result.settings.gridCols,
+      moduleWidth: result.module.width,
+      moduleHeight: result.module.height,
+      gridMarginVertical: result.grid.gridMarginVertical,
+      gridUnit: result.grid.gridUnit,
+      marginTop: result.grid.margins.top,
+      marginBottom: result.grid.margins.bottom,
+      pageHeight: result.pageSizePt.height,
     }
 
-    if (hasSpanChanges) {
-      setBlockColumnSpans((prev) => ({ ...prev, ...spanUpdates }))
-    }
-    if (hasPositionChanges) {
-      setBlockModulePositions((prev) => ({ ...prev, ...positionUpdates }))
+    const autoFitStartedAt = performance.now()
+    const { requestId, promise } = postAutoFitRequest(input)
+    let cancelled = false
+    promise.then((output) => {
+      if (cancelled) return
+      recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
+      const hasSpanChanges = Object.keys(output.spanUpdates).length > 0
+      const hasPositionChanges = Object.keys(output.positionUpdates).length > 0
+      if (hasSpanChanges) {
+        setBlockColumnSpans((prev) => ({ ...prev, ...output.spanUpdates }))
+      }
+      if (hasPositionChanges) {
+        setBlockModulePositions((prev) => ({ ...prev, ...output.positionUpdates }))
+      }
+    }).catch(() => {
+      if (cancelled) return
+      recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
+      const fallback = computeAutoFitBatch(input, (font, text) => {
+        const canvas = canvasRef.current
+        if (!canvas) return 0
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return 0
+        ctx.font = font
+        return ctx.measureText(text).width
+      })
+      if (Object.keys(fallback.spanUpdates).length > 0) {
+        setBlockColumnSpans((prev) => ({ ...prev, ...fallback.spanUpdates }))
+      }
+      if (Object.keys(fallback.positionUpdates).length > 0) {
+        setBlockModulePositions((prev) => ({ ...prev, ...fallback.positionUpdates }))
+      }
+    })
+    return () => {
+      cancelled = true
+      if (requestId > 0) autoFitWorkerResolversRef.current.delete(requestId)
     }
   }, [
     blockModulePositions,
     blockOrder,
-    getAutoFitForPlacement,
     getBlockRows,
     getBlockSpan,
     getStyleKeyForBlock,
@@ -1888,6 +2037,10 @@ export function GridPreview({
     result.settings.gridRows,
     scale,
     textContent,
+    postAutoFitRequest,
+    recordPerfMetric,
+    result.pageSizePt.height,
+    result.typography.styles,
   ])
 
   useEffect(() => {

@@ -55,6 +55,8 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - pure column increase keeps layout in place (adds capacity to the right)
   - row and baseline-structure changes remap blocks to nearest module-top anchors
   - scored auto-reposition model resolves collisions deterministically
+  - reflow planning runs in a dedicated Web Worker with safe in-thread fallback
+  - batch auto-fit planning runs in a dedicated Web Worker with safe in-thread fallback
   - warning/apply/cancel flow is used for disruptive non-row structural moves
   - post-apply undo toast
   - warning flow suppressed during JSON layout load
@@ -172,11 +174,16 @@ webapp/
 ├── hooks/
 │   ├── useSettingsHistory.ts
 │   └── useExportActions.ts
-└── lib/
-    ├── grid-calculator.ts
-    ├── pdf-vector-export.ts
-    ├── units.ts
-    └── utils.ts
+├── lib/
+│   ├── autofit-planner.ts
+│   ├── grid-calculator.ts
+│   ├── reflow-planner.ts
+│   ├── pdf-vector-export.ts
+│   ├── units.ts
+│   └── utils.ts
+└── workers/
+    ├── autoFit.worker.ts
+    └── reflowPlanner.worker.ts
 ```
 
 ## Scripts

@@ -2,7 +2,7 @@
 
 This document describes the mathematical calculations used in the Swiss Grid Generator, based on Josef Müller-Brockmann's *Grid Systems in Graphic Design* (1981).
 
-All formulas reference `webapp/lib/grid-calculator.ts`.
+Core grid formulas reference `webapp/lib/grid-calculator.ts`; preview reflow/autofit planning formulas are implemented in `webapp/lib/reflow-planner.ts` and `webapp/lib/autofit-planner.ts`.
 
 ## Table of Contents
 
@@ -409,7 +409,7 @@ All modules, baselines, margins, and typography are drawn in the rotated coordin
 
 ## Preview Placement + Reflow
 
-Interactive placement is handled in `webapp/components/grid-preview.tsx` and mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`).
+Interactive placement is orchestrated in `webapp/components/grid-preview.tsx`, mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`), and uses worker-backed planning (`webapp/workers/reflowPlanner.worker.ts`, `webapp/workers/autoFit.worker.ts`) with synchronous fallback to pure planner modules in `webapp/lib/`.
 
 ### Row Anchor Model
 
