@@ -46,15 +46,23 @@ Where A4 = 595.276 × 841.890 pt.
 
 The baseline grid is the foundation of the entire system. All vertical measurements align to this grid.
 
-### Auto Mode (Default)
+### Baseline Slider
 
-When "Custom Baseline" is OFF, each format uses a format-specific baseline:
+The user selects a baseline value from a predefined set via a slider. Available options are dynamically filtered to only include values that fit at least 24 baseline lines in the current format and margin configuration.
 
-The implementation derives values from an A4 12pt reference:
+Available options: `6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72` (pt)
+
+Default: **12pt** (A4 reference).
+
+```
+gridUnit = customBaseline ?? 12.0
+```
+
+### Format Baseline Defaults (`FORMAT_BASELINES`)
+
+The `FORMAT_BASELINES` table defines per-format reference defaults (used as the initial slider value when loading a preset). Values are derived from an A4 12pt reference:
 - A-series uses sqrt(2) steps.
 - B-series uses 2^(1/4) offsets between adjacent A sizes.
-
-Current `FORMAT_BASELINES` defaults:
 
 | Format | Baseline (pt) |
 |--------|---------------:|
@@ -73,18 +81,6 @@ Current `FORMAT_BASELINES` defaults:
 | B5 | 10.091 |
 | B6 | 7.135 |
 | LETTER | 12.000 |
-
-```
-gridUnit = FORMAT_BASELINES[format]  // Auto mode
-```
-
-### Custom Mode
-
-When "Custom Baseline" is ON, the user selects from predefined values. Available options are filtered to only include values that fit the current format and grid configuration.
-
-```
-gridUnit = customBaseline ?? FORMAT_BASELINES[format] ?? 12.0
-```
 
 ### Landscape Orientation
 

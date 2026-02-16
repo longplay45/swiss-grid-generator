@@ -49,7 +49,7 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Load JSON, Save JSON, Export PDF
   - Undo/Redo
   - Display toggles (baselines, margins, gutter/modules, typo)
-  - Sidebar selectors: Settings, Help, Imprint
+  - Sidebar selectors: Settings, Help, Imprint, Example layouts
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
@@ -155,10 +155,27 @@ webapp/
 │   └── globals.css
 ├── components/
 │   ├── grid-preview.tsx
+│   ├── dialogs/
+│   │   ├── ExportPdfDialog.tsx
+│   │   └── SaveJsonDialog.tsx
+│   ├── settings/
+│   │   ├── CanvasRatioPanel.tsx
+│   │   ├── BaselineGridPanel.tsx
+│   │   ├── MarginsPanel.tsx
+│   │   ├── GutterPanel.tsx
+│   │   └── TypographyPanel.tsx
+│   ├── sidebar/
+│   │   ├── HelpPanel.tsx
+│   │   ├── ImprintPanel.tsx
+│   │   └── ExampleLayoutsPanel.tsx
 │   └── ui/
+├── hooks/
+│   ├── useSettingsHistory.ts
+│   └── useExportActions.ts
 └── lib/
     ├── grid-calculator.ts
     ├── pdf-vector-export.ts
+    ├── units.ts
     └── utils.ts
 ```
 
