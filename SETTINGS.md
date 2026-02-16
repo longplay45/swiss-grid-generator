@@ -99,10 +99,11 @@ Default: `swiss`
 
 ### File Actions (icon buttons)
 
-- `Examples` (layout-template icon): opens/closes example preset panel
+- `Examples` (layout-template icon): opens/closes example preset panel (placed before Load)
 - `Load` (folder icon): load layout JSON
 - `Save` (save icon): opens Save JSON popup
 - `Export PDF` (download icon): opens Export PDF popup
+- Divider placement: between `Examples` and `Load`, and between `Export PDF` and `Undo`
 
 ### Undo / Redo (icon buttons)
 
@@ -113,8 +114,9 @@ Default: `swiss`
 
 ### UI + Preview Controls (icon toggles)
 
-- `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars and popup editor
+- `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars, preview shell background, and popup editor
 - `Fullscreen` (maximize/minimize icon): toggles fullscreen mode for the preview side
+- Order: dark mode icon appears to the left of fullscreen
 
 ### Display Options (icon toggles)
 
@@ -122,6 +124,7 @@ Default: `swiss`
 - Margins
 - Gutter/modules
 - Typo
+- Divider placement: fullscreen and baselines are separated by a divider
 
 ### Sidebar Panels (icon selectors)
 
@@ -131,7 +134,7 @@ Default: `swiss`
 - `Example layouts` (layout-template icon): opens example preset thumbnails panel
 - Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
 
-All header icons use styled rollover help tooltips with a second line showing the keyboard shortcut.
+All header icons use styled rollover help tooltips with a second line showing the keyboard shortcut (including Undo/Redo).
 
 ### Header Keyboard Shortcuts
 

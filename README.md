@@ -49,13 +49,14 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
   - Dark mode toggle
-  - Presets/Examples, Load JSON, Save JSON, Export PDF
+  - Presets/Examples (left of Load), Load JSON, Save JSON, Export PDF
   - Undo/Redo
   - Fullscreen preview toggle
   - Display toggles (baselines, margins, gutter/modules, typo)
   - Sidebar selectors: Settings, Help, Imprint, Example layouts
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
-  - Tooltips show action + keyboard shortcut (two lines)
+  - Divider separators are shown between Presets and Load, Export and Undo, Fullscreen and Baselines
+  - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo)
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
   - row and baseline-structure changes remap blocks to nearest module-top anchors
@@ -226,7 +227,7 @@ webapp/
 ## Changelog (Recent Behavior Updates)
 
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
-- Added dark mode for control panels/headers/sidebars and editor popup (preview paper remains independent).
+- Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
 - Added fullscreen preview toggle.
 - Added shift-drag duplication for preview paragraphs.
 - Added grouped font selectors (`Sans-Serif`, `Serif`, `Poster`) via shared component.
