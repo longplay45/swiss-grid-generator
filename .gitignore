@@ -8,6 +8,7 @@ NOTES.md
 FEEDBACK_GROK.md
 PROJECT_DEV_PROMPTS.md
 REVIEW_MINIMAX25.md
+COMMIT_HISTORY.md
 
 # macOS
 .DS_Store
@@ -42,4 +43,3 @@ __pycache__/
 *_grid.txt
 *_grid.pdf
 assets/
-
