@@ -66,8 +66,9 @@ function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
   return Math.max(1, Math.floor(gridCols / 2))
 }
 
-function getFontStyle(weight: string): "normal" | "bold" {
-  return weight === "Bold" ? "bold" : "normal"
+function getFontStyle(weight: string, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
+  if (weight === "Bold") return italic ? "bolditalic" : "bold"
+  return italic ? "italic" : "normal"
 }
 
 function estimateTextAscent(fontSize: number): number {
@@ -224,11 +225,11 @@ export function renderSwissGridVectorPdf({
     drawLine(sourceWidth, sourceHeight + outside, sourceWidth, sourceHeight + outside + length)
   }
 
-  const drawText = (line: string, x: number, y: number, align: TextAlignMode) => {
+  const drawText = (line: string, x: number, y: number, align: TextAlignMode, blockRotation = 0) => {
     const point = transformPoint(x, y)
     pdf.text(line, point.x, point.y, {
       align,
-      angle: rotation,
+      angle: rotation + blockRotation,
     })
   }
 
@@ -319,6 +320,8 @@ export function renderSwissGridVectorPdf({
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
+  const blockItalic = layout?.blockItalic ?? {}
+  const blockRotations = layout?.blockRotations ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
 
   const contentTop = margins.top
@@ -357,6 +360,12 @@ export function renderSwissGridVectorPdf({
   const isSyllableDivisionEnabled = (key: BlockId) => {
     if (blockSyllableDivision[key] === true || blockSyllableDivision[key] === false) return blockSyllableDivision[key]
     return key === "body" || key === "caption"
+  }
+  const isBlockItalic = (key: BlockId) => blockItalic[key] === true
+  const getBlockRotation = (key: BlockId) => {
+    const raw = blockRotations[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
+    return Math.max(-180, Math.min(180, raw))
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
@@ -408,7 +417,8 @@ export function renderSwissGridVectorPdf({
       blockStartOffset = displayStartOffset + block.extraOffset
     }
 
-    pdf.setFont("helvetica", getFontStyle(style.weight))
+    const blockRotation = getBlockRotation(block.key)
+    pdf.setFont("helvetica", getFontStyle(style.weight, isBlockItalic(block.key)))
     pdf.setFontSize(fontSize)
 
     const span = getBlockSpan(block.key)
@@ -448,7 +458,7 @@ export function renderSwissGridVectorPdf({
           fontSize,
           measureWidth: (text) => pdf.getTextWidth(text),
         })
-        drawText(line, anchorX + opticalOffsetX, y, align)
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
       }
     } else {
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
@@ -468,7 +478,7 @@ export function renderSwissGridVectorPdf({
           fontSize,
           measureWidth: (text) => pdf.getTextWidth(text),
         })
-        drawText(line, anchorX + opticalOffsetX, y, align)
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
       }
     }
 
@@ -493,7 +503,8 @@ export function renderSwissGridVectorPdf({
   const captionText = (textContent.caption ?? "").trim()
   if (!captionStyle || !captionText) return
 
-  pdf.setFont("helvetica", getFontStyle(captionStyle.weight))
+  const captionRotation = getBlockRotation("caption")
+  pdf.setFont("helvetica", getFontStyle(captionStyle.weight, isBlockItalic("caption")))
   pdf.setFontSize(captionStyle.size * scale)
   const captionAlign: TextAlignMode = blockTextAlignments.caption === "right" ? "right" : "left"
   const captionSpan = getBlockSpan("caption")
@@ -533,7 +544,7 @@ export function renderSwissGridVectorPdf({
         fontSize: captionFontSize,
         measureWidth: (text) => pdf.getTextWidth(text),
       })
-      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
+      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
     }
   } else {
     for (let i = 0; i < captionLines.length; i += 1) {
@@ -552,7 +563,7 @@ export function renderSwissGridVectorPdf({
         fontSize: captionFontSize,
         measureWidth: (text) => pdf.getTextWidth(text),
       })
-      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign)
+      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
     }
   }
 }

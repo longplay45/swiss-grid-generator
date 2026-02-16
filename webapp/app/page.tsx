@@ -108,6 +108,7 @@ const DEFAULT_BASE_FONT: FontFamily = (() => {
 
 const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72]
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.7.0"
 const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
   din_ab: "A4",
   letter_ansi_ab: "LETTER",
@@ -986,32 +987,6 @@ export default function Home() {
       onClick: () => setActiveSidebarPanel((prev) => (prev === "help" ? null : "help")),
       icon: <CircleHelp className="h-4 w-4" />,
     },
-    {
-      key: "imprint",
-      ariaLabel: "Show imprint",
-      tooltip: "Imprint",
-      shortcutId: "toggle_imprint_panel",
-      variant: activeSidebarPanel === "imprint" ? "default" : "outline",
-      pressed: activeSidebarPanel === "imprint",
-      onClick: () => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint")),
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-4 w-4"
-        >
-          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-          <polyline points="14 2 14 8 20 8" />
-        </svg>
-      ),
-    },
   ]
 
   const renderHeaderAction = (action: HeaderAction) => {
@@ -1118,6 +1093,19 @@ export default function Home() {
             onBaseFontChange={setBaseFont}
             isDarkMode={isDarkUi}
           />
+        </div>
+
+        <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
+          <div className="flex items-center justify-between gap-3">
+            <span>Version {APP_VERSION}</span>
+            <button
+              type="button"
+              className={uiTheme.link}
+              onClick={() => setActiveSidebarPanel("imprint")}
+            >
+              Imprint
+            </button>
+          </div>
         </div>
       </div>
 

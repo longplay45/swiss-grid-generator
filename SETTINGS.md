@@ -130,9 +130,13 @@ Default: `swiss`
 
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Help` (help icon): opens help/reference panel
-- `Imprint` (document icon): opens imprint panel
 - `Example layouts` (layout-template icon): opens example preset thumbnails panel
 - Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
+
+### Left Footer (always visible)
+
+- `Version` label: shows current app version string.
+- `Imprint` link: opens the right sidebar imprint panel.
 
 All header icons use styled rollover help tooltips with a second line showing the keyboard shortcut (including Undo/Redo).
 
@@ -210,8 +214,10 @@ Editor controls:
 - style
 - cols (1..gridCols)
 - rows (1..gridRows)
+- rotation input (`-80..80`, integer degrees)
 - reflow toggle (off = full-span wrap, on = newspaper columns)
 - syllable division toggle (`Hy`)
+- italic toggle
 - align left/right
 - Save
 - Delete paragraph (custom blocks)
@@ -266,7 +272,7 @@ UX:
 
 ## JSON Preview Layout Fields (current)
 
-`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockModulePositions`
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockModulePositions`
 
 Notes:
 - `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.

@@ -2,7 +2,7 @@
 
 A toolkit for building typographic grid systems inspired by Josef Muller-Brockmann's *Grid Systems in Graphic Design*.
 
-**Live preview:** [https://dev.lp45.net/swiss-grid-generator/](https://dev.lp45.net/swiss-grid-generator/)
+**Live preview:** [https://preview.swissgridgenerator.com/](https://preview.swissgridgenerator.com/)
 
 ## Overview
 
@@ -38,8 +38,10 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - double-click popup editor
   - hover info tooltips
   - per-paragraph font selection
+  - per-paragraph italic toggle
   - live character + word count in editor footer
   - per-block `cols` and `rows`
+  - per-block rotation input (`-80..80`)
   - per-block reflow toggle (newspaper-style column flow)
   - per-block syllable-division toggle (`Hy`)
   - optical margin alignment (hanging punctuation)
@@ -53,10 +55,13 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Undo/Redo
   - Fullscreen preview toggle
   - Display toggles (baselines, margins, gutter/modules, typo)
-  - Sidebar selectors: Settings, Help, Imprint, Example layouts
+  - Sidebar selectors: Settings, Help, Example layouts
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
   - Divider separators are shown between Presets and Load, Export and Undo, Fullscreen and Baselines
   - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo)
+- Left panel footer:
+  - always-visible `Version` label
+  - `Imprint` link opens the right-side imprint panel
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
   - row and baseline-structure changes remap blocks to nearest module-top anchors
@@ -227,6 +232,7 @@ webapp/
 ## Changelog (Recent Behavior Updates)
 
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
+- Added per-paragraph italic toggle and rotation input (`-80..80`).
 - Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
 - Added fullscreen preview toggle.
 - Added shift-drag duplication for preview paragraphs.

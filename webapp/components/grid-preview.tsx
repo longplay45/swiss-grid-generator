@@ -23,7 +23,7 @@ import {
   type ReflowPlan as PlannerReflowPlan,
   type ReflowPlannerInput,
 } from "@/lib/reflow-planner"
-import { AlignLeft, AlignRight, Columns3, ListOrdered, Rows3, Trash2, Type } from "lucide-react"
+import { AlignLeft, AlignRight, Columns3, Italic, ListOrdered, RotateCw, Rows3, Trash2, Type } from "lucide-react"
 import { ReactNode, useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type BlockId = string
@@ -49,6 +49,7 @@ type BlockRenderPlan = {
   signature: string
   font: string
   textAlign: TextAlignMode
+  blockRotation: number
   commands: TextDrawCommand[]
 }
 
@@ -100,6 +101,8 @@ type BlockCollectionsState = {
   blockTextReflow: Partial<Record<BlockId, boolean>>
   blockSyllableDivision: Partial<Record<BlockId, boolean>>
   blockFontFamilies: Partial<Record<BlockId, FontFamily>>
+  blockItalic: Partial<Record<BlockId, boolean>>
+  blockRotations: Partial<Record<BlockId, number>>
 }
 
 type BlockCollectionsAction = {
@@ -188,6 +191,8 @@ function createInitialBlockCollectionsState(): BlockCollectionsState {
     blockTextReflow: {},
     blockSyllableDivision: {},
     blockFontFamilies: {},
+    blockItalic: {},
+    blockRotations: {},
   }
 }
 
@@ -409,6 +414,8 @@ export interface PreviewLayoutState {
   blockTextAlignments: Record<BlockId, TextAlignMode>
   blockTextReflow?: Record<BlockId, boolean>
   blockSyllableDivision?: Record<BlockId, boolean>
+  blockItalic?: Record<BlockId, boolean>
+  blockRotations?: Record<BlockId, number>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
 }
 
@@ -493,6 +500,8 @@ export function GridPreview({
     blockTextReflow,
     blockSyllableDivision,
     blockFontFamilies,
+    blockItalic,
+    blockRotations,
   } = blockCollectionsState
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
@@ -516,6 +525,8 @@ export function GridPreview({
     draftAlign: TextAlignMode
     draftReflow: boolean
     draftSyllableDivision: boolean
+    draftItalic: boolean
+    draftRotation: number
     draftTextEdited: boolean
   } | null>(null)
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
@@ -650,6 +661,16 @@ export function GridPreview({
     return blockFontFamilies[key] ?? baseFont
   }, [baseFont, blockFontFamilies])
 
+  const isBlockItalic = useCallback((key: BlockId): boolean => {
+    return blockItalic[key] === true
+  }, [blockItalic])
+
+  const getBlockRotation = useCallback((key: BlockId): number => {
+    const raw = blockRotations[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
+    return Math.max(-80, Math.min(80, raw))
+  }, [blockRotations])
+
   const buildSnapshot = useCallback((): PreviewLayoutState => {
     const resolvedSpans = blockOrder.reduce((acc, key) => {
       const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -672,6 +693,14 @@ export function GridPreview({
       acc[key] = isSyllableDivisionEnabled(key)
       return acc
     }, {} as Record<BlockId, boolean>)
+    const resolvedItalic = blockOrder.reduce((acc, key) => {
+      acc[key] = isBlockItalic(key)
+      return acc
+    }, {} as Record<BlockId, boolean>)
+    const resolvedRotations = blockOrder.reduce((acc, key) => {
+      acc[key] = getBlockRotation(key)
+      return acc
+    }, {} as Record<BlockId, number>)
     return {
       blockOrder: [...blockOrder],
       textContent: { ...textContent },
@@ -683,9 +712,11 @@ export function GridPreview({
       blockTextAlignments: resolvedAlignments,
       blockTextReflow: resolvedReflow,
       blockSyllableDivision: resolvedSyllableDivision,
+      blockItalic: resolvedItalic,
+      blockRotations: resolvedRotations,
       blockModulePositions: { ...blockModulePositions },
     }
-  }, [blockColumnSpans, blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, isSyllableDivisionEnabled, isTextReflowEnabled, result.settings.gridCols, styleAssignments, textContent])
+  }, [blockColumnSpans, blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRotation, getBlockRows, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, result.settings.gridCols, styleAssignments, textContent])
 
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
     const nextFonts = snapshot.blockOrder.reduce((acc, key) => {
@@ -693,12 +724,25 @@ export function GridPreview({
       if (isFontFamily(raw) && raw !== baseFont) acc[key] = raw
       return acc
     }, {} as Partial<Record<BlockId, FontFamily>>)
+    const nextItalic = snapshot.blockOrder.reduce((acc, key) => {
+      if (snapshot.blockItalic?.[key] === true) acc[key] = true
+      return acc
+    }, {} as Partial<Record<BlockId, boolean>>)
+    const nextRotations = snapshot.blockOrder.reduce((acc, key) => {
+      const raw = snapshot.blockRotations?.[key]
+      if (typeof raw === "number" && Number.isFinite(raw) && Math.abs(raw) > 0.001) {
+        acc[key] = Math.max(-80, Math.min(80, raw))
+      }
+      return acc
+    }, {} as Partial<Record<BlockId, number>>)
     setBlockCollections(() => ({
       blockOrder: [...snapshot.blockOrder],
       textContent: { ...snapshot.textContent },
       blockTextEdited: { ...snapshot.blockTextEdited },
       styleAssignments: { ...snapshot.styleAssignments },
       blockFontFamilies: nextFonts,
+      blockItalic: nextItalic,
+      blockRotations: nextRotations,
       blockColumnSpans: { ...snapshot.blockColumnSpans },
       blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
       blockTextAlignments: { ...snapshot.blockTextAlignments },
@@ -1171,6 +1215,18 @@ export function GridPreview({
       }
       return acc
     }, {} as Record<BlockId, boolean>)
+    const nextItalic = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockItalic?.[key]
+      if (raw === true) acc[key] = true
+      return acc
+    }, {} as Record<BlockId, boolean>)
+    const nextRotations = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockRotations?.[key]
+      if (typeof raw === "number" && Number.isFinite(raw) && Math.abs(raw) > 0.001) {
+        acc[key] = Math.max(-80, Math.min(80, raw))
+      }
+      return acc
+    }, {} as Record<BlockId, number>)
 
     const metrics = getGridMetrics()
     const nextPositions = normalizedKeys.reduce((acc, key) => {
@@ -1195,6 +1251,8 @@ export function GridPreview({
       blockTextAlignments: nextAlignments,
       blockTextReflow: nextReflow,
       blockSyllableDivision: nextSyllableDivision,
+      blockItalic: nextItalic,
+      blockRotations: nextRotations,
       blockModulePositions: nextPositions,
     }))
     setDragState(null)
@@ -1402,7 +1460,9 @@ export function GridPreview({
         }
 
         const blockFont = getBlockFont(block.key)
-        ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px ${getFontFamilyCss(blockFont)}`
+        const blockFontStyle = isBlockItalic(block.key) ? "italic " : ""
+        const blockRotation = getBlockRotation(block.key)
+        ctx.font = `${blockFontStyle}${style.weight === "Bold" ? "700" : "400"} ${fontSize}px ${getFontFamilyCss(blockFont)}`
         const planFont = ctx.font
 
         const span = getBlockSpan(block.key)
@@ -1477,7 +1537,9 @@ export function GridPreview({
           signature: [
             styleKey,
             blockFont,
+            blockFontStyle ? "italic" : "normal",
             textAlign,
+            blockRotation.toFixed(2),
             span,
             rowSpan,
             columnReflow ? 1 : 0,
@@ -1489,6 +1551,7 @@ export function GridPreview({
           ].join("|"),
           font: planFont,
           textAlign,
+          blockRotation,
           commands,
         })
 
@@ -1514,7 +1577,9 @@ export function GridPreview({
         const captionBaselineMult = captionStyle.baselineMultiplier
         const captionFont = getBlockFont("caption")
 
-        ctx.font = `${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px ${getFontFamilyCss(captionFont)}`
+        const captionFontStyle = isBlockItalic("caption") ? "italic " : ""
+        const captionRotation = getBlockRotation("caption")
+        ctx.font = `${captionFontStyle}${captionStyle.weight === "Bold" ? "700" : "400"} ${captionFontSize}px ${getFontFamilyCss(captionFont)}`
         const captionPlanFont = ctx.font
         const captionAlign = blockTextAlignments.caption ?? "left"
 
@@ -1591,7 +1656,9 @@ export function GridPreview({
           signature: [
             captionStyleKey,
             captionFont,
+            captionFontStyle ? "italic" : "normal",
             captionAlign,
+            captionRotation.toFixed(2),
             captionSpan,
             captionRowSpan,
             captionColumnReflow ? 1 : 0,
@@ -1605,6 +1672,7 @@ export function GridPreview({
           ].join("|"),
           font: captionPlanFont,
           textAlign: captionAlign,
+          blockRotation: captionRotation,
           commands: captionCommands,
         })
       }
@@ -1640,8 +1708,17 @@ export function GridPreview({
         for (const plan of plans) {
           bufferCtx.font = plan.font
           bufferCtx.textAlign = plan.textAlign
+          const angle = (plan.blockRotation * Math.PI) / 180
           for (const command of plan.commands) {
-            bufferCtx.fillText(command.text, command.x, command.y)
+            if (Math.abs(angle) > 0.0001) {
+              bufferCtx.save()
+              bufferCtx.translate(command.x, command.y)
+              bufferCtx.rotate(angle)
+              bufferCtx.fillText(command.text, 0, 0)
+              bufferCtx.restore()
+            } else {
+              bufferCtx.fillText(command.text, command.x, command.y)
+            }
           }
         }
       }
@@ -1732,11 +1809,13 @@ export function GridPreview({
     blockTextAlignments,
     clampModulePosition,
     getBlockFont,
+    getBlockRotation,
     getBlockRows,
     getBlockSpan,
     getOpticalOffset,
     getWrappedText,
     isSyllableDivisionEnabled,
+    isBlockItalic,
     isTextReflowEnabled,
     onCanvasReady,
     result,
@@ -2065,7 +2144,7 @@ export function GridPreview({
   useEffect(() => {
     if (!editorState) return
     textareaRef.current?.focus()
-  }, [editorState])
+  }, [editorState?.target])
 
   useEffect(() => {
     if (!editorState) return
@@ -2172,6 +2251,16 @@ export function GridPreview({
             } else {
               nextFonts[newKey] = sourceFont
             }
+            const nextItalic = { ...current.blockItalic }
+            if (current.blockItalic[prev.key] === true) nextItalic[newKey] = true
+            else delete nextItalic[newKey]
+            const nextRotations = { ...current.blockRotations }
+            const sourceRotation = current.blockRotations[prev.key]
+            if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && Math.abs(sourceRotation) > 0.001) {
+              nextRotations[newKey] = Math.max(-80, Math.min(80, sourceRotation))
+            } else {
+              delete nextRotations[newKey]
+            }
 
             return {
               ...current,
@@ -2189,6 +2278,8 @@ export function GridPreview({
                 [newKey]: styleKey,
               },
               blockFontFamilies: nextFonts,
+              blockItalic: nextItalic,
+              blockRotations: nextRotations,
               blockColumnSpans: {
                 ...current.blockColumnSpans,
                 [newKey]: nextSpan,
@@ -2326,6 +2417,19 @@ export function GridPreview({
         ...prev.blockSyllableDivision,
         [editorState.target]: editorState.draftSyllableDivision,
       }
+      const nextItalic = { ...prev.blockItalic }
+      if (editorState.draftItalic) {
+        nextItalic[editorState.target] = true
+      } else {
+        delete nextItalic[editorState.target]
+      }
+      const nextRotations = { ...prev.blockRotations }
+      const clampedRotation = Math.max(-80, Math.min(80, editorState.draftRotation))
+      if (Math.abs(clampedRotation) > 0.001) {
+        nextRotations[editorState.target] = clampedRotation
+      } else {
+        delete nextRotations[editorState.target]
+      }
 
       const nextPositions = { ...prev.blockModulePositions }
       const pos = nextPositions[editorState.target]
@@ -2353,6 +2457,8 @@ export function GridPreview({
         blockTextAlignments: nextAlignments,
         blockTextReflow: nextReflow,
         blockSyllableDivision: nextSyllableDivision,
+        blockItalic: nextItalic,
+        blockRotations: nextRotations,
         blockModulePositions: nextPositions,
       }
     })
@@ -2406,6 +2512,8 @@ export function GridPreview({
         blockTextAlignments: omitTarget(prev.blockTextAlignments) as Partial<Record<BlockId, TextAlignMode>>,
         blockTextReflow: omitTarget(prev.blockTextReflow) as Partial<Record<BlockId, boolean>>,
         blockSyllableDivision: omitTarget(prev.blockSyllableDivision) as Partial<Record<BlockId, boolean>>,
+        blockItalic: omitTarget(prev.blockItalic) as Partial<Record<BlockId, boolean>>,
+        blockRotations: omitTarget(prev.blockRotations) as Partial<Record<BlockId, number>>,
         blockModulePositions: omitTarget(prev.blockModulePositions) as Partial<Record<BlockId, ModulePosition>>,
       }
     })
@@ -2618,6 +2726,8 @@ export function GridPreview({
           draftAlign: blockTextAlignments[key] ?? "left",
           draftReflow: isTextReflowEnabled(key),
           draftSyllableDivision: isSyllableDivisionEnabled(key),
+          draftItalic: isBlockItalic(key),
+          draftRotation: getBlockRotation(key),
           draftTextEdited: blockTextEdited[key] ?? true,
         })
         return
@@ -2670,9 +2780,11 @@ export function GridPreview({
       draftAlign: "left",
       draftReflow: false,
       draftSyllableDivision: false,
+      draftItalic: false,
+      draftRotation: 0,
       draftTextEdited: false,
     })
-  }, [baseFont, blockOrder, blockTextAlignments, blockTextEdited, getBlockFont, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
+  }, [baseFont, blockOrder, blockTextAlignments, blockTextEdited, getBlockFont, getBlockRotation, getBlockRows, getBlockSpan, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, recordHistoryBeforeChange, result.settings.gridCols, result.settings.gridRows, showTypography, snapToModule, styleAssignments, textContent, toPagePoint])
 
   const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
   const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
@@ -2717,6 +2829,14 @@ export function GridPreview({
         acc[key] = isSyllableDivisionEnabled(key)
         return acc
       }, {} as Record<BlockId, boolean>),
+      blockItalic: blockOrder.reduce((acc, key) => {
+        acc[key] = isBlockItalic(key)
+        return acc
+      }, {} as Record<BlockId, boolean>),
+      blockRotations: blockOrder.reduce((acc, key) => {
+        acc[key] = getBlockRotation(key)
+        return acc
+      }, {} as Record<BlockId, number>),
       blockModulePositions,
     }
     if (onLayoutChangeDebounceRef.current !== null) {
@@ -2734,7 +2854,7 @@ export function GridPreview({
         onLayoutChangeDebounceRef.current = null
       }
     }
-  }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRows, getBlockSpan, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
+  }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRotation, getBlockRows, getBlockSpan, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
   const canvasCursorClass = dragState
     ? (dragState.copyOnDrop ? "cursor-copy" : "cursor-grabbing")
@@ -2876,7 +2996,7 @@ export function GridPreview({
                 </EditorControlTooltip>
                 <EditorControlTooltip label="Font family" className="col-span-2 min-w-0 w-full">
                   <div className="flex min-w-0 items-center gap-1">
-                    <Type className="h-4 w-4 shrink-0 text-gray-500" />
+                    <RotateCw className="h-4 w-4 shrink-0 text-gray-500" />
                     <FontSelect
                       value={editorState.draftFont}
                       onValueChange={(value) => {
@@ -2943,16 +3063,55 @@ export function GridPreview({
                     </Select>
                   </div>
                 </EditorControlTooltip>
+                <EditorControlTooltip label={`Paragraph rotation: ${Math.round(editorState.draftRotation)}deg`} className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Type className="h-4 w-4 shrink-0 text-gray-500" />
+                    <input
+                      type="number"
+                      min={-80}
+                      max={80}
+                      step={1}
+                      value={Math.round(editorState.draftRotation)}
+                      onChange={(event) => {
+                        const parsed = Number(event.target.value)
+                        const next = Number.isFinite(parsed) ? parsed : 0
+                        setEditorState((prev) => prev ? {
+                          ...prev,
+                          draftRotation: Math.max(-80, Math.min(80, next)),
+                        } : prev)
+                      }}
+                      className={`h-8 w-24 rounded-md border px-2 text-xs outline-none ${
+                        isDarkMode
+                          ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"
+                          : "border-gray-200 bg-gray-50 text-gray-900 focus:border-gray-300"
+                      }`}
+                    />
+                  </div>
+                </EditorControlTooltip>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                    <EditorControlTooltip label={editorState.draftItalic ? "Italic: On" : "Italic: Off"}>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={editorState.draftItalic ? "secondary" : "ghost"}
+                        className={`h-8 w-8 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                        onClick={() => {
+                          setEditorState((prev) => prev ? { ...prev, draftItalic: !prev.draftItalic } : prev)
+                        }}
+                        aria-label={editorState.draftItalic ? "Disable italic" : "Enable italic"}
+                      >
+                        <Italic className="h-4 w-4" />
+                      </Button>
+                    </EditorControlTooltip>
                     <EditorControlTooltip label="Align left">
                       <Button
                         type="button"
                         size="icon"
                         variant={editorState.draftAlign === "left" ? "secondary" : "ghost"}
-                        className="h-8 w-8 rounded-r-none"
+                        className={`h-8 w-8 rounded-none border-l ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
                         onClick={() => {
                           setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
                         }}
