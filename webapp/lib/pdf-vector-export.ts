@@ -66,8 +66,8 @@ function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
   return Math.max(1, Math.floor(gridCols / 2))
 }
 
-function getFontStyle(weight: string, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
-  if (weight === "Bold") return italic ? "bolditalic" : "bold"
+function getFontStyle(bold = false, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
+  if (bold) return italic ? "bolditalic" : "bold"
   return italic ? "italic" : "normal"
 }
 
@@ -320,6 +320,7 @@ export function renderSwissGridVectorPdf({
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
+  const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
@@ -361,7 +362,18 @@ export function renderSwissGridVectorPdf({
     if (blockSyllableDivision[key] === true || blockSyllableDivision[key] === false) return blockSyllableDivision[key]
     return key === "body" || key === "caption"
   }
-  const isBlockItalic = (key: BlockId) => blockItalic[key] === true
+  const getStyleDefaultBold = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.weight === "Bold"
+  const getStyleDefaultItalic = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.blockItalic === true
+  const isBlockBold = (key: BlockId, styleKey: TypographyStyleKey) => {
+    const override = blockBold[key]
+    if (override === true || override === false) return override
+    return getStyleDefaultBold(styleKey)
+  }
+  const isBlockItalic = (key: BlockId, styleKey: TypographyStyleKey) => {
+    const override = blockItalic[key]
+    if (override === true || override === false) return override
+    return getStyleDefaultItalic(styleKey)
+  }
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
@@ -418,7 +430,7 @@ export function renderSwissGridVectorPdf({
     }
 
     const blockRotation = getBlockRotation(block.key)
-    pdf.setFont("helvetica", getFontStyle(style.weight, isBlockItalic(block.key)))
+    pdf.setFont("helvetica", getFontStyle(isBlockBold(block.key, styleKey), isBlockItalic(block.key, styleKey)))
     pdf.setFontSize(fontSize)
 
     const span = getBlockSpan(block.key)
@@ -504,7 +516,7 @@ export function renderSwissGridVectorPdf({
   if (!captionStyle || !captionText) return
 
   const captionRotation = getBlockRotation("caption")
-  pdf.setFont("helvetica", getFontStyle(captionStyle.weight, isBlockItalic("caption")))
+  pdf.setFont("helvetica", getFontStyle(isBlockBold("caption", captionStyleKey), isBlockItalic("caption", captionStyleKey)))
   pdf.setFontSize(captionStyle.size * scale)
   const captionAlign: TextAlignMode = blockTextAlignments.caption === "right" ? "right" : "left"
   const captionSpan = getBlockSpan("caption")

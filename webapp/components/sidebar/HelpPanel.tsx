@@ -6,6 +6,21 @@ type Props = {
   onClose: () => void
 }
 
+const INDEX_ITEMS = [
+  { id: "help-quick-start", label: "Quick Start" },
+  { id: "help-canvas-grid", label: "Canvas and Grid" },
+  { id: "help-typography-fonts", label: "Typography and Fonts" },
+  { id: "help-editor", label: "Text Editor Popup" },
+  { id: "help-drag-placement", label: "Drag and Placement" },
+  { id: "help-history-reflow", label: "History and Reflow" },
+  { id: "help-sidebars-header", label: "Header and Sidebars" },
+  { id: "help-save-load", label: "Save and Load JSON" },
+  { id: "help-export", label: "Export PDF" },
+  { id: "help-shortcuts", label: "Keyboard Shortcuts" },
+  { id: "help-troubleshooting", label: "Troubleshooting" },
+  { id: "help-grid-theory", label: "Grid Theory Notes" },
+] as const
+
 export function HelpPanel({ isDarkMode = false, onClose }: Props) {
   const tone = isDarkMode
     ? {
@@ -14,6 +29,7 @@ export function HelpPanel({ isDarkMode = false, onClose }: Props) {
         divider: "border-gray-700",
         emphasis: "text-gray-200 font-medium",
         caption: "text-gray-500",
+        indexLink: "text-blue-400 hover:underline",
       }
     : {
         heading: "text-gray-900",
@@ -21,10 +37,11 @@ export function HelpPanel({ isDarkMode = false, onClose }: Props) {
         divider: "border-gray-200",
         emphasis: "text-gray-700 font-medium",
         caption: "text-gray-400",
+        indexLink: "text-blue-600 hover:underline",
       }
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className={`text-sm font-semibold ${tone.heading}`}>Help</h3>
         <button
@@ -36,59 +53,184 @@ export function HelpPanel({ isDarkMode = false, onClose }: Props) {
           <X className="h-4 w-4" />
         </button>
       </div>
-      <hr className={tone.divider} />
-      <div>
-        <h3 className={`text-sm font-semibold mb-2 ${tone.heading}`}>How to Use</h3>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Double-click the canvas to edit a text block or create a new one</li>
-          <li>Drag text blocks to reposition them on the grid (Shift-drag duplicates)</li>
-          <li>
-            Use the display toggles above to show/hide baselines, margins, modules, and typography
-          </li>
-          <li>Use keyboard shortcuts below for every preview header action</li>
-          <li>Click a section header to collapse it; double-click to toggle all sections</li>
-        </ul>
-      </div>
-      <hr className={tone.divider} />
-      <div>
-        <h3 className={`text-sm font-semibold mb-2 ${tone.heading}`}>Keyboard Shortcuts</h3>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.id}>
-              <span className={tone.emphasis}>
-                {shortcut.combo}
-              </span>
-              : {shortcut.description}
+
+      <div id="help-index">
+        <h4 className={`mb-2 text-sm font-semibold ${tone.heading}`}>Index</h4>
+        <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+          {INDEX_ITEMS.map((item) => (
+            <li key={item.id}>
+              <a href={`#${item.id}`} className={tone.indexLink}>
+                {item.label}
+              </a>
             </li>
           ))}
         </ul>
       </div>
+
       <hr className={tone.divider} />
-      <div>
-        <h3 className={`text-sm font-semibold mb-2 ${tone.heading}`}>Grid Theory</h3>
+
+      <section id="help-quick-start" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Quick Start</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Pick a ratio in `I. Canvas Ratio` and set orientation/rotation.</li>
+          <li>Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.</li>
+          <li>Choose margin method in `III. Margins` or enable `Custom Margins`.</li>
+          <li>Set columns/rows and gutter in `IV. Gutter`.</li>
+          <li>Set type hierarchy and base font in `V. Typo`.</li>
+          <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-canvas-grid" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Canvas and Grid</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Grid range is `1..13` for both columns and rows.</li>
+          <li>Gutter multiple range is `0.5..4.0` in `0.5` steps.</li>
+          <li>Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).</li>
+          <li>Top/bottom margins snap to baseline grid units.</li>
+          <li>Custom margins are entered as baseline multiples per side.</li>
+          <li>Grid/module geometry is always recomputed from current page, margins, baseline, and gutter.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-typography-fonts" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Typography and Fonts</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
+          <li>`Base Font` is inherited by blocks that do not store explicit font overrides.</li>
+          <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
+          <li>Style defaults define base weight and optional default italic per style.</li>
+          <li>Manual bold/italic in editor can override style defaults per paragraph.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-editor" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Text Editor Popup</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
+          <li>Controls: style, font, row span, column span, rotation, bold, italic, alignment.</li>
+          <li>Controls: reflow toggle, syllable division toggle, save, delete (custom blocks), live character/word count.</li>
+          <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
+          <li>Paragraph rotation is clamped to `-80..80` degrees in editor.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-drag-placement" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Drag and Placement</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Drag moves a block snapped to module anchors.</li>
+          <li>`Shift` + drag duplicates a block and drops the copy.</li>
+          <li>`Ctrl` + drag snaps drop row to nearest baseline row.</li>
+          <li>Block spans and positions are clamped to valid grid bounds.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-history-reflow" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>History and Reflow</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Undo/redo includes settings changes and block edits/placement changes.</li>
+          <li>Some structural grid changes trigger auto-reflow suggestions.</li>
+          <li>Disruptive reflow opens an apply/cancel confirmation layer.</li>
+          <li>Applied reflow shows a toast with one-click Undo.</li>
+          <li>JSON layout loading suppresses disruptive reflow prompts.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-sidebars-header" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Header and Sidebars</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, fullscreen, display toggles.</li>
+          <li>Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.</li>
+          <li>Right-side content panels include close icons in their header rows.</li>
+          <li>Only one right-side panel is open at a time.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-save-load" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Save and Load JSON</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Save JSON stores UI settings and full preview layout state.</li>
+          <li>Load JSON restores both settings and layout where valid.</li>
+          <li>Unknown font overrides are dropped during load normalization.</li>
+          <li>Overrides equal to inherited defaults are normalized away.</li>
+          <li>Invalid/out-of-range spans/rows/positions are clamped safely.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-export" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Export PDF</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Export is vector-based (not raster screenshot export).</li>
+          <li>DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.</li>
+          <li>Print Pro options include bleed, registration-style crop marks, and final-safe guides.</li>
+          <li>Export applies current rotation, guides visibility toggles, and text styling.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-shortcuts" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Keyboard Shortcuts</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
+            <li key={shortcut.id}>
+              <span className={tone.emphasis}>{shortcut.combo}</span>: {shortcut.description}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-troubleshooting" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Troubleshooting</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>If blocks disappear, check display toggles and whether text content is empty.</li>
+          <li>If paragraph flow looks clipped, increase row span or disable reflow for that block.</li>
+          <li>If layout jumps after large grid changes, this is expected from structural reflow remapping.</li>
+          <li>If custom margins seem odd, verify baseline value and side multipliers first.</li>
+          <li>If keyboard shortcuts do not trigger, focus outside active text inputs.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-grid-theory" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Grid Theory Notes</h4>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>
-            <span className={tone.emphasis}>Baseline alignment:</span> all typography
-            leading is an integer multiple of the baseline unit
+            <span className={tone.emphasis}>Baseline alignment:</span> leading is an integer multiple of baseline.
           </li>
           <li>
-            <span className={tone.emphasis}>Margin methods:</span> Progressive
-            (1:2:2:3), Van de Graaf (2:3:4:6), Baseline (1:1:1:1)
+            <span className={tone.emphasis}>Margins:</span> use proportional baseline-unit systems to balance page weight.
           </li>
           <li>
-            <span className={tone.emphasis}>Typography scales:</span> Swiss, Golden
-            Ratio, Perfect Fourth, Perfect Fifth, Fibonacci
+            <span className={tone.emphasis}>Modules:</span> define consistent content rhythm and repeatable placement anchors.
           </li>
           <li>
-            <span className={tone.emphasis}>Format scaling:</span> baseline defaults
-            scale by {"\u221A"}2 steps (A4 = 12pt reference)
+            <span className={tone.emphasis}>Typographic hierarchy:</span> scale presets keep proportion while preserving baseline rhythm.
           </li>
         </ul>
         <p className={`mt-3 text-[11px] leading-relaxed ${tone.caption}`}>
-          Reference: Josef M{"\u00FC"}ller-Brockmann,{" "}
-          <em>Grid Systems in Graphic Design</em> (1981)
+          Reference: Josef M{"\u00FC"}ller-Brockmann, <em>Grid Systems in Graphic Design</em> (1981)
         </p>
-      </div>
-    </>
+      </section>
+    </div>
   )
 }

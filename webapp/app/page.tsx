@@ -1048,7 +1048,7 @@ export default function Home() {
 
         <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">
-            <span>Version {APP_VERSION}</span>
+            <span>Beta Version {APP_VERSION}</span>
             <button
               type="button"
               className={uiTheme.link}

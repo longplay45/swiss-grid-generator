@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Grid Generator — Beta Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #fafafa;
+    --gray-50: #f5f5f5;
+    --gray-100: #ebebeb;
+    --gray-200: #d6d6d6;
+    --gray-300: #b8b8b8;
+    --gray-400: #8a8a8a;
+    --gray-500: #6b6b6b;
+    --gray-600: #4a4a4a;
+    --red: #e60012;
+    --red-hover: #cc0010;
+    --red-light: #fff0f1;
+    --blue: #0055cc;
+    --green: #1a8754;
+    --green-light: #eaf7f0;
+    --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --col-width: 680px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--white);
+    color: var(--black);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* === HEADER === */
+  .header {
+    border-bottom: 3px solid var(--black);
+    padding: 40px 24px 32px;
+  }
+
+  .header-inner {
+    max-width: var(--col-width);
+    margin: 0 auto;
+  }
+
+  .header-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .header-meta span.tag {
+    background: var(--red);
+    color: white;
+    padding: 2px 8px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .header p {
+    font-size: 15px;
+    color: var(--gray-600);
+    max-width: 560px;
+    line-height: 1.65;
+  }
+
+  .header p a {
+    color: var(--black);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* === PROGRESS === */
+  .progress-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--gray-100);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--red);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-info {
+    max-width: var(--col-width);
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+  }
+
+  /* === MAIN FORM === */
+  .survey-body {
+    max-width: var(--col-width);
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* Sections */
+  .section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .section.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    padding: 48px 0 8px;
+    border-bottom: 2px solid var(--black);
+    margin-bottom: 32px;
+  }
+
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin-top: 6px;
+  }
+
+  /* Question blocks */
+  .question {
+    margin-bottom: 36px;
+  }
+
+  .question-label {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.5;
+  }
+
+  .question-hint {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .required-mark {
+    color: var(--red);
+    margin-left: 2px;
+  }
+
+  /* Radio / Checkbox groups */
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .option-group.horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .option-item {
+    position: relative;
+  }
+
+  .option-item input[type="radio"],
+  .option-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .option-item label {
+    display: block;
+    padding: 10px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    background: white;
+  }
+
+  .option-item label:hover {
+    border-color: var(--gray-400);
+  }
+
+  .option-item input:checked + label {
+    border-color: var(--black);
+    background: var(--gray-50);
+    font-weight: 500;
+  }
+
+  .option-group.horizontal .option-item label {
+    padding: 8px 16px;
+  }
+
+  /* Likert scale */
+  .likert-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .likert-item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .likert-item .likert-label {
+    font-size: 14px;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+
+  .likert-scale {
+    display: flex;
+    gap: 0;
+  }
+
+  .likert-scale .scale-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1.5px solid var(--gray-200);
+    border-right: none;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    text-align: center;
+    color: var(--gray-500);
+  }
+
+  .likert-scale .scale-btn:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .likert-scale .scale-btn:last-child {
+    border-right: 1.5px solid var(--gray-200);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .likert-scale .scale-btn:hover {
+    background: var(--gray-50);
+    color: var(--black);
+  }
+
+  .likert-scale .scale-btn.selected {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+    font-weight: 500;
+  }
+
+  .likert-scale .scale-btn.selected + .scale-btn {
+    border-left-color: var(--black);
+  }
+
+  .likert-endpoints {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  /* NPS scale */
+  .nps-scale {
+    display: flex;
+    gap: 0;
+  }
+
+  .nps-scale .nps-btn {
+    flex: 1;
+    padding: 12px 0;
+    border: 1.5px solid var(--gray-200);
+    border-right: none;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    text-align: center;
+    color: var(--gray-500);
+  }
+
+  .nps-scale .nps-btn:first-child { border-radius: 4px 0 0 4px; }
+  .nps-scale .nps-btn:last-child {
+    border-right: 1.5px solid var(--gray-200);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .nps-scale .nps-btn:hover {
+    background: var(--gray-50);
+    color: var(--black);
+  }
+
+  .nps-scale .nps-btn.selected {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+  }
+
+  .nps-scale .nps-btn.selected + .nps-btn {
+    border-left-color: var(--black);
+  }
+
+  /* Text inputs */
+  textarea, input[type="text"], input[type="email"] {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 4px;
+    background: white;
+    color: var(--black);
+    outline: none;
+    transition: border-color 0.15s ease;
+    resize: vertical;
+  }
+
+  textarea:focus, input[type="text"]:focus, input[type="email"]:focus {
+    border-color: var(--black);
+  }
+
+  textarea::placeholder, input::placeholder {
+    color: var(--gray-300);
+  }
+
+  textarea {
+    min-height: 80px;
+  }
+
+  /* Checkbox list (multi-select) */
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .checkbox-group .option-item input:checked + label {
+    border-color: var(--black);
+    background: var(--gray-50);
+    font-weight: 500;
+  }
+
+  .checkbox-group .option-item input:checked + label::before {
+    content: '✓ ';
+    font-weight: 700;
+  }
+
+  /* "Other" inline field */
+  .other-field {
+    margin-top: 8px;
+    display: none;
+  }
+
+  .other-field.visible {
+    display: block;
+  }
+
+  /* Navigation buttons */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .btn {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--black);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #222;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--gray-500);
+    border: 1.5px solid var(--gray-200);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--gray-400);
+    color: var(--black);
+  }
+
+  .btn-submit {
+    background: var(--red);
+    color: white;
+    padding: 14px 36px;
+    font-size: 15px;
+  }
+
+  .btn-submit:hover {
+    background: var(--red-hover);
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* === SUCCESS STATE === */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 120px 24px;
+    max-width: var(--col-width);
+    margin: 0 auto;
+  }
+
+  .success-screen.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .success-icon {
+    width: 56px;
+    height: 56px;
+    border: 3px solid var(--black);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 24px;
+  }
+
+  .success-screen h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .success-screen p {
+    font-size: 15px;
+    color: var(--gray-500);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.65;
+  }
+
+  .success-links {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .success-links a {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--gray-500);
+    text-decoration: none;
+    border-bottom: 1px solid var(--gray-300);
+    padding-bottom: 1px;
+    transition: color 0.15s;
+  }
+
+  .success-links a:hover {
+    color: var(--black);
+    border-color: var(--black);
+  }
+
+  /* === FOOTER === */
+  .footer {
+    border-top: 1px solid var(--gray-200);
+    padding: 24px;
+    text-align: center;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--gray-400);
+    letter-spacing: 0.03em;
+  }
+
+  .footer a {
+    color: var(--gray-500);
+    text-decoration: none;
+    border-bottom: 1px solid var(--gray-300);
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 600px) {
+    .header h1 { font-size: 22px; }
+    .nps-scale .nps-btn { padding: 10px 0; font-size: 12px; }
+    .likert-scale .scale-btn { font-size: 12px; padding: 7px 0; }
+    .nav-buttons { gap: 12px; }
+    .btn { padding: 10px 20px; font-size: 13px; }
+  }
+
+  /* Separator */
+  .question-separator {
+    border: none;
+    border-top: 1px solid var(--gray-100);
+    margin: 0 0 36px 0;
+  }
+
+  /* Bug report conditional */
+  .conditional {
+    display: none;
+    padding-left: 20px;
+    border-left: 2px solid var(--gray-200);
+    margin-top: 12px;
+  }
+  .conditional.visible {
+    display: block;
+    animation: fadeIn 0.2s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-info">
+    <span id="sectionLabel">Sektion 1 von 7</span>
+    <span id="timeEstimate">ca. 5 min</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-meta">
+      <span class="tag">Beta</span>
+      <span>Swiss Grid Generator</span>
+      <span>Feedback Survey</span>
+    </div>
+    <h1>Hilf uns, das Tool besser zu machen.</h1>
+    <p>Dein Feedback fließt direkt in die Entwicklung ein. Die Umfrage dauert etwa 5 Minuten. Alle Antworten sind anonym — es sei denn, du gibst freiwillig deine E-Mail-Adresse an.</p>
+  </div>
+</header>
+
+<!-- SURVEY FORM -->
+<main class="survey-body" id="surveyForm">
+
+  <!-- ========== SECTION 1: Über dich ========== -->
+  <div class="section active" data-section="1">
+    <div class="section-header">
+      <div class="section-number">Sektion 01</div>
+      <div class="section-title">Über dich</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Was beschreibt dich am besten?<span class="required-mark">*</span></div>
+      <div class="option-group">
+        <div class="option-item">
+          <input type="radio" name="role" id="role1" value="Grafikdesigner:in / Typograf:in" required>
+          <label for="role1">Grafikdesigner:in / Typograf:in</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="role" id="role2" value="Art Director / Creative Director">
+          <label for="role2">Art Director / Creative Director</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="role" id="role3" value="Frontend-Entwickler:in">
+          <label for="role3">Frontend-Entwickler:in</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="role" id="role4" value="Design-Student:in / Lernende:r">
+          <label for="role4">Design-Student:in / Lernende:r</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="role" id="role5" value="Dozent:in / Lehrperson">
+          <label for="role5">Dozent:in / Lehrperson</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="role" id="role6" value="other">
+          <label for="role6">Anderes</label>
+        </div>
+      </div>
+      <div class="other-field" id="roleOther">
+        <input type="text" placeholder="Bitte beschreiben…" name="role_other">
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Wie erfahren bist du mit typografischen Rastersystemen?<span class="required-mark">*</span></div>
+      <div class="question-hint">Z.B. Arbeit mit Gestaltungsrastern nach Müller-Brockmann, Baseline Grids, Spaltenraster etc.</div>
+      <div class="option-group horizontal">
+        <div class="option-item">
+          <input type="radio" name="experience" id="exp1" value="Einsteiger" required>
+          <label for="exp1">Einsteiger</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="experience" id="exp2" value="Fortgeschritten">
+          <label for="exp2">Fortgeschritten</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="experience" id="exp3" value="Profi">
+          <label for="exp3">Profi</label>
+        </div>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Wie oft hast du die Beta benutzt?</div>
+      <div class="option-group horizontal">
+        <div class="option-item">
+          <input type="radio" name="frequency" id="freq1" value="Einmal">
+          <label for="freq1">Einmal</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="frequency" id="freq2" value="2–3 Mal">
+          <label for="freq2">2–3 Mal</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="frequency" id="freq3" value="Regelmässig">
+          <label for="freq3">Regelmässig</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <div></div>
+      <button class="btn btn-primary" onclick="goTo(2)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 2: Erster Eindruck ========== -->
+  <div class="section" data-section="2">
+    <div class="section-header">
+      <div class="section-number">Sektion 02</div>
+      <div class="section-title">Erster Eindruck</div>
+      <div class="section-desc">Denk an deine ersten 10 Minuten mit dem Tool.</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Bewerte die folgenden Aussagen.<span class="required-mark">*</span></div>
+      <div class="likert-row">
+        <div class="likert-item">
+          <div class="likert-label">Ich habe schnell verstanden, was das Tool macht.</div>
+          <div class="likert-scale" data-name="understand">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Der Einstieg war einfach.</div>
+          <div class="likert-scale" data-name="easystart">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Die Oberfläche wirkt intuitiv.</div>
+          <div class="likert-scale" data-name="intuitive">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Ich konnte beim ersten Versuch ein sinnvolles Raster erstellen.</div>
+          <div class="likert-scale" data-name="firstresult">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+      </div>
+      <div class="likert-endpoints">
+        <span>Stimme nicht zu</span>
+        <span>Stimme voll zu</span>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Was war in den ersten Minuten unklar oder verwirrend?</div>
+      <textarea name="first_confusion" placeholder="Z.B. Begriffe, Steuerelemente, fehlende Erklärungen…"></textarea>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Zurück</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 3: Funktionen & Qualität ========== -->
+  <div class="section" data-section="3">
+    <div class="section-header">
+      <div class="section-number">Sektion 03</div>
+      <div class="section-title">Funktionen & Qualität</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Bewerte die einzelnen Bereiche des Tools.<span class="required-mark">*</span></div>
+      <div class="likert-row">
+        <div class="likert-item">
+          <div class="likert-label">Rasterberechnung (Ränder, Stege, Grundlinienraster)</div>
+          <div class="likert-scale" data-name="calc_accuracy">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Treue zu Müller-Brockmanns Prinzipien</div>
+          <div class="likert-scale" data-name="brockmann_fidelity">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Interaktive Vorschau (Canvas, Toggles, Text)</div>
+          <div class="likert-scale" data-name="preview_quality">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Bedienbarkeit der Parameter & Steuerelemente</div>
+          <div class="likert-scale" data-name="controls_ux">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Performance & Geschwindigkeit</div>
+          <div class="likert-scale" data-name="performance">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Export-Optionen (PDF, JSON, TXT)</div>
+          <div class="likert-scale" data-name="export_quality">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+      </div>
+      <div class="likert-endpoints">
+        <span>Schlecht</span>
+        <span>Ausgezeichnet</span>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Welche Export-Formate hast du genutzt?</div>
+      <div class="checkbox-group">
+        <div class="option-item">
+          <input type="checkbox" name="exports_used" id="exp_pdf" value="PDF">
+          <label for="exp_pdf">PDF</label>
+        </div>
+        <div class="option-item">
+          <input type="checkbox" name="exports_used" id="exp_json" value="JSON">
+          <label for="exp_json">JSON</label>
+        </div>
+        <div class="option-item">
+          <input type="checkbox" name="exports_used" id="exp_txt" value="TXT">
+          <label for="exp_txt">TXT</label>
+        </div>
+        <div class="option-item">
+          <input type="checkbox" name="exports_used" id="exp_none" value="Keine">
+          <label for="exp_none">Noch keines</label>
+        </div>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Was hat besonders gut funktioniert?</div>
+      <textarea name="what_worked" placeholder="Features, Interaktionen, Ergebnisse die überrascht oder überzeugt haben…"></textarea>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(2)">← Zurück</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 4: Probleme & Reibung ========== -->
+  <div class="section" data-section="4">
+    <div class="section-header">
+      <div class="section-number">Sektion 04</div>
+      <div class="section-title">Probleme & Reibung</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Bist du auf Fehler oder Bugs gestoßen?<span class="required-mark">*</span></div>
+      <div class="option-group horizontal">
+        <div class="option-item">
+          <input type="radio" name="bugs_found" id="bugs_no" value="Nein">
+          <label for="bugs_no">Nein</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="bugs_found" id="bugs_yes" value="Ja">
+          <label for="bugs_yes">Ja</label>
+        </div>
+      </div>
+      <div class="conditional" id="bugDetails">
+        <div class="question" style="margin-top: 16px;">
+          <div class="question-label">Beschreibe den Fehler:</div>
+          <div class="question-hint">Was ist passiert? Was hast du erwartet? Gerät/Browser?</div>
+          <textarea name="bug_description" placeholder="So detailliert wie möglich…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Größter Reibungspunkt aktuell?</div>
+      <textarea name="friction" placeholder="Was hat dich am meisten gestört oder aufgehalten?"></textarea>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Was hat beinahe dazu geführt, dass du aufgehört hast?</div>
+      <textarea name="almost_stopped" placeholder="Frustrationen, Unklarheiten, fehlende Features…"></textarea>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(3)">← Zurück</button>
+      <button class="btn btn-primary" onclick="goTo(5)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 5: Wert & Alternativen ========== -->
+  <div class="section" data-section="5">
+    <div class="section-header">
+      <div class="section-number">Sektion 05</div>
+      <div class="section-title">Wert & Alternativen</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Wie enttäuscht wärst du, wenn es dieses Tool nicht mehr gäbe?<span class="required-mark">*</span></div>
+      <div class="question-hint">Sean-Ellis-Test — hilft uns zu verstehen, ob wir Product-Market-Fit haben.</div>
+      <div class="option-group">
+        <div class="option-item">
+          <input type="radio" name="disappointment" id="dis1" value="Gar nicht enttäuscht" required>
+          <label for="dis1">Gar nicht enttäuscht</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="disappointment" id="dis2" value="Etwas enttäuscht">
+          <label for="dis2">Etwas enttäuscht</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="disappointment" id="dis3" value="Ziemlich enttäuscht">
+          <label for="dis3">Ziemlich enttäuscht</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="disappointment" id="dis4" value="Sehr enttäuscht">
+          <label for="dis4">Sehr enttäuscht</label>
+        </div>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Welche Aufgabe versuchst du mit dem Tool zu lösen?</div>
+      <textarea name="job_to_be_done" placeholder="Z.B. Raster für ein Buchprojekt erstellen, Rastersystem für eine Website planen…"></textarea>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Welche Alternativen nutzt du heute?</div>
+      <textarea name="alternatives" placeholder="Z.B. InDesign, Figma Plugins, manuelle Berechnung, Gridcalculator.dk…"></textarea>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(4)">← Zurück</button>
+      <button class="btn btn-primary" onclick="goTo(6)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 6: Prioritäten & Roadmap ========== -->
+  <div class="section" data-section="6">
+    <div class="section-header">
+      <div class="section-number">Sektion 06</div>
+      <div class="section-title">Prioritäten & Roadmap</div>
+      <div class="section-desc">Was sollen wir als nächstes bauen?</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Wie wertvoll wären diese möglichen Pro-Features?<span class="required-mark">*</span></div>
+      <div class="likert-row">
+        <div class="likert-item">
+          <div class="likert-label">Druckfertiges PDF mit Anschnitt, Schnittmarken & Hilfslinien</div>
+          <div class="likert-scale" data-name="feat_print_pdf">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">InDesign / Illustrator Export (.jsx Script oder Template)</div>
+          <div class="likert-scale" data-name="feat_adobe_export">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Figma-kompatibles JSON oder SVG Grid-Overlay</div>
+          <div class="likert-scale" data-name="feat_figma">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Beispiel-Layouts & Presets aus dem Buch / Schweizer Plakaten</div>
+          <div class="likert-scale" data-name="feat_presets">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Projekte lokal oder in der Cloud speichern & laden</div>
+          <div class="likert-scale" data-name="feat_save">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+        <div class="likert-item">
+          <div class="likert-label">Zweisprachige Oberfläche (DE/EN mit Originalbegriffen)</div>
+          <div class="likert-scale" data-name="feat_bilingual">
+            <button class="scale-btn" data-value="1">1</button>
+            <button class="scale-btn" data-value="2">2</button>
+            <button class="scale-btn" data-value="3">3</button>
+            <button class="scale-btn" data-value="4">4</button>
+            <button class="scale-btn" data-value="5">5</button>
+          </div>
+        </div>
+      </div>
+      <div class="likert-endpoints">
+        <span>Unwichtig</span>
+        <span>Sehr wichtig</span>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Die wichtigste einzelne Verbesserung, die wir als nächstes machen sollten?</div>
+      <textarea name="top_improvement" placeholder="Eine Sache, die den größten Unterschied machen würde…"></textarea>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Welches Feature hast du erwartet, aber nicht gefunden?</div>
+      <textarea name="missing_features" placeholder=""></textarea>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(5)">← Zurück</button>
+      <button class="btn btn-primary" onclick="goTo(7)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION 7: Empfehlung & Abschluss ========== -->
+  <div class="section" data-section="7">
+    <div class="section-header">
+      <div class="section-number">Sektion 07</div>
+      <div class="section-title">Empfehlung & Abschluss</div>
+    </div>
+
+    <div class="question">
+      <div class="question-label">Wie wahrscheinlich ist es, dass du das Tool weiterempfiehlst?<span class="required-mark">*</span></div>
+      <div class="question-hint">0 = Sehr unwahrscheinlich · 10 = Sehr wahrscheinlich</div>
+      <div class="nps-scale" id="npsScale">
+        <button class="nps-btn" data-value="0">0</button>
+        <button class="nps-btn" data-value="1">1</button>
+        <button class="nps-btn" data-value="2">2</button>
+        <button class="nps-btn" data-value="3">3</button>
+        <button class="nps-btn" data-value="4">4</button>
+        <button class="nps-btn" data-value="5">5</button>
+        <button class="nps-btn" data-value="6">6</button>
+        <button class="nps-btn" data-value="7">7</button>
+        <button class="nps-btn" data-value="8">8</button>
+        <button class="nps-btn" data-value="9">9</button>
+        <button class="nps-btn" data-value="10">10</button>
+      </div>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Warum diese Bewertung?</div>
+      <textarea name="nps_reason" placeholder="Was war ausschlaggebend?"></textarea>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Gibt es sonst noch etwas, das du uns mitteilen möchtest?</div>
+      <textarea name="anything_else" placeholder="Ideen, Wünsche, Kritik — alles willkommen."></textarea>
+    </div>
+
+    <hr class="question-separator">
+
+    <div class="question">
+      <div class="question-label">Dürfen wir dich für ein kurzes Follow-up kontaktieren? (Optional)</div>
+      <div class="question-hint">20 Minuten, z.B. per Video-Call. Kein Spam.</div>
+      <div class="option-group horizontal" style="margin-bottom: 12px;">
+        <div class="option-item">
+          <input type="radio" name="followup" id="fu_yes" value="Ja">
+          <label for="fu_yes">Ja, gerne</label>
+        </div>
+        <div class="option-item">
+          <input type="radio" name="followup" id="fu_no" value="Nein">
+          <label for="fu_no">Nein, danke</label>
+        </div>
+      </div>
+      <input type="email" name="email" placeholder="E-Mail-Adresse (optional)">
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goTo(6)">← Zurück</button>
+      <button class="btn btn-submit" onclick="submitSurvey()">Feedback absenden</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">✓</div>
+  <h2>Vielen Dank!</h2>
+  <p>Dein Feedback ist eingegangen und fließt direkt in die nächste Version ein. Wir melden uns, falls du ein Follow-up erlaubt hast.</p>
+  <div class="success-links">
+    <a href="https://preview.swissgridgenerator.com">Zurück zum Tool</a>
+    <a href="https://github.com/longplay45/swiss-grid-generator">GitHub Repo</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <a href="https://preview.swissgridgenerator.com">Swiss Grid Generator</a> · Beta Feedback Survey · 2025
+</footer>
+
+<script>
+  // ==========================================
+  // STATE
+  // ==========================================
+  const totalSections = 7;
+  let currentSection = 1;
+  const surveyData = {};
+
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+  function goTo(n) {
+    if (n < 1 || n > totalSections) return;
+
+    // Collect data from current section before leaving
+    collectSectionData(currentSection);
+
+    // Hide current, show next
+    document.querySelector(`.section[data-section="${currentSection}"]`).classList.remove('active');
+    document.querySelector(`.section[data-section="${n}"]`).classList.add('active');
+    currentSection = n;
+
+    // Update progress
+    const pct = ((n - 1) / (totalSections - 1)) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('sectionLabel').textContent = `Sektion ${n} von ${totalSections}`;
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ==========================================
+  // DATA COLLECTION
+  // ==========================================
+  function collectSectionData(section) {
+    const el = document.querySelector(`.section[data-section="${section}"]`);
+    if (!el) return;
+
+    // Radios
+    el.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+      surveyData[r.name] = r.value;
+    });
+
+    // Checkboxes
+    const checkboxGroups = {};
+    el.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
+      if (!checkboxGroups[c.name]) checkboxGroups[c.name] = [];
+      checkboxGroups[c.name].push(c.value);
+    });
+    Object.assign(surveyData, checkboxGroups);
+
+    // Textareas and text inputs
+    el.querySelectorAll('textarea, input[type="text"], input[type="email"]').forEach(t => {
+      if (t.name && t.value.trim()) {
+        surveyData[t.name] = t.value.trim();
+      }
+    });
+
+    // Likert scales
+    el.querySelectorAll('.likert-scale').forEach(scale => {
+      const selected = scale.querySelector('.scale-btn.selected');
+      if (selected) {
+        surveyData[scale.dataset.name] = parseInt(selected.dataset.value);
+      }
+    });
+
+    // NPS
+    const npsSelected = document.querySelector('#npsScale .nps-btn.selected');
+    if (npsSelected) {
+      surveyData['nps_score'] = parseInt(npsSelected.dataset.value);
+    }
+  }
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+  async function submitSurvey() {
+    collectSectionData(currentSection);
+
+    // Disable button to prevent double-submit
+    const btn = document.querySelector('.btn-submit');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Wird gesendet…';
+
+    try {
+      const res = await fetch('survey-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(surveyData),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Unbekannter Fehler');
+      }
+
+      // Show success
+      document.getElementById('surveyForm').style.display = 'none';
+      document.querySelector('.progress-bar').style.display = 'none';
+      document.querySelector('.header').style.display = 'none';
+      document.getElementById('successScreen').classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error('Submit error:', err);
+      btn.disabled = false;
+      btn.textContent = originalText;
+      alert('Senden fehlgeschlagen: ' + err.message + '\n\nBitte versuche es erneut.');
+    }
+  }
+
+  // ==========================================
+  // INTERACTIVE ELEMENTS
+  // ==========================================
+
+  // Likert scale buttons
+  document.querySelectorAll('.likert-scale').forEach(scale => {
+    scale.querySelectorAll('.scale-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        scale.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+  });
+
+  // NPS buttons
+  document.querySelectorAll('#npsScale .nps-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('#npsScale .nps-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // "Other" role field toggle
+  document.querySelectorAll('input[name="role"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const otherField = document.getElementById('roleOther');
+      otherField.classList.toggle('visible', r.value === 'other' && r.checked);
+    });
+  });
+
+  // Bug details conditional
+  document.querySelectorAll('input[name="bugs_found"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const details = document.getElementById('bugDetails');
+      details.classList.toggle('visible', r.value === 'Ja' && r.checked);
+    });
+  });
+</script>
+</body>
+</html>
