@@ -6,9 +6,6 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
-  onHelpClick: () => void
-  onHelpHover: () => void
-  showHelpIcon: boolean
   customBaseline: number
   availableBaselineOptions: number[]
   onCustomBaselineChange: (value: number) => void
@@ -19,9 +16,6 @@ export function BaselineGridPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
-  onHelpClick,
-  onHelpHover,
-  showHelpIcon,
   customBaseline,
   availableBaselineOptions,
   onCustomBaselineChange,
@@ -34,9 +28,7 @@ export function BaselineGridPanel({
       collapsed={collapsed}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
-      onHelpClick={onHelpClick}
-      onHelpHover={onHelpHover}
-      showHelpIcon={showHelpIcon}
+      helpSectionKey="baseline"
       isDarkMode={isDarkMode}
     >
       {availableBaselineOptions.length > 0 && (

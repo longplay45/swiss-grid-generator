@@ -42,6 +42,7 @@ import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
+import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import type { HelpSectionId } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
@@ -81,6 +82,21 @@ const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
   margins: "help-margins",
   gutter: "help-gutter",
   typo: "help-typo",
+}
+const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
+  examples: "help-header-examples",
+  load: "help-header-load",
+  save: "help-header-save",
+  export: "help-header-export",
+  undo: "help-header-undo",
+  redo: "help-header-redo",
+  "dark-mode": "help-header-dark-mode",
+  fullscreen: "help-header-fullscreen",
+  baselines: "help-header-baselines",
+  margins: "help-header-margins",
+  modules: "help-header-modules",
+  typography: "help-header-typography",
+  settings: "help-header-settings",
 }
 
 // ─── Consolidated UI state ────────────────────────────────────────────────
@@ -394,12 +410,13 @@ export default function Home() {
     toggleAllSections()
   }
 
-  const handleSectionHelpClick = useCallback((key: SectionKey) => {
+  const handleSectionHelpNavigate = useCallback((key: SectionKey) => {
     const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
     setActiveHelpSectionId(targetSectionId)
   }, [])
-  const handleSectionHelpHover = useCallback((key: SectionKey) => {
-    const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
+  const handleHeaderHelpNavigate = useCallback((actionKey: string) => {
+    const targetSectionId = HELP_SECTION_BY_HEADER_ACTION[actionKey]
+    if (!targetSectionId) return
     setActiveHelpSectionId(targetSectionId)
   }, [])
 
@@ -910,17 +927,32 @@ export default function Home() {
       : null
     const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
     return (
-    <HeaderIconButton
-      key={action.key}
-      ariaLabel={action.ariaLabel}
-      tooltip={tooltip}
-      variant={action.variant ?? "outline"}
-      aria-pressed={action.pressed}
-      disabled={action.disabled}
-      onClick={action.onClick}
-    >
-      {action.icon}
-    </HeaderIconButton>
+      <div key={action.key} className="inline-flex items-center gap-1">
+        <HeaderIconButton
+          ariaLabel={action.ariaLabel}
+          tooltip={tooltip}
+          variant={action.variant ?? "outline"}
+          aria-pressed={action.pressed}
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          {action.icon}
+        </HeaderIconButton>
+        {showSectionHelpIcons && action.key !== "help" ? (
+          <button
+            type="button"
+            aria-label={`Open help for ${action.ariaLabel}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              handleHeaderHelpNavigate(action.key)
+            }}
+            onMouseEnter={() => handleHeaderHelpNavigate(action.key)}
+            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
+          >
+            ?
+          </button>
+        ) : null}
+      </div>
     )
   }
 
@@ -942,85 +974,73 @@ export default function Home() {
           <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
             Grid Generator Settings
           </h2>
+          <SettingsHelpNavigationProvider
+            value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
+          >
+            <CanvasRatioPanel
+              collapsed={collapsed.format}
+              onHeaderClick={handleSectionHeaderClick("format")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              canvasRatio={canvasRatio}
+              onCanvasRatioChange={setCanvasRatio}
+              orientation={orientation}
+              onOrientationChange={setOrientation}
+              rotation={rotation}
+              onRotationChange={setRotation}
+              isDarkMode={isDarkUi}
+            />
 
-          <CanvasRatioPanel
-            collapsed={collapsed.format}
-            onHeaderClick={handleSectionHeaderClick("format")}
-            onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            onHelpClick={() => handleSectionHelpClick("format")}
-            onHelpHover={() => handleSectionHelpHover("format")}
-            showHelpIcon={showSectionHelpIcons}
-            canvasRatio={canvasRatio}
-            onCanvasRatioChange={setCanvasRatio}
-            orientation={orientation}
-            onOrientationChange={setOrientation}
-            rotation={rotation}
-            onRotationChange={setRotation}
-            isDarkMode={isDarkUi}
-          />
+            <BaselineGridPanel
+              collapsed={collapsed.baseline}
+              onHeaderClick={handleSectionHeaderClick("baseline")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              customBaseline={customBaseline}
+              availableBaselineOptions={availableBaselineOptions}
+              onCustomBaselineChange={setCustomBaseline}
+              isDarkMode={isDarkUi}
+            />
 
-          <BaselineGridPanel
-            collapsed={collapsed.baseline}
-            onHeaderClick={handleSectionHeaderClick("baseline")}
-            onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            onHelpClick={() => handleSectionHelpClick("baseline")}
-            onHelpHover={() => handleSectionHelpHover("baseline")}
-            showHelpIcon={showSectionHelpIcons}
-            customBaseline={customBaseline}
-            availableBaselineOptions={availableBaselineOptions}
-            onCustomBaselineChange={setCustomBaseline}
-            isDarkMode={isDarkUi}
-          />
+            <MarginsPanel
+              collapsed={collapsed.margins}
+              onHeaderClick={handleSectionHeaderClick("margins")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              marginMethod={marginMethod}
+              onMarginMethodChange={setMarginMethod}
+              baselineMultiple={baselineMultiple}
+              onBaselineMultipleChange={setBaselineMultiple}
+              useCustomMargins={useCustomMargins}
+              onUseCustomMarginsChange={setUseCustomMargins}
+              customMarginMultipliers={customMarginMultipliers}
+              onCustomMarginMultipliersChange={setCustomMarginMultipliers}
+              currentMargins={result.grid.margins}
+              gridUnit={gridUnit}
+              isDarkMode={isDarkUi}
+            />
 
-          <MarginsPanel
-            collapsed={collapsed.margins}
-            onHeaderClick={handleSectionHeaderClick("margins")}
-            onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            onHelpClick={() => handleSectionHelpClick("margins")}
-            onHelpHover={() => handleSectionHelpHover("margins")}
-            showHelpIcon={showSectionHelpIcons}
-            marginMethod={marginMethod}
-            onMarginMethodChange={setMarginMethod}
-            baselineMultiple={baselineMultiple}
-            onBaselineMultipleChange={setBaselineMultiple}
-            useCustomMargins={useCustomMargins}
-            onUseCustomMarginsChange={setUseCustomMargins}
-            customMarginMultipliers={customMarginMultipliers}
-            onCustomMarginMultipliersChange={setCustomMarginMultipliers}
-            currentMargins={result.grid.margins}
-            gridUnit={gridUnit}
-            isDarkMode={isDarkUi}
-          />
+            <GutterPanel
+              collapsed={collapsed.gutter}
+              onHeaderClick={handleSectionHeaderClick("gutter")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              gridCols={gridCols}
+              onGridColsChange={setGridCols}
+              gridRows={gridRows}
+              onGridRowsChange={setGridRows}
+              gutterMultiple={gutterMultiple}
+              onGutterMultipleChange={setGutterMultiple}
+              isDarkMode={isDarkUi}
+            />
 
-          <GutterPanel
-            collapsed={collapsed.gutter}
-            onHeaderClick={handleSectionHeaderClick("gutter")}
-            onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            onHelpClick={() => handleSectionHelpClick("gutter")}
-            onHelpHover={() => handleSectionHelpHover("gutter")}
-            showHelpIcon={showSectionHelpIcons}
-            gridCols={gridCols}
-            onGridColsChange={setGridCols}
-            gridRows={gridRows}
-            onGridRowsChange={setGridRows}
-            gutterMultiple={gutterMultiple}
-            onGutterMultipleChange={setGutterMultiple}
-            isDarkMode={isDarkUi}
-          />
-
-          <TypographyPanel
-            collapsed={collapsed.typo}
-            onHeaderClick={handleSectionHeaderClick("typo")}
-            onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            onHelpClick={() => handleSectionHelpClick("typo")}
-            onHelpHover={() => handleSectionHelpHover("typo")}
-            showHelpIcon={showSectionHelpIcons}
-            typographyScale={typographyScale}
-            onTypographyScaleChange={setTypographyScale}
-            baseFont={baseFont}
-            onBaseFontChange={setBaseFont}
-            isDarkMode={isDarkUi}
-          />
+            <TypographyPanel
+              collapsed={collapsed.typo}
+              onHeaderClick={handleSectionHeaderClick("typo")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              typographyScale={typographyScale}
+              onTypographyScaleChange={setTypographyScale}
+              baseFont={baseFont}
+              onBaseFontChange={setBaseFont}
+              isDarkMode={isDarkUi}
+            />
+          </SettingsHelpNavigationProvider>
         </div>
 
         <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>

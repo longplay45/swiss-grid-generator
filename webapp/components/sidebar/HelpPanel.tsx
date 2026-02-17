@@ -8,22 +8,51 @@ type Props = {
   activeSectionId?: HelpSectionId | null
 }
 
-const INDEX_ITEMS = [
+const QUICK_START_INDEX_ITEMS = [
   { id: "help-quick-start", label: "Quick Start" },
+] as const
+
+const GENERAL_INDEX_ITEMS = [
+  { id: "help-editor", label: "Text Editor Popup" },
+  { id: "help-drag-placement", label: "Drag and Placement" },
+  { id: "help-history-reflow", label: "History and Reflow" },
+  { id: "help-save-load", label: "Save and Load JSON" },
+  { id: "help-export", label: "Export PDF" },
+  { id: "help-troubleshooting", label: "Troubleshooting" },
+  { id: "help-grid-theory", label: "Grid Theory Notes" },
+] as const
+
+const GRID_SETTINGS_INDEX_ITEMS = [
   { id: "help-canvas-ratio", label: "I. Canvas Ratio & Rotation" },
   { id: "help-baseline-grid", label: "II. Baseline Grid" },
   { id: "help-margins", label: "III. Margins" },
   { id: "help-gutter", label: "IV. Gutter" },
   { id: "help-typo", label: "V. Typo" },
-  { id: "help-editor", label: "Text Editor Popup" },
-  { id: "help-drag-placement", label: "Drag and Placement" },
-  { id: "help-history-reflow", label: "History and Reflow" },
+] as const
+
+const HEADER_CONTROLS_INDEX_ITEMS = [
   { id: "help-sidebars-header", label: "Header and Sidebars" },
-  { id: "help-save-load", label: "Save and Load JSON" },
-  { id: "help-export", label: "Export PDF" },
+  { id: "help-header-examples", label: "Examples" },
+  { id: "help-header-load", label: "Load" },
+  { id: "help-header-save", label: "Save" },
+  { id: "help-header-export", label: "Export PDF" },
+  { id: "help-header-undo", label: "Undo" },
+  { id: "help-header-redo", label: "Redo" },
+  { id: "help-header-dark-mode", label: "Dark Mode" },
+  { id: "help-header-fullscreen", label: "Fullscreen" },
+  { id: "help-header-baselines", label: "Baselines Toggle" },
+  { id: "help-header-margins", label: "Margins Toggle" },
+  { id: "help-header-modules", label: "Modules Toggle" },
+  { id: "help-header-typography", label: "Typography Toggle" },
+  { id: "help-header-settings", label: "Settings Panel" },
   { id: "help-shortcuts", label: "Keyboard Shortcuts" },
-  { id: "help-troubleshooting", label: "Troubleshooting" },
-  { id: "help-grid-theory", label: "Grid Theory Notes" },
+] as const
+
+const INDEX_ITEMS = [
+  ...QUICK_START_INDEX_ITEMS,
+  ...GENERAL_INDEX_ITEMS,
+  ...HEADER_CONTROLS_INDEX_ITEMS,
+  ...GRID_SETTINGS_INDEX_ITEMS,
 ] as const
 
 export type HelpSectionId = (typeof INDEX_ITEMS)[number]["id"]
@@ -70,8 +99,40 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <div id="help-index">
         <h4 className={`mb-2 text-sm font-semibold ${tone.heading}`}>Index</h4>
+        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Quick Start</h5>
+        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+          {QUICK_START_INDEX_ITEMS.map((item) => (
+            <li key={item.id}>
+              <a href={`#${item.id}`} className={tone.indexLink}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>General Guidance</h5>
+        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+          {GENERAL_INDEX_ITEMS.map((item) => (
+            <li key={item.id}>
+              <a href={`#${item.id}`} className={tone.indexLink}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>UX Reference</h5>
+        <h6 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Application Controls</h6>
+        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+          {HEADER_CONTROLS_INDEX_ITEMS.map((item) => (
+            <li key={item.id}>
+              <a href={`#${item.id}`} className={tone.indexLink}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <h6 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Grid Generator Settings</h6>
         <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-          {INDEX_ITEMS.map((item) => (
+          {GRID_SETTINGS_INDEX_ITEMS.map((item) => (
             <li key={item.id}>
               <a href={`#${item.id}`} className={tone.indexLink}>
                 {item.label}
@@ -96,6 +157,195 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
       </section>
 
       <hr className={tone.divider} />
+
+      <div className="space-y-1" id="help-general-overview">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>General Guidance</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Core workflows and operational reference for editing content, reflow behavior, file I/O, and troubleshooting.
+        </p>
+      </div>
+
+      <hr className={tone.divider} />
+
+      <section id="help-editor" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Text Editor Popup</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
+          <li>Controls: style, font, row span, column span, rotation, bold, italic, alignment.</li>
+          <li>Controls: reflow toggle, syllable division toggle, save, delete (custom blocks), live character/word count.</li>
+          <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
+          <li>Paragraph rotation is clamped to `-80..80` degrees in editor.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-drag-placement" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Drag and Placement</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Drag moves a block snapped to module anchors.</li>
+          <li>`Shift` + drag duplicates a block and drops the copy.</li>
+          <li>`Ctrl` + drag snaps drop row to nearest baseline row.</li>
+          <li>Block spans and positions are clamped to valid grid bounds.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-history-reflow" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>History and Reflow</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Undo/redo includes settings changes and block edits/placement changes.</li>
+          <li>Some structural grid changes trigger auto-reflow suggestions.</li>
+          <li>Disruptive reflow opens an apply/cancel confirmation layer.</li>
+          <li>Applied reflow shows a toast with one-click Undo.</li>
+          <li>JSON layout loading suppresses disruptive reflow prompts.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <div className="space-y-1" id="help-ux-overview">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>UX Reference</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Interaction patterns for settings controls and header controls, including visibility toggles and panel behavior.
+        </p>
+      </div>
+
+      <hr className={tone.divider} />
+
+      <h5 className={`text-xs font-semibold ${tone.heading}`}>Application Controls</h5>
+
+      <section id="help-sidebars-header" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Header and Sidebars</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, fullscreen, display toggles.</li>
+          <li>Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.</li>
+          <li>Right-side content panels include close icons in their header rows.</li>
+          <li>Only one right-side panel is open at a time.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-examples" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Examples</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Opens example layouts panel. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-load" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Load</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Loads a saved JSON layout from disk. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+O</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-save" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Save</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Saves current UI settings and preview state as JSON. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-export" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Export PDF</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Opens export dialog for vector PDF output and print settings. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-undo" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Undo</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Reverts the latest history step when available. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Z</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-redo" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Redo</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Reapplies an undone history step when available. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+Z</span> or <span className={tone.emphasis}>Cmd/Ctrl+Y</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-dark-mode" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Dark Mode</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Toggles light and dark UI themes. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+D</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-fullscreen" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Fullscreen</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Enters or exits fullscreen preview mode. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+F</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-baselines" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Baselines Toggle</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Shows or hides baseline grid lines. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+B</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-margins" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Margins Toggle</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Shows or hides margin frame guides. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+M</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-modules" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Modules Toggle</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Shows or hides module and gutter guides. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+G</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-typography" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Typography Toggle</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Shows or hides text/style preview overlays. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+T</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-settings" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>Settings Panel</h4>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Opens or closes the right-side settings placeholder panel. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+1</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <h5 className={`text-xs font-semibold ${tone.heading}`}>Grid Generator Settings</h5>
 
       <section id="help-canvas-ratio" className="space-y-2">
         <h4 className={`text-sm font-semibold ${tone.heading}`}>I. Canvas Ratio &amp; Rotation</h4>
@@ -157,56 +407,6 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
-      <section id="help-editor" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>Text Editor Popup</h4>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
-          <li>Controls: style, font, row span, column span, rotation, bold, italic, alignment.</li>
-          <li>Controls: reflow toggle, syllable division toggle, save, delete (custom blocks), live character/word count.</li>
-          <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
-          <li>Paragraph rotation is clamped to `-80..80` degrees in editor.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-drag-placement" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>Drag and Placement</h4>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Drag moves a block snapped to module anchors.</li>
-          <li>`Shift` + drag duplicates a block and drops the copy.</li>
-          <li>`Ctrl` + drag snaps drop row to nearest baseline row.</li>
-          <li>Block spans and positions are clamped to valid grid bounds.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-history-reflow" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>History and Reflow</h4>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Undo/redo includes settings changes and block edits/placement changes.</li>
-          <li>Some structural grid changes trigger auto-reflow suggestions.</li>
-          <li>Disruptive reflow opens an apply/cancel confirmation layer.</li>
-          <li>Applied reflow shows a toast with one-click Undo.</li>
-          <li>JSON layout loading suppresses disruptive reflow prompts.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-sidebars-header" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>Header and Sidebars</h4>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, fullscreen, display toggles.</li>
-          <li>Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.</li>
-          <li>Right-side content panels include close icons in their header rows.</li>
-          <li>Only one right-side panel is open at a time.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
       <section id="help-save-load" className="space-y-2">
         <h4 className={`text-sm font-semibold ${tone.heading}`}>Save and Load JSON</h4>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
@@ -234,13 +434,24 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-shortcuts" className="space-y-2">
         <h4 className={`text-sm font-semibold ${tone.heading}`}>Keyboard Shortcuts</h4>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.id}>
-              <span className={tone.emphasis}>{shortcut.combo}</span>: {shortcut.description}
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto">
+          <table className={`w-full border-collapse text-xs ${tone.body}`}>
+            <thead>
+              <tr className={`border-b ${tone.divider}`}>
+                <th className={`py-1 text-left font-semibold ${tone.heading}`}>Shortcut</th>
+                <th className={`py-1 text-left font-semibold ${tone.heading}`}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
+                <tr key={shortcut.id} className={`border-b last:border-0 ${tone.divider}`}>
+                  <td className={`py-1 pr-3 align-top ${tone.emphasis}`}>{shortcut.combo}</td>
+                  <td className="py-1 align-top">{shortcut.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <hr className={tone.divider} />

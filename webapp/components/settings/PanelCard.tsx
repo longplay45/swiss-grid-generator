@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import type { ReactNode } from "react"
+import type { SectionKey } from "@/hooks/useSettingsHistory"
+import { useSettingsHelpNavigation } from "@/components/settings/help-navigation-context"
 
 type Props = {
   title: string
@@ -8,9 +10,7 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
-  onHelpClick: () => void
-  onHelpHover?: () => void
-  showHelpIcon?: boolean
+  helpSectionKey: SectionKey
   isDarkMode: boolean
   children: ReactNode
 }
@@ -21,12 +21,12 @@ export function PanelCard({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
-  onHelpClick,
-  onHelpHover,
-  showHelpIcon = true,
+  helpSectionKey,
   isDarkMode,
   children,
 }: Props) {
+  const { showHelpIcons, onNavigate } = useSettingsHelpNavigation()
+
   return (
     <Card className={isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""}>
       <HoverTooltip
@@ -41,15 +41,15 @@ export function PanelCard({
         >
           <CardTitle className="text-sm flex items-center gap-2">
             {title}
-            {showHelpIcon ? (
+            {showHelpIcons ? (
               <button
                 type="button"
                 aria-label={`Open help for ${title}`}
                 onClick={(event) => {
                   event.stopPropagation()
-                  onHelpClick()
+                  onNavigate(helpSectionKey)
                 }}
-                onMouseEnter={() => onHelpHover?.()}
+                onMouseEnter={() => onNavigate(helpSectionKey)}
                 onDoubleClick={(event) => event.stopPropagation()}
                 className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
               >
