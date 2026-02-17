@@ -26,6 +26,7 @@ export function BaselineGridPanel({
       title="II. Baseline Grid"
       tooltip="Baseline unit for grid and typography"
       collapsed={collapsed}
+      collapsedSummary={`${customBaseline} pt`}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       helpSectionKey="baseline"

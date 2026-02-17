@@ -18,8 +18,10 @@
     "test:roundtrip": "node --test tests/font-roundtrip.test.mjs",
     "test:grid": "node --test tests/grid-calculator.test.mjs",
     "test:reflow": "node --test tests/reflow-worker-contract.test.mjs",
+    "test:autofit": "node --test tests/autofit-planner.test.mjs",
+    "test:snapshot": "node --test tests/preview-layout-snapshot.test.mjs",
     "test:perf": "node --test tests/perf-smoke.test.mjs",
-    "test": "npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:perf"
+    "test": "npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:autofit && npm run test:snapshot && npm run test:perf"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.1",

@@ -3,7 +3,7 @@ import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { DisplayUnit, TypographyScale } from "@/lib/config/defaults"
 
-export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo"] as const
+export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "summary"] as const
 export type SectionKey = typeof SECTION_KEYS[number]
 
 export type UiSettingsSnapshot = {
@@ -68,6 +68,7 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.collapsed.margins === b.collapsed.margins
     && a.collapsed.gutter === b.collapsed.gutter
     && a.collapsed.typo === b.collapsed.typo
+    && a.collapsed.summary === b.collapsed.summary
   )
 }
 

@@ -46,10 +46,11 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Text Editor Popup
 
 - Open editor by double-clicking a block; double-click empty area creates a paragraph block.
-- Controls: style, font, row span, column span, rotation, bold, italic, alignment.
-- Controls: reflow toggle, syllable division toggle, save, delete (custom blocks), live character/word count.
+- Top row controls: style hierarchy, font family, row span, column span, and paragraph rotation (`-80..80`).
+- Formatting controls: bold, italic, align left/right, reflow toggle, and syllable-division toggle.
+- Action controls: save applies changes, delete removes custom blocks, and live counters show characters/words.
+- The small `?` icon at top-right of the popup opens Help and jumps to this section.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.
-- Paragraph rotation is clamped to `-80..80` degrees in editor.
 
 ## Drag and Placement
 

@@ -1,12 +1,14 @@
 import jsPDF from "jspdf"
 import type { GridResult } from "@/lib/grid-calculator"
-import type { PreviewLayoutState } from "@/components/grid-preview"
+import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+import type { FontFamily } from "@/lib/config/fonts"
 import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
 type TextAlignMode = "left" | "right"
+type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 type RgbColor = { r: number; g: number; b: number }
 type CmykColor = { c: number; m: number; y: number; k: number }
 type PrintProOptions = {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useReducer, useState, useMemo, useRef, useEffect, useCallback } from "react"
-import type { ReactNode } from "react"
 import {
   generateSwissGrid,
   FORMATS_PT,
@@ -10,38 +9,24 @@ import {
   CANVAS_RATIOS,
 } from "@/lib/grid-calculator"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
+import type { GridResult } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
-import type { PreviewLayoutState } from "@/components/grid-preview"
+import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { Button } from "@/components/ui/button"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
-import {
-  CircleHelp,
-  Download,
-  FolderOpen,
-  LayoutGrid,
-  LayoutTemplate,
-  Maximize2,
-  Minimize2,
-  Moon,
-  Redo2,
-  Rows3,
-  Save,
-  Settings,
-  SquareDashed,
-  Sun,
-  Type,
-  Undo2,
-  X,
-} from "lucide-react"
+import { X } from "lucide-react"
 import { formatValue } from "@/lib/units"
 import { useSettingsHistory, SECTION_KEYS } from "@/hooks/useSettingsHistory"
 import type { UiSettingsSnapshot, SectionKey } from "@/hooks/useSettingsHistory"
 import { useExportActions } from "@/hooks/useExportActions"
+import { useHeaderActions } from "@/hooks/useHeaderActions"
+import type { HeaderAction } from "@/hooks/useHeaderActions"
 import { CanvasRatioPanel } from "@/components/settings/CanvasRatioPanel"
 import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
+import { PanelCard } from "@/components/settings/PanelCard"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import {
@@ -54,7 +39,6 @@ import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
-import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 import {
   isFontFamily,
   type FontFamily,
@@ -80,6 +64,13 @@ const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
+const MARGIN_METHOD_LABELS: Record<1 | 2 | 3, string> = {
+  1: "Progressive",
+  2: "Van de Graaf",
+  3: "Baseline",
+}
+type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
 // ─── Consolidated UI state ────────────────────────────────────────────────
 
@@ -107,7 +98,14 @@ const INITIAL_UI_STATE: UiSettingsSnapshot = {
   showModules: DEFAULT_UI.showModules,
   showMargins: DEFAULT_UI.showMargins,
   showTypography: DEFAULT_UI.showTypography,
-  collapsed: DEFAULT_UI.collapsed,
+  collapsed: SECTION_KEYS.reduce(
+    (acc, key) => {
+      const raw = (DEFAULT_UI.collapsed as Partial<Record<SectionKey, boolean>> | undefined)?.[key]
+      acc[key] = typeof raw === "boolean" ? raw : true
+      return acc
+    },
+    {} as Record<SectionKey, boolean>,
+  ),
 }
 
 type UiAction =
@@ -314,6 +312,51 @@ export default function Home() {
   )
 
   const defaultJsonFilename = useMemo(() => `${baseFilename}_grid.json`, [baseFilename])
+
+  const settingsSummaryItems = useMemo(() => {
+    const marginsValue = useCustomMargins
+      ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
+      : `${MARGIN_METHOD_LABELS[marginMethod]}, baseline multiple ${baselineMultiple.toFixed(1)}x`
+    return [
+      {
+        title: "I. Canvas Ratio & Rotation",
+        value: `${selectedCanvasRatio.label}, ${orientation}, ${rotation}°`,
+      },
+      {
+        title: "II. Baseline Grid",
+        value: `${customBaseline}pt`,
+      },
+      {
+        title: "III. Margins",
+        value: marginsValue,
+      },
+      {
+        title: "IV. Gutter",
+        value: `${gridCols} columns, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`,
+      },
+      {
+        title: "V. Typo",
+        value: `${typographyScale}, ${baseFont}`,
+      },
+    ]
+  }, [
+    selectedCanvasRatio.label,
+    orientation,
+    rotation,
+    customBaseline,
+    useCustomMargins,
+    customMarginMultipliers.top,
+    customMarginMultipliers.left,
+    customMarginMultipliers.right,
+    customMarginMultipliers.bottom,
+    marginMethod,
+    baselineMultiple,
+    gridCols,
+    gridRows,
+    gutterMultiple,
+    typographyScale,
+    baseFont,
+  ])
 
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
@@ -711,197 +754,31 @@ export default function Home() {
         sidebarBody: "text-gray-600",
       }
 
-  type HeaderAction = {
-    key: string
-    ariaLabel: string
-    tooltip: string
-    shortcutId?: PreviewHeaderShortcutId
-    icon: ReactNode
-    variant?: "default" | "outline"
-    pressed?: boolean
-    disabled?: boolean
-    onClick: () => void
-  }
-  type HeaderItem = { type: "action"; action: HeaderAction } | { type: "divider"; key: string }
-
-  const fileGroup: HeaderItem[] = [
-    {
-      type: "action",
-      action: {
-        key: "examples",
-        ariaLabel: "Show examples",
-        tooltip: "Example layouts",
-        shortcutId: "toggle_example_panel",
-        variant: activeSidebarPanel === "example" ? "default" : "outline",
-        pressed: activeSidebarPanel === "example",
-        onClick: () => setActiveSidebarPanel((prev) => (prev === "example" ? null : "example")),
-        icon: <LayoutTemplate className="h-4 w-4" />,
-      },
-    },
-    { type: "divider", key: "divider-examples-load" },
-    {
-      type: "action",
-      action: {
-        key: "load",
-        ariaLabel: "Load",
-        tooltip: "Load layout JSON",
-        shortcutId: "load_json",
-        onClick: () => loadFileInputRef.current?.click(),
-        icon: <FolderOpen className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "save",
-        ariaLabel: "Save",
-        tooltip: "Save layout JSON",
-        shortcutId: "save_json",
-        onClick: exportActions.openSaveDialog,
-        icon: <Save className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "export",
-        ariaLabel: "Export PDF",
-        tooltip: "Export PDF",
-        shortcutId: "export_pdf",
-        onClick: exportActions.openExportDialog,
-        icon: <Download className="h-4 w-4" />,
-      },
-    },
-    { type: "divider", key: "divider-export-undo" },
-    {
-      type: "action",
-      action: {
-        key: "undo",
-        ariaLabel: "Undo",
-        tooltip: "Undo",
-        shortcutId: "undo",
-        disabled: !history.canUndo,
-        onClick: undoAny,
-        icon: <Undo2 className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "redo",
-        ariaLabel: "Redo",
-        tooltip: "Redo",
-        shortcutId: "redo",
-        disabled: !history.canRedo,
-        onClick: redoAny,
-        icon: <Redo2 className="h-4 w-4" />,
-      },
-    },
-  ]
-
-  const displayGroup: HeaderItem[] = [
-    {
-      type: "action",
-      action: {
-        key: "dark-mode",
-        ariaLabel: isDarkUi ? "Disable dark mode" : "Enable dark mode",
-        tooltip: isDarkUi ? "Switch to light UI" : "Switch to dark UI",
-        shortcutId: "toggle_dark_mode",
-        variant: isDarkUi ? "default" : "outline",
-        pressed: isDarkUi,
-        onClick: () => setIsDarkUi((prev) => !prev),
-        icon: isDarkUi ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "fullscreen",
-        ariaLabel: isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
-        tooltip: isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
-        shortcutId: "toggle_fullscreen",
-        pressed: isPreviewFullscreen,
-        onClick: togglePreviewFullscreen,
-        icon: isPreviewFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />,
-      },
-    },
-    { type: "divider", key: "divider-fullscreen-baselines" },
-    {
-      type: "action",
-      action: {
-        key: "baselines",
-        ariaLabel: "Toggle baselines",
-        tooltip: "Toggle baselines",
-        shortcutId: "toggle_baselines",
-        variant: showBaselines ? "default" : "outline",
-        pressed: showBaselines,
-        onClick: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
-        icon: <Rows3 className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "margins",
-        ariaLabel: "Toggle margins",
-        tooltip: "Toggle margin frame",
-        shortcutId: "toggle_margins",
-        variant: showMargins ? "default" : "outline",
-        pressed: showMargins,
-        onClick: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
-        icon: <SquareDashed className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "modules",
-        ariaLabel: "Toggle gutter grid",
-        tooltip: "Toggle modules and gutter",
-        shortcutId: "toggle_modules",
-        variant: showModules ? "default" : "outline",
-        pressed: showModules,
-        onClick: () => dispatch({ type: "TOGGLE", key: "showModules" }),
-        icon: <LayoutGrid className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "typography",
-        ariaLabel: "Toggle typography",
-        tooltip: "Toggle type preview",
-        shortcutId: "toggle_typography",
-        variant: showTypography ? "default" : "outline",
-        pressed: showTypography,
-        onClick: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
-        icon: <Type className="h-4 w-4" />,
-      },
-    },
-  ]
-
-  const sidebarGroup: HeaderAction[] = [
-    {
-      key: "settings",
-      ariaLabel: "Show settings panel",
-      tooltip: "Settings panel",
-      shortcutId: "toggle_settings_panel",
-      variant: activeSidebarPanel === "settings" ? "default" : "outline",
-      pressed: activeSidebarPanel === "settings",
-      onClick: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
-      icon: <Settings className="h-4 w-4" />,
-    },
-    {
-      key: "help",
-      ariaLabel: "Toggle help",
-      tooltip: "Help & reference",
-      shortcutId: "toggle_help_panel",
-      variant: activeSidebarPanel === "help" ? "default" : "outline",
-      pressed: activeSidebarPanel === "help",
-      onClick: toggleHelpPanelFromHeader,
-      icon: <CircleHelp className="h-4 w-4" />,
-    },
-  ]
+  const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
+    activeSidebarPanel,
+    isDarkUi,
+    isPreviewFullscreen,
+    showBaselines,
+    showMargins,
+    showModules,
+    showTypography,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
+    onToggleExamplePanel: () => setActiveSidebarPanel((prev) => (prev === "example" ? null : "example")),
+    onLoadJson: () => loadFileInputRef.current?.click(),
+    onSaveJson: exportActions.openSaveDialog,
+    onExportPdf: exportActions.openExportDialog,
+    onUndo: undoAny,
+    onRedo: redoAny,
+    onToggleDarkMode: () => setIsDarkUi((prev) => !prev),
+    onToggleFullscreen: togglePreviewFullscreen,
+    onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
+    onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
+    onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
+    onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleSettingsPanel: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
+    onToggleHelpPanel: toggleHelpPanelFromHeader,
+  })
 
   const renderHeaderAction = (action: HeaderAction) => {
     const shortcut = action.shortcutId
@@ -909,7 +786,7 @@ export default function Home() {
       : null
     const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
     return (
-      <div key={action.key} className="inline-flex items-center gap-1">
+      <div key={action.key} className="inline-flex w-8 flex-col items-center justify-start gap-1">
         <HeaderIconButton
           ariaLabel={action.ariaLabel}
           tooltip={tooltip}
@@ -920,7 +797,7 @@ export default function Home() {
         >
           {action.icon}
         </HeaderIconButton>
-        {showSectionHelpIcons && action.key !== "help" ? (
+        {showSectionHelpIcons ? (
           <button
             type="button"
             aria-label={`Open help for ${action.ariaLabel}`}
@@ -1022,6 +899,28 @@ export default function Home() {
               onBaseFontChange={setBaseFont}
               isDarkMode={isDarkUi}
             />
+            <PanelCard
+              title="Settings Summery"
+              tooltip="Current settings snapshot across sections I to V"
+              collapsed={collapsed.summary}
+              onHeaderClick={handleSectionHeaderClick("summary")}
+              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+              helpSectionKey="summary"
+              isDarkMode={isDarkUi}
+            >
+              <div
+                className={`space-y-2 text-[11px] leading-relaxed ${
+                  isDarkUi ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                {settingsSummaryItems.map((item) => (
+                  <div key={item.title} className="space-y-0.5">
+                    <p className={isDarkUi ? "text-gray-200" : "text-gray-800"}>{item.title}</p>
+                    <p>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </PanelCard>
           </SettingsHelpNavigationProvider>
         </div>
 
@@ -1068,7 +967,7 @@ export default function Home() {
         />
         <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
           <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
-            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
+            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
               {fileGroup.map((item) =>
                 item.type === "divider"
                   ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
@@ -1076,7 +975,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
+            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
               {displayGroup.map((item) =>
                 item.type === "divider"
                   ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
@@ -1084,7 +983,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 landscape:flex-nowrap">
+            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
               {sidebarGroup.map((action) => renderHeaderAction(action))}
             </div>
           </div>
@@ -1104,6 +1003,11 @@ export default function Home() {
               rotation={rotation}
               undoNonce={history.undoNonce}
               redoNonce={history.redoNonce}
+              onOpenHelpSection={(sectionId) => {
+                setActiveHelpSectionId(sectionId)
+                setActiveSidebarPanel("help")
+              }}
+              showEditorHelpIcon={showSectionHelpIcons}
               onHistoryAvailabilityChange={(undoAvailable, redoAvailable) => {
                 setCanUndoPreview(undoAvailable)
                 setCanRedoPreview(redoAvailable)

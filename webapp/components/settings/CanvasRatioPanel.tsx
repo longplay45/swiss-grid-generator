@@ -30,11 +30,14 @@ export function CanvasRatioPanel({
   onRotationChange,
   isDarkMode,
 }: Props) {
+  const ratioLabel = CANVAS_RATIOS.find((opt) => opt.key === canvasRatio)?.label ?? canvasRatio
+
   return (
     <PanelCard
       title="I. Canvas Ratio & Rotation"
       tooltip="Ratio, orientation, and preview rotation"
       collapsed={collapsed}
+      collapsedSummary={`${ratioLabel}, ${orientation}, ${rotation}°`}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       helpSectionKey="format"

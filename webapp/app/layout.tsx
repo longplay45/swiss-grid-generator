@@ -1,18 +1,9 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, EB_Garamond, Libre_Baskerville, Bodoni_Moda, Besley, Work_Sans, Nunito_Sans, IBM_Plex_Sans, Libre_Franklin, Playfair_Display } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
 import { FONT_CSS_VARS } from "@/lib/config/fonts"
 
 const inter = Inter({ subsets: ["latin"] })
-const ebGaramond = EB_Garamond({ subsets: ["latin"] })
-const libreBaskerville = Libre_Baskerville({ weight: ["400", "700"], subsets: ["latin"] })
-const bodoniModa = Bodoni_Moda({ subsets: ["latin"] })
-const besley = Besley({ subsets: ["latin"] })
-const workSans = Work_Sans({ subsets: ["latin"] })
-const nunitoSans = Nunito_Sans({ subsets: ["latin"] })
-const ibmPlexSans = IBM_Plex_Sans({ subsets: ["latin"] })
-const libreFranklin = Libre_Franklin({ subsets: ["latin"] })
-const playfairDisplay = Playfair_Display({ subsets: ["latin"] })
 
 export const viewport: Viewport = {
   width: "device-width",

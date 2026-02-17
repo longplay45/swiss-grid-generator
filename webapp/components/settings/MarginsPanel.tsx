@@ -53,11 +53,16 @@ export function MarginsPanel({
     onUseCustomMarginsChange(checked)
   }
 
+  const collapsedSummary = useCustomMargins
+    ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
+    : `${marginMethod === 1 ? "Progressive" : marginMethod === 2 ? "Van de Graaf" : "Baseline"}, ${baselineMultiple.toFixed(1)}x`
+
   return (
     <PanelCard
       title="III. Margins"
       tooltip="Margin method and custom margin controls"
       collapsed={collapsed}
+      collapsedSummary={collapsedSummary}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       helpSectionKey="margins"

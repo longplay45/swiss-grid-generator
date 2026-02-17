@@ -1,4 +1,4 @@
-import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
+import { hyphenateWordEnglish } from "./english-hyphenation.ts"
 
 export type AutoFitStyle = {
   size: number

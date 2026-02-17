@@ -126,7 +126,8 @@
       "baseline": true,
       "margins": true,
       "gutter": true,
-      "typo": true
+      "typo": true,
+      "summary": true
     }
   },
   "previewLayout": {

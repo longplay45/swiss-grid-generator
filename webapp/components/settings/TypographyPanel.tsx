@@ -38,6 +38,7 @@ export function TypographyPanel({
       title="V. Typo"
       tooltip="Typography scale and hierarchy preset"
       collapsed={collapsed}
+      collapsedSummary={`${TYPOGRAPHY_SCALE_LABELS[typographyScale]}, ${baseFont}`}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       helpSectionKey="typo"

@@ -2,9 +2,12 @@ import { useState, useEffect, useCallback } from "react"
 import jsPDF from "jspdf"
 import { FORMATS_PT } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
-import type { PreviewLayoutState } from "@/components/grid-preview"
+import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+import type { FontFamily } from "@/lib/config/fonts"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { mmToPt, formatValue } from "@/lib/units"
+type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
 export type PrintPresetKey = "press_proof" | "offset_final" | "digital_print"
 

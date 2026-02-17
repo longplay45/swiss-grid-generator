@@ -32,6 +32,7 @@ export function GutterPanel({
       title="IV. Gutter"
       tooltip="Grid columns, rows, and gutter multiple"
       collapsed={collapsed}
+      collapsedSummary={`${gridCols} cols, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       helpSectionKey="gutter"
