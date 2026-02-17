@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect, useCallback } from "react"
+import { useReducer, useState, useMemo, useRef, useEffect, useCallback } from "react"
 import type { ReactNode } from "react"
 import {
   generateSwissGrid,
@@ -73,6 +73,92 @@ const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.7.0"
 
+// ─── Consolidated UI state ────────────────────────────────────────────────
+
+const INITIAL_UI_STATE: UiSettingsSnapshot = {
+  canvasRatio: RESOLVED_DEFAULTS.canvasRatio,
+  exportPaperSize: DEFAULT_UI.exportPaperSize,
+  exportPrintPro: DEFAULT_UI.exportPrintPro,
+  exportBleedMm: DEFAULT_UI.exportBleedMm,
+  exportRegistrationMarks: DEFAULT_UI.exportRegistrationMarks,
+  exportFinalSafeGuides: DEFAULT_UI.exportFinalSafeGuides,
+  orientation: RESOLVED_DEFAULTS.orientation,
+  rotation: DEFAULT_UI.rotation,
+  marginMethod: RESOLVED_DEFAULTS.marginMethod,
+  gridCols: DEFAULT_UI.gridCols,
+  gridRows: DEFAULT_UI.gridRows,
+  baselineMultiple: DEFAULT_UI.baselineMultiple,
+  gutterMultiple: DEFAULT_UI.gutterMultiple,
+  typographyScale: RESOLVED_DEFAULTS.typographyScale,
+  baseFont: RESOLVED_DEFAULTS.baseFont,
+  customBaseline: RESOLVED_DEFAULTS.customBaseline,
+  displayUnit: RESOLVED_DEFAULTS.displayUnit,
+  useCustomMargins: DEFAULT_UI.useCustomMargins,
+  customMarginMultipliers: DEFAULT_UI.customMarginMultipliers,
+  showBaselines: DEFAULT_UI.showBaselines,
+  showModules: DEFAULT_UI.showModules,
+  showMargins: DEFAULT_UI.showMargins,
+  showTypography: DEFAULT_UI.showTypography,
+  collapsed: DEFAULT_UI.collapsed,
+}
+
+type UiAction =
+  | { type: "SET"; key: "canvasRatio"; value: CanvasRatioKey }
+  | { type: "SET"; key: "exportPaperSize"; value: string }
+  | { type: "SET"; key: "exportPrintPro"; value: boolean }
+  | { type: "SET"; key: "exportBleedMm"; value: number }
+  | { type: "SET"; key: "exportRegistrationMarks"; value: boolean }
+  | { type: "SET"; key: "exportFinalSafeGuides"; value: boolean }
+  | { type: "SET"; key: "orientation"; value: "portrait" | "landscape" }
+  | { type: "SET"; key: "rotation"; value: number }
+  | { type: "SET"; key: "marginMethod"; value: 1 | 2 | 3 }
+  | { type: "SET"; key: "gridCols"; value: number }
+  | { type: "SET"; key: "gridRows"; value: number }
+  | { type: "SET"; key: "baselineMultiple"; value: number }
+  | { type: "SET"; key: "gutterMultiple"; value: number }
+  | { type: "SET"; key: "typographyScale"; value: TypographyScale }
+  | { type: "SET"; key: "baseFont"; value: FontFamily }
+  | { type: "SET"; key: "customBaseline"; value: number }
+  | { type: "SET"; key: "displayUnit"; value: DisplayUnit }
+  | { type: "SET"; key: "useCustomMargins"; value: boolean }
+  | { type: "SET"; key: "customMarginMultipliers"; value: { top: number; left: number; right: number; bottom: number } }
+  | { type: "SET"; key: "showBaselines"; value: boolean }
+  | { type: "SET"; key: "showModules"; value: boolean }
+  | { type: "SET"; key: "showMargins"; value: boolean }
+  | { type: "SET"; key: "showTypography"; value: boolean }
+  | { type: "SET"; key: "collapsed"; value: Record<SectionKey, boolean> }
+  | { type: "TOGGLE"; key: "showBaselines" | "showModules" | "showMargins" | "showTypography" }
+  | { type: "TOGGLE_SECTION"; key: SectionKey }
+  | { type: "SET_ALL_SECTIONS"; value: boolean }
+  | { type: "APPLY_SNAPSHOT"; snapshot: UiSettingsSnapshot }
+  | { type: "BATCH"; actions: UiAction[] }
+
+function uiReducer(state: UiSettingsSnapshot, action: UiAction): UiSettingsSnapshot {
+  switch (action.type) {
+    case "SET":
+      if (state[action.key] === action.value) return state
+      return { ...state, [action.key]: action.value }
+    case "TOGGLE":
+      return { ...state, [action.key]: !state[action.key] }
+    case "TOGGLE_SECTION":
+      return { ...state, collapsed: { ...state.collapsed, [action.key]: !state.collapsed[action.key] } }
+    case "SET_ALL_SECTIONS":
+      return {
+        ...state,
+        collapsed: SECTION_KEYS.reduce(
+          (acc, key) => { acc[key] = action.value; return acc },
+          {} as Record<SectionKey, boolean>,
+        ),
+      }
+    case "APPLY_SNAPSHOT":
+      return { ...action.snapshot }
+    case "BATCH":
+      return action.actions.reduce(uiReducer, state)
+    default:
+      return state
+  }
+}
+
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
@@ -86,45 +172,37 @@ export default function Home() {
   } | null>(() =>
     DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
   )
-  const [canvasRatio, setCanvasRatio] = useState<CanvasRatioKey>(RESOLVED_DEFAULTS.canvasRatio)
-  const [exportPaperSize, setExportPaperSize] = useState(DEFAULT_UI.exportPaperSize)
-  const [exportPrintPro, setExportPrintPro] = useState(DEFAULT_UI.exportPrintPro)
-  const [exportBleedMm, setExportBleedMm] = useState(DEFAULT_UI.exportBleedMm)
-  const [exportRegistrationMarks, setExportRegistrationMarks] = useState(
-    DEFAULT_UI.exportRegistrationMarks,
-  )
-  const [exportFinalSafeGuides, setExportFinalSafeGuides] = useState(
-    DEFAULT_UI.exportFinalSafeGuides,
-  )
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(RESOLVED_DEFAULTS.orientation)
-  const [rotation, setRotation] = useState(DEFAULT_UI.rotation)
-  const [marginMethod, setMarginMethod] = useState<1 | 2 | 3>(RESOLVED_DEFAULTS.marginMethod)
-  const [gridCols, setGridCols] = useState(DEFAULT_UI.gridCols)
-  const [gridRows, setGridRows] = useState(DEFAULT_UI.gridRows)
-  const [baselineMultiple, setBaselineMultiple] = useState(DEFAULT_UI.baselineMultiple)
-  const [gutterMultiple, setGutterMultiple] = useState(DEFAULT_UI.gutterMultiple)
-  const [typographyScale, setTypographyScale] = useState<TypographyScale>(RESOLVED_DEFAULTS.typographyScale)
-  const [baseFont, setBaseFont] = useState<FontFamily>(RESOLVED_DEFAULTS.baseFont)
-  const [customBaseline, setCustomBaseline] = useState<number>(
-    RESOLVED_DEFAULTS.customBaseline,
-  )
-  const [showBaselines, setShowBaselines] = useState(DEFAULT_UI.showBaselines)
-  const [showModules, setShowModules] = useState(DEFAULT_UI.showModules)
-  const [showMargins, setShowMargins] = useState(DEFAULT_UI.showMargins)
-  const [showTypography, setShowTypography] = useState(DEFAULT_UI.showTypography)
+  const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
+  const {
+    canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
+    exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
+    marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple,
+    typographyScale, baseFont, customBaseline, displayUnit,
+    useCustomMargins, customMarginMultipliers, showBaselines, showModules,
+    showMargins, showTypography, collapsed,
+  } = ui
+  // Stable dispatch wrappers for child component props
+  const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [])
+  const setOrientation = useCallback((v: "portrait" | "landscape") => dispatch({ type: "SET", key: "orientation", value: v }), [])
+  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: v }), [])
+  const setMarginMethod = useCallback((v: 1 | 2 | 3) => dispatch({ type: "SET", key: "marginMethod", value: v }), [])
+  const setGridCols = useCallback((v: number) => dispatch({ type: "SET", key: "gridCols", value: v }), [])
+  const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [])
+  const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [])
+  const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [])
+  const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [])
+  const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [])
+  const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [])
+  const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [])
+  const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [])
+
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
     "settings" | "help" | "imprint" | "example" | null
   >(null)
-  const [displayUnit, setDisplayUnit] = useState<DisplayUnit>(RESOLVED_DEFAULTS.displayUnit)
-  const [useCustomMargins, setUseCustomMargins] = useState(DEFAULT_UI.useCustomMargins)
-  const [customMarginMultipliers, setCustomMarginMultipliers] = useState(
-    DEFAULT_UI.customMarginMultipliers,
-  )
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
   const [isDarkUi, setIsDarkUi] = useState(false)
-  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(DEFAULT_UI.collapsed)
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
 
@@ -159,7 +237,7 @@ export default function Home() {
   useEffect(() => {
     const available = selectedCanvasRatio.paperSizes
     if (!available.includes(exportPaperSize) && available.length > 0) {
-      setExportPaperSize(available[0])
+      dispatch({ type: "SET", key: "exportPaperSize", value: available[0] })
     }
   }, [exportPaperSize, selectedCanvasRatio])
 
@@ -229,60 +307,7 @@ export default function Home() {
 
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
-  const buildUiSnapshot = useCallback(
-    (): UiSettingsSnapshot => ({
-      canvasRatio,
-      exportPaperSize,
-      exportPrintPro,
-      exportBleedMm,
-      exportRegistrationMarks,
-      exportFinalSafeGuides,
-      orientation,
-      rotation,
-      marginMethod,
-      gridCols,
-      gridRows,
-      baselineMultiple,
-      gutterMultiple,
-      typographyScale,
-      baseFont,
-      customBaseline,
-      displayUnit,
-      useCustomMargins,
-      customMarginMultipliers: { ...customMarginMultipliers },
-      showBaselines,
-      showModules,
-      showMargins,
-      showTypography,
-      collapsed: { ...collapsed },
-    }),
-    [
-      baselineMultiple,
-      canvasRatio,
-      collapsed,
-      customBaseline,
-      customMarginMultipliers,
-      displayUnit,
-      exportPaperSize,
-      exportPrintPro,
-      exportBleedMm,
-      exportRegistrationMarks,
-      exportFinalSafeGuides,
-      gridCols,
-      gridRows,
-      gutterMultiple,
-      marginMethod,
-      orientation,
-      rotation,
-      showBaselines,
-      showMargins,
-      showModules,
-      showTypography,
-      typographyScale,
-      baseFont,
-      useCustomMargins,
-    ],
-  )
+  const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
 
   const history = useSettingsHistory(buildUiSnapshot, canUndoPreview, canRedoPreview)
   const { suppressNext, setCurrentSnapshot } = history
@@ -290,30 +315,7 @@ export default function Home() {
   const applyUiSnapshot = useCallback(
     (snapshot: UiSettingsSnapshot) => {
       suppressNext()
-      setCanvasRatio(snapshot.canvasRatio)
-      setExportPaperSize(snapshot.exportPaperSize)
-      setExportPrintPro(snapshot.exportPrintPro)
-      setExportBleedMm(snapshot.exportBleedMm)
-      setExportRegistrationMarks(snapshot.exportRegistrationMarks)
-      setExportFinalSafeGuides(snapshot.exportFinalSafeGuides)
-      setOrientation(snapshot.orientation)
-      setRotation(snapshot.rotation)
-      setMarginMethod(snapshot.marginMethod)
-      setGridCols(snapshot.gridCols)
-      setGridRows(snapshot.gridRows)
-      setBaselineMultiple(snapshot.baselineMultiple)
-      setGutterMultiple(snapshot.gutterMultiple)
-      setTypographyScale(snapshot.typographyScale)
-      setBaseFont(snapshot.baseFont)
-      setCustomBaseline(snapshot.customBaseline)
-      setDisplayUnit(snapshot.displayUnit)
-      setUseCustomMargins(snapshot.useCustomMargins)
-      setCustomMarginMultipliers({ ...snapshot.customMarginMultipliers })
-      setShowBaselines(snapshot.showBaselines)
-      setShowModules(snapshot.showModules)
-      setShowMargins(snapshot.showMargins)
-      setShowTypography(snapshot.showTypography)
-      setCollapsed({ ...snapshot.collapsed })
+      dispatch({ type: "APPLY_SNAPSHOT", snapshot })
       setCurrentSnapshot(snapshot)
     },
     [suppressNext, setCurrentSnapshot],
@@ -355,20 +357,11 @@ export default function Home() {
   // ─── Section collapse helpers ─────────────────────────────────────────────
 
   const toggle = (key: SectionKey) =>
-    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+    dispatch({ type: "TOGGLE_SECTION", key })
 
   const toggleAllSections = () => {
-    setCollapsed((prev) => {
-      const allClosed = SECTION_KEYS.every((key) => prev[key])
-      const nextValue = allClosed ? false : true
-      return SECTION_KEYS.reduce(
-        (acc, key) => {
-          acc[key] = nextValue
-          return acc
-        },
-        {} as Record<SectionKey, boolean>,
-      )
-    })
+    const allClosed = SECTION_KEYS.every((key) => collapsed[key])
+    dispatch({ type: "SET_ALL_SECTIONS", value: !allClosed })
   }
 
   const handleSectionHeaderClick = (key: SectionKey) => (event: React.MouseEvent) => {
@@ -417,61 +410,16 @@ export default function Home() {
   // ─── Export / Save actions ────────────────────────────────────────────────
 
   const buildUiSettingsPayload = useCallback(
-    () => ({
-      canvasRatio,
-      format: previewFormat,
-      exportPaperSize,
-      exportPrintPro,
-      exportBleedMm,
-      exportRegistrationMarks,
-      exportFinalSafeGuides,
-      orientation,
-      rotation,
-      marginMethod,
-      gridCols,
-      gridRows,
-      baselineMultiple,
-      gutterMultiple,
-      typographyScale,
-      baseFont,
-      customBaseline,
-      displayUnit,
-      useCustomMargins,
-      customMarginMultipliers,
-      showBaselines,
-      showModules,
-      showMargins,
-      showTypography,
-      collapsed,
-    }),
-    [
-      canvasRatio,
-      previewFormat,
-      exportPaperSize,
-      exportPrintPro,
-      exportBleedMm,
-      exportRegistrationMarks,
-      exportFinalSafeGuides,
-      orientation,
-      rotation,
-      marginMethod,
-      gridCols,
-      gridRows,
-      baselineMultiple,
-      gutterMultiple,
-      typographyScale,
-      baseFont,
-      customBaseline,
-      displayUnit,
-      useCustomMargins,
-      customMarginMultipliers,
-      showBaselines,
-      showModules,
-      showMargins,
-      showTypography,
-      collapsed,
-    ],
+    () => ({ ...ui, format: previewFormat }),
+    [ui, previewFormat],
   )
+
+  const setDisplayUnit = useCallback((v: DisplayUnit) => dispatch({ type: "SET", key: "displayUnit", value: v }), [])
+  const setExportPaperSize = useCallback((v: string) => dispatch({ type: "SET", key: "exportPaperSize", value: v }), [])
+  const setExportPrintPro = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportPrintPro", value: v }), [])
+  const setExportBleedMm = useCallback((v: number) => dispatch({ type: "SET", key: "exportBleedMm", value: v }), [])
+  const setExportRegistrationMarks = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportRegistrationMarks", value: v }), [])
+  const setExportFinalSafeGuides = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportFinalSafeGuides", value: v }), [])
 
   const exportActionsContext = useMemo(
     () => ({
@@ -513,11 +461,17 @@ export default function Home() {
       showTypography,
       isDinOrAnsiRatio,
       displayUnit,
+      setDisplayUnit,
       exportPaperSize,
+      setExportPaperSize,
       exportPrintPro,
+      setExportPrintPro,
       exportBleedMm,
+      setExportBleedMm,
       exportRegistrationMarks,
+      setExportRegistrationMarks,
       exportFinalSafeGuides,
+      setExportFinalSafeGuides,
       paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
@@ -576,16 +530,16 @@ export default function Home() {
           togglePreviewFullscreen()
           return
         case "toggle_baselines":
-          setShowBaselines((prev) => !prev)
+          dispatch({ type: "TOGGLE", key: "showBaselines" })
           return
         case "toggle_margins":
-          setShowMargins((prev) => !prev)
+          dispatch({ type: "TOGGLE", key: "showMargins" })
           return
         case "toggle_modules":
-          setShowModules((prev) => !prev)
+          dispatch({ type: "TOGGLE", key: "showModules" })
           return
         case "toggle_typography":
-          setShowTypography((prev) => !prev)
+          dispatch({ type: "TOGGLE", key: "showTypography" })
           return
         case "toggle_settings_panel":
           setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings"))
@@ -614,89 +568,70 @@ export default function Home() {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result))
-        const ui = parsed?.uiSettings
-        if (!ui || typeof ui !== "object") {
+        const loaded = parsed?.uiSettings
+        if (!loaded || typeof loaded !== "object") {
           throw new Error("Invalid layout JSON: missing uiSettings.")
         }
 
-        if (isCanvasRatioKey(ui.canvasRatio)) {
-          setCanvasRatio(ui.canvasRatio)
-        }
-        if (typeof ui.exportPaperSize === "string" && FORMATS_PT[ui.exportPaperSize]) {
-          setExportPaperSize(ui.exportPaperSize)
-        }
-        if (typeof ui.exportPrintPro === "boolean") setExportPrintPro(ui.exportPrintPro)
-        if (
-          typeof ui.exportBleedMm === "number"
-          && Number.isFinite(ui.exportBleedMm)
-          && ui.exportBleedMm >= 0
-        ) {
-          setExportBleedMm(ui.exportBleedMm)
-        }
-        if (typeof ui.exportRegistrationMarks === "boolean")
-          setExportRegistrationMarks(ui.exportRegistrationMarks)
-        if (typeof ui.exportFinalSafeGuides === "boolean")
-          setExportFinalSafeGuides(ui.exportFinalSafeGuides)
-        if (typeof ui.format === "string" && FORMATS_PT[ui.format]) {
-          if (/^[AB]/.test(ui.format)) {
-            setCanvasRatio("din_ab")
-            if (!ui.exportPaperSize) setExportPaperSize(ui.format)
+        const actions: UiAction[] = []
+        const set = <K extends UiAction & { type: "SET" }>(key: K["key"], value: K["value"]) =>
+          actions.push({ type: "SET", key, value } as UiAction)
+
+        if (isCanvasRatioKey(loaded.canvasRatio)) set("canvasRatio", loaded.canvasRatio)
+        if (typeof loaded.exportPaperSize === "string" && FORMATS_PT[loaded.exportPaperSize])
+          set("exportPaperSize", loaded.exportPaperSize)
+        if (typeof loaded.exportPrintPro === "boolean") set("exportPrintPro", loaded.exportPrintPro)
+        if (typeof loaded.exportBleedMm === "number" && Number.isFinite(loaded.exportBleedMm) && loaded.exportBleedMm >= 0)
+          set("exportBleedMm", loaded.exportBleedMm)
+        if (typeof loaded.exportRegistrationMarks === "boolean")
+          set("exportRegistrationMarks", loaded.exportRegistrationMarks)
+        if (typeof loaded.exportFinalSafeGuides === "boolean")
+          set("exportFinalSafeGuides", loaded.exportFinalSafeGuides)
+        if (typeof loaded.format === "string" && FORMATS_PT[loaded.format]) {
+          if (/^[AB]/.test(loaded.format)) {
+            set("canvasRatio", "din_ab")
+            if (!loaded.exportPaperSize) set("exportPaperSize", loaded.format)
           }
-          if (ui.format === "LETTER") {
-            setCanvasRatio("letter_ansi_ab")
-            if (!ui.exportPaperSize) setExportPaperSize("LETTER")
+          if (loaded.format === "LETTER") {
+            set("canvasRatio", "letter_ansi_ab")
+            if (!loaded.exportPaperSize) set("exportPaperSize", "LETTER")
           }
         }
-        if (ui.orientation === "portrait" || ui.orientation === "landscape")
-          setOrientation(ui.orientation)
-        if (typeof ui.rotation === "number") setRotation(ui.rotation)
-        if (ui.marginMethod === 1 || ui.marginMethod === 2 || ui.marginMethod === 3)
-          setMarginMethod(ui.marginMethod)
-        if (typeof ui.gridCols === "number") setGridCols(ui.gridCols)
-        if (typeof ui.gridRows === "number") setGridRows(ui.gridRows)
-        if (typeof ui.baselineMultiple === "number") setBaselineMultiple(ui.baselineMultiple)
-        if (typeof ui.gutterMultiple === "number") setGutterMultiple(ui.gutterMultiple)
-        if (isTypographyScale(ui.typographyScale)) {
-          setTypographyScale(ui.typographyScale)
-        }
-        if (isFontFamily(ui.baseFont)) {
-          setBaseFont(ui.baseFont)
-        }
-        if (typeof ui.customBaseline === "number") setCustomBaseline(ui.customBaseline)
-        if (isDisplayUnit(ui.displayUnit))
-          setDisplayUnit(ui.displayUnit)
-        if (typeof ui.useCustomMargins === "boolean") setUseCustomMargins(ui.useCustomMargins)
-        if (ui.customMarginMultipliers && typeof ui.customMarginMultipliers === "object") {
-          const cm = ui.customMarginMultipliers
-          if (
-            typeof cm.top === "number"
-            && typeof cm.left === "number"
-            && typeof cm.right === "number"
-            && typeof cm.bottom === "number"
-          ) {
-            setCustomMarginMultipliers({
-              top: cm.top,
-              left: cm.left,
-              right: cm.right,
-              bottom: cm.bottom,
-            })
+        if (loaded.orientation === "portrait" || loaded.orientation === "landscape")
+          set("orientation", loaded.orientation)
+        if (typeof loaded.rotation === "number") set("rotation", loaded.rotation)
+        if (loaded.marginMethod === 1 || loaded.marginMethod === 2 || loaded.marginMethod === 3)
+          set("marginMethod", loaded.marginMethod)
+        if (typeof loaded.gridCols === "number") set("gridCols", loaded.gridCols)
+        if (typeof loaded.gridRows === "number") set("gridRows", loaded.gridRows)
+        if (typeof loaded.baselineMultiple === "number") set("baselineMultiple", loaded.baselineMultiple)
+        if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
+        if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
+        if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
+        if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
+        if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
+        if (typeof loaded.useCustomMargins === "boolean") set("useCustomMargins", loaded.useCustomMargins)
+        if (loaded.customMarginMultipliers && typeof loaded.customMarginMultipliers === "object") {
+          const cm = loaded.customMarginMultipliers
+          if (typeof cm.top === "number" && typeof cm.left === "number"
+            && typeof cm.right === "number" && typeof cm.bottom === "number") {
+            set("customMarginMultipliers", { top: cm.top, left: cm.left, right: cm.right, bottom: cm.bottom })
           }
         }
-        if (typeof ui.showBaselines === "boolean") setShowBaselines(ui.showBaselines)
-        if (typeof ui.showModules === "boolean") setShowModules(ui.showModules)
-        if (typeof ui.showMargins === "boolean") setShowMargins(ui.showMargins)
-        if (typeof ui.showTypography === "boolean") setShowTypography(ui.showTypography)
-        if (ui.collapsed && typeof ui.collapsed === "object") {
-          const loadedCollapsed: Partial<Record<SectionKey, boolean>> = {}
-          if (typeof ui.collapsed.format === "boolean") loadedCollapsed.format = ui.collapsed.format
-          if (typeof ui.collapsed.baseline === "boolean")
-            loadedCollapsed.baseline = ui.collapsed.baseline
-          if (typeof ui.collapsed.margins === "boolean")
-            loadedCollapsed.margins = ui.collapsed.margins
-          if (typeof ui.collapsed.gutter === "boolean") loadedCollapsed.gutter = ui.collapsed.gutter
-          if (typeof ui.collapsed.typo === "boolean") loadedCollapsed.typo = ui.collapsed.typo
-          setCollapsed((prev) => ({ ...prev, ...loadedCollapsed }))
+        if (typeof loaded.showBaselines === "boolean") set("showBaselines", loaded.showBaselines)
+        if (typeof loaded.showModules === "boolean") set("showModules", loaded.showModules)
+        if (typeof loaded.showMargins === "boolean") set("showMargins", loaded.showMargins)
+        if (typeof loaded.showTypography === "boolean") set("showTypography", loaded.showTypography)
+        if (loaded.collapsed && typeof loaded.collapsed === "object") {
+          const merged = { ...collapsed }
+          for (const key of SECTION_KEYS) {
+            if (typeof loaded.collapsed[key] === "boolean") merged[key] = loaded.collapsed[key]
+          }
+          set("collapsed", merged)
         }
+
+        if (actions.length > 0) dispatch({ type: "BATCH", actions })
+
         if (parsed?.previewLayout) {
           const nextKey = Date.now()
           const layout = parsed.previewLayout as PreviewLayoutState
@@ -872,7 +807,7 @@ export default function Home() {
         shortcutId: "toggle_baselines",
         variant: showBaselines ? "default" : "outline",
         pressed: showBaselines,
-        onClick: () => setShowBaselines((prev) => !prev),
+        onClick: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
         icon: <Rows3 className="h-4 w-4" />,
       },
     },
@@ -885,7 +820,7 @@ export default function Home() {
         shortcutId: "toggle_margins",
         variant: showMargins ? "default" : "outline",
         pressed: showMargins,
-        onClick: () => setShowMargins((prev) => !prev),
+        onClick: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
         icon: <SquareDashed className="h-4 w-4" />,
       },
     },
@@ -898,7 +833,7 @@ export default function Home() {
         shortcutId: "toggle_modules",
         variant: showModules ? "default" : "outline",
         pressed: showModules,
-        onClick: () => setShowModules((prev) => !prev),
+        onClick: () => dispatch({ type: "TOGGLE", key: "showModules" }),
         icon: <LayoutGrid className="h-4 w-4" />,
       },
     },
@@ -911,7 +846,7 @@ export default function Home() {
         shortcutId: "toggle_typography",
         variant: showTypography ? "default" : "outline",
         pressed: showTypography,
-        onClick: () => setShowTypography((prev) => !prev),
+        onClick: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
         icon: <Type className="h-4 w-4" />,
       },
     },
@@ -1126,8 +1061,10 @@ export default function Home() {
               }}
               onRequestGridRestore={(cols, rows) => {
                 suppressNext()
-                setGridCols(cols)
-                setGridRows(rows)
+                dispatch({ type: "BATCH", actions: [
+                  { type: "SET", key: "gridCols", value: cols },
+                  { type: "SET", key: "gridRows", value: rows },
+                ] })
               }}
               isDarkMode={isDarkUi}
               onLayoutChange={setPreviewLayout}
@@ -1173,16 +1110,18 @@ export default function Home() {
                 <ExampleLayoutsPanel
                   isDarkMode={isDarkUi}
                   onLoadPreset={(preset) => {
-                    setCanvasRatio(preset.canvasRatio)
-                    setOrientation(preset.orientation)
-                    setGridCols(preset.cols)
-                    setGridRows(preset.rows)
-                    setMarginMethod(preset.marginMethod)
-                    setBaselineMultiple(preset.baselineMultiple)
-                    setGutterMultiple(preset.gutterMultiple)
-                    setShowModules(true)
-                    setShowBaselines(true)
-                    setShowMargins(true)
+                    dispatch({ type: "BATCH", actions: [
+                      { type: "SET", key: "canvasRatio", value: preset.canvasRatio },
+                      { type: "SET", key: "orientation", value: preset.orientation },
+                      { type: "SET", key: "gridCols", value: preset.cols },
+                      { type: "SET", key: "gridRows", value: preset.rows },
+                      { type: "SET", key: "marginMethod", value: preset.marginMethod },
+                      { type: "SET", key: "baselineMultiple", value: preset.baselineMultiple },
+                      { type: "SET", key: "gutterMultiple", value: preset.gutterMultiple },
+                      { type: "SET", key: "showModules", value: true },
+                      { type: "SET", key: "showBaselines", value: true },
+                      { type: "SET", key: "showMargins", value: true },
+                    ] })
                     setActiveSidebarPanel(null)
                   }}
                 />

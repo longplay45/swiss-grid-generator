@@ -40,10 +40,10 @@ test("default preset contains baseFont", () => {
 test("page save/load wiring includes baseFont", () => {
   const pageSource = readText(PAGE_PATH)
   const exportActionsSource = readText(EXPORT_ACTIONS_PATH)
-  assert.match(pageSource, /buildUiSettingsPayload[\s\S]*baseFont,/)
+  assert.match(pageSource, /buildUiSettingsPayload[\s\S]*\.\.\.ui/)
   assert.match(exportActionsSource, /uiSettings:\s*buildUiSettingsPayload\(\)/)
-  assert.match(pageSource, /if \(isFontFamily\(ui\.baseFont\)\)/)
-  assert.match(pageSource, /setBaseFont\(ui\.baseFont\)/)
+  assert.match(pageSource, /isFontFamily\(loaded\.baseFont\)/)
+  assert.match(pageSource, /set\("baseFont",\s*loaded\.baseFont\)/)
   assert.match(pageSource, /<GridPreview[\s\S]*baseFont=\{baseFont\}/)
 })
 
