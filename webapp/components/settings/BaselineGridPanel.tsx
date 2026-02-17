@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
+import { DebouncedSlider } from "@/components/ui/slider"
 import { PanelCard } from "@/components/settings/PanelCard"
 
 type Props = {
@@ -40,7 +40,7 @@ export function BaselineGridPanel({
               {customBaseline} pt
             </span>
           </div>
-          <Slider
+          <DebouncedSlider
             value={[
               availableBaselineOptions.indexOf(customBaseline) >= 0
                 ? availableBaselineOptions.indexOf(customBaseline)
@@ -49,7 +49,7 @@ export function BaselineGridPanel({
             min={0}
             max={availableBaselineOptions.length - 1}
             step={1}
-            onValueChange={([v]) => onCustomBaselineChange(availableBaselineOptions[v])}
+            onValueCommit={([v]) => onCustomBaselineChange(availableBaselineOptions[v])}
           />
         </div>
       )}

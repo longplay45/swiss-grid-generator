@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { DebouncedSlider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { PanelCard } from "@/components/settings/PanelCard"
 
@@ -98,12 +98,12 @@ export function MarginsPanel({
                 {baselineMultiple.toFixed(1)}×
               </span>
             </div>
-            <Slider
+            <DebouncedSlider
               value={[baselineMultiple]}
               min={0.5}
               max={7}
               step={0.5}
-              onValueChange={([v]) => onBaselineMultipleChange(v)}
+              onValueCommit={([v]) => onBaselineMultipleChange(v)}
             />
           </div>
         </>
@@ -117,12 +117,12 @@ export function MarginsPanel({
                   {customMarginMultipliers[side]}×
                 </span>
               </div>
-              <Slider
+              <DebouncedSlider
                 value={[customMarginMultipliers[side]]}
                 min={1}
                 max={9}
                 step={1}
-                onValueChange={([v]) =>
+                onValueCommit={([v]) =>
                   onCustomMarginMultipliersChange({ ...customMarginMultipliers, [side]: v })
                 }
               />
@@ -135,12 +135,12 @@ export function MarginsPanel({
                 {customMarginMultipliers.bottom}×
               </span>
             </div>
-            <Slider
+            <DebouncedSlider
               value={[customMarginMultipliers.bottom]}
               min={1}
               max={9}
               step={1}
-              onValueChange={([v]) =>
+              onValueCommit={([v]) =>
                 onCustomMarginMultipliersChange({ ...customMarginMultipliers, bottom: v })
               }
             />

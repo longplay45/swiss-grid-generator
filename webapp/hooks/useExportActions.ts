@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react"
-import jsPDF from "jspdf"
 import { FORMATS_PT } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
@@ -152,12 +151,13 @@ export function useExportActions(ctx: ExportActionsContext) {
   }, [saveFilenameDraft, saveJSON])
 
   const exportPDF = useCallback(
-    (
+    async (
       width: number,
       height: number,
       filename: string,
       printProConfig: { enabled: boolean; bleedMm: number; registrationMarks: boolean; finalSafeGuides: boolean },
     ) => {
+      const { default: jsPDF } = await import("jspdf")
       const { enabled, bleedMm, registrationMarks, finalSafeGuides } = printProConfig
       const bleedPt = mmToPt(bleedMm)
       const cropOffsetPt = mmToPt(PRINT_PRO_CROP_OFFSET_MM)
@@ -255,7 +255,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportFinalSafeGuidesDraft(preset.config.finalSafeGuides)
   }, [])
 
-  const confirmExportPDF = useCallback(() => {
+  const confirmExportPDF = useCallback(async () => {
     const trimmedName = exportFilenameDraft.trim()
     if (!trimmedName) return
     const filename = trimmedName.toLowerCase().endsWith(".pdf") ? trimmedName : `${trimmedName}.pdf`
@@ -276,7 +276,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMm(bleedMm)
     setExportRegistrationMarks(exportRegistrationMarksDraft)
     setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
-    exportPDF(width, height, filename, {
+    await exportPDF(width, height, filename, {
       enabled: exportPrintProDraft,
       bleedMm,
       registrationMarks: exportRegistrationMarksDraft,

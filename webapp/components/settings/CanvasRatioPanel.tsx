@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { DebouncedSlider } from "@/components/ui/slider"
 import { CANVAS_RATIOS } from "@/lib/grid-calculator"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import { PanelCard } from "@/components/settings/PanelCard"
@@ -78,12 +78,12 @@ export function CanvasRatioPanel({
           <Label>Rotation</Label>
           <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{rotation}°</span>
         </div>
-        <Slider
+        <DebouncedSlider
           value={[rotation]}
           min={-80}
           max={80}
           step={1}
-          onValueChange={([v]) => onRotationChange(v)}
+          onValueCommit={([v]) => onRotationChange(v)}
         />
       </div>
     </PanelCard>

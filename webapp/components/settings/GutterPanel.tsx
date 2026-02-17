@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
+import { DebouncedSlider } from "@/components/ui/slider"
 import { PanelCard } from "@/components/settings/PanelCard"
 
 type Props = {
@@ -43,12 +43,12 @@ export function GutterPanel({
           <Label>Vertical Fields</Label>
           <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{gridCols}</span>
         </div>
-        <Slider
+        <DebouncedSlider
           value={[gridCols]}
           min={1}
           max={13}
           step={1}
-          onValueChange={([v]) => onGridColsChange(v)}
+          onValueCommit={([v]) => onGridColsChange(v)}
         />
       </div>
       <div className="space-y-3">
@@ -56,12 +56,12 @@ export function GutterPanel({
           <Label>Horizontal Fields</Label>
           <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{gridRows}</span>
         </div>
-        <Slider
+        <DebouncedSlider
           value={[gridRows]}
           min={1}
           max={13}
           step={1}
-          onValueChange={([v]) => onGridRowsChange(v)}
+          onValueCommit={([v]) => onGridRowsChange(v)}
         />
       </div>
       <div className="space-y-3">
@@ -71,12 +71,12 @@ export function GutterPanel({
             {gutterMultiple}×
           </span>
         </div>
-        <Slider
+        <DebouncedSlider
           value={[gutterMultiple]}
           min={0.5}
           max={4}
           step={0.5}
-          onValueChange={([v]) => onGutterMultipleChange(v)}
+          onValueCommit={([v]) => onGutterMultipleChange(v)}
         />
       </div>
     </PanelCard>
