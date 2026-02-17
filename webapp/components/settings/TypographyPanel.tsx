@@ -16,6 +16,7 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
+  onHelpClick: () => void
   typographyScale: TypographyScale
   onTypographyScaleChange: (value: TypographyScale) => void
   baseFont: FontFamily
@@ -27,6 +28,7 @@ export function TypographyPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
+  onHelpClick,
   typographyScale,
   onTypographyScaleChange,
   baseFont,
@@ -40,6 +42,7 @@ export function TypographyPanel({
       collapsed={collapsed}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
+      onHelpClick={onHelpClick}
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">

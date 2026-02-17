@@ -6,7 +6,7 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
-  gridUnitPt: number
+  onHelpClick: () => void
   customBaseline: number
   availableBaselineOptions: number[]
   onCustomBaselineChange: (value: number) => void
@@ -17,7 +17,7 @@ export function BaselineGridPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
-  gridUnitPt,
+  onHelpClick,
   customBaseline,
   availableBaselineOptions,
   onCustomBaselineChange,
@@ -25,11 +25,12 @@ export function BaselineGridPanel({
 }: Props) {
   return (
     <PanelCard
-      title={`II. Baseline Grid (${gridUnitPt.toFixed(3)} pt)`}
+      title="II. Baseline Grid"
       tooltip="Baseline unit for grid and typography"
       collapsed={collapsed}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
+      onHelpClick={onHelpClick}
       isDarkMode={isDarkMode}
     >
       {availableBaselineOptions.length > 0 && (

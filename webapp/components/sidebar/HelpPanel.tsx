@@ -1,9 +1,11 @@
+import { useEffect } from "react"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { X } from "lucide-react"
 
 type Props = {
   isDarkMode?: boolean
   onClose: () => void
+  activeSectionId?: HelpSectionId | null
 }
 
 const INDEX_ITEMS = [
@@ -21,7 +23,16 @@ const INDEX_ITEMS = [
   { id: "help-grid-theory", label: "Grid Theory Notes" },
 ] as const
 
-export function HelpPanel({ isDarkMode = false, onClose }: Props) {
+export type HelpSectionId = (typeof INDEX_ITEMS)[number]["id"]
+
+export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Props) {
+  useEffect(() => {
+    if (!activeSectionId) return
+    const target = document.getElementById(activeSectionId)
+    if (!target) return
+    target.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [activeSectionId])
+
   const tone = isDarkMode
     ? {
         heading: "text-gray-100",

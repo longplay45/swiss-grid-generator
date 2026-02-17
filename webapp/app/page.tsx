@@ -43,6 +43,7 @@ import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
+import type { HelpSectionId } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
@@ -71,7 +72,16 @@ import {
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.7.0"
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
+const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
+const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
+const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
+  format: "help-canvas-grid",
+  baseline: "help-canvas-grid",
+  margins: "help-canvas-grid",
+  gutter: "help-canvas-grid",
+  typo: "help-typography-fonts",
+}
 
 // ─── Consolidated UI state ────────────────────────────────────────────────
 
@@ -199,6 +209,8 @@ export default function Home() {
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
     "settings" | "help" | "imprint" | "example" | null
   >(null)
+  const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
+  const [activeHelpTopicKey, setActiveHelpTopicKey] = useState<SectionKey | null>(null)
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
@@ -381,6 +393,17 @@ export default function Home() {
     }
     toggleAllSections()
   }
+
+  const handleSectionHelpClick = useCallback((key: SectionKey) => {
+    const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
+    if (activeSidebarPanel === "help" && activeHelpTopicKey === key) {
+      setActiveSidebarPanel(null)
+      return
+    }
+    setActiveHelpTopicKey(key)
+    setActiveHelpSectionId(targetSectionId)
+    setActiveSidebarPanel("help")
+  }, [activeHelpTopicKey, activeSidebarPanel])
 
   useEffect(() => {
     return () => {
@@ -898,15 +921,14 @@ export default function Home() {
   return (
     <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
       {/* Left Panel - Controls */}
-      <div className={`w-full md:w-96 flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
+      <div className={`w-full md:w-80 flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
         {/* Header - always visible */}
         <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className={`text-sm ${uiTheme.bodyText}`}>
             Based on Müller-Brockmann&apos;s <em>Grid Systems in Graphic Design</em> (1981).
             Copyleft &amp; -right 2026 by{" "}
-            <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.{" "}
-            <a href="https://github.com/longplay45/swiss-grid-generator" className={uiTheme.link}>Source Code</a>.
+            <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.
           </p>
         </div>
 
@@ -919,6 +941,7 @@ export default function Home() {
             collapsed={collapsed.format}
             onHeaderClick={handleSectionHeaderClick("format")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+            onHelpClick={() => handleSectionHelpClick("format")}
             canvasRatio={canvasRatio}
             onCanvasRatioChange={setCanvasRatio}
             orientation={orientation}
@@ -932,7 +955,7 @@ export default function Home() {
             collapsed={collapsed.baseline}
             onHeaderClick={handleSectionHeaderClick("baseline")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-            gridUnitPt={result.grid.gridUnit}
+            onHelpClick={() => handleSectionHelpClick("baseline")}
             customBaseline={customBaseline}
             availableBaselineOptions={availableBaselineOptions}
             onCustomBaselineChange={setCustomBaseline}
@@ -943,6 +966,7 @@ export default function Home() {
             collapsed={collapsed.margins}
             onHeaderClick={handleSectionHeaderClick("margins")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+            onHelpClick={() => handleSectionHelpClick("margins")}
             marginMethod={marginMethod}
             onMarginMethodChange={setMarginMethod}
             baselineMultiple={baselineMultiple}
@@ -960,6 +984,7 @@ export default function Home() {
             collapsed={collapsed.gutter}
             onHeaderClick={handleSectionHeaderClick("gutter")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+            onHelpClick={() => handleSectionHelpClick("gutter")}
             gridCols={gridCols}
             onGridColsChange={setGridCols}
             gridRows={gridRows}
@@ -973,6 +998,7 @@ export default function Home() {
             collapsed={collapsed.typo}
             onHeaderClick={handleSectionHeaderClick("typo")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+            onHelpClick={() => handleSectionHelpClick("typo")}
             typographyScale={typographyScale}
             onTypographyScaleChange={setTypographyScale}
             baseFont={baseFont}
@@ -983,7 +1009,12 @@ export default function Home() {
 
         <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">
-            <span>Beta Version {APP_VERSION}</span>
+            <span className="inline-flex items-center gap-2">
+              {SHOW_BETA_BADGE ? (
+                <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
+              ) : null}
+              <span>Version {APP_VERSION}</span>
+            </span>
             <div className="flex items-center gap-3">
               <a
                 href="/survey"
@@ -1098,6 +1129,7 @@ export default function Home() {
                 <HelpPanel
                   isDarkMode={isDarkUi}
                   onClose={() => setActiveSidebarPanel(null)}
+                  activeSectionId={activeHelpSectionId}
                 />
               )}
               {activeSidebarPanel === "imprint" && (

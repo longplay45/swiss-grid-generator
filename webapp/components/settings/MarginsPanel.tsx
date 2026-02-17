@@ -10,6 +10,7 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
+  onHelpClick: () => void
   marginMethod: 1 | 2 | 3
   onMarginMethodChange: (value: 1 | 2 | 3) => void
   baselineMultiple: number
@@ -28,6 +29,7 @@ export function MarginsPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
+  onHelpClick,
   marginMethod,
   onMarginMethodChange,
   baselineMultiple,
@@ -60,6 +62,7 @@ export function MarginsPanel({
       collapsed={collapsed}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
+      onHelpClick={onHelpClick}
       isDarkMode={isDarkMode}
     >
       <div className="flex items-center justify-between">

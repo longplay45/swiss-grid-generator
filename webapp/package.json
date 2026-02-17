@@ -1,11 +1,18 @@
 {
   "name": "webapp",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "type": "module",
+  "config": {
+    "releaseChannel": "beta"
+  },
   "scripts": {
     "dev": "next dev",
+    "dev:beta": "NEXT_PUBLIC_RELEASE_CHANNEL=beta next dev",
+    "dev:prod": "NEXT_PUBLIC_RELEASE_CHANNEL=prod next dev",
     "build": "next build",
+    "build:beta": "NEXT_PUBLIC_RELEASE_CHANNEL=beta next build",
+    "build:prod": "NEXT_PUBLIC_RELEASE_CHANNEL=prod next build",
     "start": "next start",
     "lint": "next lint",
     "test:roundtrip": "node --test tests/font-roundtrip.test.mjs",

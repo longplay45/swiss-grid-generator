@@ -6,6 +6,7 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
+  onHelpClick: () => void
   gridCols: number
   onGridColsChange: (value: number) => void
   gridRows: number
@@ -19,6 +20,7 @@ export function GutterPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
+  onHelpClick,
   gridCols,
   onGridColsChange,
   gridRows,
@@ -34,6 +36,7 @@ export function GutterPanel({
       collapsed={collapsed}
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
+      onHelpClick={onHelpClick}
       isDarkMode={isDarkMode}
     >
       <div className="space-y-3">
