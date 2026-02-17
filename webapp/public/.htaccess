@@ -1,0 +1,5 @@
+RewriteEngine On
+
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} ^www\.swiss-grid-generator\.com$ [NC]
+RewriteRule ^(.*)$ https://swiss-grid-generator.com/$1 [L,R=301]

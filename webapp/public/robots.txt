@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /
+
+# Optional comment lines (these are ignored by crawlers)
+# This site is under development / placeholder phase.
+# Please do not crawl or index until the tool is live.
+# Last updated: February 2026
