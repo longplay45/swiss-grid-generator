@@ -1,5 +1,7 @@
 import { useEffect } from "react"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
+import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
+import type { HelpSectionId } from "@/lib/help-registry"
 import { X } from "lucide-react"
 
 type Props = {
@@ -7,55 +9,6 @@ type Props = {
   onClose: () => void
   activeSectionId?: HelpSectionId | null
 }
-
-const QUICK_START_INDEX_ITEMS = [
-  { id: "help-quick-start", label: "Quick Start" },
-] as const
-
-const GENERAL_INDEX_ITEMS = [
-  { id: "help-editor", label: "Text Editor Popup" },
-  { id: "help-drag-placement", label: "Drag and Placement" },
-  { id: "help-history-reflow", label: "History and Reflow" },
-  { id: "help-save-load", label: "Save and Load JSON" },
-  { id: "help-export", label: "Export PDF" },
-  { id: "help-troubleshooting", label: "Troubleshooting" },
-  { id: "help-grid-theory", label: "Grid Theory Notes" },
-] as const
-
-const GRID_SETTINGS_INDEX_ITEMS = [
-  { id: "help-canvas-ratio", label: "I. Canvas Ratio & Rotation" },
-  { id: "help-baseline-grid", label: "II. Baseline Grid" },
-  { id: "help-margins", label: "III. Margins" },
-  { id: "help-gutter", label: "IV. Gutter" },
-  { id: "help-typo", label: "V. Typo" },
-] as const
-
-const HEADER_CONTROLS_INDEX_ITEMS = [
-  { id: "help-sidebars-header", label: "Header and Sidebars" },
-  { id: "help-header-examples", label: "Examples" },
-  { id: "help-header-load", label: "Load" },
-  { id: "help-header-save", label: "Save" },
-  { id: "help-header-export", label: "Export PDF" },
-  { id: "help-header-undo", label: "Undo" },
-  { id: "help-header-redo", label: "Redo" },
-  { id: "help-header-dark-mode", label: "Dark Mode" },
-  { id: "help-header-fullscreen", label: "Fullscreen" },
-  { id: "help-header-baselines", label: "Baselines Toggle" },
-  { id: "help-header-margins", label: "Margins Toggle" },
-  { id: "help-header-modules", label: "Modules Toggle" },
-  { id: "help-header-typography", label: "Typography Toggle" },
-  { id: "help-header-settings", label: "Settings Panel" },
-  { id: "help-shortcuts", label: "Keyboard Shortcuts" },
-] as const
-
-const INDEX_ITEMS = [
-  ...QUICK_START_INDEX_ITEMS,
-  ...GENERAL_INDEX_ITEMS,
-  ...HEADER_CONTROLS_INDEX_ITEMS,
-  ...GRID_SETTINGS_INDEX_ITEMS,
-] as const
-
-export type HelpSectionId = (typeof INDEX_ITEMS)[number]["id"]
 
 export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Props) {
   useEffect(() => {
@@ -99,47 +52,20 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <div id="help-index">
         <h4 className={`mb-2 text-sm font-semibold ${tone.heading}`}>Index</h4>
-        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Quick Start</h5>
-        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-          {QUICK_START_INDEX_ITEMS.map((item) => (
-            <li key={item.id}>
-              <a href={`#${item.id}`} className={tone.indexLink}>
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>General Guidance</h5>
-        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-          {GENERAL_INDEX_ITEMS.map((item) => (
-            <li key={item.id}>
-              <a href={`#${item.id}`} className={tone.indexLink}>
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-        <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>UX Reference</h5>
-        <h6 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Application Controls</h6>
-        <ul className={`mb-3 space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-          {HEADER_CONTROLS_INDEX_ITEMS.map((item) => (
-            <li key={item.id}>
-              <a href={`#${item.id}`} className={tone.indexLink}>
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-        <h6 className={`mb-1 text-xs font-semibold ${tone.heading}`}>Grid Generator Settings</h6>
-        <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-          {GRID_SETTINGS_INDEX_ITEMS.map((item) => (
-            <li key={item.id}>
-              <a href={`#${item.id}`} className={tone.indexLink}>
-                {item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        {HELP_INDEX_GROUPS.map((group, groupIndex) => (
+          <div key={group.title} className={groupIndex > 0 ? "mt-2" : ""}>
+            <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>{group.title}</h5>
+            <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+              {group.items.map((item) => (
+                <li key={item.id}>
+                  <a href={`#${item.id}`} className={tone.indexLink}>
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
       <hr className={tone.divider} />

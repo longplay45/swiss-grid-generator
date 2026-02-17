@@ -44,7 +44,11 @@ import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
-import type { HelpSectionId } from "@/components/sidebar/HelpPanel"
+import {
+  HELP_SECTION_BY_HEADER_ACTION,
+  HELP_SECTION_BY_SETTINGS_SECTION,
+} from "@/lib/help-registry"
+import type { HelpSectionId } from "@/lib/help-registry"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
@@ -76,28 +80,6 @@ const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
-const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
-  format: "help-canvas-ratio",
-  baseline: "help-baseline-grid",
-  margins: "help-margins",
-  gutter: "help-gutter",
-  typo: "help-typo",
-}
-const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
-  examples: "help-header-examples",
-  load: "help-header-load",
-  save: "help-header-save",
-  export: "help-header-export",
-  undo: "help-header-undo",
-  redo: "help-header-redo",
-  "dark-mode": "help-header-dark-mode",
-  fullscreen: "help-header-fullscreen",
-  baselines: "help-header-baselines",
-  margins: "help-header-margins",
-  modules: "help-header-modules",
-  typography: "help-header-typography",
-  settings: "help-header-settings",
-}
 
 // ─── Consolidated UI state ────────────────────────────────────────────────
 
