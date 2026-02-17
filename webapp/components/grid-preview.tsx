@@ -1302,6 +1302,13 @@ export function GridPreview({
       const { gridCols, gridRows } = result.settings
       const pageWidth = width * scale
       const pageHeight = height * scale
+      const contentTop = margins.top * scale
+      const baselineSpacing = gridUnit * scale
+      const baselineRows = Math.max(
+        0,
+        Math.round((pageHeight - (margins.top + margins.bottom) * scale) / baselineSpacing),
+      )
+      const contentBottom = contentTop + baselineRows * baselineSpacing
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.fillStyle = "#ffffff"
@@ -1322,9 +1329,9 @@ export function GridPreview({
         ctx.setLineDash([4, 4])
         ctx.strokeRect(
           margins.left * scale,
-          margins.top * scale,
+          contentTop,
           pageWidth - (margins.left + margins.right) * scale,
-          pageHeight - (margins.top + margins.bottom) * scale,
+          contentBottom - contentTop,
         )
         ctx.setLineDash([])
       }
@@ -1352,22 +1359,26 @@ export function GridPreview({
       }
 
       if (showBaselines) {
-        const startY = margins.top * scale
-        const endY = pageHeight - margins.bottom * scale
-        const baselineSpacing = gridUnit * scale
+        const startY = contentTop
         const baselineStep = isMobile ? 2 : 1
 
-        let currentY = startY
         ctx.strokeStyle = "#ec4899"
         ctx.lineWidth = 0.3
         ctx.globalAlpha = 0.5
 
-        while (currentY <= endY) {
+        for (let row = 0; row <= baselineRows; row += baselineStep) {
+          const y = startY + row * baselineSpacing
           ctx.beginPath()
-          ctx.moveTo(0, currentY)
-          ctx.lineTo(pageWidth, currentY)
+          ctx.moveTo(0, y)
+          ctx.lineTo(pageWidth, y)
           ctx.stroke()
-          currentY += baselineSpacing * baselineStep
+        }
+
+        if (baselineRows % baselineStep !== 0) {
+          ctx.beginPath()
+          ctx.moveTo(0, contentBottom)
+          ctx.lineTo(pageWidth, contentBottom)
+          ctx.stroke()
         }
         ctx.globalAlpha = 1
       }
