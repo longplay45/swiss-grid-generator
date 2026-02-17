@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { GridResult } from "@/lib/grid-calculator"
-import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
+import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   computeAutoFitBatch,
   type AutoFitPlannerInput,
@@ -249,87 +249,6 @@ function getDummyTextForStyle(style: TypographyStyleKey): string {
   return DUMMY_TEXT_BY_STYLE[style] ?? DUMMY_TEXT_BY_STYLE.body
 }
 
-function getDefaultColumnSpan(key: BlockId, gridCols: number): number {
-  if (gridCols <= 1) return 1
-  if (key === "display") return gridCols
-  if (key === "headline") return gridCols >= 3 ? Math.min(gridCols, Math.floor(gridCols / 2) + 1) : gridCols
-  if (key === "caption") return 1
-  return Math.max(1, Math.floor(gridCols / 2))
-}
-
-function hyphenateWord(
-  ctx: CanvasRenderingContext2D,
-  word: string,
-  maxWidth: number,
-  measureWidth: (text: string) => number,
-): string[] {
-  return hyphenateWordEnglish(word, maxWidth, measureWidth)
-}
-
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  { hyphenate = false }: { hyphenate?: boolean } = {},
-  measureWidth: (text: string) => number = (input) => ctx.measureText(input).width,
-): string[] {
-  const wrapSingleLine = (input: string): string[] => {
-    const words = input.split(/\s+/).filter(Boolean)
-    if (!words.length) return [""]
-
-    const lines: string[] = []
-    let current = ""
-
-    for (const word of words) {
-      const testLine = current ? `${current} ${word}` : word
-      if (measureWidth(testLine) <= maxWidth || current.length === 0) {
-        if (measureWidth(word) > maxWidth && hyphenate) {
-          if (current) {
-            lines.push(current)
-            current = ""
-          }
-          const parts = hyphenateWord(ctx, word, maxWidth, measureWidth)
-          for (let i = 0; i < parts.length; i += 1) {
-            if (i === parts.length - 1) {
-              current = parts[i]
-            } else {
-              lines.push(parts[i])
-            }
-          }
-        } else {
-          current = testLine
-        }
-      } else {
-        lines.push(current)
-        if (measureWidth(word) > maxWidth && hyphenate) {
-          const parts = hyphenateWord(ctx, word, maxWidth, measureWidth)
-          for (let i = 0; i < parts.length; i += 1) {
-            if (i === parts.length - 1) {
-              current = parts[i]
-            } else {
-              lines.push(parts[i])
-            }
-          }
-        } else {
-          current = word
-        }
-      }
-    }
-
-    if (current) lines.push(current)
-    return lines
-  }
-
-  const hardBreakLines = text.replace(/\r\n/g, "\n").split("\n")
-  const wrapped: string[] = []
-
-  for (const line of hardBreakLines) {
-    wrapped.push(...wrapSingleLine(line))
-  }
-
-  return wrapped
-}
-
 function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
   const metrics = ctx.measureText("Hg")
   return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
@@ -426,6 +345,7 @@ export function GridPreview({
   const autoFitWorkerRequestIdRef = useRef(0)
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
+  const mouseMoveRafRef = useRef<number | null>(null)
   const perfStateRef = useRef<PerfState>({
     drawMs: [],
     reflowMs: [],
@@ -853,7 +773,7 @@ export function GridPreview({
   ): string[] => {
     const key = `${ctx.font}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
     const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
-      wrapText(ctx, text, maxWidth, { hyphenate }, (sample) => getMeasuredTextWidth(ctx, sample)),
+      wrapText(text, maxWidth, hyphenate, (sample) => getMeasuredTextWidth(ctx, sample)),
     )
     return [...cached]
   }, [getMeasuredTextWidth, makeCachedValue])
@@ -2722,7 +2642,9 @@ export function GridPreview({
     finishDrag()
   }, [dragState, finishDrag])
 
-  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
+    mouseMoveRafRef.current = null
+
     if (!showTypography || editorState || dragState) {
       if (hoverState) setHoverState(null)
       return
@@ -2732,8 +2654,8 @@ export function GridPreview({
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const canvasX = event.clientX - rect.left
-    const canvasY = event.clientY - rect.top
+    const canvasX = clientX - rect.left
+    const canvasY = clientY - rect.top
     const pagePoint = toPagePoint(canvasX, canvasY)
     if (!pagePoint) {
       if (hoverState) setHoverState(null)
@@ -2753,6 +2675,18 @@ export function GridPreview({
 
     if (hoverState) setHoverState(null)
   }, [dragState, editorState, findTopmostBlockAtPoint, hoverState, showTypography, toPagePoint])
+
+  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (mouseMoveRafRef.current !== null) return
+    const { clientX, clientY } = event
+    mouseMoveRafRef.current = requestAnimationFrame(() => handleCanvasMouseMoveInner(clientX, clientY))
+  }, [handleCanvasMouseMoveInner])
+
+  useEffect(() => {
+    return () => {
+      if (mouseMoveRafRef.current !== null) cancelAnimationFrame(mouseMoveRafRef.current)
+    }
+  }, [])
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return

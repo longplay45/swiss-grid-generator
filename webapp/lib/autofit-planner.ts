@@ -1,4 +1,4 @@
-import { hyphenateWordEnglish } from "@/lib/english-hyphenation"
+import { wrapText } from "./text-layout"
 
 export type AutoFitStyle = {
   size: number
@@ -39,61 +39,6 @@ export type AutoFitPlannerOutput = {
   positionUpdates: Partial<Record<string, AutoFitPosition>>
 }
 
-type MeasureWidth = (text: string) => number
-
-function wrapTextMeasure(
-  text: string,
-  maxWidth: number,
-  hyphenate: boolean,
-  measureWidth: MeasureWidth,
-): string[] {
-  const wrapSingleLine = (input: string): string[] => {
-    const words = input.split(/\s+/).filter(Boolean)
-    if (!words.length) return [""]
-
-    const lines: string[] = []
-    let current = ""
-
-    for (const word of words) {
-      const testLine = current ? `${current} ${word}` : word
-      if (measureWidth(testLine) <= maxWidth || current.length === 0) {
-        if (measureWidth(word) > maxWidth && hyphenate) {
-          if (current) {
-            lines.push(current)
-            current = ""
-          }
-          const parts = hyphenateWordEnglish(word, maxWidth, measureWidth)
-          for (let i = 0; i < parts.length; i += 1) {
-            if (i === parts.length - 1) current = parts[i]
-            else lines.push(parts[i])
-          }
-        } else {
-          current = testLine
-        }
-      } else {
-        lines.push(current)
-        if (measureWidth(word) > maxWidth && hyphenate) {
-          const parts = hyphenateWordEnglish(word, maxWidth, measureWidth)
-          for (let i = 0; i < parts.length; i += 1) {
-            if (i === parts.length - 1) current = parts[i]
-            else lines.push(parts[i])
-          }
-        } else {
-          current = word
-        }
-      }
-    }
-
-    if (current) lines.push(current)
-    return lines
-  }
-
-  const hardBreakLines = text.replace(/\r\n/g, "\n").split("\n")
-  const wrapped: string[] = []
-  for (const line of hardBreakLines) wrapped.push(...wrapSingleLine(line))
-  return wrapped
-}
-
 export function computeAutoFitBatch(
   input: AutoFitPlannerInput,
   measureWidthForFont: (font: string, text: string) => number,
@@ -126,7 +71,7 @@ export function computeAutoFitBatch(
     const fontSpec = `${item.style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
     const columnWidth = input.moduleWidth * input.scale
     const cachedMeasure = (text: string) => measureWidthForFont(fontSpec, text)
-    const lines = wrapTextMeasure(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
+    const lines = wrapText(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
     const maxColsFromPlacement = Math.max(

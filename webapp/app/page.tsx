@@ -724,7 +724,7 @@ export default function Home() {
   }
   type HeaderItem = { type: "action"; action: HeaderAction } | { type: "divider"; key: string }
 
-  const fileGroup: HeaderItem[] = [
+  const fileGroup: HeaderItem[] = useMemo(() => [
     {
       type: "action",
       action: {
@@ -797,9 +797,9 @@ export default function Home() {
         icon: <Redo2 className="h-4 w-4" />,
       },
     },
-  ]
+  ], [activeSidebarPanel, exportActions.openSaveDialog, exportActions.openExportDialog, history.canUndo, history.canRedo, undoAny, redoAny])
 
-  const displayGroup: HeaderItem[] = [
+  const displayGroup: HeaderItem[] = useMemo(() => [
     {
       type: "action",
       action: {
@@ -878,9 +878,9 @@ export default function Home() {
         icon: <Type className="h-4 w-4" />,
       },
     },
-  ]
+  ], [isDarkUi, isPreviewFullscreen, togglePreviewFullscreen, showBaselines, showMargins, showModules, showTypography, dispatch])
 
-  const sidebarGroup: HeaderAction[] = [
+  const sidebarGroup: HeaderAction[] = useMemo(() => [
     {
       key: "settings",
       ariaLabel: "Show settings panel",
@@ -901,7 +901,7 @@ export default function Home() {
       onClick: toggleHelpPanelFromHeader,
       icon: <CircleHelp className="h-4 w-4" />,
     },
-  ]
+  ], [activeSidebarPanel, toggleHelpPanelFromHeader])
 
   const renderHeaderAction = (action: HeaderAction) => {
     const shortcut = action.shortcutId
