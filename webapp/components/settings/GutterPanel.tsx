@@ -7,6 +7,8 @@ type Props = {
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   onHelpClick: () => void
+  onHelpHover: () => void
+  showHelpIcon: boolean
   gridCols: number
   onGridColsChange: (value: number) => void
   gridRows: number
@@ -21,6 +23,8 @@ export function GutterPanel({
   onHeaderClick,
   onHeaderDoubleClick,
   onHelpClick,
+  onHelpHover,
+  showHelpIcon,
   gridCols,
   onGridColsChange,
   gridRows,
@@ -37,6 +41,8 @@ export function GutterPanel({
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       onHelpClick={onHelpClick}
+      onHelpHover={onHelpHover}
+      showHelpIcon={showHelpIcon}
       isDarkMode={isDarkMode}
     >
       <div className="space-y-3">

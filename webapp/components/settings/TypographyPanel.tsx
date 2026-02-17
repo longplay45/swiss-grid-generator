@@ -17,6 +17,8 @@ type Props = {
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   onHelpClick: () => void
+  onHelpHover: () => void
+  showHelpIcon: boolean
   typographyScale: TypographyScale
   onTypographyScaleChange: (value: TypographyScale) => void
   baseFont: FontFamily
@@ -29,6 +31,8 @@ export function TypographyPanel({
   onHeaderClick,
   onHeaderDoubleClick,
   onHelpClick,
+  onHelpHover,
+  showHelpIcon,
   typographyScale,
   onTypographyScaleChange,
   baseFont,
@@ -43,6 +47,8 @@ export function TypographyPanel({
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       onHelpClick={onHelpClick}
+      onHelpHover={onHelpHover}
+      showHelpIcon={showHelpIcon}
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">

@@ -9,6 +9,8 @@ type Props = {
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   onHelpClick: () => void
+  onHelpHover?: () => void
+  showHelpIcon?: boolean
   isDarkMode: boolean
   children: ReactNode
 }
@@ -20,6 +22,8 @@ export function PanelCard({
   onHeaderClick,
   onHeaderDoubleClick,
   onHelpClick,
+  onHelpHover,
+  showHelpIcon = true,
   isDarkMode,
   children,
 }: Props) {
@@ -37,18 +41,21 @@ export function PanelCard({
         >
           <CardTitle className="text-sm flex items-center gap-2">
             {title}
-            <button
-              type="button"
-              aria-label={`Open help for ${title}`}
-              onClick={(event) => {
-                event.stopPropagation()
-                onHelpClick()
-              }}
-              onDoubleClick={(event) => event.stopPropagation()}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
-            >
-              ?
-            </button>
+            {showHelpIcon ? (
+              <button
+                type="button"
+                aria-label={`Open help for ${title}`}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onHelpClick()
+                }}
+                onMouseEnter={() => onHelpHover?.()}
+                onDoubleClick={(event) => event.stopPropagation()}
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
+              >
+                ?
+              </button>
+            ) : null}
             <span
               className={`ml-auto text-base leading-none transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`}
             >

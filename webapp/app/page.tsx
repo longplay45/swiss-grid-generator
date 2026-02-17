@@ -76,11 +76,11 @@ const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
 const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
-  format: "help-canvas-grid",
-  baseline: "help-canvas-grid",
-  margins: "help-canvas-grid",
-  gutter: "help-canvas-grid",
-  typo: "help-typography-fonts",
+  format: "help-canvas-ratio",
+  baseline: "help-baseline-grid",
+  margins: "help-margins",
+  gutter: "help-gutter",
+  typo: "help-typo",
 }
 
 // ─── Consolidated UI state ────────────────────────────────────────────────
@@ -210,7 +210,7 @@ export default function Home() {
     "settings" | "help" | "imprint" | "example" | null
   >(null)
   const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
-  const [activeHelpTopicKey, setActiveHelpTopicKey] = useState<SectionKey | null>(null)
+  const showSectionHelpIcons = activeSidebarPanel === "help"
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
@@ -396,14 +396,20 @@ export default function Home() {
 
   const handleSectionHelpClick = useCallback((key: SectionKey) => {
     const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
-    if (activeSidebarPanel === "help" && activeHelpTopicKey === key) {
-      setActiveSidebarPanel(null)
-      return
-    }
-    setActiveHelpTopicKey(key)
     setActiveHelpSectionId(targetSectionId)
-    setActiveSidebarPanel("help")
-  }, [activeHelpTopicKey, activeSidebarPanel])
+  }, [])
+  const handleSectionHelpHover = useCallback((key: SectionKey) => {
+    const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
+    setActiveHelpSectionId(targetSectionId)
+  }, [])
+
+  const toggleHelpPanelFromHeader = useCallback(() => {
+    setActiveSidebarPanel((prev) => {
+      if (prev === "help") return null
+      setActiveHelpSectionId(null)
+      return "help"
+    })
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -568,7 +574,7 @@ export default function Home() {
           setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings"))
           return
         case "toggle_help_panel":
-          setActiveSidebarPanel((prev) => (prev === "help" ? null : "help"))
+          toggleHelpPanelFromHeader()
           return
         case "toggle_imprint_panel":
           setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))
@@ -579,7 +585,7 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [exportActions, history.canRedo, history.canUndo, redoAny, togglePreviewFullscreen, undoAny])
+  }, [exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, togglePreviewFullscreen, undoAny])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -893,7 +899,7 @@ export default function Home() {
       shortcutId: "toggle_help_panel",
       variant: activeSidebarPanel === "help" ? "default" : "outline",
       pressed: activeSidebarPanel === "help",
-      onClick: () => setActiveSidebarPanel((prev) => (prev === "help" ? null : "help")),
+      onClick: toggleHelpPanelFromHeader,
       icon: <CircleHelp className="h-4 w-4" />,
     },
   ]
@@ -926,7 +932,7 @@ export default function Home() {
         <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className={`text-sm ${uiTheme.bodyText}`}>
-            Based on Müller-Brockmann&apos;s <em>Grid Systems in Graphic Design</em> (1981).
+            Based on Müller-Brockmann&apos;s <em><a href="https://www.amazon.de/Rastersysteme-für-visuelle-Gestaltung-Ausstellungsgestalter/dp/3721201450/ref=sr_1_1?__mk_de_DE=ÅMÅŽÕÑ&crid=74R825L27LI9&dib=eyJ2IjoiMSJ9.Fr4qEzNQ1JprJm6AnGDkr515wH4rn_TRLxzDhds_c8zgl7MhUPAATEtWXTsB4ZG4uiy6Ia9l5Ez5tNdXxXkqH9rohnoUBitHUtOp_d2NbgxwT4rn8OpG5dCk1XeLsRYLLnubd029D_styBocpnSKCyAT4zUdtmxsRtJ_syk-fwAspDKfrpHI6EDrWaJkuD6KSsU1ugAswiaIkHPHFo_DrLg5cmQmSleYfq9Xx1IZXdg.cuUDPIhomsYbSXnb3uhv0zUGsBUl8pRwP5rYhURySrA&dib_tag=se&keywords=Müller-Brockmann%27s+Grid+Systems+in+Graphic+Design&qid=1771329823&sprefix=müller-brockmann%27s+grid+systems+in+graphic+design%2Caps%2C216&sr=8-1">Grid Systems in Graphic Design</a></em> (1981).
             Copyleft &amp; -right 2026 by{" "}
             <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.
           </p>
@@ -942,6 +948,8 @@ export default function Home() {
             onHeaderClick={handleSectionHeaderClick("format")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
             onHelpClick={() => handleSectionHelpClick("format")}
+            onHelpHover={() => handleSectionHelpHover("format")}
+            showHelpIcon={showSectionHelpIcons}
             canvasRatio={canvasRatio}
             onCanvasRatioChange={setCanvasRatio}
             orientation={orientation}
@@ -956,6 +964,8 @@ export default function Home() {
             onHeaderClick={handleSectionHeaderClick("baseline")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
             onHelpClick={() => handleSectionHelpClick("baseline")}
+            onHelpHover={() => handleSectionHelpHover("baseline")}
+            showHelpIcon={showSectionHelpIcons}
             customBaseline={customBaseline}
             availableBaselineOptions={availableBaselineOptions}
             onCustomBaselineChange={setCustomBaseline}
@@ -967,6 +977,8 @@ export default function Home() {
             onHeaderClick={handleSectionHeaderClick("margins")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
             onHelpClick={() => handleSectionHelpClick("margins")}
+            onHelpHover={() => handleSectionHelpHover("margins")}
+            showHelpIcon={showSectionHelpIcons}
             marginMethod={marginMethod}
             onMarginMethodChange={setMarginMethod}
             baselineMultiple={baselineMultiple}
@@ -985,6 +997,8 @@ export default function Home() {
             onHeaderClick={handleSectionHeaderClick("gutter")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
             onHelpClick={() => handleSectionHelpClick("gutter")}
+            onHelpHover={() => handleSectionHelpHover("gutter")}
+            showHelpIcon={showSectionHelpIcons}
             gridCols={gridCols}
             onGridColsChange={setGridCols}
             gridRows={gridRows}
@@ -999,6 +1013,8 @@ export default function Home() {
             onHeaderClick={handleSectionHeaderClick("typo")}
             onHeaderDoubleClick={handleSectionHeaderDoubleClick}
             onHelpClick={() => handleSectionHelpClick("typo")}
+            onHelpHover={() => handleSectionHelpHover("typo")}
+            showHelpIcon={showSectionHelpIcons}
             typographyScale={typographyScale}
             onTypographyScaleChange={setTypographyScale}
             baseFont={baseFont}

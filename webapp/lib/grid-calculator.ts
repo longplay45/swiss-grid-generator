@@ -549,7 +549,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     throw new Error("Invalid grid settings: module width must be > 0");
   }
 
-  let netH = h - (marginTop + marginBottom);
+  const netH = h - (marginTop + marginBottom);
   if (netH <= 0) {
     throw new Error("Invalid vertical margins: content height must be > 0");
   }

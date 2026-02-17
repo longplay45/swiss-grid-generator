@@ -10,6 +10,8 @@ type Props = {
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   onHelpClick: () => void
+  onHelpHover: () => void
+  showHelpIcon: boolean
   canvasRatio: CanvasRatioKey
   onCanvasRatioChange: (value: CanvasRatioKey) => void
   orientation: "portrait" | "landscape"
@@ -24,6 +26,8 @@ export function CanvasRatioPanel({
   onHeaderClick,
   onHeaderDoubleClick,
   onHelpClick,
+  onHelpHover,
+  showHelpIcon,
   canvasRatio,
   onCanvasRatioChange,
   orientation,
@@ -40,6 +44,8 @@ export function CanvasRatioPanel({
       onHeaderClick={onHeaderClick}
       onHeaderDoubleClick={onHeaderDoubleClick}
       onHelpClick={onHelpClick}
+      onHelpHover={onHelpHover}
+      showHelpIcon={showHelpIcon}
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">

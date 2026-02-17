@@ -10,8 +10,11 @@ type Props = {
 
 const INDEX_ITEMS = [
   { id: "help-quick-start", label: "Quick Start" },
-  { id: "help-canvas-grid", label: "Canvas and Grid" },
-  { id: "help-typography-fonts", label: "Typography and Fonts" },
+  { id: "help-canvas-ratio", label: "I. Canvas Ratio & Rotation" },
+  { id: "help-baseline-grid", label: "II. Baseline Grid" },
+  { id: "help-margins", label: "III. Margins" },
+  { id: "help-gutter", label: "IV. Gutter" },
+  { id: "help-typo", label: "V. Typo" },
   { id: "help-editor", label: "Text Editor Popup" },
   { id: "help-drag-placement", label: "Drag and Placement" },
   { id: "help-history-reflow", label: "History and Reflow" },
@@ -94,28 +97,61 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
-      <section id="help-canvas-grid" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>Canvas and Grid</h4>
+      <section id="help-canvas-ratio" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>I. Canvas Ratio &amp; Rotation</h4>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Grid range is `1..13` for both columns and rows.</li>
-          <li>Gutter multiple range is `0.5..4.0` in `0.5` steps.</li>
-          <li>Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).</li>
-          <li>Top/bottom margins snap to baseline grid units.</li>
-          <li>Custom margins are entered as baseline multiples per side.</li>
-          <li>Grid/module geometry is always recomputed from current page, margins, baseline, and gutter.</li>
+          <li>Choose the base canvas ratio preset (DIN, ANSI, photo, square, editorial, etc.).</li>
+          <li>Orientation changes between portrait and landscape at the layout level.</li>
+          <li>Rotation rotates the preview/export composition between `-80..80` degrees.</li>
+          <li>Paper sizing for DIN/ANSI exports is derived from this ratio selection.</li>
         </ul>
       </section>
 
       <hr className={tone.divider} />
 
-      <section id="help-typography-fonts" className="space-y-2">
-        <h4 className={`text-sm font-semibold ${tone.heading}`}>Typography and Fonts</h4>
+      <section id="help-baseline-grid" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>II. Baseline Grid</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>The baseline unit controls vertical rhythm for grid and typography.</li>
+          <li>All style leading values are baseline multiples to preserve alignment.</li>
+          <li>Top and bottom margins are snapped to baseline units.</li>
+          <li>Changing baseline can trigger structural reflow behavior for existing blocks.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-margins" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>III. Margins</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).</li>
+          <li>`Baseline Multiple` scales method ratios while staying baseline-aligned.</li>
+          <li>`Custom Margins` sets top/left/right/bottom independently as baseline multiples.</li>
+          <li>Bottom margin is expected to align with the last baseline line.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-gutter" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>IV. Gutter</h4>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
+          <li>Gutter multiple range is `0.5..4.0` in `0.5` steps.</li>
+          <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
+          <li>Large structural changes may trigger reflow suggestions.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-typo" className="space-y-2">
+        <h4 className={`text-sm font-semibold ${tone.heading}`}>V. Typo</h4>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
-          <li>`Base Font` is inherited by blocks that do not store explicit font overrides.</li>
+          <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
-          <li>Style defaults define base weight and optional default italic per style.</li>
-          <li>Manual bold/italic in editor can override style defaults per paragraph.</li>
+          <li>Manual bold/italic in the editor can override defaults per paragraph.</li>
         </ul>
       </section>
 
