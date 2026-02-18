@@ -36,6 +36,15 @@ type DebouncedSliderProps = Omit<
 function DebouncedSlider({ value, onValueCommit, className, ...props }: DebouncedSliderProps) {
   const [localValue, setLocalValue] = React.useState(value)
   const dragging = React.useRef(false)
+  const lastEmittedRef = React.useRef<number[] | null>(null)
+
+  const arraysEqual = React.useCallback((a: number[], b: number[]) => {
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i += 1) {
+      if (a[i] !== b[i]) return false
+    }
+    return true
+  }, [])
 
   // Sync from parent when not dragging (e.g. undo/redo, preset load)
   React.useEffect(() => {
@@ -52,10 +61,15 @@ function DebouncedSlider({ value, onValueCommit, className, ...props }: Debounce
       onValueChange={(v) => {
         dragging.current = true
         setLocalValue(v)
+        lastEmittedRef.current = v
+        onValueCommit(v)
       }}
       onValueCommit={(v) => {
         dragging.current = false
-        onValueCommit(v)
+        if (!lastEmittedRef.current || !arraysEqual(lastEmittedRef.current, v)) {
+          onValueCommit(v)
+        }
+        lastEmittedRef.current = null
       }}
       {...props}
     >

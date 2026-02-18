@@ -72,15 +72,42 @@ const MARGIN_METHOD_LABELS: Record<1 | 2 | 3, string> = {
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
-// ─── Consolidated UI state ────────────────────────────────────────────────
+// ─── Split UI state (Grid/Preview + Export) ───────────────────────────────
 
-const INITIAL_UI_STATE: UiSettingsSnapshot = {
+type GridUiState = Pick<
+  UiSettingsSnapshot,
+  | "canvasRatio"
+  | "orientation"
+  | "rotation"
+  | "marginMethod"
+  | "gridCols"
+  | "gridRows"
+  | "baselineMultiple"
+  | "gutterMultiple"
+  | "typographyScale"
+  | "baseFont"
+  | "customBaseline"
+  | "useCustomMargins"
+  | "customMarginMultipliers"
+  | "showBaselines"
+  | "showModules"
+  | "showMargins"
+  | "showTypography"
+  | "collapsed"
+>
+
+type ExportUiState = Pick<
+  UiSettingsSnapshot,
+  | "exportPaperSize"
+  | "exportPrintPro"
+  | "exportBleedMm"
+  | "exportRegistrationMarks"
+  | "exportFinalSafeGuides"
+  | "displayUnit"
+>
+
+const INITIAL_GRID_UI_STATE: GridUiState = {
   canvasRatio: RESOLVED_DEFAULTS.canvasRatio,
-  exportPaperSize: DEFAULT_UI.exportPaperSize,
-  exportPrintPro: DEFAULT_UI.exportPrintPro,
-  exportBleedMm: DEFAULT_UI.exportBleedMm,
-  exportRegistrationMarks: DEFAULT_UI.exportRegistrationMarks,
-  exportFinalSafeGuides: DEFAULT_UI.exportFinalSafeGuides,
   orientation: RESOLVED_DEFAULTS.orientation,
   rotation: DEFAULT_UI.rotation,
   marginMethod: RESOLVED_DEFAULTS.marginMethod,
@@ -91,7 +118,6 @@ const INITIAL_UI_STATE: UiSettingsSnapshot = {
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
   customBaseline: RESOLVED_DEFAULTS.customBaseline,
-  displayUnit: RESOLVED_DEFAULTS.displayUnit,
   useCustomMargins: DEFAULT_UI.useCustomMargins,
   customMarginMultipliers: DEFAULT_UI.customMarginMultipliers,
   showBaselines: DEFAULT_UI.showBaselines,
@@ -106,6 +132,15 @@ const INITIAL_UI_STATE: UiSettingsSnapshot = {
     },
     {} as Record<SectionKey, boolean>,
   ),
+}
+
+const INITIAL_EXPORT_UI_STATE: ExportUiState = {
+  exportPaperSize: DEFAULT_UI.exportPaperSize,
+  exportPrintPro: DEFAULT_UI.exportPrintPro,
+  exportBleedMm: DEFAULT_UI.exportBleedMm,
+  exportRegistrationMarks: DEFAULT_UI.exportRegistrationMarks,
+  exportFinalSafeGuides: DEFAULT_UI.exportFinalSafeGuides,
+  displayUnit: RESOLVED_DEFAULTS.displayUnit,
 }
 
 type UiAction =
@@ -139,11 +174,33 @@ type UiAction =
   | { type: "APPLY_SNAPSHOT"; snapshot: UiSettingsSnapshot }
   | { type: "BATCH"; actions: UiAction[] }
 
-function uiReducer(state: UiSettingsSnapshot, action: UiAction): UiSettingsSnapshot {
+function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
   switch (action.type) {
     case "SET":
-      if (state[action.key] === action.value) return state
-      return { ...state, [action.key]: action.value }
+      switch (action.key) {
+        case "canvasRatio":
+        case "orientation":
+        case "rotation":
+        case "marginMethod":
+        case "gridCols":
+        case "gridRows":
+        case "baselineMultiple":
+        case "gutterMultiple":
+        case "typographyScale":
+        case "baseFont":
+        case "customBaseline":
+        case "useCustomMargins":
+        case "customMarginMultipliers":
+        case "showBaselines":
+        case "showModules":
+        case "showMargins":
+        case "showTypography":
+        case "collapsed":
+          if (state[action.key] === action.value) return state
+          return { ...state, [action.key]: action.value }
+        default:
+          return state
+      }
     case "TOGGLE":
       return { ...state, [action.key]: !state[action.key] }
     case "TOGGLE_SECTION":
@@ -157,9 +214,59 @@ function uiReducer(state: UiSettingsSnapshot, action: UiAction): UiSettingsSnaps
         ),
       }
     case "APPLY_SNAPSHOT":
-      return { ...action.snapshot }
+      return {
+        canvasRatio: action.snapshot.canvasRatio,
+        orientation: action.snapshot.orientation,
+        rotation: action.snapshot.rotation,
+        marginMethod: action.snapshot.marginMethod,
+        gridCols: action.snapshot.gridCols,
+        gridRows: action.snapshot.gridRows,
+        baselineMultiple: action.snapshot.baselineMultiple,
+        gutterMultiple: action.snapshot.gutterMultiple,
+        typographyScale: action.snapshot.typographyScale,
+        baseFont: action.snapshot.baseFont,
+        customBaseline: action.snapshot.customBaseline,
+        useCustomMargins: action.snapshot.useCustomMargins,
+        customMarginMultipliers: action.snapshot.customMarginMultipliers,
+        showBaselines: action.snapshot.showBaselines,
+        showModules: action.snapshot.showModules,
+        showMargins: action.snapshot.showMargins,
+        showTypography: action.snapshot.showTypography,
+        collapsed: action.snapshot.collapsed,
+      }
     case "BATCH":
-      return action.actions.reduce(uiReducer, state)
+      return action.actions.reduce(gridUiReducer, state)
+    default:
+      return state
+  }
+}
+
+function exportUiReducer(state: ExportUiState, action: UiAction): ExportUiState {
+  switch (action.type) {
+    case "SET":
+      switch (action.key) {
+        case "exportPaperSize":
+        case "exportPrintPro":
+        case "exportBleedMm":
+        case "exportRegistrationMarks":
+        case "exportFinalSafeGuides":
+        case "displayUnit":
+          if (state[action.key] === action.value) return state
+          return { ...state, [action.key]: action.value }
+        default:
+          return state
+      }
+    case "APPLY_SNAPSHOT":
+      return {
+        exportPaperSize: action.snapshot.exportPaperSize,
+        exportPrintPro: action.snapshot.exportPrintPro,
+        exportBleedMm: action.snapshot.exportBleedMm,
+        exportRegistrationMarks: action.snapshot.exportRegistrationMarks,
+        exportFinalSafeGuides: action.snapshot.exportFinalSafeGuides,
+        displayUnit: action.snapshot.displayUnit,
+      }
+    case "BATCH":
+      return action.actions.reduce(exportUiReducer, state)
     default:
       return state
   }
@@ -178,7 +285,18 @@ export default function Home() {
   } | null>(() =>
     DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
   )
-  const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
+  const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
+  const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
+  const dispatch = useCallback((action: UiAction) => {
+    if (action.type === "BATCH") {
+      dispatchGrid(action)
+      dispatchExport(action)
+      return
+    }
+    dispatchGrid(action)
+    dispatchExport(action)
+  }, [dispatchExport, dispatchGrid])
+  const ui = useMemo(() => ({ ...gridUi, ...exportUi }), [gridUi, exportUi])
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
@@ -188,19 +306,19 @@ export default function Home() {
     showMargins, showTypography, collapsed,
   } = ui
   // Stable dispatch wrappers for child component props
-  const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [])
-  const setOrientation = useCallback((v: "portrait" | "landscape") => dispatch({ type: "SET", key: "orientation", value: v }), [])
-  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: v }), [])
-  const setMarginMethod = useCallback((v: 1 | 2 | 3) => dispatch({ type: "SET", key: "marginMethod", value: v }), [])
-  const setGridCols = useCallback((v: number) => dispatch({ type: "SET", key: "gridCols", value: v }), [])
-  const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [])
-  const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [])
-  const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [])
-  const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [])
-  const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [])
-  const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [])
-  const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [])
-  const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [])
+  const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [dispatch])
+  const setOrientation = useCallback((v: "portrait" | "landscape") => dispatch({ type: "SET", key: "orientation", value: v }), [dispatch])
+  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: v }), [dispatch])
+  const setMarginMethod = useCallback((v: 1 | 2 | 3) => dispatch({ type: "SET", key: "marginMethod", value: v }), [dispatch])
+  const setGridCols = useCallback((v: number) => dispatch({ type: "SET", key: "gridCols", value: v }), [dispatch])
+  const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [dispatch])
+  const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [dispatch])
+  const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [dispatch])
+  const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
+  const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
+  const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [dispatch])
+  const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
+  const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
     "settings" | "help" | "imprint" | "example" | null
@@ -247,7 +365,7 @@ export default function Home() {
     if (!available.includes(exportPaperSize) && available.length > 0) {
       dispatch({ type: "SET", key: "exportPaperSize", value: available[0] })
     }
-  }, [exportPaperSize, selectedCanvasRatio])
+  }, [dispatch, exportPaperSize, selectedCanvasRatio])
 
   const result = useMemo(() => {
     const customMargins = useCustomMargins
@@ -371,7 +489,7 @@ export default function Home() {
       dispatch({ type: "APPLY_SNAPSHOT", snapshot })
       setCurrentSnapshot(snapshot)
     },
-    [suppressNext, setCurrentSnapshot],
+    [dispatch, suppressNext, setCurrentSnapshot],
   )
 
   const undoAny = useCallback(
@@ -399,7 +517,7 @@ export default function Home() {
       { type: "SET", key: "gridCols", value: cols },
       { type: "SET", key: "gridRows", value: rows },
     ] })
-  }, [suppressNext])
+  }, [dispatch, suppressNext])
 
   const togglePreviewFullscreen = useCallback(async () => {
     const previewElement = previewPanelRef.current
@@ -427,31 +545,31 @@ export default function Home() {
 
   // ─── Section collapse helpers ─────────────────────────────────────────────
 
-  const toggle = (key: SectionKey) =>
-    dispatch({ type: "TOGGLE_SECTION", key })
+  const toggle = useCallback((key: SectionKey) =>
+    dispatch({ type: "TOGGLE_SECTION", key }), [dispatch])
 
-  const toggleAllSections = () => {
+  const toggleAllSections = useCallback(() => {
     const allClosed = SECTION_KEYS.every((key) => collapsed[key])
     dispatch({ type: "SET_ALL_SECTIONS", value: !allClosed })
-  }
+  }, [collapsed, dispatch])
 
-  const handleSectionHeaderClick = (key: SectionKey) => (event: React.MouseEvent) => {
+  const handleSectionHeaderClick = useCallback((key: SectionKey) => (event: React.MouseEvent) => {
     if (event.detail > 1) return
     if (headerClickTimeoutRef.current !== null) window.clearTimeout(headerClickTimeoutRef.current)
     headerClickTimeoutRef.current = window.setTimeout(() => {
       toggle(key)
       headerClickTimeoutRef.current = null
     }, 180)
-  }
+  }, [toggle])
 
-  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+  const handleSectionHeaderDoubleClick = useCallback((event: React.MouseEvent) => {
     event.preventDefault()
     if (headerClickTimeoutRef.current !== null) {
       window.clearTimeout(headerClickTimeoutRef.current)
       headerClickTimeoutRef.current = null
     }
     toggleAllSections()
-  }
+  }, [toggleAllSections])
 
   const handleSectionHelpNavigate = useCallback((key: SectionKey) => {
     const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
@@ -503,12 +621,12 @@ export default function Home() {
     [ui, previewFormat],
   )
 
-  const setDisplayUnit = useCallback((v: DisplayUnit) => dispatch({ type: "SET", key: "displayUnit", value: v }), [])
-  const setExportPaperSize = useCallback((v: string) => dispatch({ type: "SET", key: "exportPaperSize", value: v }), [])
-  const setExportPrintPro = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportPrintPro", value: v }), [])
-  const setExportBleedMm = useCallback((v: number) => dispatch({ type: "SET", key: "exportBleedMm", value: v }), [])
-  const setExportRegistrationMarks = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportRegistrationMarks", value: v }), [])
-  const setExportFinalSafeGuides = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportFinalSafeGuides", value: v }), [])
+  const setDisplayUnit = useCallback((v: DisplayUnit) => dispatch({ type: "SET", key: "displayUnit", value: v }), [dispatch])
+  const setExportPaperSize = useCallback((v: string) => dispatch({ type: "SET", key: "exportPaperSize", value: v }), [dispatch])
+  const setExportPrintPro = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportPrintPro", value: v }), [dispatch])
+  const setExportBleedMm = useCallback((v: number) => dispatch({ type: "SET", key: "exportBleedMm", value: v }), [dispatch])
+  const setExportRegistrationMarks = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportRegistrationMarks", value: v }), [dispatch])
+  const setExportFinalSafeGuides = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportFinalSafeGuides", value: v }), [dispatch])
 
   const exportActionsContext = useMemo(
     () => ({
@@ -645,11 +763,11 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, togglePreviewFullscreen, undoAny])
+  }, [dispatch, exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, togglePreviewFullscreen, undoAny])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
-  const loadLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const loadLayout = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -738,39 +856,41 @@ export default function Home() {
       }
     }
     reader.readAsText(file)
-  }
+  }, [collapsed, dispatch])
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const uiTheme = isDarkUi
-    ? {
-        root: "bg-gray-950",
-        leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
-        subtleBorder: "border-gray-700",
-        bodyText: "text-gray-300",
-        headingText: "text-gray-300",
-        link: "text-gray-100 underline",
-        previewShell: "bg-gray-950",
-        previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
-        divider: "bg-gray-700",
-        sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
-        sidebarHeading: "text-gray-100",
-        sidebarBody: "text-gray-400",
-      }
-    : {
-        root: "bg-gray-100",
-        leftPanel: "border-gray-200 bg-white",
-        subtleBorder: "border-gray-200",
-        bodyText: "text-gray-600",
-        headingText: "text-gray-700",
-        link: "underline",
-        previewShell: "bg-white",
-        previewHeader: "border-gray-200 bg-white",
-        divider: "bg-gray-200",
-        sidebar: "border-gray-200 bg-white text-gray-700",
-        sidebarHeading: "text-gray-900",
-        sidebarBody: "text-gray-600",
-      }
+  const uiTheme = useMemo(() =>
+    (isDarkUi
+      ? {
+          root: "bg-gray-950",
+          leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
+          subtleBorder: "border-gray-700",
+          bodyText: "text-gray-300",
+          headingText: "text-gray-300",
+          link: "text-gray-100 underline",
+          previewShell: "bg-gray-950",
+          previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
+          divider: "bg-gray-700",
+          sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
+          sidebarHeading: "text-gray-100",
+          sidebarBody: "text-gray-400",
+        }
+      : {
+          root: "bg-gray-100",
+          leftPanel: "border-gray-200 bg-white",
+          subtleBorder: "border-gray-200",
+          bodyText: "text-gray-600",
+          headingText: "text-gray-700",
+          link: "underline",
+          previewShell: "bg-white",
+          previewHeader: "border-gray-200 bg-white",
+          divider: "bg-gray-200",
+          sidebar: "border-gray-200 bg-white text-gray-700",
+          sidebarHeading: "text-gray-900",
+          sidebarBody: "text-gray-600",
+        }),
+  [isDarkUi])
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
@@ -798,7 +918,7 @@ export default function Home() {
     onToggleHelpPanel: toggleHelpPanelFromHeader,
   })
 
-  const renderHeaderAction = (action: HeaderAction) => {
+  const renderHeaderAction = useCallback((action: HeaderAction) => {
     const shortcut = action.shortcutId
       ? PREVIEW_HEADER_SHORTCUTS.find((item) => item.id === action.shortcutId)?.combo
       : null
@@ -831,7 +951,309 @@ export default function Home() {
         ) : null}
       </div>
     )
-  }
+  }, [handleHeaderHelpNavigate, showSectionHelpIcons])
+
+  const handleCloseSidebar = useCallback(() => {
+    setActiveSidebarPanel(null)
+  }, [])
+
+  const handleLoadExamplePreset = useCallback((preset: {
+    canvasRatio: CanvasRatioKey
+    orientation: "portrait" | "landscape"
+    cols: number
+    rows: number
+    marginMethod: 1 | 2 | 3
+    baselineMultiple: number
+    gutterMultiple: number
+  }) => {
+    dispatch({ type: "BATCH", actions: [
+      { type: "SET", key: "canvasRatio", value: preset.canvasRatio },
+      { type: "SET", key: "orientation", value: preset.orientation },
+      { type: "SET", key: "gridCols", value: preset.cols },
+      { type: "SET", key: "gridRows", value: preset.rows },
+      { type: "SET", key: "marginMethod", value: preset.marginMethod },
+      { type: "SET", key: "baselineMultiple", value: preset.baselineMultiple },
+      { type: "SET", key: "gutterMultiple", value: preset.gutterMultiple },
+      { type: "SET", key: "showModules", value: true },
+      { type: "SET", key: "showBaselines", value: true },
+      { type: "SET", key: "showMargins", value: true },
+    ] })
+    setActiveSidebarPanel(null)
+  }, [dispatch])
+
+  const settingsPanels = useMemo(() => (
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
+      <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
+        Grid Generator Settings
+      </h2>
+      <SettingsHelpNavigationProvider
+        value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
+      >
+        <CanvasRatioPanel
+          collapsed={collapsed.format}
+          onHeaderClick={handleSectionHeaderClick("format")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          canvasRatio={canvasRatio}
+          onCanvasRatioChange={setCanvasRatio}
+          orientation={orientation}
+          onOrientationChange={setOrientation}
+          rotation={rotation}
+          onRotationChange={setRotation}
+          isDarkMode={isDarkUi}
+        />
+
+        <BaselineGridPanel
+          collapsed={collapsed.baseline}
+          onHeaderClick={handleSectionHeaderClick("baseline")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          customBaseline={customBaseline}
+          availableBaselineOptions={availableBaselineOptions}
+          onCustomBaselineChange={setCustomBaseline}
+          isDarkMode={isDarkUi}
+        />
+
+        <MarginsPanel
+          collapsed={collapsed.margins}
+          onHeaderClick={handleSectionHeaderClick("margins")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          marginMethod={marginMethod}
+          onMarginMethodChange={setMarginMethod}
+          baselineMultiple={baselineMultiple}
+          onBaselineMultipleChange={setBaselineMultiple}
+          useCustomMargins={useCustomMargins}
+          onUseCustomMarginsChange={setUseCustomMargins}
+          customMarginMultipliers={customMarginMultipliers}
+          onCustomMarginMultipliersChange={setCustomMarginMultipliers}
+          currentMargins={result.grid.margins}
+          gridUnit={gridUnit}
+          isDarkMode={isDarkUi}
+        />
+
+        <GutterPanel
+          collapsed={collapsed.gutter}
+          onHeaderClick={handleSectionHeaderClick("gutter")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          gridCols={gridCols}
+          onGridColsChange={setGridCols}
+          gridRows={gridRows}
+          onGridRowsChange={setGridRows}
+          gutterMultiple={gutterMultiple}
+          onGutterMultipleChange={setGutterMultiple}
+          isDarkMode={isDarkUi}
+        />
+
+        <TypographyPanel
+          collapsed={collapsed.typo}
+          onHeaderClick={handleSectionHeaderClick("typo")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          typographyScale={typographyScale}
+          onTypographyScaleChange={setTypographyScale}
+          baseFont={baseFont}
+          onBaseFontChange={setBaseFont}
+          isDarkMode={isDarkUi}
+        />
+        <PanelCard
+          title="Settings Summery"
+          tooltip="Current settings snapshot across sections I to V"
+          collapsed={collapsed.summary}
+          onHeaderClick={handleSectionHeaderClick("summary")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          helpSectionKey="summary"
+          isDarkMode={isDarkUi}
+        >
+          <div
+            className={`space-y-2 text-[11px] leading-relaxed ${
+              isDarkUi ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
+            {settingsSummaryItems.map((item) => (
+              <div key={item.title} className="space-y-0.5">
+                <p className={isDarkUi ? "text-gray-200" : "text-gray-800"}>{item.title}</p>
+                <p>{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </PanelCard>
+      </SettingsHelpNavigationProvider>
+    </div>
+  ), [
+    availableBaselineOptions,
+    baseFont,
+    baselineMultiple,
+    canvasRatio,
+    collapsed,
+    customBaseline,
+    customMarginMultipliers,
+    gridCols,
+    gridRows,
+    gridUnit,
+    gutterMultiple,
+    handleSectionHeaderDoubleClick,
+    handleSectionHeaderClick,
+    handleSectionHelpNavigate,
+    isDarkUi,
+    marginMethod,
+    orientation,
+    result.grid.margins,
+    rotation,
+    setBaseFont,
+    setBaselineMultiple,
+    setCanvasRatio,
+    setCustomBaseline,
+    setCustomMarginMultipliers,
+    setGutterMultiple,
+    setGridCols,
+    setGridRows,
+    setMarginMethod,
+    setOrientation,
+    setRotation,
+    setTypographyScale,
+    setUseCustomMargins,
+    settingsSummaryItems,
+    showSectionHelpIcons,
+    typographyScale,
+    uiTheme.headingText,
+    useCustomMargins,
+  ])
+
+  const previewWorkspace = useMemo(() => (
+    <div
+      ref={previewPanelRef}
+      className={`flex-1 flex flex-col min-h-[50vh] md:min-h-full ${uiTheme.previewShell}`}
+    >
+      <input
+        ref={loadFileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={loadLayout}
+      />
+      <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
+        <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
+          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
+            {fileGroup.map((item) =>
+              item.type === "divider"
+                ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
+                : renderHeaderAction(item.action),
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
+            {displayGroup.map((item) =>
+              item.type === "divider"
+                ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
+                : renderHeaderAction(item.action),
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
+            {sidebarGroup.map((action) => renderHeaderAction(action))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-row overflow-hidden">
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <GridPreview
+            result={result}
+            showBaselines={showBaselines}
+            showModules={showModules}
+            showMargins={showMargins}
+            showTypography={showTypography}
+            baseFont={baseFont}
+            initialLayout={loadedPreviewLayout?.layout ?? null}
+            initialLayoutKey={loadedPreviewLayout?.key ?? 0}
+            rotation={rotation}
+            undoNonce={history.undoNonce}
+            redoNonce={history.redoNonce}
+            onOpenHelpSection={handlePreviewOpenHelpSection}
+            showEditorHelpIcon={showSectionHelpIcons}
+            onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
+            onRequestGridRestore={handlePreviewGridRestore}
+            isDarkMode={isDarkUi}
+            onLayoutChange={setPreviewLayout}
+          />
+        </div>
+        {activeSidebarPanel && (
+          <div className={`w-80 shrink-0 border-l overflow-y-auto p-4 md:p-6 space-y-4 text-sm ${uiTheme.sidebar}`}>
+            {activeSidebarPanel === "settings" && (
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Settings</h3>
+                  <button
+                    type="button"
+                    aria-label="Close settings panel"
+                    onClick={handleCloseSidebar}
+                    className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
+                  <p>This is a placeholder settings page.</p>
+                  <p>
+                    Future settings can be added here (profile, defaults, shortcuts, language,
+                    etc.).
+                  </p>
+                </div>
+              </div>
+            )}
+            {activeSidebarPanel === "help" && (
+              <HelpPanel
+                isDarkMode={isDarkUi}
+                onClose={handleCloseSidebar}
+                activeSectionId={activeHelpSectionId}
+              />
+            )}
+            {activeSidebarPanel === "imprint" && (
+              <ImprintPanel
+                isDarkMode={isDarkUi}
+                onClose={handleCloseSidebar}
+              />
+            )}
+            {activeSidebarPanel === "example" && (
+              <ExampleLayoutsPanel
+                isDarkMode={isDarkUi}
+                onLoadPreset={handleLoadExamplePreset}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  ), [
+    activeHelpSectionId,
+    activeSidebarPanel,
+    baseFont,
+    displayGroup,
+    fileGroup,
+    handleCloseSidebar,
+    handleLoadExamplePreset,
+    handlePreviewGridRestore,
+    handlePreviewHistoryAvailabilityChange,
+    handlePreviewOpenHelpSection,
+    history.redoNonce,
+    history.undoNonce,
+    isDarkUi,
+    loadLayout,
+    loadedPreviewLayout,
+    previewPanelRef,
+    renderHeaderAction,
+    result,
+    rotation,
+    showBaselines,
+    showMargins,
+    showModules,
+    showSectionHelpIcons,
+    showTypography,
+    sidebarGroup,
+    uiTheme.divider,
+    uiTheme.previewHeader,
+    uiTheme.previewShell,
+    uiTheme.sidebar,
+    uiTheme.sidebarBody,
+    uiTheme.sidebarHeading,
+  ])
 
   return (
     <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
@@ -847,100 +1269,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
-          <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
-            Grid Generator Settings
-          </h2>
-          <SettingsHelpNavigationProvider
-            value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
-          >
-            <CanvasRatioPanel
-              collapsed={collapsed.format}
-              onHeaderClick={handleSectionHeaderClick("format")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              canvasRatio={canvasRatio}
-              onCanvasRatioChange={setCanvasRatio}
-              orientation={orientation}
-              onOrientationChange={setOrientation}
-              rotation={rotation}
-              onRotationChange={setRotation}
-              isDarkMode={isDarkUi}
-            />
-
-            <BaselineGridPanel
-              collapsed={collapsed.baseline}
-              onHeaderClick={handleSectionHeaderClick("baseline")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              customBaseline={customBaseline}
-              availableBaselineOptions={availableBaselineOptions}
-              onCustomBaselineChange={setCustomBaseline}
-              isDarkMode={isDarkUi}
-            />
-
-            <MarginsPanel
-              collapsed={collapsed.margins}
-              onHeaderClick={handleSectionHeaderClick("margins")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              marginMethod={marginMethod}
-              onMarginMethodChange={setMarginMethod}
-              baselineMultiple={baselineMultiple}
-              onBaselineMultipleChange={setBaselineMultiple}
-              useCustomMargins={useCustomMargins}
-              onUseCustomMarginsChange={setUseCustomMargins}
-              customMarginMultipliers={customMarginMultipliers}
-              onCustomMarginMultipliersChange={setCustomMarginMultipliers}
-              currentMargins={result.grid.margins}
-              gridUnit={gridUnit}
-              isDarkMode={isDarkUi}
-            />
-
-            <GutterPanel
-              collapsed={collapsed.gutter}
-              onHeaderClick={handleSectionHeaderClick("gutter")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              gridCols={gridCols}
-              onGridColsChange={setGridCols}
-              gridRows={gridRows}
-              onGridRowsChange={setGridRows}
-              gutterMultiple={gutterMultiple}
-              onGutterMultipleChange={setGutterMultiple}
-              isDarkMode={isDarkUi}
-            />
-
-            <TypographyPanel
-              collapsed={collapsed.typo}
-              onHeaderClick={handleSectionHeaderClick("typo")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              typographyScale={typographyScale}
-              onTypographyScaleChange={setTypographyScale}
-              baseFont={baseFont}
-              onBaseFontChange={setBaseFont}
-              isDarkMode={isDarkUi}
-            />
-            <PanelCard
-              title="Settings Summery"
-              tooltip="Current settings snapshot across sections I to V"
-              collapsed={collapsed.summary}
-              onHeaderClick={handleSectionHeaderClick("summary")}
-              onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              helpSectionKey="summary"
-              isDarkMode={isDarkUi}
-            >
-              <div
-                className={`space-y-2 text-[11px] leading-relaxed ${
-                  isDarkUi ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                {settingsSummaryItems.map((item) => (
-                  <div key={item.title} className="space-y-0.5">
-                    <p className={isDarkUi ? "text-gray-200" : "text-gray-800"}>{item.title}</p>
-                    <p>{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </PanelCard>
-          </SettingsHelpNavigationProvider>
-        </div>
+        {settingsPanels}
 
         <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">
@@ -971,125 +1300,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right Panel - Preview */}
-      <div
-        ref={previewPanelRef}
-        className={`flex-1 flex flex-col min-h-[50vh] md:min-h-full ${uiTheme.previewShell}`}
-      >
-        <input
-          ref={loadFileInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={loadLayout}
-        />
-        <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
-          <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
-            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-              {fileGroup.map((item) =>
-                item.type === "divider"
-                  ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                  : renderHeaderAction(item.action),
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-              {displayGroup.map((item) =>
-                item.type === "divider"
-                  ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                  : renderHeaderAction(item.action),
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-              {sidebarGroup.map((action) => renderHeaderAction(action))}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-row overflow-hidden">
-          <div className="flex-1 p-4 md:p-6 overflow-auto">
-            <GridPreview
-              result={result}
-              showBaselines={showBaselines}
-              showModules={showModules}
-              showMargins={showMargins}
-              showTypography={showTypography}
-              baseFont={baseFont}
-              initialLayout={loadedPreviewLayout?.layout ?? null}
-              initialLayoutKey={loadedPreviewLayout?.key ?? 0}
-              rotation={rotation}
-              undoNonce={history.undoNonce}
-              redoNonce={history.redoNonce}
-              onOpenHelpSection={handlePreviewOpenHelpSection}
-              showEditorHelpIcon={showSectionHelpIcons}
-              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
-              onRequestGridRestore={handlePreviewGridRestore}
-              isDarkMode={isDarkUi}
-              onLayoutChange={setPreviewLayout}
-            />
-          </div>
-          {activeSidebarPanel && (
-            <div className={`w-80 shrink-0 border-l overflow-y-auto p-4 md:p-6 space-y-4 text-sm ${uiTheme.sidebar}`}>
-              {activeSidebarPanel === "settings" && (
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Settings</h3>
-                    <button
-                      type="button"
-                      aria-label="Close settings panel"
-                      onClick={() => setActiveSidebarPanel(null)}
-                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
-                    <p>This is a placeholder settings page.</p>
-                    <p>
-                      Future settings can be added here (profile, defaults, shortcuts, language,
-                      etc.).
-                    </p>
-                  </div>
-                </div>
-              )}
-              {activeSidebarPanel === "help" && (
-                <HelpPanel
-                  isDarkMode={isDarkUi}
-                  onClose={() => setActiveSidebarPanel(null)}
-                  activeSectionId={activeHelpSectionId}
-                />
-              )}
-              {activeSidebarPanel === "imprint" && (
-                <ImprintPanel
-                  isDarkMode={isDarkUi}
-                  onClose={() => setActiveSidebarPanel(null)}
-                />
-              )}
-              {activeSidebarPanel === "example" && (
-                <ExampleLayoutsPanel
-                  isDarkMode={isDarkUi}
-                  onLoadPreset={(preset) => {
-                    dispatch({ type: "BATCH", actions: [
-                      { type: "SET", key: "canvasRatio", value: preset.canvasRatio },
-                      { type: "SET", key: "orientation", value: preset.orientation },
-                      { type: "SET", key: "gridCols", value: preset.cols },
-                      { type: "SET", key: "gridRows", value: preset.rows },
-                      { type: "SET", key: "marginMethod", value: preset.marginMethod },
-                      { type: "SET", key: "baselineMultiple", value: preset.baselineMultiple },
-                      { type: "SET", key: "gutterMultiple", value: preset.gutterMultiple },
-                      { type: "SET", key: "showModules", value: true },
-                      { type: "SET", key: "showBaselines", value: true },
-                      { type: "SET", key: "showMargins", value: true },
-                    ] })
-                    setActiveSidebarPanel(null)
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      {previewWorkspace}
 
       <ExportPdfDialog
         isOpen={exportActions.isExportDialogOpen}

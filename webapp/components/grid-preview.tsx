@@ -46,7 +46,7 @@ import {
 } from "@/lib/config/fonts"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { AlignLeft, AlignRight, Bold, CaseSensitive, Columns3, Italic, RotateCw, Rows3, Save as SaveIcon, Trash2, Type } from "lucide-react"
-import { ReactNode, memo, useCallback, useEffect, useRef, useState } from "react"
+import { ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -91,6 +91,12 @@ type PerfState = {
   reflowMs: number[]
   autofitMs: number[]
   lastLogAt: number
+}
+
+type PerfPayload = {
+  draw: PerfSnapshot | null
+  reflow: PerfSnapshot | null
+  autofit: PerfSnapshot | null
 }
 
 type ModulePosition = {
@@ -309,10 +315,13 @@ export const GridPreview = memo(function GridPreview({
     autofitMs: [],
     lastLogAt: 0,
   })
+  const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
+  const [showPerfOverlay, setShowPerfOverlay] = useState(PERF_ENABLED)
+  const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const {
     state: blockCollectionsState,
     merge: setBlockCollections,
@@ -346,7 +355,6 @@ export const GridPreview = memo(function GridPreview({
   const TOUCH_CANCEL_DISTANCE_PX = 10
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
-  const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const makeCachedValue = useCallback(
     <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
@@ -394,16 +402,41 @@ export const GridPreview = memo(function GridPreview({
     const bucket = state[metric]
     bucket.push(valueMs)
     if (bucket.length > PERF_SAMPLE_LIMIT) bucket.shift()
-    const now = Date.now()
-    if (now - state.lastLogAt < PERF_LOG_INTERVAL_MS) return
-    state.lastLogAt = now
     const draw = computePerfSnapshot(state.drawMs)
     const reflow = computePerfSnapshot(state.reflowMs)
     const autofit = computePerfSnapshot(state.autofitMs)
     const payload = { draw, reflow, autofit }
     ;(window as unknown as { __sggPerf?: typeof payload }).__sggPerf = payload
+    setPerfOverlay(payload)
+    const now = Date.now()
+    if (now - state.lastLogAt < PERF_LOG_INTERVAL_MS) return
+    state.lastLogAt = now
     console.debug("[SGG perf]", payload)
   }, [PERF_ENABLED, PERF_LOG_INTERVAL_MS, PERF_SAMPLE_LIMIT])
+
+  useEffect(() => {
+    if (!PERF_ENABLED) return
+    const readPerf = () => {
+      const perf = (window as unknown as { __sggPerf?: PerfPayload }).__sggPerf
+      if (!perf) return
+      setPerfOverlay(perf)
+    }
+    readPerf()
+    const timer = window.setInterval(readPerf, 500)
+    return () => window.clearInterval(timer)
+  }, [PERF_ENABLED])
+
+  useEffect(() => {
+    if (!PERF_ENABLED) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) return
+      if (event.key.toLowerCase() !== "p") return
+      event.preventDefault()
+      setShowPerfOverlay((prev) => !prev)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [PERF_ENABLED])
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -1048,6 +1081,8 @@ export const GridPreview = memo(function GridPreview({
     if (!canvas) return
 
     const frame = window.requestAnimationFrame(() => {
+      const markName = "sgg:guides"
+      if (typeof performance.mark === "function") performance.mark(`${markName}:start`)
       const ctx = canvas.getContext("2d")
       if (!ctx) return
       const cssWidth = canvas.width / pixelRatio
@@ -1065,6 +1100,14 @@ export const GridPreview = memo(function GridPreview({
         showBaselines,
         isMobile,
       })
+      if (typeof performance.mark === "function" && typeof performance.measure === "function") {
+        performance.mark(`${markName}:end`)
+        try {
+          performance.measure(markName, `${markName}:start`, `${markName}:end`)
+        } catch {
+          // Ignore missing/invalid marks.
+        }
+      }
     })
 
     return () => window.cancelAnimationFrame(frame)
@@ -1279,10 +1322,14 @@ export const GridPreview = memo(function GridPreview({
     getBlockRotation,
   })
 
+  const focusEditor = useCallback(() => {
+    textareaRef.current?.focus()
+  }, [])
+
   usePreviewKeyboard({
     editorTarget: editorState?.target ?? null,
     isEditorOpen: Boolean(editorState),
-    focusEditor: () => textareaRef.current?.focus(),
+    focusEditor,
     onCloseEditor: closeEditor,
     undo,
     redo,
@@ -1417,6 +1464,19 @@ export const GridPreview = memo(function GridPreview({
     : hoverState
       ? "cursor-grab"
       : "cursor-default"
+  const hierarchyOptionLabels = useMemo(
+    () =>
+      STYLE_OPTIONS.map(
+        (option) => `${option.label} (${formatPtSize(result.typography.styles[option.value].size)})`,
+      ),
+    [result.typography.styles],
+  )
+  const hierarchyTriggerMinWidthCh = useMemo(
+    () => Math.max(12, hierarchyOptionLabels.reduce((max, label) => Math.max(max, label.length), 0) + 4),
+    [hierarchyOptionLabels],
+  )
+  const rowTriggerMinWidthCh = 10
+  const colTriggerMinWidthCh = 10
   const editorText = editorState?.draftText ?? ""
   const editorCharacterCount = editorText.length
   const editorWordCount = editorText.trim() ? editorText.trim().split(/\s+/).length : 0
@@ -1513,6 +1573,15 @@ export const GridPreview = memo(function GridPreview({
         </div>
       ) : null}
 
+      {PERF_ENABLED && showPerfOverlay && perfOverlay ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-40 rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
+          <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>
+          <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
+          <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
+          <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
+        </div>
+      ) : null}
+
       {editorState ? (
         <div
           className={`absolute inset-0 flex items-center justify-center p-4 ${isDarkMode ? "bg-black/45" : "bg-black/20"}`}
@@ -1525,9 +1594,9 @@ export const GridPreview = memo(function GridPreview({
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className={`space-y-2 border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-              <div className="grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2">
-                <div className="space-y-2">
-                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_8rem] items-center gap-2">
+              <div className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-start gap-x-3 gap-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0">
                     <EditorControlTooltip label="Paragraph row span">
                       <div className="flex min-w-0 items-center gap-1">
                         <Rows3 className="h-4 w-4 shrink-0 text-gray-500" />
@@ -1539,9 +1608,12 @@ export const GridPreview = memo(function GridPreview({
                               draftRows: Math.max(1, Math.min(result.settings.gridRows, Number(value))),
                             } : prev)
                           }}
-                        >
-                          <SelectTrigger className="h-8 min-w-0 w-full text-xs">
-                            <SelectValue />
+                          >
+                            <SelectTrigger
+                              className="h-8 text-xs"
+                              style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}
+                            >
+                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {Array.from({ length: result.settings.gridRows }, (_, index) => index + 1).map((count) => (
@@ -1553,6 +1625,8 @@ export const GridPreview = memo(function GridPreview({
                         </Select>
                       </div>
                     </EditorControlTooltip>
+                  </div>
+                  <div className="shrink-0">
                     <EditorControlTooltip label="Paragraph column span">
                       <div className="flex min-w-0 items-center gap-1">
                         <Columns3 className="h-4 w-4 shrink-0 text-gray-500" />
@@ -1564,9 +1638,12 @@ export const GridPreview = memo(function GridPreview({
                               draftColumns: Math.max(1, Math.min(result.settings.gridCols, Number(value))),
                             } : prev)
                           }}
-                        >
-                          <SelectTrigger className="h-8 min-w-0 w-full text-xs">
-                            <SelectValue />
+                          >
+                            <SelectTrigger
+                              className="h-8 text-xs"
+                              style={{ minWidth: `${colTriggerMinWidthCh}ch` }}
+                            >
+                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {Array.from({ length: result.settings.gridCols }, (_, index) => index + 1).map((count) => (
@@ -1578,12 +1655,10 @@ export const GridPreview = memo(function GridPreview({
                         </Select>
                       </div>
                     </EditorControlTooltip>
-                    <div
-                      className={`mx-0.5 h-6 w-px ${isDarkMode ? "bg-gray-600" : "bg-gray-300"}`}
-                      aria-hidden="true"
-                    />
+                  </div>
+                  <div className="shrink-0">
                     <EditorControlTooltip label={`Paragraph rotation: ${Math.round(editorState.draftRotation)}deg`} className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <RotateCw className="h-4 w-4 shrink-0 text-gray-500" />
                         <input
                           type="number"
@@ -1599,7 +1674,7 @@ export const GridPreview = memo(function GridPreview({
                               draftRotation: Math.max(-80, Math.min(80, next)),
                             } : prev)
                           }}
-                          className={`h-8 w-24 rounded-md border px-2 text-xs outline-none ${
+                          className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${
                             isDarkMode
                               ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"
                               : "border-gray-200 bg-gray-50 text-gray-900 focus:border-gray-300"
@@ -1608,7 +1683,22 @@ export const GridPreview = memo(function GridPreview({
                       </div>
                     </EditorControlTooltip>
                   </div>
-                  <div className="grid grid-cols-2 items-center gap-2">
+                </div>
+                <div className="justify-self-end">
+                  <EditorControlTooltip label="Save changes">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-8 w-8"
+                      onClick={saveEditor}
+                      aria-label="Save changes"
+                    >
+                      <SaveIcon className="h-4 w-4" />
+                    </Button>
+                  </EditorControlTooltip>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0">
                     <EditorControlTooltip label="Font hierarchy" className="min-w-0">
                       <div className="flex min-w-0 items-center gap-1">
                         <Type className="h-4 w-4 shrink-0 text-gray-500" />
@@ -1623,7 +1713,10 @@ export const GridPreview = memo(function GridPreview({
                             } : prev)
                           }}
                         >
-                          <SelectTrigger className="h-8 min-w-0 w-full text-xs">
+                          <SelectTrigger
+                            className="h-8 text-xs"
+                            style={{ minWidth: `${hierarchyTriggerMinWidthCh}ch` }}
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1636,6 +1729,8 @@ export const GridPreview = memo(function GridPreview({
                         </Select>
                       </div>
                     </EditorControlTooltip>
+                  </div>
+                  <div className="shrink-0">
                     <EditorControlTooltip label="Font family" className="min-w-0">
                       <div className="flex min-w-0 items-center gap-1">
                         <CaseSensitive className="h-4 w-4 shrink-0 text-gray-500" />
@@ -1649,13 +1744,27 @@ export const GridPreview = memo(function GridPreview({
                           }}
                           options={FONT_OPTIONS}
                           fitToLongestOption
-                          triggerClassName="h-8 w-full text-xs"
+                          triggerClassName="h-8 text-xs"
                         />
                       </div>
                     </EditorControlTooltip>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                </div>
+                <div className="justify-self-end">
+                  <EditorControlTooltip label="Delete paragraph">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className={`h-8 w-8 ${isDarkMode ? "text-gray-300 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
+                      onClick={deleteEditorBlock}
+                      aria-label="Delete paragraph"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </EditorControlTooltip>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
                     <EditorControlTooltip label={editorState.draftBold ? "Bold: On" : "Bold: Off"}>
                       <Button
                         type="button"
@@ -1684,13 +1793,14 @@ export const GridPreview = memo(function GridPreview({
                         <Italic className="h-4 w-4" />
                       </Button>
                     </EditorControlTooltip>
-                    <div className={`h-5 w-px ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`} aria-hidden="true" />
+                  </div>
+                  <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
                     <EditorControlTooltip label="Align left">
                       <Button
                         type="button"
                         size="icon"
                         variant={editorState.draftAlign === "left" ? "secondary" : "ghost"}
-                        className={`h-8 w-8 rounded-none border-l ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                        className={`h-8 w-8 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
                         onClick={() => {
                           setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)
                         }}
@@ -1704,7 +1814,7 @@ export const GridPreview = memo(function GridPreview({
                         type="button"
                         size="icon"
                         variant={editorState.draftAlign === "right" ? "secondary" : "ghost"}
-                        className={`h-8 w-8 rounded-l-none border-l ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                        className={`h-8 w-8 rounded-none border-l ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
                         onClick={() => {
                           setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)
                         }}
@@ -1714,72 +1824,50 @@ export const GridPreview = memo(function GridPreview({
                       </Button>
                     </EditorControlTooltip>
                   </div>
-                  <div className={`h-5 w-px ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`} aria-hidden="true" />
-                  <EditorControlTooltip label={editorState.draftReflow ? "Reflow: On" : "Reflow: Off"}>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant={editorState.draftReflow ? "secondary" : "ghost"}
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)
-                      }}
-                      aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
-                    >
-                      <Rows3 className="h-4 w-4" />
-                    </Button>
-                  </EditorControlTooltip>
-                  <EditorControlTooltip label={editorState.draftSyllableDivision ? "Syllable division: On" : "Syllable division: Off"}>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={editorState.draftSyllableDivision ? "secondary" : "ghost"}
-                      className="h-8 px-2 text-xs"
-                      onClick={() => {
-                        setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)
-                      }}
-                      aria-label={editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
-                    >
-                      Hy
-                    </Button>
-                  </EditorControlTooltip>
+                  <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                    <EditorControlTooltip label={editorState.draftReflow ? "Reflow: On" : "Reflow: Off"}>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={editorState.draftReflow ? "secondary" : "ghost"}
+                        className={`h-8 w-8 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                        onClick={() => {
+                          setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)
+                        }}
+                        aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
+                      >
+                        <Rows3 className="h-4 w-4" />
+                      </Button>
+                    </EditorControlTooltip>
+                    <EditorControlTooltip label={editorState.draftSyllableDivision ? "Syllable division: On" : "Syllable division: Off"}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={editorState.draftSyllableDivision ? "secondary" : "ghost"}
+                        className={`h-8 min-w-10 rounded-none border-l px-2 text-xs ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                        onClick={() => {
+                          setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)
+                        }}
+                        aria-label={editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
+                      >
+                        Hy
+                      </Button>
+                    </EditorControlTooltip>
                   </div>
                 </div>
-                <div className="grid grid-rows-3 gap-2 justify-items-end">
-                  <div className="flex h-8 w-8 items-center justify-center">
-                    {showEditorHelpIcon ? (
-                      <button
-                        type="button"
-                        aria-label="Open help for text editor"
-                        onClick={() => onOpenHelpSection?.("help-editor")}
-                        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
-                      >
-                        ?
-                      </button>
-                    ) : null}
-                  </div>
-                  <EditorControlTooltip label="Delete paragraph">
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className={`h-8 w-8 ${isDarkMode ? "text-gray-300 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
-                      onClick={deleteEditorBlock}
-                      aria-label="Delete paragraph"
+                <div className="flex h-8 w-8 items-center justify-center justify-self-end">
+                  {showEditorHelpIcon ? (
+                    <button
+                      type="button"
+                      aria-label="Open help for text editor"
+                      onClick={() => onOpenHelpSection?.("help-editor")}
+                      onMouseEnter={() => onOpenHelpSection?.("help-editor")}
+                      onFocus={() => onOpenHelpSection?.("help-editor")}
+                      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </EditorControlTooltip>
-                  <EditorControlTooltip label="Save changes">
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="h-8 w-8"
-                      onClick={saveEditor}
-                      aria-label="Save changes"
-                    >
-                      <SaveIcon className="h-4 w-4" />
-                    </Button>
-                  </EditorControlTooltip>
+                      ?
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1806,7 +1894,12 @@ export const GridPreview = memo(function GridPreview({
                     saveEditor()
                   }
                 }}
-                style={{ fontFamily: getFontFamilyCss(editorState.draftFont) }}
+                style={{
+                  fontFamily: getFontFamilyCss(editorState.draftFont),
+                  fontStyle: editorState.draftItalic ? "italic" : "normal",
+                  fontWeight: editorState.draftBold ? 700 : 400,
+                  textAlign: editorState.draftAlign,
+                }}
                 className={`min-h-40 w-full resize-y rounded-md border p-3 outline-none ring-0 ${
                   isDarkMode
                     ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"

@@ -46,10 +46,14 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Text Editor Popup
 
 - Open editor by double-clicking a block; double-click empty area creates a paragraph block.
-- Top row controls: style hierarchy, font family, row span, column span, and paragraph rotation (`-80..80`).
-- Formatting controls: bold, italic, align left/right, reflow toggle, and syllable-division toggle.
-- Action controls: save applies changes, delete removes custom blocks, and live counters show characters/words.
-- The small `?` icon at top-right of the popup opens Help and jumps to this section.
+- Header layout is a 2-column, 3-row control grid.
+- Left column rows:
+  - Row 1: row span, column span, paragraph rotation (`-80..80`)
+  - Row 2: style hierarchy, font family
+  - Row 3: bold/italic, align left/right, reflow/syllable division
+- Right action column rows: save, delete, help (`?`).
+- Textarea preview mirrors current paragraph style controls: font family, bold/italic, and left/right alignment.
+- Live counters show characters/words in the footer.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.
 
 ## Drag and Placement

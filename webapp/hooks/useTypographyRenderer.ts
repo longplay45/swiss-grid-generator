@@ -123,8 +123,20 @@ export function useTypographyRenderer<BlockId extends string>({
 
     const frame = window.requestAnimationFrame(() => {
       const drawStartedAt = performance.now()
+      const drawMarkName = "sgg:draw"
+      if (typeof performance.mark === "function") performance.mark(`${drawMarkName}:start`)
+      const endDrawMark = () => {
+        if (typeof performance.mark !== "function" || typeof performance.measure !== "function") return
+        performance.mark(`${drawMarkName}:end`)
+        try {
+          performance.measure(drawMarkName, `${drawMarkName}:start`, `${drawMarkName}:end`)
+        } catch {
+          // Ignore missing/invalid marks.
+        }
+      }
       const ctx = canvas.getContext("2d")
       if (!ctx) {
+        endDrawMark()
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
       }
@@ -142,6 +154,7 @@ export function useTypographyRenderer<BlockId extends string>({
       ctx.clearRect(0, 0, canvasCssWidth, canvasCssHeight)
       blockRectsRef.current = {} as Record<BlockId, BlockRect>
       if (!showTypography) {
+        endDrawMark()
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
       }
@@ -462,6 +475,7 @@ export function useTypographyRenderer<BlockId extends string>({
       }
       const bufferCtx = typographyBuffer.getContext("2d")
       if (!bufferCtx) {
+        endDrawMark()
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
       }
@@ -531,6 +545,7 @@ export function useTypographyRenderer<BlockId extends string>({
           ctx.clearRect(0, 0, canvas.width, canvas.height)
           ctx.drawImage(typographyBuffer, 0, 0)
           previousPlansRef.current = draftPlans
+          endDrawMark()
           recordPerfMetric("drawMs", performance.now() - drawStartedAt)
           return
         }
@@ -568,6 +583,7 @@ export function useTypographyRenderer<BlockId extends string>({
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(typographyBuffer, 0, 0)
       previousPlansRef.current = draftPlans
+      endDrawMark()
       recordPerfMetric("drawMs", performance.now() - drawStartedAt)
     })
 

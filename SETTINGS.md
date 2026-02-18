@@ -214,17 +214,16 @@ All header icons use styled rollover help tooltips with a second line showing th
 - Hover shows style/span/alignment tooltip
 
 Editor controls:
+- header layout: 2 columns x 3 rows
+- left column row 1: rows, cols, rotation (`-80..80`, integer degrees)
+- left column row 2: style hierarchy, font family
+- left column row 3: bold/italic, align left/right, reflow, syllable division (`Hy`)
+- right action column row order: save, delete, help (`?`)
 - font family
 - style
 - cols (1..gridCols)
 - rows (1..gridRows)
-- rotation input (`-80..80`, integer degrees)
-- reflow toggle (off = full-span wrap, on = newspaper columns)
-- syllable division toggle (`Hy`)
-- italic toggle
-- align left/right
-- Save
-- Delete paragraph (custom blocks)
+- textarea preview mirrors font family, bold/italic, and left/right alignment
 - live `Characters` + `Words` counts in footer
 
 Font behavior:

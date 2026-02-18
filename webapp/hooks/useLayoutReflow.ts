@@ -118,6 +118,23 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   const [pendingReflow, setPendingReflow] = useState<PendingReflow<BlockId> | null>(null)
   const [reflowToast, setReflowToast] = useState<{ movedCount: number } | null>(null)
 
+  const markStart = useCallback((name: string) => {
+    if (typeof performance.mark !== "function") return
+    performance.mark(`${name}:start`)
+  }, [])
+
+  const markEnd = useCallback((name: string) => {
+    if (typeof performance.mark !== "function" || typeof performance.measure !== "function") return
+    const start = `${name}:start`
+    const end = `${name}:end`
+    performance.mark(end)
+    try {
+      performance.measure(name, start, end)
+    } catch {
+      // Ignore missing/invalid marks.
+    }
+  }, [])
+
   const clearTransientState = useCallback(() => {
     setPendingReflow(null)
     setReflowToast(null)
@@ -243,15 +260,19 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     const plannerInput = buildReflowPlannerInput(currentGrid.cols, currentGrid.rows, sourcePositions)
     const reflowStartedAt = performance.now()
     const { requestId, promise } = postReflowPlanRequest(plannerInput)
+    const reflowMarkName = `sgg:reflow:${requestId}`
+    markStart(reflowMarkName)
     let cancelled = false
     promise
       .then((plan) => {
         if (cancelled) return
+        markEnd(reflowMarkName)
         recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
         applyComputedPlan(plan)
       })
       .catch(() => {
         if (cancelled) return
+        markEnd(reflowMarkName)
         recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
         applyComputedPlan(computeReflowPlan(plannerInput))
       })
@@ -342,8 +363,11 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       autoFitStartedAt = performance.now()
       const request = postAutoFitRequest(input)
       requestId = request.requestId
+      const autoFitMarkName = `sgg:autofit:${requestId}`
+      markStart(autoFitMarkName)
       request.promise.then((output) => {
         if (cancelled) return
+        markEnd(autoFitMarkName)
         recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
         const hasSpanChanges = Object.keys(output.spanUpdates).length > 0
         const hasPositionChanges = Object.keys(output.positionUpdates).length > 0
@@ -355,6 +379,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
         }
       }).catch(() => {
         if (cancelled) return
+        markEnd(autoFitMarkName)
         recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
         const fallback = computeAutoFitFallback(input)
         if (Object.keys(fallback.spanUpdates).length > 0) {
@@ -398,6 +423,8 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     textContent,
     typographyStyles,
     AUTOFIT_REQUEST_DEBOUNCE_MS,
+    markEnd,
+    markStart,
   ])
 
   return {
