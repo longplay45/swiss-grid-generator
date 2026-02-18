@@ -91,7 +91,7 @@ test("reflow worker preserves id and posts computed plan", () => {
   assert.match(source, /self\.onmessage\s*=\s*\(event:\s*MessageEvent<ReflowPlanRequest>\)\s*=>/)
   assert.match(source, /const\s+\{\s*id,\s*input\s*\}\s*=\s*event\.data/)
   assert.match(source, /const\s+plan\s*=\s*computeReflowPlan\(input\)/)
-  assert.match(source, /const\s+response:\s*ReflowPlanResponse\s*=\s*\{\s*id,\s*plan\s*\}/)
+  assert.match(source, /const\s+response:\s*ReflowPlanResponse\s*=\s*\{\s*id,\s*plan,\s*overflowLinesByBlock:\s*\{\}\s*\}/)
   assert.match(source, /self\.postMessage\(response\)/)
 })
 
@@ -105,4 +105,3 @@ test("autofit worker preserves id and handles no OffscreenCanvas context", () =>
   assert.match(source, /const\s+response:\s*AutoFitResponse\s*=\s*\{\s*id,\s*output\s*\}/)
   assert.match(source, /self\.postMessage\(response\)/)
 })
-

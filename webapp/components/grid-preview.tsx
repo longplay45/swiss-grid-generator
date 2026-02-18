@@ -144,6 +144,8 @@ type HoverState = {
   canvasY: number
 }
 
+type OverflowLinesByBlock = Partial<Record<BlockId, number>>
+
 function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   if (!values.length) return null
   const sorted = [...values].sort((a, b) => a - b)
@@ -219,6 +221,10 @@ const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
   caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
+
+const OVERFLOW_BADGE_RADIUS = 11
+const OVERFLOW_BADGE_PADDING = 6
+const OVERFLOW_BADGE_FILL = "rgba(255, 80, 80, 0.85)"
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
@@ -322,6 +328,7 @@ export const GridPreview = memo(function GridPreview({
   const [isMobile, setIsMobile] = useState(false)
   const [showPerfOverlay, setShowPerfOverlay] = useState(PERF_ENABLED)
   const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
+  const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const {
     state: blockCollectionsState,
     merge: setBlockCollections,
@@ -414,6 +421,18 @@ export const GridPreview = memo(function GridPreview({
     console.debug("[SGG perf]", payload)
   }, [PERF_ENABLED, PERF_LOG_INTERVAL_MS, PERF_SAMPLE_LIMIT])
 
+  const handleOverflowLinesChange = useCallback((next: OverflowLinesByBlock) => {
+    setOverflowLinesByBlock((prev) => {
+      const prevKeys = Object.keys(prev)
+      const nextKeys = Object.keys(next)
+      if (prevKeys.length !== nextKeys.length) return next
+      for (const key of nextKeys) {
+        if ((prev[key] ?? 0) !== (next[key] ?? 0)) return next
+      }
+      return prev
+    })
+  }, [])
+
   useEffect(() => {
     if (!PERF_ENABLED) return
     const readPerf = () => {
@@ -457,7 +476,8 @@ export const GridPreview = memo(function GridPreview({
   }, [styleAssignments])
 
   const isTextReflowEnabled = useCallback((key: BlockId) => {
-    return blockTextReflow[key] ?? false
+    if (blockTextReflow[key] !== undefined) return blockTextReflow[key] === true
+    return key === "body" || key === "caption"
   }, [blockTextReflow])
 
   const isSyllableDivisionEnabled = useCallback((key: BlockId) => {
@@ -742,21 +762,6 @@ export const GridPreview = memo(function GridPreview({
     return { span: nextSpan, position: nextPosition }
   }, [getWrappedText, result.grid, result.module.height, result.module.width, result.pageSizePt.height, result.settings.gridCols, result.typography.styles, scale])
 
-  const getAutoFitDropUpdate = useCallback((key: BlockId, dropped: ModulePosition): { span: number; position: ModulePosition } | null => {
-    const styleKey = getStyleKeyForBlock(key)
-    const autoFit = getAutoFitForPlacement({
-      key,
-      text: textContent[key] ?? "",
-      styleKey,
-      rowSpan: getBlockRows(key),
-      reflow: isTextReflowEnabled(key),
-      syllableDivision: isSyllableDivisionEnabled(key),
-      position: dropped,
-    })
-    if (!autoFit?.position) return null
-    return { span: autoFit.span, position: autoFit.position }
-  }, [getAutoFitForPlacement, getBlockRows, getStyleKeyForBlock, isSyllableDivisionEnabled, isTextReflowEnabled, textContent])
-
   const applyDragDrop = useCallback((drag: DragState, nextPreview: ModulePosition, copyOnDrop: boolean) => {
     if (copyOnDrop) {
       const sourceText = textContent[drag.key] ?? ""
@@ -772,27 +777,13 @@ export const GridPreview = memo(function GridPreview({
       const sourceReflow = isTextReflowEnabled(drag.key)
       const sourceSyllableDivision = isSyllableDivisionEnabled(drag.key)
       const sourceSpan = getBlockSpan(drag.key)
-      const autoFit = getAutoFitForPlacement({
-        key: drag.key,
-        text: sourceText,
-        styleKey,
-        rowSpan: sourceRows,
-        reflow: sourceReflow,
-        syllableDivision: sourceSyllableDivision,
-        position: nextPreview,
-      })
-      const nextSpan = autoFit?.span ?? sourceSpan
+      const nextSpan = sourceSpan
       const metrics = getGridMetrics()
       const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
-      const resolvedPosition = autoFit?.position
-        ? {
-            col: Math.max(0, Math.min(maxCol, autoFit.position.col)),
-            row: Math.max(0, Math.min(metrics.maxBaselineRow, autoFit.position.row)),
-          }
-        : {
-            col: Math.max(0, Math.min(maxCol, nextPreview.col)),
-            row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-          }
+      const resolvedPosition = {
+        col: Math.max(0, Math.min(maxCol, nextPreview.col)),
+        row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
+      }
       const newKey = getNextCustomBlockId()
 
       recordHistoryBeforeChange()
@@ -876,28 +867,19 @@ export const GridPreview = memo(function GridPreview({
       })
     } else {
       recordHistoryBeforeChange()
-      const autoFit = getAutoFitDropUpdate(drag.key, nextPreview)
-      if (autoFit) {
-        setBlockColumnSpans((current) => ({
-          ...current,
-          [drag.key]: autoFit.span,
-        }))
-        setBlockModulePositions((current) => ({
-          ...current,
-          [drag.key]: autoFit.position,
-        }))
-      } else {
-        setBlockModulePositions((current) => ({
-          ...current,
-          [drag.key]: nextPreview,
-        }))
-      }
+      const span = getBlockSpan(drag.key)
+      const maxCol = Math.max(0, result.settings.gridCols - span)
+      setBlockModulePositions((current) => ({
+        ...current,
+        [drag.key]: {
+          col: Math.max(0, Math.min(maxCol, nextPreview.col)),
+          row: nextPreview.row,
+        },
+      }))
     }
   }, [
     baseFont,
     blockOrder,
-    getAutoFitDropUpdate,
-    getAutoFitForPlacement,
     getBlockRows,
     getBlockSpan,
     getGridMetrics,
@@ -908,7 +890,6 @@ export const GridPreview = memo(function GridPreview({
     result.settings.gridCols,
     result.settings.gridRows,
     setBlockCollections,
-    setBlockColumnSpans,
     setBlockModulePositions,
     textContent,
   ])
@@ -1140,6 +1121,7 @@ export const GridPreview = memo(function GridPreview({
     isSyllableDivisionEnabled,
     getWrappedText,
     getOpticalOffset,
+    onOverflowLinesChange: handleOverflowLinesChange,
     onCanvasReady,
     recordPerfMetric,
     pixelRatio,
@@ -1155,7 +1137,9 @@ export const GridPreview = memo(function GridPreview({
       const cssHeight = canvas.height / pixelRatio
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.clearRect(0, 0, cssWidth, cssHeight)
-      if (!showTypography || !dragState) return
+      if (!showTypography) return
+      const hasOverflow = blockOrder.some((key) => (overflowLinesByBlock[key] ?? 0) > 0)
+      if (!dragState && !hasOverflow) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal } = result.grid
@@ -1167,25 +1151,47 @@ export const GridPreview = memo(function GridPreview({
       const baselineOriginTop = margins.top * scale - baselineStep
       const contentLeft = margins.left * scale
 
-      const dragSpan = getBlockSpan(dragState.key)
-      const snapX = contentLeft + dragState.preview.col * moduleXStep
-      const snapY = baselineOriginTop + dragState.preview.row * baselineStep
-      const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
-
       ctx.save()
       ctx.translate(cssWidth / 2, cssHeight / 2)
       ctx.rotate((rotation * Math.PI) / 180)
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
-      ctx.strokeStyle = "#f97316"
-      ctx.lineWidth = 1.5
-      ctx.beginPath()
-      ctx.moveTo(snapX, snapY + baselineStep)
-      ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
-      ctx.stroke()
+      if (dragState) {
+        const dragSpan = getBlockSpan(dragState.key)
+        const snapX = contentLeft + dragState.preview.col * moduleXStep
+        const snapY = baselineOriginTop + dragState.preview.row * baselineStep
+        const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
+        ctx.strokeStyle = "#f97316"
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.moveTo(snapX, snapY + baselineStep)
+        ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
+        ctx.stroke()
+      }
+      if (hasOverflow) {
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+        ctx.font = `700 ${Math.max(10, OVERFLOW_BADGE_RADIUS * 1.2)}px Inter, system-ui, -apple-system, sans-serif`
+        for (const key of blockOrder) {
+          const overflowLines = overflowLinesByBlock[key] ?? 0
+          if (overflowLines <= 0) continue
+          const rect = blockRectsRef.current[key]
+          if (!rect || rect.width <= 0 || rect.height <= 0) continue
+          const cx = rect.x + rect.width - OVERFLOW_BADGE_RADIUS - OVERFLOW_BADGE_PADDING
+          const cy = rect.y + rect.height - OVERFLOW_BADGE_RADIUS - OVERFLOW_BADGE_PADDING
+          ctx.save()
+          ctx.beginPath()
+          ctx.fillStyle = OVERFLOW_BADGE_FILL
+          ctx.arc(cx, cy, OVERFLOW_BADGE_RADIUS, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = "#ffffff"
+          ctx.fillText("…", cx, cy + 0.5)
+          ctx.restore()
+        }
+      }
       ctx.restore()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [dragState, getBlockSpan, pixelRatio, result, rotation, scale, showTypography])
+  }, [blockOrder, dragState, getBlockSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1198,8 +1204,6 @@ export const GridPreview = memo(function GridPreview({
 
       const nextScale = Math.min(containerWidth / width, containerHeight / height)
       setScale((prev) => (Math.abs(prev - nextScale) < 0.0001 ? prev : nextScale))
-      const nextRatio = Math.max(1, window.devicePixelRatio || 1)
-      setPixelRatio((prev) => (Math.abs(prev - nextRatio) < 0.01 ? prev : nextRatio))
     }
 
     calculateScale()
@@ -1213,6 +1217,34 @@ export const GridPreview = memo(function GridPreview({
       window.removeEventListener("resize", calculateScale)
     }
   }, [result])
+
+  useEffect(() => {
+    const readDevicePixelRatio = () => Math.max(1, window.devicePixelRatio || 1)
+    const applyDevicePixelRatio = () => {
+      const nextRatio = readDevicePixelRatio()
+      setPixelRatio((prev) => (Math.abs(prev - nextRatio) < 0.01 ? prev : nextRatio))
+    }
+
+    applyDevicePixelRatio()
+    let mediaQuery = window.matchMedia(`(resolution: ${readDevicePixelRatio()}dppx)`)
+    const handleDprChange = () => {
+      applyDevicePixelRatio()
+      mediaQuery.removeEventListener("change", handleDprChange)
+      mediaQuery = window.matchMedia(`(resolution: ${readDevicePixelRatio()}dppx)`)
+      mediaQuery.addEventListener("change", handleDprChange)
+    }
+
+    mediaQuery.addEventListener("change", handleDprChange)
+    window.addEventListener("resize", applyDevicePixelRatio)
+    window.addEventListener("orientationchange", applyDevicePixelRatio)
+    window.visualViewport?.addEventListener("resize", applyDevicePixelRatio)
+    return () => {
+      mediaQuery.removeEventListener("change", handleDprChange)
+      window.removeEventListener("resize", applyDevicePixelRatio)
+      window.removeEventListener("orientationchange", applyDevicePixelRatio)
+      window.visualViewport?.removeEventListener("resize", applyDevicePixelRatio)
+    }
+  }, [])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)

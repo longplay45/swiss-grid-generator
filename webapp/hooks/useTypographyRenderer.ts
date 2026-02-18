@@ -3,6 +3,7 @@ import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
 import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
+import { computeSingleColumnLineTops } from "@/lib/reflow-line-placement"
 
 type TextAlignMode = "left" | "right"
 
@@ -67,17 +68,9 @@ type Args<BlockId extends string> = {
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   getWrappedText: (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, hyphenate: boolean) => string[]
   getOpticalOffset: (ctx: CanvasRenderingContext2D, line: string, align: TextAlignMode, fontSize: number) => number
+  onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   recordPerfMetric: (metric: "drawMs", valueMs: number) => void
-}
-
-function rectsIntersect(a: BlockRect, b: BlockRect): boolean {
-  return !(
-    a.x + a.width < b.x
-    || b.x + b.width < a.x
-    || a.y + a.height < b.y
-    || b.y + b.height < a.y
-  )
 }
 
 function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
@@ -113,6 +106,7 @@ export function useTypographyRenderer<BlockId extends string>({
   isSyllableDivisionEnabled,
   getWrappedText,
   getOpticalOffset,
+  onOverflowLinesChange,
   onCanvasReady,
   recordPerfMetric,
 }: Args<BlockId>) {
@@ -153,7 +147,9 @@ export function useTypographyRenderer<BlockId extends string>({
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.clearRect(0, 0, canvasCssWidth, canvasCssHeight)
       blockRectsRef.current = {} as Record<BlockId, BlockRect>
+      const overflowByBlock: Partial<Record<BlockId, number>> = {}
       if (!showTypography) {
+        onOverflowLinesChange?.(overflowByBlock)
         endDrawMark()
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
@@ -241,12 +237,15 @@ export function useTypographyRenderer<BlockId extends string>({
         const span = getBlockSpan(block.key)
         const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
         const rowSpan = getBlockRows(block.key)
-        const columnReflow = isTextReflowEnabled(block.key)
+        const reflowEnabled = isTextReflowEnabled(block.key)
+        const columnReflow = reflowEnabled && span >= 2
+        const singleColumnReflow = reflowEnabled && span === 1
+        const syllableDivision = isSyllableDivisionEnabled(block.key)
         const textLines = getWrappedText(
           ctx,
           blockText,
-          columnReflow ? modW * scale : wrapWidth,
-          isSyllableDivisionEnabled(block.key),
+          reflowEnabled ? modW * scale : wrapWidth,
+          syllableDivision,
         )
 
         const autoBlockX = contentLeft
@@ -258,8 +257,11 @@ export function useTypographyRenderer<BlockId extends string>({
         const lineStep = baselineMult * baselinePx
         const pageBottomY = pageHeight - margins.bottom * scale
         const moduleHeightPx = rowSpan * modH * scale + Math.max(rowSpan - 1, 0) * gridMarginVertical * scale
+        const firstLineTopY = origin.y + baselinePx
         const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
+        const moduleCyclePx = (modH + gridMarginVertical) * scale
         let maxUsedRows = 0
+        let lastRenderedLineTopY: number | null = null
 
         nextRects[block.key] = {
           x: origin.x,
@@ -271,7 +273,7 @@ export function useTypographyRenderer<BlockId extends string>({
         }
         const commands: TextDrawCommand[] = []
 
-        if (!columnReflow) {
+        if (!reflowEnabled) {
           const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
           textLines.forEach((line, lineIndex) => {
             const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
@@ -282,7 +284,27 @@ export function useTypographyRenderer<BlockId extends string>({
               commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
             }
           })
-        } else {
+        } else if (singleColumnReflow) {
+          const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
+          const lineTops = computeSingleColumnLineTops({
+            firstLineTopY,
+            lineStep,
+            pageBottomY,
+            lineCount: textLines.length,
+            contentTop,
+            moduleHeightPx: modH * scale,
+            moduleCyclePx,
+          })
+          for (let lineIndex = 0; lineIndex < lineTops.length; lineIndex += 1) {
+            const lineTopY = lineTops[lineIndex]
+            const line = textLines[lineIndex]
+            const y = lineTopY + textAscentPx
+            maxUsedRows += 1
+            lastRenderedLineTopY = lineTopY
+            const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
+            commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
+          }
+        } else if (columnReflow) {
           const columnWidth = modW * scale
           for (let lineIndex = 0; lineIndex < textLines.length; lineIndex += 1) {
             const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
@@ -299,8 +321,20 @@ export function useTypographyRenderer<BlockId extends string>({
             commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
           }
         }
-
-        if (maxUsedRows > 0 && !columnReflow) {
+        const overflowLines = reflowEnabled ? Math.max(0, textLines.length - commands.length) : 0
+        overflowByBlock[block.key] = overflowLines
+        if (overflowLines > 0 && syllableDivision && commands.length > 0) {
+          const last = commands[commands.length - 1]
+          if (last.text && !last.text.endsWith("-") && !last.text.endsWith("\u00AD")) {
+            last.text = `${last.text}\u00AD`
+          }
+        }
+        if (singleColumnReflow) {
+          nextRects[block.key].height = lastRenderedLineTopY !== null
+            ? (lastRenderedLineTopY - origin.y) + baselinePx + hitTopPadding
+            : baselinePx + hitTopPadding
+        }
+        if (!reflowEnabled && maxUsedRows > 0) {
           nextRects[block.key].height = (maxUsedRows * baselineMult + 1) * baselinePx + hitTopPadding
         }
 
@@ -330,7 +364,9 @@ export function useTypographyRenderer<BlockId extends string>({
         })
 
         if (!useParagraphRows) {
-          const usedLineRows = maxUsedRows || textLines.length
+          const usedLineRows = reflowEnabled
+            ? (maxUsedRows || Math.min(textLines.length, Math.max(1, maxLinesPerColumn)))
+            : (maxUsedRows || textLines.length)
           if (!useRowPlacement || block.key !== "display") {
             currentBaselineOffset = blockStartOffset + usedLineRows * baselineMult
           } else {
@@ -362,12 +398,15 @@ export function useTypographyRenderer<BlockId extends string>({
         const captionSpan = getBlockSpan(captionKey)
         const captionRowSpan = getBlockRows(captionKey)
         const captionWidth = captionSpan * modW * scale + Math.max(captionSpan - 1, 0) * gutterX
-        const captionColumnReflow = isTextReflowEnabled(captionKey)
+        const captionReflowEnabled = isTextReflowEnabled(captionKey)
+        const captionColumnReflow = captionReflowEnabled && captionSpan >= 2
+        const captionSingleColumnReflow = captionReflowEnabled && captionSpan === 1
+        const captionSyllableDivision = isSyllableDivisionEnabled(captionKey)
         const captionLines = getWrappedText(
           ctx,
           captionText,
-          captionColumnReflow ? modW * scale : captionWidth,
-          isSyllableDivisionEnabled(captionKey),
+          captionReflowEnabled ? modW * scale : captionWidth,
+          captionSyllableDivision,
         )
         const captionLineCount = captionLines.length
 
@@ -384,11 +423,14 @@ export function useTypographyRenderer<BlockId extends string>({
         const captionLineStep = captionBaselineMult * baselinePx
         const captionPageBottomY = pageHeight - margins.bottom * scale
         const captionModuleHeightPx = captionRowSpan * modH * scale + Math.max(captionRowSpan - 1, 0) * gridMarginVertical * scale
+        const captionFirstLineTopY = captionOrigin.y + baselinePx
         const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeightPx / captionLineStep))
+        const captionModuleCyclePx = (modH + gridMarginVertical) * scale
         let captionMaxUsedRows = 0
+        let captionLastRenderedLineTopY: number | null = null
         const captionCommands: TextDrawCommand[] = []
 
-        if (!captionColumnReflow) {
+        if (!captionReflowEnabled) {
           const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
           captionLines.forEach((line, lineIndex) => {
             const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
@@ -399,7 +441,27 @@ export function useTypographyRenderer<BlockId extends string>({
               captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
             }
           })
-        } else {
+        } else if (captionSingleColumnReflow) {
+          const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
+          const captionLineTops = computeSingleColumnLineTops({
+            firstLineTopY: captionFirstLineTopY,
+            lineStep: captionLineStep,
+            pageBottomY: captionPageBottomY,
+            lineCount: captionLines.length,
+            contentTop,
+            moduleHeightPx: modH * scale,
+            moduleCyclePx: captionModuleCyclePx,
+          })
+          for (let lineIndex = 0; lineIndex < captionLineTops.length; lineIndex += 1) {
+            const lineTopY = captionLineTops[lineIndex]
+            const line = captionLines[lineIndex]
+            const y = lineTopY + captionAscentPx
+            captionMaxUsedRows += 1
+            captionLastRenderedLineTopY = lineTopY
+            const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
+            captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
+          }
+        } else if (captionColumnReflow) {
           const columnWidth = modW * scale
           for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
             const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
@@ -416,14 +478,25 @@ export function useTypographyRenderer<BlockId extends string>({
             captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
           }
         }
-
+        const captionOverflowLines = captionReflowEnabled ? Math.max(0, captionLines.length - captionCommands.length) : 0
+        overflowByBlock[captionKey] = captionOverflowLines
+        if (captionOverflowLines > 0 && captionSyllableDivision && captionCommands.length > 0) {
+          const last = captionCommands[captionCommands.length - 1]
+          if (last.text && !last.text.endsWith("-") && !last.text.endsWith("\u00AD")) {
+            last.text = `${last.text}\u00AD`
+          }
+        }
         const captionRect: BlockRect = {
           x: captionOrigin.x,
           y: captionOrigin.y - captionHitTopPadding,
           width: captionWidth,
-          height: captionColumnReflow
-            ? captionModuleHeightPx + captionHitTopPadding
-            : ((captionMaxUsedRows || captionLineCount) * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
+          height: captionSingleColumnReflow
+            ? (captionLastRenderedLineTopY !== null
+              ? (captionLastRenderedLineTopY - captionOrigin.y) + baselinePx + captionHitTopPadding
+              : baselinePx + captionHitTopPadding)
+            : captionColumnReflow
+              ? captionModuleHeightPx + captionHitTopPadding
+              : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
         }
         nextRects[captionKey] = captionRect
         draftPlans.set(captionKey, {
@@ -455,6 +528,7 @@ export function useTypographyRenderer<BlockId extends string>({
       }
 
       blockRectsRef.current = nextRects
+      onOverflowLinesChange?.(overflowByBlock)
 
       let typographyBuffer = typographyBufferRef.current
       if (!typographyBuffer) {
@@ -503,81 +577,16 @@ export function useTypographyRenderer<BlockId extends string>({
         }
       }
 
-      const previousPlans = previousPlansRef.current
-      const fullRedraw = resized || transformChanged || previousPlans.size === 0
       const allCurrentPlans = [...draftPlans.values()]
-
-      if (fullRedraw) {
-        bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
-        bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
-        bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-        bufferCtx.save()
-        bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
-        bufferCtx.rotate((rotation * Math.PI) / 180)
-        bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
-        drawPlans(allCurrentPlans)
-        bufferCtx.restore()
-      } else {
-        const dirtyKeys = new Set<BlockId>()
-        const mergedKeys = new Set<BlockId>([
-          ...Array.from(previousPlans.keys()),
-          ...Array.from(draftPlans.keys()),
-        ])
-        for (const key of mergedKeys) {
-          const prev = previousPlans.get(key)
-          const next = draftPlans.get(key)
-          if (!prev || !next) {
-            dirtyKeys.add(key)
-            continue
-          }
-          if (
-            prev.signature !== next.signature
-            || prev.rect.x !== next.rect.x
-            || prev.rect.y !== next.rect.y
-            || prev.rect.width !== next.rect.width
-            || prev.rect.height !== next.rect.height
-          ) {
-            dirtyKeys.add(key)
-          }
-        }
-        if (!dirtyKeys.size) {
-          ctx.setTransform(1, 0, 0, 1, 0, 0)
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          ctx.drawImage(typographyBuffer, 0, 0)
-          previousPlansRef.current = draftPlans
-          endDrawMark()
-          recordPerfMetric("drawMs", performance.now() - drawStartedAt)
-          return
-        }
-        const dirtyRegions: BlockRect[] = []
-        for (const key of dirtyKeys) {
-          const prev = previousPlans.get(key)
-          const next = draftPlans.get(key)
-          if (prev) dirtyRegions.push(prev.rect)
-          if (next) dirtyRegions.push(next.rect)
-        }
-        if (dirtyRegions.length > 0) {
-          const redrawPlans = allCurrentPlans.filter((plan) =>
-            dirtyRegions.some((region) => rectsIntersect(plan.rect, region)),
-          )
-          bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-          bufferCtx.save()
-          bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
-          bufferCtx.rotate((rotation * Math.PI) / 180)
-          bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
-          const clearPadding = 2
-          for (const region of dirtyRegions) {
-            bufferCtx.clearRect(
-              region.x - clearPadding,
-              region.y - clearPadding,
-              region.width + clearPadding * 2,
-              region.height + clearPadding * 2,
-            )
-          }
-          drawPlans(redrawPlans)
-          bufferCtx.restore()
-        }
-      }
+      bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
+      bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
+      bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      bufferCtx.save()
+      bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
+      bufferCtx.rotate((rotation * Math.PI) / 180)
+      bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
+      drawPlans(allCurrentPlans)
+      bufferCtx.restore()
 
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -607,6 +616,7 @@ export function useTypographyRenderer<BlockId extends string>({
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onCanvasReady,
+    onOverflowLinesChange,
     previousPlansRef,
     recordPerfMetric,
     result,

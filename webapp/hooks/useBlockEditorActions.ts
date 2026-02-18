@@ -163,7 +163,7 @@ export function useBlockEditorActions({
       syllableDivision: editorState.draftSyllableDivision,
       position: existingPosition,
     })
-    const nextSpan = autoFit?.span ?? editorState.draftColumns
+    const nextSpan = editorState.draftColumns
     setBlockCollections((prev) => {
       const nextTextContent = {
         ...prev.textContent,
