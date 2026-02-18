@@ -111,6 +111,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   computeAutoFitFallback,
   recordPerfMetric,
 }: Args<BlockId, ReflowInput, Snapshot>) {
+  const AUTOFIT_REQUEST_DEBOUNCE_MS = 80
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
   const previousModuleRowStepRef = useRef<number | null>(null)
   const lastAutoFitSettingsRef = useRef<string>("")
@@ -334,32 +335,38 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       pageHeight,
     }
 
-    const autoFitStartedAt = performance.now()
-    const { requestId, promise } = postAutoFitRequest(input)
+    let requestId = -1
     let cancelled = false
-    promise.then((output) => {
-      if (cancelled) return
-      recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
-      const hasSpanChanges = Object.keys(output.spanUpdates).length > 0
-      const hasPositionChanges = Object.keys(output.positionUpdates).length > 0
-      if (hasSpanChanges) {
-        setBlockColumnSpans((prev) => ({ ...prev, ...output.spanUpdates }))
-      }
-      if (hasPositionChanges) {
-        setBlockModulePositions((prev) => ({ ...prev, ...output.positionUpdates }))
-      }
-    }).catch(() => {
-      if (cancelled) return
-      recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
-      const fallback = computeAutoFitFallback(input)
-      if (Object.keys(fallback.spanUpdates).length > 0) {
-        setBlockColumnSpans((prev) => ({ ...prev, ...fallback.spanUpdates }))
-      }
-      if (Object.keys(fallback.positionUpdates).length > 0) {
-        setBlockModulePositions((prev) => ({ ...prev, ...fallback.positionUpdates }))
-      }
-    })
+    let autoFitStartedAt = 0
+    const timeoutId = window.setTimeout(() => {
+      autoFitStartedAt = performance.now()
+      const request = postAutoFitRequest(input)
+      requestId = request.requestId
+      request.promise.then((output) => {
+        if (cancelled) return
+        recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
+        const hasSpanChanges = Object.keys(output.spanUpdates).length > 0
+        const hasPositionChanges = Object.keys(output.positionUpdates).length > 0
+        if (hasSpanChanges) {
+          setBlockColumnSpans((prev) => ({ ...prev, ...output.spanUpdates }))
+        }
+        if (hasPositionChanges) {
+          setBlockModulePositions((prev) => ({ ...prev, ...output.positionUpdates }))
+        }
+      }).catch(() => {
+        if (cancelled) return
+        recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
+        const fallback = computeAutoFitFallback(input)
+        if (Object.keys(fallback.spanUpdates).length > 0) {
+          setBlockColumnSpans((prev) => ({ ...prev, ...fallback.spanUpdates }))
+        }
+        if (Object.keys(fallback.positionUpdates).length > 0) {
+          setBlockModulePositions((prev) => ({ ...prev, ...fallback.positionUpdates }))
+        }
+      })
+    }, AUTOFIT_REQUEST_DEBOUNCE_MS)
     return () => {
+      window.clearTimeout(timeoutId)
       cancelled = true
       cancelAutoFitWorkerRequest(requestId)
     }
@@ -390,6 +397,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     setBlockModulePositions,
     textContent,
     typographyStyles,
+    AUTOFIT_REQUEST_DEBOUNCE_MS,
   ])
 
   return {

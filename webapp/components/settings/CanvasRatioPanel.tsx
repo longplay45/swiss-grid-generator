@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
@@ -18,7 +19,7 @@ type Props = {
   isDarkMode: boolean
 }
 
-export function CanvasRatioPanel({
+export const CanvasRatioPanel = memo(function CanvasRatioPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
@@ -88,4 +89,6 @@ export function CanvasRatioPanel({
       </div>
     </PanelCard>
   )
-}
+})
+
+CanvasRatioPanel.displayName = "CanvasRatioPanel"

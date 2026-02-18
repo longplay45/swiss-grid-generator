@@ -1,4 +1,4 @@
-import jsPDF from "jspdf"
+import type jsPDF from "jspdf"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"

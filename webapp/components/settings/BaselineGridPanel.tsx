@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { DebouncedSlider } from "@/components/ui/slider"
 import { PanelCard } from "@/components/settings/PanelCard"
@@ -12,7 +13,7 @@ type Props = {
   isDarkMode: boolean
 }
 
-export function BaselineGridPanel({
+export const BaselineGridPanel = memo(function BaselineGridPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
@@ -55,4 +56,6 @@ export function BaselineGridPanel({
       )}
     </PanelCard>
   )
-}
+})
+
+BaselineGridPanel.displayName = "BaselineGridPanel"

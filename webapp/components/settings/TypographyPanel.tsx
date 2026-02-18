@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -23,7 +24,7 @@ type Props = {
   isDarkMode: boolean
 }
 
-export function TypographyPanel({
+export const TypographyPanel = memo(function TypographyPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
@@ -74,4 +75,6 @@ export function TypographyPanel({
       </div>
     </PanelCard>
   )
-}
+})
+
+TypographyPanel.displayName = "TypographyPanel"

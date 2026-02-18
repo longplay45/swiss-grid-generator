@@ -46,7 +46,7 @@ import {
 } from "@/lib/config/fonts"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { AlignLeft, AlignRight, Bold, CaseSensitive, Columns3, Italic, RotateCw, Rows3, Save as SaveIcon, Trash2, Type } from "lucide-react"
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react"
+import { ReactNode, memo, useCallback, useEffect, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -242,11 +242,6 @@ function getDummyTextForStyle(style: TypographyStyleKey): string {
   return DUMMY_TEXT_BY_STYLE[style] ?? DUMMY_TEXT_BY_STYLE.body
 }
 
-function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
-  const metrics = ctx.measureText("Hg")
-  return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
-}
-
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -270,7 +265,7 @@ interface GridPreviewProps {
 
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 
-export function GridPreview({
+export const GridPreview = memo(function GridPreview({
   result,
   showBaselines,
   showModules,
@@ -316,6 +311,7 @@ export function GridPreview({
   })
 
   const [scale, setScale] = useState(1)
+  const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   const {
     state: blockCollectionsState,
@@ -589,8 +585,8 @@ export function GridPreview({
 
     const pageWidth = result.pageSizePt.width * scale
     const pageHeight = result.pageSizePt.height * scale
-    const centerCanvasX = canvas.width / 2
-    const centerCanvasY = canvas.height / 2
+    const centerCanvasX = canvas.width / (2 * pixelRatio)
+    const centerCanvasY = canvas.height / (2 * pixelRatio)
     const theta = (rotation * Math.PI) / 180
     const cos = Math.cos(theta)
     const sin = Math.sin(theta)
@@ -601,7 +597,7 @@ export function GridPreview({
       x: dx * cos + dy * sin + pageWidth / 2,
       y: -dx * sin + dy * cos + pageHeight / 2,
     }
-  }, [result.pageSizePt.height, result.pageSizePt.width, rotation, scale])
+  }, [pixelRatio, result.pageSizePt.height, result.pageSizePt.width, rotation, scale])
 
   const clampModulePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
@@ -954,6 +950,7 @@ export function GridPreview({
     postRequest: postReflowWorkerRequest,
     cancelRequest: cancelReflowWorkerRequest,
   } = useWorkerBridge<ReflowPlannerInput, ReflowPlan>({
+    strategy: "latest",
     createWorker: () => new Worker(new URL("../workers/reflowPlanner.worker.ts", import.meta.url)),
     parseMessage: (data) => {
       if (!data || typeof data !== "object") return null
@@ -985,6 +982,7 @@ export function GridPreview({
     }
   >({
     enabled: typeof OffscreenCanvas !== "undefined",
+    strategy: "latest",
     createWorker: () => new Worker(new URL("../workers/autoFit.worker.ts", import.meta.url)),
     parseMessage: (data) => {
       if (!data || typeof data !== "object") return null
@@ -1052,10 +1050,13 @@ export function GridPreview({
     const frame = window.requestAnimationFrame(() => {
       const ctx = canvas.getContext("2d")
       if (!ctx) return
+      const cssWidth = canvas.width / pixelRatio
+      const cssHeight = canvas.height / pixelRatio
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       renderStaticGuides({
         ctx,
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height,
+        canvasWidth: cssWidth,
+        canvasHeight: cssHeight,
         result,
         scale,
         rotation,
@@ -1067,7 +1068,7 @@ export function GridPreview({
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [isMobile, result, rotation, scale, showBaselines, showMargins, showModules])
+  }, [isMobile, pixelRatio, result, rotation, scale, showBaselines, showMargins, showModules])
 
   useTypographyRenderer<BlockId>({
     canvasRef,
@@ -1098,6 +1099,7 @@ export function GridPreview({
     getOpticalOffset,
     onCanvasReady,
     recordPerfMetric,
+    pixelRatio,
   })
 
   useEffect(() => {
@@ -1106,7 +1108,10 @@ export function GridPreview({
     const frame = window.requestAnimationFrame(() => {
       const ctx = canvas.getContext("2d")
       if (!ctx) return
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const cssWidth = canvas.width / pixelRatio
+      const cssHeight = canvas.height / pixelRatio
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      ctx.clearRect(0, 0, cssWidth, cssHeight)
       if (!showTypography || !dragState) return
 
       const { width, height } = result.pageSizePt
@@ -1125,7 +1130,7 @@ export function GridPreview({
       const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
 
       ctx.save()
-      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.translate(cssWidth / 2, cssHeight / 2)
       ctx.rotate((rotation * Math.PI) / 180)
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
       ctx.strokeStyle = "#f97316"
@@ -1137,7 +1142,7 @@ export function GridPreview({
       ctx.restore()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [dragState, getBlockSpan, result, rotation, scale, showTypography])
+  }, [dragState, getBlockSpan, pixelRatio, result, rotation, scale, showTypography])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1148,12 +1153,22 @@ export function GridPreview({
       const containerWidth = container.clientWidth - 40
       const containerHeight = container.clientHeight - 40
 
-      setScale(Math.min(containerWidth / width, containerHeight / height))
+      const nextScale = Math.min(containerWidth / width, containerHeight / height)
+      setScale((prev) => (Math.abs(prev - nextScale) < 0.0001 ? prev : nextScale))
+      const nextRatio = Math.max(1, window.devicePixelRatio || 1)
+      setPixelRatio((prev) => (Math.abs(prev - nextRatio) < 0.01 ? prev : nextRatio))
     }
 
     calculateScale()
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(calculateScale)
+      : null
+    if (observer && previewContainerRef.current) observer.observe(previewContainerRef.current)
     window.addEventListener("resize", calculateScale)
-    return () => window.removeEventListener("resize", calculateScale)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener("resize", calculateScale)
+    }
   }, [result])
 
   useEffect(() => {
@@ -1392,6 +1407,11 @@ export function GridPreview({
     }
   }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRotation, getBlockRows, getBlockSpan, isBlockBold, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
 
+  const pageWidthCss = result.pageSizePt.width * scale
+  const pageHeightCss = result.pageSizePt.height * scale
+  const pageWidthPx = Math.max(1, Math.round(pageWidthCss * pixelRatio))
+  const pageHeightPx = Math.max(1, Math.round(pageHeightCss * pixelRatio))
+
   const canvasCursorClass = dragState
     ? (dragState.copyOnDrop ? "cursor-copy" : "cursor-grabbing")
     : hoverState
@@ -1408,17 +1428,19 @@ export function GridPreview({
         isDarkMode ? "bg-gray-900" : "bg-gray-50"
       }`}
     >
-      <div className="relative" style={{ width: result.pageSizePt.width * scale, height: result.pageSizePt.height * scale }}>
+      <div className="relative" style={{ width: pageWidthCss, height: pageHeightCss }}>
         <canvas
           ref={staticCanvasRef}
-          width={result.pageSizePt.width * scale}
-          height={result.pageSizePt.height * scale}
+          width={pageWidthPx}
+          height={pageHeightPx}
+          style={{ width: pageWidthCss, height: pageHeightCss }}
           className="absolute inset-0 block shadow-lg"
         />
         <canvas
           ref={canvasRef}
-          width={result.pageSizePt.width * scale}
-          height={result.pageSizePt.height * scale}
+          width={pageWidthPx}
+          height={pageHeightPx}
+          style={{ width: pageWidthCss, height: pageHeightCss }}
           className={`absolute inset-0 block touch-none ${canvasCursorClass}`}
           onPointerDown={handleCanvasPointerDown}
           onPointerMove={handleCanvasPointerMove}
@@ -1431,16 +1453,17 @@ export function GridPreview({
         />
         <canvas
           ref={overlayCanvasRef}
-          width={result.pageSizePt.width * scale}
-          height={result.pageSizePt.height * scale}
+          width={pageWidthPx}
+          height={pageHeightPx}
+          style={{ width: pageWidthCss, height: pageHeightCss }}
           className="pointer-events-none absolute inset-0 block"
         />
         {hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
           <div
             className="pointer-events-none absolute z-20 w-64 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm"
             style={{
-              left: Math.min(Math.max(8, hoverState.canvasX + 10), Math.max(8, result.pageSizePt.width * scale - 268)),
-              top: Math.min(Math.max(8, hoverState.canvasY + 10), Math.max(8, result.pageSizePt.height * scale - 120)),
+              left: Math.min(Math.max(8, hoverState.canvasX + 10), Math.max(8, pageWidthCss - 268)),
+              top: Math.min(Math.max(8, hoverState.canvasY + 10), Math.max(8, pageHeightCss - 120)),
             }}
           >
             <div className="text-[11px] font-medium text-gray-900">
@@ -1806,4 +1829,6 @@ export function GridPreview({
 
     </div>
   )
-}
+})
+
+GridPreview.displayName = "GridPreview"

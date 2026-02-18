@@ -383,6 +383,24 @@ export default function Home() {
     [history, applyUiSnapshot],
   )
 
+  const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
+    setActiveHelpSectionId(sectionId)
+    setActiveSidebarPanel("help")
+  }, [])
+
+  const handlePreviewHistoryAvailabilityChange = useCallback((undoAvailable: boolean, redoAvailable: boolean) => {
+    setCanUndoPreview(undoAvailable)
+    setCanRedoPreview(redoAvailable)
+  }, [])
+
+  const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
+    suppressNext()
+    dispatch({ type: "BATCH", actions: [
+      { type: "SET", key: "gridCols", value: cols },
+      { type: "SET", key: "gridRows", value: rows },
+    ] })
+  }, [suppressNext])
+
   const togglePreviewFullscreen = useCallback(async () => {
     const previewElement = previewPanelRef.current
     if (!previewElement || typeof document === "undefined") return
@@ -1003,22 +1021,10 @@ export default function Home() {
               rotation={rotation}
               undoNonce={history.undoNonce}
               redoNonce={history.redoNonce}
-              onOpenHelpSection={(sectionId) => {
-                setActiveHelpSectionId(sectionId)
-                setActiveSidebarPanel("help")
-              }}
+              onOpenHelpSection={handlePreviewOpenHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
-              onHistoryAvailabilityChange={(undoAvailable, redoAvailable) => {
-                setCanUndoPreview(undoAvailable)
-                setCanRedoPreview(redoAvailable)
-              }}
-              onRequestGridRestore={(cols, rows) => {
-                suppressNext()
-                dispatch({ type: "BATCH", actions: [
-                  { type: "SET", key: "gridCols", value: cols },
-                  { type: "SET", key: "gridRows", value: rows },
-                ] })
-              }}
+              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
+              onRequestGridRestore={handlePreviewGridRestore}
               isDarkMode={isDarkUi}
               onLayoutChange={setPreviewLayout}
             />

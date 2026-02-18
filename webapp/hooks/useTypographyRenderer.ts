@@ -47,6 +47,7 @@ type Args<BlockId extends string> = {
   typographyBufferTransformRef: MutableRefObject<string>
   result: GridResult
   scale: number
+  pixelRatio: number
   rotation: number
   showTypography: boolean
   blockOrder: BlockId[]
@@ -92,6 +93,7 @@ export function useTypographyRenderer<BlockId extends string>({
   typographyBufferTransformRef,
   result,
   scale,
+  pixelRatio,
   rotation,
   showTypography,
   blockOrder,
@@ -126,6 +128,8 @@ export function useTypographyRenderer<BlockId extends string>({
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
       }
+      const canvasCssWidth = canvas.width / pixelRatio
+      const canvasCssHeight = canvas.height / pixelRatio
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -134,7 +138,8 @@ export function useTypographyRenderer<BlockId extends string>({
       const pageWidth = width * scale
       const pageHeight = height * scale
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      ctx.clearRect(0, 0, canvasCssWidth, canvasCssHeight)
       blockRectsRef.current = {} as Record<BlockId, BlockRect>
       if (!showTypography) {
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
@@ -460,6 +465,8 @@ export function useTypographyRenderer<BlockId extends string>({
         recordPerfMetric("drawMs", performance.now() - drawStartedAt)
         return
       }
+      const bufferCssWidth = typographyBuffer.width / pixelRatio
+      const bufferCssHeight = typographyBuffer.height / pixelRatio
 
       const drawPlans = (plans: BlockRenderPlan<BlockId>[]) => {
         bufferCtx.fillStyle = "#1f2937"
@@ -489,8 +496,9 @@ export function useTypographyRenderer<BlockId extends string>({
       if (fullRedraw) {
         bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
         bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
+        bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
         bufferCtx.save()
-        bufferCtx.translate(typographyBuffer.width / 2, typographyBuffer.height / 2)
+        bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
         bufferCtx.rotate((rotation * Math.PI) / 180)
         bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
         drawPlans(allCurrentPlans)
@@ -519,6 +527,7 @@ export function useTypographyRenderer<BlockId extends string>({
           }
         }
         if (!dirtyKeys.size) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0)
           ctx.clearRect(0, 0, canvas.width, canvas.height)
           ctx.drawImage(typographyBuffer, 0, 0)
           previousPlansRef.current = draftPlans
@@ -536,8 +545,9 @@ export function useTypographyRenderer<BlockId extends string>({
           const redrawPlans = allCurrentPlans.filter((plan) =>
             dirtyRegions.some((region) => rectsIntersect(plan.rect, region)),
           )
+          bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
           bufferCtx.save()
-          bufferCtx.translate(typographyBuffer.width / 2, typographyBuffer.height / 2)
+          bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
           bufferCtx.rotate((rotation * Math.PI) / 180)
           bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
           const clearPadding = 2
@@ -554,6 +564,7 @@ export function useTypographyRenderer<BlockId extends string>({
         }
       }
 
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(typographyBuffer, 0, 0)
       previousPlansRef.current = draftPlans
@@ -585,6 +596,7 @@ export function useTypographyRenderer<BlockId extends string>({
     result,
     rotation,
     scale,
+    pixelRatio,
     showTypography,
     styleAssignments,
     textContent,

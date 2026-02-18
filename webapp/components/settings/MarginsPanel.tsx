@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
@@ -24,7 +25,7 @@ type Props = {
   isDarkMode: boolean
 }
 
-export function MarginsPanel({
+export const MarginsPanel = memo(function MarginsPanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
@@ -149,4 +150,6 @@ export function MarginsPanel({
       )}
     </PanelCard>
   )
-}
+})
+
+MarginsPanel.displayName = "MarginsPanel"
