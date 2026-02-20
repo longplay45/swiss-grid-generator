@@ -333,6 +333,23 @@ export default function Home() {
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    const applyTheme = (matches: boolean) => setIsDarkUi(matches)
+    applyTheme(mediaQuery.matches)
+
+    const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches)
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [])
+
   // ─── Derived values ───────────────────────────────────────────────────────
 
   const selectedCanvasRatio = useMemo(

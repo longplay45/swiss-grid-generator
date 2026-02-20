@@ -404,6 +404,7 @@ def main() -> int:
         upload_tree(sftp, local_root, remote_root, exclude, dry_run=args.dry_run)
 
         print("Done.")
+        print("https://preview.swiss-grid-generator.com is live with the latest changes!")
         return 0
 
     except Exception as e:
@@ -419,7 +420,6 @@ def main() -> int:
             ssh.close()  # type: ignore
         except Exception:
             pass
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
