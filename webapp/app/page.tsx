@@ -1285,7 +1285,7 @@ export default function Home() {
         <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
           <p className={`text-sm ${uiTheme.bodyText}`}>
-            Based on Müller-Brockmann&apos;s <em><a href="https://www.amazon.de/Rastersysteme-für-visuelle-Gestaltung-Ausstellungsgestalter/dp/3721201450/ref=sr_1_1?__mk_de_DE=ÅMÅŽÕÑ&crid=74R825L27LI9&dib=eyJ2IjoiMSJ9.Fr4qEzNQ1JprJm6AnGDkr515wH4rn_TRLxzDhds_c8zgl7MhUPAATEtWXTsB4ZG4uiy6Ia9l5Ez5tNdXxXkqH9rohnoUBitHUtOp_d2NbgxwT4rn8OpG5dCk1XeLsRYLLnubd029D_styBocpnSKCyAT4zUdtmxsRtJ_syk-fwAspDKfrpHI6EDrWaJkuD6KSsU1ugAswiaIkHPHFo_DrLg5cmQmSleYfq9Xx1IZXdg.cuUDPIhomsYbSXnb3uhv0zUGsBUl8pRwP5rYhURySrA&dib_tag=se&keywords=Müller-Brockmann%27s+Grid+Systems+in+Graphic+Design&qid=1771329823&sprefix=müller-brockmann%27s+grid+systems+in+graphic+design%2Caps%2C216&sr=8-1">Grid Systems in Graphic Design</a></em> (1981).
+            Based on Müller-Brockmann&apos;s <em><a href="https://amzn.to/40kfiUL">Grid Systems in Graphic Design</a></em> (1981).
             Copyleft &amp; -right 2026 by{" "}
             <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.
           </p>
