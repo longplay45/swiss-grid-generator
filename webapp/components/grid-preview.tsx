@@ -140,8 +140,6 @@ type BlockCollectionsState = {
 
 type HoverState = {
   key: BlockId
-  canvasX: number
-  canvasY: number
 }
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
@@ -260,6 +258,7 @@ interface GridPreviewProps {
   showModules: boolean
   showMargins: boolean
   showTypography: boolean
+  showRolloverInfo?: boolean
   initialLayout?: PreviewLayoutState | null
   initialLayoutKey?: number
   rotation?: number
@@ -283,6 +282,7 @@ export const GridPreview = memo(function GridPreview({
   showModules,
   showMargins,
   showTypography,
+  showRolloverInfo = true,
   initialLayout = null,
   initialLayoutKey = 0,
   rotation = 0,
@@ -326,7 +326,7 @@ export const GridPreview = memo(function GridPreview({
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
-  const [showPerfOverlay, setShowPerfOverlay] = useState(PERF_ENABLED)
+  const [showPerfOverlay, setShowPerfOverlay] = useState(false)
   const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const {
@@ -1390,10 +1390,10 @@ export const GridPreview = memo(function GridPreview({
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (key) {
       setHoverState((prev) => {
-        if (prev && prev.key === key && Math.abs(prev.canvasX - canvasX) < 1 && Math.abs(prev.canvasY - canvasY) < 1) {
+        if (prev && prev.key === key) {
           return prev
         }
-        return { key, canvasX, canvasY }
+        return { key }
       })
       return
     }
@@ -1550,25 +1550,6 @@ export const GridPreview = memo(function GridPreview({
           style={{ width: pageWidthCss, height: pageHeightCss }}
           className="pointer-events-none absolute inset-0 block"
         />
-        {hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
-          <div
-            className="pointer-events-none absolute z-20 w-64 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm"
-            style={{
-              left: Math.min(Math.max(8, hoverState.canvasX + 10), Math.max(8, pageWidthCss - 268)),
-              top: Math.min(Math.max(8, hoverState.canvasY + 10), Math.max(8, pageHeightCss - 120)),
-            }}
-          >
-            <div className="text-[11px] font-medium text-gray-900">
-              {STYLE_OPTIONS.find((option) => option.value === hoveredStyle)?.label ?? hoveredStyle} ({formatPtSize(result.typography.styles[hoveredStyle].size)})
-            </div>
-            <div className="mt-1 text-[11px] text-gray-600">
-              Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
-            </div>
-            <div className="mt-1 text-[11px] text-gray-500">
-              Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap • Touch: long-press then drag
-            </div>
-          </div>
-        ) : null}
       </div>
 
       {pendingReflow ? (
@@ -1605,12 +1586,30 @@ export const GridPreview = memo(function GridPreview({
         </div>
       ) : null}
 
-      {PERF_ENABLED && showPerfOverlay && perfOverlay ? (
-        <div className="pointer-events-none absolute left-3 top-3 z-40 rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
-          <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>
-          <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
-          <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
-          <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
+      {(showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign) || (PERF_ENABLED && showPerfOverlay && perfOverlay) ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
+          {showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
+            <div className="w-64 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
+              <div className="text-[11px] font-medium text-gray-900">
+                {STYLE_OPTIONS.find((option) => option.value === hoveredStyle)?.label ?? hoveredStyle} ({formatPtSize(result.typography.styles[hoveredStyle].size)})
+              </div>
+              <div className="mt-1 text-[11px] text-gray-600">
+                Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
+              </div>
+              <div className="mt-1 text-[11px] text-gray-500">
+                Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap • Touch: long-press then drag
+              </div>
+            </div>
+          ) : null}
+
+          {PERF_ENABLED && showPerfOverlay && perfOverlay ? (
+            <div className="rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
+              <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>
+              <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
+              <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
+              <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

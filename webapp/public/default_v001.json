@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "exportedAt": "2026-02-15T11:42:21.904Z",
+  "exportedAt": "2026-02-20T09:26:46.077Z",
   "gridResult": {
     "format": "A4",
     "settings": {
@@ -21,7 +21,7 @@
       "gridMarginHorizontal": 12,
       "gridMarginVertical": 12,
       "margins": {
-        "top": 12,
+        "top": 24,
         "bottom": 36,
         "left": 24,
         "right": 24
@@ -52,6 +52,7 @@
           "size": 7,
           "leading": 12,
           "weight": "Regular",
+          "blockItalic": true,
           "alignment": "Left",
           "baselineMultiplier": 1,
           "bodyLines": 1
@@ -60,6 +61,7 @@
           "size": 10,
           "leading": 12,
           "weight": "Regular",
+          "blockItalic": false,
           "alignment": "Left",
           "baselineMultiplier": 1,
           "bodyLines": 1
@@ -68,6 +70,7 @@
           "size": 20,
           "leading": 24,
           "weight": "Regular",
+          "blockItalic": false,
           "alignment": "Left",
           "baselineMultiplier": 2,
           "bodyLines": 2
@@ -76,6 +79,7 @@
           "size": 30,
           "leading": 36,
           "weight": "Bold",
+          "blockItalic": false,
           "alignment": "Left",
           "baselineMultiplier": 3,
           "bodyLines": 3
@@ -84,6 +88,7 @@
           "size": 64,
           "leading": 72,
           "weight": "Bold",
+          "blockItalic": false,
           "alignment": "Left",
           "baselineMultiplier": 6,
           "bodyLines": 6
@@ -93,12 +98,6 @@
   },
   "uiSettings": {
     "canvasRatio": "din_ab",
-    "format": "A4",
-    "exportPaperSize": "A4",
-    "exportPrintPro": true,
-    "exportBleedMm": 3,
-    "exportRegistrationMarks": true,
-    "exportFinalSafeGuides": true,
     "orientation": "portrait",
     "rotation": 0,
     "marginMethod": 1,
@@ -109,10 +108,9 @@
     "typographyScale": "swiss",
     "baseFont": "Inter",
     "customBaseline": 12,
-    "displayUnit": "pt",
-    "useCustomMargins": false,
+    "useCustomMargins": true,
     "customMarginMultipliers": {
-      "top": 1,
+      "top": 2,
       "left": 2,
       "right": 2,
       "bottom": 3
@@ -128,7 +126,14 @@
       "gutter": true,
       "typo": true,
       "summary": true
-    }
+    },
+    "exportPaperSize": "A4",
+    "exportPrintPro": true,
+    "exportBleedMm": 3,
+    "exportRegistrationMarks": true,
+    "exportFinalSafeGuides": true,
+    "displayUnit": "pt",
+    "format": "A4"
   },
   "previewLayout": {
     "blockOrder": [
@@ -159,10 +164,18 @@
       "body": "body",
       "caption": "caption"
     },
+    "blockFontFamilies": {},
     "blockColumnSpans": {
       "display": 3,
       "headline": 2,
       "subhead": 2,
+      "body": 1,
+      "caption": 1
+    },
+    "blockRowSpans": {
+      "display": 1,
+      "headline": 1,
+      "subhead": 1,
       "body": 1,
       "caption": 1
     },
@@ -173,8 +186,41 @@
       "body": "right",
       "caption": "right"
     },
-    "blockItalic": {},
-    "blockRotations": {},
+    "blockTextReflow": {
+      "display": false,
+      "headline": false,
+      "subhead": false,
+      "body": false,
+      "caption": false
+    },
+    "blockSyllableDivision": {
+      "display": false,
+      "headline": false,
+      "subhead": false,
+      "body": true,
+      "caption": true
+    },
+    "blockBold": {
+      "display": true,
+      "headline": false,
+      "subhead": false,
+      "body": false,
+      "caption": false
+    },
+    "blockItalic": {
+      "display": false,
+      "headline": false,
+      "subhead": false,
+      "body": false,
+      "caption": true
+    },
+    "blockRotations": {
+      "display": 0,
+      "headline": 0,
+      "subhead": 0,
+      "body": 0,
+      "caption": 0
+    },
     "blockModulePositions": {
       "display": {
         "col": 0,

@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import {
   CircleHelp,
   Download,
+  Info,
   FolderOpen,
   LayoutGrid,
   LayoutTemplate,
@@ -43,6 +44,7 @@ type Args = {
   showMargins: boolean
   showModules: boolean
   showTypography: boolean
+  showRolloverInfo: boolean
   canUndo: boolean
   canRedo: boolean
   onToggleExamplePanel: () => void
@@ -57,6 +59,7 @@ type Args = {
   onToggleMargins: () => void
   onToggleModules: () => void
   onToggleTypography: () => void
+  onToggleRolloverInfo: () => void
   onToggleSettingsPanel: () => void
   onToggleHelpPanel: () => void
 }
@@ -214,6 +217,18 @@ export function useHeaderActions(args: Args) {
         pressed: args.showTypography,
         onClick: args.onToggleTypography,
         icon: <Type className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "rollover-info",
+        ariaLabel: args.showRolloverInfo ? "Disable rollover info" : "Enable rollover info",
+        tooltip: "Toggle rollover info",
+        variant: args.showRolloverInfo ? "default" : "outline",
+        pressed: args.showRolloverInfo,
+        onClick: args.onToggleRolloverInfo,
+        icon: <Info className="h-4 w-4" />,
       },
     },
   ]

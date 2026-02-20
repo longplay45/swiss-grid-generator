@@ -329,6 +329,7 @@ export default function Home() {
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
   const [isDarkUi, setIsDarkUi] = useState(false)
+  const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
 
@@ -900,6 +901,7 @@ export default function Home() {
     showMargins,
     showModules,
     showTypography,
+    showRolloverInfo,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
     onToggleExamplePanel: () => setActiveSidebarPanel((prev) => (prev === "example" ? null : "example")),
@@ -914,6 +916,7 @@ export default function Home() {
     onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
     onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
     onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
     onToggleSettingsPanel: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
     onToggleHelpPanel: toggleHelpPanelFromHeader,
   })
@@ -1160,6 +1163,7 @@ export default function Home() {
             showModules={showModules}
             showMargins={showMargins}
             showTypography={showTypography}
+            showRolloverInfo={showRolloverInfo}
             baseFont={baseFont}
             initialLayout={loadedPreviewLayout?.layout ?? null}
             initialLayoutKey={loadedPreviewLayout?.key ?? 0}
@@ -1246,6 +1250,7 @@ export default function Home() {
     showModules,
     showSectionHelpIcons,
     showTypography,
+    showRolloverInfo,
     sidebarGroup,
     uiTheme.divider,
     uiTheme.previewHeader,

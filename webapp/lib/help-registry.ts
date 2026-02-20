@@ -79,6 +79,7 @@ export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
   margins: "help-header-margins",
   modules: "help-header-modules",
   typography: "help-header-typography",
+  "rollover-info": "help-sidebars-header",
   settings: "help-header-settings",
   help: "help-help-navigation",
 }
