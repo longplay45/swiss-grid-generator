@@ -26,7 +26,6 @@ import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
-import { PanelCard } from "@/components/settings/PanelCard"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import {
@@ -64,11 +63,6 @@ const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
-const MARGIN_METHOD_LABELS: Record<1 | 2 | 3, string> = {
-  1: "Progressive",
-  2: "Van de Graaf",
-  3: "Baseline",
-}
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
@@ -449,51 +443,6 @@ export default function Home() {
 
   const defaultJsonFilename = useMemo(() => `${baseFilename}_grid.json`, [baseFilename])
 
-  const settingsSummaryItems = useMemo(() => {
-    const marginsValue = useCustomMargins
-      ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
-      : `${MARGIN_METHOD_LABELS[marginMethod]}, baseline multiple ${baselineMultiple.toFixed(1)}x`
-    return [
-      {
-        title: "I. Canvas Ratio & Rotation",
-        value: `${selectedCanvasRatio.label}, ${orientation}, ${rotation}°`,
-      },
-      {
-        title: "II. Baseline Grid",
-        value: `${customBaseline}pt`,
-      },
-      {
-        title: "III. Margins",
-        value: marginsValue,
-      },
-      {
-        title: "IV. Gutter",
-        value: `${gridCols} columns, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`,
-      },
-      {
-        title: "V. Typo",
-        value: `${typographyScale}, ${baseFont}`,
-      },
-    ]
-  }, [
-    selectedCanvasRatio.label,
-    orientation,
-    rotation,
-    customBaseline,
-    useCustomMargins,
-    customMarginMultipliers.top,
-    customMarginMultipliers.left,
-    customMarginMultipliers.right,
-    customMarginMultipliers.bottom,
-    marginMethod,
-    baselineMultiple,
-    gridCols,
-    gridRows,
-    gutterMultiple,
-    typographyScale,
-    baseFont,
-  ])
-
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
@@ -650,6 +599,7 @@ export default function Home() {
     () => ({
       result,
       previewLayout,
+      baseFont,
       orientation,
       rotation,
       showBaselines,
@@ -678,6 +628,7 @@ export default function Home() {
     [
       result,
       previewLayout,
+      baseFont,
       orientation,
       rotation,
       showBaselines,
@@ -1072,28 +1023,6 @@ export default function Home() {
           onBaseFontChange={setBaseFont}
           isDarkMode={isDarkUi}
         />
-        <PanelCard
-          title="Settings Summery"
-          tooltip="Current settings snapshot across sections I to V"
-          collapsed={collapsed.summary}
-          onHeaderClick={handleSectionHeaderClick("summary")}
-          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-          helpSectionKey="summary"
-          isDarkMode={isDarkUi}
-        >
-          <div
-            className={`space-y-2 text-[11px] leading-relaxed ${
-              isDarkUi ? "text-gray-300" : "text-gray-600"
-            }`}
-          >
-            {settingsSummaryItems.map((item) => (
-              <div key={item.title} className="space-y-0.5">
-                <p className={isDarkUi ? "text-gray-200" : "text-gray-800"}>{item.title}</p>
-                <p>{item.value}</p>
-              </div>
-            ))}
-          </div>
-        </PanelCard>
       </SettingsHelpNavigationProvider>
     </div>
   ), [
@@ -1129,7 +1058,6 @@ export default function Home() {
     setRotation,
     setTypographyScale,
     setUseCustomMargins,
-    settingsSummaryItems,
     showSectionHelpIcons,
     typographyScale,
     uiTheme.headingText,

@@ -1,6 +1,54 @@
 import { hyphenateWordEnglish } from "./english-hyphenation.ts"
 
 export type MeasureWidth = (text: string) => number
+const MIN_INLINE_HYPHEN_PREFIX_CHARS = 5
+const MIN_INLINE_HYPHEN_SUFFIX_CHARS = 3
+
+type InlineSplitResult = {
+  leadingWithHyphen: string
+  remainder: string
+}
+
+function trySplitWordAtLineEnd(
+  word: string,
+  currentLine: string,
+  maxWidth: number,
+  measureWidth: MeasureWidth,
+): InlineSplitResult | null {
+  const linePrefix = currentLine ? `${currentLine} ` : ""
+  const remainingWidth = maxWidth - measureWidth(linePrefix)
+  if (remainingWidth <= 0) return null
+
+  const toSplitResult = (leading: string): InlineSplitResult | null => {
+    const remainder = word.slice(leading.length)
+    if (leading.length < MIN_INLINE_HYPHEN_PREFIX_CHARS) return null
+    if (remainder.length < MIN_INLINE_HYPHEN_SUFFIX_CHARS) return null
+    const leadingWithHyphen = `${leading}-`
+    const candidate = `${linePrefix}${leadingWithHyphen}`
+    if (measureWidth(candidate) > maxWidth) return null
+    return { leadingWithHyphen, remainder }
+  }
+
+  const parts = hyphenateWordEnglish(word, remainingWidth, measureWidth)
+  const first = parts[0]
+  if (first && first.endsWith("-")) {
+    const leading = first.slice(0, -1)
+    const splitResult = toSplitResult(leading)
+    if (splitResult) return splitResult
+  }
+
+  for (
+    let splitAt = word.length - MIN_INLINE_HYPHEN_SUFFIX_CHARS;
+    splitAt >= MIN_INLINE_HYPHEN_PREFIX_CHARS;
+    splitAt -= 1
+  ) {
+    const leading = word.slice(0, splitAt)
+    const splitResult = toSplitResult(leading)
+    if (splitResult) return splitResult
+  }
+
+  return null
+}
 
 /**
  * Word-wrap text into lines that fit within `maxWidth`, respecting hard
@@ -23,7 +71,8 @@ export function wrapText(
     const lines: string[] = []
     let current = ""
 
-    for (const word of words) {
+    for (let i = 0; i < words.length; i += 1) {
+      const word = words[i]
       const testLine = current ? `${current} ${word}` : word
       if (measureWidth(testLine) <= maxWidth || current.length === 0) {
         if (measureWidth(word) > maxWidth && hyphenate) {
@@ -40,6 +89,16 @@ export function wrapText(
           current = testLine
         }
       } else {
+        if (hyphenate && current) {
+          const split = trySplitWordAtLineEnd(word, current, maxWidth, measureWidth)
+          if (split) {
+            lines.push(`${current} ${split.leadingWithHyphen}`)
+            current = ""
+            words.splice(i + 1, 0, split.remainder)
+            continue
+          }
+        }
+
         lines.push(current)
         if (measureWidth(word) > maxWidth && hyphenate) {
           const parts = hyphenateWordEnglish(word, maxWidth, measureWidth)

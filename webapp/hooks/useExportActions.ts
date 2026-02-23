@@ -38,6 +38,7 @@ const PRINT_PRO_CROP_LENGTH_MM = 5
 export type ExportActionsContext = {
   result: GridResult
   previewLayout: PreviewLayoutState | null
+  baseFont: FontFamily
   orientation: "portrait" | "landscape"
   rotation: number
   showBaselines: boolean
@@ -69,6 +70,7 @@ export function useExportActions(ctx: ExportActionsContext) {
   const {
     result,
     previewLayout,
+    baseFont,
     orientation,
     rotation,
     showBaselines,
@@ -202,6 +204,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         height,
         result,
         layout: previewLayout,
+        baseFont,
         originX,
         originY,
         printPro: {
@@ -221,7 +224,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       })
       pdf.save(filename)
     },
-    [previewLayout, result, rotation, showBaselines, showMargins, showModules, showTypography],
+    [baseFont, previewLayout, result, rotation, showBaselines, showMargins, showModules, showTypography],
   )
 
   const openExportDialog = useCallback(() => {

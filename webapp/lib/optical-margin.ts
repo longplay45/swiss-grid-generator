@@ -19,27 +19,6 @@ const LEADING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
   "{": 0.24,
 }
 
-const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
-  ".": 0.38,
-  ",": 0.38,
-  ":": 0.34,
-  ";": 0.34,
-  "!": 0.34,
-  "?": 0.34,
-  "-": 0.28,
-  "–": 0.24,
-  "—": 0.2,
-  "\"": 0.26,
-  "'": 0.24,
-  "”": 0.34,
-  "’": 0.32,
-  "»": 0.3,
-  "›": 0.28,
-  ")": 0.2,
-  "]": 0.2,
-  "}": 0.2,
-}
-
 function getEdgeCharacters(line: string): { first: string | null; last: string | null } {
   const trimmed = line.trim()
   if (!trimmed) {
@@ -75,11 +54,7 @@ export function getOpticalMarginAnchorOffset({
     return -clampHangingOffset(desired, glyphWidth)
   }
 
-  // Right-aligned lines hang terminal punctuation into the right margin.
-  const emOffset = TRAILING_PUNCTUATION_OFFSETS_EM[last]
-  if (!emOffset) return 0
-  const desired = emOffset * fontSize
-  const glyphWidth = measureWidth(last)
-  return clampHangingOffset(desired, glyphWidth)
+  // Keep right-aligned punctuation inside the column edge.
+  void last
+  return 0
 }
-

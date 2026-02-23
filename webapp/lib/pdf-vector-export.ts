@@ -1,9 +1,10 @@
 import type jsPDF from "jspdf"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import type { FontFamily } from "@/lib/config/fonts"
+import { DEFAULT_BASE_FONT, getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
+import { computeSingleColumnLineTops } from "@/lib/reflow-line-placement"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -27,6 +28,7 @@ type ExportVectorPdfOptions = {
   height: number
   result: GridResult
   layout: PreviewLayoutState | null
+  baseFont?: FontFamily
   originX?: number
   originY?: number
   printPro?: PrintProOptions
@@ -39,13 +41,14 @@ type ExportVectorPdfOptions = {
 
 const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
 type BaseBlockId = typeof BASE_BLOCK_IDS[number]
+type PdfFontFamily = "helvetica" | "times"
 
 const DEFAULT_TEXT_CONTENT: Record<BaseBlockId, string> = {
   display: "Swiss Design",
   headline: "Modular Grid Systems",
   subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-  body: "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
-  caption: "Figure 5: Based on Muller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
 
 const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
@@ -56,17 +59,44 @@ const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
   caption: "caption",
 }
 
-function isBaseBlockId(key: string): key is BaseBlockId {
-  return (BASE_BLOCK_IDS as readonly string[]).includes(key)
-}
-
 function getFontStyle(bold = false, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
   if (bold) return italic ? "bolditalic" : "bold"
   return italic ? "italic" : "normal"
 }
 
-function estimateTextAscent(fontSize: number): number {
-  return fontSize * 0.78
+const SERIF_STYLE_FONTS = new Set<FontFamily>([
+  "EB Garamond",
+  "Libre Baskerville",
+  "Bodoni Moda",
+  "Besley",
+  "Playfair Display",
+])
+
+function getPdfFontFamily(fontFamily: FontFamily): PdfFontFamily {
+  return SERIF_STYLE_FONTS.has(fontFamily) ? "times" : "helvetica"
+}
+
+function createTextMeasureContext(): CanvasRenderingContext2D | null {
+  if (typeof document === "undefined") return null
+  const canvas = document.createElement("canvas")
+  return canvas.getContext("2d")
+}
+
+function buildCanvasFont(fontFamily: FontFamily, bold: boolean, italic: boolean, fontSize: number): string {
+  const fontStyle = italic ? "italic " : ""
+  const fontWeight = bold ? "700" : "400"
+  return `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
+}
+
+function estimateTextAscent(
+  measureContext: CanvasRenderingContext2D | null,
+  canvasFont: string,
+  fallbackFontSize: number,
+): number {
+  if (!measureContext) return fallbackFontSize * 0.8
+  measureContext.font = canvasFont
+  const metrics = measureContext.measureText("Hg")
+  return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSize * 0.8
 }
 
 function rgbToCmyk({ r, g, b }: RgbColor): CmykColor {
@@ -111,6 +141,7 @@ export function renderSwissGridVectorPdf({
   height,
   result,
   layout,
+  baseFont = DEFAULT_BASE_FONT,
   originX = 0,
   originY = 0,
   printPro,
@@ -181,6 +212,13 @@ export function renderSwissGridVectorPdf({
   const { gridCols, gridRows } = result.settings
   const minHairlinePt = 0.25
   const useMonochromeGuides = printPro?.monochromeGuides ?? false
+  const guideContentTop = margins.top
+  const guideBaselineSpacing = gridUnit
+  const guideBaselineRows = Math.max(
+    0,
+    Math.round((sourceHeight - (margins.top + margins.bottom)) / guideBaselineSpacing),
+  )
+  const guideContentBottom = guideContentTop + guideBaselineRows * guideBaselineSpacing
 
   pdf.setLineCap("butt")
   pdf.setLineJoin("miter")
@@ -215,9 +253,9 @@ export function renderSwissGridVectorPdf({
     pdf.setLineDashPattern([4 * scale, 4 * scale], 0)
     drawRectOutline(
       margins.left,
-      margins.top,
+      guideContentTop,
       sourceWidth - (margins.left + margins.right),
-      sourceHeight - (margins.top + margins.bottom),
+      guideContentBottom - guideContentTop,
     )
     pdf.setLineDashPattern([], 0)
   }
@@ -235,22 +273,17 @@ export function renderSwissGridVectorPdf({
   }
 
   if (showBaselines) {
-    const startY = margins.top
-    const endY = sourceHeight - margins.bottom
-    const baselineSpacing = gridUnit
     setDrawColorCmyk(pdf, useMonochromeGuides ? { r: 148, g: 148, b: 148 } : { r: 236, g: 72, b: 153 })
     pdf.setLineWidth(Math.max(0.3 * scale, minHairlinePt))
-    let currentY = startY
-    while (currentY <= endY) {
-      drawLine(0, currentY, sourceWidth, currentY)
-      currentY += baselineSpacing
+    for (let row = 0; row <= guideBaselineRows; row += 1) {
+      const y = guideContentTop + row * guideBaselineSpacing
+      drawLine(0, y, sourceWidth, y)
     }
   }
 
   if (!showTypography) return
 
   const styleDefinitions = result.typography.styles
-  const validStyles = new Set(Object.keys(styleDefinitions))
   const blockOrder = layout?.blockOrder?.filter((key): key is BlockId => typeof key === "string" && key.length > 0) ?? [...BASE_BLOCK_IDS]
   const textContent: Record<BlockId, string> = layout?.textContent
     ? { ...layout.textContent }
@@ -258,6 +291,7 @@ export function renderSwissGridVectorPdf({
   const styleAssignments: Record<BlockId, TypographyStyleKey> = layout?.styleAssignments
     ? { ...layout.styleAssignments }
     : { ...DEFAULT_STYLE_ASSIGNMENTS }
+  const blockFontFamilies = layout?.blockFontFamilies ?? {}
   const blockColumnSpans = layout?.blockColumnSpans ?? {}
   const blockRowSpans = layout?.blockRowSpans ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
@@ -267,6 +301,7 @@ export function renderSwissGridVectorPdf({
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
+  const textMeasureContext = createTextMeasureContext()
 
   const contentTop = margins.top
   const contentLeft = margins.left
@@ -290,20 +325,24 @@ export function renderSwissGridVectorPdf({
 
   const getBlockSpan = (key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
-    return Math.max(1, Math.min(gridCols, Math.round(raw)))
+    return Math.max(1, Math.min(gridCols, raw))
   }
 
   const getBlockRows = (key: BlockId) => {
     const raw = blockRowSpans[key] ?? 1
-    return Math.max(1, Math.min(gridRows, Math.round(raw)))
+    return Math.max(1, Math.min(gridRows, raw))
   }
 
   const isTextReflowEnabled = (key: BlockId) => {
-    return blockTextReflow[key] ?? false
+    if (blockTextReflow[key] === true || blockTextReflow[key] === false) return blockTextReflow[key]
+    return key === "body" || key === "caption"
   }
   const isSyllableDivisionEnabled = (key: BlockId) => {
     if (blockSyllableDivision[key] === true || blockSyllableDivision[key] === false) return blockSyllableDivision[key]
     return key === "body" || key === "caption"
+  }
+  const getBlockFont = (key: BlockId): FontFamily => {
+    return blockFontFamilies[key] ?? baseFont
   }
   const getStyleDefaultBold = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.weight === "Bold"
   const getStyleDefaultItalic = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.blockItalic === true
@@ -320,7 +359,7 @@ export function renderSwissGridVectorPdf({
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
-    return Math.max(-180, Math.min(180, raw))
+    return Math.max(-80, Math.min(80, raw))
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
@@ -330,7 +369,7 @@ export function renderSwissGridVectorPdf({
     }
     const span = getBlockSpan(key)
     const maxCol = Math.max(0, gridCols - span)
-    const col = Math.max(0, Math.min(maxCol, Math.round(manual.col)))
+    const col = Math.max(0, Math.min(maxCol, manual.col))
     const row = Math.max(0, Math.min(maxBaselineRow, manual.row))
     return {
       x: contentLeft + col * moduleXStep,
@@ -355,15 +394,23 @@ export function renderSwissGridVectorPdf({
     const value = (textContent[block.key] ?? "").trim()
     if (!value) continue
 
-    const styleKeyRaw = styleAssignments[block.key]
-    const styleKey = (validStyles.has(String(styleKeyRaw))
-      ? String(styleKeyRaw)
-      : (isBaseBlockId(block.key) ? DEFAULT_STYLE_ASSIGNMENTS[block.key] : "body")) as TypographyStyleKey
+    const styleKey = (styleAssignments[block.key] ?? "body") as TypographyStyleKey
     const style = styleDefinitions[styleKey]
     if (!style) continue
 
     const fontSize = style.size * scale
     const baselineMult = style.baselineMultiplier
+    const blockIsBold = isBlockBold(block.key, styleKey)
+    const blockIsItalic = isBlockItalic(block.key, styleKey)
+    const blockFont = getBlockFont(block.key)
+    const canvasFont = buildCanvasFont(blockFont, blockIsBold, blockIsItalic, fontSize)
+    const measureWidth = (text: string) => {
+      if (textMeasureContext) {
+        textMeasureContext.font = canvasFont
+        return textMeasureContext.measureText(text).width
+      }
+      return pdf.getTextWidth(text)
+    }
 
     let blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
     if (useParagraphRows) {
@@ -373,31 +420,35 @@ export function renderSwissGridVectorPdf({
     }
 
     const blockRotation = getBlockRotation(block.key)
-    pdf.setFont("helvetica", getFontStyle(isBlockBold(block.key, styleKey), isBlockItalic(block.key, styleKey)))
+    pdf.setFont(getPdfFontFamily(blockFont), getFontStyle(blockIsBold, blockIsItalic))
     pdf.setFontSize(fontSize)
 
     const span = getBlockSpan(block.key)
     const wrapWidth = (span * modW + Math.max(span - 1, 0) * gridMarginHorizontal) * scale
     const rowSpan = getBlockRows(block.key)
-    const columnReflow = isTextReflowEnabled(block.key)
+    const reflowEnabled = isTextReflowEnabled(block.key)
+    const columnReflow = reflowEnabled && span >= 2
+    const singleColumnReflow = reflowEnabled && span === 1
     const lines = wrapText(
       value,
-      columnReflow ? modW * scale : wrapWidth,
+      reflowEnabled ? modW * scale : wrapWidth,
       isSyllableDivisionEnabled(block.key),
-      (t) => pdf.getTextWidth(t),
+      measureWidth,
     )
 
     const autoX = contentLeft
     const autoY = contentTop + (blockStartOffset - 1) * baselineStep
     const origin = getOriginForBlock(block.key, autoX, autoY)
     const align: TextAlignMode = blockTextAlignments[block.key] === "right" ? "right" : "left"
-    const textAscent = estimateTextAscent(fontSize)
+    const textAscent = estimateTextAscent(textMeasureContext, canvasFont, fontSize)
     const lineStep = baselineMult * baselineStep
     const moduleHeight = rowSpan * modH + Math.max(rowSpan - 1, 0) * gridMarginVertical
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeight / lineStep))
+    const moduleCyclePt = modH + gridMarginVertical
+    const firstLineTopY = origin.y + baselineStep
     let maxUsedRows = 0
 
-    if (!columnReflow) {
+    if (!reflowEnabled) {
       const anchorX = align === "right"
         ? origin.x + span * modW + Math.max(span - 1, 0) * gridMarginHorizontal
         : origin.x
@@ -411,11 +462,35 @@ export function renderSwissGridVectorPdf({
           line,
           align,
           fontSize,
-          measureWidth: (text) => pdf.getTextWidth(text),
+          measureWidth,
         })
         drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
       }
-    } else {
+    } else if (singleColumnReflow) {
+      const anchorX = align === "right" ? origin.x + wrapWidth : origin.x
+      const lineTops = computeSingleColumnLineTops({
+        firstLineTopY,
+        lineStep,
+        pageBottomY: pageBottom,
+        lineCount: lines.length,
+        contentTop,
+        moduleHeightPx: modH,
+        moduleCyclePx: moduleCyclePt,
+      })
+      for (let lineIndex = 0; lineIndex < lineTops.length; lineIndex += 1) {
+        const lineTopY = lineTops[lineIndex]
+        const line = lines[lineIndex]
+        const y = lineTopY + textAscent / scale
+        maxUsedRows += 1
+        const opticalOffsetX = getOpticalMarginAnchorOffset({
+          line,
+          align,
+          fontSize,
+          measureWidth,
+        })
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
+      }
+    } else if (columnReflow) {
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
         if (columnIndex >= span) break
@@ -431,14 +506,16 @@ export function renderSwissGridVectorPdf({
           line,
           align,
           fontSize,
-          measureWidth: (text) => pdf.getTextWidth(text),
+          measureWidth,
         })
         drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
       }
     }
 
     if (!useParagraphRows) {
-      const usedLineRows = maxUsedRows || lines.length
+      const usedLineRows = reflowEnabled
+        ? (maxUsedRows || Math.min(lines.length, Math.max(1, maxLinesPerColumn)))
+        : (maxUsedRows || lines.length)
       if (!useRowPlacement || block.key !== "display") {
         currentBaselineOffset = blockStartOffset + usedLineRows * baselineMult
       } else {
@@ -450,41 +527,57 @@ export function renderSwissGridVectorPdf({
     }
   }
 
-  const captionStyleRaw = styleAssignments.caption
-  const captionStyleKey = (validStyles.has(String(captionStyleRaw))
-    ? String(captionStyleRaw)
-    : DEFAULT_STYLE_ASSIGNMENTS.caption) as TypographyStyleKey
+  const captionKey = "caption" as const
+  const hasCaptionBlock = blockOrder.includes(captionKey)
+  if (!hasCaptionBlock) return
+
+  const captionStyleKey = (styleAssignments[captionKey] ?? "caption") as TypographyStyleKey
   const captionStyle = styleDefinitions[captionStyleKey]
-  const captionText = (textContent.caption ?? "").trim()
+  const captionText = (textContent[captionKey] ?? "").trim()
   if (!captionStyle || !captionText) return
 
-  const captionRotation = getBlockRotation("caption")
-  pdf.setFont("helvetica", getFontStyle(isBlockBold("caption", captionStyleKey), isBlockItalic("caption", captionStyleKey)))
-  pdf.setFontSize(captionStyle.size * scale)
-  const captionAlign: TextAlignMode = blockTextAlignments.caption === "right" ? "right" : "left"
-  const captionSpan = getBlockSpan("caption")
-  const captionRowSpan = getBlockRows("caption")
+  const captionFontSize = captionStyle.size * scale
+  const captionIsBold = isBlockBold(captionKey, captionStyleKey)
+  const captionIsItalic = isBlockItalic(captionKey, captionStyleKey)
+  const captionFont = getBlockFont(captionKey)
+  const captionCanvasFont = buildCanvasFont(captionFont, captionIsBold, captionIsItalic, captionFontSize)
+  const captionMeasureWidth = (text: string) => {
+    if (textMeasureContext) {
+      textMeasureContext.font = captionCanvasFont
+      return textMeasureContext.measureText(text).width
+    }
+    return pdf.getTextWidth(text)
+  }
+  const captionRotation = getBlockRotation(captionKey)
+  pdf.setFont(getPdfFontFamily(captionFont), getFontStyle(captionIsBold, captionIsItalic))
+  pdf.setFontSize(captionFontSize)
+  const captionAlign: TextAlignMode = blockTextAlignments[captionKey] === "right" ? "right" : "left"
+  const captionSpan = getBlockSpan(captionKey)
+  const captionRowSpan = getBlockRows(captionKey)
   const captionWidth = (captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal) * scale
-  const captionColumnReflow = isTextReflowEnabled("caption")
+  const captionReflowEnabled = isTextReflowEnabled(captionKey)
+  const captionColumnReflow = captionReflowEnabled && captionSpan >= 2
+  const captionSingleColumnReflow = captionReflowEnabled && captionSpan === 1
   const captionLines = wrapText(
     captionText,
-    captionColumnReflow ? modW * scale : captionWidth,
-    isSyllableDivisionEnabled("caption"),
-    (t) => pdf.getTextWidth(t),
+    captionReflowEnabled ? modW * scale : captionWidth,
+    isSyllableDivisionEnabled(captionKey),
+    captionMeasureWidth,
   )
   const captionLineCount = captionLines.length
   const availableHeight = sourceHeight - margins.top - margins.bottom
   const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
   const firstLineBaselineUnit = totalBaselinesFromTop - (captionLineCount - 1) * captionStyle.baselineMultiplier
   const autoCaptionY = contentTop + (firstLineBaselineUnit - 1) * baselineStep
-  const captionOrigin = getOriginForBlock("caption", contentLeft, autoCaptionY)
-  const captionAscent = estimateTextAscent(captionStyle.size * scale)
-  const captionFontSize = captionStyle.size * scale
+  const captionOrigin = getOriginForBlock(captionKey, contentLeft, autoCaptionY)
+  const captionAscent = estimateTextAscent(textMeasureContext, captionCanvasFont, captionFontSize)
   const captionLineStep = captionStyle.baselineMultiplier * baselineStep
   const captionModuleHeight = captionRowSpan * modH + Math.max(captionRowSpan - 1, 0) * gridMarginVertical
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
+  const captionModuleCyclePt = modH + gridMarginVertical
+  const captionFirstLineTopY = captionOrigin.y + baselineStep
 
-  if (!captionColumnReflow) {
+  if (!captionReflowEnabled) {
     const captionAnchorX = captionAlign === "right"
       ? captionOrigin.x + captionSpan * modW + Math.max(captionSpan - 1, 0) * gridMarginHorizontal
       : captionOrigin.x
@@ -497,11 +590,34 @@ export function renderSwissGridVectorPdf({
         line,
         align: captionAlign,
         fontSize: captionFontSize,
-        measureWidth: (text) => pdf.getTextWidth(text),
+        measureWidth: captionMeasureWidth,
       })
       drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
     }
-  } else {
+  } else if (captionSingleColumnReflow) {
+    const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
+    const captionLineTops = computeSingleColumnLineTops({
+      firstLineTopY: captionFirstLineTopY,
+      lineStep: captionLineStep,
+      pageBottomY: pageBottom,
+      lineCount: captionLines.length,
+      contentTop,
+      moduleHeightPx: modH,
+      moduleCyclePx: captionModuleCyclePt,
+    })
+    for (let i = 0; i < captionLineTops.length; i += 1) {
+      const lineTopY = captionLineTops[i]
+      const line = captionLines[i]
+      const y = lineTopY + captionAscent / scale
+      const opticalOffsetX = getOpticalMarginAnchorOffset({
+        line,
+        align: captionAlign,
+        fontSize: captionFontSize,
+        measureWidth: captionMeasureWidth,
+      })
+      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
+    }
+  } else if (captionColumnReflow) {
     for (let i = 0; i < captionLines.length; i += 1) {
       const columnIndex = Math.floor(i / captionMaxLinesPerColumn)
       if (columnIndex >= captionSpan) break
@@ -516,7 +632,7 @@ export function renderSwissGridVectorPdf({
         line,
         align: captionAlign,
         fontSize: captionFontSize,
-        measureWidth: (text) => pdf.getTextWidth(text),
+        measureWidth: captionMeasureWidth,
       })
       drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
     }
