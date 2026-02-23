@@ -48,7 +48,19 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
     if (!activeSectionId) return
     const target = document.getElementById(activeSectionId)
     if (!target) return
-    target.scrollIntoView({ behavior: "smooth", block: "start" })
+    const maybeDivider = target.previousElementSibling
+    const scrollTarget = maybeDivider instanceof HTMLHRElement ? maybeDivider : target
+    const scrollRoot = scrollTarget.closest("[data-help-scroll-root='true']") as HTMLElement | null
+    if (!scrollRoot) return
+
+    const topGapPx = -1
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const targetRect = scrollTarget.getBoundingClientRect()
+    const deltaToTop = targetRect.top - rootRect.top
+    const nextTop = scrollRoot.scrollTop + deltaToTop - topGapPx
+    window.requestAnimationFrame(() => {
+      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" })
+    })
   }, [activeSectionId])
 
   const tone = isDarkMode
@@ -190,7 +202,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <SectionHeading
         as="h5"
-        className={`text-xs font-semibold ${tone.heading}`}
+        className={`text-sm font-semibold ${tone.heading}`}
         jumpButtonClassName={tone.jumpButton}
       >
         Application Controls
@@ -369,7 +381,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <SectionHeading
         as="h5"
-        className={`text-xs font-semibold ${tone.heading}`}
+        className={`text-sm font-semibold ${tone.heading}`}
         jumpButtonClassName={tone.jumpButton}
       >
         Grid Generator Settings

@@ -43,9 +43,9 @@ export function PanelCard({
           onDoubleClick={onHeaderDoubleClick}
         >
           <CardTitle className="text-sm">
-            <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex items-center gap-2">
                   <span>{title}</span>
                   {showHelpIcons ? (
                     <button
@@ -63,24 +63,24 @@ export function PanelCard({
                     </button>
                   ) : null}
                 </div>
-                {collapsed && collapsedSummary ? (
-                  <p className={`mt-1 text-[11px] font-normal leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                    {collapsedSummary}
-                  </p>
-                ) : null}
+                <span
+                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    isDarkMode
+                      ? "border-gray-600 bg-gray-800 text-gray-300"
+                      : "border-gray-300 bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <ChevronUp
+                    className={`h-2.5 w-2.5 transition-transform ${collapsed ? "rotate-90" : "rotate-180"}`}
+                    aria-hidden="true"
+                  />
+                </span>
               </div>
-            <span
-              className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                isDarkMode
-                  ? "border-gray-600 bg-gray-800 text-gray-300"
-                  : "border-gray-300 bg-gray-100 text-gray-700"
-              }`}
-            >
-              <ChevronUp
-                className={`h-2.5 w-2.5 transition-transform ${collapsed ? "rotate-90" : "rotate-180"}`}
-                aria-hidden="true"
-              />
-            </span>
+              {collapsed && collapsedSummary ? (
+                <p className={`mt-1 text-[11px] font-normal leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {collapsedSummary}
+                </p>
+              ) : null}
             </div>
           </CardTitle>
         </CardHeader>

@@ -77,7 +77,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label>Rotation</Label>
-          <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{rotation}°</span>
+          <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{rotation}°</span>
         </div>
         <DebouncedSlider
           value={[rotation]}

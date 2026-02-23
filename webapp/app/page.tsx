@@ -1124,7 +1124,14 @@ export default function Home() {
           />
         </div>
         {activeSidebarPanel && (
-          <div className={`w-80 shrink-0 border-l overflow-y-auto p-4 md:p-6 space-y-4 text-sm ${uiTheme.sidebar}`}>
+          <div
+            data-help-scroll-root="true"
+            className={`w-80 shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
+              activeSidebarPanel === "help"
+                ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
+                : "p-4 md:p-6"
+            }`}
+          >
             {activeSidebarPanel === "settings" && (
               <div>
                 <div className="mb-2 flex items-center justify-between">

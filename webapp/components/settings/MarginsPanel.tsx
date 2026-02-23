@@ -95,7 +95,7 @@ export const MarginsPanel = memo(function MarginsPanel({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Baseline Multiple</Label>
-              <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+              <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                 {baselineMultiple.toFixed(1)}×
               </span>
             </div>
@@ -114,7 +114,7 @@ export const MarginsPanel = memo(function MarginsPanel({
             <div key={side} className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="capitalize">{side}</Label>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+                <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                   {customMarginMultipliers[side]}×
                 </span>
               </div>
@@ -132,7 +132,7 @@ export const MarginsPanel = memo(function MarginsPanel({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="capitalize">Bottom</Label>
-              <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+              <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                 {customMarginMultipliers.bottom}×
               </span>
             </div>
