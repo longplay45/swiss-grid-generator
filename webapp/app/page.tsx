@@ -270,6 +270,7 @@ export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const previewPanelRef = useRef<HTMLDivElement | null>(null)
+  const isDirtyRef = useRef(false)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
     DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
   )
@@ -562,6 +563,24 @@ export default function Home() {
     }
   }, [])
 
+  // Mark dirty whenever the settings or layout history accumulate unsaved changes
+  useEffect(() => {
+    if (history.settingsPast.length > 0 || canUndoPreview) {
+      isDirtyRef.current = true
+    }
+  }, [history.settingsPast.length, canUndoPreview])
+
+  // Warn before reload / tab close when there are unsaved edits
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return
+      e.preventDefault()
+      e.returnValue = ""
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [])
+
   useEffect(() => {
     try {
       setSmartphoneNoticeDismissed(window.sessionStorage.getItem("sgg-smartphone-notice-dismissed") === "1")
@@ -817,6 +836,7 @@ export default function Home() {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
         }
+        isDirtyRef.current = false
       } catch (error) {
         console.error(error)
         window.alert("Could not load layout JSON.")
@@ -860,6 +880,11 @@ export default function Home() {
           sidebarBody: "text-gray-600",
         }),
   [isDarkUi])
+
+  const handleConfirmSaveJSON = useCallback(() => {
+    exportActions.confirmSaveJSON()
+    isDirtyRef.current = false
+  }, [exportActions])
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
@@ -1294,7 +1319,7 @@ export default function Home() {
         onClose={() => exportActions.setIsSaveDialogOpen(false)}
         filename={exportActions.saveFilenameDraft}
         onFilenameChange={exportActions.setSaveFilenameDraft}
-        onConfirm={exportActions.confirmSaveJSON}
+        onConfirm={handleConfirmSaveJSON}
         defaultFilename={defaultJsonFilename}
         ratioLabel={selectedCanvasRatio.label}
         orientation={orientation}
