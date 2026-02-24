@@ -1874,7 +1874,7 @@ export const GridPreview = memo(function GridPreview({
                         }}
                         aria-label={editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
                       >
-                        <Rows3 className="h-4 w-4" />
+                        <Rows3 className={`h-4 w-4 transition-transform ${editorState.draftColumns > 1 ? "rotate-90" : ""}`} />
                       </Button>
                     </EditorControlTooltip>
                     <EditorControlTooltip label={editorState.draftSyllableDivision ? "Syllable division: On" : "Syllable division: Off"}>
