@@ -31,7 +31,7 @@ export function PanelCard({
   const { showHelpIcons, onNavigate } = useSettingsHelpNavigation()
 
   return (
-    <Card className={isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""}>
+    <Card className={`${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""} ${showHelpIcons ? "ring-1 ring-red-500" : ""}`}>
       <HoverTooltip
         label={tooltip}
         className="block"
@@ -41,27 +41,13 @@ export function PanelCard({
           className="pb-3 cursor-pointer select-none"
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
+          onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
           <CardTitle className="text-sm">
             <div className="min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex items-center gap-2">
                   <span>{title}</span>
-                  {showHelpIcons ? (
-                    <button
-                      type="button"
-                      aria-label={`Open help for ${title}`}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        onNavigate(helpSectionKey)
-                      }}
-                      onMouseEnter={() => onNavigate(helpSectionKey)}
-                      onDoubleClick={(event) => event.stopPropagation()}
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
-                    >
-                      ?
-                    </button>
-                  ) : null}
                 </div>
                 <span
                   className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${

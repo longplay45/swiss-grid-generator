@@ -919,8 +919,13 @@ export default function Home() {
       ? PREVIEW_HEADER_SHORTCUTS.find((item) => item.id === action.shortcutId)?.combo
       : null
     const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
+    const isHelpButton = action.key === "help"
     return (
-      <div key={action.key} className="inline-flex w-8 flex-col items-center justify-start gap-1">
+      <div
+        key={action.key}
+        className="inline-flex w-8 items-center justify-center"
+        onMouseEnter={showSectionHelpIcons ? () => handleHeaderHelpNavigate(action.key) : undefined}
+      >
         <HeaderIconButton
           ariaLabel={action.ariaLabel}
           tooltip={tooltip}
@@ -928,23 +933,10 @@ export default function Home() {
           aria-pressed={action.pressed}
           disabled={action.disabled}
           onClick={action.onClick}
+          buttonClassName={showSectionHelpIcons && !isHelpButton ? "ring-1 ring-red-500" : undefined}
         >
           {action.icon}
         </HeaderIconButton>
-        {showSectionHelpIcons ? (
-          <button
-            type="button"
-            aria-label={`Open help for ${action.ariaLabel}`}
-            onClick={(event) => {
-              event.stopPropagation()
-              handleHeaderHelpNavigate(action.key)
-            }}
-            onMouseEnter={() => handleHeaderHelpNavigate(action.key)}
-            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
-          >
-            ?
-          </button>
-        ) : null}
       </div>
     )
   }, [handleHeaderHelpNavigate, showSectionHelpIcons])

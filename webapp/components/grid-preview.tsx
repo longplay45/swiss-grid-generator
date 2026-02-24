@@ -1621,12 +1621,12 @@ export const GridPreview = memo(function GridPreview({
           }}
         >
           <div
-            className={`w-full max-w-[500px] rounded-md border shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"}`}
+            className={`w-full max-w-[500px] rounded-md border shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"} ${showEditorHelpIcon ? "ring-1 ring-red-500" : ""}`}
             onMouseDown={(event) => event.stopPropagation()}
+            onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
           >
             <div className={`space-y-2 border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-              <div className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-start gap-x-3 gap-y-2">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                   <div className="shrink-0">
                     <EditorControlTooltip label="Paragraph row span">
                       <div className="flex min-w-0 items-center gap-1">
@@ -1886,21 +1886,6 @@ export const GridPreview = memo(function GridPreview({
                     </EditorControlTooltip>
                   </div>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center justify-self-end">
-                  {showEditorHelpIcon ? (
-                    <button
-                      type="button"
-                      aria-label="Open help for text editor"
-                      onClick={() => onOpenHelpSection?.("help-editor")}
-                      onMouseEnter={() => onOpenHelpSection?.("help-editor")}
-                      onFocus={() => onOpenHelpSection?.("help-editor")}
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-semibold leading-none text-gray-700 hover:bg-gray-200"
-                    >
-                      ?
-                    </button>
-                  ) : null}
-                </div>
-              </div>
             </div>
             <div className="p-3">
               <textarea
