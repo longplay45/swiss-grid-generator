@@ -134,7 +134,7 @@ export function normalizeSnapshotStateForApply<
   const nextRotations = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockRotations?.[key]
     if (typeof raw === "number" && Number.isFinite(raw) && Math.abs(raw) > 0.001) {
-      acc[key] = Math.max(-80, Math.min(80, raw))
+      acc[key] = Math.max(-180, Math.min(180, raw))
     }
     return acc
   }, {} as Partial<Record<Key, number>>)

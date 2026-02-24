@@ -218,7 +218,7 @@ export function useBlockEditorActions({
         nextItalic[editorState.target] = editorState.draftItalic
       }
       const nextRotations = { ...prev.blockRotations }
-      const clampedRotation = Math.max(-80, Math.min(80, editorState.draftRotation))
+      const clampedRotation = Math.max(-180, Math.min(180, editorState.draftRotation))
       if (Math.abs(clampedRotation) > 0.001) {
         nextRotations[editorState.target] = clampedRotation
       } else {

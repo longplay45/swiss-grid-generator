@@ -150,10 +150,13 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
-          <li>Top row controls: style hierarchy, font family, row span, column span, and paragraph rotation (`-80..80`).</li>
-          <li>Formatting controls: bold, italic, align left/right, reflow toggle, and syllable-division toggle.</li>
-          <li>Action controls: save applies changes, delete removes custom blocks, and live counters show characters/words.</li>
-          <li>The small `?` icon at top-right of the popup opens Help and jumps to this section.</li>
+          <li>Row 1 controls: row span, column span, paragraph rotation (`-180..180`), and save.</li>
+          <li>Row 2 controls: font hierarchy and font family.</li>
+          <li>Row 3 controls: bold/italic, align left/right, reflow, syllable division, and delete (right side).</li>
+          <li>Reflow with `col = 1`: vertical flow in one column, respecting module rows and skipping gutter bands.</li>
+          <li>Reflow with `col &gt; 1`: newspaper flow across the configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
+          <li>Reflow icon rotates 90° when paragraph columns are set above 1.</li>
+          <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
           <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
         </ul>
       </section>

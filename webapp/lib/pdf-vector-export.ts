@@ -359,7 +359,7 @@ export function renderSwissGridVectorPdf({
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
-    return Math.max(-80, Math.min(80, raw))
+    return Math.max(-180, Math.min(180, raw))
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {

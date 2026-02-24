@@ -215,10 +215,13 @@ All header icons use styled rollover help tooltips with a second line showing th
 
 Editor controls:
 - header layout: 2 columns x 3 rows
-- left column row 1: rows, cols, rotation (`-80..80`, integer degrees)
+- left column row 1: rows, cols, rotation (`-180..180`, integer degrees)
 - left column row 2: style hierarchy, font family
 - left column row 3: bold/italic, align left/right, reflow, syllable division (`Hy`)
-- right action column row order: save, delete, help (`?`)
+- right action controls: row 1 save, row 3 delete
+- reflow with cols = 1: vertical single-column flow, module-aware
+- reflow with cols > 1: newspaper flow across configured columns
+- reflow icon rotates 90° when cols > 1
 - font family
 - style
 - cols (1..gridCols)
