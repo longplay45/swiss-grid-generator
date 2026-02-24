@@ -31,7 +31,7 @@ export function PanelCard({
   const { showHelpIcons, onNavigate } = useSettingsHelpNavigation()
 
   return (
-    <Card className={`${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""} ${showHelpIcons ? "ring-1 ring-red-500" : ""}`}>
+    <Card className={`${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""} ${showHelpIcons ? "ring-1 ring-blue-500" : ""}`}>
       <HoverTooltip
         label={tooltip}
         className="block"

@@ -1142,8 +1142,8 @@ export const GridPreview = memo(function GridPreview({
       if (!dragState && !hasOverflow) return
 
       const { width, height } = result.pageSizePt
-      const { margins, gridUnit, gridMarginHorizontal } = result.grid
-      const { width: modW } = result.module
+      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+      const { width: modW, height: modH } = result.module
       const pageWidth = width * scale
       const pageHeight = height * scale
       const moduleXStep = (modW + gridMarginHorizontal) * scale
@@ -1157,14 +1157,21 @@ export const GridPreview = memo(function GridPreview({
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
       if (dragState) {
         const dragSpan = getBlockSpan(dragState.key)
+        const dragRows = getBlockRows(dragState.key)
         const snapX = contentLeft + dragState.preview.col * moduleXStep
         const snapY = baselineOriginTop + dragState.preview.row * baselineStep
         const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
+        const snapHeight = dragRows * modH * scale + Math.max(dragRows - 1, 0) * gridMarginVertical * scale
         ctx.strokeStyle = "#f97316"
-        ctx.lineWidth = 1.5
+        ctx.lineWidth = 1
+        const lineY = snapY + baselineStep
         ctx.beginPath()
-        ctx.moveTo(snapX, snapY + baselineStep)
-        ctx.lineTo(snapX + snapWidth, snapY + baselineStep)
+        ctx.moveTo(snapX, lineY)
+        ctx.lineTo(snapX + snapWidth, lineY)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(snapX, lineY)
+        ctx.lineTo(snapX, lineY + snapHeight)
         ctx.stroke()
       }
       if (hasOverflow) {
@@ -1191,7 +1198,7 @@ export const GridPreview = memo(function GridPreview({
       ctx.restore()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [blockOrder, dragState, getBlockSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
+  }, [blockOrder, dragState, getBlockRows, getBlockSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1621,12 +1628,13 @@ export const GridPreview = memo(function GridPreview({
           }}
         >
           <div
-            className={`w-full max-w-[500px] rounded-md border shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"} ${showEditorHelpIcon ? "ring-1 ring-red-500" : ""}`}
+            className={`w-full max-w-[500px] rounded-md border shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"} ${showEditorHelpIcon ? "ring-1 ring-blue-500" : ""}`}
             onMouseDown={(event) => event.stopPropagation()}
             onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
           >
             <div className={`space-y-2 border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
                   <div className="shrink-0">
                     <EditorControlTooltip label="Paragraph row span">
                       <div className="flex min-w-0 items-center gap-1">
@@ -1715,7 +1723,7 @@ export const GridPreview = memo(function GridPreview({
                     </EditorControlTooltip>
                   </div>
                 </div>
-                <div className="justify-self-end">
+                <div className="flex items-center gap-1">
                   <EditorControlTooltip label="Save changes">
                     <Button
                       size="icon"
@@ -1727,7 +1735,19 @@ export const GridPreview = memo(function GridPreview({
                       <SaveIcon className="h-4 w-4" />
                     </Button>
                   </EditorControlTooltip>
+                  <EditorControlTooltip label="Delete paragraph">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className={`h-8 w-8 ${isDarkMode ? "text-gray-300 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
+                      onClick={deleteEditorBlock}
+                      aria-label="Delete paragraph"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </EditorControlTooltip>
                 </div>
+              </div>
                 <div className="flex items-center gap-3">
                   <div className="shrink-0">
                     <EditorControlTooltip label="Font hierarchy" className="min-w-0">
@@ -1780,19 +1800,6 @@ export const GridPreview = memo(function GridPreview({
                       </div>
                     </EditorControlTooltip>
                   </div>
-                </div>
-                <div className="justify-self-end">
-                  <EditorControlTooltip label="Delete paragraph">
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className={`h-8 w-8 ${isDarkMode ? "text-gray-300 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
-                      onClick={deleteEditorBlock}
-                      aria-label="Delete paragraph"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </EditorControlTooltip>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>

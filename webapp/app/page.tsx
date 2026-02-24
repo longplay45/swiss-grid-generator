@@ -933,7 +933,7 @@ export default function Home() {
           aria-pressed={action.pressed}
           disabled={action.disabled}
           onClick={action.onClick}
-          buttonClassName={showSectionHelpIcons && !isHelpButton ? "ring-1 ring-red-500" : undefined}
+          buttonClassName={showSectionHelpIcons ? isHelpButton ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-500" : "ring-1 ring-blue-500" : undefined}
         >
           {action.icon}
         </HeaderIconButton>

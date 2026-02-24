@@ -28,7 +28,7 @@ export type HeaderAction = {
   tooltip: string
   shortcutId?: PreviewHeaderShortcutId
   icon: ReactNode
-  variant?: "default" | "outline" | "destructive"
+  variant?: "default" | "outline"
   pressed?: boolean
   disabled?: boolean
   onClick: () => void
@@ -249,7 +249,7 @@ export function useHeaderActions(args: Args) {
       ariaLabel: "Toggle help",
       tooltip: "Help & reference",
       shortcutId: "toggle_help_panel",
-      variant: args.activeSidebarPanel === "help" ? "destructive" : "outline",
+      variant: "outline",
       pressed: args.activeSidebarPanel === "help",
       onClick: args.onToggleHelpPanel,
       icon: <CircleHelp className="h-4 w-4" />,
