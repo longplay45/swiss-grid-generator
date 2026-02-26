@@ -88,25 +88,21 @@ export function renderStaticGuides({
   }
 
   if (showBaselines) {
-    const startY = contentTop
     const baselineStep = isMobile ? 2 : 1
+    const rowsAbove = Math.ceil(contentTop / baselineSpacing)
+    const startY = contentTop - rowsAbove * baselineSpacing
+    const totalRows = Math.ceil((pageHeight - startY) / baselineSpacing)
 
     ctx.strokeStyle = "#ec4899"
     ctx.lineWidth = 0.3
     ctx.globalAlpha = 0.5
 
-    for (let row = 0; row <= baselineRows; row += baselineStep) {
+    for (let row = 0; row <= totalRows; row += baselineStep) {
       const y = startY + row * baselineSpacing
+      if (y > pageHeight) break
       ctx.beginPath()
       ctx.moveTo(0, y)
       ctx.lineTo(pageWidth, y)
-      ctx.stroke()
-    }
-
-    if (baselineRows % baselineStep !== 0) {
-      ctx.beginPath()
-      ctx.moveTo(0, contentBottom)
-      ctx.lineTo(pageWidth, contentBottom)
       ctx.stroke()
     }
     ctx.globalAlpha = 1
