@@ -89,9 +89,12 @@ export function renderStaticGuides({
 
   if (showBaselines) {
     const baselineStep = isMobile ? 2 : 1
-    const rowsAbove = Math.ceil(contentTop / baselineSpacing)
-    const startY = contentTop - rowsAbove * baselineSpacing
-    const totalRows = Math.ceil((pageHeight - startY) / baselineSpacing)
+    const halfDiag = Math.sqrt(canvasWidth * canvasWidth + canvasHeight * canvasHeight) / 2
+    const extStartY = contentTop - halfDiag
+    const extEndY   = pageHeight + halfDiag
+    const rowsAbove = Math.ceil((contentTop - extStartY) / baselineSpacing)
+    const startY    = contentTop - rowsAbove * baselineSpacing
+    const totalRows = Math.ceil((extEndY - startY) / baselineSpacing)
 
     ctx.strokeStyle = "#ec4899"
     ctx.lineWidth = 0.3
@@ -99,10 +102,10 @@ export function renderStaticGuides({
 
     for (let row = 0; row <= totalRows; row += baselineStep) {
       const y = startY + row * baselineSpacing
-      if (y > pageHeight) break
+      if (y > extEndY) break
       ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(pageWidth, y)
+      ctx.moveTo(-halfDiag, y)
+      ctx.lineTo(pageWidth + halfDiag, y)
       ctx.stroke()
     }
     ctx.globalAlpha = 1
