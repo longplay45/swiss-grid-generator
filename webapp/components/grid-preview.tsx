@@ -1379,9 +1379,19 @@ export const GridPreview = memo(function GridPreview({
       if (mouseMoveRafRef.current !== null) cancelAnimationFrame(mouseMoveRafRef.current)
     }
   }, [])
-  const hoveredStyle = hoverState ? (styleAssignments[hoverState.key] ?? "body") : null
-  const hoveredSpan = hoverState ? getBlockSpan(hoverState.key) : null
-  const hoveredAlign = hoverState ? (blockTextAlignments[hoverState.key] ?? "left") : null
+  const hoveredKey = hoverState?.key ?? null
+  const hoveredStyle = hoveredKey ? (styleAssignments[hoveredKey] ?? "body") : null
+  const hoveredSpan = hoveredKey ? getBlockSpan(hoveredKey) : null
+  const hoveredRows = hoveredKey ? getBlockRows(hoveredKey) : null
+  const hoveredAlign = hoveredKey ? (blockTextAlignments[hoveredKey] ?? "left") : null
+  const hoveredRotation = hoveredKey ? getBlockRotation(hoveredKey) : null
+  const hoveredReflow = hoveredKey ? isTextReflowEnabled(hoveredKey) : null
+  const hoveredSyllableDivision = hoveredKey ? isSyllableDivisionEnabled(hoveredKey) : null
+  const hoveredFont = hoveredKey ? getBlockFont(hoveredKey) : null
+  const hoveredBold = hoveredKey ? isBlockBold(hoveredKey) : null
+  const hoveredItalic = hoveredKey ? isBlockItalic(hoveredKey) : null
+  const hoveredOverflowLines = hoveredKey ? (overflowLinesByBlock[hoveredKey] ?? 0) : null
+  const hoveredModulePosition = hoveredKey ? (blockModulePositions[hoveredKey] ?? null) : null
 
   useEffect(() => {
     if (!onLayoutChange) {
@@ -1553,12 +1563,21 @@ export const GridPreview = memo(function GridPreview({
       {(showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign) || (PERF_ENABLED && showPerfOverlay && perfOverlay) ? (
         <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
           {showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
-            <div className="w-64 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
+            <div className="w-72 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
               <div className="text-[11px] font-medium text-gray-900">
                 {STYLE_OPTIONS.find((option) => option.value === hoveredStyle)?.label ?? hoveredStyle} ({formatPtSize(result.typography.styles[hoveredStyle].size)})
               </div>
               <div className="mt-1 text-[11px] text-gray-600">
-                Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"}
+                Key: {hoveredKey} • Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"} • Rows: {hoveredRows}
+              </div>
+              <div className="mt-1 text-[11px] text-gray-600">
+                Rotation: {hoveredRotation?.toFixed(0) ?? "0"} deg (pivot: paragraph origin) • Reflow: {hoveredReflow ? "on" : "off"} • Syllable: {hoveredSyllableDivision ? "on" : "off"}
+              </div>
+              <div className="mt-1 text-[11px] text-gray-600">
+                Font: {hoveredFont ?? "-"} • Weight: {hoveredBold ? "bold" : "regular"} • Slant: {hoveredItalic ? "italic" : "roman"}
+              </div>
+              <div className="mt-1 text-[11px] text-gray-600">
+                Pos: {hoveredModulePosition ? `col ${hoveredModulePosition.col}, row ${hoveredModulePosition.row}` : "auto-flow"} • Overflow lines: {hoveredOverflowLines ?? 0}
               </div>
               <div className="mt-1 text-[11px] text-gray-500">
                 Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap • Touch: long-press then drag

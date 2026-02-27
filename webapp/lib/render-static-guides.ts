@@ -31,6 +31,7 @@ export function renderStaticGuides({
   const { gridCols, gridRows } = result.settings
   const pageWidth = width * scale
   const pageHeight = height * scale
+  const showPageOutline = showMargins || showModules || showBaselines
   const contentTop = margins.top * scale
   const baselineSpacing = gridUnit * scale
   const baselineRows = Math.max(
@@ -48,9 +49,11 @@ export function renderStaticGuides({
   ctx.rotate((rotation * Math.PI) / 180)
   ctx.translate(-pageWidth / 2, -pageHeight / 2)
 
-  ctx.strokeStyle = "#e5e5e5"
-  ctx.lineWidth = 1
-  ctx.strokeRect(0, 0, pageWidth, pageHeight)
+  if (showPageOutline) {
+    ctx.strokeStyle = "#e5e5e5"
+    ctx.lineWidth = 1
+    ctx.strokeRect(0, 0, pageWidth, pageHeight)
+  }
 
   if (showMargins) {
     ctx.strokeStyle = "#3b82f6"

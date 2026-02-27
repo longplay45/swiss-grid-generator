@@ -236,6 +236,9 @@ export function renderSwissGridVectorPdf({
     pdf.text(line, point.x, point.y, {
       align,
       angle: rotation + blockRotation,
+      // Keep PDF text rotation semantics aligned with canvas:
+      // positive angles rotate clockwise in preview.
+      rotationDirection: 0,
     })
   }
 
@@ -243,6 +246,7 @@ export function renderSwissGridVectorPdf({
   const { width: modW, height: modH } = result.module
   const { gridCols, gridRows } = result.settings
   const minHairlinePt = 0.25
+  const showPageOutline = showMargins || showModules || showBaselines
   const useMonochromeGuides = printPro?.monochromeGuides ?? false
   const guideContentTop = margins.top
   const guideBaselineSpacing = gridUnit
@@ -255,15 +259,17 @@ export function renderSwissGridVectorPdf({
   pdf.setLineCap("butt")
   pdf.setLineJoin("miter")
   pdf.setLineMiterLimit(10)
-  setDrawColorCmyk(pdf, useMonochromeGuides ? { r: 172, g: 172, b: 172 } : { r: 229, g: 229, b: 229 })
-  pdf.setLineWidth(Math.max(0.4 * scale, minHairlinePt))
-  drawRectOutline(0, 0, sourceWidth, sourceHeight)
+  if (showPageOutline) {
+    setDrawColorCmyk(pdf, useMonochromeGuides ? { r: 172, g: 172, b: 172 } : { r: 229, g: 229, b: 229 })
+    pdf.setLineWidth(Math.max(0.4 * scale, minHairlinePt))
+    drawRectOutline(0, 0, sourceWidth, sourceHeight)
+  }
 
   if (printPro?.enabled) {
     const bleed = Math.max(0, printPro.bleedPt)
     const markOffset = Math.max(0, printPro.cropMarkOffsetPt + bleed)
     const markLength = Math.max(0, printPro.cropMarkLengthPt)
-    if (printPro.showBleedGuide) {
+    if (printPro.showBleedGuide && showPageOutline) {
       setDrawColorCmyk(pdf, { r: 140, g: 140, b: 140 })
       pdf.setLineWidth(Math.max(0.25 * scale, minHairlinePt))
       pdf.setLineDashPattern([2 * scale, 2 * scale], 0)
@@ -307,9 +313,16 @@ export function renderSwissGridVectorPdf({
   if (showBaselines) {
     setDrawColorCmyk(pdf, useMonochromeGuides ? { r: 148, g: 148, b: 148 } : { r: 236, g: 72, b: 153 })
     pdf.setLineWidth(Math.max(0.3 * scale, minHairlinePt))
-    for (let row = 0; row <= guideBaselineRows; row += 1) {
-      const y = guideContentTop + row * guideBaselineSpacing
-      drawLine(0, y, sourceWidth, y)
+    const halfDiag = Math.sqrt(sourceWidth * sourceWidth + sourceHeight * sourceHeight) / 2
+    const extStartY = guideContentTop - halfDiag
+    const extEndY = sourceHeight + halfDiag
+    const rowsAbove = Math.ceil((guideContentTop - extStartY) / guideBaselineSpacing)
+    const startY = guideContentTop - rowsAbove * guideBaselineSpacing
+    const totalRows = Math.ceil((extEndY - startY) / guideBaselineSpacing)
+    for (let row = 0; row <= totalRows; row += 1) {
+      const y = startY + row * guideBaselineSpacing
+      if (y > extEndY) break
+      drawLine(-halfDiag, y, sourceWidth + halfDiag, y)
     }
   }
 
@@ -436,13 +449,7 @@ export function renderSwissGridVectorPdf({
     const blockIsItalic = isBlockItalic(block.key, styleKey)
     const blockFont = getBlockFont(block.key)
     const canvasFont = buildCanvasFont(blockFont, blockIsBold, blockIsItalic, fontSize)
-    const measureWidth = (text: string) => {
-      if (textMeasureContext) {
-        textMeasureContext.font = canvasFont
-        return textMeasureContext.measureText(text).width
-      }
-      return pdf.getTextWidth(text)
-    }
+    const measureWidth = (text: string) => pdf.getTextWidth(text)
 
     let blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
     if (useParagraphRows) {
@@ -574,13 +581,7 @@ export function renderSwissGridVectorPdf({
   const captionIsItalic = isBlockItalic(captionKey, captionStyleKey)
   const captionFont = getBlockFont(captionKey)
   const captionCanvasFont = buildCanvasFont(captionFont, captionIsBold, captionIsItalic, captionFontSize)
-  const captionMeasureWidth = (text: string) => {
-    if (textMeasureContext) {
-      textMeasureContext.font = captionCanvasFont
-      return textMeasureContext.measureText(text).width
-    }
-    return pdf.getTextWidth(text)
-  }
+  const captionMeasureWidth = (text: string) => pdf.getTextWidth(text)
   const captionRotation = getBlockRotation(captionKey)
   pdf.setFont(getPdfFontFamily(captionFont), getFontStyle(captionIsBold, captionIsItalic))
   pdf.setFontSize(captionFontSize)
