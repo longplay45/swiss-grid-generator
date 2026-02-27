@@ -382,6 +382,22 @@ Known font values are defined centrally in `webapp/lib/config/fonts.ts`.
 
 Note: this affects only the rendered typography on the preview/export canvas; UI chrome fonts are unchanged.
 
+### Font Load + Metric Stability
+
+Preview text measurement waits for active font faces to load before finalizing wrap metrics:
+- `document.fonts.load(...)` is requested for active block font/style/size combinations.
+- On completion, text-measure caches are cleared and typography is redrawn.
+
+This prevents fallback-font measurements from producing stale wraps when changing to fonts like `Bodoni Moda`.
+
+### PDF Font Embedding Parity
+
+PDF export embeds selected Google font assets before layout/draw:
+- `regular`, `bold`, `italic`, `bolditalic` are registered per family.
+- If local files are missing, registry can fall back to Google Fonts repository sources.
+
+This keeps preview/PDF wrap and anchor calculations aligned across font choices.
+
 ---
 
 ## Unit Conversions

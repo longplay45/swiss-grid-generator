@@ -94,6 +94,7 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Export PDF
 
 - Export is vector-based (not raster screenshot export).
+- PDF typography uses embedded selected fonts (where available) to keep line-wrap parity with preview.
 - DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.
 - Print Pro options include bleed, registration-style crop marks, and final-safe guides.
 - Export applies current rotation, guides visibility toggles, and text styling.

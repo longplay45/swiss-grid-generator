@@ -233,6 +233,13 @@ Font behavior:
 - If a paragraph font is set to the current `Base Font`, it is stored as inherited (no explicit override entry).
 - If a paragraph font differs from `Base Font`, it is stored as an explicit paragraph override.
 - Changing `Base Font` re-renders the preview immediately for inherited paragraphs only.
+- Preview + PDF parity depends on local strict font assets:
+  - `public/fonts/google/<slug>/regular.ttf`
+  - `public/fonts/google/<slug>/bold.ttf`
+  - `public/fonts/google/<slug>/italic.ttf`
+  - `public/fonts/google/<slug>/bolditalic.ttf`
+- Asset sync routine:
+  - `npm run fonts:sync` (reads `lib/config/fonts.ts` and rebuilds local Google font assets)
 
 Syllable division behavior:
 - Stored per paragraph in `blockSyllableDivision`.

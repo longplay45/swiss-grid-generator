@@ -25,6 +25,10 @@ Rendering is split across three canvas layers in `webapp/components/grid-preview
 - Draws drag snap indicator line
 - Draws overflow badge (red circle with ellipsis) for blocks with `overflowLines > 0`
 
+Layout planning is shared between preview and PDF:
+- `webapp/lib/typography-layout-plan.ts` is the canonical planner for block flow/reflow/wrap command generation
+- preview and PDF consume the same plan model to keep parity
+
 ## Core Block Inputs
 For each block key:
 - Text: `textContent[key]`
@@ -113,6 +117,12 @@ Position:
 2. It calls `onOverflowLinesChange(overflowByBlock)`
 3. `GridPreview` stores state in `overflowLinesByBlock`
 4. Overlay canvas reads that state and renders badges
+
+## Font Metric Parity
+- Preview waits for `document.fonts.load(...)` on active block font/style combinations before committing layout metrics.
+- On font-load completion, wrap/measure/optical caches are invalidated and typography is redrawn.
+- PDF export embeds selected font families (Google-font assets) before layout + draw.
+- Rotated right-aligned PDF lines are drawn from explicit left anchors (`x - measuredWidth`) to avoid jsPDF alignment drift.
 
 ## Drag and Drop Behavior (User Settings Preservation)
 The drag/drop behavior is in `applyDragDrop(...)` inside `webapp/components/grid-preview.tsx`.

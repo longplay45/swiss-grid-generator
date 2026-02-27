@@ -1,4 +1,4 @@
-You are assisting with swiss-grid-generator, a Next.js static-export web app
+You are assisting with swiss-grid-generator, a Next.js web app
 that produces typographic grid systems based on Josef Müller-Brockmann's
 "Grid Systems in Graphic Design" (1981) / International Typographic Style.
 
@@ -6,7 +6,7 @@ Live: https://dev.lp45.net/swiss-grid-generator/
 Codebase root: swiss-grid-generator/webapp/
 
 ## TECH STACK
-Next.js 14 (App Router, static export), TypeScript, Tailwind CSS, jsPDF,
+Next.js 15 (App Router), TypeScript, Tailwind CSS, jsPDF,
 Canvas API, Web Workers (ESM). Tests: Node native test runner (ESM).
 
 ## KEY FILES
@@ -15,7 +15,9 @@ app/page.tsx                    — Root UI; all settings state, undo/redo, expo
 components/grid-preview.tsx     — Canvas preview; owns layout state (blocks, drag, editor)
 lib/reflow-planner.ts           — Pure deterministic reflow scoring
 lib/autofit-planner.ts          — Pure batch autofit planner
-lib/pdf-vector-export.ts        — jsPDF vector export (CMYK, bleed, crop/reg marks)
+lib/pdf-vector-export.ts        — jsPDF vector export (CMYK, bleed, crop/reg marks, shared planner draw)
+lib/typography-layout-plan.ts   — Shared typography layout planner for preview + PDF
+lib/pdf-font-registry.ts        — PDF embedded font registration and fallback source resolution
 lib/text-layout.ts              — Canonical word-wrap + syllable hyphenation
 lib/optical-margin.ts           — Hanging punctuation offsets
 lib/preview-header-shortcuts.ts — Canonical keyboard shortcut registry
@@ -71,7 +73,7 @@ Each defines (sizeRatio, leadingMultiplier) pairs for 5 levels.
 Leading is always integer multiples of gridUnit.
 
 ## CANVAS RENDERING
-4-layer stack: guideCanvas (static) → textCanvas (full) → textCanvasDirty (incremental) → dragCanvas (overlay).
+3-layer stack: guideCanvas (static) → typographyCanvas (text) → overlayCanvas (drag/overflow).
 Guide colors: margins=#3b82f6 dashed, modules=#06b6d4 @0.7, baselines=#ec4899 @0.5.
 PDF export uses CMYK equivalents.
 
@@ -91,10 +93,16 @@ Global Cmd+Z dispatches to settings first; falls through to layout via undoNonce
 
 ## COMMANDS (run from webapp/)
 npm run dev          — localhost:3000
-npm run build        — static export → out/
+npm run build        — production build
 npm run test:grid    — grid math + edge cases
 npm run test:reflow  — reflow planner + worker contract
+npm run test:autofit — autofit planner contract
+npm run test:snapshot — preview layout snapshot normalization
+npm run test:text    — text wrap + syllable division
+npm run test:optical — optical margin offsets
+npm run test:pdf     — pdf export parity/rotation contracts
 npm run test:perf    — performance smoke tests
+npm run fonts:sync   — rebuild strict Google font assets (regular/bold/italic/bolditalic)
 npm test             — full suite
 
 ## DEPLOYMENT

@@ -93,6 +93,11 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 
 PDF export is vector-based via jsPDF primitives (lines/text), not canvas raster embedding.
 
+Typography parity details:
+- preview and PDF share one layout planner (`webapp/lib/typography-layout-plan.ts`)
+- PDF embeds selected Google fonts to keep wrap metrics aligned with preview
+- rotated right-aligned paragraph anchors are resolved explicitly in PDF draw logic to avoid drift
+
 Includes print-focused options:
 - CMYK color pipeline for guides/text/marks
 - Print Pro bleed + crop marks
@@ -222,8 +227,12 @@ webapp/
 │   ├── reflow-planner.ts
 │   ├── preview-header-shortcuts.ts
 │   ├── pdf-vector-export.ts
+│   ├── pdf-font-registry.ts
+│   ├── typography-layout-plan.ts
 │   ├── units.ts
 │   └── utils.ts
+├── scripts/
+│   └── sync_google_font_assets.py
 └── workers/
     ├── autoFit.worker.ts
     └── reflowPlanner.worker.ts
@@ -240,8 +249,14 @@ webapp/
 | `npm run test:roundtrip` | Verify font-related JSON save/load roundtrip rules |
 | `npm run test:grid` | Validate grid calculator invariants, edge cases, and input guard rails |
 | `npm run test:reflow` | Validate reflow planner determinism + worker request/response contract rules |
+| `npm run test:autofit` | Validate autofit planner determinism and bounds |
+| `npm run test:snapshot` | Validate preview layout snapshot normalization and restore rules |
+| `npm run test:text` | Validate canonical wrap + syllable-division behavior |
+| `npm run test:optical` | Validate optical margin offset calculations |
+| `npm run test:pdf` | Validate PDF export rendering contract/parity guards |
 | `npm run test:perf` | Performance smoke tests for `generateSwissGrid` and `computeReflowPlan` |
-| `npm test` | Run all test suites (`roundtrip`, `grid`, `reflow`, `perf`) |
+| `npm run fonts:sync` | Rebuild strict Google font assets (`regular`,`bold`,`italic`,`bolditalic`) |
+| `npm test` | Run all test suites (`roundtrip`, `grid`, `reflow`, `autofit`, `snapshot`, `text`, `optical`, `pdf`, `perf`) |
 
 ## Changelog (Recent Behavior Updates)
 
@@ -266,6 +281,9 @@ webapp/
 - Row-structure changes remap rows by module index before repositioning.
 - Added runtime guard rails in `generateSwissGrid()` for invalid settings (invalid grid dimensions, non-positive baseline/multiples, invalid custom margins).
 - Added deterministic planner/worker contract tests and performance smoke tests to prevent UX regressions.
+- Added shared typography layout planner used by canvas preview and PDF export.
+- Added embedded Google font workflow for PDF export with strict style assets per family.
+- Added preview font-load synchronization and cache invalidation to prevent fallback-metric wrapping drift.
 
 ## Reference
 
