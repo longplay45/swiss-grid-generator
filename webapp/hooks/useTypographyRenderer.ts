@@ -32,6 +32,8 @@ type BlockRenderPlan<BlockId extends string> = {
   font: string
   textAlign: TextAlignMode
   blockRotation: number
+  rotationOriginX: number
+  rotationOriginY: number
   commands: TextDrawCommand[]
 }
 
@@ -360,6 +362,8 @@ export function useTypographyRenderer<BlockId extends string>({
           font: planFont,
           textAlign,
           blockRotation,
+          rotationOriginX: origin.x,
+          rotationOriginY: origin.y,
           commands,
         })
 
@@ -523,6 +527,8 @@ export function useTypographyRenderer<BlockId extends string>({
           font: captionPlanFont,
           textAlign: captionAlign,
           blockRotation: captionRotation,
+          rotationOriginX: captionOrigin.x,
+          rotationOriginY: captionOrigin.y,
           commands: captionCommands,
         })
       }
@@ -563,14 +569,20 @@ export function useTypographyRenderer<BlockId extends string>({
           bufferCtx.font = plan.font
           bufferCtx.textAlign = plan.textAlign
           const angle = (plan.blockRotation * Math.PI) / 180
-          for (const command of plan.commands) {
-            if (Math.abs(angle) > 0.0001) {
-              bufferCtx.save()
-              bufferCtx.translate(command.x, command.y)
-              bufferCtx.rotate(angle)
-              bufferCtx.fillText(command.text, 0, 0)
-              bufferCtx.restore()
-            } else {
+          if (Math.abs(angle) > 0.0001) {
+            bufferCtx.save()
+            bufferCtx.translate(plan.rotationOriginX, plan.rotationOriginY)
+            bufferCtx.rotate(angle)
+            for (const command of plan.commands) {
+              bufferCtx.fillText(
+                command.text,
+                command.x - plan.rotationOriginX,
+                command.y - plan.rotationOriginY,
+              )
+            }
+            bufferCtx.restore()
+          } else {
+            for (const command of plan.commands) {
               bufferCtx.fillText(command.text, command.x, command.y)
             }
           }

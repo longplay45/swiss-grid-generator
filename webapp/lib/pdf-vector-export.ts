@@ -199,8 +199,40 @@ export function renderSwissGridVectorPdf({
     drawLine(sourceWidth, sourceHeight + outside, sourceWidth, sourceHeight + outside + length)
   }
 
-  const drawText = (line: string, x: number, y: number, align: TextAlignMode, blockRotation = 0) => {
-    const point = transformPoint(x, y)
+  const rotatePointAround = (
+    x: number,
+    y: number,
+    originX: number,
+    originY: number,
+    angleDeg: number,
+  ) => {
+    const radians = (angleDeg * Math.PI) / 180
+    const cosAngle = Math.cos(radians)
+    const sinAngle = Math.sin(radians)
+    const dx = x - originX
+    const dy = y - originY
+    return {
+      x: originX + dx * cosAngle - dy * sinAngle,
+      y: originY + dx * sinAngle + dy * cosAngle,
+    }
+  }
+
+  const drawText = (
+    line: string,
+    x: number,
+    y: number,
+    align: TextAlignMode,
+    blockRotation = 0,
+    rotationOrigin?: { x: number; y: number },
+  ) => {
+    let drawX = x
+    let drawY = y
+    if (rotationOrigin && Math.abs(blockRotation) > 0.0001) {
+      const rotated = rotatePointAround(x, y, rotationOrigin.x, rotationOrigin.y, blockRotation)
+      drawX = rotated.x
+      drawY = rotated.y
+    }
+    const point = transformPoint(drawX, drawY)
     pdf.text(line, point.x, point.y, {
       align,
       angle: rotation + blockRotation,
@@ -439,6 +471,7 @@ export function renderSwissGridVectorPdf({
     const autoX = contentLeft
     const autoY = contentTop + (blockStartOffset - 1) * baselineStep
     const origin = getOriginForBlock(block.key, autoX, autoY)
+    const rotationOrigin = { x: origin.x, y: origin.y }
     const align: TextAlignMode = blockTextAlignments[block.key] === "right" ? "right" : "left"
     const textAscent = estimateTextAscent(textMeasureContext, canvasFont, fontSize)
     const lineStep = baselineMult * baselineStep
@@ -464,7 +497,7 @@ export function renderSwissGridVectorPdf({
           fontSize,
           measureWidth,
         })
-        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation, rotationOrigin)
       }
     } else if (singleColumnReflow) {
       const anchorX = align === "right" ? origin.x + wrapWidth : origin.x
@@ -488,7 +521,7 @@ export function renderSwissGridVectorPdf({
           fontSize,
           measureWidth,
         })
-        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation, rotationOrigin)
       }
     } else if (columnReflow) {
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
@@ -508,7 +541,7 @@ export function renderSwissGridVectorPdf({
           fontSize,
           measureWidth,
         })
-        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation)
+        drawText(line, anchorX + opticalOffsetX, y, align, blockRotation, rotationOrigin)
       }
     }
 
@@ -570,6 +603,7 @@ export function renderSwissGridVectorPdf({
   const firstLineBaselineUnit = totalBaselinesFromTop - (captionLineCount - 1) * captionStyle.baselineMultiplier
   const autoCaptionY = contentTop + (firstLineBaselineUnit - 1) * baselineStep
   const captionOrigin = getOriginForBlock(captionKey, contentLeft, autoCaptionY)
+  const captionRotationOrigin = { x: captionOrigin.x, y: captionOrigin.y }
   const captionAscent = estimateTextAscent(textMeasureContext, captionCanvasFont, captionFontSize)
   const captionLineStep = captionStyle.baselineMultiplier * baselineStep
   const captionModuleHeight = captionRowSpan * modH + Math.max(captionRowSpan - 1, 0) * gridMarginVertical
@@ -592,7 +626,14 @@ export function renderSwissGridVectorPdf({
         fontSize: captionFontSize,
         measureWidth: captionMeasureWidth,
       })
-      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
+      drawText(
+        line,
+        captionAnchorX + opticalOffsetX,
+        y,
+        captionAlign,
+        captionRotation,
+        captionRotationOrigin,
+      )
     }
   } else if (captionSingleColumnReflow) {
     const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
@@ -615,7 +656,14 @@ export function renderSwissGridVectorPdf({
         fontSize: captionFontSize,
         measureWidth: captionMeasureWidth,
       })
-      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
+      drawText(
+        line,
+        captionAnchorX + opticalOffsetX,
+        y,
+        captionAlign,
+        captionRotation,
+        captionRotationOrigin,
+      )
     }
   } else if (captionColumnReflow) {
     for (let i = 0; i < captionLines.length; i += 1) {
@@ -634,7 +682,14 @@ export function renderSwissGridVectorPdf({
         fontSize: captionFontSize,
         measureWidth: captionMeasureWidth,
       })
-      drawText(line, captionAnchorX + opticalOffsetX, y, captionAlign, captionRotation)
+      drawText(
+        line,
+        captionAnchorX + opticalOffsetX,
+        y,
+        captionAlign,
+        captionRotation,
+        captionRotationOrigin,
+      )
     }
   }
 }
