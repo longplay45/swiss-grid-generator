@@ -51,6 +51,7 @@ type Args<BlockId extends string> = {
   result: GridResult
   scale: number
   pixelRatio: number
+  fontRenderEpoch: number
   rotation: number
   showTypography: boolean
   blockOrder: BlockId[]
@@ -89,6 +90,7 @@ export function useTypographyRenderer<BlockId extends string>({
   result,
   scale,
   pixelRatio,
+  fontRenderEpoch,
   rotation,
   showTypography,
   blockOrder,
@@ -357,6 +359,7 @@ export function useTypographyRenderer<BlockId extends string>({
     previousPlansRef,
     recordPerfMetric,
     result,
+    fontRenderEpoch,
     rotation,
     scale,
     pixelRatio,

@@ -36,6 +36,7 @@ import {
 } from "@/lib/reflow-planner"
 import {
   DEFAULT_BASE_FONT,
+  getFontFamilyCss,
   isFontFamily,
   type FontFamily,
 } from "@/lib/config/fonts"
@@ -289,6 +290,7 @@ export const GridPreview = memo(function GridPreview({
   const [showPerfOverlay, setShowPerfOverlay] = useState(false)
   const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
+  const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
   const {
     state: blockCollectionsState,
     merge: setBlockCollections,
@@ -473,6 +475,50 @@ export const GridPreview = memo(function GridPreview({
     if (override === true || override === false) return override
     return getStyleDefaultItalic(key)
   }, [blockItalic, getStyleDefaultItalic])
+
+  useEffect(() => {
+    if (!showTypography || typeof document === "undefined" || !("fonts" in document)) return
+
+    let cancelled = false
+    const fontFaceSet = document.fonts
+    const specs = new Set<string>()
+    for (const key of blockOrder) {
+      const styleKey = getStyleKeyForBlock(key)
+      const style = result.typography.styles[styleKey]
+      if (!style) continue
+      const fontFamily = getBlockFont(key)
+      const fontWeight = isBlockBold(key) ? "700" : "400"
+      const fontStyle = isBlockItalic(key) ? "italic" : "normal"
+      const fontSize = style.size * scale
+      specs.add(`${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}"`)
+    }
+
+    if (!specs.size) return
+
+    void Promise
+      .allSettled([...specs].map((spec) => fontFaceSet.load(spec)))
+      .then(() => {
+        if (cancelled) return
+        measureWidthCacheRef.current.clear()
+        wrapTextCacheRef.current.clear()
+        opticalOffsetCacheRef.current.clear()
+        reflowPlanCacheRef.current.clear()
+        setFontRenderEpoch((value) => value + 1)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    blockOrder,
+    getBlockFont,
+    getStyleKeyForBlock,
+    isBlockBold,
+    isBlockItalic,
+    result.typography.styles,
+    scale,
+    showTypography,
+  ])
 
   const getBlockRotation = useCallback((key: BlockId): number => {
     const raw = blockRotations[key]
@@ -674,7 +720,6 @@ export const GridPreview = memo(function GridPreview({
     position?: ModulePosition | null
   }): { span: number; position: ModulePosition | null } | null => {
     if (!reflow) return null
-    void key
     const trimmed = text.trim()
     if (!trimmed) return null
     const canvas = canvasRef.current
@@ -703,7 +748,10 @@ export const GridPreview = memo(function GridPreview({
     if (maxLinesPerColumn <= 0) return null
 
     const fontSize = style.size * scale
-    ctx.font = `${style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
+    const fontFamily = getBlockFont(key)
+    const fontWeight = isBlockBold(key) ? "700" : "400"
+    const fontStyle = isBlockItalic(key) ? "italic " : ""
+    ctx.font = `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
     const columnWidth = result.module.width * scale
     const lines = getWrappedText(ctx, trimmed, columnWidth, syllableDivision)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
@@ -720,7 +768,19 @@ export const GridPreview = memo(function GridPreview({
       : null
 
     return { span: nextSpan, position: nextPosition }
-  }, [getWrappedText, result.grid, result.module.height, result.module.width, result.pageSizePt.height, result.settings.gridCols, result.typography.styles, scale])
+  }, [
+    getBlockFont,
+    getWrappedText,
+    isBlockBold,
+    isBlockItalic,
+    result.grid,
+    result.module.height,
+    result.module.width,
+    result.pageSizePt.height,
+    result.settings.gridCols,
+    result.typography.styles,
+    scale,
+  ])
 
   const applyDragDrop = useCallback((drag: DragState, nextPreview: ModulePosition, copyOnDrop: boolean) => {
     if (copyOnDrop) {
@@ -1062,6 +1122,7 @@ export const GridPreview = memo(function GridPreview({
     typographyBufferTransformRef,
     result,
     scale,
+    fontRenderEpoch,
     rotation,
     showTypography,
     blockOrder,
