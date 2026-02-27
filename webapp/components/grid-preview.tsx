@@ -67,6 +67,8 @@ type BlockRenderPlan = {
   font: string
   textAlign: TextAlignMode
   blockRotation: number
+  rotationOriginX: number
+  rotationOriginY: number
   commands: TextDrawCommand[]
 }
 
