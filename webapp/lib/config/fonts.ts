@@ -92,6 +92,14 @@ export const FONT_OPTIONS: FontOption[] = FONT_DEFINITIONS.map(({ value, label, 
   category,
 }))
 
+const PDF_SERIF_STYLE_FONTS = new Set<FontFamily>([
+  "EB Garamond",
+  "Libre Baskerville",
+  "Bodoni Moda",
+  "Besley",
+  "Playfair Display",
+])
+
 const FONT_STACK_MAP = new Map<FontFamily, string>(
   FONT_DEFINITIONS.map(({ value, stack }) => [value, stack]),
 )
@@ -104,6 +112,16 @@ export function isFontFamily(value: unknown): value is FontFamily {
 
 export function getFontFamilyCss(fontFamily: FontFamily): string {
   return FONT_STACK_MAP.get(fontFamily) ?? FONT_STACK_MAP.get(DEFAULT_BASE_FONT) ?? "Inter, sans-serif"
+}
+
+export function isPdfSerifStyleFont(fontFamily: FontFamily): boolean {
+  return PDF_SERIF_STYLE_FONTS.has(fontFamily)
+}
+
+export function getPdfCompatibleCanvasFontCss(fontFamily: FontFamily): string {
+  return isPdfSerifStyleFont(fontFamily)
+    ? "Times New Roman, Times, serif"
+    : "Helvetica, Arial, sans-serif"
 }
 
 export const FONT_CSS_VARS: Record<string, string> = FONT_DEFINITIONS.reduce(

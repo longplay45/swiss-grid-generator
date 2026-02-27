@@ -4,6 +4,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
+import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
 import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -198,6 +199,16 @@ export function useExportActions(ctx: ExportActionsContext) {
         ViewArea: "TrimBox",
         ViewClip: "TrimBox",
       })
+
+      const fontsToRegister = new Set<FontFamily>([baseFont])
+      const blockFonts = previewLayout?.blockFontFamilies
+      if (blockFonts) {
+        for (const family of Object.values(blockFonts)) {
+          if (family) fontsToRegister.add(family)
+        }
+      }
+      await ensurePdfFontsRegistered(pdf, fontsToRegister)
+
       renderSwissGridVectorPdf({
         pdf,
         width,

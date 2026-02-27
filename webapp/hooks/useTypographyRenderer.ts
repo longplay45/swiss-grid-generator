@@ -3,7 +3,7 @@ import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
 import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
-import { computeSingleColumnLineTops } from "@/lib/reflow-line-placement"
+import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 
 type TextAlignMode = "left" | "right"
 
@@ -165,39 +165,7 @@ export function useTypographyRenderer<BlockId extends string>({
       const baselineStep = gridUnit * scale
       const baselineOriginTop = contentTop - baselineStep
       const gutterX = gridMarginHorizontal * scale
-
-      const getMinOffset = (): number => 1
       const draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
-
-      const textBlocks = blockOrder
-        .filter((key) => key !== "caption")
-        .map((key) => ({
-          key,
-          extraOffset: 0,
-          spaceBefore: key === "body" ? 1 : 0,
-          lines: [textContent[key] ?? ""],
-        }))
-
-      const useRowPlacement = gridRows >= 2
-      const useParagraphRows = gridRows >= 5
-      const rowHeightBaselines = modH / gridUnit
-      const gutterBaselines = gridMarginVertical / gridUnit
-      const rowStepBaselines = rowHeightBaselines + gutterBaselines
-      const row2TopBaselines = rowStepBaselines
-      const row3TopBaselines = rowStepBaselines * 2
-
-      const displayStartOffset = getMinOffset()
-      const restStartOffset = gridRows > 6
-        ? row3TopBaselines + getMinOffset()
-        : row2TopBaselines + getMinOffset()
-
-      let currentBaselineOffset = useRowPlacement ? restStartOffset : displayStartOffset
-      let currentRowIndex = 0
-
-      const nextRects: Record<BlockId, BlockRect> = {} as Record<BlockId, BlockRect>
-      for (const key of blockOrder) {
-        nextRects[key] = { x: 0, y: 0, width: 0, height: 0 }
-      }
 
       const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
         const dragged = dragState?.key === key ? dragState.preview : undefined
@@ -210,330 +178,87 @@ export function useTypographyRenderer<BlockId extends string>({
         }
       }
 
-      for (const block of textBlocks) {
-        const blockText = block.lines.join(" ")
-        if (!blockText.trim()) continue
+      const layoutOutput = buildTypographyLayoutPlan<BlockId, keyof GridResult["typography"]["styles"], CanvasRenderingContext2D>({
+        blockOrder,
+        textContent,
+        styleAssignments,
+        styles,
+        blockTextAlignments,
+        contentTop,
+        contentLeft,
+        pageHeight,
+        marginsBottom: margins.bottom * scale,
+        baselineStep: baselinePx,
+        moduleWidth: modW * scale,
+        moduleHeight: modH * scale,
+        gutterX,
+        gutterY: gridMarginVertical * scale,
+        gridRows,
+        gridCols: result.settings.gridCols,
+        fontScale: scale,
+        bodyKey: "body" as BlockId,
+        displayKey: "display" as BlockId,
+        captionKey: "caption" as BlockId,
+        defaultBodyStyleKey: "body",
+        defaultCaptionStyleKey: "caption",
+        getBlockSpan,
+        getBlockRows,
+        getBlockRotation,
+        isTextReflowEnabled,
+        isSyllableDivisionEnabled,
+        getOriginForBlock,
+        createTextContext: ({ key, fontSize }) => {
+          const blockFont = getBlockFont(key)
+          const blockFontStyle = isBlockItalic(key) ? "italic " : ""
+          const blockFontWeight = isBlockBold(key) ? "700" : "400"
+          ctx.font = `${blockFontStyle}${blockFontWeight} ${fontSize}px ${getFontFamilyCss(blockFont)}`
+          return ctx
+        },
+        wrapText: ({ context, text, maxWidth, hyphenate }) =>
+          getWrappedText(context, text, maxWidth, hyphenate),
+        textAscent: ({ context, fontSize }) => getTextAscentPx(context, fontSize),
+        opticalOffset: ({ context, line, align, fontSize }) =>
+          getOpticalOffset(context, line, align, fontSize),
+      })
 
-        const styleKey = styleAssignments[block.key] ?? "body"
-        const style = styles[styleKey]
-        if (!style) continue
-
-        const fontSize = style.size * scale
-        const baselineMult = style.baselineMultiplier
-
-        let blockStartOffset = currentBaselineOffset + block.spaceBefore + block.extraOffset
-        if (useParagraphRows) {
-          const minOffset = getMinOffset()
-          blockStartOffset = currentRowIndex * rowStepBaselines + minOffset + block.extraOffset
-        } else if (useRowPlacement && block.key === "display") {
-          blockStartOffset = displayStartOffset + block.extraOffset
-        }
-
-        const blockFont = getBlockFont(block.key)
-        const blockFontStyle = isBlockItalic(block.key) ? "italic " : ""
-        const blockFontWeight = isBlockBold(block.key) ? "700" : "400"
-        const blockRotation = getBlockRotation(block.key)
-        ctx.font = `${blockFontStyle}${blockFontWeight} ${fontSize}px ${getFontFamilyCss(blockFont)}`
+      for (const plan of layoutOutput.plans) {
+        const blockFont = getBlockFont(plan.key)
+        const blockFontStyle = isBlockItalic(plan.key) ? "italic " : ""
+        const blockFontWeight = isBlockBold(plan.key) ? "700" : "400"
+        ctx.font = `${blockFontStyle}${blockFontWeight} ${plan.fontSize}px ${getFontFamilyCss(blockFont)}`
         const planFont = ctx.font
-
-        const span = getBlockSpan(block.key)
-        const wrapWidth = span * modW * scale + Math.max(span - 1, 0) * gutterX
-        const rowSpan = getBlockRows(block.key)
-        const reflowEnabled = isTextReflowEnabled(block.key)
-        const columnReflow = reflowEnabled && span >= 2
-        const singleColumnReflow = reflowEnabled && span === 1
-        const syllableDivision = isSyllableDivisionEnabled(block.key)
-        const textLines = getWrappedText(
-          ctx,
-          blockText,
-          reflowEnabled ? modW * scale : wrapWidth,
-          syllableDivision,
-        )
-
-        const autoBlockX = contentLeft
-        const autoBlockY = contentTop + (blockStartOffset - 1) * baselinePx
-        const origin = getOriginForBlock(block.key, autoBlockX, autoBlockY)
-        const textAlign = blockTextAlignments[block.key] ?? "left"
-        const textAscentPx = getTextAscentPx(ctx, fontSize)
-        const hitTopPadding = Math.max(baselinePx, textAscentPx)
-        const lineStep = baselineMult * baselinePx
-        const pageBottomY = pageHeight - margins.bottom * scale
-        const moduleHeightPx = rowSpan * modH * scale + Math.max(rowSpan - 1, 0) * gridMarginVertical * scale
-        const firstLineTopY = origin.y + baselinePx
-        const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
-        const moduleCyclePx = (modH + gridMarginVertical) * scale
-        let maxUsedRows = 0
-        let lastRenderedLineTopY: number | null = null
-
-        nextRects[block.key] = {
-          x: origin.x,
-          y: origin.y - hitTopPadding,
-          width: wrapWidth,
-          height: columnReflow
-            ? moduleHeightPx + hitTopPadding
-            : (Math.max(textLines.length, 1) * baselineMult + 1) * baselinePx + hitTopPadding,
-        }
-        const commands: TextDrawCommand[] = []
-
-        if (!reflowEnabled) {
-          const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
-          textLines.forEach((line, lineIndex) => {
-            const lineTopY = origin.y + baselinePx + lineIndex * baselineMult * baselinePx
-            const y = lineTopY + textAscentPx
-            if (lineTopY < pageBottomY) {
-              maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
-              const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
-              commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
-            }
-          })
-        } else if (singleColumnReflow) {
-          const textAnchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
-          const lineTops = computeSingleColumnLineTops({
-            firstLineTopY,
-            lineStep,
-            pageBottomY,
-            lineCount: textLines.length,
-            contentTop,
-            moduleHeightPx: modH * scale,
-            moduleCyclePx,
-          })
-          for (let lineIndex = 0; lineIndex < lineTops.length; lineIndex += 1) {
-            const lineTopY = lineTops[lineIndex]
-            const line = textLines[lineIndex]
-            const y = lineTopY + textAscentPx
-            maxUsedRows += 1
-            lastRenderedLineTopY = lineTopY
-            const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
-            commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
-          }
-        } else if (columnReflow) {
-          const columnWidth = modW * scale
-          for (let lineIndex = 0; lineIndex < textLines.length; lineIndex += 1) {
-            const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
-            if (columnIndex >= span) break
-            const rowIndex = lineIndex % maxLinesPerColumn
-            const columnX = origin.x + columnIndex * (columnWidth + gutterX)
-            const textAnchorX = textAlign === "right" ? columnX + columnWidth : columnX
-            const line = textLines[lineIndex]
-            const lineTopY = origin.y + baselinePx + rowIndex * lineStep
-            const y = lineTopY + textAscentPx
-            if (lineTopY >= pageBottomY) continue
-            maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
-            const opticalOffsetX = getOpticalOffset(ctx, line, textAlign, fontSize)
-            commands.push({ text: line, x: textAnchorX + opticalOffsetX, y })
-          }
-        }
-        const overflowLines = reflowEnabled ? Math.max(0, textLines.length - commands.length) : 0
-        overflowByBlock[block.key] = overflowLines
-        if (overflowLines > 0 && syllableDivision && commands.length > 0) {
-          const last = commands[commands.length - 1]
-          if (last.text && !last.text.endsWith("-") && !last.text.endsWith("\u00AD")) {
-            last.text = `${last.text}\u00AD`
-          }
-        }
-        if (singleColumnReflow) {
-          nextRects[block.key].height = lastRenderedLineTopY !== null
-            ? (lastRenderedLineTopY - origin.y) + baselinePx + hitTopPadding
-            : baselinePx + hitTopPadding
-        }
-        if (!reflowEnabled && maxUsedRows > 0) {
-          nextRects[block.key].height = (maxUsedRows * baselineMult + 1) * baselinePx + hitTopPadding
-        }
-
-        draftPlans.set(block.key, {
-          key: block.key,
-          rect: nextRects[block.key],
+        draftPlans.set(plan.key, {
+          key: plan.key,
+          rect: plan.rect,
           signature: [
-            styleKey,
+            plan.styleKey,
             blockFont,
             blockFontWeight === "700" ? "bold" : "regular",
             blockFontStyle ? "italic" : "normal",
-            textAlign,
-            blockRotation.toFixed(2),
-            span,
-            rowSpan,
-            columnReflow ? 1 : 0,
-            origin.x.toFixed(3),
-            origin.y.toFixed(3),
-            nextRects[block.key].width.toFixed(3),
-            nextRects[block.key].height.toFixed(3),
-            commands.map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`).join("||"),
-          ].join("|"),
-          font: planFont,
-          textAlign,
-          blockRotation,
-          rotationOriginX: origin.x,
-          rotationOriginY: origin.y,
-          commands,
-        })
-
-        if (!useParagraphRows) {
-          const usedLineRows = reflowEnabled
-            ? (maxUsedRows || Math.min(textLines.length, Math.max(1, maxLinesPerColumn)))
-            : (maxUsedRows || textLines.length)
-          if (!useRowPlacement || block.key !== "display") {
-            currentBaselineOffset = blockStartOffset + usedLineRows * baselineMult
-          } else {
-            currentBaselineOffset = restStartOffset
-          }
-        } else {
-          const blockEnd = blockStartOffset + textLines.length * baselineMult
-          currentRowIndex = Math.ceil(blockEnd / rowStepBaselines)
-        }
-      }
-
-      const captionKey = "caption" as BlockId
-      const hasCaptionBlock = blockOrder.includes(captionKey)
-      const captionStyleKey = (styleAssignments[captionKey] ?? "caption") as keyof GridResult["typography"]["styles"]
-      const captionStyle = styles[captionStyleKey]
-      const captionText = textContent[captionKey] ?? ""
-      if (hasCaptionBlock && captionStyle && captionText.trim()) {
-        const captionFontSize = captionStyle.size * scale
-        const captionBaselineMult = captionStyle.baselineMultiplier
-        const captionFont = getBlockFont(captionKey)
-
-        const captionFontStyle = isBlockItalic(captionKey) ? "italic " : ""
-        const captionFontWeight = isBlockBold(captionKey) ? "700" : "400"
-        const captionRotation = getBlockRotation(captionKey)
-        ctx.font = `${captionFontStyle}${captionFontWeight} ${captionFontSize}px ${getFontFamilyCss(captionFont)}`
-        const captionPlanFont = ctx.font
-        const captionAlign = blockTextAlignments[captionKey] ?? "left"
-
-        const captionSpan = getBlockSpan(captionKey)
-        const captionRowSpan = getBlockRows(captionKey)
-        const captionWidth = captionSpan * modW * scale + Math.max(captionSpan - 1, 0) * gutterX
-        const captionReflowEnabled = isTextReflowEnabled(captionKey)
-        const captionColumnReflow = captionReflowEnabled && captionSpan >= 2
-        const captionSingleColumnReflow = captionReflowEnabled && captionSpan === 1
-        const captionSyllableDivision = isSyllableDivisionEnabled(captionKey)
-        const captionLines = getWrappedText(
-          ctx,
-          captionText,
-          captionReflowEnabled ? modW * scale : captionWidth,
-          captionSyllableDivision,
-        )
-        const captionLineCount = captionLines.length
-
-        const pageHeightPt = result.pageSizePt.height
-        const availableHeight = pageHeightPt - margins.top - margins.bottom
-        const totalBaselinesFromTop = Math.floor(availableHeight / gridUnit)
-        const firstLineBaselineUnit = totalBaselinesFromTop - (captionLineCount - 1) * captionBaselineMult
-
-        const autoCaptionY = contentTop + (firstLineBaselineUnit - 1) * baselinePx
-        const captionOrigin = getOriginForBlock(captionKey, contentLeft, autoCaptionY)
-        ctx.textAlign = captionAlign
-        const captionAscentPx = getTextAscentPx(ctx, captionFontSize)
-        const captionHitTopPadding = Math.max(baselinePx, captionAscentPx)
-        const captionLineStep = captionBaselineMult * baselinePx
-        const captionPageBottomY = pageHeight - margins.bottom * scale
-        const captionModuleHeightPx = captionRowSpan * modH * scale + Math.max(captionRowSpan - 1, 0) * gridMarginVertical * scale
-        const captionFirstLineTopY = captionOrigin.y + baselinePx
-        const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeightPx / captionLineStep))
-        const captionModuleCyclePx = (modH + gridMarginVertical) * scale
-        let captionMaxUsedRows = 0
-        let captionLastRenderedLineTopY: number | null = null
-        const captionCommands: TextDrawCommand[] = []
-
-        if (!captionReflowEnabled) {
-          const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
-          captionLines.forEach((line, lineIndex) => {
-            const lineTopY = captionOrigin.y + baselinePx + lineIndex * captionBaselineMult * baselinePx
-            const y = lineTopY + captionAscentPx
-            if (lineTopY < captionPageBottomY) {
-              captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
-              const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
-              captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
-            }
-          })
-        } else if (captionSingleColumnReflow) {
-          const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
-          const captionLineTops = computeSingleColumnLineTops({
-            firstLineTopY: captionFirstLineTopY,
-            lineStep: captionLineStep,
-            pageBottomY: captionPageBottomY,
-            lineCount: captionLines.length,
-            contentTop,
-            moduleHeightPx: modH * scale,
-            moduleCyclePx: captionModuleCyclePx,
-          })
-          for (let lineIndex = 0; lineIndex < captionLineTops.length; lineIndex += 1) {
-            const lineTopY = captionLineTops[lineIndex]
-            const line = captionLines[lineIndex]
-            const y = lineTopY + captionAscentPx
-            captionMaxUsedRows += 1
-            captionLastRenderedLineTopY = lineTopY
-            const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
-            captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
-          }
-        } else if (captionColumnReflow) {
-          const columnWidth = modW * scale
-          for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
-            const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
-            if (columnIndex >= captionSpan) break
-            const rowIndex = lineIndex % captionMaxLinesPerColumn
-            const columnX = captionOrigin.x + columnIndex * (columnWidth + gutterX)
-            const captionAnchorX = captionAlign === "right" ? columnX + columnWidth : columnX
-            const line = captionLines[lineIndex]
-            const lineTopY = captionOrigin.y + baselinePx + rowIndex * captionLineStep
-            const y = lineTopY + captionAscentPx
-            if (lineTopY >= captionPageBottomY) continue
-            captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
-            const opticalOffsetX = getOpticalOffset(ctx, line, captionAlign, captionFontSize)
-            captionCommands.push({ text: line, x: captionAnchorX + opticalOffsetX, y })
-          }
-        }
-        const captionOverflowLines = captionReflowEnabled ? Math.max(0, captionLines.length - captionCommands.length) : 0
-        overflowByBlock[captionKey] = captionOverflowLines
-        if (captionOverflowLines > 0 && captionSyllableDivision && captionCommands.length > 0) {
-          const last = captionCommands[captionCommands.length - 1]
-          if (last.text && !last.text.endsWith("-") && !last.text.endsWith("\u00AD")) {
-            last.text = `${last.text}\u00AD`
-          }
-        }
-        const captionRect: BlockRect = {
-          x: captionOrigin.x,
-          y: captionOrigin.y - captionHitTopPadding,
-          width: captionWidth,
-          height: captionSingleColumnReflow
-            ? (captionLastRenderedLineTopY !== null
-              ? (captionLastRenderedLineTopY - captionOrigin.y) + baselinePx + captionHitTopPadding
-              : baselinePx + captionHitTopPadding)
-            : captionColumnReflow
-              ? captionModuleHeightPx + captionHitTopPadding
-              : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselinePx + captionHitTopPadding,
-        }
-        nextRects[captionKey] = captionRect
-        draftPlans.set(captionKey, {
-          key: captionKey,
-          rect: captionRect,
-          signature: [
-            captionStyleKey,
-            captionFont,
-            captionFontWeight === "700" ? "bold" : "regular",
-            captionFontStyle ? "italic" : "normal",
-            captionAlign,
-            captionRotation.toFixed(2),
-            captionSpan,
-            captionRowSpan,
-            captionColumnReflow ? 1 : 0,
-            captionOrigin.x.toFixed(3),
-            captionOrigin.y.toFixed(3),
-            captionRect.width.toFixed(3),
-            captionRect.height.toFixed(3),
-            captionCommands
+            plan.textAlign,
+            plan.blockRotation.toFixed(2),
+            plan.span,
+            plan.rowSpan,
+            plan.columnReflow ? 1 : 0,
+            plan.rotationOriginX.toFixed(3),
+            plan.rotationOriginY.toFixed(3),
+            plan.rect.width.toFixed(3),
+            plan.rect.height.toFixed(3),
+            plan.commands
               .map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`)
               .join("||"),
           ].join("|"),
-          font: captionPlanFont,
-          textAlign: captionAlign,
-          blockRotation: captionRotation,
-          rotationOriginX: captionOrigin.x,
-          rotationOriginY: captionOrigin.y,
-          commands: captionCommands,
+          font: planFont,
+          textAlign: plan.textAlign,
+          blockRotation: plan.blockRotation,
+          rotationOriginX: plan.rotationOriginX,
+          rotationOriginY: plan.rotationOriginY,
+          commands: plan.commands,
         })
       }
 
-      blockRectsRef.current = nextRects
+      blockRectsRef.current = layoutOutput.rects
+      Object.assign(overflowByBlock, layoutOutput.overflowByBlock)
       onOverflowLinesChange?.(overflowByBlock)
 
       let typographyBuffer = typographyBufferRef.current
