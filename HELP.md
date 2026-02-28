@@ -65,8 +65,9 @@ Comprehensive user reference for the in-app Help sidebar.
 
 - Drag moves a block snapped to module anchors.
 - `Shift` + drag duplicates a block and drops the copy.
-- `Ctrl` + drag snaps drop row to nearest baseline row.
-- Block spans and positions are clamped to valid grid bounds.
+- `Ctrl` + drag snaps to baseline rows and baseline columns (instead of module-row anchors).
+- `Ctrl` + drag enables overset placement for “angeschnitten” layouts (left/right/top/bottom).
+- Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.
 
 ## History and Reflow
 

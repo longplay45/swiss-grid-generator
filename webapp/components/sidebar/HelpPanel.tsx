@@ -170,8 +170,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Drag moves a block snapped to module anchors.</li>
           <li>`Shift` + drag duplicates a block and drops the copy.</li>
-          <li>`Ctrl` + drag snaps drop row to nearest baseline row.</li>
-          <li>Block spans and positions are clamped to valid grid bounds.</li>
+          <li>`Ctrl` + drag snaps to baseline rows and baseline columns (not module rows).</li>
+          <li>`Ctrl` + drag allows overset placement for “angeschnitten” layouts (left/right/top/bottom).</li>
+          <li>Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.</li>
         </ul>
       </section>
 

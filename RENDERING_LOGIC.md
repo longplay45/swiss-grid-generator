@@ -131,6 +131,7 @@ Current rule:
 - Dragging a block changes only position
 - Dragging does not auto-change column span
 - Copy-on-drop duplicates block settings and preserves source span
+- `Ctrl` + drag uses baseline snapping with extended overset anchors (`col` and `row` can go beyond module-fit bounds for clipped/“angeschnitten” layouts)
 
 This prevents unwanted column-span mutation (e.g. 1 col becoming 2 cols automatically).
 

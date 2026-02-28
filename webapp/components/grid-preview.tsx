@@ -1657,7 +1657,7 @@ export const GridPreview = memo(function GridPreview({
                 Pos: {hoveredModulePosition ? `col ${hoveredModulePosition.col}, row ${hoveredModulePosition.row}` : "auto-flow"} • Overflow lines: {hoveredOverflowLines ?? 0}
               </div>
               <div className="mt-1 text-[11px] text-gray-500">
-                Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap • Touch: long-press then drag
+                Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap (overset) • Touch: long-press then drag
               </div>
             </div>
           ) : null}
