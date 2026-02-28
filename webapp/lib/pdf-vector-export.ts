@@ -419,6 +419,9 @@ export function renderSwissGridVectorPdf({
   const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
+  const blockCustomSizes = layout?.blockCustomSizes ?? {}
+  const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
+  const blockTextColors = layout?.blockTextColors ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
   const textMeasureContext = createTextMeasureContext()
 
@@ -459,6 +462,23 @@ export function renderSwissGridVectorPdf({
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
     return Math.max(-180, Math.min(180, raw))
+  }
+  const getBlockFontSize = (key: BlockId, styleKey: TypographyStyleKey, defaultSize: number) => {
+    if (styleKey !== "fx") return defaultSize
+    const raw = blockCustomSizes[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultSize
+    return Math.max(1, Math.min(400, raw))
+  }
+
+  const getBlockBaselineMultiplier = (
+    key: BlockId,
+    styleKey: TypographyStyleKey,
+    defaultMultiplier: number,
+  ) => {
+    if (styleKey !== "fx") return defaultMultiplier
+    const raw = blockCustomLeadings[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultMultiplier
+    return Math.max(0.01, Math.min(800, raw) / gridUnit)
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
@@ -511,6 +531,12 @@ export function renderSwissGridVectorPdf({
     defaultCaptionStyleKey: "caption",
     getBlockSpan,
     getBlockRows,
+    getBlockFontSize: ({ key, styleKey, defaultSize }) => (
+      getBlockFontSize(key, styleKey, defaultSize)
+    ),
+    getBlockBaselineMultiplier: ({ key, styleKey, defaultMultiplier }) => (
+      getBlockBaselineMultiplier(key, styleKey, defaultMultiplier)
+    ),
     getBlockRotation,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
@@ -550,6 +576,7 @@ export function renderSwissGridVectorPdf({
     const blockFont = getBlockFont(plan.key)
     const blockIsBold = isBlockBold(plan.key, plan.styleKey)
     const blockIsItalic = isBlockItalic(plan.key, plan.styleKey)
+    const blockTextColor = parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 }
     const canvasFont = buildCanvasFont(blockFont, blockIsBold, blockIsItalic, plan.fontSize)
     const measureWidthSource = (text: string) => {
       if (textMeasureContext) {
@@ -559,6 +586,7 @@ export function renderSwissGridVectorPdf({
       return pdf.getTextWidth(text) / scale
     }
     pdf.setFont(getPdfFontFamily(blockFont), getFontStyle(blockIsBold, blockIsItalic))
+    setTextColorCmyk(pdf, blockTextColor)
     pdf.setFontSize(plan.fontSize * scale)
     const rotationOrigin = { x: plan.rotationOriginX, y: plan.rotationOriginY }
     for (const command of plan.commands) {

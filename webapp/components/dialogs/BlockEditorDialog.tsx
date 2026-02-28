@@ -20,13 +20,16 @@ import {
   CaseSensitive,
   Columns3,
   Italic,
+  Palette,
   RotateCw,
   Rows3,
   Save as SaveIcon,
   Trash2,
   Type,
 } from "lucide-react"
+import { useEffect, useState } from "react"
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
 export type BlockEditorTextAlign = "left" | "right"
 
@@ -34,10 +37,13 @@ export type BlockEditorState<StyleKey extends string = string> = {
   target: string
   draftText: string
   draftStyle: StyleKey
+  draftFxSize: number
+  draftFxLeading: number
   draftFont: FontFamily
   draftColumns: number
   draftRows: number
   draftAlign: BlockEditorTextAlign
+  draftColor: string
   draftReflow: boolean
   draftSyllableDivision: boolean
   draftBold: boolean
@@ -68,7 +74,14 @@ type BlockEditorDialogProps<StyleKey extends string> = {
   colTriggerMinWidthCh: number
   styleOptions: Array<BlockEditorStyleOption<StyleKey>>
   getStyleSizeLabel: (styleKey: StyleKey) => string
+  getStyleSizeValue: (styleKey: StyleKey) => number
+  getStyleLeadingValue: (styleKey: StyleKey) => number
+  isFxStyle: (styleKey: StyleKey) => boolean
   getDummyTextForStyle: (styleKey: StyleKey) => string
+  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
+  selectedColorScheme: ImageColorSchemeId
+  onColorSchemeChange: (value: ImageColorSchemeId) => void
+  palette: readonly string[]
 }
 
 function EditorControlTooltip({
@@ -108,13 +121,34 @@ export function BlockEditorDialog<StyleKey extends string>({
   colTriggerMinWidthCh,
   styleOptions,
   getStyleSizeLabel,
+  getStyleSizeValue,
+  getStyleLeadingValue,
+  isFxStyle,
   getDummyTextForStyle,
+  colorSchemes,
+  selectedColorScheme,
+  onColorSchemeChange,
+  palette,
 }: BlockEditorDialogProps<StyleKey>) {
+  const [fxSizeInput, setFxSizeInput] = useState("")
+  const [fxLeadingInput, setFxLeadingInput] = useState("")
+
+  useEffect(() => {
+    if (!editorState) {
+      setFxSizeInput("")
+      setFxLeadingInput("")
+      return
+    }
+    setFxSizeInput(String(editorState.draftFxSize))
+    setFxLeadingInput(String(editorState.draftFxLeading))
+  }, [editorState])
+
   if (!editorState) return null
 
   const editorText = editorState.draftText ?? ""
   const editorCharacterCount = editorText.length
   const editorWordCount = editorText.trim() ? editorText.trim().split(/\s+/).length : 0
+  const fxSelected = isFxStyle(editorState.draftStyle)
 
   return (
     <div
@@ -245,6 +279,12 @@ export function BlockEditorDialog<StyleKey extends string>({
                         setEditorState((prev) => prev ? {
                           ...prev,
                           draftStyle: nextStyle,
+                          draftFxSize: isFxStyle(nextStyle)
+                            ? (isFxStyle(prev.draftStyle) ? prev.draftFxSize : getStyleSizeValue(nextStyle))
+                            : prev.draftFxSize,
+                          draftFxLeading: isFxStyle(nextStyle)
+                            ? (isFxStyle(prev.draftStyle) ? prev.draftFxLeading : getStyleLeadingValue(nextStyle))
+                            : prev.draftFxLeading,
                           draftText: prev.draftTextEdited ? prev.draftText : getDummyTextForStyle(nextStyle),
                         } : prev)
                       }}
@@ -286,6 +326,86 @@ export function BlockEditorDialog<StyleKey extends string>({
                 </EditorControlTooltip>
               </div>
             </div>
+            {fxSelected ? (
+              <div className="flex items-center gap-3">
+                <div className="shrink-0">
+                  <EditorControlTooltip label="FX font size (pt)" className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={fxSizeInput}
+                        onChange={(event) => {
+                          const normalized = event.target.value.replace(",", ".")
+                          if (!/^\d*\.?\d*$/.test(normalized)) return
+                          setFxSizeInput(normalized)
+                        }}
+                        onBlur={() => {
+                          const parsed = Number(fxSizeInput)
+                          if (!Number.isFinite(parsed) || parsed <= 0) {
+                            setFxSizeInput(String(editorState.draftFxSize))
+                            return
+                          }
+                          const clamped = Math.max(1, Math.min(400, Math.round(parsed * 10) / 10))
+                          setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
+                          setFxSizeInput(String(clamped))
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== "Enter") return
+                          event.preventDefault()
+                          ;(event.currentTarget as HTMLInputElement).blur()
+                        }}
+                        className={`h-8 w-20 rounded-md border px-2 text-xs outline-none ${
+                          isDarkMode
+                            ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"
+                            : "border-gray-200 bg-gray-50 text-gray-900 focus:border-gray-300"
+                        }`}
+                        aria-label="FX font size"
+                      />
+                      <span className="text-xs text-gray-500">pt</span>
+                    </div>
+                  </EditorControlTooltip>
+                </div>
+                <div className="shrink-0">
+                  <EditorControlTooltip label="FX line leading (pt)" className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={fxLeadingInput}
+                        onChange={(event) => {
+                          const normalized = event.target.value.replace(",", ".")
+                          if (!/^\d*\.?\d*$/.test(normalized)) return
+                          setFxLeadingInput(normalized)
+                        }}
+                        onBlur={() => {
+                          const parsed = Number(fxLeadingInput)
+                          if (!Number.isFinite(parsed) || parsed <= 0) {
+                            setFxLeadingInput(String(editorState.draftFxLeading))
+                            return
+                          }
+                          const clamped = Math.max(1, Math.min(800, Math.round(parsed * 10) / 10))
+                          setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
+                          setFxLeadingInput(String(clamped))
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== "Enter") return
+                          event.preventDefault()
+                          ;(event.currentTarget as HTMLInputElement).blur()
+                        }}
+                        className={`h-8 w-20 rounded-md border px-2 text-xs outline-none ${
+                          isDarkMode
+                            ? "border-gray-700 bg-gray-950 text-gray-100 focus:border-gray-600"
+                            : "border-gray-200 bg-gray-50 text-gray-900 focus:border-gray-300"
+                        }`}
+                        aria-label="FX line leading"
+                      />
+                      <span className="text-xs text-gray-500">pt</span>
+                    </div>
+                  </EditorControlTooltip>
+                </div>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className={`flex items-center rounded-md border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
@@ -391,6 +511,57 @@ export function BlockEditorDialog<StyleKey extends string>({
                 </Button>
               </EditorControlTooltip>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="shrink-0 min-w-[92px]">
+                <EditorControlTooltip label="Color shema" className="min-w-0">
+                  <Select
+                    value={selectedColorScheme}
+                    onValueChange={(value) => {
+                      const nextScheme = value as ImageColorSchemeId
+                      onColorSchemeChange(nextScheme)
+                      const nextPalette = colorSchemes.find((scheme) => scheme.id === nextScheme)?.colors ?? palette
+                      const hasCurrentColor = nextPalette.some((color) => color.toLowerCase() === editorState.draftColor.toLowerCase())
+                      if (hasCurrentColor || !nextPalette.length) return
+                      setEditorState((prev) => (prev ? { ...prev, draftColor: nextPalette[0] } : prev))
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colorSchemes.map((scheme) => (
+                        <SelectItem key={scheme.id} value={scheme.id}>
+                          {scheme.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </EditorControlTooltip>
+              </div>
+              <div className="flex items-center gap-2">
+                <EditorControlTooltip label="Text color palette" className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 shrink-0 text-gray-500" />
+                    <div className="grid grid-cols-4 gap-2">
+                      {palette.map((color, index) => {
+                        const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
+                        return (
+                          <button
+                            key={`${selectedColorScheme}-${index}-${color}`}
+                            type="button"
+                            onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
+                            className={`h-6 w-8 rounded border ${selected ? "ring-2 ring-offset-1 ring-gray-500" : ""} ${isDarkMode ? "ring-offset-gray-900" : "ring-offset-white"}`}
+                            style={{ backgroundColor: color }}
+                            aria-label={`Select ${color}`}
+                            title={color}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                </EditorControlTooltip>
+              </div>
+            </div>
         </div>
         <div className="p-3">
           <textarea
@@ -420,6 +591,7 @@ export function BlockEditorDialog<StyleKey extends string>({
               fontStyle: editorState.draftItalic ? "italic" : "normal",
               fontWeight: editorState.draftBold ? 700 : 400,
               textAlign: editorState.draftAlign,
+              color: editorState.draftColor,
             }}
             className={`min-h-40 w-full resize-y rounded-md border p-3 outline-none ring-0 ${
               isDarkMode

@@ -30,6 +30,7 @@ type BlockRenderPlan<BlockId extends string> = {
   rect: BlockRect
   signature: string
   font: string
+  textColor: string
   textAlign: TextAlignMode
   blockRotation: number
   rotationOriginX: number
@@ -66,6 +67,9 @@ type Args<BlockId extends string> = {
   getBlockRotation: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
+  getBlockFontSize: (key: BlockId, styleKey: keyof GridResult["typography"]["styles"]) => number
+  getBlockBaselineMultiplier: (key: BlockId, styleKey: keyof GridResult["typography"]["styles"]) => number
+  getBlockTextColor: (key: BlockId) => string
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   getWrappedText: (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, hyphenate: boolean) => string[]
@@ -104,6 +108,9 @@ export function useTypographyRenderer<BlockId extends string>({
   getBlockRotation,
   getBlockSpan,
   getBlockRows,
+  getBlockFontSize,
+  getBlockBaselineMultiplier,
+  getBlockTextColor,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   getWrappedText,
@@ -213,6 +220,14 @@ export function useTypographyRenderer<BlockId extends string>({
         defaultCaptionStyleKey: "caption",
         getBlockSpan,
         getBlockRows,
+        getBlockFontSize: ({ key, styleKey, defaultSize }) => {
+          const scaledSize = getBlockFontSize(key, styleKey) * scale
+          return Number.isFinite(scaledSize) && scaledSize > 0 ? scaledSize : defaultSize
+        },
+        getBlockBaselineMultiplier: ({ key, styleKey, defaultMultiplier }) => {
+          const next = getBlockBaselineMultiplier(key, styleKey)
+          return Number.isFinite(next) && next > 0 ? next : defaultMultiplier
+        },
         getBlockRotation,
         isTextReflowEnabled,
         isSyllableDivisionEnabled,
@@ -244,6 +259,7 @@ export function useTypographyRenderer<BlockId extends string>({
           signature: [
             plan.styleKey,
             blockFont,
+            getBlockTextColor(plan.key),
             blockFontWeight === "700" ? "bold" : "regular",
             blockFontStyle ? "italic" : "normal",
             plan.textAlign,
@@ -260,6 +276,7 @@ export function useTypographyRenderer<BlockId extends string>({
               .join("||"),
           ].join("|"),
           font: planFont,
+          textColor: getBlockTextColor(plan.key),
           textAlign: plan.textAlign,
           blockRotation: plan.blockRotation,
           rotationOriginX: plan.rotationOriginX,
@@ -299,9 +316,9 @@ export function useTypographyRenderer<BlockId extends string>({
       const bufferCssHeight = typographyBuffer.height / pixelRatio
 
       const drawPlans = (plans: BlockRenderPlan<BlockId>[]) => {
-        bufferCtx.fillStyle = "#1f2937"
         bufferCtx.textBaseline = "alphabetic"
         for (const plan of plans) {
+          bufferCtx.fillStyle = plan.textColor
           bufferCtx.font = plan.font
           bufferCtx.textAlign = plan.textAlign
           const angle = (plan.blockRotation * Math.PI) / 180
@@ -355,6 +372,9 @@ export function useTypographyRenderer<BlockId extends string>({
     getBlockFont,
     getBlockRotation,
     getBlockRows,
+    getBlockFontSize,
+    getBlockBaselineMultiplier,
+    getBlockTextColor,
     getBlockSpan,
     getOpticalOffset,
     getWrappedText,

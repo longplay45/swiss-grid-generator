@@ -209,6 +209,7 @@ type TypographyRatios = Record<string, {
 
 // Swiss (hand-tuned) — original ratios from Müller-Brockmann reference
 const TYPOGRAPHY_RATIOS_SWISS: TypographyRatios = {
+  fx:       { sizeRatio: 96 / 12, leadingMult: 8, bodyLines: 8, weight: "Bold" },      // 8.000× baseline
   caption:  { sizeRatio:  7 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },  // 0.583× baseline
   body:     { sizeRatio: 10 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.833× baseline
   subhead:  { sizeRatio: 20 / 12, leadingMult: 2, bodyLines: 2, weight: "Regular" },  // 1.667× baseline
@@ -219,6 +220,7 @@ const TYPOGRAPHY_RATIOS_SWISS: TypographyRatios = {
 // Golden Ratio (φ=1.618) — steps from body: -1, 0, +1, +2, +4
 const PHI = 1.618;
 const TYPOGRAPHY_RATIOS_GOLDEN: TypographyRatios = {
+  fx:       { sizeRatio: (10 * PHI ** 5) / 12,      leadingMult: 8, bodyLines: 8, weight: "Bold" },
   caption:  { sizeRatio: (10 / PHI) / 12,           leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },
   body:     { sizeRatio: 10 / 12,                   leadingMult: 1, bodyLines: 1, weight: "Regular" },
   subhead:  { sizeRatio: (10 * PHI) / 12,           leadingMult: 2, bodyLines: 2, weight: "Regular" },
@@ -229,6 +231,7 @@ const TYPOGRAPHY_RATIOS_GOLDEN: TypographyRatios = {
 // Perfect Fourth (4:3) — steps from body: -1, 0, +2, +3, +6
 const P4 = 4 / 3;
 const TYPOGRAPHY_RATIOS_FOURTH: TypographyRatios = {
+  fx:       { sizeRatio: (10 * P4 ** 7) / 12,   leadingMult: 8, bodyLines: 8, weight: "Bold" },
   caption:  { sizeRatio: (10 / P4) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },
   body:     { sizeRatio: 10 / 12,                leadingMult: 1, bodyLines: 1, weight: "Regular" },
   subhead:  { sizeRatio: (10 * P4 ** 2) / 12,   leadingMult: 2, bodyLines: 2, weight: "Regular" },
@@ -239,6 +242,7 @@ const TYPOGRAPHY_RATIOS_FOURTH: TypographyRatios = {
 // Perfect Fifth (3:2) — steps from body: -1, 0, +1, +2, +4
 const P5 = 3 / 2;
 const TYPOGRAPHY_RATIOS_FIFTH: TypographyRatios = {
+  fx:       { sizeRatio: (10 * P5 ** 5) / 12,   leadingMult: 8, bodyLines: 8, weight: "Bold" },
   caption:  { sizeRatio: (10 / P5) / 12,        leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },
   body:     { sizeRatio: 10 / 12,               leadingMult: 1, bodyLines: 1, weight: "Regular" },
   subhead:  { sizeRatio: (10 * P5) / 12,        leadingMult: 2, bodyLines: 2, weight: "Regular" },
@@ -248,6 +252,7 @@ const TYPOGRAPHY_RATIOS_FIFTH: TypographyRatios = {
 
 // Fibonacci sizes (A4 baseline reference): 8, 13, 21, 34, 55 pt
 const TYPOGRAPHY_RATIOS_FIBONACCI: TypographyRatios = {
+  fx:       { sizeRatio: 89 / 12,  leadingMult: 8, bodyLines: 8, weight: "Bold" },
   caption:  { sizeRatio: 8 / 12,   leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },
   body:     { sizeRatio: 13 / 12,  leadingMult: 1, bodyLines: 1, weight: "Regular" },
   subhead:  { sizeRatio: 21 / 12,  leadingMult: 2, bodyLines: 2, weight: "Regular" },
@@ -444,9 +449,10 @@ function generateTypographyStyles(
     const scaledSize = gridUnit * style.sizeRatio;
     // Leading = baseline × multiplier (always baseline-aligned)
     const scaledLeading = gridUnit * style.leadingMult;
+    const flooredSize = Math.max(1, Math.floor(scaledSize));
 
     scaledStyles[styleName] = {
-      size: Math.round(scaledSize * 1000) / 1000,
+      size: flooredSize,
       leading: Math.round(scaledLeading * 1000) / 1000,
       weight: style.weight,
       blockItalic: style.blockItalic === true,

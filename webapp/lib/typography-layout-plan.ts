@@ -60,6 +60,8 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   defaultCaptionStyleKey: StyleKey
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
+  getBlockFontSize?: (args: { key: BlockId; styleKey: StyleKey; defaultSize: number }) => number
+  getBlockBaselineMultiplier?: (args: { key: BlockId; styleKey: StyleKey; defaultMultiplier: number }) => number
   getBlockRotation: (key: BlockId) => number
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
@@ -109,6 +111,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   defaultCaptionStyleKey,
   getBlockSpan,
   getBlockRows,
+  getBlockFontSize,
+  getBlockBaselineMultiplier,
   getBlockRotation,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
@@ -152,8 +156,13 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const styleKey = styleAssignments[key] ?? defaultBodyStyleKey
     const style = styles[styleKey]
     if (!style) continue
-    const fontSize = style.size * fontScale
-    const baselineMult = style.baselineMultiplier
+    const defaultFontSize = style.size * fontScale
+    const fontSize = getBlockFontSize?.({ key, styleKey, defaultSize: defaultFontSize }) ?? defaultFontSize
+    const baselineMult = getBlockBaselineMultiplier?.({
+      key,
+      styleKey,
+      defaultMultiplier: style.baselineMultiplier,
+    }) ?? style.baselineMultiplier
 
     let blockStartOffset = currentBaselineOffset + (key === bodyKey ? 1 : 0)
     if (useParagraphRows) {
@@ -310,8 +319,17 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     return { plans, rects, overflowByBlock }
   }
 
-  const captionFontSize = captionStyle.size * fontScale
-  const captionBaselineMult = captionStyle.baselineMultiplier
+  const captionDefaultFontSize = captionStyle.size * fontScale
+  const captionFontSize = getBlockFontSize?.({
+    key: captionKey,
+    styleKey: captionStyleKey,
+    defaultSize: captionDefaultFontSize,
+  }) ?? captionDefaultFontSize
+  const captionBaselineMult = getBlockBaselineMultiplier?.({
+    key: captionKey,
+    styleKey: captionStyleKey,
+    defaultMultiplier: captionStyle.baselineMultiplier,
+  }) ?? captionStyle.baselineMultiplier
   const captionContext = createTextContext({ key: captionKey, styleKey: captionStyleKey, fontSize: captionFontSize })
   const captionAlign = blockTextAlignments[captionKey] ?? "left"
   const captionSpan = getBlockSpan(captionKey)

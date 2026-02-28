@@ -42,6 +42,8 @@ type Args<BlockId extends string, ReflowInput, Snapshot> = {
   getBlockRows: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getStyleKeyForBlock: (key: BlockId) => string
+  getBlockFontSize: (key: BlockId, styleKey: string) => number
+  getBlockBaselineMultiplier: (key: BlockId, styleKey: string) => number
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   buildSnapshot: () => Snapshot
@@ -95,6 +97,8 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   getBlockRows,
   getBlockSpan,
   getStyleKeyForBlock,
+  getBlockFontSize,
+  getBlockBaselineMultiplier,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   buildSnapshot,
@@ -331,8 +335,8 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
         key,
         text: textContent[key] ?? "",
         style: {
-          size: style.size,
-          baselineMultiplier: style.baselineMultiplier,
+          size: getBlockFontSize(key, styleKey),
+          baselineMultiplier: getBlockBaselineMultiplier(key, styleKey),
           weight: style.weight,
         },
         rowSpan: getBlockRows(key),
@@ -401,6 +405,8 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     cancelAutoFitWorkerRequest,
     computeAutoFitFallback,
     getBlockRows,
+    getBlockFontSize,
+    getBlockBaselineMultiplier,
     getBlockSpan,
     getStyleKeyForBlock,
     gridCols,

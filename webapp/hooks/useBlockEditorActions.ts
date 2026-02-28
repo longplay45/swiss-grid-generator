@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react"
 
+import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { Updater } from "@/hooks/useStateCommands"
 
@@ -15,10 +16,13 @@ type EditorState = {
   target: string
   draftText: string
   draftStyle: string
+  draftFxSize: number
+  draftFxLeading: number
   draftFont: FontFamily
   draftColumns: number
   draftRows: number
   draftAlign: TextAlignMode
+  draftColor: string
   draftReflow: boolean
   draftSyllableDivision: boolean
   draftBold: boolean
@@ -65,6 +69,8 @@ type Args = {
   textContent: Record<string, string>
   blockTextEdited: Record<string, boolean>
   styleAssignments: Record<string, string>
+  blockCustomSizes: Partial<Record<string, number>>
+  blockCustomLeadings: Partial<Record<string, number>>
   blockTextAlignments: Partial<Record<string, TextAlignMode>>
   blockModulePositions: Partial<Record<string, ModulePosition>>
   recordHistoryBeforeChange: () => void
@@ -73,6 +79,9 @@ type Args = {
   setTextContent: (next: Updater<Record<string, string>>) => void
   setBlockTextEdited: (next: Updater<Record<string, boolean>>) => void
   setStyleAssignments: (next: Updater<Record<string, string>>) => void
+  setBlockCustomSizes: (next: Updater<Partial<Record<string, number>>>) => void
+  setBlockCustomLeadings: (next: Updater<Partial<Record<string, number>>>) => void
+  setBlockTextColors: (next: Updater<Partial<Record<string, string>>>) => void
   setBlockColumnSpans: (next: Updater<Partial<Record<string, number>>>) => void
   setBlockTextAlignments: (next: Updater<Partial<Record<string, TextAlignMode>>>) => void
   setBlockModulePositions: (next: Updater<Partial<Record<string, ModulePosition>>>) => void
@@ -83,13 +92,19 @@ type Args = {
     rowSpan: number
     reflow: boolean
     syllableDivision: boolean
+    baselineMultiplierOverride?: number
     position?: ModulePosition
   }) => AutoFitResult
   getGridMetrics: () => { maxBaselineRow: number }
   isBaseBlockId: (key: string) => boolean
   getNextCustomBlockId: () => string
   getDummyTextForStyle: (style: string) => string
+  getStyleSize: (style: string) => number
+  getStyleLeading: (style: string) => number
+  getBlockTextColor: (key: string) => string
+  defaultTextColor: string
   getDefaultColumnSpan: (key: string, gridCols: number) => number
+  resultGridUnit: number
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
@@ -101,6 +116,14 @@ type Args = {
   isBlockBold: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   getBlockRotation: (key: string) => number
+}
+
+function clampFxSize(value: number): number {
+  return Math.max(1, Math.min(400, value))
+}
+
+function clampFxLeading(value: number): number {
+  return Math.max(1, Math.min(800, value))
 }
 
 export function useBlockEditorActions({
@@ -117,6 +140,8 @@ export function useBlockEditorActions({
   textContent,
   blockTextEdited,
   styleAssignments,
+  blockCustomSizes,
+  blockCustomLeadings,
   blockTextAlignments,
   blockModulePositions,
   recordHistoryBeforeChange,
@@ -125,6 +150,9 @@ export function useBlockEditorActions({
   setTextContent,
   setBlockTextEdited,
   setStyleAssignments,
+  setBlockCustomSizes,
+  setBlockCustomLeadings,
+  setBlockTextColors,
   setBlockColumnSpans,
   setBlockTextAlignments,
   setBlockModulePositions,
@@ -133,7 +161,12 @@ export function useBlockEditorActions({
   isBaseBlockId,
   getNextCustomBlockId,
   getDummyTextForStyle,
+  getStyleSize,
+  getStyleLeading,
+  getBlockTextColor,
+  defaultTextColor,
   getDefaultColumnSpan,
+  resultGridUnit,
   toPagePoint,
   findTopmostBlockAtPoint,
   snapToModule,
@@ -161,6 +194,9 @@ export function useBlockEditorActions({
       rowSpan: editorState.draftRows,
       reflow: editorState.draftReflow,
       syllableDivision: editorState.draftSyllableDivision,
+      baselineMultiplierOverride: editorState.draftStyle === "fx"
+        ? clampFxLeading(editorState.draftFxLeading) / resultGridUnit
+        : undefined,
       position: existingPosition,
     })
     const nextSpan = editorState.draftColumns
@@ -260,6 +296,33 @@ export function useBlockEditorActions({
         blockModulePositions: nextPositions,
       }
     })
+    setBlockCustomSizes((prev) => {
+      const next = { ...prev }
+      if (editorState.draftStyle === "fx") {
+        next[editorState.target] = clampFxSize(editorState.draftFxSize)
+      } else {
+        delete next[editorState.target]
+      }
+      return next
+    })
+    setBlockCustomLeadings((prev) => {
+      const next = { ...prev }
+      if (editorState.draftStyle === "fx") {
+        next[editorState.target] = clampFxLeading(editorState.draftFxLeading)
+      } else {
+        delete next[editorState.target]
+      }
+      return next
+    })
+    setBlockTextColors((prev) => {
+      const next = { ...prev }
+      if (isImagePlaceholderColor(editorState.draftColor)) {
+        next[editorState.target] = editorState.draftColor
+      } else {
+        delete next[editorState.target]
+      }
+      return next
+    })
     setEditorState(null)
   }, [
     baseFont,
@@ -269,8 +332,12 @@ export function useBlockEditorActions({
     getGridMetrics,
     recordHistoryBeforeChange,
     resultGridCols,
+    resultGridUnit,
     resultTypographyStyles,
     setBlockCollections,
+    setBlockCustomLeadings,
+    setBlockTextColors,
+    setBlockCustomSizes,
     setEditorState,
   ])
 
@@ -318,8 +385,25 @@ export function useBlockEditorActions({
         blockModulePositions: omitTarget(prev.blockModulePositions) as Partial<Record<string, ModulePosition>>,
       }
     })
+    if (!isBaseBlockId(target)) {
+      setBlockCustomSizes((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockCustomLeadings((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+      setBlockTextColors((prev) => {
+        const next = { ...prev }
+        delete next[target]
+        return next
+      })
+    }
     setEditorState(null)
-  }, [editorState, isBaseBlockId, recordHistoryBeforeChange, setBlockCollections, setEditorState])
+  }, [editorState, isBaseBlockId, recordHistoryBeforeChange, setBlockCollections, setBlockCustomLeadings, setBlockCustomSizes, setBlockTextColors, setEditorState])
 
   const handleCanvasDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
@@ -333,14 +417,22 @@ export function useBlockEditorActions({
 
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (key) {
+      const styleKey = styleAssignments[key] ?? "body"
       setEditorState({
         target: key,
         draftText: textContent[key] ?? "",
-        draftStyle: styleAssignments[key] ?? "body",
+        draftStyle: styleKey,
+        draftFxSize: styleKey === "fx"
+          ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
+          : getStyleSize("fx"),
+        draftFxLeading: styleKey === "fx"
+          ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading("fx"))
+          : getStyleLeading("fx"),
         draftFont: getBlockFont(key),
         draftColumns: getBlockSpan(key),
         draftRows: getBlockRows(key),
         draftAlign: blockTextAlignments[key] ?? "left",
+        draftColor: getBlockTextColor(key),
         draftReflow: isTextReflowEnabled(key),
         draftSyllableDivision: isSyllableDivisionEnabled(key),
         draftBold: isBlockBold(key),
@@ -391,10 +483,13 @@ export function useBlockEditorActions({
       target: newKey,
       draftText: getDummyTextForStyle("body"),
       draftStyle: "body",
+      draftFxSize: getStyleSize("fx"),
+      draftFxLeading: getStyleLeading("fx"),
       draftFont: baseFont,
       draftColumns: defaultSpan,
       draftRows: 1,
       draftAlign: "left",
+      draftColor: defaultTextColor,
       draftReflow: false,
       draftSyllableDivision: false,
       draftBold: false,
@@ -404,6 +499,8 @@ export function useBlockEditorActions({
     })
   }, [
     baseFont,
+    blockCustomLeadings,
+    blockCustomSizes,
     blockOrder,
     blockTextAlignments,
     blockTextEdited,
@@ -416,6 +513,9 @@ export function useBlockEditorActions({
     getBlockSpan,
     getDefaultColumnSpan,
     getDummyTextForStyle,
+    getBlockTextColor,
+    getStyleLeading,
+    getStyleSize,
     getNextCustomBlockId,
     isBlockBold,
     isBlockItalic,
@@ -424,6 +524,7 @@ export function useBlockEditorActions({
     recordHistoryBeforeChange,
     resultGridCols,
     resultGridRows,
+    defaultTextColor,
     setBlockColumnSpans,
     setBlockModulePositions,
     setBlockOrder,

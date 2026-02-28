@@ -146,7 +146,7 @@ test("custom margins override defaults; top/bottom are baseline-snapped", () => 
 
 test("typography styles stay baseline-aligned across all scales", () => {
   const scales = ["swiss", "golden", "fourth", "fifth", "fibonacci"]
-  const styleKeys = ["caption", "body", "subhead", "headline", "display"]
+  const styleKeys = ["fx", "caption", "body", "subhead", "headline", "display"]
 
   for (const scale of scales) {
     const result = generateSwissGrid({
@@ -162,6 +162,7 @@ test("typography styles stay baseline-aligned across all scales", () => {
     for (const key of styleKeys) {
       const style = result.typography.styles[key]
       assert.ok(style, `missing style "${key}" for scale "${scale}"`)
+      assert.equal(Number.isInteger(style.size), true, `style "${key}" should be floored to integer pt`)
       assert.equal(style.leading, round3(result.grid.gridUnit * style.baselineMultiplier))
     }
   }
