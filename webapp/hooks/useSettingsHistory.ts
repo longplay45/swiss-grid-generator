@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { DisplayUnit, TypographyScale } from "@/lib/config/defaults"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
-export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "summary"] as const
+export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "color", "summary"] as const
 export type SectionKey = typeof SECTION_KEYS[number]
 
 export type UiSettingsSnapshot = {
@@ -22,6 +23,7 @@ export type UiSettingsSnapshot = {
   gutterMultiple: number
   typographyScale: TypographyScale
   baseFont: FontFamily
+  imageColorScheme: ImageColorSchemeId
   customBaseline: number
   displayUnit: DisplayUnit
   useCustomMargins: boolean
@@ -52,6 +54,7 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.gutterMultiple === b.gutterMultiple
     && a.typographyScale === b.typographyScale
     && a.baseFont === b.baseFont
+    && a.imageColorScheme === b.imageColorScheme
     && a.customBaseline === b.customBaseline
     && a.displayUnit === b.displayUnit
     && a.useCustomMargins === b.useCustomMargins
@@ -68,6 +71,7 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.collapsed.margins === b.collapsed.margins
     && a.collapsed.gutter === b.collapsed.gutter
     && a.collapsed.typo === b.collapsed.typo
+    && a.collapsed.color === b.collapsed.color
     && a.collapsed.summary === b.collapsed.summary
   )
 }

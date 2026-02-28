@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select"
 import { Image as ImageIcon, Rows3, Columns3, Palette, Save as SaveIcon, Trash2 } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
 export type ImageEditorState = {
   target: string
@@ -26,6 +27,9 @@ type ImageEditorDialogProps = {
   deleteEditor: () => void
   gridRows: number
   gridCols: number
+  colorSchemes: readonly { id: ImageColorSchemeId; label: string }[]
+  selectedColorScheme: ImageColorSchemeId
+  onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
   isDarkMode: boolean
 }
@@ -38,6 +42,9 @@ export function ImageEditorDialog({
   deleteEditor,
   gridRows,
   gridCols,
+  colorSchemes,
+  selectedColorScheme,
+  onColorSchemeChange,
   palette,
   isDarkMode,
 }: ImageEditorDialogProps) {
@@ -63,6 +70,25 @@ export function ImageEditorDialog({
         </div>
 
         <div className="space-y-3 px-3 py-3">
+          <div className="space-y-1">
+            <div className="text-xs">Color Shema</div>
+            <Select
+              value={selectedColorScheme}
+              onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
+            >
+              <SelectTrigger className={`h-8 ${isDarkMode ? "border-gray-700 bg-gray-950 text-gray-100" : "border-gray-300 bg-white text-gray-900"}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {colorSchemes.map((scheme) => (
+                  <SelectItem key={scheme.id} value={scheme.id}>
+                    {scheme.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             <label className="space-y-1">
               <div className="flex items-center gap-1 text-xs">
@@ -121,11 +147,11 @@ export function ImageEditorDialog({
               Color
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {palette.map((color) => {
+              {palette.map((color, index) => {
                 const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
                 return (
                   <button
-                    key={color}
+                    key={`${index}-${color}`}
                     type="button"
                     onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
                     className={`h-10 rounded border ${selected ? "ring-2 ring-offset-1 ring-gray-500" : ""} ${isDarkMode ? "ring-offset-gray-900" : "ring-offset-white"}`}

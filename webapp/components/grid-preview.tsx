@@ -44,6 +44,14 @@ import {
   isFontFamily,
   type FontFamily,
 } from "@/lib/config/fonts"
+import {
+  DEFAULT_IMAGE_COLOR_SCHEME_ID,
+  getDefaultImagePlaceholderColor,
+  getImageColorScheme,
+  IMAGE_COLOR_SCHEMES,
+  isImagePlaceholderColor,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -131,9 +139,6 @@ type HoverState = {
 }
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
-
-const IMAGE_PLACEHOLDER_COLORS = ["#0b3536", "#e5e7de", "#0098d8", "#f54123"] as const
-const DEFAULT_IMAGE_PLACEHOLDER_COLOR = IMAGE_PLACEHOLDER_COLORS[0]
 
 function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   if (!values.length) return null
@@ -243,6 +248,8 @@ interface GridPreviewProps {
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   showEditorHelpIcon?: boolean
   baseFont?: FontFamily
+  imageColorScheme?: ImageColorSchemeId
+  onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
   isDarkMode?: boolean
 }
 
@@ -267,6 +274,8 @@ export const GridPreview = memo(function GridPreview({
   onOpenHelpSection,
   showEditorHelpIcon = false,
   baseFont = DEFAULT_BASE_FONT,
+  imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
+  onImageColorSchemeChange,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -278,6 +287,7 @@ export const GridPreview = memo(function GridPreview({
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const imageRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const lastAppliedLayoutKeyRef = useRef(0)
+  const lastAppliedImageLayoutKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
@@ -336,6 +346,14 @@ export const GridPreview = memo(function GridPreview({
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [editorState, setEditorState] = useState<EditorState | null>(null)
   const [imageEditorState, setImageEditorState] = useState<PlaceholderEditorState | null>(null)
+  const imagePalette = useMemo(
+    () => getImageColorScheme(imageColorScheme).colors,
+    [imageColorScheme],
+  )
+  const defaultImageColor = useMemo(
+    () => getDefaultImagePlaceholderColor(imageColorScheme),
+    [imageColorScheme],
+  )
   const HISTORY_LIMIT = 50
   const TEXT_CACHE_LIMIT = 5000
   const REFLOW_PLAN_CACHE_LIMIT = 200
@@ -461,11 +479,11 @@ export const GridPreview = memo(function GridPreview({
 
   const getImageColor = useCallback((key: BlockId): string => {
     const raw = imageColors[key]
-    if (typeof raw === "string" && IMAGE_PLACEHOLDER_COLORS.includes(raw as (typeof IMAGE_PLACEHOLDER_COLORS)[number])) {
+    if (isImagePlaceholderColor(raw)) {
       return raw
     }
-    return DEFAULT_IMAGE_PLACEHOLDER_COLOR
-  }, [imageColors])
+    return defaultImageColor
+  }, [defaultImageColor, imageColors])
 
   const isImagePlaceholderKey = useCallback((key: BlockId): boolean => (
     key.startsWith("image-")
@@ -646,17 +664,19 @@ export const GridPreview = memo(function GridPreview({
       .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
       .filter((key, index, source) => source.indexOf(key) === index)
 
-    const rowStep = (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit
+    const contentHeight = (result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) * scale
+    const baselineStep = result.grid.gridUnit * scale
+    const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
     const nextPositions = normalizedOrder.reduce((acc, key) => {
       const raw = snapshot.imageModulePositions?.[key]
       if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
       const span = Math.max(1, Math.min(result.settings.gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
-      const rows = Math.max(1, Math.min(result.settings.gridRows, snapshot.imageRowSpans?.[key] ?? 1))
-      const maxCol = Math.max(0, result.settings.gridCols - span)
-      const maxRow = Math.max(0, (result.settings.gridRows - rows) * rowStep)
+      const minCol = -Math.max(0, span - 1)
+      const maxCol = Math.max(0, result.settings.gridCols - 1)
+      const minRow = -Math.max(0, maxBaselineRow)
       acc[key] = {
-        col: Math.max(0, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(0, Math.min(maxRow, raw.row)),
+        col: Math.max(minCol, Math.min(maxCol, Math.round(raw.col))),
+        row: Math.max(minRow, Math.min(maxBaselineRow, raw.row)),
       }
       return acc
     }, {} as Partial<Record<BlockId, ModulePosition>>)
@@ -671,10 +691,10 @@ export const GridPreview = memo(function GridPreview({
     }, {} as Partial<Record<BlockId, number>>)
     const nextColors = normalizedOrder.reduce((acc, key) => {
       const raw = snapshot.imageColors?.[key]
-      if (typeof raw === "string" && IMAGE_PLACEHOLDER_COLORS.includes(raw as (typeof IMAGE_PLACEHOLDER_COLORS)[number])) {
+      if (isImagePlaceholderColor(raw)) {
         acc[key] = raw
       } else {
-        acc[key] = DEFAULT_IMAGE_PLACEHOLDER_COLOR
+        acc[key] = defaultImageColor
       }
       return acc
     }, {} as Partial<Record<BlockId, string>>)
@@ -686,11 +706,14 @@ export const GridPreview = memo(function GridPreview({
     setImageColors(nextColors)
     setImageEditorState(null)
   }, [
-    result.grid.gridMarginVertical,
+    defaultImageColor,
     result.grid.gridUnit,
-    result.module.height,
+    result.grid.margins.bottom,
+    result.grid.margins.top,
+    result.pageSizePt.height,
     result.settings.gridCols,
     result.settings.gridRows,
+    scale,
   ])
 
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
@@ -829,6 +852,21 @@ export const GridPreview = memo(function GridPreview({
       row: Math.max(0, Math.min(maxRow, position.row)),
     }
   }, [getGridMetrics, result.settings.gridCols, result.settings.gridRows])
+
+  const clampImageBaselinePosition = useCallback((
+    position: ModulePosition,
+    columns: number,
+  ): ModulePosition => {
+    const metrics = getGridMetrics()
+    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
+    const minCol = -Math.max(0, safeCols - 1)
+    const maxCol = Math.max(0, metrics.gridCols - 1)
+    const minRow = -Math.max(0, metrics.maxBaselineRow)
+    return {
+      col: Math.max(minCol, Math.min(maxCol, position.col)),
+      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
+    }
+  }, [getGridMetrics, result.settings.gridCols])
 
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
@@ -1327,6 +1365,8 @@ export const GridPreview = memo(function GridPreview({
 
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
+    if (lastAppliedImageLayoutKeyRef.current === initialLayoutKey) return
+    lastAppliedImageLayoutKeyRef.current = initialLayoutKey
     applyImageSnapshot(initialLayout)
   }, [applyImageSnapshot, initialLayout, initialLayoutKey])
 
@@ -1403,7 +1443,7 @@ export const GridPreview = memo(function GridPreview({
         if (!position) continue
         const columns = getImageSpan(key)
         const rows = getImageRows(key)
-        const clamped = clampImageModulePosition(position, columns, rows)
+        const clamped = clampImageBaselinePosition(position, columns)
         const x = contentLeft + clamped.col * moduleXStep
         const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
         const widthPx = columns * modW * scale + Math.max(columns - 1, 0) * gridMarginHorizontal * scale
@@ -1423,7 +1463,7 @@ export const GridPreview = memo(function GridPreview({
 
     return () => window.cancelAnimationFrame(frame)
   }, [
-    clampImageModulePosition,
+    clampImageBaselinePosition,
     getImageColor,
     getImageRows,
     getImageSpan,
@@ -1718,26 +1758,47 @@ export const GridPreview = memo(function GridPreview({
     setImageEditorState(null)
   }, [])
 
+  const handleImageColorSchemeChange = useCallback((nextShema: ImageColorSchemeId) => {
+    onImageColorSchemeChange?.(nextShema)
+    setImageEditorState((prev) => {
+      if (!prev) return prev
+      const nextPalette = getImageColorScheme(nextShema).colors
+      const hasCurrentColor = nextPalette.some((color) => color.toLowerCase() === prev.draftColor.toLowerCase())
+      if (hasCurrentColor) return prev
+      return { ...prev, draftColor: nextPalette[0] }
+    })
+  }, [onImageColorSchemeChange])
+
+  useEffect(() => {
+    setImageEditorState((prev) => {
+      if (!prev) return prev
+      const hasCurrentColor = imagePalette.some((color) => color.toLowerCase() === prev.draftColor.toLowerCase())
+      if (hasCurrentColor) return prev
+      return { ...prev, draftColor: defaultImageColor }
+    })
+  }, [defaultImageColor, imagePalette])
+
   const saveImageEditor = useCallback(() => {
     if (!imageEditorState) return
     recordHistoryBeforeChange()
     const key = imageEditorState.target
     const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
     const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
-    const color = IMAGE_PLACEHOLDER_COLORS.includes(imageEditorState.draftColor as (typeof IMAGE_PLACEHOLDER_COLORS)[number])
+    const color = isImagePlaceholderColor(imageEditorState.draftColor)
       ? imageEditorState.draftColor
-      : DEFAULT_IMAGE_PLACEHOLDER_COLOR
+      : defaultImageColor
     const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
-    const clampedPosition = clampImageModulePosition(existingPosition, columns, rows)
+    const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
     setImageColumnSpans((prev) => ({ ...prev, [key]: columns }))
     setImageRowSpans((prev) => ({ ...prev, [key]: rows }))
     setImageColors((prev) => ({ ...prev, [key]: color }))
     setImageModulePositions((prev) => ({ ...prev, [key]: clampedPosition }))
     setImageEditorState(null)
   }, [
-    clampImageModulePosition,
+    clampImageBaselinePosition,
     imageEditorState,
     imageModulePositions,
+    defaultImageColor,
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
@@ -1801,12 +1862,14 @@ export const GridPreview = memo(function GridPreview({
     const metrics = getGridMetrics()
     const rawColFloat = (pagePoint.x - metrics.contentLeft) / metrics.xStep
     const rawRowFloat = (pagePoint.y - metrics.contentTop) / metrics.moduleYStep
-    const moduleColIndex = Math.round(rawColFloat)
-    const moduleRowIndex = Math.round(rawRowFloat)
+    const moduleColIndex = Math.floor(rawColFloat)
+    const moduleRowIndex = Math.floor(rawRowFloat)
     const moduleX = metrics.contentLeft + moduleColIndex * metrics.xStep
     const moduleY = metrics.contentTop + moduleRowIndex * metrics.moduleYStep
-    const insideModuleX = pagePoint.x >= moduleX && pagePoint.x <= moduleX + metrics.moduleWidth
-    const insideModuleY = pagePoint.y >= moduleY && pagePoint.y <= moduleY + metrics.moduleHeight
+    const localX = pagePoint.x - moduleX
+    const localY = pagePoint.y - moduleY
+    const insideModuleX = localX >= 0 && localX <= metrics.moduleWidth
+    const insideModuleY = localY >= 0 && localY <= metrics.moduleHeight
     if (
       moduleColIndex < 0
       || moduleColIndex >= result.settings.gridCols
@@ -1829,7 +1892,7 @@ export const GridPreview = memo(function GridPreview({
     setImageModulePositions((prev) => ({ ...prev, [newKey]: snapped }))
     setImageColumnSpans((prev) => ({ ...prev, [newKey]: 1 }))
     setImageRowSpans((prev) => ({ ...prev, [newKey]: 1 }))
-    setImageColors((prev) => ({ ...prev, [newKey]: DEFAULT_IMAGE_PLACEHOLDER_COLOR }))
+    setImageColors((prev) => ({ ...prev, [newKey]: defaultImageColor }))
     openImageEditor(newKey)
   }, [
     canvasRef,
@@ -1841,6 +1904,7 @@ export const GridPreview = memo(function GridPreview({
     handleTextCanvasDoubleClick,
     openImageEditor,
     recordHistoryBeforeChange,
+    defaultImageColor,
     result.settings.gridCols,
     result.settings.gridRows,
     showTypography,
@@ -2222,7 +2286,10 @@ export const GridPreview = memo(function GridPreview({
         deleteEditor={deleteImagePlaceholder}
         gridRows={result.settings.gridRows}
         gridCols={result.settings.gridCols}
-        palette={IMAGE_PLACEHOLDER_COLORS}
+        colorSchemes={IMAGE_COLOR_SCHEMES}
+        selectedColorScheme={imageColorScheme}
+        onColorSchemeChange={handleImageColorSchemeChange}
+        palette={imagePalette}
         isDarkMode={isDarkMode}
       />
 

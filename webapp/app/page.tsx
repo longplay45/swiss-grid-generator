@@ -26,6 +26,7 @@ import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
+import { ColorShemaPanel } from "@/components/settings/ColorShemaPanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import {
@@ -49,6 +50,10 @@ import {
   type DisplayUnit,
   type TypographyScale
 } from "@/lib/config/defaults"
+import {
+  isImageColorSchemeId,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 import {
   DEFAULT_PREVIEW_LAYOUT,
   DEFAULT_UI,
@@ -80,6 +85,7 @@ type GridUiState = Pick<
   | "gutterMultiple"
   | "typographyScale"
   | "baseFont"
+  | "imageColorScheme"
   | "customBaseline"
   | "useCustomMargins"
   | "customMarginMultipliers"
@@ -111,6 +117,7 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   gutterMultiple: DEFAULT_UI.gutterMultiple,
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
+  imageColorScheme: RESOLVED_DEFAULTS.imageColorScheme,
   customBaseline: RESOLVED_DEFAULTS.customBaseline,
   useCustomMargins: DEFAULT_UI.useCustomMargins,
   customMarginMultipliers: DEFAULT_UI.customMarginMultipliers,
@@ -153,6 +160,7 @@ type UiAction =
   | { type: "SET"; key: "gutterMultiple"; value: number }
   | { type: "SET"; key: "typographyScale"; value: TypographyScale }
   | { type: "SET"; key: "baseFont"; value: FontFamily }
+  | { type: "SET"; key: "imageColorScheme"; value: ImageColorSchemeId }
   | { type: "SET"; key: "customBaseline"; value: number }
   | { type: "SET"; key: "displayUnit"; value: DisplayUnit }
   | { type: "SET"; key: "useCustomMargins"; value: boolean }
@@ -182,6 +190,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "gutterMultiple":
         case "typographyScale":
         case "baseFont":
+        case "imageColorScheme":
         case "customBaseline":
         case "useCustomMargins":
         case "customMarginMultipliers":
@@ -219,6 +228,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         gutterMultiple: action.snapshot.gutterMultiple,
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
+        imageColorScheme: action.snapshot.imageColorScheme,
         customBaseline: action.snapshot.customBaseline,
         useCustomMargins: action.snapshot.useCustomMargins,
         customMarginMultipliers: action.snapshot.customMarginMultipliers,
@@ -296,7 +306,7 @@ export default function Home() {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple,
-    typographyScale, baseFont, customBaseline, displayUnit,
+    typographyScale, baseFont, imageColorScheme, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showTypography, collapsed,
   } = ui
@@ -311,6 +321,7 @@ export default function Home() {
   const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [dispatch])
   const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
   const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
+  const setImageColorScheme = useCallback((v: ImageColorSchemeId) => dispatch({ type: "SET", key: "imageColorScheme", value: v }), [dispatch])
   const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [dispatch])
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
@@ -803,6 +814,7 @@ export default function Home() {
         if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
         if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
         if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
+        if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
         if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
         if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
         if (typeof loaded.useCustomMargins === "boolean") set("useCustomMargins", loaded.useCustomMargins)
@@ -1040,6 +1052,15 @@ export default function Home() {
           onBaseFontChange={setBaseFont}
           isDarkMode={isDarkUi}
         />
+
+        <ColorShemaPanel
+          collapsed={collapsed.color}
+          onHeaderClick={handleSectionHeaderClick("color")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          colorShema={imageColorScheme}
+          onColorShemaChange={setImageColorScheme}
+          isDarkMode={isDarkUi}
+        />
       </SettingsHelpNavigationProvider>
     </div>
   ), [
@@ -1057,6 +1078,7 @@ export default function Home() {
     handleSectionHeaderDoubleClick,
     handleSectionHeaderClick,
     handleSectionHelpNavigate,
+    imageColorScheme,
     isDarkUi,
     marginMethod,
     orientation,
@@ -1070,6 +1092,7 @@ export default function Home() {
     setGutterMultiple,
     setGridCols,
     setGridRows,
+    setImageColorScheme,
     setMarginMethod,
     setOrientation,
     setRotation,
@@ -1127,6 +1150,8 @@ export default function Home() {
             showTypography={showTypography}
             showRolloverInfo={showRolloverInfo}
             baseFont={baseFont}
+            imageColorScheme={imageColorScheme}
+            onImageColorSchemeChange={setImageColorScheme}
             initialLayout={loadedPreviewLayout?.layout ?? null}
             initialLayoutKey={loadedPreviewLayout?.key ?? 0}
             rotation={rotation}
@@ -1207,6 +1232,7 @@ export default function Home() {
     handlePreviewOpenHelpSection,
     history.redoNonce,
     history.undoNonce,
+    imageColorScheme,
     isDarkUi,
     loadLayout,
     loadedPreviewLayout,
@@ -1214,6 +1240,7 @@ export default function Home() {
     renderHeaderAction,
     result,
     rotation,
+    setImageColorScheme,
     showBaselines,
     showMargins,
     showModules,

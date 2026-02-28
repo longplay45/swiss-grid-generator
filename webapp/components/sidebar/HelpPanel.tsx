@@ -127,6 +127,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Choose margin method in `III. Margins` or enable `Custom Margins`.</li>
           <li>Set columns/rows and gutter in `IV. Gutter`.</li>
           <li>Set type hierarchy and base font in `V. Typo`.</li>
+          <li>Set default placeholder palette in `VI. Color Shema`.</li>
           <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
         </ul>
       </section>
@@ -457,6 +458,20 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
           <li>Manual bold/italic in the editor can override defaults per paragraph.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-color-shema" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          VI. Color Shema
+        </SectionHeading>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Selects the base shema used for new image placeholders.</li>
+          <li>The same selector appears in the image editor popup.</li>
+          <li>Image editor starts with the current global shema selected.</li>
+          <li>Each placeholder still stores its own final color value.</li>
         </ul>
       </section>
 

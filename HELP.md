@@ -24,6 +24,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Choose margin method in `III. Margins` or enable `Custom Margins`.
 - Set columns/rows and gutter in `IV. Gutter`.
 - Set type hierarchy and base font in `V. Typo`.
+- Set default image placeholder palette in `VI. Color Shema`.
 - Use display toggles in the header to inspect baselines, margins, modules, and type.
 
 ## Canvas and Grid

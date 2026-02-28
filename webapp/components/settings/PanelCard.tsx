@@ -9,7 +9,7 @@ type Props = {
   title: string
   tooltip: string
   collapsed: boolean
-  collapsedSummary?: string
+  collapsedSummary?: ReactNode
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   helpSectionKey: SectionKey
@@ -63,9 +63,9 @@ export function PanelCard({
                 </span>
               </div>
               {collapsed && collapsedSummary ? (
-                <p className={`mt-1 text-[11px] font-normal leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <div className={`mt-1 text-[11px] font-normal leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                   {collapsedSummary}
-                </p>
+                </div>
               ) : null}
             </div>
           </CardTitle>

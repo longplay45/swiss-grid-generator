@@ -7,6 +7,11 @@ import {
   type DisplayUnit,
   type TypographyScale,
 } from "@/lib/config/defaults"
+import {
+  DEFAULT_IMAGE_COLOR_SCHEME_ID,
+  isImageColorSchemeId,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 
 export type MarginMethod = 1 | 2 | 3
 export type Orientation = "portrait" | "landscape"
@@ -18,6 +23,7 @@ type UiSettingsLike = {
   typographyScale?: unknown
   displayUnit?: unknown
   baseFont?: unknown
+  imageColorScheme?: unknown
   customBaseline?: unknown
 }
 
@@ -72,6 +78,10 @@ function resolveBaseFont(value: unknown): FontFamily {
   return isFontFamily(value) ? value : DEFAULT_BASE_FONT
 }
 
+function resolveImageColorScheme(value: unknown): ImageColorSchemeId {
+  return isImageColorSchemeId(value) ? value : DEFAULT_IMAGE_COLOR_SCHEME_ID
+}
+
 function resolveCustomBaseline(value: unknown, defaultA4Baseline: number): number {
   return typeof value === "number" ? value : defaultA4Baseline
 }
@@ -86,6 +96,7 @@ export function resolveUiDefaults(
   typographyScale: TypographyScale
   displayUnit: DisplayUnit
   baseFont: FontFamily
+  imageColorScheme: ImageColorSchemeId
   customBaseline: number
 } {
   return {
@@ -95,6 +106,7 @@ export function resolveUiDefaults(
     typographyScale: resolveTypographyScale(uiSettings.typographyScale),
     displayUnit: resolveDisplayUnit(uiSettings.displayUnit),
     baseFont: resolveBaseFont(uiSettings.baseFont),
+    imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
     customBaseline: resolveCustomBaseline(uiSettings.customBaseline, defaultA4Baseline),
   }
 }
