@@ -164,6 +164,20 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
+      <section id="help-image-editor" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          Image Editor Popup
+        </SectionHeading>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.</li>
+          <li>Controls: color shema selector, row span, column span, and color swatches.</li>
+          <li>Save applies changes; delete removes the placeholder.</li>
+          <li>`Esc` or click outside closes without saving.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
       <section id="help-drag-placement" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
           Drag and Placement

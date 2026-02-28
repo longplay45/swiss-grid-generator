@@ -2302,6 +2302,8 @@ export const GridPreview = memo(function GridPreview({
         onColorSchemeChange={handleImageColorSchemeChange}
         palette={imagePalette}
         isDarkMode={isDarkMode}
+        showEditorHelpIcon={showEditorHelpIcon}
+        onOpenHelpSection={onOpenHelpSection}
       />
 
     </div>

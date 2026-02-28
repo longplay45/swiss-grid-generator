@@ -11,6 +11,7 @@ import {
 import { Image as ImageIcon, Rows3, Columns3, Palette, Save as SaveIcon, Trash2 } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import type { HelpSectionId } from "@/lib/help-registry"
 
 export type ImageEditorState = {
   target: string
@@ -32,6 +33,8 @@ type ImageEditorDialogProps = {
   onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
   isDarkMode: boolean
+  showEditorHelpIcon: boolean
+  onOpenHelpSection?: (sectionId: HelpSectionId) => void
 }
 
 export function ImageEditorDialog({
@@ -47,6 +50,8 @@ export function ImageEditorDialog({
   onColorSchemeChange,
   palette,
   isDarkMode,
+  showEditorHelpIcon,
+  onOpenHelpSection,
 }: ImageEditorDialogProps) {
   if (!editorState) return null
 
@@ -58,8 +63,9 @@ export function ImageEditorDialog({
       }}
     >
       <div
-        className={`w-full max-w-[420px] rounded-md border shadow-xl ${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"}`}
+        className={`w-full max-w-[420px] rounded-md border shadow-xl ${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white"} ${showEditorHelpIcon ? "ring-1 ring-blue-500" : ""}`}
         onMouseDown={(event) => event.stopPropagation()}
+        onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
       >
         <div className={`flex items-center justify-between border-b px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -166,12 +172,22 @@ export function ImageEditorDialog({
         </div>
 
         <div className={`flex items-center justify-between border-t px-3 py-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-          <Button type="button" variant="outline" className="h-8 px-2" onClick={deleteEditor}>
+          <Button
+            type="button"
+            variant="outline"
+            className={`h-8 px-2 text-[#555555] ${isDarkMode ? "border-gray-300 bg-white hover:bg-gray-100 hover:text-gray-700" : "hover:text-gray-700"}`}
+            onClick={deleteEditor}
+          >
             <Trash2 className="mr-1 h-3.5 w-3.5" />
             Delete
           </Button>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" className="h-8 px-2" onClick={closeEditor}>
+            <Button
+              type="button"
+              variant="outline"
+              className={`h-8 px-2 text-[#555555] ${isDarkMode ? "border-gray-300 bg-white hover:bg-gray-100 hover:text-gray-700" : "hover:text-gray-700"}`}
+              onClick={closeEditor}
+            >
               Cancel
             </Button>
             <Button type="button" className="h-8 px-2" onClick={saveEditor}>
