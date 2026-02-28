@@ -460,13 +460,13 @@ moduleRowStart(i) = i * moduleRowStep
 
 Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
 
-Shift-duplicate behavior (`Shift` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
+Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
 
-Ctrl-drag behavior switches snapping to baseline rows and baseline columns at the drop point and allows overset anchors for clipped ("angeschnitten") placements:
+Shift-drag behavior (Ctrl fallback) switches snapping to baseline rows and baseline columns at the drop point and allows overset anchors for clipped ("angeschnitten") placements:
 
 ```
-col range (ctrl-drag): [-(span - 1), gridCols - 1]
-row range (ctrl-drag): [-maxBaselineRow, +maxBaselineRow]
+col range (shift-drag): [-(span - 1), gridCols - 1]
+row range (shift-drag): [-maxBaselineRow, +maxBaselineRow]
 ```
 
 ### Per-Paragraph Span

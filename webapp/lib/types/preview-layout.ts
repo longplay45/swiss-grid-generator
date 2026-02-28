@@ -25,4 +25,9 @@ export type PreviewLayoutState<
   blockItalic?: Record<Key, boolean>
   blockRotations?: Record<Key, number>
   blockModulePositions: Partial<Record<Key, ModulePosition>>
+  imageOrder?: Key[]
+  imageModulePositions?: Partial<Record<Key, ModulePosition>>
+  imageColumnSpans?: Partial<Record<Key, number>>
+  imageRowSpans?: Partial<Record<Key, number>>
+  imageColors?: Partial<Record<Key, string>>
 }

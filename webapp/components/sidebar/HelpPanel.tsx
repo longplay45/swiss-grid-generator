@@ -169,9 +169,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Drag moves a block snapped to module anchors.</li>
-          <li>`Shift` + drag duplicates a block and drops the copy.</li>
-          <li>`Ctrl` + drag snaps to baseline rows and baseline columns (not module rows).</li>
-          <li>`Ctrl` + drag allows overset placement for “angeschnitten” layouts (left/right/top/bottom).</li>
+          <li>`Alt/Option` + drag duplicates a block and drops the copy.</li>
+          <li>`Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).</li>
+          <li>`Shift` + drag snaps to baseline rows and baseline columns (not module rows, `Ctrl` fallback).</li>
+          <li>`Shift` + drag allows overset placement for “angeschnitten” layouts (left/right/top/bottom, `Ctrl` fallback).</li>
           <li>Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.</li>
         </ul>
       </section>

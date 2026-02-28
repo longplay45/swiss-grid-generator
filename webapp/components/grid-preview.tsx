@@ -7,6 +7,10 @@ import {
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
 } from "@/components/dialogs/BlockEditorDialog"
+import {
+  ImageEditorDialog,
+  type ImageEditorState,
+} from "@/components/dialogs/ImageEditorDialog"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
@@ -103,6 +107,7 @@ type ModulePosition = {
 
 type DragState = PreviewDragState<BlockId>
 type EditorState = BlockEditorState<TypographyStyleKey>
+type PlaceholderEditorState = ImageEditorState
 
 type BlockCollectionsState = {
   blockOrder: BlockId[]
@@ -126,6 +131,9 @@ type HoverState = {
 }
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
+
+const IMAGE_PLACEHOLDER_COLORS = ["#0b3536", "#e5e7de", "#0098d8", "#f54123"] as const
+const DEFAULT_IMAGE_PLACEHOLDER_COLOR = IMAGE_PLACEHOLDER_COLORS[0]
 
 function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   if (!values.length) return null
@@ -164,6 +172,7 @@ const getDefaultTextContent = (): Record<BlockId, string> => ({ ...DEFAULT_TEXT_
 const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => ({ ...DEFAULT_STYLE_ASSIGNMENTS })
 const isBaseBlockId = (key: string): key is BaseBlockId => (BASE_BLOCK_IDS as readonly string[]).includes(key)
 const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+const getNextImagePlaceholderId = () => `image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 function createInitialBlockCollectionsState(): BlockCollectionsState {
   return {
@@ -262,10 +271,12 @@ export const GridPreview = memo(function GridPreview({
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
+  const imageCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRectsRef = useRef<Record<BlockId, BlockRect>>({})
+  const imageRectsRef = useRef<Record<BlockId, BlockRect>>({})
   const lastAppliedLayoutKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
@@ -293,6 +304,11 @@ export const GridPreview = memo(function GridPreview({
   const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
+  const [imageOrder, setImageOrder] = useState<BlockId[]>([])
+  const [imageModulePositions, setImageModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
+  const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
+  const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<BlockId, number>>>({})
+  const [imageColors, setImageColors] = useState<Partial<Record<BlockId, string>>>({})
   const {
     state: blockCollectionsState,
     merge: setBlockCollections,
@@ -317,7 +333,9 @@ export const GridPreview = memo(function GridPreview({
     blockRotations,
   } = blockCollectionsState
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
+  const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [editorState, setEditorState] = useState<EditorState | null>(null)
+  const [imageEditorState, setImageEditorState] = useState<PlaceholderEditorState | null>(null)
   const HISTORY_LIMIT = 50
   const TEXT_CACHE_LIMIT = 5000
   const REFLOW_PLAN_CACHE_LIMIT = 200
@@ -431,6 +449,37 @@ export const GridPreview = memo(function GridPreview({
     return Math.max(1, Math.min(result.settings.gridRows, raw))
   }, [blockRowSpans, result.settings.gridRows])
 
+  const getImageSpan = useCallback((key: BlockId) => {
+    const raw = imageColumnSpans[key] ?? 1
+    return Math.max(1, Math.min(result.settings.gridCols, raw))
+  }, [imageColumnSpans, result.settings.gridCols])
+
+  const getImageRows = useCallback((key: BlockId) => {
+    const raw = imageRowSpans[key] ?? 1
+    return Math.max(1, Math.min(result.settings.gridRows, raw))
+  }, [imageRowSpans, result.settings.gridRows])
+
+  const getImageColor = useCallback((key: BlockId): string => {
+    const raw = imageColors[key]
+    if (typeof raw === "string" && IMAGE_PLACEHOLDER_COLORS.includes(raw as (typeof IMAGE_PLACEHOLDER_COLORS)[number])) {
+      return raw
+    }
+    return DEFAULT_IMAGE_PLACEHOLDER_COLOR
+  }, [imageColors])
+
+  const isImagePlaceholderKey = useCallback((key: BlockId): boolean => (
+    key.startsWith("image-")
+    || imageOrder.includes(key)
+  ), [imageOrder])
+
+  const getPlacementSpan = useCallback((key: BlockId): number => (
+    isImagePlaceholderKey(key) ? getImageSpan(key) : getBlockSpan(key)
+  ), [getBlockSpan, getImageSpan, isImagePlaceholderKey])
+
+  const getPlacementRows = useCallback((key: BlockId): number => (
+    isImagePlaceholderKey(key) ? getImageRows(key) : getBlockRows(key)
+  ), [getBlockRows, getImageRows, isImagePlaceholderKey])
+
   const getStyleKeyForBlock = useCallback((key: BlockId): TypographyStyleKey => {
     const assigned = styleAssignments[key]
     if (assigned === "display" || assigned === "headline" || assigned === "subhead" || assigned === "body" || assigned === "caption") {
@@ -528,7 +577,7 @@ export const GridPreview = memo(function GridPreview({
     return Math.max(-180, Math.min(180, raw))
   }, [blockRotations])
 
-  const { buildSnapshot, applySnapshot } = useLayoutSnapshot<
+  const { buildSnapshot: buildTextSnapshot, applySnapshot: applyTextSnapshot } = useLayoutSnapshot<
     BlockId,
     TypographyStyleKey,
     FontFamily,
@@ -566,6 +615,88 @@ export const GridPreview = memo(function GridPreview({
     }),
     setState: setBlockCollections,
   })
+
+  const buildSnapshot = useCallback((): PreviewLayoutState => ({
+    ...buildTextSnapshot(),
+    imageOrder: [...imageOrder],
+    imageModulePositions: { ...imageModulePositions },
+    imageColumnSpans: imageOrder.reduce((acc, key) => {
+      acc[key] = getImageSpan(key)
+      return acc
+    }, {} as Partial<Record<BlockId, number>>),
+    imageRowSpans: imageOrder.reduce((acc, key) => {
+      acc[key] = getImageRows(key)
+      return acc
+    }, {} as Partial<Record<BlockId, number>>),
+    imageColors: imageOrder.reduce((acc, key) => {
+      acc[key] = getImageColor(key)
+      return acc
+    }, {} as Partial<Record<BlockId, string>>),
+  }), [
+    buildTextSnapshot,
+    getImageColor,
+    getImageRows,
+    getImageSpan,
+    imageModulePositions,
+    imageOrder,
+  ])
+
+  const applyImageSnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    const normalizedOrder = (Array.isArray(snapshot.imageOrder) ? snapshot.imageOrder : [])
+      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
+      .filter((key, index, source) => source.indexOf(key) === index)
+
+    const rowStep = (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit
+    const nextPositions = normalizedOrder.reduce((acc, key) => {
+      const raw = snapshot.imageModulePositions?.[key]
+      if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
+      const span = Math.max(1, Math.min(result.settings.gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
+      const rows = Math.max(1, Math.min(result.settings.gridRows, snapshot.imageRowSpans?.[key] ?? 1))
+      const maxCol = Math.max(0, result.settings.gridCols - span)
+      const maxRow = Math.max(0, (result.settings.gridRows - rows) * rowStep)
+      acc[key] = {
+        col: Math.max(0, Math.min(maxCol, Math.round(raw.col))),
+        row: Math.max(0, Math.min(maxRow, raw.row)),
+      }
+      return acc
+    }, {} as Partial<Record<BlockId, ModulePosition>>)
+
+    const nextSpans = normalizedOrder.reduce((acc, key) => {
+      acc[key] = Math.max(1, Math.min(result.settings.gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
+      return acc
+    }, {} as Partial<Record<BlockId, number>>)
+    const nextRows = normalizedOrder.reduce((acc, key) => {
+      acc[key] = Math.max(1, Math.min(result.settings.gridRows, snapshot.imageRowSpans?.[key] ?? 1))
+      return acc
+    }, {} as Partial<Record<BlockId, number>>)
+    const nextColors = normalizedOrder.reduce((acc, key) => {
+      const raw = snapshot.imageColors?.[key]
+      if (typeof raw === "string" && IMAGE_PLACEHOLDER_COLORS.includes(raw as (typeof IMAGE_PLACEHOLDER_COLORS)[number])) {
+        acc[key] = raw
+      } else {
+        acc[key] = DEFAULT_IMAGE_PLACEHOLDER_COLOR
+      }
+      return acc
+    }, {} as Partial<Record<BlockId, string>>)
+
+    setImageOrder(normalizedOrder)
+    setImageModulePositions(nextPositions)
+    setImageColumnSpans(nextSpans)
+    setImageRowSpans(nextRows)
+    setImageColors(nextColors)
+    setImageEditorState(null)
+  }, [
+    result.grid.gridMarginVertical,
+    result.grid.gridUnit,
+    result.module.height,
+    result.settings.gridCols,
+    result.settings.gridRows,
+  ])
+
+  const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    applyTextSnapshot(snapshot)
+    applyImageSnapshot(snapshot)
+  }, [applyImageSnapshot, applyTextSnapshot])
 
   const {
     pushHistory,
@@ -662,17 +793,17 @@ export const GridPreview = memo(function GridPreview({
 
   const clampModulePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
-    const span = getBlockSpan(key)
+    const span = getPlacementSpan(key)
     const maxCol = Math.max(0, metrics.gridCols - span)
     return {
       col: Math.max(0, Math.min(maxCol, position.col)),
       row: Math.max(0, Math.min(metrics.maxBaselineRow, position.row)),
     }
-  }, [getBlockSpan, getGridMetrics])
+  }, [getGridMetrics, getPlacementSpan])
 
   const clampBaselinePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
-    const span = getBlockSpan(key)
+    const span = getPlacementSpan(key)
     const minCol = -Math.max(0, span - 1)
     const maxCol = Math.max(0, metrics.gridCols - 1)
     const minRow = -Math.max(0, metrics.maxBaselineRow)
@@ -680,7 +811,24 @@ export const GridPreview = memo(function GridPreview({
       col: Math.max(minCol, Math.min(maxCol, position.col)),
       row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
     }
-  }, [getBlockSpan, getGridMetrics])
+  }, [getGridMetrics, getPlacementSpan])
+
+  const clampImageModulePosition = useCallback((
+    position: ModulePosition,
+    columns: number,
+    rows: number,
+  ): ModulePosition => {
+    const metrics = getGridMetrics()
+    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
+    const safeRows = Math.max(1, Math.min(result.settings.gridRows, rows))
+    const rowStep = metrics.moduleYStep / metrics.baselineStep
+    const maxCol = Math.max(0, metrics.gridCols - safeCols)
+    const maxRow = Math.max(0, (result.settings.gridRows - safeRows) * rowStep)
+    return {
+      col: Math.max(0, Math.min(maxCol, position.col)),
+      row: Math.max(0, Math.min(maxRow, position.row)),
+    }
+  }, [getGridMetrics, result.settings.gridCols, result.settings.gridRows])
 
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
@@ -715,6 +863,29 @@ export const GridPreview = memo(function GridPreview({
     }
     return null
   }, [blockOrder])
+
+  const findTopmostImageAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    for (let index = imageOrder.length - 1; index >= 0; index -= 1) {
+      const key = imageOrder[index]
+      const rect = imageRectsRef.current[key]
+      if (!rect || rect.width <= 0 || rect.height <= 0) continue
+      if (
+        pageX >= rect.x
+        && pageX <= rect.x + rect.width
+        && pageY >= rect.y
+        && pageY <= rect.y + rect.height
+      ) {
+        return key
+      }
+    }
+    return null
+  }, [imageOrder])
+
+  const findTopmostDraggableAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    const textKey = findTopmostBlockAtPoint(pageX, pageY)
+    if (textKey) return textKey
+    return findTopmostImageAtPoint(pageX, pageY)
+  }, [findTopmostBlockAtPoint, findTopmostImageAtPoint])
 
   const getAutoFitForPlacement = useCallback(({
     key,
@@ -797,6 +968,43 @@ export const GridPreview = memo(function GridPreview({
   ])
 
   const applyDragDrop = useCallback((drag: DragState, nextPreview: ModulePosition, copyOnDrop: boolean) => {
+    if (isImagePlaceholderKey(drag.key)) {
+      const sourceColumns = getImageSpan(drag.key)
+      const sourceRows = getImageRows(drag.key)
+      const sourceColor = getImageColor(drag.key)
+      const metrics = getGridMetrics()
+      const minCol = -Math.max(0, sourceColumns - 1)
+      const minRow = -Math.max(0, metrics.maxBaselineRow)
+      const resolvedPosition = {
+        col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
+        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
+      }
+
+      if (copyOnDrop) {
+        const newKey = getNextImagePlaceholderId()
+        recordHistoryBeforeChange()
+        setImageOrder((current) => {
+          const sourceIndex = current.indexOf(drag.key)
+          const next = [...current]
+          if (sourceIndex >= 0) next.splice(sourceIndex + 1, 0, newKey)
+          else next.push(newKey)
+          return next
+        })
+        setImageModulePositions((current) => ({ ...current, [newKey]: resolvedPosition }))
+        setImageColumnSpans((current) => ({ ...current, [newKey]: sourceColumns }))
+        setImageRowSpans((current) => ({ ...current, [newKey]: sourceRows }))
+        setImageColors((current) => ({ ...current, [newKey]: sourceColor }))
+        return
+      }
+
+      recordHistoryBeforeChange()
+      setImageModulePositions((current) => ({
+        ...current,
+        [drag.key]: resolvedPosition,
+      }))
+      return
+    }
+
     if (copyOnDrop) {
       const sourceText = textContent[drag.key] ?? ""
       const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
@@ -919,17 +1127,34 @@ export const GridPreview = memo(function GridPreview({
     blockOrder,
     getBlockRows,
     getBlockSpan,
+    getImageColor,
+    getImageRows,
+    getImageSpan,
     getGridMetrics,
     getStyleKeyForBlock,
+    isImagePlaceholderKey,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
+    setImageColors,
+    setImageColumnSpans,
+    setImageModulePositions,
+    setImageOrder,
+    setImageRowSpans,
     setBlockCollections,
     setBlockModulePositions,
     textContent,
   ])
+
+  const draggableModulePositions = useMemo(
+    () => ({
+      ...blockModulePositions,
+      ...imageModulePositions,
+    }),
+    [blockModulePositions, imageModulePositions],
+  )
 
   const {
     dragState,
@@ -942,16 +1167,20 @@ export const GridPreview = memo(function GridPreview({
     handleCanvasLostPointerCapture,
   } = usePreviewDrag<BlockId>({
     showTypography,
-    isEditorOpen: Boolean(editorState),
+    isEditorOpen: Boolean(editorState || imageEditorState),
     canvasRef,
     blockRectsRef,
-    blockModulePositions,
-    findTopmostBlockAtPoint,
+    getBlockRect: (key) => blockRectsRef.current[key] ?? imageRectsRef.current[key] ?? null,
+    blockModulePositions: draggableModulePositions,
+    findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
     toPagePoint,
     snapToModule,
     snapToBaseline,
     onDrop: applyDragDrop,
-    onClearHover: () => setHoverState(null),
+    onClearHover: () => {
+      setHoverState(null)
+      setHoverImageKey(null)
+    },
     touchLongPressMs: TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
   })
@@ -1090,9 +1319,16 @@ export const GridPreview = memo(function GridPreview({
     onAfterApply: () => {
       setDragState(null)
       setHoverState(null)
+      setHoverImageKey(null)
       setEditorState(null)
+      setImageEditorState(null)
     },
   })
+
+  useEffect(() => {
+    if (!initialLayout || initialLayoutKey === 0) return
+    applyImageSnapshot(initialLayout)
+  }, [applyImageSnapshot, initialLayout, initialLayoutKey])
 
   useEffect(() => {
     const canvas = staticCanvasRef.current
@@ -1130,6 +1366,76 @@ export const GridPreview = memo(function GridPreview({
 
     return () => window.cancelAnimationFrame(frame)
   }, [isMobile, pixelRatio, result, rotation, scale, showBaselines, showMargins, showModules])
+
+  useEffect(() => {
+    const canvas = imageCanvasRef.current
+    if (!canvas) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      const cssWidth = canvas.width / pixelRatio
+      const cssHeight = canvas.height / pixelRatio
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      ctx.clearRect(0, 0, cssWidth, cssHeight)
+      imageRectsRef.current = {}
+      if (!showTypography || imageOrder.length === 0) return
+
+      const { width, height } = result.pageSizePt
+      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+      const { width: modW, height: modH } = result.module
+      const pageWidth = width * scale
+      const pageHeight = height * scale
+      const contentLeft = margins.left * scale
+      const contentTop = margins.top * scale
+      const baselineStep = gridUnit * scale
+      const baselineOriginTop = contentTop - baselineStep
+      const moduleXStep = (modW + gridMarginHorizontal) * scale
+
+      ctx.save()
+      ctx.translate(cssWidth / 2, cssHeight / 2)
+      ctx.rotate((rotation * Math.PI) / 180)
+      ctx.translate(-pageWidth / 2, -pageHeight / 2)
+
+      for (const key of imageOrder) {
+        const basePosition = imageModulePositions[key]
+        const position = dragState?.key === key ? dragState.preview : basePosition
+        if (!position) continue
+        const columns = getImageSpan(key)
+        const rows = getImageRows(key)
+        const clamped = clampImageModulePosition(position, columns, rows)
+        const x = contentLeft + clamped.col * moduleXStep
+        const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
+        const widthPx = columns * modW * scale + Math.max(columns - 1, 0) * gridMarginHorizontal * scale
+        const heightPx = rows * modH * scale + Math.max(rows - 1, 0) * gridMarginVertical * scale
+        imageRectsRef.current[key] = { x, y, width: widthPx, height: heightPx }
+        ctx.fillStyle = getImageColor(key)
+        ctx.globalAlpha = 0.92
+        ctx.fillRect(x, y, widthPx, heightPx)
+        ctx.globalAlpha = 1
+        ctx.strokeStyle = "rgba(15, 23, 42, 0.22)"
+        ctx.lineWidth = 1
+        ctx.strokeRect(x, y, widthPx, heightPx)
+      }
+
+      ctx.restore()
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [
+    clampImageModulePosition,
+    getImageColor,
+    getImageRows,
+    getImageSpan,
+    imageModulePositions,
+    imageOrder,
+    dragState,
+    pixelRatio,
+    result,
+    rotation,
+    scale,
+    showTypography,
+  ])
 
   useTypographyRenderer<BlockId>({
     canvasRef,
@@ -1193,8 +1499,8 @@ export const GridPreview = memo(function GridPreview({
       ctx.rotate((rotation * Math.PI) / 180)
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
       if (dragState) {
-        const dragSpan = getBlockSpan(dragState.key)
-        const dragRows = getBlockRows(dragState.key)
+        const dragSpan = getPlacementSpan(dragState.key)
+        const dragRows = getPlacementRows(dragState.key)
         const snapX = contentLeft + dragState.preview.col * moduleXStep
         const snapY = baselineOriginTop + dragState.preview.row * baselineStep
         const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
@@ -1235,7 +1541,7 @@ export const GridPreview = memo(function GridPreview({
       ctx.restore()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [blockOrder, dragState, getBlockRows, getBlockSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
+  }, [blockOrder, dragState, getPlacementRows, getPlacementSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1353,7 +1659,7 @@ export const GridPreview = memo(function GridPreview({
     closeEditor,
     saveEditor,
     deleteEditorBlock,
-    handleCanvasDoubleClick,
+    handleCanvasDoubleClick: handleTextCanvasDoubleClick,
   } = useBlockEditorActions({
     showTypography,
     dragEndedAtRef,
@@ -1398,15 +1704,164 @@ export const GridPreview = memo(function GridPreview({
     getBlockRotation,
   })
 
-  const focusEditor = useCallback(() => {
-    textareaRef.current?.focus()
+  const openImageEditor = useCallback((key: BlockId) => {
+    setEditorState(null)
+    setImageEditorState({
+      target: key,
+      draftColumns: getImageSpan(key),
+      draftRows: getImageRows(key),
+      draftColor: getImageColor(key),
+    })
+  }, [getImageColor, getImageRows, getImageSpan])
+
+  const closeImageEditor = useCallback(() => {
+    setImageEditorState(null)
   }, [])
 
+  const saveImageEditor = useCallback(() => {
+    if (!imageEditorState) return
+    recordHistoryBeforeChange()
+    const key = imageEditorState.target
+    const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
+    const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
+    const color = IMAGE_PLACEHOLDER_COLORS.includes(imageEditorState.draftColor as (typeof IMAGE_PLACEHOLDER_COLORS)[number])
+      ? imageEditorState.draftColor
+      : DEFAULT_IMAGE_PLACEHOLDER_COLOR
+    const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
+    const clampedPosition = clampImageModulePosition(existingPosition, columns, rows)
+    setImageColumnSpans((prev) => ({ ...prev, [key]: columns }))
+    setImageRowSpans((prev) => ({ ...prev, [key]: rows }))
+    setImageColors((prev) => ({ ...prev, [key]: color }))
+    setImageModulePositions((prev) => ({ ...prev, [key]: clampedPosition }))
+    setImageEditorState(null)
+  }, [
+    clampImageModulePosition,
+    imageEditorState,
+    imageModulePositions,
+    recordHistoryBeforeChange,
+    result.settings.gridCols,
+    result.settings.gridRows,
+  ])
+
+  const deleteImagePlaceholder = useCallback(() => {
+    if (!imageEditorState) return
+    const key = imageEditorState.target
+    recordHistoryBeforeChange()
+    setImageOrder((prev) => prev.filter((item) => item !== key))
+    setImageModulePositions((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageColumnSpans((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageRowSpans((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageColors((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageEditorState(null)
+  }, [imageEditorState, recordHistoryBeforeChange])
+
+  const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
+    if (!pagePoint) return
+
+    const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
+    if (textKey) {
+      setImageEditorState(null)
+      handleTextCanvasDoubleClick(event)
+      return
+    }
+
+    const imageKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
+    if (imageKey) {
+      openImageEditor(imageKey)
+      return
+    }
+
+    if (!(event.shiftKey || event.ctrlKey)) {
+      setImageEditorState(null)
+      handleTextCanvasDoubleClick(event)
+      return
+    }
+
+    const metrics = getGridMetrics()
+    const rawColFloat = (pagePoint.x - metrics.contentLeft) / metrics.xStep
+    const rawRowFloat = (pagePoint.y - metrics.contentTop) / metrics.moduleYStep
+    const moduleColIndex = Math.round(rawColFloat)
+    const moduleRowIndex = Math.round(rawRowFloat)
+    const moduleX = metrics.contentLeft + moduleColIndex * metrics.xStep
+    const moduleY = metrics.contentTop + moduleRowIndex * metrics.moduleYStep
+    const insideModuleX = pagePoint.x >= moduleX && pagePoint.x <= moduleX + metrics.moduleWidth
+    const insideModuleY = pagePoint.y >= moduleY && pagePoint.y <= moduleY + metrics.moduleHeight
+    if (
+      moduleColIndex < 0
+      || moduleColIndex >= result.settings.gridCols
+      || moduleRowIndex < 0
+      || moduleRowIndex >= result.settings.gridRows
+      || !insideModuleX
+      || !insideModuleY
+    ) {
+      return
+    }
+    const rowStep = metrics.moduleYStep / metrics.baselineStep
+    const rawPosition = {
+      col: moduleColIndex,
+      row: moduleRowIndex * rowStep,
+    }
+    const newKey = getNextImagePlaceholderId()
+    const snapped = clampImageModulePosition(rawPosition, 1, 1)
+    recordHistoryBeforeChange()
+    setImageOrder((prev) => [...prev, newKey])
+    setImageModulePositions((prev) => ({ ...prev, [newKey]: snapped }))
+    setImageColumnSpans((prev) => ({ ...prev, [newKey]: 1 }))
+    setImageRowSpans((prev) => ({ ...prev, [newKey]: 1 }))
+    setImageColors((prev) => ({ ...prev, [newKey]: DEFAULT_IMAGE_PLACEHOLDER_COLOR }))
+    openImageEditor(newKey)
+  }, [
+    canvasRef,
+    clampImageModulePosition,
+    dragEndedAtRef,
+    findTopmostBlockAtPoint,
+    findTopmostImageAtPoint,
+    getGridMetrics,
+    handleTextCanvasDoubleClick,
+    openImageEditor,
+    recordHistoryBeforeChange,
+    result.settings.gridCols,
+    result.settings.gridRows,
+    showTypography,
+    toPagePoint,
+  ])
+
+  const focusEditor = useCallback(() => {
+    if (!editorState) return
+    textareaRef.current?.focus()
+  }, [editorState])
+
+  const closeAnyEditor = useCallback(() => {
+    closeEditor()
+    closeImageEditor()
+  }, [closeEditor, closeImageEditor])
+
   usePreviewKeyboard({
-    editorTarget: editorState?.target ?? null,
-    isEditorOpen: Boolean(editorState),
+    editorTarget: editorState?.target ?? imageEditorState?.target ?? null,
+    isEditorOpen: Boolean(editorState || imageEditorState),
     focusEditor,
-    onCloseEditor: closeEditor,
+    onCloseEditor: closeAnyEditor,
     undo,
     redo,
   })
@@ -1414,8 +1869,9 @@ export const GridPreview = memo(function GridPreview({
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
     mouseMoveRafRef.current = null
 
-    if (!showTypography || editorState || dragState) {
+    if (!showTypography || editorState || imageEditorState || dragState) {
       if (hoverState) setHoverState(null)
+      if (hoverImageKey) setHoverImageKey(null)
       return
     }
 
@@ -1428,22 +1884,42 @@ export const GridPreview = memo(function GridPreview({
     const pagePoint = toPagePoint(canvasX, canvasY)
     if (!pagePoint) {
       if (hoverState) setHoverState(null)
+      if (hoverImageKey) setHoverImageKey(null)
       return
     }
 
-    const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
-    if (key) {
+    const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
+    if (textKey) {
+      if (hoverImageKey) setHoverImageKey(null)
       setHoverState((prev) => {
-        if (prev && prev.key === key) {
+        if (prev && prev.key === textKey) {
           return prev
         }
-        return { key }
+        return { key: textKey }
       })
       return
     }
 
+    const imageKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
+    if (imageKey) {
+      if (hoverState) setHoverState(null)
+      if (hoverImageKey !== imageKey) setHoverImageKey(imageKey)
+      return
+    }
+
     if (hoverState) setHoverState(null)
-  }, [dragState, editorState, findTopmostBlockAtPoint, hoverState, showTypography, toPagePoint])
+    if (hoverImageKey) setHoverImageKey(null)
+  }, [
+    dragState,
+    editorState,
+    findTopmostBlockAtPoint,
+    findTopmostImageAtPoint,
+    hoverImageKey,
+    hoverState,
+    imageEditorState,
+    showTypography,
+    toPagePoint,
+  ])
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (mouseMoveRafRef.current !== null) return
@@ -1522,6 +1998,20 @@ export const GridPreview = memo(function GridPreview({
         return acc
       }, {} as Record<BlockId, number>),
       blockModulePositions,
+      imageOrder: [...imageOrder],
+      imageModulePositions: { ...imageModulePositions },
+      imageColumnSpans: imageOrder.reduce((acc, key) => {
+        acc[key] = getImageSpan(key)
+        return acc
+      }, {} as Partial<Record<BlockId, number>>),
+      imageRowSpans: imageOrder.reduce((acc, key) => {
+        acc[key] = getImageRows(key)
+        return acc
+      }, {} as Partial<Record<BlockId, number>>),
+      imageColors: imageOrder.reduce((acc, key) => {
+        acc[key] = getImageColor(key)
+        return acc
+      }, {} as Partial<Record<BlockId, string>>),
     }
     if (onLayoutChangeDebounceRef.current !== null) {
       window.clearTimeout(onLayoutChangeDebounceRef.current)
@@ -1538,7 +2028,29 @@ export const GridPreview = memo(function GridPreview({
         onLayoutChangeDebounceRef.current = null
       }
     }
-  }, [blockFontFamilies, blockModulePositions, blockOrder, blockTextAlignments, blockTextEdited, getBlockRotation, getBlockRows, getBlockSpan, isBlockBold, isBlockItalic, isSyllableDivisionEnabled, isTextReflowEnabled, onLayoutChange, styleAssignments, textContent])
+  }, [
+    blockFontFamilies,
+    blockModulePositions,
+    blockOrder,
+    blockTextAlignments,
+    blockTextEdited,
+    getBlockRotation,
+    getBlockRows,
+    getBlockSpan,
+    getImageColor,
+    getImageRows,
+    getImageSpan,
+    imageColors,
+    imageModulePositions,
+    imageOrder,
+    isBlockBold,
+    isBlockItalic,
+    isSyllableDivisionEnabled,
+    isTextReflowEnabled,
+    onLayoutChange,
+    styleAssignments,
+    textContent,
+  ])
 
   const pageWidthCss = result.pageSizePt.width * scale
   const pageHeightCss = result.pageSizePt.height * scale
@@ -1547,7 +2059,7 @@ export const GridPreview = memo(function GridPreview({
 
   const canvasCursorClass = dragState
     ? (dragState.copyOnDrop ? "cursor-copy" : "cursor-grabbing")
-    : hoverState
+    : (hoverState || hoverImageKey)
       ? "cursor-grab"
       : "cursor-default"
   const hierarchyOptionLabels = useMemo(
@@ -1580,6 +2092,13 @@ export const GridPreview = memo(function GridPreview({
           className="absolute inset-0 block shadow-lg"
         />
         <canvas
+          ref={imageCanvasRef}
+          width={pageWidthPx}
+          height={pageHeightPx}
+          style={{ width: pageWidthCss, height: pageHeightCss }}
+          className="pointer-events-none absolute inset-0 block"
+        />
+        <canvas
           ref={canvasRef}
           width={pageWidthPx}
           height={pageHeightPx}
@@ -1591,7 +2110,10 @@ export const GridPreview = memo(function GridPreview({
           onPointerCancel={handleCanvasPointerCancel}
           onLostPointerCapture={handleCanvasLostPointerCapture}
           onMouseMove={handleCanvasMouseMove}
-          onMouseLeave={() => setHoverState(null)}
+          onMouseLeave={() => {
+            setHoverState(null)
+            setHoverImageKey(null)
+          }}
           onDoubleClick={handleCanvasDoubleClick}
         />
         <canvas
@@ -1657,7 +2179,7 @@ export const GridPreview = memo(function GridPreview({
                 Pos: {hoveredModulePosition ? `col ${hoveredModulePosition.col}, row ${hoveredModulePosition.row}` : "auto-flow"} • Overflow lines: {hoveredOverflowLines ?? 0}
               </div>
               <div className="mt-1 text-[11px] text-gray-500">
-                Double-click to edit • Shift-drag duplicate • Ctrl-drag baseline snap (overset) • Touch: long-press then drag
+                Double-click edit • Shift-double-click empty module: image placeholder • Alt-drag duplicate • Shift-drag baseline snap (overset)
               </div>
             </div>
           ) : null}
@@ -1691,6 +2213,17 @@ export const GridPreview = memo(function GridPreview({
         styleOptions={STYLE_OPTIONS}
         getStyleSizeLabel={(styleKey) => formatPtSize(result.typography.styles[styleKey].size)}
         getDummyTextForStyle={getDummyTextForStyle}
+      />
+      <ImageEditorDialog
+        editorState={imageEditorState}
+        setEditorState={setImageEditorState}
+        closeEditor={closeImageEditor}
+        saveEditor={saveImageEditor}
+        deleteEditor={deleteImagePlaceholder}
+        gridRows={result.settings.gridRows}
+        gridCols={result.settings.gridCols}
+        palette={IMAGE_PLACEHOLDER_COLORS}
+        isDarkMode={isDarkMode}
       />
 
     </div>

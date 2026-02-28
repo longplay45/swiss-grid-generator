@@ -34,8 +34,9 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth
 - Interactive preview:
   - drag-and-snap text blocks
-  - `Shift` + drag duplicates a text block
-  - `Ctrl` + drag snaps to baseline rows/columns and allows overset placement (left/right/top/bottom)
+  - `Shift` + double-click on empty module creates an image placeholder editor (`Ctrl` fallback)
+  - `Alt/Option` + drag duplicates a text block
+  - `Shift` + drag snaps to baseline rows/columns and allows overset placement (left/right/top/bottom, `Ctrl` fallback)
   - double-click popup editor
   - hover info tooltips
   - per-paragraph font selection
@@ -264,8 +265,8 @@ webapp/
 - Added per-paragraph italic toggle and rotation input (`-180..180`).
 - Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
 - Added fullscreen preview toggle.
-- Added shift-drag duplication for preview paragraphs.
-- Added ctrl-drag baseline snapping with overset placement support (left/right/top/bottom).
+- Added Alt/Option-drag duplication for preview paragraphs.
+- Added Shift-drag baseline snapping with overset placement support (left/right/top/bottom, Ctrl fallback).
 - Added grouped font selectors (`Sans-Serif`, `Serif`, `Poster`) via shared component.
 - Added live character and word counts to the text editor footer.
 - Added complete keyboard coverage for preview-header actions and surfaced shortcut hints in icon tooltips.

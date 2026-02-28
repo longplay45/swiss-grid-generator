@@ -64,9 +64,10 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Drag and Placement
 
 - Drag moves a block snapped to module anchors.
-- `Shift` + drag duplicates a block and drops the copy.
-- `Ctrl` + drag snaps to baseline rows and baseline columns (instead of module-row anchors).
-- `Ctrl` + drag enables overset placement for “angeschnitten” layouts (left/right/top/bottom).
+- `Alt/Option` + drag duplicates a block and drops the copy.
+- `Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).
+- `Shift` + drag snaps to baseline rows and baseline columns (instead of module-row anchors, `Ctrl` fallback).
+- `Shift` + drag enables overset placement for “angeschnitten” layouts (left/right/top/bottom, `Ctrl` fallback).
 - Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.
 
 ## History and Reflow

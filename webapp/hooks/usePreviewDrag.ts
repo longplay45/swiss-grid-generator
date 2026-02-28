@@ -34,6 +34,7 @@ type Args<Key extends string> = {
   isEditorOpen: boolean
   canvasRef: RefObject<HTMLCanvasElement | null>
   blockRectsRef: RefObject<Record<Key, BlockRect>>
+  getBlockRect?: (key: Key) => BlockRect | null
   blockModulePositions: Partial<Record<Key, DragModulePosition>>
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null
   toPagePoint: (x: number, y: number) => PagePoint | null
@@ -50,6 +51,7 @@ export function usePreviewDrag<Key extends string>({
   isEditorOpen,
   canvasRef,
   blockRectsRef,
+  getBlockRect,
   blockModulePositions,
   findTopmostBlockAtPoint,
   toPagePoint,
@@ -127,7 +129,7 @@ export function usePreviewDrag<Key extends string>({
 
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (!key) return
-    const block = blockRectsRef.current[key]
+    const block = getBlockRect ? getBlockRect(key) : blockRectsRef.current[key]
     if (!block) return
     event.preventDefault()
 
@@ -140,7 +142,7 @@ export function usePreviewDrag<Key extends string>({
       pointerOffsetY: pagePoint.y - block.y,
       preview: snapped,
       moved: false,
-      copyOnDrop: event.pointerType !== "touch" && event.shiftKey,
+      copyOnDrop: event.pointerType !== "touch" && event.altKey,
     }
 
     const pointerId = event.pointerId
@@ -185,6 +187,7 @@ export function usePreviewDrag<Key extends string>({
     canvasRef,
     clearPendingTouchLongPress,
     findTopmostBlockAtPoint,
+    getBlockRect,
     isEditorOpen,
     onClearHover,
     showTypography,
@@ -212,12 +215,12 @@ export function usePreviewDrag<Key extends string>({
     const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!point) return
 
-    const useBaselineSnap = event.pointerType !== "touch" && event.ctrlKey
+    const useBaselineSnap = event.pointerType !== "touch" && (event.shiftKey || event.ctrlKey)
     const snap = useBaselineSnap
       ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
       : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
     const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
-    const copyOnDrop = event.pointerType !== "touch" && event.shiftKey
+    const copyOnDrop = event.pointerType !== "touch" && event.altKey
     pendingDragPreviewRef.current = { preview: snap, moved, copyOnDrop }
     if (dragRafRef.current !== null) return
     dragRafRef.current = window.requestAnimationFrame(() => {
