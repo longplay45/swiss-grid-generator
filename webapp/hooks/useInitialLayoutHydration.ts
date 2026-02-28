@@ -163,9 +163,10 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       const span = nextSpans[key]
       const minCol = -Math.max(0, span - 1)
       const maxCol = Math.max(0, gridCols - 1)
+      const minRow = -Math.max(0, metrics.maxBaselineRow)
       acc[key] = {
         col: Math.max(minCol, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(0, Math.min(metrics.maxBaselineRow, raw.row)),
+        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, raw.row)),
       }
       return acc
     }, {} as Partial<Record<BlockKey, ModulePosition>>)

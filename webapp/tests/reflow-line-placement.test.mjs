@@ -68,3 +68,19 @@ test("single-column placement advances first line out of gutter", () => {
 
   assert.equal(tops[0], 90)
 })
+
+test("single-column placement keeps negative top lines when they land in module bands", () => {
+  const tops = computeSingleColumnLineTops({
+    firstLineTopY: -24,
+    lineStep: 12,
+    pageBottomY: 80,
+    lineCount: 6,
+    contentTop: 0,
+    moduleHeightPx: 72,
+    moduleCyclePx: 84,
+  })
+
+  assert.ok(tops.length > 0)
+  assert.equal(tops[0], -24)
+  assert.ok(tops.some((top) => top < 0))
+})

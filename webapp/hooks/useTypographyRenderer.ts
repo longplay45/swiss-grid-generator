@@ -168,6 +168,7 @@ export function useTypographyRenderer<BlockId extends string>({
         0,
         Math.floor((pageHeight - (margins.top + margins.bottom) * scale) / baselineStep),
       )
+      const minBaselineRow = -maxBaselineRow
       const gutterX = gridMarginHorizontal * scale
       const draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
 
@@ -179,7 +180,7 @@ export function useTypographyRenderer<BlockId extends string>({
         const minCol = -Math.max(0, span - 1)
         const clamped = {
           col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), manual.col)),
-          row: Math.max(0, Math.min(maxBaselineRow, manual.row)),
+          row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
         }
         return {
           x: contentLeft + clamped.col * moduleXStep,

@@ -229,11 +229,13 @@ export function useBlockEditorActions({
       const pos = nextPositions[editorState.target]
       const desired = autoFit?.position ?? pos
       if (desired) {
+        const metrics = getGridMetrics()
         const minCol = -Math.max(0, nextSpan - 1)
         const maxCol = Math.max(0, resultGridCols - nextSpan)
+        const minRow = -Math.max(0, metrics.maxBaselineRow)
         const clamped = {
           col: Math.max(minCol, Math.min(maxCol, desired.col)),
-          row: Math.max(0, Math.min(getGridMetrics().maxBaselineRow, desired.row)),
+          row: Math.max(minRow, Math.min(metrics.maxBaselineRow, desired.row)),
         }
         const original = pos ?? desired
         if (clamped.col !== original.col || clamped.row !== original.row) {

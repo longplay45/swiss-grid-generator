@@ -15,7 +15,6 @@ function isWithinModuleBand(
   moduleCyclePx: number,
 ): boolean {
   const relativeY = lineTopY - contentTop
-  if (relativeY < -0.0001) return false
   const cycleOffset = ((relativeY % moduleCyclePx) + moduleCyclePx) % moduleCyclePx
   return cycleOffset <= moduleHeightPx - 0.0001
 }

@@ -675,9 +675,10 @@ export const GridPreview = memo(function GridPreview({
     const span = getBlockSpan(key)
     const minCol = -Math.max(0, span - 1)
     const maxCol = Math.max(0, metrics.gridCols - 1)
+    const minRow = -Math.max(0, metrics.maxBaselineRow)
     return {
       col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(0, Math.min(metrics.maxBaselineRow, position.row)),
+      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
     }
   }, [getBlockSpan, getGridMetrics])
 
@@ -813,9 +814,10 @@ export const GridPreview = memo(function GridPreview({
       const nextSpan = sourceSpan
       const metrics = getGridMetrics()
       const minCol = -Math.max(0, nextSpan - 1)
+      const minRow = -Math.max(0, metrics.maxBaselineRow)
       const resolvedPosition = {
         col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
-        row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
+        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
       }
       const newKey = getNextCustomBlockId()
 
@@ -901,12 +903,14 @@ export const GridPreview = memo(function GridPreview({
     } else {
       recordHistoryBeforeChange()
       const span = getBlockSpan(drag.key)
+      const metrics = getGridMetrics()
       const minCol = -Math.max(0, span - 1)
+      const minRow = -Math.max(0, metrics.maxBaselineRow)
       setBlockModulePositions((current) => ({
         ...current,
         [drag.key]: {
           col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
-          row: nextPreview.row,
+          row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
         },
       }))
     }

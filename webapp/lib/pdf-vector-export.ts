@@ -403,8 +403,9 @@ export function renderSwissGridVectorPdf({
     }
     const span = getBlockSpan(key)
     const minCol = -Math.max(0, span - 1)
+    const minRow = -Math.max(0, maxBaselineRow)
     const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
-    const row = Math.max(0, Math.min(maxBaselineRow, manual.row))
+    const row = Math.max(minRow, Math.min(maxBaselineRow, manual.row))
     return {
       x: contentLeft + col * moduleXStep,
       y: baselineOriginTop + row * baselineStep,
