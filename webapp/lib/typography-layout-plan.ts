@@ -63,6 +63,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   getBlockRotation: (key: BlockId) => number
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
+  isBlockPositionManual?: (key: BlockId) => boolean
   getOriginForBlock: (key: BlockId, fallbackX: number, fallbackY: number) => { x: number; y: number }
   createTextContext: (args: { key: BlockId; styleKey: StyleKey; fontSize: number }) => Context
   wrapText: (args: {
@@ -111,6 +112,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   getBlockRotation,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
+  isBlockPositionManual,
   getOriginForBlock,
   createTextContext,
   wrapText,
@@ -184,7 +186,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const ascent = textAscent({ context, key, styleKey, fontSize })
     const hitTopPadding = Math.max(baselineStep, ascent)
     const lineStep = baselineMult * baselineStep
-    const pageBottomY = pageHeight - marginsBottom
+    const pageBottomY = (isBlockPositionManual?.(key) === true)
+      ? Number.POSITIVE_INFINITY
+      : pageHeight - marginsBottom
+    const bottomLineLimit = pageBottomY + 0.0001
     const moduleHeightForBlock = rowSpan * moduleHeight + Math.max(rowSpan - 1, 0) * gutterY
     const firstLineTopY = origin.y + baselineStep
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / lineStep))
@@ -208,7 +213,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
         const y = lineTopY + ascent
-        if (lineTopY >= pageBottomY) continue
+        if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
         commands.push({ text: line, x: anchorX + offsetX, y })
@@ -243,7 +248,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + rowIndex * lineStep
         const y = lineTopY + ascent
-        if (lineTopY >= pageBottomY) continue
+        if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
         commands.push({ text: line, x: anchorX + offsetX, y })
@@ -338,7 +343,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   })
   const captionHitTopPadding = Math.max(baselineStep, captionAscent)
   const captionLineStep = captionBaselineMult * baselineStep
-  const captionPageBottomY = pageHeight - marginsBottom
+  const captionPageBottomY = (isBlockPositionManual?.(captionKey) === true)
+    ? Number.POSITIVE_INFINITY
+    : pageHeight - marginsBottom
+  const captionBottomLineLimit = captionPageBottomY + 0.0001
   const captionModuleHeight = captionRowSpan * moduleHeight + Math.max(captionRowSpan - 1, 0) * gutterY
   const captionFirstLineTopY = captionOrigin.y + baselineStep
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
@@ -353,7 +361,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + lineIndex * captionBaselineMult * baselineStep
       const y = lineTopY + captionAscent
-      if (lineTopY >= captionPageBottomY) continue
+      if (lineTopY > captionBottomLineLimit) continue
       captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
       const offsetX = opticalOffset({
         context: captionContext,
@@ -402,7 +410,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + rowIndex * captionLineStep
       const y = lineTopY + captionAscent
-      if (lineTopY >= captionPageBottomY) continue
+      if (lineTopY > captionBottomLineLimit) continue
       captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
       const offsetX = opticalOffset({
         context: captionContext,

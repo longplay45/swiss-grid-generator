@@ -160,7 +160,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
     const nextPositions = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockModulePositions?.[key]
       if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
-      const maxCol = Math.max(0, gridCols - nextSpans[key])
+      const maxCol = Math.max(0, gridCols - 1)
       acc[key] = {
         col: Math.max(0, Math.min(maxCol, Math.round(raw.col))),
         row: Math.max(0, Math.min(metrics.maxBaselineRow, raw.row)),

@@ -670,6 +670,14 @@ export const GridPreview = memo(function GridPreview({
     }
   }, [getBlockSpan, getGridMetrics])
 
+  const clampBaselinePosition = useCallback((position: ModulePosition): ModulePosition => {
+    const metrics = getGridMetrics()
+    return {
+      col: Math.max(0, Math.min(Math.max(0, metrics.gridCols - 1), position.col)),
+      row: Math.max(0, Math.min(metrics.maxBaselineRow, position.row)),
+    }
+  }, [getGridMetrics])
+
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
     const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
@@ -679,12 +687,12 @@ export const GridPreview = memo(function GridPreview({
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
-  const snapToBaseline = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
+  const snapToBaseline = useCallback((pageX: number, pageY: number): ModulePosition => {
     const metrics = getGridMetrics()
     const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
-    return clampModulePosition({ col: rawCol, row: rawRow }, key)
-  }, [clampModulePosition, getGridMetrics])
+    return clampBaselinePosition({ col: rawCol, row: rawRow })
+  }, [clampBaselinePosition, getGridMetrics])
 
   const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
     // Hit-test in reverse draw order so visually top blocks win when overlaps happen.
@@ -801,9 +809,8 @@ export const GridPreview = memo(function GridPreview({
       const sourceSpan = getBlockSpan(drag.key)
       const nextSpan = sourceSpan
       const metrics = getGridMetrics()
-      const maxCol = Math.max(0, result.settings.gridCols - nextSpan)
       const resolvedPosition = {
-        col: Math.max(0, Math.min(maxCol, nextPreview.col)),
+        col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
         row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
       }
       const newKey = getNextCustomBlockId()
@@ -889,12 +896,10 @@ export const GridPreview = memo(function GridPreview({
       })
     } else {
       recordHistoryBeforeChange()
-      const span = getBlockSpan(drag.key)
-      const maxCol = Math.max(0, result.settings.gridCols - span)
       setBlockModulePositions((current) => ({
         ...current,
         [drag.key]: {
-          col: Math.max(0, Math.min(maxCol, nextPreview.col)),
+          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
           row: nextPreview.row,
         },
       }))
@@ -1133,7 +1138,6 @@ export const GridPreview = memo(function GridPreview({
     blockTextAlignments,
     blockModulePositions,
     dragState,
-    clampModulePosition,
     getBlockFont,
     isBlockItalic,
     isBlockBold,

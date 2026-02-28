@@ -24,17 +24,18 @@ export function computeSingleColumnLineTops(input: SingleColumnLinePlacementInpu
   const safeLineStep = Math.max(0.0001, input.lineStep)
   const safeModuleHeightPx = Math.max(0.0001, input.moduleHeightPx)
   const safeModuleCyclePx = Math.max(safeModuleHeightPx, input.moduleCyclePx)
+  const bottomLineLimit = input.pageBottomY + 0.0001
 
   const tops: number[] = []
   let lineTopY = input.firstLineTopY
   for (let lineIndex = 0; lineIndex < input.lineCount; lineIndex += 1) {
     while (
-      lineTopY < input.pageBottomY
+      lineTopY <= bottomLineLimit
       && !isWithinModuleBand(lineTopY, input.contentTop, safeModuleHeightPx, safeModuleCyclePx)
     ) {
       lineTopY += safeLineStep
     }
-    if (lineTopY >= input.pageBottomY) break
+    if (lineTopY > bottomLineLimit) break
     tops.push(lineTopY)
     lineTopY += safeLineStep
   }

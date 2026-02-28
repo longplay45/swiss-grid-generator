@@ -39,6 +39,22 @@ test("single-column placement stops at page bottom", () => {
   assert.equal(tops[tops.length - 1], 120)
 })
 
+test("single-column placement includes a line on the last visible baseline", () => {
+  const tops = computeSingleColumnLineTops({
+    firstLineTopY: 12,
+    lineStep: 12,
+    pageBottomY: 132,
+    lineCount: 50,
+    contentTop: 0,
+    moduleHeightPx: 72,
+    moduleCyclePx: 84,
+  })
+
+  assert.ok(tops.length > 0)
+  assert.ok(tops.every((top) => top <= 132))
+  assert.equal(tops[tops.length - 1], 132)
+})
+
 test("single-column placement advances first line out of gutter", () => {
   const tops = computeSingleColumnLineTops({
     firstLineTopY: 78,

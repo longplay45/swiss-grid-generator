@@ -401,9 +401,7 @@ export function renderSwissGridVectorPdf({
     if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") {
       return { x: fallbackX, y: fallbackY }
     }
-    const span = getBlockSpan(key)
-    const maxCol = Math.max(0, gridCols - span)
-    const col = Math.max(0, Math.min(maxCol, manual.col))
+    const col = Math.max(0, Math.min(Math.max(0, gridCols - 1), manual.col))
     const row = Math.max(0, Math.min(maxBaselineRow, manual.row))
     return {
       x: contentLeft + col * moduleXStep,
@@ -448,6 +446,10 @@ export function renderSwissGridVectorPdf({
     getBlockRotation,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
+    isBlockPositionManual: (key) => {
+      const manual = blockModulePositions[key]
+      return Boolean(manual && typeof manual.col === "number" && typeof manual.row === "number")
+    },
     getOriginForBlock,
     createTextContext: ({ key, styleKey, fontSize }) => {
       const blockIsBold = isBlockBold(key, styleKey)

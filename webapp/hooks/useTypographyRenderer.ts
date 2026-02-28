@@ -60,7 +60,6 @@ type Args<BlockId extends string> = {
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
   dragState: DragState<BlockId> | null
-  clampModulePosition: (position: ModulePosition, key: BlockId) => ModulePosition
   getBlockFont: (key: BlockId) => FontFamily
   isBlockItalic: (key: BlockId) => boolean
   isBlockBold: (key: BlockId) => boolean
@@ -99,7 +98,6 @@ export function useTypographyRenderer<BlockId extends string>({
   blockTextAlignments,
   blockModulePositions,
   dragState,
-  clampModulePosition,
   getBlockFont,
   isBlockItalic,
   isBlockBold,
@@ -166,6 +164,10 @@ export function useTypographyRenderer<BlockId extends string>({
       const moduleXStep = (modW + gridMarginHorizontal) * scale
       const baselineStep = gridUnit * scale
       const baselineOriginTop = contentTop - baselineStep
+      const maxBaselineRow = Math.max(
+        0,
+        Math.floor((pageHeight - (margins.top + margins.bottom) * scale) / baselineStep),
+      )
       const gutterX = gridMarginHorizontal * scale
       const draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
 
@@ -173,7 +175,10 @@ export function useTypographyRenderer<BlockId extends string>({
         const dragged = dragState?.key === key ? dragState.preview : undefined
         const manual = dragged ?? blockModulePositions[key]
         if (!manual) return { x: fallbackX, y: fallbackY }
-        const clamped = clampModulePosition(manual, key)
+        const clamped = {
+          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), manual.col)),
+          row: Math.max(0, Math.min(maxBaselineRow, manual.row)),
+        }
         return {
           x: contentLeft + clamped.col * moduleXStep,
           y: baselineOriginTop + clamped.row * baselineStep,
@@ -208,6 +213,7 @@ export function useTypographyRenderer<BlockId extends string>({
         getBlockRotation,
         isTextReflowEnabled,
         isSyllableDivisionEnabled,
+        isBlockPositionManual: (key) => blockModulePositions[key] !== undefined,
         getOriginForBlock,
         createTextContext: ({ key, fontSize }) => {
           const blockFont = getBlockFont(key)
@@ -342,7 +348,6 @@ export function useTypographyRenderer<BlockId extends string>({
     blockRectsRef,
     blockTextAlignments,
     canvasRef,
-    clampModulePosition,
     dragState,
     getBlockFont,
     getBlockRotation,

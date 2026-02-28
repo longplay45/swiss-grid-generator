@@ -31,7 +31,7 @@ export function renderStaticGuides({
   const { gridCols, gridRows } = result.settings
   const pageWidth = width * scale
   const pageHeight = height * scale
-  const showPageOutline = showMargins || showModules || showBaselines
+  const showPageOutline = showMargins
   const contentTop = margins.top * scale
   const baselineSpacing = gridUnit * scale
   const baselineRows = Math.max(
