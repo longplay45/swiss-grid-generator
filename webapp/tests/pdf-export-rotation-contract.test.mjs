@@ -58,6 +58,33 @@ test("pdf export manually right-aligns text anchors before draw to avoid rotated
   assert.match(source, /const\s+drawX\s*=\s*plan\.textAlign\s*===\s*"right"[\s\S]*?command\.x\s*-\s*measureWidthSource\(command\.text\)/)
 })
 
+test("pdf export draws image placeholders only when placeholder layer is visible", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /if\s*\(showTypography\s*&&\s*showImagePlaceholders\)\s*\{/)
+  assert.match(source, /setFillColorCmyk\(pdf,\s*fillColor\)/)
+  assert.match(source, /drawFilledRect\(x,\s*y,\s*blockWidth,\s*blockHeight\)/)
+})
+
+test("pdf export rotates placeholder fill geometry through transformed corner path", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /const\s+topLeft\s*=\s*transformPoint\(x,\s*y\)/)
+  assert.match(source, /const\s+topRight\s*=\s*transformPoint\(x\s*\+\s*w,\s*y\)/)
+  assert.match(source, /const\s+bottomRight\s*=\s*transformPoint\(x\s*\+\s*w,\s*y\s*\+\s*h\)/)
+  assert.match(source, /const\s+bottomLeft\s*=\s*transformPoint\(x,\s*y\s*\+\s*h\)/)
+  assert.match(source, /pdf\.moveTo\(topLeft\.x,\s*topLeft\.y\)/)
+  assert.match(source, /pdf\.lineTo\(topRight\.x,\s*topRight\.y\)/)
+  assert.match(source, /pdf\.lineTo\(bottomRight\.x,\s*bottomRight\.y\)/)
+  assert.match(source, /pdf\.lineTo\(bottomLeft\.x,\s*bottomLeft\.y\)/)
+  assert.match(source, /pdf\.close\(\)/)
+  assert.match(source, /pdf\.fill\(\)/)
+})
+
+test("pdf export action forwards placeholder visibility toggle", () => {
+  const source = readText("hooks/useExportActions.ts")
+  assert.match(source, /showImagePlaceholders:\s*boolean/)
+  assert.match(source, /showImagePlaceholders,\s*showTypography,\s*\n\s*}\)/)
+})
+
 test("pdf font registry derives embedded families from configured font list", () => {
   const source = readText("lib/pdf-font-registry.ts")
   assert.match(source, /FONT_DEFINITIONS/)

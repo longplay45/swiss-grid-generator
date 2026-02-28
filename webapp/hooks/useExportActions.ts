@@ -45,6 +45,7 @@ export type ExportActionsContext = {
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
+  showImagePlaceholders: boolean
   showTypography: boolean
   isDinOrAnsiRatio: boolean
   displayUnit: "pt" | "mm" | "px"
@@ -77,6 +78,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     showBaselines,
     showModules,
     showMargins,
+    showImagePlaceholders,
     showTypography,
     isDinOrAnsiRatio,
     displayUnit,
@@ -231,11 +233,12 @@ export function useExportActions(ctx: ExportActionsContext) {
         showBaselines,
         showModules,
         showMargins,
+        showImagePlaceholders,
         showTypography,
       })
       pdf.save(filename)
     },
-    [baseFont, previewLayout, result, rotation, showBaselines, showMargins, showModules, showTypography],
+    [baseFont, previewLayout, result, rotation, showBaselines, showMargins, showModules, showImagePlaceholders, showTypography],
   )
 
   const openExportDialog = useCallback(() => {

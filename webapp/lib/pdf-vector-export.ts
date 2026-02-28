@@ -42,6 +42,7 @@ type ExportVectorPdfOptions = {
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
+  showImagePlaceholders: boolean
   showTypography: boolean
 }
 
@@ -130,8 +131,27 @@ function setTextColorCmyk(pdf: jsPDF, color: RgbColor): void {
   pdf.setTextColor(c, m, y, k)
 }
 
+function setFillColorCmyk(pdf: jsPDF, color: RgbColor): void {
+  const { c, m, y, k } = rgbToCmyk(color)
+  pdf.setFillColor(c, m, y, k)
+}
+
 function setDrawColorFromCmyk(pdf: jsPDF, color: CmykColor): void {
   pdf.setDrawColor(color.c, color.m, color.y, color.k)
+}
+
+function parseHexColor(value: string | undefined): RgbColor | null {
+  if (!value || typeof value !== "string") return null
+  const normalized = value.trim().replace(/^#/, "")
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((char) => `${char}${char}`).join("")
+    : normalized
+  if (!/^[\da-fA-F]{6}$/.test(expanded)) return null
+  return {
+    r: Number.parseInt(expanded.slice(0, 2), 16),
+    g: Number.parseInt(expanded.slice(2, 4), 16),
+    b: Number.parseInt(expanded.slice(4, 6), 16),
+  }
 }
 
 export function renderSwissGridVectorPdf({
@@ -148,6 +168,7 @@ export function renderSwissGridVectorPdf({
   showBaselines,
   showModules,
   showMargins,
+  showImagePlaceholders,
   showTypography,
 }: ExportVectorPdfOptions): void {
   const sourceWidth = result.pageSizePt.width
@@ -183,6 +204,19 @@ export function renderSwissGridVectorPdf({
     drawLine(x + w, y, x + w, y + h)
     drawLine(x + w, y + h, x, y + h)
     drawLine(x, y + h, x, y)
+  }
+
+  const drawFilledRect = (x: number, y: number, w: number, h: number) => {
+    const topLeft = transformPoint(x, y)
+    const topRight = transformPoint(x + w, y)
+    const bottomRight = transformPoint(x + w, y + h)
+    const bottomLeft = transformPoint(x, y + h)
+    pdf.moveTo(topLeft.x, topLeft.y)
+    pdf.lineTo(topRight.x, topRight.y)
+    pdf.lineTo(bottomRight.x, bottomRight.y)
+    pdf.lineTo(bottomLeft.x, bottomLeft.y)
+    pdf.close()
+    pdf.fill()
   }
 
   const drawCropMarks = (offset: number, length: number) => {
@@ -254,6 +288,15 @@ export function renderSwissGridVectorPdf({
     Math.round((sourceHeight - (margins.top + margins.bottom)) / guideBaselineSpacing),
   )
   const guideContentBottom = guideContentTop + guideBaselineRows * guideBaselineSpacing
+  const contentTop = margins.top
+  const contentLeft = margins.left
+  const baselineStep = gridUnit
+  const baselineOriginTop = contentTop - baselineStep
+  const moduleXStep = modW + gridMarginHorizontal
+  const maxBaselineRow = Math.max(
+    0,
+    Math.floor((sourceHeight - margins.top - margins.bottom) / gridUnit),
+  )
 
   pdf.setLineCap("butt")
   pdf.setLineJoin("miter")
@@ -325,6 +368,38 @@ export function renderSwissGridVectorPdf({
     }
   }
 
+  if (showTypography && showImagePlaceholders) {
+    const imageOrder = layout?.imageOrder?.filter(
+      (key): key is BlockId => typeof key === "string" && key.length > 0,
+    ) ?? []
+    const imageModulePositions = layout?.imageModulePositions ?? {}
+    const imageColumnSpans = layout?.imageColumnSpans ?? {}
+    const imageRowSpans = layout?.imageRowSpans ?? {}
+    const imageColors = layout?.imageColors ?? {}
+    const fallbackImageColor: RgbColor = { r: 11, g: 53, b: 54 }
+
+    for (const key of imageOrder) {
+      const manual = imageModulePositions[key]
+      if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") continue
+
+      const spanRaw = imageColumnSpans[key] ?? 1
+      const rowRaw = imageRowSpans[key] ?? 1
+      const span = Math.max(1, Math.min(gridCols, spanRaw))
+      const rows = Math.max(1, Math.min(gridRows, rowRaw))
+      const minCol = -Math.max(0, span - 1)
+      const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+      const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
+
+      const x = contentLeft + col * moduleXStep
+      const y = baselineOriginTop + row * baselineStep + baselineStep
+      const blockWidth = span * modW + Math.max(span - 1, 0) * gridMarginHorizontal
+      const blockHeight = rows * modH + Math.max(rows - 1, 0) * gridMarginVertical
+      const fillColor = parseHexColor(imageColors[key]) ?? fallbackImageColor
+      setFillColorCmyk(pdf, fillColor)
+      drawFilledRect(x, y, blockWidth, blockHeight)
+    }
+  }
+
   if (!showTypography) return
 
   const styleDefinitions = result.typography.styles
@@ -346,16 +421,6 @@ export function renderSwissGridVectorPdf({
   const blockRotations = layout?.blockRotations ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
   const textMeasureContext = createTextMeasureContext()
-
-  const contentTop = margins.top
-  const contentLeft = margins.left
-  const baselineStep = gridUnit
-  const baselineOriginTop = contentTop - baselineStep
-  const moduleXStep = modW + gridMarginHorizontal
-  const maxBaselineRow = Math.max(
-    0,
-    Math.floor((sourceHeight - margins.top - margins.bottom) / gridUnit),
-  )
 
   const getBlockSpan = (key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
