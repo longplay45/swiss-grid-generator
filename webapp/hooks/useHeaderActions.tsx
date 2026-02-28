@@ -4,6 +4,7 @@ import {
   Download,
   Info,
   FolderOpen,
+  Image,
   LayoutGrid,
   LayoutTemplate,
   Maximize2,
@@ -43,6 +44,7 @@ type Args = {
   showBaselines: boolean
   showMargins: boolean
   showModules: boolean
+  showImagePlaceholders: boolean
   showTypography: boolean
   showRolloverInfo: boolean
   canUndo: boolean
@@ -58,6 +60,7 @@ type Args = {
   onToggleBaselines: () => void
   onToggleMargins: () => void
   onToggleModules: () => void
+  onToggleImagePlaceholders: () => void
   onToggleTypography: () => void
   onToggleRolloverInfo: () => void
   onToggleSettingsPanel: () => void
@@ -204,6 +207,18 @@ export function useHeaderActions(args: Args) {
         pressed: args.showModules,
         onClick: args.onToggleModules,
         icon: <LayoutGrid className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "image-placeholders",
+        ariaLabel: "Toggle image placeholders",
+        tooltip: "Toggle image placeholders",
+        variant: args.showImagePlaceholders ? "default" : "outline",
+        pressed: args.showImagePlaceholders,
+        onClick: args.onToggleImagePlaceholders,
+        icon: <Image className="h-4 w-4" />,
       },
     },
     {

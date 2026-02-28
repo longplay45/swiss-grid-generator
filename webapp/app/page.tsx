@@ -92,6 +92,7 @@ type GridUiState = Pick<
   | "showBaselines"
   | "showModules"
   | "showMargins"
+  | "showImagePlaceholders"
   | "showTypography"
   | "collapsed"
 >
@@ -124,6 +125,7 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   showBaselines: DEFAULT_UI.showBaselines,
   showModules: DEFAULT_UI.showModules,
   showMargins: DEFAULT_UI.showMargins,
+  showImagePlaceholders: typeof DEFAULT_UI.showImagePlaceholders === "boolean" ? DEFAULT_UI.showImagePlaceholders : true,
   showTypography: DEFAULT_UI.showTypography,
   collapsed: SECTION_KEYS.reduce(
     (acc, key) => {
@@ -168,9 +170,10 @@ type UiAction =
   | { type: "SET"; key: "showBaselines"; value: boolean }
   | { type: "SET"; key: "showModules"; value: boolean }
   | { type: "SET"; key: "showMargins"; value: boolean }
+  | { type: "SET"; key: "showImagePlaceholders"; value: boolean }
   | { type: "SET"; key: "showTypography"; value: boolean }
   | { type: "SET"; key: "collapsed"; value: Record<SectionKey, boolean> }
-  | { type: "TOGGLE"; key: "showBaselines" | "showModules" | "showMargins" | "showTypography" }
+  | { type: "TOGGLE"; key: "showBaselines" | "showModules" | "showMargins" | "showImagePlaceholders" | "showTypography" }
   | { type: "TOGGLE_SECTION"; key: SectionKey }
   | { type: "SET_ALL_SECTIONS"; value: boolean }
   | { type: "APPLY_SNAPSHOT"; snapshot: UiSettingsSnapshot }
@@ -197,6 +200,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "showBaselines":
         case "showModules":
         case "showMargins":
+        case "showImagePlaceholders":
         case "showTypography":
         case "collapsed":
           if (state[action.key] === action.value) return state
@@ -235,6 +239,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         showBaselines: action.snapshot.showBaselines,
         showModules: action.snapshot.showModules,
         showMargins: action.snapshot.showMargins,
+        showImagePlaceholders: action.snapshot.showImagePlaceholders,
         showTypography: action.snapshot.showTypography,
         collapsed: action.snapshot.collapsed,
       }
@@ -308,7 +313,7 @@ export default function Home() {
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple,
     typographyScale, baseFont, imageColorScheme, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
-    showMargins, showTypography, collapsed,
+    showMargins, showImagePlaceholders, showTypography, collapsed,
   } = ui
   // Stable dispatch wrappers for child component props
   const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [dispatch])
@@ -828,6 +833,7 @@ export default function Home() {
         if (typeof loaded.showBaselines === "boolean") set("showBaselines", loaded.showBaselines)
         if (typeof loaded.showModules === "boolean") set("showModules", loaded.showModules)
         if (typeof loaded.showMargins === "boolean") set("showMargins", loaded.showMargins)
+        if (typeof loaded.showImagePlaceholders === "boolean") set("showImagePlaceholders", loaded.showImagePlaceholders)
         if (typeof loaded.showTypography === "boolean") set("showTypography", loaded.showTypography)
         if (loaded.collapsed && typeof loaded.collapsed === "object") {
           const merged = { ...collapsed }
@@ -905,6 +911,7 @@ export default function Home() {
     showBaselines,
     showMargins,
     showModules,
+    showImagePlaceholders,
     showTypography,
     showRolloverInfo,
     canUndo: history.canUndo,
@@ -920,6 +927,7 @@ export default function Home() {
     onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
     onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
     onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
+    onToggleImagePlaceholders: () => dispatch({ type: "TOGGLE", key: "showImagePlaceholders" }),
     onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
     onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
     onToggleSettingsPanel: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
@@ -1147,6 +1155,7 @@ export default function Home() {
             showBaselines={showBaselines}
             showModules={showModules}
             showMargins={showMargins}
+            showImagePlaceholders={showImagePlaceholders}
             showTypography={showTypography}
             showRolloverInfo={showRolloverInfo}
             baseFont={baseFont}
@@ -1243,6 +1252,7 @@ export default function Home() {
     setImageColorScheme,
     showBaselines,
     showMargins,
+    showImagePlaceholders,
     showModules,
     showSectionHelpIcons,
     showTypography,

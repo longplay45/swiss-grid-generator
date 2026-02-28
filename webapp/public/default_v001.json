@@ -119,6 +119,7 @@
     "showBaselines": true,
     "showModules": true,
     "showMargins": true,
+    "showImagePlaceholders": true,
     "showTypography": true,
     "collapsed": {
       "format": true,

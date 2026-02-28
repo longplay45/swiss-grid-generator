@@ -234,6 +234,7 @@ interface GridPreviewProps {
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
+  showImagePlaceholders?: boolean
   showTypography: boolean
   showRolloverInfo?: boolean
   initialLayout?: PreviewLayoutState | null
@@ -260,6 +261,7 @@ export const GridPreview = memo(function GridPreview({
   showBaselines,
   showModules,
   showMargins,
+  showImagePlaceholders = true,
   showTypography,
   showRolloverInfo = true,
   initialLayout = null,
@@ -903,6 +905,7 @@ export const GridPreview = memo(function GridPreview({
   }, [blockOrder])
 
   const findTopmostImageAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    if (!showImagePlaceholders) return null
     for (let index = imageOrder.length - 1; index >= 0; index -= 1) {
       const key = imageOrder[index]
       const rect = imageRectsRef.current[key]
@@ -917,7 +920,7 @@ export const GridPreview = memo(function GridPreview({
       }
     }
     return null
-  }, [imageOrder])
+  }, [imageOrder, showImagePlaceholders])
 
   const findTopmostDraggableAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
     const textKey = findTopmostBlockAtPoint(pageX, pageY)
@@ -1419,7 +1422,7 @@ export const GridPreview = memo(function GridPreview({
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.clearRect(0, 0, cssWidth, cssHeight)
       imageRectsRef.current = {}
-      if (!showTypography || imageOrder.length === 0) return
+      if (!showTypography || !showImagePlaceholders || imageOrder.length === 0) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -1474,6 +1477,7 @@ export const GridPreview = memo(function GridPreview({
     result,
     rotation,
     scale,
+    showImagePlaceholders,
     showTypography,
   ])
 
@@ -1847,6 +1851,12 @@ export const GridPreview = memo(function GridPreview({
       return
     }
 
+    if (!showImagePlaceholders) {
+      setImageEditorState(null)
+      handleTextCanvasDoubleClick(event)
+      return
+    }
+
     const imageKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
     if (imageKey) {
       openImageEditor(imageKey)
@@ -1907,6 +1917,7 @@ export const GridPreview = memo(function GridPreview({
     defaultImageColor,
     result.settings.gridCols,
     result.settings.gridRows,
+    showImagePlaceholders,
     showTypography,
     toPagePoint,
   ])
