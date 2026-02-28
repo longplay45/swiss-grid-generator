@@ -13,12 +13,12 @@ export const IMAGE_COLOR_SCHEMES = [
   {
     id: "s2",
     label: "s2",
-    colors: ["#35342f", "#e1e0dd", "#f1f2f0", "#f1f2f0"],
+    colors: ["#35342f", "#e1e0dd", "#f1f2f0", "#37bbe4"],
   },
   {
     id: "s3",
     label: "s3",
-    colors: ["#c7943e", "#c7943e", "#c7943e", "#c7943e"],
+    colors: ["#fef9f7", "#1aa9bc", "#457c39", "#ffeb00"],
   },
 ] as const satisfies readonly ImageColorScheme[]
 
