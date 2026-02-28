@@ -670,13 +670,16 @@ export const GridPreview = memo(function GridPreview({
     }
   }, [getBlockSpan, getGridMetrics])
 
-  const clampBaselinePosition = useCallback((position: ModulePosition): ModulePosition => {
+  const clampBaselinePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
+    const span = getBlockSpan(key)
+    const minCol = -Math.max(0, span - 1)
+    const maxCol = Math.max(0, metrics.gridCols - 1)
     return {
-      col: Math.max(0, Math.min(Math.max(0, metrics.gridCols - 1), position.col)),
+      col: Math.max(minCol, Math.min(maxCol, position.col)),
       row: Math.max(0, Math.min(metrics.maxBaselineRow, position.row)),
     }
-  }, [getGridMetrics])
+  }, [getBlockSpan, getGridMetrics])
 
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
@@ -687,11 +690,11 @@ export const GridPreview = memo(function GridPreview({
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
-  const snapToBaseline = useCallback((pageX: number, pageY: number): ModulePosition => {
+  const snapToBaseline = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
     const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
-    return clampBaselinePosition({ col: rawCol, row: rawRow })
+    return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
 
   const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
@@ -809,8 +812,9 @@ export const GridPreview = memo(function GridPreview({
       const sourceSpan = getBlockSpan(drag.key)
       const nextSpan = sourceSpan
       const metrics = getGridMetrics()
+      const minCol = -Math.max(0, nextSpan - 1)
       const resolvedPosition = {
-        col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
+        col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
         row: Math.max(0, Math.min(metrics.maxBaselineRow, nextPreview.row)),
       }
       const newKey = getNextCustomBlockId()
@@ -896,10 +900,12 @@ export const GridPreview = memo(function GridPreview({
       })
     } else {
       recordHistoryBeforeChange()
+      const span = getBlockSpan(drag.key)
+      const minCol = -Math.max(0, span - 1)
       setBlockModulePositions((current) => ({
         ...current,
         [drag.key]: {
-          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
+          col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
           row: nextPreview.row,
         },
       }))

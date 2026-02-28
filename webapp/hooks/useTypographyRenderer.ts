@@ -175,8 +175,10 @@ export function useTypographyRenderer<BlockId extends string>({
         const dragged = dragState?.key === key ? dragState.preview : undefined
         const manual = dragged ?? blockModulePositions[key]
         if (!manual) return { x: fallbackX, y: fallbackY }
+        const span = getBlockSpan(key)
+        const minCol = -Math.max(0, span - 1)
         const clamped = {
-          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - 1), manual.col)),
+          col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), manual.col)),
           row: Math.max(0, Math.min(maxBaselineRow, manual.row)),
         }
         return {

@@ -401,7 +401,9 @@ export function renderSwissGridVectorPdf({
     if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") {
       return { x: fallbackX, y: fallbackY }
     }
-    const col = Math.max(0, Math.min(Math.max(0, gridCols - 1), manual.col))
+    const span = getBlockSpan(key)
+    const minCol = -Math.max(0, span - 1)
+    const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
     const row = Math.max(0, Math.min(maxBaselineRow, manual.row))
     return {
       x: contentLeft + col * moduleXStep,
