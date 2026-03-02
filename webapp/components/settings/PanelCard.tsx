@@ -63,7 +63,7 @@ export function PanelCard({
                 </span>
               </div>
               {collapsed && collapsedSummary ? (
-                <div className={`mt-0.5 text-[10px] font-normal leading-snug ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <div className={`mt-1 text-[10px] font-normal leading-snug ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                   {collapsedSummary}
                 </div>
               ) : null}

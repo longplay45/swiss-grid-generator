@@ -33,7 +33,6 @@ import { useEffect, useState } from "react"
 import type { Dispatch, SetStateAction } from "react"
 
 type TextEditorPanelProps<StyleKey extends string> = {
-  isDarkMode: boolean
   controls: TextEditorPanelControls<StyleKey>
 }
 
@@ -61,7 +60,6 @@ type TextEditorPanelControls<StyleKey extends string> = {
 }
 
 export function TextEditorPanel<StyleKey extends string>({
-  isDarkMode,
   controls,
 }: TextEditorPanelProps<StyleKey>) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
@@ -82,25 +80,16 @@ export function TextEditorPanel<StyleKey extends string>({
     setFxLeadingInput(String(controls.editorState.draftFxLeading))
   }, [controls.editorState.draftFxLeading, controls.editorState.draftFxSize, controls.editorState.target])
 
-  const tone = isDarkMode
-    ? {
-      rail: "border-red-900/70 bg-red-950/55",
-      railButton: "border-red-900/60 text-red-200 hover:bg-red-900/50",
-      railButtonActive: "bg-red-700/80 text-white border-red-500",
-      submenu: "border-red-900/70 bg-red-950/55 text-red-100",
-      input: "border-red-900/60 bg-red-950/65 text-red-100 focus:border-red-500",
-      iconMuted: "text-red-200/80",
-      ringOffset: "ring-offset-red-950",
-    }
-    : {
-      rail: "border-red-200 bg-red-50/95",
-      railButton: "border-red-200 text-red-900 hover:bg-red-100",
-      railButtonActive: "bg-red-500 text-white border-red-500",
-      submenu: "border-red-200 bg-red-50/95 text-red-900",
-      input: "border-red-200 bg-white text-gray-900 focus:border-red-400",
-      iconMuted: "text-red-800/80",
-      ringOffset: "ring-offset-red-50",
-    }
+  const tone = {
+    rail: "border-red-300 bg-white",
+    railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+    railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
+    submenu: "border-red-300 bg-white text-gray-900",
+    input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
+    iconMuted: "text-gray-500",
+    ringOffset: "ring-offset-white",
+    divider: "bg-red-200",
+  }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
   const toggleSubmenu = (next: Exclude<MainSubmenu, null>) => {
@@ -141,7 +130,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <Palette className="h-4 w-4" />
         </Button>
 
-        <div className={`my-1 h-px w-full ${isDarkMode ? "bg-red-900/60" : "bg-red-200"}`} />
+        <div className={`my-1 h-px w-full ${tone.divider}`} />
 
         <Button
           type="button"
@@ -214,7 +203,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <Info className="h-4 w-4" />
         </Button>
 
-        <div className={`my-1 h-px w-full ${isDarkMode ? "bg-red-900/60" : "bg-red-200"}`} />
+        <div className={`my-1 h-px w-full ${tone.divider}`} />
         <Button
           type="button"
           size="icon"

@@ -2540,7 +2540,6 @@ export const GridPreview = memo(function GridPreview({
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
           <TextEditorPanel
-            isDarkMode={isDarkMode}
             controls={{
               editorState,
               setEditorState,
