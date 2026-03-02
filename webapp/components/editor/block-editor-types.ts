@@ -1,0 +1,27 @@
+import type { FontFamily } from "@/lib/config/fonts"
+
+export type BlockEditorTextAlign = "left" | "right"
+
+export type BlockEditorState<StyleKey extends string = string> = {
+  target: string
+  draftText: string
+  draftStyle: StyleKey
+  draftFxSize: number
+  draftFxLeading: number
+  draftFont: FontFamily
+  draftColumns: number
+  draftRows: number
+  draftAlign: BlockEditorTextAlign
+  draftColor: string
+  draftReflow: boolean
+  draftSyllableDivision: boolean
+  draftBold: boolean
+  draftItalic: boolean
+  draftRotation: number
+  draftTextEdited: boolean
+}
+
+export type BlockEditorStyleOption<StyleKey extends string = string> = {
+  value: StyleKey
+  label: string
+}

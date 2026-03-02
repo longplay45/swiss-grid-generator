@@ -10,7 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
-import type { TextEditorControlsProps } from "@/components/editor/TextEditorControls"
+import type {
+  BlockEditorState,
+  BlockEditorStyleOption,
+} from "@/components/editor/block-editor-types"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import {
   AlignLeft,
   AlignRight,
@@ -26,14 +30,35 @@ import {
   Type,
 } from "lucide-react"
 import { useEffect, useState } from "react"
+import type { Dispatch, SetStateAction } from "react"
 
 type TextEditorPanelProps<StyleKey extends string> = {
   isDarkMode: boolean
-  closeEditor: () => void
-  controls: Omit<TextEditorControlsProps<StyleKey>, "isDarkMode">
+  controls: TextEditorPanelControls<StyleKey>
 }
 
 type MainSubmenu = "geometry" | "type" | "color" | "info" | null
+
+type TextEditorPanelControls<StyleKey extends string> = {
+  editorState: BlockEditorState<StyleKey>
+  setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
+  deleteEditorBlock: () => void
+  gridRows: number
+  gridCols: number
+  hierarchyTriggerMinWidthCh: number
+  rowTriggerMinWidthCh: number
+  colTriggerMinWidthCh: number
+  styleOptions: Array<BlockEditorStyleOption<StyleKey>>
+  getStyleSizeLabel: (styleKey: StyleKey) => string
+  getStyleSizeValue: (styleKey: StyleKey) => number
+  getStyleLeadingValue: (styleKey: StyleKey) => number
+  isFxStyle: (styleKey: StyleKey) => boolean
+  getDummyTextForStyle: (styleKey: StyleKey) => string
+  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
+  selectedColorScheme: ImageColorSchemeId
+  onColorSchemeChange: (value: ImageColorSchemeId) => void
+  palette: readonly string[]
+}
 
 export function TextEditorPanel<StyleKey extends string>({
   isDarkMode,

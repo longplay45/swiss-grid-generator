@@ -1,6 +1,6 @@
 "use client"
 
-import type { BlockEditorState } from "@/components/dialogs/BlockEditorDialog"
+import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { getFontFamilyCss } from "@/lib/config/fonts"
 import { buildInlineEditorTransform } from "@/lib/inline-editor"
 import type { RefObject, SetStateAction, Dispatch } from "react"

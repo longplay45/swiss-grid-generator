@@ -6,7 +6,7 @@ import {
   type BlockEditorState,
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
-} from "@/components/dialogs/BlockEditorDialog"
+} from "@/components/editor/block-editor-types"
 import {
   ImageEditorDialog,
   type ImageEditorState,
@@ -2541,11 +2541,9 @@ export const GridPreview = memo(function GridPreview({
         >
           <TextEditorPanel
             isDarkMode={isDarkMode}
-            closeEditor={closeEditor}
             controls={{
               editorState,
               setEditorState,
-              saveEditor,
               deleteEditorBlock,
               gridRows: result.settings.gridRows,
               gridCols: result.settings.gridCols,
