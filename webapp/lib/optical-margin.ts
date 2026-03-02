@@ -19,6 +19,18 @@ const LEADING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
   "{": 0.24,
 }
 
+function getLeadingOpticalOffsetEm(char: string): number {
+  const punctuationOffset = LEADING_PUNCTUATION_OFFSETS_EM[char]
+  if (typeof punctuationOffset === "number") return punctuationOffset
+
+  // Apply a subtle hang for letters/digits so display words like "Swiss"
+  // also benefit from optical edge alignment.
+  if (/^[A-ZÄÖÜ]$/.test(char)) return 0.055
+  if (/^[a-zäöüß]$/.test(char)) return 0.03
+  if (/^\d$/.test(char)) return 0.024
+  return 0
+}
+
 function getEdgeCharacters(line: string): { first: string | null; last: string | null } {
   const trimmed = line.trim()
   if (!trimmed) {
@@ -47,7 +59,7 @@ export function getOpticalMarginAnchorOffset({
 
   // Left-aligned lines hang opening punctuation into the left margin.
   if (align === "left") {
-    const emOffset = LEADING_PUNCTUATION_OFFSETS_EM[first]
+    const emOffset = getLeadingOpticalOffsetEm(first)
     if (!emOffset) return 0
     const desired = emOffset * fontSize
     const glyphWidth = measureWidth(first)

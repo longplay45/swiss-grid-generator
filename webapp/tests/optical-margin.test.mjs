@@ -25,12 +25,22 @@ test("right-aligned trailing punctuation stays inside column edge", () => {
   assert.equal(offset, 0)
 })
 
-test("non-punctuation left edge returns zero offset", () => {
+test("leading uppercase letter receives optical offset", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Swiss",
     align: "left",
     fontSize: 10,
     measureWidth: monoMeasure,
   })
-  assert.equal(offset, 0)
+  assert.ok(offset < 0)
+})
+
+test("lowercase leading letter also receives subtle offset", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "swiss",
+    align: "left",
+    fontSize: 10,
+    measureWidth: monoMeasure,
+  })
+  assert.ok(offset < 0)
 })

@@ -20,6 +20,11 @@ export const IMAGE_COLOR_SCHEMES = [
     label: "s3",
     colors: ["#fef9f7", "#1aa9bc", "#457c39", "#ffeb00"],
   },
+    {
+    id: "s4",
+    label: "s4",
+    colors: ["#0b3536", "#e5e7de", "#0098d8", "#f54123"],
+  },
 ] as const satisfies readonly ImageColorScheme[]
 
 export type ImageColorSchemeId = (typeof IMAGE_COLOR_SCHEMES)[number]["id"]
