@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { InlineBlockTextarea } from "@/components/editor/InlineBlockTextarea"
 import {
-  BlockEditorDialog,
   type BlockEditorState,
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
@@ -11,6 +11,7 @@ import {
   ImageEditorDialog,
   type ImageEditorState,
 } from "@/components/dialogs/ImageEditorDialog"
+import { TextEditorPanel } from "@/components/sidebar/TextEditorPanel"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
@@ -306,6 +307,7 @@ export const GridPreview = memo(function GridPreview({
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
   const mouseMoveRafRef = useRef<number | null>(null)
+  const lastLiveEditorSignatureRef = useRef("")
   const perfStateRef = useRef<PerfState>({
     drawMs: [],
     reflowMs: [],
@@ -1682,7 +1684,8 @@ export const GridPreview = memo(function GridPreview({
       ctx.clearRect(0, 0, cssWidth, cssHeight)
       if (!showTypography) return
       const hasOverflow = blockOrder.some((key) => (overflowLinesByBlock[key] ?? 0) > 0)
-      if (!dragState && !hasOverflow) return
+      const activeEditorPlan = editorState ? previousPlansRef.current.get(editorState.target) : null
+      if (!dragState && !hasOverflow && !activeEditorPlan) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -1717,6 +1720,25 @@ export const GridPreview = memo(function GridPreview({
         ctx.lineTo(snapX, lineY + snapHeight)
         ctx.stroke()
       }
+      if (activeEditorPlan) {
+        const editorSpan = getBlockSpan(activeEditorPlan.key)
+        const editorRows = getBlockRows(activeEditorPlan.key)
+        const editorX = activeEditorPlan.rotationOriginX
+        const editorY = activeEditorPlan.rotationOriginY
+        const editorWidth = editorSpan * modW * scale + Math.max(editorSpan - 1, 0) * gridMarginHorizontal * scale
+        const editorHeight = editorRows * modH * scale + Math.max(editorRows - 1, 0) * gridMarginVertical * scale
+        const lineY = editorY + baselineStep
+        ctx.strokeStyle = "#ef4444"
+        ctx.lineWidth = 1.1
+        ctx.beginPath()
+        ctx.moveTo(editorX, lineY)
+        ctx.lineTo(editorX + editorWidth, lineY)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(editorX, lineY)
+        ctx.lineTo(editorX, lineY + editorHeight)
+        ctx.stroke()
+      }
       if (hasOverflow) {
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
@@ -1741,7 +1763,21 @@ export const GridPreview = memo(function GridPreview({
       ctx.restore()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [blockOrder, dragState, getPlacementRows, getPlacementSpan, overflowLinesByBlock, pixelRatio, result, rotation, scale, showTypography])
+  }, [
+    blockOrder,
+    dragState,
+    editorState,
+    getBlockRows,
+    getBlockSpan,
+    getPlacementRows,
+    getPlacementSpan,
+    overflowLinesByBlock,
+    pixelRatio,
+    result,
+    rotation,
+    scale,
+    showTypography,
+  ])
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1860,6 +1896,7 @@ export const GridPreview = memo(function GridPreview({
   const {
     closeEditor,
     saveEditor,
+    applyEditorDraftLive,
     deleteEditorBlock,
     handleCanvasDoubleClick: handleTextCanvasDoubleClick,
   } = useBlockEditorActions({
@@ -1915,6 +1952,34 @@ export const GridPreview = memo(function GridPreview({
     isBlockItalic,
     getBlockRotation,
   })
+
+  useEffect(() => {
+    if (!editorState) {
+      lastLiveEditorSignatureRef.current = ""
+      return
+    }
+    const signature = [
+      editorState.target,
+      editorState.draftStyle,
+      editorState.draftFont,
+      editorState.draftColumns,
+      editorState.draftRows,
+      editorState.draftAlign,
+      editorState.draftColor,
+      editorState.draftReflow ? "1" : "0",
+      editorState.draftSyllableDivision ? "1" : "0",
+      editorState.draftBold ? "1" : "0",
+      editorState.draftItalic ? "1" : "0",
+      editorState.draftRotation.toFixed(3),
+      editorState.draftFxSize,
+      editorState.draftFxLeading,
+      editorState.draftTextEdited ? "1" : "0",
+      editorState.draftText,
+    ].join("|")
+    if (lastLiveEditorSignatureRef.current === signature) return
+    lastLiveEditorSignatureRef.current = signature
+    applyEditorDraftLive(editorState)
+  }, [applyEditorDraftLive, editorState])
 
   const openImageEditor = useCallback((key: BlockId) => {
     setEditorState(null)
@@ -2343,6 +2408,17 @@ export const GridPreview = memo(function GridPreview({
   )
   const rowTriggerMinWidthCh = 10
   const colTriggerMinWidthCh = 10
+  const inlineEditorLayout = editorState ? (() => {
+    const rect = blockRectsRef.current[editorState.target]
+    if (!rect) return null
+    const plan = previousPlansRef.current.get(editorState.target)
+    return {
+      rect,
+      blockRotation: plan?.blockRotation ?? editorState.draftRotation,
+      rotationOriginX: plan?.rotationOriginX ?? rect.x,
+      rotationOriginY: plan?.rotationOriginY ?? rect.y,
+    }
+  })() : null
 
   return (
     <div
@@ -2390,6 +2466,22 @@ export const GridPreview = memo(function GridPreview({
           height={pageHeightPx}
           style={{ width: pageWidthCss, height: pageHeightCss }}
           className="pointer-events-none absolute inset-0 block"
+        />
+        <InlineBlockTextarea
+          editorState={editorState}
+          setEditorState={setEditorState}
+          textareaRef={textareaRef}
+          layout={inlineEditorLayout}
+          pageWidth={pageWidthCss}
+          pageHeight={pageHeightCss}
+          pageRotation={rotation}
+          scale={scale}
+          baselineStep={result.grid.gridUnit * scale}
+          isDarkMode={isDarkMode}
+          closeEditor={closeEditor}
+          saveEditor={saveEditor}
+          getStyleSizeValue={getStyleSize}
+          isFxStyle={(styleKey) => styleKey === "fx"}
         />
       </div>
 
@@ -2463,32 +2555,42 @@ export const GridPreview = memo(function GridPreview({
         </div>
       ) : null}
 
-      <BlockEditorDialog
-        editorState={editorState}
-        setEditorState={setEditorState}
-        closeEditor={closeEditor}
-        saveEditor={saveEditor}
-        deleteEditorBlock={deleteEditorBlock}
-        textareaRef={textareaRef}
-        isDarkMode={isDarkMode}
-        showEditorHelpIcon={showEditorHelpIcon}
-        onOpenHelpSection={onOpenHelpSection}
-        gridRows={result.settings.gridRows}
-        gridCols={result.settings.gridCols}
-        hierarchyTriggerMinWidthCh={hierarchyTriggerMinWidthCh}
-        rowTriggerMinWidthCh={rowTriggerMinWidthCh}
-        colTriggerMinWidthCh={colTriggerMinWidthCh}
-        styleOptions={STYLE_OPTIONS}
-        getStyleSizeLabel={(styleKey) => formatPtSize(getStyleSize(styleKey))}
-        getStyleSizeValue={getStyleSize}
-        getStyleLeadingValue={getStyleLeading}
-        isFxStyle={(styleKey) => styleKey === "fx"}
-        getDummyTextForStyle={getDummyTextForStyle}
-        colorSchemes={IMAGE_COLOR_SCHEMES}
-        selectedColorScheme={imageColorScheme}
-        onColorSchemeChange={handleImageColorSchemeChange}
-        palette={imagePalette}
-      />
+      {editorState ? (
+        <div
+          className={`absolute right-3 top-3 z-40 w-[min(92vw,24rem)] rounded-md border p-3 shadow-xl ${
+            isDarkMode
+              ? "border-gray-700 bg-gray-900/95 text-gray-100"
+              : "border-gray-200 bg-white/95 text-gray-900"
+          } ${showEditorHelpIcon ? "ring-1 ring-blue-500" : ""}`}
+          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
+        >
+          <TextEditorPanel
+            isDarkMode={isDarkMode}
+            closeEditor={closeEditor}
+            controls={{
+              editorState,
+              setEditorState,
+              saveEditor,
+              deleteEditorBlock,
+              gridRows: result.settings.gridRows,
+              gridCols: result.settings.gridCols,
+              hierarchyTriggerMinWidthCh,
+              rowTriggerMinWidthCh,
+              colTriggerMinWidthCh,
+              styleOptions: STYLE_OPTIONS,
+              getStyleSizeLabel: (styleKey) => formatPtSize(getStyleSize(styleKey)),
+              getStyleSizeValue: getStyleSize,
+              getStyleLeadingValue: getStyleLeading,
+              isFxStyle: (styleKey) => styleKey === "fx",
+              getDummyTextForStyle,
+              colorSchemes: IMAGE_COLOR_SCHEMES,
+              selectedColorScheme: imageColorScheme,
+              onColorSchemeChange: handleImageColorSchemeChange,
+              palette: imagePalette,
+            }}
+          />
+        </div>
+      ) : null}
       <ImageEditorDialog
         editorState={imageEditorState}
         setEditorState={setImageEditorState}

@@ -55,6 +55,7 @@ export type TextEditorControlsProps<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey>
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
   saveEditor: () => void
+  showSaveButton?: boolean
   deleteEditorBlock: () => void
   isDarkMode: boolean
   gridRows: number
@@ -78,6 +79,7 @@ export function TextEditorControls<StyleKey extends string>({
   editorState,
   setEditorState,
   saveEditor,
+  showSaveButton = true,
   deleteEditorBlock,
   isDarkMode,
   gridRows,
@@ -197,19 +199,21 @@ export function TextEditorControls<StyleKey extends string>({
             </EditorControlTooltip>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <EditorControlTooltip label="Save changes">
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8"
-              onClick={saveEditor}
-              aria-label="Save changes"
-            >
-              <SaveIcon className="h-4 w-4" />
-            </Button>
-          </EditorControlTooltip>
-        </div>
+        {showSaveButton ? (
+          <div className="flex items-center gap-1">
+            <EditorControlTooltip label="Save changes">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                onClick={saveEditor}
+                aria-label="Save changes"
+              >
+                <SaveIcon className="h-4 w-4" />
+              </Button>
+            </EditorControlTooltip>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-3">

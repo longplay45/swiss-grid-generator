@@ -55,6 +55,7 @@ type Args<BlockId extends string> = {
   fontRenderEpoch: number
   rotation: number
   showTypography: boolean
+  hiddenBlockKey?: BlockId | null
   blockOrder: BlockId[]
   textContent: Record<BlockId, string>
   styleAssignments: Record<BlockId, keyof GridResult["typography"]["styles"]>
@@ -96,6 +97,7 @@ export function useTypographyRenderer<BlockId extends string>({
   fontRenderEpoch,
   rotation,
   showTypography,
+  hiddenBlockKey = null,
   blockOrder,
   textContent,
   styleAssignments,
@@ -342,7 +344,9 @@ export function useTypographyRenderer<BlockId extends string>({
         }
       }
 
-      const allCurrentPlans = [...draftPlans.values()]
+      const allCurrentPlans = hiddenBlockKey
+        ? [...draftPlans.values()].filter((plan) => plan.key !== hiddenBlockKey)
+        : [...draftPlans.values()]
       bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
       bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
       bufferCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
@@ -392,6 +396,7 @@ export function useTypographyRenderer<BlockId extends string>({
     scale,
     pixelRatio,
     showTypography,
+    hiddenBlockKey,
     styleAssignments,
     textContent,
     typographyBufferRef,

@@ -40,6 +40,7 @@ export function TextEditorPanel<StyleKey extends string>({
       <div className={`space-y-2 rounded-md border p-2 ${isDarkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"}`}>
         <TextEditorControls
           {...controls}
+          showSaveButton={false}
           isDarkMode={isDarkMode}
         />
       </div>
@@ -49,7 +50,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <span>Characters: {characterCount}</span>
           <span>Words: {wordCount}</span>
         </div>
-        <div className="mt-1">Esc closes without saving. Cmd/Ctrl+Enter saves.</div>
+        <div className="mt-1">Changes apply live. Esc closes the editor.</div>
       </div>
     </div>
   )

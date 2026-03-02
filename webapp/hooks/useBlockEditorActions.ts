@@ -183,86 +183,87 @@ export function useBlockEditorActions({
     setEditorState(null)
   }, [setEditorState])
 
-  const saveEditor = useCallback(() => {
-    if (!editorState) return
-    recordHistoryBeforeChange()
-    const existingPosition = blockModulePositions[editorState.target]
+  const applyEditorDraftLive = useCallback((draft: EditorState, options?: { recordHistory?: boolean; closeAfter?: boolean }) => {
+    if (options?.recordHistory) {
+      recordHistoryBeforeChange()
+    }
+    const existingPosition = blockModulePositions[draft.target]
     const autoFit = getAutoFitForPlacement({
-      key: editorState.target,
-      text: editorState.draftText,
-      styleKey: editorState.draftStyle,
-      rowSpan: editorState.draftRows,
-      reflow: editorState.draftReflow,
-      syllableDivision: editorState.draftSyllableDivision,
-      baselineMultiplierOverride: editorState.draftStyle === "fx"
-        ? clampFxLeading(editorState.draftFxLeading) / resultGridUnit
+      key: draft.target,
+      text: draft.draftText,
+      styleKey: draft.draftStyle,
+      rowSpan: draft.draftRows,
+      reflow: draft.draftReflow,
+      syllableDivision: draft.draftSyllableDivision,
+      baselineMultiplierOverride: draft.draftStyle === "fx"
+        ? clampFxLeading(draft.draftFxLeading) / resultGridUnit
         : undefined,
       position: existingPosition,
     })
-    const nextSpan = editorState.draftColumns
+    const nextSpan = draft.draftColumns
     setBlockCollections((prev) => {
       const nextTextContent = {
         ...prev.textContent,
-        [editorState.target]: editorState.draftText,
+        [draft.target]: draft.draftText,
       }
       const nextTextEdited = {
         ...prev.blockTextEdited,
-        [editorState.target]: editorState.draftTextEdited,
+        [draft.target]: draft.draftTextEdited,
       }
       const nextStyles = {
         ...prev.styleAssignments,
-        [editorState.target]: editorState.draftStyle,
+        [draft.target]: draft.draftStyle,
       }
       const nextFonts = { ...prev.blockFontFamilies }
-      if (editorState.draftFont === baseFont) {
-        delete nextFonts[editorState.target]
+      if (draft.draftFont === baseFont) {
+        delete nextFonts[draft.target]
       } else {
-        nextFonts[editorState.target] = editorState.draftFont
+        nextFonts[draft.target] = draft.draftFont
       }
       const nextColumnSpans = {
         ...prev.blockColumnSpans,
-        [editorState.target]: nextSpan,
+        [draft.target]: nextSpan,
       }
       const nextRowSpans = {
         ...prev.blockRowSpans,
-        [editorState.target]: editorState.draftRows,
+        [draft.target]: draft.draftRows,
       }
       const nextAlignments = {
         ...prev.blockTextAlignments,
-        [editorState.target]: editorState.draftAlign,
+        [draft.target]: draft.draftAlign,
       }
       const nextReflow = {
         ...prev.blockTextReflow,
-        [editorState.target]: editorState.draftReflow,
+        [draft.target]: draft.draftReflow,
       }
       const nextSyllableDivision = {
         ...prev.blockSyllableDivision,
-        [editorState.target]: editorState.draftSyllableDivision,
+        [draft.target]: draft.draftSyllableDivision,
       }
       const nextBold = { ...prev.blockBold }
-      const defaultBold = resultTypographyStyles[editorState.draftStyle]?.weight === "Bold"
-      if (editorState.draftBold === defaultBold) {
-        delete nextBold[editorState.target]
+      const defaultBold = resultTypographyStyles[draft.draftStyle]?.weight === "Bold"
+      if (draft.draftBold === defaultBold) {
+        delete nextBold[draft.target]
       } else {
-        nextBold[editorState.target] = editorState.draftBold
+        nextBold[draft.target] = draft.draftBold
       }
       const nextItalic = { ...prev.blockItalic }
-      const defaultItalic = resultTypographyStyles[editorState.draftStyle]?.blockItalic === true
-      if (editorState.draftItalic === defaultItalic) {
-        delete nextItalic[editorState.target]
+      const defaultItalic = resultTypographyStyles[draft.draftStyle]?.blockItalic === true
+      if (draft.draftItalic === defaultItalic) {
+        delete nextItalic[draft.target]
       } else {
-        nextItalic[editorState.target] = editorState.draftItalic
+        nextItalic[draft.target] = draft.draftItalic
       }
       const nextRotations = { ...prev.blockRotations }
-      const clampedRotation = Math.max(-180, Math.min(180, editorState.draftRotation))
+      const clampedRotation = Math.max(-180, Math.min(180, draft.draftRotation))
       if (Math.abs(clampedRotation) > 0.001) {
-        nextRotations[editorState.target] = clampedRotation
+        nextRotations[draft.target] = clampedRotation
       } else {
-        delete nextRotations[editorState.target]
+        delete nextRotations[draft.target]
       }
 
       const nextPositions = { ...prev.blockModulePositions }
-      const pos = nextPositions[editorState.target]
+      const pos = nextPositions[draft.target]
       const desired = autoFit?.position ?? pos
       if (desired) {
         const metrics = getGridMetrics()
@@ -275,7 +276,7 @@ export function useBlockEditorActions({
         }
         const original = pos ?? desired
         if (clamped.col !== original.col || clamped.row !== original.row) {
-          nextPositions[editorState.target] = clamped
+          nextPositions[draft.target] = clamped
         }
       }
 
@@ -298,36 +299,37 @@ export function useBlockEditorActions({
     })
     setBlockCustomSizes((prev) => {
       const next = { ...prev }
-      if (editorState.draftStyle === "fx") {
-        next[editorState.target] = clampFxSize(editorState.draftFxSize)
+      if (draft.draftStyle === "fx") {
+        next[draft.target] = clampFxSize(draft.draftFxSize)
       } else {
-        delete next[editorState.target]
+        delete next[draft.target]
       }
       return next
     })
     setBlockCustomLeadings((prev) => {
       const next = { ...prev }
-      if (editorState.draftStyle === "fx") {
-        next[editorState.target] = clampFxLeading(editorState.draftFxLeading)
+      if (draft.draftStyle === "fx") {
+        next[draft.target] = clampFxLeading(draft.draftFxLeading)
       } else {
-        delete next[editorState.target]
+        delete next[draft.target]
       }
       return next
     })
     setBlockTextColors((prev) => {
       const next = { ...prev }
-      if (isImagePlaceholderColor(editorState.draftColor)) {
-        next[editorState.target] = editorState.draftColor
+      if (isImagePlaceholderColor(draft.draftColor)) {
+        next[draft.target] = draft.draftColor
       } else {
-        delete next[editorState.target]
+        delete next[draft.target]
       }
       return next
     })
-    setEditorState(null)
+    if (options?.closeAfter) {
+      setEditorState(null)
+    }
   }, [
     baseFont,
     blockModulePositions,
-    editorState,
     getAutoFitForPlacement,
     getGridMetrics,
     recordHistoryBeforeChange,
@@ -340,6 +342,11 @@ export function useBlockEditorActions({
     setBlockCustomSizes,
     setEditorState,
   ])
+
+  const saveEditor = useCallback(() => {
+    if (!editorState) return
+    applyEditorDraftLive(editorState, { closeAfter: true })
+  }, [applyEditorDraftLive, editorState])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
@@ -417,6 +424,7 @@ export function useBlockEditorActions({
 
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (key) {
+      recordHistoryBeforeChange()
       const styleKey = styleAssignments[key] ?? "body"
       setEditorState({
         target: key,
@@ -543,6 +551,7 @@ export function useBlockEditorActions({
   return {
     closeEditor,
     saveEditor,
+    applyEditorDraftLive,
     deleteEditorBlock,
     handleCanvasDoubleClick,
   }
