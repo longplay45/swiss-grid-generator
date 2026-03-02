@@ -38,7 +38,7 @@ export function PanelCard({
         tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
         <CardHeader
-          className={`cursor-pointer select-none ${collapsed ? "px-4 pt-[10px] pb-[6px]" : "px-4 pt-3 pb-2"}`}
+          className={`cursor-pointer select-none ${collapsed ? "px-4 pt-[10px] pb-[8px]" : "px-4 pt-3 pb-2"}`}
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
           onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
