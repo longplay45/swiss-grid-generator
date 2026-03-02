@@ -12,6 +12,7 @@ type ExamplePreset = {
 type Props = {
   onLoadPreset: (preset: ExamplePreset) => void
   isDarkMode?: boolean
+  compact?: boolean
 }
 
 const EXAMPLE_PRESETS: ExamplePreset[] = [
@@ -37,18 +38,23 @@ const EXAMPLE_PRESETS: ExamplePreset[] = [
   },
 ]
 
-export function ExampleLayoutsPanel({ onLoadPreset, isDarkMode = false }: Props) {
+export function ExampleLayoutsPanel({ onLoadPreset, isDarkMode = false, compact = false }: Props) {
+  const cardGapClass = compact ? "gap-2" : "gap-3"
   return (
     <div>
-      <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Example Layouts</h3>
-      <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Click a thumbnail to load a preset layout.</p>
-      <div className="grid grid-cols-1 gap-3">
+      {!compact ? (
+        <>
+          <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Presets</h3>
+          <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Double-click a thumbnail to load a preset layout.</p>
+        </>
+      ) : null}
+      <div className={`grid grid-cols-1 ${cardGapClass}`}>
         {EXAMPLE_PRESETS.map((preset) => (
           <button
             key={preset.label}
             type="button"
-            className={`group relative rounded-md border-2 transition-colors cursor-pointer overflow-hidden ${preset.orientation === "landscape" ? "aspect-[4/3]" : "aspect-[3/4]"} ${isDarkMode ? "border-gray-700 bg-gray-800 hover:border-blue-400 hover:bg-gray-700" : "border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}
-            onClick={() => onLoadPreset(preset)}
+            className={`group relative rounded-md border-2 transition-colors cursor-pointer overflow-hidden ${preset.orientation === "landscape" ? "aspect-[4/3]" : "aspect-[3/4]"} ${compact ? "max-w-[140px]" : ""} ${isDarkMode ? "border-gray-700 bg-gray-800 hover:border-blue-400 hover:bg-gray-700" : "border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}
+            onDoubleClick={() => onLoadPreset(preset)}
           >
             <div className={`absolute inset-2 border ${isDarkMode ? "border-gray-600 bg-gray-900" : "border-gray-300 bg-white"}`}>
               <div

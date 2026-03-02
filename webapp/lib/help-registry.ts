@@ -27,7 +27,7 @@ export const GRID_SETTINGS_INDEX_ITEMS = [
 export const HEADER_CONTROLS_INDEX_ITEMS = [
   { id: "help-sidebars-header", label: "Header and Sidebars" },
   { id: "help-help-navigation", label: "Help Navigation" },
-  { id: "help-header-examples", label: "Examples" },
+  { id: "help-header-examples", label: "Presets" },
   { id: "help-header-load", label: "Load" },
   { id: "help-header-save", label: "Save" },
   { id: "help-header-export", label: "Export PDF" },
@@ -69,7 +69,7 @@ export const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId>
 }
 
 export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
-  examples: "help-header-examples",
+  presets: "help-header-examples",
   load: "help-header-load",
   save: "help-header-save",
   export: "help-header-export",

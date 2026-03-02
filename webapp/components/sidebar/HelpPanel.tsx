@@ -258,10 +258,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-header-examples" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Examples
+          Presets
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens example layouts panel. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.
+          Opens the presets browser in the preview area; double-click a thumbnail to load it. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.
         </p>
       </section>
 

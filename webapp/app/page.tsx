@@ -335,8 +335,9 @@ export default function Home() {
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
-    "settings" | "help" | "imprint" | "example" | null
+    "settings" | "help" | "imprint" | null
   >(null)
+  const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
   const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
   const showSectionHelpIcons = activeSidebarPanel === "help"
   const [canUndoPreview, setCanUndoPreview] = useState(false)
@@ -739,7 +740,7 @@ export default function Home() {
           setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))
           return
         case "toggle_example_panel":
-          setActiveSidebarPanel((prev) => (prev === "example" ? null : "example"))
+          setShowPresetsBrowser(true)
       }
     }
     window.addEventListener("keydown", onKeyDown)
@@ -831,6 +832,7 @@ export default function Home() {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
         }
+        setShowPresetsBrowser(false)
         isDirtyRef.current = false
       } catch (error) {
         console.error(error)
@@ -883,6 +885,7 @@ export default function Home() {
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
+    showPresetsBrowser,
     isDarkUi,
     showBaselines,
     showMargins,
@@ -892,7 +895,7 @@ export default function Home() {
     showRolloverInfo,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
-    onToggleExamplePanel: () => setActiveSidebarPanel((prev) => (prev === "example" ? null : "example")),
+    onOpenPresets: () => setShowPresetsBrowser(true),
     onLoadJson: () => loadFileInputRef.current?.click(),
     onSaveJson: exportActions.openSaveDialog,
     onExportPdf: exportActions.openExportDialog,
@@ -961,7 +964,7 @@ export default function Home() {
       { type: "SET", key: "showBaselines", value: true },
       { type: "SET", key: "showMargins", value: true },
     ] })
-    setActiveSidebarPanel(null)
+    setShowPresetsBrowser(false)
   }, [dispatch])
 
   const settingsPanels = useMemo(() => (
@@ -1124,34 +1127,46 @@ export default function Home() {
 
       <div className="flex-1 flex flex-row overflow-hidden">
         <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <GridPreview
-            result={result}
-            showBaselines={showBaselines}
-            showModules={showModules}
-            showMargins={showMargins}
-            showImagePlaceholders={showImagePlaceholders}
-            showTypography={showTypography}
-            showRolloverInfo={showRolloverInfo}
-            baseFont={baseFont}
-            imageColorScheme={imageColorScheme}
-            onImageColorSchemeChange={setImageColorScheme}
-            initialLayout={loadedPreviewLayout?.layout ?? null}
-            initialLayoutKey={loadedPreviewLayout?.key ?? 0}
-            rotation={rotation}
-            undoNonce={history.undoNonce}
-            redoNonce={history.redoNonce}
-            onOpenHelpSection={handlePreviewOpenHelpSection}
-            showEditorHelpIcon={showSectionHelpIcons}
-            onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
-            onRequestGridRestore={handlePreviewGridRestore}
-            isDarkMode={isDarkUi}
-            onLayoutChange={setPreviewLayout}
-          />
+          {showPresetsBrowser ? (
+            <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
+              <div className="w-40">
+                <ExampleLayoutsPanel
+                  isDarkMode={isDarkUi}
+                  onLoadPreset={handleLoadExamplePreset}
+                  compact
+                />
+              </div>
+            </div>
+          ) : (
+            <GridPreview
+              result={result}
+              showBaselines={showBaselines}
+              showModules={showModules}
+              showMargins={showMargins}
+              showImagePlaceholders={showImagePlaceholders}
+              showTypography={showTypography}
+              showRolloverInfo={showRolloverInfo}
+              baseFont={baseFont}
+              imageColorScheme={imageColorScheme}
+              onImageColorSchemeChange={setImageColorScheme}
+              initialLayout={loadedPreviewLayout?.layout ?? null}
+              initialLayoutKey={loadedPreviewLayout?.key ?? 0}
+              rotation={rotation}
+              undoNonce={history.undoNonce}
+              redoNonce={history.redoNonce}
+              onOpenHelpSection={handlePreviewOpenHelpSection}
+              showEditorHelpIcon={showSectionHelpIcons}
+              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
+              onRequestGridRestore={handlePreviewGridRestore}
+              isDarkMode={isDarkUi}
+              onLayoutChange={setPreviewLayout}
+            />
+          )}
         </div>
         {activeSidebarPanel && (
           <div
             data-help-scroll-root="true"
-            className={`w-80 shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
+            className={`w-[280px] shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "help"
                 ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
                 : "p-4 md:p-6"
@@ -1192,12 +1207,6 @@ export default function Home() {
                 onClose={handleCloseSidebar}
               />
             )}
-            {activeSidebarPanel === "example" && (
-              <ExampleLayoutsPanel
-                isDarkMode={isDarkUi}
-                onLoadPreset={handleLoadExamplePreset}
-              />
-            )}
           </div>
         )}
       </div>
@@ -1219,6 +1228,7 @@ export default function Home() {
     isDarkUi,
     loadLayout,
     loadedPreviewLayout,
+    showPresetsBrowser,
     renderHeaderAction,
     result,
     rotation,
@@ -1242,7 +1252,7 @@ export default function Home() {
   return (
     <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
       {/* Left Panel - Controls */}
-      <div className={`w-full md:w-80 flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
+      <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
         {/* Header - always visible */}
         <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
           <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>

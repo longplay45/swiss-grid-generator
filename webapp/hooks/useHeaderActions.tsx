@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
-export type SidebarPanel = "settings" | "help" | "imprint" | "example" | null
+export type SidebarPanel = "settings" | "help" | "imprint" | null
 
 export type HeaderAction = {
   key: string
@@ -37,6 +37,7 @@ export type HeaderItem = { type: "action"; action: HeaderAction } | { type: "div
 
 type Args = {
   activeSidebarPanel: SidebarPanel
+  showPresetsBrowser: boolean
   isDarkUi: boolean
   showBaselines: boolean
   showMargins: boolean
@@ -46,7 +47,7 @@ type Args = {
   showRolloverInfo: boolean
   canUndo: boolean
   canRedo: boolean
-  onToggleExamplePanel: () => void
+  onOpenPresets: () => void
   onLoadJson: () => void
   onSaveJson: () => void
   onExportPdf: () => void
@@ -68,17 +69,17 @@ export function useHeaderActions(args: Args) {
     {
       type: "action",
       action: {
-        key: "examples",
-        ariaLabel: "Show examples",
-        tooltip: "Example layouts",
+        key: "presets",
+        ariaLabel: "Show presets",
+        tooltip: "Presets",
         shortcutId: "toggle_example_panel",
-        variant: args.activeSidebarPanel === "example" ? "default" : "outline",
-        pressed: args.activeSidebarPanel === "example",
-        onClick: args.onToggleExamplePanel,
+        variant: args.showPresetsBrowser ? "default" : "outline",
+        pressed: args.showPresetsBrowser,
+        onClick: args.onOpenPresets,
         icon: <LayoutTemplate className="h-4 w-4" />,
       },
     },
-    { type: "divider", key: "divider-examples-load" },
+    { type: "divider", key: "divider-presets-load" },
     {
       type: "action",
       action: {

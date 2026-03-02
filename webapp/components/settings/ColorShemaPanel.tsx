@@ -77,7 +77,7 @@ export const ColorShemaPanel = memo(function ColorShemaPanel({
         {selected.colors.map((color, index) => (
           <div
             key={`${selected.id}-${index}-${color}`}
-            className={`h-8 rounded border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+            className={`h-2.5 rounded-sm border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
             style={{ backgroundColor: color }}
             title={color}
           />
