@@ -19,12 +19,41 @@ const LEADING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
   "{": 0.24,
 }
 
+const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
+  ".": 0.28,
+  ",": 0.28,
+  ":": 0.22,
+  ";": 0.22,
+  "!": 0.2,
+  "?": 0.2,
+  "\"": 0.22,
+  "'": 0.18,
+  "”": 0.32,
+  "’": 0.28,
+  "»": 0.28,
+  "›": 0.24,
+  ")": 0.22,
+  "]": 0.2,
+  "}": 0.18,
+}
+
 function getLeadingOpticalOffsetEm(char: string): number {
   const punctuationOffset = LEADING_PUNCTUATION_OFFSETS_EM[char]
   if (typeof punctuationOffset === "number") return punctuationOffset
 
   // Apply a subtle hang for letters/digits so display words like "Swiss"
   // also benefit from optical edge alignment.
+  if (/^[A-ZÄÖÜ]$/.test(char)) return 0.055
+  if (/^[a-zäöüß]$/.test(char)) return 0.03
+  if (/^\d$/.test(char)) return 0.024
+  return 0
+}
+
+function getTrailingOpticalOffsetEm(char: string): number {
+  const punctuationOffset = TRAILING_PUNCTUATION_OFFSETS_EM[char]
+  if (typeof punctuationOffset === "number") return punctuationOffset
+
+  // Keep right-aligned optical compensation consistent with left edge behavior.
   if (/^[A-ZÄÖÜ]$/.test(char)) return 0.055
   if (/^[a-zäöüß]$/.test(char)) return 0.03
   if (/^\d$/.test(char)) return 0.024
@@ -66,7 +95,10 @@ export function getOpticalMarginAnchorOffset({
     return -clampHangingOffset(desired, glyphWidth)
   }
 
-  // Keep right-aligned punctuation inside the column edge.
-  void last
-  return 0
+  // Right-aligned lines hang trailing punctuation into the right margin.
+  const emOffset = getTrailingOpticalOffsetEm(last)
+  if (!emOffset) return 0
+  const desired = emOffset * fontSize
+  const glyphWidth = measureWidth(last)
+  return clampHangingOffset(desired, glyphWidth)
 }

@@ -992,7 +992,7 @@ export default function Home() {
   }, [dispatch])
 
   const settingsPanels = useMemo(() => (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
       <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
         Grid Generator Settings
       </h2>

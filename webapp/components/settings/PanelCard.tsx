@@ -38,32 +38,32 @@ export function PanelCard({
         tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
         <CardHeader
-          className="pb-3 cursor-pointer select-none"
+          className={`cursor-pointer select-none ${collapsed ? "px-4 py-3" : "px-4 pt-3 pb-2"}`}
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
           onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
-          <CardTitle className="text-sm">
+          <CardTitle className="text-sm leading-tight">
             <div className="min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex items-center gap-2">
                   <span>{title}</span>
                 </div>
                 <span
-                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isDarkMode
                       ? "border-gray-600 bg-gray-800 text-gray-300"
                       : "border-gray-300 bg-gray-100 text-gray-700"
                   }`}
                 >
                   <ChevronUp
-                    className={`h-2.5 w-2.5 transition-transform ${collapsed ? "rotate-90" : "rotate-180"}`}
+                    className={`h-2 w-2 transition-transform ${collapsed ? "rotate-90" : "rotate-180"}`}
                     aria-hidden="true"
                   />
                 </span>
               </div>
               {collapsed && collapsedSummary ? (
-                <div className={`mt-1 text-[11px] font-normal leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <div className={`mt-0.5 text-[10px] font-normal leading-snug ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                   {collapsedSummary}
                 </div>
               ) : null}
