@@ -2240,19 +2240,6 @@ export const GridPreview = memo(function GridPreview({
       if (mouseMoveRafRef.current !== null) cancelAnimationFrame(mouseMoveRafRef.current)
     }
   }, [])
-  const hoveredKey = hoverState?.key ?? null
-  const hoveredStyle = hoveredKey ? (styleAssignments[hoveredKey] ?? "body") : null
-  const hoveredSpan = hoveredKey ? getBlockSpan(hoveredKey) : null
-  const hoveredRows = hoveredKey ? getBlockRows(hoveredKey) : null
-  const hoveredAlign = hoveredKey ? (blockTextAlignments[hoveredKey] ?? "left") : null
-  const hoveredRotation = hoveredKey ? getBlockRotation(hoveredKey) : null
-  const hoveredReflow = hoveredKey ? isTextReflowEnabled(hoveredKey) : null
-  const hoveredSyllableDivision = hoveredKey ? isSyllableDivisionEnabled(hoveredKey) : null
-  const hoveredFont = hoveredKey ? getBlockFont(hoveredKey) : null
-  const hoveredBold = hoveredKey ? isBlockBold(hoveredKey) : null
-  const hoveredItalic = hoveredKey ? isBlockItalic(hoveredKey) : null
-  const hoveredOverflowLines = hoveredKey ? (overflowLinesByBlock[hoveredKey] ?? 0) : null
-  const hoveredModulePosition = hoveredKey ? (blockModulePositions[hoveredKey] ?? null) : null
 
   useEffect(() => {
     if (!onLayoutChange) {
@@ -2519,27 +2506,19 @@ export const GridPreview = memo(function GridPreview({
         </div>
       ) : null}
 
-      {(showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign) || (PERF_ENABLED && showPerfOverlay && perfOverlay) ? (
+      {(showRolloverInfo && hoverState) || (PERF_ENABLED && showPerfOverlay && perfOverlay) ? (
         <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
-          {showRolloverInfo && hoverState && hoveredStyle && hoveredSpan && hoveredAlign ? (
+          {showRolloverInfo && hoverState ? (
             <div className="w-72 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-              <div className="text-[11px] font-medium text-gray-900">
-                {STYLE_OPTIONS.find((option) => option.value === hoveredStyle)?.label ?? hoveredStyle} ({formatPtSize(getBlockFontSize(hoverState.key, hoveredStyle))})
-              </div>
+              <div className="text-[11px] font-medium text-gray-900">Interaction</div>
               <div className="mt-1 text-[11px] text-gray-600">
-                Key: {hoveredKey} • Align: {hoveredAlign} • Span: {hoveredSpan} {hoveredSpan === 1 ? "col" : "cols"} • Rows: {hoveredRows}
+                Double-click paragraph to edit.
               </div>
-              <div className="mt-1 text-[11px] text-gray-600">
-                Rotation: {hoveredRotation?.toFixed(0) ?? "0"} deg (pivot: paragraph origin) • Reflow: {hoveredReflow ? "on" : "off"} • Syllable: {hoveredSyllableDivision ? "on" : "off"}
+              <div className="text-[11px] text-gray-600">
+                Shift-double-click empty module to create image placeholder.
               </div>
-              <div className="mt-1 text-[11px] text-gray-600">
-                Font: {hoveredFont ?? "-"} • Weight: {hoveredBold ? "bold" : "regular"} • Slant: {hoveredItalic ? "italic" : "roman"}
-              </div>
-              <div className="mt-1 text-[11px] text-gray-600">
-                Pos: {hoveredModulePosition ? `col ${hoveredModulePosition.col}, row ${hoveredModulePosition.row}` : "auto-flow"} • Overflow lines: {hoveredOverflowLines ?? 0}
-              </div>
-              <div className="mt-1 text-[11px] text-gray-500">
-                Double-click edit • Shift-double-click empty module: image placeholder • Alt-drag duplicate • Shift-drag baseline snap (overset)
+              <div className="text-[11px] text-gray-600">
+                Alt-drag duplicate • Shift-drag baseline snap (overset).
               </div>
             </div>
           ) : null}
@@ -2557,11 +2536,7 @@ export const GridPreview = memo(function GridPreview({
 
       {editorState ? (
         <div
-          className={`absolute right-3 top-3 z-40 w-[min(92vw,24rem)] rounded-md border p-3 shadow-xl ${
-            isDarkMode
-              ? "border-gray-700 bg-gray-900/95 text-gray-100"
-              : "border-gray-200 bg-white/95 text-gray-900"
-          } ${showEditorHelpIcon ? "ring-1 ring-blue-500" : ""}`}
+          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
           <TextEditorPanel
