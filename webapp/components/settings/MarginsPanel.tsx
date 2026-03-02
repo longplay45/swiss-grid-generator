@@ -57,6 +57,12 @@ export const MarginsPanel = memo(function MarginsPanel({
   const collapsedSummary = useCustomMargins
     ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
     : `${marginMethod === 1 ? "Progressive" : marginMethod === 2 ? "Van de Graaf" : "Baseline"}, ${baselineMultiple.toFixed(1)}x`
+  const customMarginsSwitchClass = isDarkMode
+    ? "h-3 w-6 rounded-none border border-white bg-black data-[state=checked]:bg-white data-[state=unchecked]:bg-black"
+    : "h-3 w-6 rounded-none border border-gray-300 bg-white data-[state=checked]:bg-gray-900 data-[state=unchecked]:bg-white"
+  const customMarginsThumbClass = isDarkMode
+    ? "h-3 w-3 rounded-none border-0 bg-white shadow-none data-[state=checked]:translate-x-3 data-[state=unchecked]:translate-x-0 data-[state=checked]:bg-black data-[state=unchecked]:bg-white"
+    : "h-3 w-3 rounded-none border-0 bg-gray-900 shadow-none data-[state=checked]:translate-x-3 data-[state=unchecked]:translate-x-0 data-[state=checked]:bg-white data-[state=unchecked]:bg-gray-900"
 
   return (
     <PanelCard
@@ -71,7 +77,12 @@ export const MarginsPanel = memo(function MarginsPanel({
     >
       <div className="flex items-center justify-between">
         <Label>Custom Margins</Label>
-        <Switch checked={useCustomMargins} onCheckedChange={handleCustomMarginsToggle} />
+        <Switch
+          checked={useCustomMargins}
+          onCheckedChange={handleCustomMarginsToggle}
+          className={customMarginsSwitchClass}
+          thumbClassName={customMarginsThumbClass}
+        />
       </div>
 
       {!useCustomMargins ? (
@@ -101,7 +112,7 @@ export const MarginsPanel = memo(function MarginsPanel({
             </div>
             <DebouncedSlider
               value={[baselineMultiple]}
-              min={0.5}
+              min={1}
               max={7}
               step={0.5}
               onValueCommit={([v]) => onBaselineMultipleChange(v)}

@@ -233,7 +233,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Header and Sidebars
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, fullscreen, display toggles.</li>
+          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
           <li>Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
@@ -328,17 +328,6 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
           Toggles light and dark UI themes. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+D</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-fullscreen" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Fullscreen
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Enters or exits fullscreen preview mode. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+F</span>.
         </p>
       </section>
 

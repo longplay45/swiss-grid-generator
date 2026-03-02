@@ -5,7 +5,6 @@ export type PreviewHeaderShortcutId =
   | "undo"
   | "redo"
   | "toggle_dark_mode"
-  | "toggle_fullscreen"
   | "toggle_baselines"
   | "toggle_margins"
   | "toggle_modules"
@@ -64,12 +63,6 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
     combo: "Cmd/Ctrl+Shift+D",
     description: "Toggle dark mode",
     bindings: [{ key: "d", shift: true }],
-  },
-  {
-    id: "toggle_fullscreen",
-    combo: "Cmd/Ctrl+Shift+F",
-    description: "Toggle fullscreen preview",
-    bindings: [{ key: "f", shift: true }],
   },
   {
     id: "toggle_baselines",

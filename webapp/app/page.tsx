@@ -114,7 +114,7 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   marginMethod: RESOLVED_DEFAULTS.marginMethod,
   gridCols: DEFAULT_UI.gridCols,
   gridRows: DEFAULT_UI.gridRows,
-  baselineMultiple: DEFAULT_UI.baselineMultiple,
+  baselineMultiple: Math.max(1, DEFAULT_UI.baselineMultiple),
   gutterMultiple: DEFAULT_UI.gutterMultiple,
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
@@ -189,7 +189,6 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "marginMethod":
         case "gridCols":
         case "gridRows":
-        case "baselineMultiple":
         case "gutterMultiple":
         case "typographyScale":
         case "baseFont":
@@ -205,6 +204,11 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "collapsed":
           if (state[action.key] === action.value) return state
           return { ...state, [action.key]: action.value }
+        case "baselineMultiple": {
+          const nextBaselineMultiple = Math.max(1, action.value)
+          if (state.baselineMultiple === nextBaselineMultiple) return state
+          return { ...state, baselineMultiple: nextBaselineMultiple }
+        }
         default:
           return state
       }
@@ -228,7 +232,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         marginMethod: action.snapshot.marginMethod,
         gridCols: action.snapshot.gridCols,
         gridRows: action.snapshot.gridRows,
-        baselineMultiple: action.snapshot.baselineMultiple,
+        baselineMultiple: Math.max(1, action.snapshot.baselineMultiple),
         gutterMultiple: action.snapshot.gutterMultiple,
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
@@ -284,7 +288,6 @@ function exportUiReducer(state: ExportUiState, action: UiAction): ExportUiState 
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
-  const previewPanelRef = useRef<HTMLDivElement | null>(null)
   const isDirtyRef = useRef(false)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
     DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
@@ -338,7 +341,6 @@ export default function Home() {
   const showSectionHelpIcons = activeSidebarPanel === "help"
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
-  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
@@ -502,30 +504,6 @@ export default function Home() {
       { type: "SET", key: "gridRows", value: rows },
     ] })
   }, [dispatch, suppressNext])
-
-  const togglePreviewFullscreen = useCallback(async () => {
-    const previewElement = previewPanelRef.current
-    if (!previewElement || typeof document === "undefined") return
-
-    try {
-      if (document.fullscreenElement === previewElement) {
-        await document.exitFullscreen()
-      } else {
-        await previewElement.requestFullscreen()
-      }
-    } catch {
-      // Ignore request/exit failures and keep current non-fullscreen UI usable.
-    }
-  }, [])
-
-  useEffect(() => {
-    const updateFullscreenState = () => {
-      setIsPreviewFullscreen(document.fullscreenElement === previewPanelRef.current)
-    }
-    updateFullscreenState()
-    document.addEventListener("fullscreenchange", updateFullscreenState)
-    return () => document.removeEventListener("fullscreenchange", updateFullscreenState)
-  }, [])
 
   // ─── Section collapse helpers ─────────────────────────────────────────────
 
@@ -739,9 +717,6 @@ export default function Home() {
         case "toggle_dark_mode":
           setIsDarkUi((prev) => !prev)
           return
-        case "toggle_fullscreen":
-          togglePreviewFullscreen()
-          return
         case "toggle_baselines":
           dispatch({ type: "TOGGLE", key: "showBaselines" })
           return
@@ -769,7 +744,7 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [dispatch, exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, togglePreviewFullscreen, undoAny])
+  }, [dispatch, exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, undoAny])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -909,7 +884,6 @@ export default function Home() {
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
     isDarkUi,
-    isPreviewFullscreen,
     showBaselines,
     showMargins,
     showModules,
@@ -925,7 +899,6 @@ export default function Home() {
     onUndo: undoAny,
     onRedo: redoAny,
     onToggleDarkMode: () => setIsDarkUi((prev) => !prev),
-    onToggleFullscreen: togglePreviewFullscreen,
     onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
     onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
     onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
@@ -1116,7 +1089,6 @@ export default function Home() {
 
   const previewWorkspace = useMemo(() => (
     <div
-      ref={previewPanelRef}
       className={`flex-1 flex flex-col min-h-[50vh] md:min-h-full ${uiTheme.previewShell}`}
     >
       <input
@@ -1247,7 +1219,6 @@ export default function Home() {
     isDarkUi,
     loadLayout,
     loadedPreviewLayout,
-    previewPanelRef,
     renderHeaderAction,
     result,
     rotation,

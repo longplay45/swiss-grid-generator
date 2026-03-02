@@ -7,8 +7,6 @@ import {
   Image,
   LayoutGrid,
   LayoutTemplate,
-  Maximize2,
-  Minimize2,
   Moon,
   Redo2,
   Rows3,
@@ -40,7 +38,6 @@ export type HeaderItem = { type: "action"; action: HeaderAction } | { type: "div
 type Args = {
   activeSidebarPanel: SidebarPanel
   isDarkUi: boolean
-  isPreviewFullscreen: boolean
   showBaselines: boolean
   showMargins: boolean
   showModules: boolean
@@ -56,7 +53,6 @@ type Args = {
   onUndo: () => void
   onRedo: () => void
   onToggleDarkMode: () => void
-  onToggleFullscreen: () => void
   onToggleBaselines: () => void
   onToggleMargins: () => void
   onToggleModules: () => void
@@ -157,19 +153,7 @@ export function useHeaderActions(args: Args) {
         icon: args.isDarkUi ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
       },
     },
-    {
-      type: "action",
-      action: {
-        key: "fullscreen",
-        ariaLabel: args.isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
-        tooltip: args.isPreviewFullscreen ? "Exit fullscreen preview" : "Enter fullscreen preview",
-        shortcutId: "toggle_fullscreen",
-        pressed: args.isPreviewFullscreen,
-        onClick: args.onToggleFullscreen,
-        icon: args.isPreviewFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />,
-      },
-    },
-    { type: "divider", key: "divider-fullscreen-baselines" },
+    { type: "divider", key: "divider-darkmode-baselines" },
     {
       type: "action",
       action: {
