@@ -2174,6 +2174,22 @@ export const GridPreview = memo(function GridPreview({
     redo,
   })
 
+  useEffect(() => {
+    if (!editorState) return
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) {
+        closeEditor()
+        return
+      }
+      if (textareaRef.current?.contains(target)) return
+      if (target.closest('[data-text-editor-panel="true"]')) return
+      closeEditor()
+    }
+    window.addEventListener("pointerdown", handlePointerDown, true)
+    return () => window.removeEventListener("pointerdown", handlePointerDown, true)
+  }, [closeEditor, editorState])
+
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
     mouseMoveRafRef.current = null
 
@@ -2536,6 +2552,7 @@ export const GridPreview = memo(function GridPreview({
 
       {editorState ? (
         <div
+          data-text-editor-panel="true"
           className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
