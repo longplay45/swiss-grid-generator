@@ -1153,6 +1153,8 @@ export default function Home() {
                 <PresetLayoutsPanel
                   isDarkMode={isDarkUi}
                   onLoadPreset={handleLoadPresetLayout}
+                  showHelpHints={showSectionHelpIcons}
+                  onHelpNavigate={() => handleHeaderHelpNavigate("presets")}
                   compact
                 />
               </div>
@@ -1238,6 +1240,7 @@ export default function Home() {
     displayGroup,
     fileGroup,
     handleCloseSidebar,
+    handleHeaderHelpNavigate,
     handleLoadPresetLayout,
     handlePreviewGridRestore,
     handlePreviewHistoryAvailabilityChange,

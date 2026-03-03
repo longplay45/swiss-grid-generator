@@ -4,17 +4,54 @@ type Props = {
   onLoadPreset: (preset: LayoutPreset) => void
   isDarkMode?: boolean
   compact?: boolean
+  showHelpHints?: boolean
+  onHelpNavigate?: () => void
 }
 
-export function PresetLayoutsPanel({ onLoadPreset, isDarkMode = false, compact = false }: Props) {
+export function PresetLayoutsPanel({
+  onLoadPreset,
+  isDarkMode = false,
+  compact = false,
+  showHelpHints = false,
+  onHelpNavigate,
+}: Props) {
   const cardGapClass = compact ? "gap-2" : "gap-3"
   return (
-    <div>
+    <div
+      className={showHelpHints ? "rounded-md ring-1 ring-blue-500 p-2 -m-2" : undefined}
+      onMouseEnter={showHelpHints ? onHelpNavigate : undefined}
+    >
       {!compact ? (
         <>
-          <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Presets</h3>
+          <h3 className={`text-sm font-semibold mb-2 flex items-center gap-1.5 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>
+            <span>Presets</span>
+            {showHelpHints ? (
+              <span
+                className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border text-[10px] leading-none ${
+                  isDarkMode
+                    ? "border-blue-400 bg-blue-500 text-white"
+                    : "border-blue-500 bg-blue-500 text-white"
+                }`}
+              >
+                ?
+              </span>
+            ) : null}
+          </h3>
           <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Double-click a thumbnail to load a preset layout.</p>
         </>
+      ) : null}
+      {compact && showHelpHints ? (
+        <div className="mb-2 flex justify-end">
+          <span
+            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border text-[10px] leading-none ${
+              isDarkMode
+                ? "border-blue-400 bg-blue-500 text-white"
+                : "border-blue-500 bg-blue-500 text-white"
+            }`}
+          >
+            ?
+          </span>
+        </div>
       ) : null}
       <div className={`grid grid-cols-1 ${cardGapClass}`}>
         {LAYOUT_PRESETS.map((preset) => (

@@ -260,9 +260,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
           Presets
         </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens the presets browser in the preview area; double-click a thumbnail to load it. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.
-        </p>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Opens the presets browser in the preview area.</li>
+          <li>Double-click a thumbnail to load it.</li>
+          <li>When help is open, hovering the presets panel (or its `?` marker) jumps here.</li>
+          <li>Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.</li>
+        </ul>
       </section>
 
       <hr className={tone.divider} />
