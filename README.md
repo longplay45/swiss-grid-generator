@@ -58,13 +58,12 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
   - Dark mode toggle
-  - Presets/Examples (left of Load), Load JSON, Save JSON, Export PDF
+  - Presets (left of Load), Load JSON, Save JSON, Export PDF
   - Undo/Redo
-  - Fullscreen preview toggle
   - Display toggles (baselines, margins, gutter/modules, typo)
-  - Sidebar selectors: Settings, Help, Example layouts
+  - Sidebar selectors: Settings, Help
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
-  - Divider separators are shown between Presets and Load, Export and Undo, Fullscreen and Baselines
+  - Divider separators are shown between Presets and Load, Export and Undo, and dark mode and baselines
   - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo)
 - Left panel footer:
   - always-visible `Version` label
@@ -164,7 +163,6 @@ All preview-header actions are keyboard accessible:
 - `Cmd/Ctrl+Z` Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` Redo
 - `Cmd/Ctrl+Shift+D` Toggle dark mode
-- `Cmd/Ctrl+Shift+F` Toggle fullscreen preview
 - `Cmd/Ctrl+Shift+B` Toggle baselines
 - `Cmd/Ctrl+Shift+M` Toggle margins
 - `Cmd/Ctrl+Shift+G` Toggle modules/gutter
@@ -172,7 +170,7 @@ All preview-header actions are keyboard accessible:
 - `Cmd/Ctrl+Shift+1` Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2` Toggle help sidebar
 - `Cmd/Ctrl+Shift+3` Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4` Toggle example layouts
+- `Cmd/Ctrl+Shift+4` Open presets browser
 
 Includes:
 - settings changes (ratio, grid, margins, toggles, etc.)
@@ -211,7 +209,7 @@ webapp/
 │   ├── sidebar/
 │   │   ├── HelpPanel.tsx
 │   │   ├── ImprintPanel.tsx
-│   │   └── ExampleLayoutsPanel.tsx
+│   │   └── PresetLayoutsPanel.tsx
 │   └── ui/
 │       ├── font-select.tsx
 │       ├── header-icon-button.tsx
@@ -265,7 +263,6 @@ webapp/
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
 - Added per-paragraph italic toggle and rotation input (`-180..180`).
 - Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
-- Added fullscreen preview toggle.
 - Added Alt/Option-drag duplication for preview paragraphs.
 - Added Shift-drag baseline snapping with overset placement support (left/right/top/bottom, Ctrl fallback).
 - Added centralized image color shemas with global selector (`VI. Color Shema`) and image-editor shema sync.

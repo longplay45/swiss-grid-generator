@@ -89,7 +89,7 @@ Comprehensive user reference for the in-app Help sidebar.
 
 ## Header and Sidebars
 
-- Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, fullscreen, display toggles.
+- Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.
 - Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.
 - Right-side content panels include close icons in their header rows.
 - Only one right-side panel is open at a time.
@@ -118,7 +118,6 @@ Comprehensive user reference for the in-app Help sidebar.
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
 - `Cmd/Ctrl+Shift+D`: Toggle dark mode
-- `Cmd/Ctrl+Shift+F`: Toggle fullscreen preview
 - `Cmd/Ctrl+Shift+B`: Toggle baselines
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules and gutter
@@ -126,7 +125,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4`: Toggle example layouts
+- `Cmd/Ctrl+Shift+4`: Open presets browser
 
 ## Troubleshooting
 

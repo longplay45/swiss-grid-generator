@@ -112,11 +112,11 @@ Default: `swiss`
 
 ### File Actions (icon buttons)
 
-- `Examples` (layout-template icon): opens/closes example preset panel (placed before Load)
+- `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Load)
 - `Load` (folder icon): load layout JSON
 - `Save` (save icon): opens Save JSON popup
 - `Export PDF` (download icon): opens Export PDF popup
-- Divider placement: between `Examples` and `Load`, and between `Export PDF` and `Undo`
+- Divider placement: between `Presets` and `Load`, and between `Export PDF` and `Undo`
 
 ### Undo / Redo (icon buttons)
 
@@ -128,8 +128,7 @@ Default: `swiss`
 ### UI + Preview Controls (icon toggles)
 
 - `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars, preview shell background, and popup editor
-- `Fullscreen` (maximize/minimize icon): toggles fullscreen mode for the preview side
-- Order: dark mode icon appears to the left of fullscreen
+- Order: dark mode icon appears to the left of the display toggles
 
 ### Display Options (icon toggles)
 
@@ -137,13 +136,13 @@ Default: `swiss`
 - Margins
 - Gutter/modules
 - Typo
-- Divider placement: fullscreen and baselines are separated by a divider
+- Divider placement: dark mode and baselines are separated by a divider
 
 ### Sidebar Panels (icon selectors)
 
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Help` (help icon): opens help/reference panel
-- `Example layouts` (layout-template icon): opens example preset thumbnails panel
+- `Presets` (layout-template icon): opens preset thumbnails in the preview area
 - Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
 
 ### Left Footer (always visible)
@@ -161,7 +160,6 @@ All header icons use styled rollover help tooltips with a second line showing th
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
 - `Cmd/Ctrl+Shift+D`: Toggle dark mode
-- `Cmd/Ctrl+Shift+F`: Toggle fullscreen preview
 - `Cmd/Ctrl+Shift+B`: Toggle baselines
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
@@ -169,7 +167,7 @@ All header icons use styled rollover help tooltips with a second line showing th
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4`: Toggle example layouts
+- `Cmd/Ctrl+Shift+4`: Open presets browser
 
 ## Popups
 

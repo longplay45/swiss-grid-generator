@@ -2184,6 +2184,7 @@ export const GridPreview = memo(function GridPreview({
       }
       if (textareaRef.current?.contains(target)) return
       if (target.closest('[data-text-editor-panel="true"]')) return
+      if (target.closest('[data-text-editor-select-content="true"]')) return
       closeEditor()
     }
     window.addEventListener("pointerdown", handlePointerDown, true)

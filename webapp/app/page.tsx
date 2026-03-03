@@ -29,13 +29,14 @@ import { TypographyPanel } from "@/components/settings/TypographyPanel"
 import { ColorShemaPanel } from "@/components/settings/ColorShemaPanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
+import type { LayoutPreset } from "@/lib/presets"
 import {
   HELP_SECTION_BY_HEADER_ACTION,
   HELP_SECTION_BY_SETTINGS_SECTION,
 } from "@/lib/help-registry"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
-import { ExampleLayoutsPanel } from "@/components/sidebar/ExampleLayoutsPanel"
+import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
@@ -283,6 +284,90 @@ function exportUiReducer(state: ExportUiState, action: UiAction): ExportUiState 
     default:
       return state
   }
+}
+
+function buildUiActionsFromLoadedSettings(
+  loaded: Record<string, unknown>,
+  currentCollapsed: Record<SectionKey, boolean>,
+): UiAction[] {
+  const actions: UiAction[] = []
+  const set = <K extends UiAction & { type: "SET" }>(key: K["key"], value: K["value"]) =>
+    actions.push({ type: "SET", key, value } as UiAction)
+
+  if (isCanvasRatioKey(loaded.canvasRatio)) set("canvasRatio", loaded.canvasRatio)
+  if (typeof loaded.exportPaperSize === "string" && FORMATS_PT[loaded.exportPaperSize]) {
+    set("exportPaperSize", loaded.exportPaperSize)
+  }
+  if (typeof loaded.exportPrintPro === "boolean") set("exportPrintPro", loaded.exportPrintPro)
+  if (typeof loaded.exportBleedMm === "number" && Number.isFinite(loaded.exportBleedMm) && loaded.exportBleedMm >= 0) {
+    set("exportBleedMm", loaded.exportBleedMm)
+  }
+  if (typeof loaded.exportRegistrationMarks === "boolean") set("exportRegistrationMarks", loaded.exportRegistrationMarks)
+  if (typeof loaded.exportFinalSafeGuides === "boolean") set("exportFinalSafeGuides", loaded.exportFinalSafeGuides)
+  if (typeof loaded.format === "string" && FORMATS_PT[loaded.format]) {
+    if (/^[AB]/.test(loaded.format)) {
+      set("canvasRatio", "din_ab")
+      if (!loaded.exportPaperSize) set("exportPaperSize", loaded.format)
+    }
+    if (loaded.format === "LETTER") {
+      set("canvasRatio", "letter_ansi_ab")
+      if (!loaded.exportPaperSize) set("exportPaperSize", "LETTER")
+    }
+  }
+  if (loaded.orientation === "portrait" || loaded.orientation === "landscape") set("orientation", loaded.orientation)
+  if (typeof loaded.rotation === "number") set("rotation", loaded.rotation)
+  if (loaded.marginMethod === 1 || loaded.marginMethod === 2 || loaded.marginMethod === 3) {
+    set("marginMethod", loaded.marginMethod)
+  }
+  if (typeof loaded.gridCols === "number") set("gridCols", loaded.gridCols)
+  if (typeof loaded.gridRows === "number") set("gridRows", loaded.gridRows)
+  if (typeof loaded.baselineMultiple === "number") set("baselineMultiple", loaded.baselineMultiple)
+  if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
+  if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
+  if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
+  if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
+  if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
+  if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
+  if (typeof loaded.useCustomMargins === "boolean") set("useCustomMargins", loaded.useCustomMargins)
+
+  if (loaded.customMarginMultipliers && typeof loaded.customMarginMultipliers === "object") {
+    const customMargins = loaded.customMarginMultipliers as {
+      top?: unknown
+      left?: unknown
+      right?: unknown
+      bottom?: unknown
+    }
+    if (
+      typeof customMargins.top === "number"
+      && typeof customMargins.left === "number"
+      && typeof customMargins.right === "number"
+      && typeof customMargins.bottom === "number"
+    ) {
+      set("customMarginMultipliers", {
+        top: customMargins.top,
+        left: customMargins.left,
+        right: customMargins.right,
+        bottom: customMargins.bottom,
+      })
+    }
+  }
+
+  if (typeof loaded.showBaselines === "boolean") set("showBaselines", loaded.showBaselines)
+  if (typeof loaded.showModules === "boolean") set("showModules", loaded.showModules)
+  if (typeof loaded.showMargins === "boolean") set("showMargins", loaded.showMargins)
+  if (typeof loaded.showImagePlaceholders === "boolean") set("showImagePlaceholders", loaded.showImagePlaceholders)
+  if (typeof loaded.showTypography === "boolean") set("showTypography", loaded.showTypography)
+
+  if (loaded.collapsed && typeof loaded.collapsed === "object") {
+    const collapsedSettings = loaded.collapsed as Partial<Record<SectionKey, unknown>>
+    const merged = { ...currentCollapsed }
+    for (const key of SECTION_KEYS) {
+      if (typeof collapsedSettings[key] === "boolean") merged[key] = collapsedSettings[key]
+    }
+    set("collapsed", merged)
+  }
+
+  return actions
 }
 
 export default function Home() {
@@ -762,65 +847,7 @@ export default function Home() {
           throw new Error("Invalid layout JSON: missing uiSettings.")
         }
 
-        const actions: UiAction[] = []
-        const set = <K extends UiAction & { type: "SET" }>(key: K["key"], value: K["value"]) =>
-          actions.push({ type: "SET", key, value } as UiAction)
-
-        if (isCanvasRatioKey(loaded.canvasRatio)) set("canvasRatio", loaded.canvasRatio)
-        if (typeof loaded.exportPaperSize === "string" && FORMATS_PT[loaded.exportPaperSize])
-          set("exportPaperSize", loaded.exportPaperSize)
-        if (typeof loaded.exportPrintPro === "boolean") set("exportPrintPro", loaded.exportPrintPro)
-        if (typeof loaded.exportBleedMm === "number" && Number.isFinite(loaded.exportBleedMm) && loaded.exportBleedMm >= 0)
-          set("exportBleedMm", loaded.exportBleedMm)
-        if (typeof loaded.exportRegistrationMarks === "boolean")
-          set("exportRegistrationMarks", loaded.exportRegistrationMarks)
-        if (typeof loaded.exportFinalSafeGuides === "boolean")
-          set("exportFinalSafeGuides", loaded.exportFinalSafeGuides)
-        if (typeof loaded.format === "string" && FORMATS_PT[loaded.format]) {
-          if (/^[AB]/.test(loaded.format)) {
-            set("canvasRatio", "din_ab")
-            if (!loaded.exportPaperSize) set("exportPaperSize", loaded.format)
-          }
-          if (loaded.format === "LETTER") {
-            set("canvasRatio", "letter_ansi_ab")
-            if (!loaded.exportPaperSize) set("exportPaperSize", "LETTER")
-          }
-        }
-        if (loaded.orientation === "portrait" || loaded.orientation === "landscape")
-          set("orientation", loaded.orientation)
-        if (typeof loaded.rotation === "number") set("rotation", loaded.rotation)
-        if (loaded.marginMethod === 1 || loaded.marginMethod === 2 || loaded.marginMethod === 3)
-          set("marginMethod", loaded.marginMethod)
-        if (typeof loaded.gridCols === "number") set("gridCols", loaded.gridCols)
-        if (typeof loaded.gridRows === "number") set("gridRows", loaded.gridRows)
-        if (typeof loaded.baselineMultiple === "number") set("baselineMultiple", loaded.baselineMultiple)
-        if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
-        if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
-        if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
-        if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
-        if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
-        if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
-        if (typeof loaded.useCustomMargins === "boolean") set("useCustomMargins", loaded.useCustomMargins)
-        if (loaded.customMarginMultipliers && typeof loaded.customMarginMultipliers === "object") {
-          const cm = loaded.customMarginMultipliers
-          if (typeof cm.top === "number" && typeof cm.left === "number"
-            && typeof cm.right === "number" && typeof cm.bottom === "number") {
-            set("customMarginMultipliers", { top: cm.top, left: cm.left, right: cm.right, bottom: cm.bottom })
-          }
-        }
-        if (typeof loaded.showBaselines === "boolean") set("showBaselines", loaded.showBaselines)
-        if (typeof loaded.showModules === "boolean") set("showModules", loaded.showModules)
-        if (typeof loaded.showMargins === "boolean") set("showMargins", loaded.showMargins)
-        if (typeof loaded.showImagePlaceholders === "boolean") set("showImagePlaceholders", loaded.showImagePlaceholders)
-        if (typeof loaded.showTypography === "boolean") set("showTypography", loaded.showTypography)
-        if (loaded.collapsed && typeof loaded.collapsed === "object") {
-          const merged = { ...collapsed }
-          for (const key of SECTION_KEYS) {
-            if (typeof loaded.collapsed[key] === "boolean") merged[key] = loaded.collapsed[key]
-          }
-          set("collapsed", merged)
-        }
-
+        const actions = buildUiActionsFromLoadedSettings(loaded, collapsed)
         if (actions.length > 0) dispatch({ type: "BATCH", actions })
 
         if (parsed?.previewLayout) {
@@ -943,29 +970,22 @@ export default function Home() {
     setActiveSidebarPanel(null)
   }, [])
 
-  const handleLoadExamplePreset = useCallback((preset: {
-    canvasRatio: CanvasRatioKey
-    orientation: "portrait" | "landscape"
-    cols: number
-    rows: number
-    marginMethod: 1 | 2 | 3
-    baselineMultiple: number
-    gutterMultiple: number
-  }) => {
-    dispatch({ type: "BATCH", actions: [
-      { type: "SET", key: "canvasRatio", value: preset.canvasRatio },
-      { type: "SET", key: "orientation", value: preset.orientation },
-      { type: "SET", key: "gridCols", value: preset.cols },
-      { type: "SET", key: "gridRows", value: preset.rows },
-      { type: "SET", key: "marginMethod", value: preset.marginMethod },
-      { type: "SET", key: "baselineMultiple", value: preset.baselineMultiple },
-      { type: "SET", key: "gutterMultiple", value: preset.gutterMultiple },
-      { type: "SET", key: "showModules", value: true },
-      { type: "SET", key: "showBaselines", value: true },
-      { type: "SET", key: "showMargins", value: true },
-    ] })
+  const handleLoadPresetLayout = useCallback((preset: LayoutPreset) => {
+    const actions = buildUiActionsFromLoadedSettings(preset.uiSettings, collapsed)
+    if (actions.length > 0) dispatch({ type: "BATCH", actions })
+
+    if (preset.previewLayout) {
+      const nextKey = Date.now()
+      const layout = preset.previewLayout as PreviewLayoutState
+      setPreviewLayout(layout)
+      setLoadedPreviewLayout({ key: nextKey, layout })
+    } else {
+      setPreviewLayout(null)
+      setLoadedPreviewLayout(null)
+    }
+
     setShowPresetsBrowser(false)
-  }, [dispatch])
+  }, [collapsed, dispatch])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
@@ -1130,9 +1150,9 @@ export default function Home() {
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
               <div className="w-40">
-                <ExampleLayoutsPanel
+                <PresetLayoutsPanel
                   isDarkMode={isDarkUi}
-                  onLoadPreset={handleLoadExamplePreset}
+                  onLoadPreset={handleLoadPresetLayout}
                   compact
                 />
               </div>
@@ -1218,7 +1238,7 @@ export default function Home() {
     displayGroup,
     fileGroup,
     handleCloseSidebar,
-    handleLoadExamplePreset,
+    handleLoadPresetLayout,
     handlePreviewGridRestore,
     handlePreviewHistoryAvailabilityChange,
     handlePreviewOpenHelpSection,

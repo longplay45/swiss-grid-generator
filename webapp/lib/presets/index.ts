@@ -1,0 +1,116 @@
+import type { LayoutPreset, LayoutPresetUiSettings } from "@/lib/presets/types"
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === "object" && value !== null
+)
+
+const isCanvasRatio = (value: unknown): value is LayoutPresetUiSettings["canvasRatio"] => (
+  value === "din_ab" || value === "letter_ansi_ab"
+)
+
+const isOrientation = (value: unknown): value is LayoutPresetUiSettings["orientation"] => (
+  value === "portrait" || value === "landscape"
+)
+
+const isMarginMethod = (value: unknown): value is LayoutPresetUiSettings["marginMethod"] => (
+  value === 1 || value === 2 || value === 3
+)
+
+function toPresetId(sourcePath: string): string {
+  return sourcePath
+    .replace(/^\.?\//, "")
+    .replace(/\.json$/i, "")
+    .trim()
+}
+
+function toPresetLabel(sourcePath: string): string {
+  const id = toPresetId(sourcePath)
+  const cleaned = id
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+  return cleaned
+    .split(" ")
+    .map((token) => (token ? `${token.charAt(0).toUpperCase()}${token.slice(1)}` : token))
+    .join(" ")
+}
+
+function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
+  const payload = isObjectRecord(source) && isObjectRecord(source.default)
+    ? source.default
+    : source
+
+  if (!isObjectRecord(payload)) {
+    throw new Error(`Invalid preset "${sourcePath}": expected object`)
+  }
+
+  if (!isObjectRecord(payload.uiSettings)) {
+    throw new Error(`Invalid preset "${sourcePath}": missing uiSettings`)
+  }
+
+  const uiSettingsSource = payload.uiSettings
+  const gridCols = uiSettingsSource.gridCols
+  const gridRows = uiSettingsSource.gridRows
+  const canvasRatio = uiSettingsSource.canvasRatio
+  const orientation = uiSettingsSource.orientation
+  const marginMethod = uiSettingsSource.marginMethod
+  const baselineMultiple = uiSettingsSource.baselineMultiple
+  const gutterMultiple = uiSettingsSource.gutterMultiple
+
+  if (typeof gridCols !== "number" || !Number.isFinite(gridCols) || gridCols <= 0) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.gridCols must be a positive number`)
+  }
+  if (typeof gridRows !== "number" || !Number.isFinite(gridRows) || gridRows <= 0) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.gridRows must be a positive number`)
+  }
+  if (!isCanvasRatio(canvasRatio)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.canvasRatio is not supported`)
+  }
+  if (!isOrientation(orientation)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.orientation is not supported`)
+  }
+  if (!isMarginMethod(marginMethod)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.marginMethod must be 1, 2, or 3`)
+  }
+  if (typeof baselineMultiple !== "number" || !Number.isFinite(baselineMultiple) || baselineMultiple <= 0) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.baselineMultiple must be a positive number`)
+  }
+  if (typeof gutterMultiple !== "number" || !Number.isFinite(gutterMultiple) || gutterMultiple <= 0) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.gutterMultiple must be a positive number`)
+  }
+
+  const uiSettings: LayoutPresetUiSettings = {
+    ...uiSettingsSource,
+    gridCols,
+    gridRows,
+    canvasRatio,
+    orientation,
+    marginMethod,
+    baselineMultiple,
+    gutterMultiple,
+  }
+
+  return {
+    id: toPresetId(sourcePath),
+    label: toPresetLabel(sourcePath),
+    uiSettings,
+    previewLayout: isObjectRecord(payload.previewLayout) ? payload.previewLayout : null,
+  }
+}
+
+type PresetContext = {
+  keys: () => string[]
+  <T>(id: string): T
+}
+
+const webpackRequire = require as unknown as {
+  context: (path: string, deep?: boolean, filter?: RegExp) => PresetContext
+}
+const presetContext = webpackRequire.context("./data", false, /\.json$/)
+
+export const LAYOUT_PRESETS: LayoutPreset[] = presetContext
+  .keys()
+  .sort((a, b) => a.localeCompare(b))
+  .map((filePath) => parseLayoutPreset(presetContext<Record<string, unknown>>(filePath), filePath))
+
+export type { LayoutPreset }
