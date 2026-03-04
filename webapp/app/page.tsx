@@ -435,6 +435,8 @@ export default function Home() {
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
+  const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
+  const lastDocumentHistoryResetNonceRef = useRef(0)
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -557,7 +559,7 @@ export default function Home() {
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
 
   const history = useSettingsHistory(buildUiSnapshot, canUndoPreview, canRedoPreview)
-  const { suppressNext, setCurrentSnapshot } = history
+  const { suppressNext, setCurrentSnapshot, reset: resetSettingsHistory } = history
 
   const applyUiSnapshot = useCallback(
     (snapshot: UiSettingsSnapshot) => {
@@ -586,6 +588,16 @@ export default function Home() {
     setCanUndoPreview(undoAvailable)
     setCanRedoPreview(redoAvailable)
   }, [])
+
+  useEffect(() => {
+    if (documentHistoryResetNonce === 0 || documentHistoryResetNonce === lastDocumentHistoryResetNonceRef.current) {
+      return
+    }
+    lastDocumentHistoryResetNonceRef.current = documentHistoryResetNonce
+    resetSettingsHistory(buildUiSnapshot())
+    setCanUndoPreview(false)
+    setCanRedoPreview(false)
+  }, [buildUiSnapshot, documentHistoryResetNonce, resetSettingsHistory])
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNext()
@@ -863,6 +875,7 @@ export default function Home() {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
         }
+        setDocumentHistoryResetNonce((nonce) => nonce + 1)
         setShowPresetsBrowser(false)
         isDirtyRef.current = false
       } catch (error) {
@@ -988,7 +1001,9 @@ export default function Home() {
       setLoadedPreviewLayout(null)
     }
 
+    setDocumentHistoryResetNonce((nonce) => nonce + 1)
     setShowPresetsBrowser(false)
+    isDirtyRef.current = false
   }, [collapsed, dispatch])
 
   const settingsPanels = useMemo(() => (
@@ -1176,6 +1191,7 @@ export default function Home() {
               rotation={rotation}
               undoNonce={history.undoNonce}
               redoNonce={history.redoNonce}
+              historyResetToken={documentHistoryResetNonce}
               onOpenHelpSection={handlePreviewOpenHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
               onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
@@ -1238,6 +1254,7 @@ export default function Home() {
     activeSidebarPanel,
     baseFont,
     displayGroup,
+    documentHistoryResetNonce,
     fileGroup,
     handleCloseSidebar,
     handleHeaderHelpNavigate,

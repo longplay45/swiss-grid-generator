@@ -247,6 +247,7 @@ interface GridPreviewProps {
   rotation?: number
   undoNonce?: number
   redoNonce?: number
+  historyResetToken?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
@@ -274,6 +275,7 @@ export const GridPreview = memo(function GridPreview({
   rotation = 0,
   undoNonce = 0,
   redoNonce = 0,
+  historyResetToken = 0,
   onCanvasReady,
   onLayoutChange,
   onRequestGridRestore,
@@ -307,6 +309,7 @@ export const GridPreview = memo(function GridPreview({
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
   const typographyBufferTransformRef = useRef("")
   const reflowPlanCacheRef = useRef<Map<string, ReflowPlan>>(new Map())
+  const lastHistoryResetTokenRef = useRef(historyResetToken)
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
   const mouseMoveRafRef = useRef<number | null>(null)
@@ -836,6 +839,7 @@ export const GridPreview = memo(function GridPreview({
   const {
     pushHistory,
     recordHistoryBeforeChange,
+    resetHistory,
     undo,
     redo,
   } = usePreviewHistory<PreviewLayoutState>({
@@ -1377,6 +1381,24 @@ export const GridPreview = memo(function GridPreview({
     touchLongPressMs: TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
   })
+
+  useEffect(() => {
+    if (historyResetToken === lastHistoryResetTokenRef.current) return
+    lastHistoryResetTokenRef.current = historyResetToken
+    resetHistory()
+    lastAppliedLayoutKeyRef.current = 0
+    lastAppliedImageLayoutKeyRef.current = 0
+    lastAppliedCustomSizeLayoutKeyRef.current = 0
+    suppressReflowCheckRef.current = true
+    suppressImageModuleRemapRef.current = true
+    previousImageGridRef.current = null
+    previousImageModuleRowStepRef.current = null
+    setDragState(null)
+    setHoverState(null)
+    setHoverImageKey(null)
+    setEditorState(null)
+    setImageEditorState(null)
+  }, [historyResetToken, resetHistory, setDragState])
 
   const buildReflowPlannerInput = useCallback((
     gridCols: number,

@@ -65,6 +65,12 @@ export function usePreviewHistory<T>({
     })
   }, [applySnapshot, buildSnapshot, historyLimit, onClearTransient])
 
+  const resetHistory = useCallback(() => {
+    setHistoryPast([])
+    setHistoryFuture([])
+    onClearTransient?.()
+  }, [onClearTransient])
+
   useEffect(() => {
     onHistoryAvailabilityChange?.(historyPast.length > 0, historyFuture.length > 0)
   }, [historyFuture.length, historyPast.length, onHistoryAvailabilityChange])
@@ -84,6 +90,7 @@ export function usePreviewHistory<T>({
   return {
     pushHistory,
     recordHistoryBeforeChange,
+    resetHistory,
     undo,
     redo,
     canUndo: historyPast.length > 0,

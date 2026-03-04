@@ -159,6 +159,15 @@ export function useSettingsHistory(
     uiSnapshotRef.current = snapshot
   }, [])
 
+  /** Clear all settings history and establish a new current baseline snapshot. */
+  const reset = useCallback((snapshot?: UiSettingsSnapshot) => {
+    const baseline = snapshot ?? buildSnapshot()
+    setSettingsPast([])
+    setSettingsFuture([])
+    skipUiHistoryRef.current = false
+    uiSnapshotRef.current = baseline
+  }, [buildSnapshot])
+
   return {
     settingsPast,
     settingsFuture,
@@ -166,6 +175,7 @@ export function useSettingsHistory(
     redoNonce,
     suppressNext,
     setCurrentSnapshot,
+    reset,
     canUndo: settingsPast.length > 0 || canUndoPreview,
     canRedo: settingsFuture.length > 0 || canRedoPreview,
     undoAny,
