@@ -13,7 +13,7 @@ function formatPresetCreatedAt(value?: string): string {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+  return date.toISOString().slice(0, 10)
 }
 
 export function PresetLayoutsPanel({
@@ -70,7 +70,9 @@ export function PresetLayoutsPanel({
           <HoverTooltip
             key={preset.id}
             className="block"
-            tooltipClassName={`left-2 top-2 w-72 max-w-[80vw] whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
+            constrainToViewport
+            viewportPaddingPx={36}
+            tooltipClassName={`left-1/2 top-full mt-2 w-72 max-w-[80vw] -translate-x-1/2 whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
               isDarkMode
                 ? "border-gray-600 bg-gray-900/95 text-gray-200"
                 : "border-gray-300 bg-white/95 text-gray-700"

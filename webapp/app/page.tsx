@@ -40,6 +40,7 @@ import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
+import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
 import {
   isFontFamily,
   type FontFamily,
@@ -1209,7 +1210,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-row overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
         <div className="flex-1 p-4 md:p-6 overflow-auto">
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
@@ -1295,6 +1296,14 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {!showPresetsBrowser && showRolloverInfo ? (
+        <div className={`shrink-0 h-11 border-t px-4 text-[11px] md:px-6 ${uiTheme.previewHeader} ${uiTheme.bodyText} flex items-center`}>
+          <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+            {PREVIEW_INTERACTION_HINT_SINGLE_LINE}
+          </div>
+        </div>
+      ) : null}
     </div>
   ), [
     activeHelpSectionId,
@@ -1329,6 +1338,7 @@ export default function Home() {
     showRolloverInfo,
     sidebarGroup,
     uiTheme.divider,
+    uiTheme.bodyText,
     uiTheme.previewHeader,
     uiTheme.previewShell,
     uiTheme.sidebar,
@@ -1352,7 +1362,7 @@ export default function Home() {
 
         {settingsPanels}
 
-        <div className={`shrink-0 border-t px-4 py-3 text-xs md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
+        <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-2">
               {SHOW_BETA_BADGE ? (

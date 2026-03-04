@@ -63,6 +63,7 @@ import {
   isImagePlaceholderColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
+import { PREVIEW_INTERACTION_HINT_LINES } from "@/lib/preview-interaction-hints"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -2616,15 +2617,11 @@ export const GridPreview = memo(function GridPreview({
           {showRolloverInfo && hoverState ? (
             <div className="w-72 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
               <div className="text-[11px] font-medium text-gray-900">Interaction</div>
-              <div className="mt-1 text-[11px] text-gray-600">
-                Double-click paragraph to edit.
-              </div>
-              <div className="text-[11px] text-gray-600">
-                Shift-double-click empty module to create image placeholder.
-              </div>
-              <div className="text-[11px] text-gray-600">
-                Alt-drag duplicate • Shift-drag baseline snap (overset).
-              </div>
+              {PREVIEW_INTERACTION_HINT_LINES.map((line, index) => (
+                <div key={line} className={`${index === 0 ? "mt-1" : ""} text-[11px] text-gray-600`}>
+                  {line}
+                </div>
+              ))}
             </div>
           ) : null}
 
