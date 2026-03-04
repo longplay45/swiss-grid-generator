@@ -128,7 +128,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             caretColor: editorState.draftColor,
             WebkitTextFillColor: "transparent",
           }}
-          className={`pointer-events-auto absolute resize-none overflow-hidden border-0 bg-transparent p-0 outline-none focus:outline-none ${
+          className={`pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none ${
             isDarkMode
               ? "text-gray-100"
               : "text-gray-900"
