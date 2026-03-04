@@ -436,7 +436,6 @@ export default function Home() {
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
-  const lastDocumentHistoryResetNonceRef = useRef(0)
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -589,15 +588,16 @@ export default function Home() {
     setCanRedoPreview(redoAvailable)
   }, [])
 
-  useEffect(() => {
-    if (documentHistoryResetNonce === 0 || documentHistoryResetNonce === lastDocumentHistoryResetNonceRef.current) {
-      return
+  const applyLoadedUiActions = useCallback((actions: UiAction[]) => {
+    const nextGridUi = actions.reduce(gridUiReducer, gridUi)
+    const nextExportUi = actions.reduce(exportUiReducer, exportUi)
+    const nextSnapshot = { ...nextGridUi, ...nextExportUi } as UiSettingsSnapshot
+    resetSettingsHistory(nextSnapshot)
+    if (actions.length > 0) {
+      suppressNext()
+      dispatch({ type: "BATCH", actions })
     }
-    lastDocumentHistoryResetNonceRef.current = documentHistoryResetNonce
-    resetSettingsHistory(buildUiSnapshot())
-    setCanUndoPreview(false)
-    setCanRedoPreview(false)
-  }, [buildUiSnapshot, documentHistoryResetNonce, resetSettingsHistory])
+  }, [dispatch, exportUi, gridUi, resetSettingsHistory, suppressNext])
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNext()
@@ -864,7 +864,7 @@ export default function Home() {
         }
 
         const actions = buildUiActionsFromLoadedSettings(loaded, collapsed)
-        if (actions.length > 0) dispatch({ type: "BATCH", actions })
+        applyLoadedUiActions(actions)
 
         if (parsed?.previewLayout) {
           const nextKey = Date.now()
@@ -876,6 +876,8 @@ export default function Home() {
           setLoadedPreviewLayout(null)
         }
         setDocumentHistoryResetNonce((nonce) => nonce + 1)
+        setCanUndoPreview(false)
+        setCanRedoPreview(false)
         setShowPresetsBrowser(false)
         isDirtyRef.current = false
       } catch (error) {
@@ -886,7 +888,7 @@ export default function Home() {
       }
     }
     reader.readAsText(file)
-  }, [collapsed, dispatch])
+  }, [applyLoadedUiActions, collapsed])
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -989,7 +991,7 @@ export default function Home() {
 
   const handleLoadPresetLayout = useCallback((preset: LayoutPreset) => {
     const actions = buildUiActionsFromLoadedSettings(preset.uiSettings, collapsed)
-    if (actions.length > 0) dispatch({ type: "BATCH", actions })
+    applyLoadedUiActions(actions)
 
     if (preset.previewLayout) {
       const nextKey = Date.now()
@@ -1002,9 +1004,11 @@ export default function Home() {
     }
 
     setDocumentHistoryResetNonce((nonce) => nonce + 1)
+    setCanUndoPreview(false)
+    setCanRedoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
-  }, [collapsed, dispatch])
+  }, [applyLoadedUiActions, collapsed])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
