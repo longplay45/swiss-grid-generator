@@ -6,6 +6,12 @@ type Props = {
   onClose: () => void
   filename: string
   onFilenameChange: (value: string) => void
+  title: string
+  onTitleChange: (value: string) => void
+  description: string
+  onDescriptionChange: (value: string) => void
+  author: string
+  onAuthorChange: (value: string) => void
   onConfirm: () => void
   defaultFilename: string
   ratioLabel: string
@@ -18,6 +24,12 @@ export function SaveJsonDialog({
   onClose,
   filename,
   onFilenameChange,
+  title,
+  onTitleChange,
+  description,
+  onDescriptionChange,
+  author,
+  onAuthorChange,
   onConfirm,
   defaultFilename,
   ratioLabel,
@@ -41,6 +53,35 @@ export function SaveJsonDialog({
             onChange={(event) => onFilenameChange(event.target.value)}
             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
             placeholder={defaultFilename}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Title (optional)</Label>
+          <input
+            type="text"
+            value={title}
+            onChange={(event) => onTitleChange(event.target.value)}
+            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            placeholder="Layout title"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Description (optional)</Label>
+          <textarea
+            value={description}
+            onChange={(event) => onDescriptionChange(event.target.value)}
+            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm min-h-20"
+            placeholder="Short description"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Author (optional)</Label>
+          <input
+            type="text"
+            value={author}
+            onChange={(event) => onAuthorChange(event.target.value)}
+            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            placeholder="Author name"
           />
         </div>
         <div className="flex items-center justify-end gap-2">

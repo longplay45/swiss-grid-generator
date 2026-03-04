@@ -108,6 +108,9 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(exportFinalSafeGuides)
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
+  const [saveTitleDraft, setSaveTitleDraft] = useState("")
+  const [saveDescriptionDraft, setSaveDescriptionDraft] = useState("")
+  const [saveAuthorDraft, setSaveAuthorDraft] = useState("")
 
   const getOrientedDimensions = useCallback(
     (paperSize: string) => {
@@ -121,13 +124,16 @@ export function useExportActions(ctx: ExportActionsContext) {
   )
 
   const saveJSON = useCallback(
-    (filename: string) => {
+    (filename: string, metadata: { title: string; description: string; author: string }) => {
       const trimmed = filename.trim()
       if (!trimmed) return
       const normalizedFilename = trimmed.toLowerCase().endsWith(".json") ? trimmed : `${trimmed}.json`
       const payload = {
         schemaVersion: 1,
         exportedAt: new Date().toISOString(),
+        title: metadata.title,
+        description: metadata.description,
+        author: metadata.author,
         gridResult: result,
         uiSettings: buildUiSettingsPayload(),
         previewLayout,
@@ -151,9 +157,13 @@ export function useExportActions(ctx: ExportActionsContext) {
   const confirmSaveJSON = useCallback(() => {
     const trimmedName = saveFilenameDraft.trim()
     if (!trimmedName) return
-    saveJSON(trimmedName)
+    saveJSON(trimmedName, {
+      title: saveTitleDraft,
+      description: saveDescriptionDraft,
+      author: saveAuthorDraft,
+    })
     setIsSaveDialogOpen(false)
-  }, [saveFilenameDraft, saveJSON])
+  }, [saveAuthorDraft, saveDescriptionDraft, saveFilenameDraft, saveJSON, saveTitleDraft])
 
   const exportPDF = useCallback(
     async (
@@ -338,6 +348,12 @@ export function useExportActions(ctx: ExportActionsContext) {
     setIsSaveDialogOpen,
     saveFilenameDraft,
     setSaveFilenameDraft,
+    saveTitleDraft,
+    setSaveTitleDraft,
+    saveDescriptionDraft,
+    setSaveDescriptionDraft,
+    saveAuthorDraft,
+    setSaveAuthorDraft,
     openSaveDialog,
     confirmSaveJSON,
     // Export dialog

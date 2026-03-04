@@ -1354,6 +1354,12 @@ export default function Home() {
         onClose={() => exportActions.setIsSaveDialogOpen(false)}
         filename={exportActions.saveFilenameDraft}
         onFilenameChange={exportActions.setSaveFilenameDraft}
+        title={exportActions.saveTitleDraft}
+        onTitleChange={exportActions.setSaveTitleDraft}
+        description={exportActions.saveDescriptionDraft}
+        onDescriptionChange={exportActions.setSaveDescriptionDraft}
+        author={exportActions.saveAuthorDraft}
+        onAuthorChange={exportActions.setSaveAuthorDraft}
         onConfirm={handleConfirmSaveJSON}
         defaultFilename={defaultJsonFilename}
         ratioLabel={selectedCanvasRatio.label}
