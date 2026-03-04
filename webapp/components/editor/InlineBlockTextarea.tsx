@@ -27,7 +27,6 @@ type InlineBlockTextareaProps<StyleKey extends string> = {
   pageRotation: number
   scale: number
   baselineStep: number
-  isDarkMode: boolean
   closeEditor: () => void
   saveEditor: () => void
   getStyleSizeValue: (styleKey: StyleKey) => number
@@ -44,7 +43,6 @@ export function InlineBlockTextarea<StyleKey extends string>({
   pageRotation,
   scale,
   baselineStep,
-  isDarkMode,
   closeEditor,
   saveEditor,
   getStyleSizeValue,
@@ -128,11 +126,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             caretColor: editorState.draftColor,
             WebkitTextFillColor: "transparent",
           }}
-          className={`pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none ${
-            isDarkMode
-              ? "text-gray-100"
-              : "text-gray-900"
-          }`}
+          className="pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none"
           aria-label={`Inline editor for ${editorState.target}`}
         />
       </div>

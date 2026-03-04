@@ -30,6 +30,16 @@ import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
+  BASE_BLOCK_IDS,
+  DEFAULT_STYLE_ASSIGNMENTS,
+  DEFAULT_TEXT_CONTENT,
+  createDefaultStyleAssignments,
+  createDefaultTextContent,
+  isBaseBlockId,
+} from "@/lib/document-defaults"
+import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
+import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
+import {
   computeAutoFitBatch,
   type AutoFitPlannerInput,
 } from "@/lib/autofit-planner"
@@ -156,28 +166,12 @@ function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   }
 }
 
-const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
-type BaseBlockId = typeof BASE_BLOCK_IDS[number]
-
-const DEFAULT_TEXT_CONTENT: Record<BaseBlockId, string> = {
-  display: "Swiss Design",
-  headline: "Modular Grid Systems",
-  subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
-  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
-}
-
-const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
-  display: "display",
-  headline: "headline",
-  subhead: "subhead",
-  body: "body",
-  caption: "caption",
-}
-
-const getDefaultTextContent = (): Record<BlockId, string> => ({ ...DEFAULT_TEXT_CONTENT })
-const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => ({ ...DEFAULT_STYLE_ASSIGNMENTS })
-const isBaseBlockId = (key: string): key is BaseBlockId => (BASE_BLOCK_IDS as readonly string[]).includes(key)
+const getDefaultTextContent = (): Record<BlockId, string> => (
+  createDefaultTextContent() as Record<BlockId, string>
+)
+const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => (
+  createDefaultStyleAssignments() as unknown as Record<BlockId, TypographyStyleKey>
+)
 const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 const getNextImagePlaceholderId = () => `image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
@@ -525,17 +519,14 @@ export const GridPreview = memo(function GridPreview({
   }, [styleAssignments])
 
   const isTextReflowEnabled = useCallback((key: BlockId) => {
-    const enabled = blockTextReflow[key] !== undefined
-      ? blockTextReflow[key] === true
-      : (key === "body" || key === "caption")
-    // Reflow is newspaper-only (multi-column); single-column vertical flow is disabled.
-    return enabled && getBlockSpan(key) > 1
-  }, [blockTextReflow, getBlockSpan])
+    const styleKey = getStyleKeyForBlock(key)
+    return resolveTextReflowEnabled(key, styleKey, getBlockSpan(key), blockTextReflow)
+  }, [blockTextReflow, getBlockSpan, getStyleKeyForBlock])
 
   const isSyllableDivisionEnabled = useCallback((key: BlockId) => {
-    if (blockSyllableDivision[key] !== undefined) return blockSyllableDivision[key] === true
-    return key === "body" || key === "caption"
-  }, [blockSyllableDivision])
+    const styleKey = getStyleKeyForBlock(key)
+    return resolveSyllableDivisionEnabled(key, styleKey, blockSyllableDivision)
+  }, [blockSyllableDivision, getStyleKeyForBlock])
 
   const getBlockFont = useCallback((key: BlockId): FontFamily => {
     return blockFontFamilies[key] ?? baseFont
@@ -561,7 +552,7 @@ export const GridPreview = memo(function GridPreview({
     if (styleKey !== "fx") return defaultSize
     const raw = blockCustomSizes[key]
     if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultSize
-    return Math.max(1, Math.min(400, raw))
+    return clampFxSize(raw)
   }, [blockCustomSizes, getStyleSize])
 
   const getBlockBaselineMultiplier = useCallback((key: BlockId, styleKey: TypographyStyleKey): number => {
@@ -648,7 +639,7 @@ export const GridPreview = memo(function GridPreview({
   const getBlockRotation = useCallback((key: BlockId): number => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
-    return Math.max(-180, Math.min(180, raw))
+    return clampRotation(raw)
   }, [blockRotations])
 
   const { buildSnapshot: buildTextSnapshot, applySnapshot: applyTextSnapshot } = useLayoutSnapshot<
@@ -697,7 +688,7 @@ export const GridPreview = memo(function GridPreview({
       if (styleKey !== "fx") return acc
       const raw = blockCustomSizes[key]
       if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = Math.max(1, Math.min(400, raw))
+      acc[key] = clampFxSize(raw)
       return acc
     }, {} as Partial<Record<BlockId, number>>),
     blockCustomLeadings: blockOrder.reduce((acc, key) => {
@@ -705,7 +696,7 @@ export const GridPreview = memo(function GridPreview({
       if (styleKey !== "fx") return acc
       const raw = blockCustomLeadings[key]
       if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = Math.max(1, Math.min(800, raw))
+      acc[key] = clampFxLeading(raw)
       return acc
     }, {} as Partial<Record<BlockId, number>>),
     blockTextColors: blockOrder.reduce((acc, key) => {
@@ -809,7 +800,7 @@ export const GridPreview = memo(function GridPreview({
         if (styleKey !== "fx") return acc
         const raw = snapshot.blockCustomSizes?.[key]
         if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = Math.max(1, Math.min(400, raw))
+        acc[key] = clampFxSize(raw)
         return acc
       }, {} as Partial<Record<BlockId, number>>)
     const nextLeadings = normalizedOrder
@@ -818,7 +809,7 @@ export const GridPreview = memo(function GridPreview({
         if (styleKey !== "fx") return acc
         const raw = snapshot.blockCustomLeadings?.[key]
         if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = Math.max(1, Math.min(800, raw))
+        acc[key] = clampFxLeading(raw)
         return acc
       }, {} as Partial<Record<BlockId, number>>)
     const nextTextColors = normalizedOrder
@@ -1225,7 +1216,7 @@ export const GridPreview = memo(function GridPreview({
         const nextRotations = { ...current.blockRotations }
         const sourceRotation = current.blockRotations[drag.key]
         if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && Math.abs(sourceRotation) > 0.001) {
-          nextRotations[newKey] = Math.max(-180, Math.min(180, sourceRotation))
+          nextRotations[newKey] = clampRotation(sourceRotation)
         } else {
           delete nextRotations[newKey]
         }
@@ -1278,7 +1269,7 @@ export const GridPreview = memo(function GridPreview({
       setBlockCustomSizes((current) => {
         const next = { ...current }
         if (styleKey === "fx" && typeof sourceCustomSize === "number" && Number.isFinite(sourceCustomSize) && sourceCustomSize > 0) {
-          next[newKey] = Math.max(1, Math.min(400, sourceCustomSize))
+          next[newKey] = clampFxSize(sourceCustomSize)
         } else {
           delete next[newKey]
         }
@@ -1287,7 +1278,7 @@ export const GridPreview = memo(function GridPreview({
       setBlockCustomLeadings((current) => {
         const next = { ...current }
         if (styleKey === "fx" && typeof sourceCustomLeading === "number" && Number.isFinite(sourceCustomLeading) && sourceCustomLeading > 0) {
-          next[newKey] = Math.max(1, Math.min(800, sourceCustomLeading))
+          next[newKey] = clampFxLeading(sourceCustomLeading)
         } else {
           delete next[newKey]
         }
@@ -1525,8 +1516,8 @@ export const GridPreview = memo(function GridPreview({
     gridRows: result.settings.gridRows,
     typographyStyles: result.typography.styles,
     isBaseBlockId,
-    defaultTextContent: DEFAULT_TEXT_CONTENT,
-    defaultStyleAssignments: DEFAULT_STYLE_ASSIGNMENTS,
+    defaultTextContent: DEFAULT_TEXT_CONTENT as Record<string, string>,
+    defaultStyleAssignments: DEFAULT_STYLE_ASSIGNMENTS as unknown as Record<string, TypographyStyleKey>,
     isFontFamily,
     getDefaultColumnSpan,
     getGridMetrics,
@@ -2413,7 +2404,7 @@ export const GridPreview = memo(function GridPreview({
         if (styleKey !== "fx") return acc
         const raw = blockCustomSizes[key]
         if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = Math.max(1, Math.min(400, raw))
+        acc[key] = clampFxSize(raw)
         return acc
       }, {} as Partial<Record<BlockId, number>>),
       blockCustomLeadings: blockOrder.reduce((acc, key) => {
@@ -2421,7 +2412,7 @@ export const GridPreview = memo(function GridPreview({
         if (styleKey !== "fx") return acc
         const raw = blockCustomLeadings[key]
         if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = Math.max(1, Math.min(800, raw))
+        acc[key] = clampFxLeading(raw)
         return acc
       }, {} as Partial<Record<BlockId, number>>),
       blockTextColors: blockOrder.reduce((acc, key) => {
@@ -2580,7 +2571,6 @@ export const GridPreview = memo(function GridPreview({
           pageRotation={rotation}
           scale={scale}
           baselineStep={result.grid.gridUnit * scale}
-          isDarkMode={isDarkMode}
           closeEditor={closeEditor}
           saveEditor={saveEditor}
           getStyleSizeValue={getStyleSize}

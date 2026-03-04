@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
+import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
 import type {
   BlockEditorState,
   BlockEditorStyleOption,
@@ -291,7 +292,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   const next = Number.isFinite(parsed) ? parsed : 0
                   controls.setEditorState((prev) => prev ? {
                     ...prev,
-                    draftRotation: Math.max(-180, Math.min(180, next)),
+                    draftRotation: clampRotation(next),
                   } : prev)
                 }}
                 className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
@@ -359,7 +360,7 @@ export function TextEditorPanel<StyleKey extends string>({
                         setFxSizeInput(String(controls.editorState.draftFxSize))
                         return
                       }
-                      const clamped = Math.max(1, Math.min(400, Math.round(parsed * 10) / 10))
+                      const clamped = clampFxSize(Math.round(parsed * 10) / 10)
                       controls.setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
                       setFxSizeInput(String(clamped))
                     }}
@@ -386,7 +387,7 @@ export function TextEditorPanel<StyleKey extends string>({
                         setFxLeadingInput(String(controls.editorState.draftFxLeading))
                         return
                       }
-                      const clamped = Math.max(1, Math.min(800, Math.round(parsed * 10) / 10))
+                      const clamped = clampFxLeading(Math.round(parsed * 10) / 10)
                       controls.setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
                       setFxLeadingInput(String(clamped))
                     }}

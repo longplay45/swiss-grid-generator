@@ -1,8 +1,11 @@
 import { hyphenateWordEnglish } from "./english-hyphenation.ts"
+export { getDefaultColumnSpan } from "./default-column-span.ts"
 
 export type MeasureWidth = (text: string) => number
-const MIN_INLINE_HYPHEN_PREFIX_CHARS = 5
-const MIN_INLINE_HYPHEN_SUFFIX_CHARS = 3
+// Keep line-end splits relatively permissive to match the former browser
+// hyphenation feel users preferred in inline editing.
+const MIN_INLINE_HYPHEN_PREFIX_CHARS = 3
+const MIN_INLINE_HYPHEN_SUFFIX_CHARS = 2
 
 type InlineSplitResult = {
   leadingWithHyphen: string
@@ -120,19 +123,4 @@ export function wrapText(
   const wrapped: string[] = []
   for (const line of hardBreakLines) wrapped.push(...wrapSingleLine(line))
   return wrapped
-}
-
-/**
- * Returns the default column span for a text block based on its style key
- * and the total number of grid columns.
- *
- * Canonical implementation shared by canvas preview, PDF export, and
- * reflow planner.
- */
-export function getDefaultColumnSpan(key: string, gridCols: number): number {
-  if (gridCols <= 1) return 1
-  if (key === "display") return gridCols
-  if (key === "headline") return gridCols >= 3 ? Math.min(gridCols, Math.floor(gridCols / 2) + 1) : gridCols
-  if (key === "caption") return 1
-  return Math.max(1, Math.floor(gridCols / 2))
 }

@@ -11,6 +11,14 @@ import { resolvePdfFontFamily } from "@/lib/pdf-font-registry"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
+import {
+  BASE_BLOCK_IDS,
+  DEFAULT_STYLE_ASSIGNMENTS,
+  DEFAULT_TEXT_CONTENT,
+  isBaseBlockId,
+} from "@/lib/document-defaults"
+import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
+import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -44,25 +52,6 @@ type ExportVectorPdfOptions = {
   showMargins: boolean
   showImagePlaceholders: boolean
   showTypography: boolean
-}
-
-const BASE_BLOCK_IDS = ["display", "headline", "subhead", "body", "caption"] as const
-type BaseBlockId = typeof BASE_BLOCK_IDS[number]
-
-const DEFAULT_TEXT_CONTENT: Record<BaseBlockId, string> = {
-  display: "Swiss Design",
-  headline: "Modular Grid Systems",
-  subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
-  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
-}
-
-const DEFAULT_STYLE_ASSIGNMENTS: Record<BaseBlockId, TypographyStyleKey> = {
-  display: "display",
-  headline: "headline",
-  subhead: "subhead",
-  body: "body",
-  caption: "caption",
 }
 
 function getFontStyle(bold = false, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
@@ -406,10 +395,10 @@ export function renderSwissGridVectorPdf({
   const blockOrder = layout?.blockOrder?.filter((key): key is BlockId => typeof key === "string" && key.length > 0) ?? [...BASE_BLOCK_IDS]
   const textContent: Record<BlockId, string> = layout?.textContent
     ? { ...layout.textContent }
-    : { ...DEFAULT_TEXT_CONTENT }
+    : { ...DEFAULT_TEXT_CONTENT } as Record<BlockId, string>
   const styleAssignments: Record<BlockId, TypographyStyleKey> = layout?.styleAssignments
     ? { ...layout.styleAssignments }
-    : { ...DEFAULT_STYLE_ASSIGNMENTS }
+    : { ...DEFAULT_STYLE_ASSIGNMENTS } as Record<BlockId, TypographyStyleKey>
   const blockFontFamilies = layout?.blockFontFamilies ?? {}
   const blockColumnSpans = layout?.blockColumnSpans ?? {}
   const blockRowSpans = layout?.blockRowSpans ?? {}
@@ -435,13 +424,18 @@ export function renderSwissGridVectorPdf({
     return Math.max(1, Math.min(gridRows, raw))
   }
 
+  const getStyleKeyForBlock = (key: BlockId): TypographyStyleKey => {
+    const assigned = styleAssignments[key]
+    if (assigned && Object.hasOwn(styleDefinitions, assigned)) return assigned
+    if (isBaseBlockId(key)) return DEFAULT_STYLE_ASSIGNMENTS[key] as TypographyStyleKey
+    return "body"
+  }
+
   const isTextReflowEnabled = (key: BlockId) => {
-    if (blockTextReflow[key] === true || blockTextReflow[key] === false) return blockTextReflow[key]
-    return key === "body" || key === "caption"
+    return resolveTextReflowEnabled(key, getStyleKeyForBlock(key), getBlockSpan(key), blockTextReflow)
   }
   const isSyllableDivisionEnabled = (key: BlockId) => {
-    if (blockSyllableDivision[key] === true || blockSyllableDivision[key] === false) return blockSyllableDivision[key]
-    return key === "body" || key === "caption"
+    return resolveSyllableDivisionEnabled(key, getStyleKeyForBlock(key), blockSyllableDivision)
   }
   const getBlockFont = (key: BlockId): FontFamily => {
     return blockFontFamilies[key] ?? baseFont
@@ -461,13 +455,13 @@ export function renderSwissGridVectorPdf({
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
-    return Math.max(-180, Math.min(180, raw))
+    return clampRotation(raw)
   }
   const getBlockFontSize = (key: BlockId, styleKey: TypographyStyleKey, defaultSize: number) => {
     if (styleKey !== "fx") return defaultSize
     const raw = blockCustomSizes[key]
     if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultSize
-    return Math.max(1, Math.min(400, raw))
+    return clampFxSize(raw)
   }
 
   const getBlockBaselineMultiplier = (
@@ -478,7 +472,7 @@ export function renderSwissGridVectorPdf({
     if (styleKey !== "fx") return defaultMultiplier
     const raw = blockCustomLeadings[key]
     if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultMultiplier
-    return Math.max(0.01, Math.min(800, raw) / gridUnit)
+    return Math.max(0.01, clampFxLeading(raw) / gridUnit)
   }
 
   const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {

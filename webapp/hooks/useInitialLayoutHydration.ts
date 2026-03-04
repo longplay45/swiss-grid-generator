@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import type { MutableRefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
+import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, BlockKey extends string> = {
@@ -150,8 +151,8 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
 
     const nextRotations = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockRotations?.[key]
-      if (typeof raw === "number" && Number.isFinite(raw) && Math.abs(raw) > 0.001) {
-        acc[key] = Math.max(-180, Math.min(180, raw))
+      if (typeof raw === "number" && Number.isFinite(raw) && hasSignificantRotation(raw)) {
+        acc[key] = clampRotation(raw)
       }
       return acc
     }, {} as Record<BlockKey, number>)

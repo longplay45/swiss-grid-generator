@@ -1,3 +1,5 @@
+import { getDefaultColumnSpan } from "./default-column-span.ts"
+
 export type PlannerModulePosition = {
   col: number
   row: number
@@ -34,16 +36,6 @@ const REPOSITION_ORDER_VIOLATION_STEP = 0.5
 const REPOSITION_SEARCH_ROW_BUFFER = 60
 const REPOSITION_NON_MODULE_ROW_PENALTY = 80
 const REPOSITION_OUTSIDE_GRID_ROW_PENALTY = 600
-
-// Kept local (not imported from text-layout) because this file is consumed
-// directly by the Node native test-runner without a bundler/alias resolver.
-function getDefaultColumnSpan(key: string, gridCols: number): number {
-  if (gridCols <= 1) return 1
-  if (key === "display") return gridCols
-  if (key === "headline") return gridCols >= 3 ? Math.min(gridCols, Math.floor(gridCols / 2) + 1) : gridCols
-  if (key === "caption") return 1
-  return Math.max(1, Math.floor(gridCols / 2))
-}
 
 function makeRowColKey(row: number, col: number): string {
   return `${row.toFixed(4)}:${col}`

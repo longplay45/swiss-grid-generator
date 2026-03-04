@@ -3,6 +3,7 @@ import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction
 
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
+import { clampFxLeading, clampFxSize, clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { Updater } from "@/hooks/useStateCommands"
 
 type TextAlignMode = "left" | "right"
@@ -118,14 +119,6 @@ type Args = {
   getBlockRotation: (key: string) => number
 }
 
-function clampFxSize(value: number): number {
-  return Math.max(1, Math.min(400, value))
-}
-
-function clampFxLeading(value: number): number {
-  return Math.max(1, Math.min(800, value))
-}
-
 export function useBlockEditorActions({
   showTypography,
   dragEndedAtRef,
@@ -179,14 +172,7 @@ export function useBlockEditorActions({
   isBlockItalic,
   getBlockRotation,
 }: Args) {
-  const closeEditor = useCallback(() => {
-    setEditorState(null)
-  }, [setEditorState])
-
-  const applyEditorDraftLive = useCallback((draft: EditorState, options?: { recordHistory?: boolean; closeAfter?: boolean }) => {
-    if (options?.recordHistory) {
-      recordHistoryBeforeChange()
-    }
+  const applyEditorDraftLive = useCallback((draft: EditorState) => {
     const effectiveReflow = draft.draftReflow && draft.draftColumns > 1
     const existingPosition = blockModulePositions[draft.target]
     const autoFit = getAutoFitForPlacement({
@@ -256,8 +242,8 @@ export function useBlockEditorActions({
         nextItalic[draft.target] = draft.draftItalic
       }
       const nextRotations = { ...prev.blockRotations }
-      const clampedRotation = Math.max(-180, Math.min(180, draft.draftRotation))
-      if (Math.abs(clampedRotation) > 0.001) {
+      const clampedRotation = clampRotation(draft.draftRotation)
+      if (hasSignificantRotation(clampedRotation)) {
         nextRotations[draft.target] = clampedRotation
       } else {
         delete nextRotations[draft.target]
@@ -325,15 +311,11 @@ export function useBlockEditorActions({
       }
       return next
     })
-    if (options?.closeAfter) {
-      setEditorState(null)
-    }
   }, [
     baseFont,
     blockModulePositions,
     getAutoFitForPlacement,
     getGridMetrics,
-    recordHistoryBeforeChange,
     resultGridCols,
     resultGridUnit,
     resultTypographyStyles,
@@ -341,13 +323,15 @@ export function useBlockEditorActions({
     setBlockCustomLeadings,
     setBlockTextColors,
     setBlockCustomSizes,
-    setEditorState,
   ])
 
+  const closeEditor = useCallback(() => {
+    setEditorState(null)
+  }, [setEditorState])
+
   const saveEditor = useCallback(() => {
-    if (!editorState) return
-    applyEditorDraftLive(editorState, { closeAfter: true })
-  }, [applyEditorDraftLive, editorState])
+    setEditorState(null)
+  }, [setEditorState])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return
@@ -484,6 +468,17 @@ export function useBlockEditorActions({
       ...prev,
       [newKey]: "left",
     }))
+    setBlockCollections((prev) => ({
+      ...prev,
+      blockTextReflow: {
+        ...prev.blockTextReflow,
+        [newKey]: false,
+      },
+      blockSyllableDivision: {
+        ...prev.blockSyllableDivision,
+        [newKey]: true,
+      },
+    }))
     setBlockModulePositions((prev) => ({
       ...prev,
       [newKey]: snapped,
@@ -500,7 +495,7 @@ export function useBlockEditorActions({
       draftAlign: "left",
       draftColor: defaultTextColor,
       draftReflow: false,
-      draftSyllableDivision: false,
+      draftSyllableDivision: true,
       draftBold: false,
       draftItalic: false,
       draftRotation: 0,

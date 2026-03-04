@@ -1,4 +1,5 @@
 import type { SnapshotState } from "@/hooks/useLayoutSnapshot"
+import { clampRotation, hasSignificantRotation } from "./block-constraints.ts"
 
 type ResolvedSnapshotState<
   Key extends string,
@@ -133,8 +134,8 @@ export function normalizeSnapshotStateForApply<
   }, {} as Partial<Record<Key, boolean>>)
   const nextRotations = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockRotations?.[key]
-    if (typeof raw === "number" && Number.isFinite(raw) && Math.abs(raw) > 0.001) {
-      acc[key] = Math.max(-180, Math.min(180, raw))
+    if (typeof raw === "number" && Number.isFinite(raw) && hasSignificantRotation(raw)) {
+      acc[key] = clampRotation(raw)
     }
     return acc
   }, {} as Partial<Record<Key, number>>)

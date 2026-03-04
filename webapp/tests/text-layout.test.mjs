@@ -7,12 +7,12 @@ const monoMeasure = (text) => text.length
 
 test("syllable division splits words at line end when threshold allows it", () => {
   const lines = wrapText("alpha betagamma", 12, true, monoMeasure)
-  assert.deepEqual(lines, ["alpha betag-", "amma"])
+  assert.deepEqual(lines, ["alpha beta-", "gamma"])
 })
 
-test("syllable division keeps word intact when less than 5 chars can fit", () => {
+test("syllable division can split earlier when only a short remainder fits", () => {
   const lines = wrapText("alpha betagamma", 11, true, monoMeasure)
-  assert.deepEqual(lines, ["alpha", "betagamma"])
+  assert.deepEqual(lines, ["alpha beta-", "gamma"])
 })
 
 test("long words still hyphenate even without a current line prefix", () => {
