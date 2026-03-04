@@ -187,13 +187,14 @@ export function useBlockEditorActions({
     if (options?.recordHistory) {
       recordHistoryBeforeChange()
     }
+    const effectiveReflow = draft.draftReflow && draft.draftColumns > 1
     const existingPosition = blockModulePositions[draft.target]
     const autoFit = getAutoFitForPlacement({
       key: draft.target,
       text: draft.draftText,
       styleKey: draft.draftStyle,
       rowSpan: draft.draftRows,
-      reflow: draft.draftReflow,
+      reflow: effectiveReflow,
       syllableDivision: draft.draftSyllableDivision,
       baselineMultiplierOverride: draft.draftStyle === "fx"
         ? clampFxLeading(draft.draftFxLeading) / resultGridUnit
@@ -234,7 +235,7 @@ export function useBlockEditorActions({
       }
       const nextReflow = {
         ...prev.blockTextReflow,
-        [draft.target]: draft.draftReflow,
+        [draft.target]: effectiveReflow,
       }
       const nextSyllableDivision = {
         ...prev.blockSyllableDivision,

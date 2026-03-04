@@ -52,13 +52,12 @@ Comprehensive user reference for the in-app Help sidebar.
 - Left column rows:
   - Row 1: row span, column span, paragraph rotation (`-180..180`)
   - Row 2: style hierarchy, font family
-  - Row 3: bold/italic, align left/right, reflow/syllable division
+  - Row 3: bold/italic, align left/right, newspaper reflow/syllable division
 - Right action controls:
   - Row 1: save
   - Row 3: delete
-- Reflow with `col = 1`: vertical flow in one column, respecting module rows and skipping gutter bands.
+- Newspaper reflow is available only when paragraph columns are `2+`.
 - Reflow with `col > 1`: newspaper flow across configured columns (col 1 top-to-bottom, then col 2, etc.).
-- Reflow icon rotates 90° when paragraph columns are greater than `1`.
 - Textarea preview mirrors current paragraph style controls: font family, bold/italic, and left/right alignment.
 - Live counters show characters/words in the footer.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.

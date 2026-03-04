@@ -70,6 +70,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const editorText = controls.editorState.draftText ?? ""
   const characterCount = editorText.length
   const wordCount = editorText.trim() ? editorText.trim().split(/\s+/).length : 0
+  const canUseNewspaperReflow = controls.editorState.draftColumns > 1
   const selectedStyleLabel = controls.styleOptions.find((option) => option.value === controls.editorState.draftStyle)?.label
     ?? controls.editorState.draftStyle
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === controls.selectedColorScheme)?.label
@@ -176,9 +177,15 @@ export function TextEditorPanel<StyleKey extends string>({
           type="button"
           size="sm"
           variant="ghost"
-          className={`h-8 rounded-sm border px-2 text-xs ${controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton}`}
+          disabled={!canUseNewspaperReflow}
+          className={`h-8 rounded-sm border px-2 text-xs ${
+            !canUseNewspaperReflow
+              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+              : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
+          }`}
           onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
-          aria-label={controls.editorState.draftReflow ? "Disable reflow" : "Enable reflow"}
+          aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
+          title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
         >
           Re
         </Button>
@@ -252,9 +259,11 @@ export function TextEditorPanel<StyleKey extends string>({
               <Select
                 value={String(controls.editorState.draftColumns)}
                 onValueChange={(value) => {
+                  const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
                   controls.setEditorState((prev) => prev ? {
                     ...prev,
-                    draftColumns: Math.max(1, Math.min(controls.gridCols, Number(value))),
+                    draftColumns: nextColumns,
+                    draftReflow: nextColumns > 1 ? prev.draftReflow : false,
                   } : prev)
                 }}
               >
@@ -453,7 +462,7 @@ export function TextEditorPanel<StyleKey extends string>({
               <div><span className="font-medium">Rows/Cols:</span> {controls.editorState.draftRows} / {controls.editorState.draftColumns}</div>
               <div><span className="font-medium">Align/Rotation:</span> {controls.editorState.draftAlign}, {Math.round(controls.editorState.draftRotation)}deg</div>
               <div><span className="font-medium">Weight/Slant:</span> {controls.editorState.draftBold ? "bold" : "regular"}, {controls.editorState.draftItalic ? "italic" : "roman"}</div>
-              <div><span className="font-medium">Reflow/Hyphenation:</span> {controls.editorState.draftReflow ? "on" : "off"}, {controls.editorState.draftSyllableDivision ? "on" : "off"}</div>
+              <div><span className="font-medium">Newspaper Reflow/Hyphenation:</span> {controls.editorState.draftReflow && canUseNewspaperReflow ? "on" : "off"}, {controls.editorState.draftSyllableDivision ? "on" : "off"}</div>
               <div><span className="font-medium">Color Scheme:</span> {selectedSchemeLabel}</div>
               <div><span className="font-medium">Text Color:</span> {controls.editorState.draftColor}</div>
               <div><span className="font-medium">Characters/Words:</span> {characterCount} / {wordCount}</div>

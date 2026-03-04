@@ -1,5 +1,3 @@
-import { computeSingleColumnLineTops } from "@/lib/reflow-line-placement"
-
 export type TextAlignMode = "left" | "right"
 
 export type BlockRect = {
@@ -175,16 +173,15 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const span = getBlockSpan(key)
     const rowSpan = getBlockRows(key)
     const wrapWidth = span * moduleWidth + Math.max(span - 1, 0) * gutterX
-    const reflowEnabled = isTextReflowEnabled(key)
-    const columnReflow = reflowEnabled && span >= 2
-    const singleColumnReflow = reflowEnabled && span === 1
+    const reflowEnabled = isTextReflowEnabled(key) && span >= 2
+    const columnReflow = reflowEnabled
     const hyphenate = isSyllableDivisionEnabled(key)
     const lines = wrapText({
       context,
       key,
       styleKey,
       text: blockText,
-      maxWidth: reflowEnabled ? moduleWidth : wrapWidth,
+      maxWidth: columnReflow ? moduleWidth : wrapWidth,
       hyphenate,
     })
 
@@ -200,11 +197,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       : pageHeight - marginsBottom
     const bottomLineLimit = pageBottomY + 0.0001
     const moduleHeightForBlock = rowSpan * moduleHeight + Math.max(rowSpan - 1, 0) * gutterY
-    const firstLineTopY = origin.y + baselineStep
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / lineStep))
-    const moduleCycle = moduleHeight + gutterY
     let maxUsedRows = 0
-    let lastRenderedLineTopY: number | null = null
     const commands: TextDrawCommand[] = []
 
     const rect: BlockRect = {
@@ -216,7 +210,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         : (Math.max(lines.length, 1) * baselineMult + 1) * baselineStep + hitTopPadding,
     }
 
-    if (!reflowEnabled) {
+    if (!columnReflow) {
       const anchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const line = lines[lineIndex]
@@ -227,27 +221,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
         commands.push({ text: line, x: anchorX + offsetX, y })
       }
-    } else if (singleColumnReflow) {
-      const anchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
-      const lineTops = computeSingleColumnLineTops({
-        firstLineTopY,
-        lineStep,
-        pageBottomY,
-        lineCount: lines.length,
-        contentTop,
-        moduleHeightPx: moduleHeight,
-        moduleCyclePx: moduleCycle,
-      })
-      for (let lineIndex = 0; lineIndex < lineTops.length; lineIndex += 1) {
-        const lineTopY = lineTops[lineIndex]
-        const line = lines[lineIndex]
-        const y = lineTopY + ascent
-        maxUsedRows += 1
-        lastRenderedLineTopY = lineTopY
-        const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
-        commands.push({ text: line, x: anchorX + offsetX, y })
-      }
-    } else if (columnReflow) {
+    } else {
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
         if (columnIndex >= span) break
@@ -272,12 +246,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         last.text = `${last.text}\u00AD`
       }
     }
-    if (singleColumnReflow) {
-      rect.height = lastRenderedLineTopY !== null
-        ? (lastRenderedLineTopY - origin.y) + baselineStep + hitTopPadding
-        : baselineStep + hitTopPadding
-    }
-    if (!reflowEnabled && maxUsedRows > 0) {
+    if (!columnReflow && maxUsedRows > 0) {
       rect.height = (maxUsedRows * baselineMult + 1) * baselineStep + hitTopPadding
     }
     rects[key] = rect
@@ -297,7 +266,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     })
 
     if (!useParagraphRows) {
-      const usedLineRows = reflowEnabled
+      const usedLineRows = columnReflow
         ? (maxUsedRows || Math.min(lines.length, Math.max(1, maxLinesPerColumn)))
         : (maxUsedRows || lines.length)
       if (!useRowPlacement || key !== displayKey) {
@@ -335,16 +304,15 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionSpan = getBlockSpan(captionKey)
   const captionRowSpan = getBlockRows(captionKey)
   const captionWidth = captionSpan * moduleWidth + Math.max(captionSpan - 1, 0) * gutterX
-  const captionReflowEnabled = isTextReflowEnabled(captionKey)
-  const captionColumnReflow = captionReflowEnabled && captionSpan >= 2
-  const captionSingleColumnReflow = captionReflowEnabled && captionSpan === 1
+  const captionReflowEnabled = isTextReflowEnabled(captionKey) && captionSpan >= 2
+  const captionColumnReflow = captionReflowEnabled
   const captionSyllableDivision = isSyllableDivisionEnabled(captionKey)
   const captionLines = wrapText({
     context: captionContext,
     key: captionKey,
     styleKey: captionStyleKey,
     text: captionText,
-    maxWidth: captionReflowEnabled ? moduleWidth : captionWidth,
+    maxWidth: captionColumnReflow ? moduleWidth : captionWidth,
     hyphenate: captionSyllableDivision,
   })
   const captionLineCount = captionLines.length
@@ -366,11 +334,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     : pageHeight - marginsBottom
   const captionBottomLineLimit = captionPageBottomY + 0.0001
   const captionModuleHeight = captionRowSpan * moduleHeight + Math.max(captionRowSpan - 1, 0) * gutterY
-  const captionFirstLineTopY = captionOrigin.y + baselineStep
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
-  const captionModuleCycle = moduleHeight + gutterY
   let captionMaxUsedRows = 0
-  let captionLastRenderedLineTopY: number | null = null
   const captionCommands: TextDrawCommand[] = []
 
   if (!captionReflowEnabled) {
@@ -391,34 +356,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       })
       captionCommands.push({ text: line, x: captionAnchorX + offsetX, y })
     }
-  } else if (captionSingleColumnReflow) {
-    const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
-    const captionLineTops = computeSingleColumnLineTops({
-      firstLineTopY: captionFirstLineTopY,
-      lineStep: captionLineStep,
-      pageBottomY: captionPageBottomY,
-      lineCount: captionLines.length,
-      contentTop,
-      moduleHeightPx: moduleHeight,
-      moduleCyclePx: captionModuleCycle,
-    })
-    for (let lineIndex = 0; lineIndex < captionLineTops.length; lineIndex += 1) {
-      const lineTopY = captionLineTops[lineIndex]
-      const line = captionLines[lineIndex]
-      const y = lineTopY + captionAscent
-      captionMaxUsedRows += 1
-      captionLastRenderedLineTopY = lineTopY
-      const offsetX = opticalOffset({
-        context: captionContext,
-        key: captionKey,
-        styleKey: captionStyleKey,
-        line,
-        align: captionAlign,
-        fontSize: captionFontSize,
-      })
-      captionCommands.push({ text: line, x: captionAnchorX + offsetX, y })
-    }
-  } else if (captionColumnReflow) {
+  } else {
     for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
       const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
       if (columnIndex >= captionSpan) break
@@ -457,13 +395,9 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     x: captionOrigin.x,
     y: captionOrigin.y - captionHitTopPadding,
     width: captionWidth,
-    height: captionSingleColumnReflow
-      ? (captionLastRenderedLineTopY !== null
-        ? (captionLastRenderedLineTopY - captionOrigin.y) + baselineStep + captionHitTopPadding
-        : baselineStep + captionHitTopPadding)
-      : captionColumnReflow
-        ? captionModuleHeight + captionHitTopPadding
-        : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselineStep + captionHitTopPadding,
+    height: captionColumnReflow
+      ? captionModuleHeight + captionHitTopPadding
+      : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselineStep + captionHitTopPadding,
   }
   rects[captionKey] = captionRect
   plans.push({

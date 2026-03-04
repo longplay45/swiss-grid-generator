@@ -153,10 +153,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
           <li>Row 1 controls: row span, column span, paragraph rotation (`-180..180`), and save.</li>
           <li>Row 2 controls: font hierarchy and font family.</li>
-          <li>Row 3 controls: bold/italic, align left/right, reflow, syllable division, and delete (right side).</li>
-          <li>Reflow with `col = 1`: vertical flow in one column, respecting module rows and skipping gutter bands.</li>
-          <li>Reflow with `col &gt; 1`: newspaper flow across the configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
-          <li>Reflow icon rotates 90° when paragraph columns are set above 1.</li>
+          <li>Row 3 controls: bold/italic, align left/right, newspaper reflow, syllable division, and delete (right side).</li>
+          <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
+          <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
           <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
         </ul>

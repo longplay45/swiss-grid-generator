@@ -525,9 +525,12 @@ export const GridPreview = memo(function GridPreview({
   }, [styleAssignments])
 
   const isTextReflowEnabled = useCallback((key: BlockId) => {
-    if (blockTextReflow[key] !== undefined) return blockTextReflow[key] === true
-    return key === "body" || key === "caption"
-  }, [blockTextReflow])
+    const enabled = blockTextReflow[key] !== undefined
+      ? blockTextReflow[key] === true
+      : (key === "body" || key === "caption")
+    // Reflow is newspaper-only (multi-column); single-column vertical flow is disabled.
+    return enabled && getBlockSpan(key) > 1
+  }, [blockTextReflow, getBlockSpan])
 
   const isSyllableDivisionEnabled = useCallback((key: BlockId) => {
     if (blockSyllableDivision[key] !== undefined) return blockSyllableDivision[key] === true
