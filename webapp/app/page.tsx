@@ -71,6 +71,36 @@ const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLo
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
+type DocumentMetadata = {
+  title: string
+  description: string
+  author: string
+  createdAt?: string
+}
+
+function toNormalizedIsoDate(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return undefined
+  return new Date(parsed).toISOString()
+}
+
+function toDocumentText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function extractDocumentMetadata(source: unknown): DocumentMetadata {
+  if (typeof source !== "object" || source === null) {
+    return { title: "", description: "", author: "" }
+  }
+  const payload = source as Record<string, unknown>
+  return {
+    title: toDocumentText(payload.title),
+    description: toDocumentText(payload.description),
+    author: toDocumentText(payload.author),
+    createdAt: toNormalizedIsoDate(payload.createdAt) ?? toNormalizedIsoDate(payload.exportedAt),
+  }
+}
 
 // ─── Split UI state (Grid/Preview + Export) ───────────────────────────────
 
@@ -436,6 +466,11 @@ export default function Home() {
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
+  const [documentMetadata, setDocumentMetadata] = useState<DocumentMetadata>({
+    title: "",
+    description: "",
+    author: "",
+  })
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -739,6 +774,8 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultJsonFilename,
+      documentMetadata,
+      onDocumentMetadataChange: setDocumentMetadata,
       buildUiSettingsPayload,
     }),
     [
@@ -769,6 +806,7 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultJsonFilename,
+      documentMetadata,
       buildUiSettingsPayload,
     ],
   )
@@ -875,6 +913,7 @@ export default function Home() {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
         }
+        setDocumentMetadata(extractDocumentMetadata(parsed))
         setDocumentHistoryResetNonce((nonce) => nonce + 1)
         setCanUndoPreview(false)
         setCanRedoPreview(false)
@@ -1002,6 +1041,12 @@ export default function Home() {
       setPreviewLayout(null)
       setLoadedPreviewLayout(null)
     }
+    setDocumentMetadata({
+      title: preset.title ?? "",
+      description: preset.description ?? "",
+      author: preset.author ?? "",
+      createdAt: toNormalizedIsoDate(preset.createdAt),
+    })
 
     setDocumentHistoryResetNonce((nonce) => nonce + 1)
     setCanUndoPreview(false)
