@@ -1597,7 +1597,7 @@ export const GridPreview = memo(function GridPreview({
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.clearRect(0, 0, cssWidth, cssHeight)
       imageRectsRef.current = {}
-      if (!showTypography || !showImagePlaceholders || imageOrder.length === 0) return
+      if (!showImagePlaceholders || imageOrder.length === 0) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -1653,7 +1653,6 @@ export const GridPreview = memo(function GridPreview({
     rotation,
     scale,
     showImagePlaceholders,
-    showTypography,
   ])
 
   useTypographyRenderer<BlockId>({

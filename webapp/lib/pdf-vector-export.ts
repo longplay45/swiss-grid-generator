@@ -357,7 +357,7 @@ export function renderSwissGridVectorPdf({
     }
   }
 
-  if (showTypography && showImagePlaceholders) {
+  if (showImagePlaceholders) {
     const imageOrder = layout?.imageOrder?.filter(
       (key): key is BlockId => typeof key === "string" && key.length > 0,
     ) ?? []
