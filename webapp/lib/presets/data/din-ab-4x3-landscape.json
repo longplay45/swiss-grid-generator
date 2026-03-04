@@ -113,7 +113,7 @@
     "gridCols": 4,
     "gridRows": 3,
     "baselineMultiple": 3,
-    "gutterMultiple": 0.5,
+    "gutterMultiple": 1,
     "typographyScale": "swiss",
     "baseFont": "Inter",
     "imageColorScheme": "s1",

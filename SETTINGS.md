@@ -87,7 +87,7 @@ Default: `swiss`
 
 - Columns (`gridCols`): min `1`, max `13`, step `1`, default `3` (from `default_v001.json`)
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
-- Gutter multiple: min `0.5`, max `4.0`, step `0.5`, default `1.0`
+- Gutter multiple: min `1.0`, max `4.0`, step `0.5`, default `1.0`
 
 ### V. Typo
 

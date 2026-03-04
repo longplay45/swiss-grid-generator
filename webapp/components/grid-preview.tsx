@@ -297,6 +297,9 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedImageLayoutKeyRef = useRef(0)
   const lastAppliedCustomSizeLayoutKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
+  const suppressImageModuleRemapRef = useRef(false)
+  const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
+  const previousImageModuleRowStepRef = useRef<number | null>(null)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
@@ -773,6 +776,7 @@ export const GridPreview = memo(function GridPreview({
       return acc
     }, {} as Partial<Record<BlockId, string>>)
 
+    suppressImageModuleRemapRef.current = true
     setImageOrder(normalizedOrder)
     setImageModulePositions(nextPositions)
     setImageColumnSpans(nextSpans)
@@ -1892,6 +1896,76 @@ export const GridPreview = memo(function GridPreview({
     }),
     recordPerfMetric,
   })
+
+  useEffect(() => {
+    const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
+    const currentModuleRowStep = Math.max(
+      0.0001,
+      (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit,
+    )
+    const maxBaselineRow = Math.max(
+      0,
+      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit),
+    )
+
+    if (!previousImageGridRef.current) {
+      previousImageGridRef.current = currentGrid
+      previousImageModuleRowStepRef.current = currentModuleRowStep
+      return
+    }
+
+    if (suppressImageModuleRemapRef.current) {
+      suppressImageModuleRemapRef.current = false
+      previousImageGridRef.current = currentGrid
+      previousImageModuleRowStepRef.current = currentModuleRowStep
+      return
+    }
+
+    const previousGrid = previousImageGridRef.current
+    const previousModuleRowStep = previousImageModuleRowStepRef.current ?? currentModuleRowStep
+    const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
+    const moduleRowStepChanged = Math.abs(previousModuleRowStep - currentModuleRowStep) > 0.0001
+    if (!gridChanged && !moduleRowStepChanged) return
+
+    const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
+    if (!hasGridReduction && moduleRowStepChanged) {
+      setImageModulePositions((prev) => {
+        let changed = false
+        const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
+        for (const key of imageOrder) {
+          const position = prev[key]
+          if (!position) continue
+          const span = Math.max(1, Math.min(currentGrid.cols, imageColumnSpans[key] ?? 1))
+          const minCol = -Math.max(0, span - 1)
+          const maxCol = Math.max(0, currentGrid.cols - 1)
+          const moduleIndex = Math.trunc(position.row / previousModuleRowStep)
+          const baselineOffset = position.row - moduleIndex * previousModuleRowStep
+          const remappedRow = moduleIndex * currentModuleRowStep + baselineOffset
+          const clampedRow = Math.max(-maxBaselineRow, Math.min(maxBaselineRow, remappedRow))
+          const clampedCol = Math.max(minCol, Math.min(maxCol, position.col))
+          if (Math.abs(clampedRow - position.row) > 0.0001 || clampedCol !== position.col) {
+            next[key] = { col: clampedCol, row: clampedRow }
+            changed = true
+          }
+        }
+        return changed ? next : prev
+      })
+    }
+
+    previousImageGridRef.current = currentGrid
+    previousImageModuleRowStepRef.current = currentModuleRowStep
+  }, [
+    imageColumnSpans,
+    imageOrder,
+    result.grid.gridMarginVertical,
+    result.grid.gridUnit,
+    result.grid.margins.bottom,
+    result.grid.margins.top,
+    result.module.height,
+    result.pageSizePt.height,
+    result.settings.gridCols,
+    result.settings.gridRows,
+  ])
 
   const {
     closeEditor,

@@ -24,7 +24,7 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 
 - Ratio-first canvas workflow (`DIN`, `ANSI`, `Balanced`, `Photo`, `Screen`, `Square`, `Editorial`, `Wide Impact`)
 - Orientation + preview rotation controls
-- Grid controls: columns/rows (`1..13`) and gutter multiple (`0.5..4.0`)
+- Grid controls: columns/rows (`1..13`) and gutter multiple (`1.0..4.0`)
 - Margin methods:
   - Progressive (`1:2:2:3`)
   - Van de Graaf (`2:3:4:6`)

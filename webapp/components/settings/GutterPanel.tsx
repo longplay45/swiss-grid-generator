@@ -74,7 +74,7 @@ export const GutterPanel = memo(function GutterPanel({
         </div>
         <DebouncedSlider
           value={[gutterMultiple]}
-          min={0.5}
+          min={1}
           max={4}
           step={0.5}
           onValueCommit={([v]) => onGutterMultipleChange(v)}

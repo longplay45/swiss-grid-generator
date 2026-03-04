@@ -200,7 +200,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Undo/redo includes settings changes and block edits/placement changes.</li>
-          <li>Some structural grid changes trigger auto-reflow suggestions.</li>
+          <li>Auto-reflow suggestions are shown when columns or rows are reduced.</li>
           <li>Disruptive reflow opens an apply/cancel confirmation layer.</li>
           <li>Applied reflow shows a toast with one-click Undo.</li>
           <li>JSON layout loading suppresses disruptive reflow prompts.</li>
@@ -421,7 +421,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The baseline unit controls vertical rhythm for grid and typography.</li>
           <li>All style leading values are baseline multiples to preserve alignment.</li>
           <li>Top and bottom margins are snapped to baseline units.</li>
-          <li>Changing baseline can trigger structural reflow behavior for existing blocks.</li>
+          <li>Changing baseline does not auto-reposition blocks.</li>
         </ul>
       </section>
 
@@ -447,9 +447,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
-          <li>Gutter multiple range is `0.5..4.0` in `0.5` steps.</li>
+          <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
-          <li>Large structural changes may trigger reflow suggestions.</li>
+          <li>Reducing rows/cols may trigger reflow suggestions.</li>
         </ul>
       </section>
 
@@ -548,7 +548,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>If blocks disappear, check display toggles and whether text content is empty.</li>
           <li>If paragraph flow looks clipped, increase row span or disable reflow for that block.</li>
-          <li>If layout jumps after large grid changes, this is expected from structural reflow remapping.</li>
+          <li>If layout jumps after reducing rows/cols, this is expected from structural reflow remapping.</li>
           <li>If custom margins seem odd, verify baseline value and side multipliers first.</li>
           <li>If keyboard shortcuts do not trigger, focus outside active text inputs.</li>
         </ul>

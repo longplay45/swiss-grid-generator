@@ -31,7 +31,7 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Canvas and Grid
 
 - Grid range is `1..13` for both columns and rows.
-- Gutter multiple range is `0.5..4.0` in `0.5` steps.
+- Gutter multiple range is `1.0..4.0` in `0.5` steps.
 - Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).
 - Top/bottom margins snap to baseline grid units.
 - Custom margins are entered as baseline multiples per side.

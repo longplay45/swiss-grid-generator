@@ -116,7 +116,7 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   gridCols: DEFAULT_UI.gridCols,
   gridRows: DEFAULT_UI.gridRows,
   baselineMultiple: Math.max(1, DEFAULT_UI.baselineMultiple),
-  gutterMultiple: DEFAULT_UI.gutterMultiple,
+  gutterMultiple: Math.max(1, DEFAULT_UI.gutterMultiple),
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
   imageColorScheme: RESOLVED_DEFAULTS.imageColorScheme,
@@ -190,7 +190,6 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "marginMethod":
         case "gridCols":
         case "gridRows":
-        case "gutterMultiple":
         case "typographyScale":
         case "baseFont":
         case "imageColorScheme":
@@ -209,6 +208,11 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
           const nextBaselineMultiple = Math.max(1, action.value)
           if (state.baselineMultiple === nextBaselineMultiple) return state
           return { ...state, baselineMultiple: nextBaselineMultiple }
+        }
+        case "gutterMultiple": {
+          const nextGutterMultiple = Math.max(1, action.value)
+          if (state.gutterMultiple === nextGutterMultiple) return state
+          return { ...state, gutterMultiple: nextGutterMultiple }
         }
         default:
           return state
@@ -234,7 +238,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         gridCols: action.snapshot.gridCols,
         gridRows: action.snapshot.gridRows,
         baselineMultiple: Math.max(1, action.snapshot.baselineMultiple),
-        gutterMultiple: action.snapshot.gutterMultiple,
+        gutterMultiple: Math.max(1, action.snapshot.gutterMultiple),
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
         imageColorScheme: action.snapshot.imageColorScheme,
@@ -989,9 +993,6 @@ export default function Home() {
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
-      <h2 className={`text-sm font-semibold tracking-wide ${uiTheme.headingText}`}>
-        Grid Generator Settings
-      </h2>
       <SettingsHelpNavigationProvider
         value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
       >
@@ -1106,7 +1107,6 @@ export default function Home() {
     setUseCustomMargins,
     showSectionHelpIcons,
     typographyScale,
-    uiTheme.headingText,
     useCustomMargins,
   ])
 
