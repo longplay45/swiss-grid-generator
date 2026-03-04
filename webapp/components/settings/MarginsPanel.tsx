@@ -57,12 +57,6 @@ export const MarginsPanel = memo(function MarginsPanel({
   const collapsedSummary = useCustomMargins
     ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
     : `${marginMethod === 1 ? "Progressive" : marginMethod === 2 ? "Van de Graaf" : "Baseline"}, ${baselineMultiple.toFixed(1)}x`
-  const customMarginsSwitchClass = isDarkMode
-    ? "h-3 w-6 rounded-none border border-white bg-black data-[state=checked]:bg-white data-[state=unchecked]:bg-black"
-    : "h-3 w-6 rounded-none border border-gray-300 bg-white data-[state=checked]:bg-gray-900 data-[state=unchecked]:bg-white"
-  const customMarginsThumbClass = isDarkMode
-    ? "h-3 w-3 rounded-none border-0 bg-white shadow-none data-[state=checked]:translate-x-3 data-[state=unchecked]:translate-x-0 data-[state=checked]:bg-black data-[state=unchecked]:bg-white"
-    : "h-3 w-3 rounded-none border-0 bg-gray-900 shadow-none data-[state=checked]:translate-x-3 data-[state=unchecked]:translate-x-0 data-[state=checked]:bg-white data-[state=unchecked]:bg-gray-900"
 
   return (
     <PanelCard
@@ -76,19 +70,19 @@ export const MarginsPanel = memo(function MarginsPanel({
       isDarkMode={isDarkMode}
     >
       <div className="flex items-center justify-between">
-        <Label>Custom Margins</Label>
+        <Label className="text-sm text-gray-600">Custom Margins</Label>
         <Switch
           checked={useCustomMargins}
           onCheckedChange={handleCustomMarginsToggle}
-          className={customMarginsSwitchClass}
-          thumbClassName={customMarginsThumbClass}
+          className="h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
+          thumbClassName="h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
         />
       </div>
 
       {!useCustomMargins ? (
         <>
           <div className="space-y-2">
-            <Label>Margin Method</Label>
+            <Label className="text-sm text-gray-600">Margin Method</Label>
             <Select
               value={marginMethod.toString()}
               onValueChange={(v) => onMarginMethodChange(parseInt(v) as 1 | 2 | 3)}
@@ -105,7 +99,7 @@ export const MarginsPanel = memo(function MarginsPanel({
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Baseline Multiple</Label>
+              <Label className="text-sm text-gray-600">Baseline Multiple</Label>
               <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                 {baselineMultiple.toFixed(1)}×
               </span>
@@ -124,7 +118,7 @@ export const MarginsPanel = memo(function MarginsPanel({
           {(["top", "left", "right"] as const).map((side) => (
             <div key={side} className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="capitalize">{side}</Label>
+                <Label className="capitalize text-sm text-gray-600">{side}</Label>
                 <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                   {customMarginMultipliers[side]}×
                 </span>
@@ -142,7 +136,7 @@ export const MarginsPanel = memo(function MarginsPanel({
           ))}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="capitalize">Bottom</Label>
+              <Label className="capitalize text-sm text-gray-600">Bottom</Label>
               <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
                 {customMarginMultipliers.bottom}×
               </span>

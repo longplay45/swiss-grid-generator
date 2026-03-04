@@ -56,7 +56,7 @@ export const ColorShemaPanel = memo(function ColorShemaPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label>Base Shema</Label>
+        <Label className="text-sm text-gray-600">Base Shema</Label>
         <Select
           value={colorShema}
           onValueChange={(value) => onColorShemaChange(value as ImageColorSchemeId)}

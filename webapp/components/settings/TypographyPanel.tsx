@@ -46,7 +46,7 @@ export const TypographyPanel = memo(function TypographyPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label>Font Hierarchy</Label>
+        <Label className="text-sm text-gray-600">Font Hierarchy</Label>
         <Select
           value={typographyScale}
           onValueChange={(v: TypographyScale) =>
@@ -66,7 +66,7 @@ export const TypographyPanel = memo(function TypographyPanel({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label>Base Font</Label>
+        <Label className="text-sm text-gray-600">Base Font</Label>
         <FontSelect
           value={baseFont}
           onValueChange={(value) => onBaseFontChange(value as FontFamily)}

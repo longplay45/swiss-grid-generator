@@ -11,6 +11,10 @@ export type LayoutPresetUiSettings = Record<string, unknown> & {
 export type LayoutPreset = {
   id: string
   label: string
+  title?: string
+  description?: string
+  author?: string
+  createdAt?: string
   uiSettings: LayoutPresetUiSettings
   previewLayout: Record<string, unknown> | null
 }

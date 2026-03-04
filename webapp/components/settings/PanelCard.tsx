@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import type { ReactNode } from "react"
 import type { SectionKey } from "@/hooks/useSettingsHistory"
@@ -31,19 +30,25 @@ export function PanelCard({
   const { showHelpIcons, onNavigate } = useSettingsHelpNavigation()
 
   return (
-    <Card className={`${isDarkMode ? "border-gray-700 bg-gray-900 text-gray-100" : ""} ${showHelpIcons ? "ring-1 ring-blue-500" : ""}`}>
+    <section
+      className={`mb-3 border-b pb-3 ${
+        isDarkMode
+          ? "border-gray-700 text-gray-100"
+          : "border-gray-200 text-gray-900"
+      } ${showHelpIcons ? "ring-1 ring-blue-500" : ""}`}
+    >
       <HoverTooltip
         label={tooltip}
         className="block"
         tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
-        <CardHeader
-          className={`cursor-pointer select-none ${collapsed ? "px-4 pt-3 pb-[8px]" : "px-4 pt-3 pb-2"}`}
+        <header
+          className={`cursor-pointer select-none ${collapsed ? "pt-3 pb-[8px]" : "pt-3 pb-2"}`}
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
           onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
-          <CardTitle className="text-sm leading-tight">
+          <h3 className="text-sm font-bold leading-tight">
             <div className="min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex items-center gap-2">
@@ -68,10 +73,10 @@ export function PanelCard({
                 </div>
               ) : null}
             </div>
-          </CardTitle>
-        </CardHeader>
+          </h3>
+        </header>
       </HoverTooltip>
-      {!collapsed && <CardContent className="space-y-4">{children}</CardContent>}
-    </Card>
+      {!collapsed && <div className="space-y-4 pb-4 pt-1">{children}</div>}
+    </section>
   )
 }

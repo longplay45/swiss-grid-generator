@@ -35,6 +35,19 @@ function toPresetLabel(sourcePath: string): string {
     .join(" ")
 }
 
+function toOptionalText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function toOptionalIsoDate(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return undefined
+  return new Date(parsed).toISOString()
+}
+
 function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   const payload = isObjectRecord(source) && isObjectRecord(source.default)
     ? source.default
@@ -93,6 +106,10 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   return {
     id: toPresetId(sourcePath),
     label: toPresetLabel(sourcePath),
+    title: toOptionalText(payload.title),
+    description: toOptionalText(payload.description),
+    author: toOptionalText(payload.author),
+    createdAt: toOptionalIsoDate(payload.createdAt) ?? toOptionalIsoDate(payload.exportedAt),
     uiSettings,
     previewLayout: isObjectRecord(payload.previewLayout) ? payload.previewLayout : null,
   }

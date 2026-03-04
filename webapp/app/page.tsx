@@ -1011,7 +1011,7 @@ export default function Home() {
   }, [applyLoadedUiActions, collapsed])
 
   const settingsPanels = useMemo(() => (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
         value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
       >
@@ -1168,15 +1168,13 @@ export default function Home() {
         <div className="flex-1 p-4 md:p-6 overflow-auto">
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
-              <div className="w-40">
-                <PresetLayoutsPanel
-                  isDarkMode={isDarkUi}
-                  onLoadPreset={handleLoadPresetLayout}
-                  showHelpHints={showSectionHelpIcons}
-                  onHelpNavigate={() => handleHeaderHelpNavigate("presets")}
-                  compact
-                />
-              </div>
+              <PresetLayoutsPanel
+                isDarkMode={isDarkUi}
+                onLoadPreset={handleLoadPresetLayout}
+                showHelpHints={showSectionHelpIcons}
+                onHelpNavigate={() => handleHeaderHelpNavigate("presets")}
+                compact
+              />
             </div>
           ) : (
             <GridPreview

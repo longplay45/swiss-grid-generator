@@ -45,7 +45,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label>Ratio</Label>
+        <Label className="text-sm text-gray-600">Ratio</Label>
         <Select value={canvasRatio} onValueChange={(v: CanvasRatioKey) => onCanvasRatioChange(v)}>
           <SelectTrigger>
             <SelectValue />
@@ -60,7 +60,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label>Orientation</Label>
+        <Label className="text-sm text-gray-600">Orientation</Label>
         <Select
           value={orientation}
           onValueChange={(v: "portrait" | "landscape") => onOrientationChange(v)}
@@ -76,7 +76,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label>Rotation</Label>
+          <Label className="text-sm text-gray-600">Rotation</Label>
           <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{rotation}°</span>
         </div>
         <DebouncedSlider
