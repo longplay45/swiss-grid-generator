@@ -2574,6 +2574,7 @@ export const GridPreview = memo(function GridPreview({
           closeEditor={closeEditor}
           saveEditor={saveEditor}
           getStyleSizeValue={getStyleSize}
+          getStyleLeadingValue={getStyleLeading}
           isFxStyle={(styleKey) => styleKey === "fx"}
         />
       </div>

@@ -4,6 +4,7 @@ import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampFxLeading, clampFxSize, clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import type { Updater } from "@/hooks/useStateCommands"
 
 type TextAlignMode = "left" | "right"
@@ -413,7 +414,7 @@ export function useBlockEditorActions({
       const styleKey = styleAssignments[key] ?? "body"
       setEditorState({
         target: key,
-        draftText: textContent[key] ?? "",
+        draftText: normalizeInlineEditorText(textContent[key] ?? ""),
         draftStyle: styleKey,
         draftFxSize: styleKey === "fx"
           ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
@@ -485,7 +486,7 @@ export function useBlockEditorActions({
     }))
     setEditorState({
       target: newKey,
-      draftText: getDummyTextForStyle("body"),
+      draftText: normalizeInlineEditorText(getDummyTextForStyle("body")),
       draftStyle: "body",
       draftFxSize: getStyleSize("fx"),
       draftFxLeading: getStyleLeading("fx"),

@@ -3,6 +3,7 @@
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { getFontFamilyCss } from "@/lib/config/fonts"
 import { buildInlineEditorTransform } from "@/lib/inline-editor"
+import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import type { RefObject, SetStateAction, Dispatch } from "react"
 
 type InlineEditorLayout = {
@@ -30,6 +31,7 @@ type InlineBlockTextareaProps<StyleKey extends string> = {
   closeEditor: () => void
   saveEditor: () => void
   getStyleSizeValue: (styleKey: StyleKey) => number
+  getStyleLeadingValue: (styleKey: StyleKey) => number
   isFxStyle: (styleKey: StyleKey) => boolean
 }
 
@@ -46,6 +48,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   closeEditor,
   saveEditor,
   getStyleSizeValue,
+  getStyleLeadingValue,
   isFxStyle,
 }: InlineBlockTextareaProps<StyleKey>) {
   if (!editorState || !layout) return null
@@ -62,7 +65,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
   })
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
   const styleFontSize = isFxStyle(editorState.draftStyle) ? editorState.draftFxSize : fallbackStyleSize
-  const styleLeading = isFxStyle(editorState.draftStyle) ? editorState.draftFxLeading : Math.max(styleFontSize * 1.2, styleFontSize + 2)
+  const fallbackStyleLeading = getStyleLeadingValue(editorState.draftStyle)
+  const styleLeading = isFxStyle(editorState.draftStyle) ? editorState.draftFxLeading : fallbackStyleLeading
   const scaledFontSize = Math.max(1, styleFontSize * scale)
   const scaledLeading = Math.max(scaledFontSize, styleLeading * scale)
   const firstLineTop = layout.rotationOriginY + baselineStep
@@ -89,7 +93,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
           spellCheck={false}
           onMouseDown={(event) => event.stopPropagation()}
           onChange={(event) => {
-            const value = event.target.value
+            const value = normalizeInlineEditorText(event.target.value)
             setEditorState((prev) => prev ? {
               ...prev,
               draftText: value,
@@ -123,6 +127,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
             lineHeight: `${scaledLeading}px`,
             fontKerning: "normal",
             textRendering: "geometricPrecision",
+            hyphens: "none",
+            overflowWrap: "normal",
+            wordBreak: "normal",
+            whiteSpace: "pre-wrap",
             caretColor: editorState.draftColor,
             WebkitTextFillColor: "transparent",
           }}
