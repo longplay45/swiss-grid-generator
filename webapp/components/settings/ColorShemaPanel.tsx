@@ -77,10 +77,17 @@ export const ColorShemaPanel = memo(function ColorShemaPanel({
         {selected.colors.map((color, index) => (
           <div
             key={`${selected.id}-${index}-${color}`}
-            className={`h-2.5 rounded-sm border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
-            style={{ backgroundColor: color }}
-            title={color}
-          />
+            className="flex flex-col items-start gap-1"
+          >
+            <div
+              className={`h-5 w-full rounded-sm border ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+            <span className={`w-full text-left text-[9px] font-mono leading-none ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+              {color.toLowerCase()}
+            </span>
+          </div>
         ))}
       </div>
     </PanelCard>

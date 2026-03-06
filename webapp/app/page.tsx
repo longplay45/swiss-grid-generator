@@ -459,11 +459,11 @@ export default function Home() {
   >(null)
   const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
   const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
-  const showSectionHelpIcons = activeSidebarPanel === "help"
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [canRedoPreview, setCanRedoPreview] = useState(false)
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
+  const showSectionHelpIcons = activeSidebarPanel === "help"
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
@@ -1007,6 +1007,7 @@ export default function Home() {
     return (
       <div
         key={action.key}
+        data-preview-header-action={action.key}
         className="inline-flex w-8 items-center justify-center"
         onMouseEnter={showSectionHelpIcons ? () => handleHeaderHelpNavigate(action.key) : undefined}
       >
@@ -1017,13 +1018,14 @@ export default function Home() {
           aria-pressed={action.pressed}
           disabled={action.disabled}
           onClick={action.onClick}
+          showTooltip={showRolloverInfo}
           buttonClassName={showSectionHelpIcons ? isHelpButton ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-500" : "ring-1 ring-blue-500" : undefined}
         >
           {action.icon}
         </HeaderIconButton>
       </div>
     )
-  }, [handleHeaderHelpNavigate, showSectionHelpIcons])
+  }, [handleHeaderHelpNavigate, showRolloverInfo, showSectionHelpIcons])
 
   const handleCloseSidebar = useCallback(() => {
     setActiveSidebarPanel(null)
@@ -1059,7 +1061,7 @@ export default function Home() {
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
-        value={{ showHelpIcons: showSectionHelpIcons, onNavigate: handleSectionHelpNavigate }}
+        value={{ showHelpIcons: showSectionHelpIcons, showRolloverInfo, onNavigate: handleSectionHelpNavigate }}
       >
         <CanvasRatioPanel
           collapsed={collapsed.format}
@@ -1170,6 +1172,7 @@ export default function Home() {
     setRotation,
     setTypographyScale,
     setUseCustomMargins,
+    showRolloverInfo,
     showSectionHelpIcons,
     typographyScale,
     useCustomMargins,
@@ -1217,6 +1220,7 @@ export default function Home() {
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={handleLoadPresetLayout}
+                showRolloverInfo={showRolloverInfo}
                 showHelpHints={showSectionHelpIcons}
                 onHelpNavigate={() => handleHeaderHelpNavigate("presets")}
                 compact

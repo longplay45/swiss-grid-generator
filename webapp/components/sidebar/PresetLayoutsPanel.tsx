@@ -7,6 +7,7 @@ type Props = {
   compact?: boolean
   showHelpHints?: boolean
   onHelpNavigate?: () => void
+  showRolloverInfo?: boolean
 }
 
 function formatPresetCreatedAt(value?: string): string {
@@ -22,11 +23,13 @@ export function PresetLayoutsPanel({
   compact = false,
   showHelpHints = false,
   onHelpNavigate,
+  showRolloverInfo = true,
 }: Props) {
   const cardGapClass = compact ? "gap-2" : "gap-3"
   const minCardWidth = compact ? 120 : 168
   return (
     <div
+      data-tooltip-boundary="preset-browser"
       className={showHelpHints ? "rounded-md ring-1 ring-blue-500 p-2 -m-2" : undefined}
       onMouseEnter={showHelpHints ? onHelpNavigate : undefined}
     >
@@ -70,7 +73,9 @@ export function PresetLayoutsPanel({
           <HoverTooltip
             key={preset.id}
             className="block"
+            disabled={!showRolloverInfo}
             constrainToViewport
+            constrainToClosestSelector='[data-tooltip-boundary="preset-browser"]'
             viewportPaddingPx={36}
             tooltipClassName={`left-1/2 top-full mt-2 w-72 max-w-[80vw] -translate-x-1/2 whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
               isDarkMode

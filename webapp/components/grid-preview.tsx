@@ -1628,11 +1628,12 @@ export const GridPreview = memo(function GridPreview({
         const widthPx = columns * modW * scale + Math.max(columns - 1, 0) * gridMarginHorizontal * scale
         const heightPx = rows * modH * scale + Math.max(rows - 1, 0) * gridMarginVertical * scale
         imageRectsRef.current[key] = { x, y, width: widthPx, height: heightPx }
-        ctx.fillStyle = getImageColor(key)
+        const imageColor = getImageColor(key)
+        ctx.fillStyle = imageColor
         ctx.globalAlpha = 0.92
         ctx.fillRect(x, y, widthPx, heightPx)
         ctx.globalAlpha = 1
-        ctx.strokeStyle = "rgba(15, 23, 42, 0.22)"
+        ctx.strokeStyle = imageColor
         ctx.lineWidth = 1
         ctx.strokeRect(x, y, widthPx, heightPx)
       }
@@ -2275,6 +2276,7 @@ export const GridPreview = memo(function GridPreview({
       if (textareaRef.current?.contains(target)) return
       if (target.closest('[data-text-editor-panel="true"]')) return
       if (target.closest('[data-text-editor-select-content="true"]')) return
+      if (target.closest('[data-preview-header-action="help"]')) return
       closeEditor()
     }
     window.addEventListener("pointerdown", handlePointerDown, true)
@@ -2644,6 +2646,7 @@ export const GridPreview = memo(function GridPreview({
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
           <TextEditorPanel
+            isHelpActive={showEditorHelpIcon}
             controls={{
               editorState,
               setEditorState,

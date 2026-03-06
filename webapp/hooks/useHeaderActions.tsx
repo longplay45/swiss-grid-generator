@@ -219,30 +219,17 @@ export function useHeaderActions(args: Args) {
         icon: <Type className="h-4 w-4" />,
       },
     },
-    {
-      type: "action",
-      action: {
-        key: "rollover-info",
-        ariaLabel: args.showRolloverInfo ? "Disable rollover info" : "Enable rollover info",
-        tooltip: "Toggle rollover info",
-        variant: args.showRolloverInfo ? "default" : "outline",
-        pressed: args.showRolloverInfo,
-        onClick: args.onToggleRolloverInfo,
-        icon: <Info className="h-4 w-4" />,
-      },
-    },
   ]
 
   const sidebarGroup: HeaderAction[] = [
     {
-      key: "settings",
-      ariaLabel: "Show settings panel",
-      tooltip: "Settings panel",
-      shortcutId: "toggle_settings_panel",
-      variant: args.activeSidebarPanel === "settings" ? "default" : "outline",
-      pressed: args.activeSidebarPanel === "settings",
-      onClick: args.onToggleSettingsPanel,
-      icon: <Settings className="h-4 w-4" />,
+      key: "rollover-info",
+      ariaLabel: args.showRolloverInfo ? "Disable rollover info" : "Enable rollover info",
+      tooltip: "Toggle rollover info",
+      variant: args.showRolloverInfo ? "default" : "outline",
+      pressed: args.showRolloverInfo,
+      onClick: args.onToggleRolloverInfo,
+      icon: <Info className="h-4 w-4" />,
     },
     {
       key: "help",
@@ -253,6 +240,16 @@ export function useHeaderActions(args: Args) {
       pressed: args.activeSidebarPanel === "help",
       onClick: args.onToggleHelpPanel,
       icon: <CircleHelp className="h-4 w-4" />,
+    },
+    {
+      key: "settings",
+      ariaLabel: "Show settings panel",
+      tooltip: "Settings panel",
+      shortcutId: "toggle_settings_panel",
+      variant: args.activeSidebarPanel === "settings" ? "default" : "outline",
+      pressed: args.activeSidebarPanel === "settings",
+      onClick: args.onToggleSettingsPanel,
+      icon: <Settings className="h-4 w-4" />,
     },
   ]
 

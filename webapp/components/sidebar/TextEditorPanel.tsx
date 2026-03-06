@@ -35,6 +35,7 @@ import type { Dispatch, SetStateAction } from "react"
 
 type TextEditorPanelProps<StyleKey extends string> = {
   controls: TextEditorPanelControls<StyleKey>
+  isHelpActive?: boolean
 }
 
 type MainSubmenu = "geometry" | "type" | "color" | "info" | null
@@ -62,6 +63,7 @@ type TextEditorPanelControls<StyleKey extends string> = {
 
 export function TextEditorPanel<StyleKey extends string>({
   controls,
+  isHelpActive = false,
 }: TextEditorPanelProps<StyleKey>) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [fxSizeInput, setFxSizeInput] = useState("")
@@ -83,14 +85,14 @@ export function TextEditorPanel<StyleKey extends string>({
   }, [controls.editorState.draftFxLeading, controls.editorState.draftFxSize, controls.editorState.target])
 
   const tone = {
-    rail: "border-red-300 bg-white",
+    rail: isHelpActive ? "border-blue-500 bg-white" : "border-gray-300 bg-white",
     railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
     railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-    submenu: "border-red-300 bg-white text-gray-900",
+    submenu: isHelpActive ? "border-blue-500 bg-white text-gray-900" : "border-gray-300 bg-white text-gray-900",
     input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
     iconMuted: "text-gray-500",
     ringOffset: "ring-offset-white",
-    divider: "bg-red-200",
+    divider: isHelpActive ? "bg-blue-300" : "bg-gray-200",
   }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
@@ -439,7 +441,7 @@ export function TextEditorPanel<StyleKey extends string>({
                       onClick={() => {
                         controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))
                       }}
-                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-red-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
+                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}
                       style={{ backgroundColor: color }}
                       aria-label={`Select ${color}`}
                       title={color}

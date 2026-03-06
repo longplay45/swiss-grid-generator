@@ -27,7 +27,7 @@ export function PanelCard({
   isDarkMode,
   children,
 }: Props) {
-  const { showHelpIcons, onNavigate } = useSettingsHelpNavigation()
+  const { showHelpIcons, showRolloverInfo, onNavigate } = useSettingsHelpNavigation()
 
   return (
     <section
@@ -35,10 +35,12 @@ export function PanelCard({
         isDarkMode
           ? "border-gray-700 text-gray-100"
           : "border-gray-200 text-gray-900"
-      } ${showHelpIcons ? "ring-1 ring-blue-500" : ""}`}
+      } ${showHelpIcons ? "outline outline-1 outline-blue-500 outline-offset-4" : ""}`}
+      onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
     >
       <HoverTooltip
         label={tooltip}
+        disabled={!showRolloverInfo}
         className="block"
         tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
@@ -46,7 +48,6 @@ export function PanelCard({
           className={`cursor-pointer select-none ${collapsed ? "pt-3 pb-[8px]" : "pt-3 pb-2"}`}
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
-          onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
           <h3 className="text-sm font-bold leading-tight">
             <div className="min-w-0">
