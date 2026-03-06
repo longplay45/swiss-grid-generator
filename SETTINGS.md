@@ -88,11 +88,11 @@ Default: `swiss`
 - Columns (`gridCols`): min `1`, max `13`, step `1`, default `3` (from `default_v001.json`)
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
 - Gutter multiple: min `1.0`, max `4.0`, step `0.5`, default `1.0`
-- Rhythms (`rhythm`): `repetitive` (default), `fibonacci`
-- Fibonacci rows:
+- Rhythms (`rhythm`): `fibonacci`, `golden`, `fifth`, `fourth`, `repetitive` (default)
+- Non-repetitive rhythm rows:
   - enabled (`rhythmRowsEnabled`): `true|false` (default `true`)
   - direction (`rhythmRowsDirection`): `ltr` (`L>R`) or `rtl` (`R>L`) (default `ltr`)
-- Fibonacci cols:
+- Non-repetitive rhythm cols:
   - enabled (`rhythmColsEnabled`): `true|false` (default `true`)
   - direction (`rhythmColsDirection`): `ttb` (`T>B`) or `btt` (`B>T`) (default `ttb`)
 

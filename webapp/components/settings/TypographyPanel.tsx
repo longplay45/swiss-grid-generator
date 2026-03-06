@@ -13,6 +13,11 @@ import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
 import type { TypographyScale } from "@/lib/config/defaults"
 import { PanelCard } from "@/components/settings/PanelCard"
 
+const TYPOGRAPHY_SCALE_OPTIONS: Array<{ value: TypographyScale; label: string }> = Object
+  .entries(TYPOGRAPHY_SCALE_LABELS)
+  .map(([value, label]) => ({ value: value as TypographyScale, label }))
+  .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }))
+
 type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
@@ -57,9 +62,9 @@ export const TypographyPanel = memo(function TypographyPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(TYPOGRAPHY_SCALE_LABELS).map(([key, label]) => (
-              <SelectItem key={key} value={key}>
-                {label}
+            {TYPOGRAPHY_SCALE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>

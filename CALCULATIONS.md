@@ -192,12 +192,15 @@ Where `gutterMultiple` defaults to 1.0 (range 1.0–4.0, step 0.5).
 
 ### Grid Rhythm
 
-Module distribution supports two rhythm modes:
+Module distribution supports these rhythm modes:
 
 - `repetitive` (default): equal-width/equal-height modules
-- `fibonacci`: proportional module sizes from a normalized Fibonacci sequence per axis
+- `fibonacci`: normalized Fibonacci sequence per axis
+- `golden`: normalized geometric sequence with ratio φ (1.618...) per axis
+- `fourth`: normalized geometric sequence with ratio 4:3 per axis
+- `fifth`: normalized geometric sequence with ratio 3:2 per axis
 
-For Fibonacci mode, each axis can be controlled independently:
+For all non-repetitive rhythms, each axis can be controlled independently:
 
 - rows axis (`widths`): on/off, direction `L>R` (`ltr`) or `R>L` (`rtl`)
 - cols axis (`heights`): on/off, direction `T>B` (`ttb`) or `B>T` (`btt`)
@@ -238,6 +241,13 @@ widths[i] = moduleWidthBudget / gridCols
 
 If rows direction is `R>L`, the width sequence is reversed.
 
+For geometric rhythms, the sequence is:
+
+```
+seq[i] = ratio^i
+widths[i] = moduleWidthBudget × seq[i] / sum(seq)
+```
+
 The scalar `module.width` value in output is the axis average:
 
 ```
@@ -259,7 +269,7 @@ moduleHeightDistributionBudget = gridRows × modH
 Then rhythm is applied:
 
 - `repetitive`: equal heights
-- `fibonacci`: normalized Fibonacci proportions (or equal heights if cols Fibonacci is disabled)
+- non-repetitive rhythms (`fibonacci`, `golden`, `fourth`, `fifth`): normalized sequence proportions (or equal heights if cols rhythm is disabled)
 
 If cols direction is `B>T`, the height sequence is reversed.
 

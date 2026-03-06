@@ -16,7 +16,7 @@ export function isDisplayUnit(value: unknown): value is DisplayUnit {
 
 export const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72] as const
 
-export const GRID_RHYTHMS = ["repetitive", "fibonacci"] as const
+export const GRID_RHYTHMS = ["fibonacci", "fifth", "fourth", "golden", "repetitive"] as const
 export type GridRhythm = (typeof GRID_RHYTHMS)[number]
 const GRID_RHYTHM_SET = new Set(GRID_RHYTHMS)
 

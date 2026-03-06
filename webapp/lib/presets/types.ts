@@ -6,7 +6,7 @@ export type LayoutPresetUiSettings = Record<string, unknown> & {
   gridRows: number
   baselineMultiple: number
   gutterMultiple: number
-  rhythm?: "repetitive" | "fibonacci"
+  rhythm?: "repetitive" | "fibonacci" | "golden" | "fourth" | "fifth"
   rhythmRowsEnabled?: boolean
   rhythmRowsDirection?: "ltr" | "rtl"
   rhythmColsEnabled?: boolean

@@ -106,7 +106,7 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.gutterMultiple must be a positive number`)
   }
   if (rhythmSource !== undefined && !isGridRhythm(rhythmSource)) {
-    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythm must be \"repetitive\" or \"fibonacci\"`)
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythm must be one of repetitive, fibonacci, golden, fourth, fifth`)
   }
   if (rhythmRowsEnabledSource !== undefined && typeof rhythmRowsEnabledSource !== "boolean") {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRowsEnabled must be a boolean`)

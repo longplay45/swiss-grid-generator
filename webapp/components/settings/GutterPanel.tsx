@@ -16,6 +16,14 @@ import type {
   GridRhythmRowsDirection,
 } from "@/lib/config/defaults"
 
+const RHYTHM_OPTIONS: Array<{ value: GridRhythm; label: string }> = [
+  { value: "fibonacci", label: "Fibonacci" },
+  { value: "golden", label: "Golden Ratio" },
+  { value: "fifth", label: "Perfect Fifth" },
+  { value: "fourth", label: "Perfect Fourth" },
+  { value: "repetitive", label: "Repetitive" },
+]
+
 type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
@@ -82,12 +90,15 @@ export const GutterPanel = memo(function GutterPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="repetitive">Repetitive</SelectItem>
-            <SelectItem value="fibonacci">Fibonacci</SelectItem>
+            {RHYTHM_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-      {rhythm === "fibonacci" ? (
+      {rhythm !== "repetitive" ? (
         <div className="space-y-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between">

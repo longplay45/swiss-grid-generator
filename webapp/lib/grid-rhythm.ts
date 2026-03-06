@@ -35,13 +35,36 @@ export function calculateModuleSizes(
     return sequence.map((value) => value / total)
   }
 
-  const fibonacciWidthRatios = fib(columns)
-  const fibonacciHeightRatios = fib(rows)
+  const geometric = (count: number, ratio: number) => {
+    if (count <= 0) return []
+    const sequence = Array.from({ length: count }, (_, index) => ratio ** index)
+    const total = sequence.reduce((sum, value) => sum + value, 0)
+    if (total <= 0) return Array(count).fill(1 / count)
+    return sequence.map((value) => value / total)
+  }
+
+  const toRatios = (count: number): number[] => {
+    switch (rhythm) {
+      case "fibonacci":
+        return fib(count)
+      case "golden":
+        return geometric(count, (1 + Math.sqrt(5)) / 2)
+      case "fourth":
+        return geometric(count, 4 / 3)
+      case "fifth":
+        return geometric(count, 3 / 2)
+      default:
+        return count > 0 ? Array(count).fill(1 / count) : []
+    }
+  }
+
+  const widthRatios = toRatios(columns)
+  const heightRatios = toRatios(rows)
   let widths = rhythmRowsEnabled
-    ? fibonacciWidthRatios.map((ratio) => totalWidth * ratio)
+    ? widthRatios.map((ratio) => totalWidth * ratio)
     : repetitiveWidths
   let heights = rhythmColsEnabled
-    ? fibonacciHeightRatios.map((ratio) => totalHeight * ratio)
+    ? heightRatios.map((ratio) => totalHeight * ratio)
     : repetitiveHeights
 
   if (rhythmRowsDirection === "rtl") widths = [...widths].reverse()

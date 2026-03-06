@@ -454,9 +454,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
           <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
-          <li>`Rhythms` options: `Repetitive` (default) and `Fibonacci`.</li>
-          <li>Fibonacci rows can be toggled on/off with direction `L&gt;R` or `R&gt;L` (default: on, `L&gt;R`).</li>
-          <li>Fibonacci cols can be toggled on/off with direction `T&gt;B` or `B&gt;T` (default: on, `T&gt;B`).</li>
+          <li>`Rhythms` options: `Fibonacci`, `Golden Ratio`, `Perfect Fifth`, `Perfect Fourth`, `Repetitive` (default).</li>
+          <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `L&gt;R` or `R&gt;L` (default: on, `L&gt;R`).</li>
+          <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `T&gt;B` or `B&gt;T` (default: on, `T&gt;B`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
           <li>Reducing rows/cols may trigger reflow suggestions.</li>
         </ul>
