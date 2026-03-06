@@ -23,6 +23,7 @@ export type ReflowPlannerInput = {
   gridUnit: number
   moduleHeight: number
   gridMarginVertical: number
+  moduleRowStarts?: number[]
 }
 
 const BASE_BLOCK_IDS = new Set(["display", "headline", "subhead", "body", "caption"])
@@ -52,6 +53,9 @@ export function createReflowPlanSignature(input: ReflowPlannerInput): string {
     input.moduleHeight.toFixed(4),
     input.gridMarginVertical.toFixed(4),
   ]
+  if (Array.isArray(input.moduleRowStarts)) {
+    signatureParts.push(...input.moduleRowStarts.map((value) => value.toFixed(4)))
+  }
   for (const key of input.blockOrder) {
     const rawSpan = input.blockColumnSpans[key] ?? getDefaultColumnSpan(key, input.gridCols)
     const position = input.sourcePositions[key]
@@ -78,6 +82,7 @@ export function computeReflowPlan(input: ReflowPlannerInput): ReflowPlan {
     gridUnit,
     moduleHeight,
     gridMarginVertical,
+    moduleRowStarts,
   } = input
 
   const maxBaselineRow = Math.max(0, Math.floor((pageHeight - marginTop - marginBottom) / gridUnit))
@@ -113,19 +118,21 @@ export function computeReflowPlan(input: ReflowPlannerInput): ReflowPlan {
   }
   const getReadingIndex = (position: PlannerModulePosition) => position.row * (gridCols + 1) + position.col
   const moduleRowStep = Math.max(0.0001, (moduleHeight + gridMarginVertical) / gridUnit)
-  const moduleRowStarts = Array.from({ length: Math.max(1, gridRows) }, (_, index) =>
-    Math.max(0, index * moduleRowStep),
+  const normalizedModuleRows = (
+    Array.isArray(moduleRowStarts) && moduleRowStarts.length > 0
+      ? moduleRowStarts
+      : Array.from({ length: Math.max(1, gridRows) }, (_, index) => Math.max(0, index * moduleRowStep))
   ).filter((row, index, arr) => arr.indexOf(row) === index)
-  const moduleRowSet = new Set(moduleRowStarts.map((row) => row.toFixed(4)))
-  const maxGridAnchorRow = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
+  const moduleRowSet = new Set(normalizedModuleRows.map((row) => row.toFixed(4)))
+  const maxGridAnchorRow = normalizedModuleRows[normalizedModuleRows.length - 1] ?? 1
   const snapToNearestModuleTop = (row: number): number => {
     const clamped = Math.max(0, row)
-    if (moduleRowStarts.length === 0) return clamped
+    if (normalizedModuleRows.length === 0) return clamped
     if (clamped <= maxGridAnchorRow) {
-      let best = moduleRowStarts[0]
+      let best = normalizedModuleRows[0]
       let bestDistance = Math.abs(best - clamped)
-      for (let i = 1; i < moduleRowStarts.length; i += 1) {
-        const candidate = moduleRowStarts[i]
+      for (let i = 1; i < normalizedModuleRows.length; i += 1) {
+        const candidate = normalizedModuleRows[i]
         const distance = Math.abs(candidate - clamped)
         if (distance < bestDistance) {
           best = candidate
@@ -155,8 +162,8 @@ export function computeReflowPlan(input: ReflowPlannerInput): ReflowPlan {
 
     const searchMaxRow = Math.max(maxBaselineRow + REPOSITION_SEARCH_ROW_BUFFER, desired.row + REPOSITION_SEARCH_ROW_BUFFER)
     let best: { position: PlannerModulePosition; score: number } | null = null
-    const prioritizedRows = [...moduleRowStarts].sort((a, b) => Math.abs(a - desired.row) - Math.abs(b - desired.row))
-    let overflowCursor = moduleRowStarts[moduleRowStarts.length - 1] ?? 1
+    const prioritizedRows = [...normalizedModuleRows].sort((a, b) => Math.abs(a - desired.row) - Math.abs(b - desired.row))
+    let overflowCursor = normalizedModuleRows[normalizedModuleRows.length - 1] ?? 1
     while (overflowCursor <= searchMaxRow) {
       if (!moduleRowSet.has(overflowCursor.toFixed(4))) {
         prioritizedRows.push(overflowCursor)

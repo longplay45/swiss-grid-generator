@@ -19,6 +19,12 @@ import {
 } from "@/lib/document-defaults"
 import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
+import {
+  buildAxisStarts,
+  findNearestAxisIndex,
+  resolveAxisSizes,
+  sumAxisSpan,
+} from "@/lib/grid-rhythm"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -267,6 +273,13 @@ export function renderSwissGridVectorPdf({
   const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
   const { width: modW, height: modH } = result.module
   const { gridCols, gridRows } = result.settings
+  const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
+  const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
+  const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+  const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
+  const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
+  const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+  const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
   const minHairlinePt = 0.25
   const showPageOutline = showMargins || showModules || showBaselines
   const useMonochromeGuides = printPro?.monochromeGuides ?? false
@@ -281,7 +294,6 @@ export function renderSwissGridVectorPdf({
   const contentLeft = margins.left
   const baselineStep = gridUnit
   const baselineOriginTop = contentTop - baselineStep
-  const moduleXStep = modW + gridMarginHorizontal
   const maxBaselineRow = Math.max(
     0,
     Math.floor((sourceHeight - margins.top - margins.bottom) / gridUnit),
@@ -334,9 +346,9 @@ export function renderSwissGridVectorPdf({
     pdf.setLineWidth(Math.max(0.4 * scale, minHairlinePt))
     for (let row = 0; row < gridRows; row += 1) {
       for (let col = 0; col < gridCols; col += 1) {
-        const x = margins.left + col * (modW + gridMarginHorizontal)
-        const y = margins.top + row * (modH + gridMarginVertical)
-        drawRectOutline(x, y, modW, modH)
+        const x = margins.left + (colStarts[col] ?? col * firstColumnStep)
+        const y = margins.top + (rowStarts[row] ?? row * firstRowStep)
+        drawRectOutline(x, y, moduleWidths[col] ?? modW, moduleHeights[row] ?? modH)
       }
     }
   }
@@ -378,11 +390,15 @@ export function renderSwissGridVectorPdf({
       const minCol = -Math.max(0, span - 1)
       const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
       const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
+      const rowStartIndex = Math.max(
+        0,
+        Math.min(Math.max(0, gridRows - 1), findNearestAxisIndex(rowStartsInBaselines, row)),
+      )
 
-      const x = contentLeft + col * moduleXStep
+      const x = contentLeft + (col < 0 ? col * firstColumnStep : (colStarts[col] ?? col * firstColumnStep))
       const y = baselineOriginTop + row * baselineStep + baselineStep
-      const blockWidth = span * modW + Math.max(span - 1, 0) * gridMarginHorizontal
-      const blockHeight = rows * modH + Math.max(rows - 1, 0) * gridMarginVertical
+      const blockWidth = sumAxisSpan(moduleWidths, col, span, gridMarginHorizontal)
+      const blockHeight = sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical)
       const fillColor = parseHexColor(imageColors[key]) ?? fallbackImageColor
       setFillColorCmyk(pdf, fillColor)
       drawFilledRect(x, y, blockWidth, blockHeight)
@@ -486,7 +502,7 @@ export function renderSwissGridVectorPdf({
     const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
     const row = Math.max(minRow, Math.min(maxBaselineRow, manual.row))
     return {
-      x: contentLeft + col * moduleXStep,
+      x: contentLeft + (col < 0 ? col * firstColumnStep : (colStarts[col] ?? col * firstColumnStep)),
       y: baselineOriginTop + row * baselineStep,
     }
   }
@@ -512,6 +528,8 @@ export function renderSwissGridVectorPdf({
     baselineStep,
     moduleWidth: modW,
     moduleHeight: modH,
+    moduleWidths,
+    moduleHeights,
     gutterX: gridMarginHorizontal,
     gutterY: gridMarginVertical,
     gridRows,
@@ -537,6 +555,20 @@ export function renderSwissGridVectorPdf({
     isBlockPositionManual: (key) => {
       const manual = blockModulePositions[key]
       return Boolean(manual && typeof manual.col === "number" && typeof manual.row === "number")
+    },
+    getBlockColumnStart: (key, span) => {
+      const manual = blockModulePositions[key]
+      if (!manual || typeof manual.col !== "number") return 0
+      const minCol = -Math.max(0, span - 1)
+      return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+    },
+    getBlockRowStart: (key) => {
+      const manual = blockModulePositions[key]
+      if (!manual || typeof manual.row !== "number") return 0
+      return Math.max(
+        0,
+        Math.min(Math.max(0, gridRows - 1), findNearestAxisIndex(rowStartsInBaselines, manual.row)),
+      )
     },
     getOriginForBlock,
     createTextContext: ({ key, styleKey, fontSize }) => {

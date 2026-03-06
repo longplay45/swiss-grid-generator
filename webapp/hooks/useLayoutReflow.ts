@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { AutoFitPlannerInput } from "@/lib/autofit-planner"
+import { findNearestAxisIndex } from "@/lib/grid-rhythm"
 
 type ModulePosition = {
   col: number
@@ -32,6 +33,9 @@ type Args<BlockId extends string, ReflowInput, Snapshot> = {
   gridRows: number
   moduleWidth: number
   moduleHeight: number
+  moduleWidths: number[]
+  moduleHeights: number[]
+  moduleRowStarts: number[]
   gridUnit: number
   gridMarginVertical: number
   marginTop: number
@@ -87,6 +91,9 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   gridRows,
   moduleWidth,
   moduleHeight,
+  moduleWidths,
+  moduleHeights,
+  moduleRowStarts,
   gridUnit,
   gridMarginVertical,
   marginTop,
@@ -117,7 +124,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
 }: Args<BlockId, ReflowInput, Snapshot>) {
   const AUTOFIT_REQUEST_DEBOUNCE_MS = 80
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
-  const previousModuleRowStepRef = useRef<number | null>(null)
+  const previousModuleRowsRef = useRef<number[] | null>(null)
   const lastAutoFitSettingsRef = useRef<string>("")
   const [pendingReflow, setPendingReflow] = useState<PendingReflow<BlockId> | null>(null)
   const [reflowToast, setReflowToast] = useState<{ movedCount: number } | null>(null)
@@ -154,7 +161,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     setBlockColumnSpans((prev) => ({ ...prev, ...pendingReflow.resolvedSpans }))
     setBlockModulePositions((prev) => ({ ...prev, ...pendingReflow.nextPositions }))
     previousGridRef.current = pendingReflow.nextGrid
-    previousModuleRowStepRef.current = null
+    previousModuleRowsRef.current = null
     setReflowToast({ movedCount: pendingReflow.movedCount })
     setPendingReflow(null)
   }, [buildSnapshot, pendingReflow, pushHistory, setBlockColumnSpans, setBlockModulePositions])
@@ -162,7 +169,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   const cancelPendingReflow = useCallback(() => {
     if (!pendingReflow) return
     previousGridRef.current = pendingReflow.previousGrid
-    previousModuleRowStepRef.current = null
+    previousModuleRowsRef.current = null
     setPendingReflow(null)
     onRequestGridRestore?.(pendingReflow.previousGrid.cols, pendingReflow.previousGrid.rows)
   }, [onRequestGridRestore, pendingReflow])
@@ -170,18 +177,25 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   useEffect(() => {
     const currentGrid = { cols: gridCols, rows: gridRows }
     const currentModuleRowStep = Math.max(0.0001, (moduleHeight + gridMarginVertical) / gridUnit)
+    const currentModuleRows = (
+      moduleRowStarts.length > 0
+        ? moduleRowStarts
+        : Array.from({ length: Math.max(1, gridRows) }, (_, index) => index * currentModuleRowStep)
+    ).map((value) => Math.max(0, value))
     const maxBaselineRow = Math.max(0, Math.floor((pageHeight - marginTop - marginBottom) / gridUnit))
 
-    const remapRowsToCurrentModules = (fromModuleRowStep: number) => {
+    const remapRowsToCurrentModules = (fromModuleRows: number[]) => {
       setBlockModulePositions((prev) => {
         let changed = false
         const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
         for (const key of blockOrder) {
           const position = prev[key]
           if (!position) continue
-          const moduleIndex = Math.trunc(position.row / fromModuleRowStep)
-          const baselineOffset = position.row - moduleIndex * fromModuleRowStep
-          const remappedRow = moduleIndex * currentModuleRowStep + baselineOffset
+          const moduleIndex = findNearestAxisIndex(fromModuleRows, position.row)
+          const fromStart = fromModuleRows[moduleIndex] ?? 0
+          const targetStart = currentModuleRows[Math.min(moduleIndex, Math.max(0, currentModuleRows.length - 1))] ?? 0
+          const baselineOffset = position.row - fromStart
+          const remappedRow = targetStart + baselineOffset
           const clampedRow = Math.max(-maxBaselineRow, Math.min(maxBaselineRow, remappedRow))
           if (Math.abs(clampedRow - position.row) > 0.0001) {
             next[key] = { ...position, row: clampedRow }
@@ -194,36 +208,39 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
 
     if (!previousGridRef.current) {
       previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
+      previousModuleRowsRef.current = currentModuleRows
       return
     }
     if (suppressReflowCheckRef.current) {
       previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
+      previousModuleRowsRef.current = currentModuleRows
       suppressReflowCheckRef.current = false
       return
     }
     if (pendingReflow) return
 
     const previousGrid = previousGridRef.current
-    const previousModuleRowStep = previousModuleRowStepRef.current ?? currentModuleRowStep
+    const previousModuleRows = previousModuleRowsRef.current ?? currentModuleRows
     const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    const moduleRowStepChanged = Math.abs(previousModuleRowStep - currentModuleRowStep) > 0.0001
+    const moduleRowStepChanged = (
+      previousModuleRows.length !== currentModuleRows.length
+      || previousModuleRows.some((value, index) => Math.abs(value - (currentModuleRows[index] ?? value)) > 0.0001)
+    )
     if (!gridChanged && !moduleRowStepChanged) return
 
     // For ratio/orientation/baseline/gutter changes (or row/col increases), preserve
     // each block's module index plus baseline offset inside that module.
     if (!gridChanged || (currentGrid.cols >= previousGrid.cols && currentGrid.rows >= previousGrid.rows)) {
-      if (moduleRowStepChanged) remapRowsToCurrentModules(previousModuleRowStep)
+      if (moduleRowStepChanged) remapRowsToCurrentModules(previousModuleRows)
       previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
+      previousModuleRowsRef.current = currentModuleRows
       return
     }
 
     const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
     if (!hasGridReduction) {
       previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
+      previousModuleRowsRef.current = currentModuleRows
       return
     }
 
@@ -242,7 +259,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
 
       if (!spanChanged && !positionChanged) {
         previousGridRef.current = currentGrid
-        previousModuleRowStepRef.current = currentModuleRowStep
+        previousModuleRowsRef.current = currentModuleRows
         return
       }
 
@@ -261,7 +278,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
       setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
       previousGridRef.current = currentGrid
-      previousModuleRowStepRef.current = currentModuleRowStep
+      previousModuleRowsRef.current = currentModuleRows
     }
 
     const plannerInput = buildReflowPlannerInput(currentGrid.cols, currentGrid.rows, blockModulePositions)
@@ -304,6 +321,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     marginTop,
     moduleHeight,
     pageHeight,
+    moduleRowStarts,
     pendingReflow,
     postReflowPlanRequest,
     pushHistory,
@@ -319,6 +337,9 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       gridRows,
       moduleWidth,
       moduleHeight,
+      moduleWidths.join(","),
+      moduleHeights.join(","),
+      moduleRowStarts.join(","),
       gridUnit,
       gridMarginVertical,
       scale,
@@ -356,6 +377,9 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       gridCols,
       moduleWidth,
       moduleHeight,
+      moduleWidths,
+      moduleHeights,
+      moduleRowStarts,
       gridMarginVertical,
       gridUnit,
       marginTop,
@@ -422,6 +446,9 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     marginTop,
     moduleHeight,
     moduleWidth,
+    moduleHeights,
+    moduleRowStarts,
+    moduleWidths,
     pageHeight,
     pendingReflow,
     postAutoFitRequest,

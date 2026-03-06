@@ -3,6 +3,7 @@ import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
 import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
+import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 
 type TextAlignMode = "left" | "right"
@@ -149,7 +150,7 @@ export function useTypographyRenderer<BlockId extends string>({
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
       const { width: modW, height: modH } = result.module
-      const { gridRows } = result.settings
+      const { gridCols, gridRows } = result.settings
       const pageWidth = width * scale
       const pageHeight = height * scale
 
@@ -168,9 +169,23 @@ export function useTypographyRenderer<BlockId extends string>({
       const contentTop = margins.top * scale
       const contentLeft = margins.left * scale
       const baselinePx = gridUnit * scale
-      const moduleXStep = (modW + gridMarginHorizontal) * scale
       const baselineStep = gridUnit * scale
       const baselineOriginTop = contentTop - baselineStep
+      const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
+      const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
+      const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+      const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
+      const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
+      const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+      const toColumnX = (col: number) => {
+        if (col < 0) return contentLeft + col * firstColumnStep * scale
+        const start = colStarts[col] ?? col * firstColumnStep
+        return contentLeft + start * scale
+      }
+      const toClosestRowIndex = (rowInBaselines: number) => {
+        if (!rowStartsInBaselines.length) return 0
+        return findNearestAxisIndex(rowStartsInBaselines, rowInBaselines)
+      }
       const maxBaselineRow = Math.max(
         0,
         Math.floor((pageHeight - (margins.top + margins.bottom) * scale) / baselineStep),
@@ -186,11 +201,11 @@ export function useTypographyRenderer<BlockId extends string>({
         const span = getBlockSpan(key)
         const minCol = -Math.max(0, span - 1)
         const clamped = {
-          col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), manual.col)),
+          col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col)),
           row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
         }
         return {
-          x: contentLeft + clamped.col * moduleXStep,
+          x: toColumnX(clamped.col),
           y: baselineOriginTop + clamped.row * baselineStep,
         }
       }
@@ -208,10 +223,12 @@ export function useTypographyRenderer<BlockId extends string>({
         baselineStep: baselinePx,
         moduleWidth: modW * scale,
         moduleHeight: modH * scale,
+        moduleWidths: moduleWidths.map((value) => value * scale),
+        moduleHeights: moduleHeights.map((value) => value * scale),
         gutterX,
         gutterY: gridMarginVertical * scale,
         gridRows,
-        gridCols: result.settings.gridCols,
+        gridCols,
         fontScale: scale,
         bodyKey: "body" as BlockId,
         displayKey: "display" as BlockId,
@@ -232,6 +249,17 @@ export function useTypographyRenderer<BlockId extends string>({
         isTextReflowEnabled,
         isSyllableDivisionEnabled,
         isBlockPositionManual: (key) => blockModulePositions[key] !== undefined,
+        getBlockColumnStart: (key, span) => {
+          const manual = (dragState?.key === key ? dragState.preview : blockModulePositions[key])
+          if (!manual) return 0
+          const minCol = -Math.max(0, span - 1)
+          return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+        },
+        getBlockRowStart: (key) => {
+          const manual = (dragState?.key === key ? dragState.preview : blockModulePositions[key])
+          if (!manual) return 0
+          return toClosestRowIndex(manual.row)
+        },
         getOriginForBlock,
         createTextContext: ({ key, fontSize }) => {
           const blockFont = getBlockFont(key)

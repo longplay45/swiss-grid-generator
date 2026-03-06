@@ -1,3 +1,5 @@
+import { sumAxisSpan } from "@/lib/grid-rhythm"
+
 export type TextAlignMode = "left" | "right"
 
 export type BlockRect = {
@@ -46,6 +48,8 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   baselineStep: number
   moduleWidth: number
   moduleHeight: number
+  moduleWidths?: number[]
+  moduleHeights?: number[]
   gutterX: number
   gutterY: number
   gridRows: number
@@ -64,6 +68,8 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   isBlockPositionManual?: (key: BlockId) => boolean
+  getBlockColumnStart?: (key: BlockId, span: number) => number
+  getBlockRowStart?: (key: BlockId, rowSpan: number) => number
   getOriginForBlock: (key: BlockId, fallbackX: number, fallbackY: number) => { x: number; y: number }
   createTextContext: (args: { key: BlockId; styleKey: StyleKey; fontSize: number }) => Context
   wrapText: (args: {
@@ -98,9 +104,12 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   baselineStep,
   moduleWidth,
   moduleHeight,
+  moduleWidths,
+  moduleHeights,
   gutterX,
   gutterY,
   gridRows,
+  gridCols,
   fontScale,
   bodyKey,
   displayKey,
@@ -115,6 +124,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isBlockPositionManual,
+  getBlockColumnStart,
+  getBlockRowStart,
   getOriginForBlock,
   createTextContext,
   wrapText,
@@ -130,6 +141,49 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const rects = {} as Record<BlockId, BlockRect>
   for (const key of blockOrder) {
     rects[key] = { x: 0, y: 0, width: 0, height: 0 }
+  }
+
+  const resolvedModuleWidths = (
+    Array.isArray(moduleWidths) && moduleWidths.length === gridCols
+      ? moduleWidths
+      : Array(Math.max(1, gridCols)).fill(moduleWidth)
+  ).map((value) => (Number.isFinite(value) && value > 0 ? value : moduleWidth))
+  const resolvedModuleHeights = (
+    Array.isArray(moduleHeights) && moduleHeights.length === gridRows
+      ? moduleHeights
+      : Array(Math.max(1, gridRows)).fill(moduleHeight)
+  ).map((value) => (Number.isFinite(value) && value > 0 ? value : moduleHeight))
+
+  const getColumnWidthAt = (columnIndex: number) => {
+    if (columnIndex < 0 || columnIndex >= gridCols) return moduleWidth
+    return resolvedModuleWidths[columnIndex] ?? moduleWidth
+  }
+  const getSpanWidth = (columnStart: number, span: number) => {
+    if (columnStart < 0 || columnStart >= gridCols) {
+      return span * moduleWidth + Math.max(span - 1, 0) * gutterX
+    }
+    return sumAxisSpan(resolvedModuleWidths, columnStart, span, gutterX)
+  }
+  const getReflowColumnWidth = (columnStart: number, span: number) => {
+    let minWidth = Number.POSITIVE_INFINITY
+    for (let index = 0; index < span; index += 1) {
+      const width = getColumnWidthAt(columnStart + index)
+      minWidth = Math.min(minWidth, width)
+    }
+    return Number.isFinite(minWidth) && minWidth > 0 ? minWidth : moduleWidth
+  }
+  const getColumnOffset = (columnStart: number, offset: number) => {
+    let position = 0
+    for (let index = 0; index < offset; index += 1) {
+      position += getColumnWidthAt(columnStart + index) + gutterX
+    }
+    return position
+  }
+  const getRowSpanHeight = (rowStart: number, rowSpan: number) => {
+    if (rowStart < 0 || rowStart >= gridRows) {
+      return rowSpan * moduleHeight + Math.max(rowSpan - 1, 0) * gutterY
+    }
+    return sumAxisSpan(resolvedModuleHeights, rowStart, rowSpan, gutterY)
   }
 
   const useRowPlacement = gridRows >= 2
@@ -172,16 +226,21 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const context = createTextContext({ key, styleKey, fontSize })
     const span = getBlockSpan(key)
     const rowSpan = getBlockRows(key)
-    const wrapWidth = span * moduleWidth + Math.max(span - 1, 0) * gutterX
+    const startColRaw = getBlockColumnStart?.(key, span) ?? 0
+    const startCol = Math.max(-Math.max(0, span - 1), Math.min(Math.max(0, gridCols - 1), startColRaw))
+    const startRowRaw = getBlockRowStart?.(key, rowSpan) ?? 0
+    const startRow = Math.max(0, Math.min(Math.max(0, gridRows - 1), startRowRaw))
+    const wrapWidth = getSpanWidth(startCol, span)
     const reflowEnabled = isTextReflowEnabled(key) && span >= 2
     const columnReflow = reflowEnabled
     const hyphenate = isSyllableDivisionEnabled(key)
+    const reflowColumnWidth = getReflowColumnWidth(startCol, span)
     const lines = wrapText({
       context,
       key,
       styleKey,
       text: blockText,
-      maxWidth: columnReflow ? moduleWidth : wrapWidth,
+      maxWidth: columnReflow ? reflowColumnWidth : wrapWidth,
       hyphenate,
     })
 
@@ -196,7 +255,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       ? Number.POSITIVE_INFINITY
       : pageHeight - marginsBottom
     const bottomLineLimit = pageBottomY + 0.0001
-    const moduleHeightForBlock = rowSpan * moduleHeight + Math.max(rowSpan - 1, 0) * gutterY
+    const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan)
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / lineStep))
     let maxUsedRows = 0
     const commands: TextDrawCommand[] = []
@@ -226,8 +285,9 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
         if (columnIndex >= span) break
         const rowIndex = lineIndex % maxLinesPerColumn
-        const columnX = origin.x + columnIndex * (moduleWidth + gutterX)
-        const anchorX = textAlign === "right" ? columnX + moduleWidth : columnX
+        const columnX = origin.x + getColumnOffset(startCol, columnIndex)
+        const columnWidth = getColumnWidthAt(startCol + columnIndex)
+        const anchorX = textAlign === "right" ? columnX + columnWidth : columnX
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + rowIndex * lineStep
         const y = lineTopY + ascent
@@ -303,16 +363,24 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionAlign = blockTextAlignments[captionKey] ?? "left"
   const captionSpan = getBlockSpan(captionKey)
   const captionRowSpan = getBlockRows(captionKey)
-  const captionWidth = captionSpan * moduleWidth + Math.max(captionSpan - 1, 0) * gutterX
+  const captionStartColRaw = getBlockColumnStart?.(captionKey, captionSpan) ?? 0
+  const captionStartCol = Math.max(
+    -Math.max(0, captionSpan - 1),
+    Math.min(Math.max(0, gridCols - 1), captionStartColRaw),
+  )
+  const captionStartRowRaw = getBlockRowStart?.(captionKey, captionRowSpan) ?? 0
+  const captionStartRow = Math.max(0, Math.min(Math.max(0, gridRows - 1), captionStartRowRaw))
+  const captionWidth = getSpanWidth(captionStartCol, captionSpan)
   const captionReflowEnabled = isTextReflowEnabled(captionKey) && captionSpan >= 2
   const captionColumnReflow = captionReflowEnabled
   const captionSyllableDivision = isSyllableDivisionEnabled(captionKey)
+  const captionReflowColumnWidth = getReflowColumnWidth(captionStartCol, captionSpan)
   const captionLines = wrapText({
     context: captionContext,
     key: captionKey,
     styleKey: captionStyleKey,
     text: captionText,
-    maxWidth: captionColumnReflow ? moduleWidth : captionWidth,
+    maxWidth: captionColumnReflow ? captionReflowColumnWidth : captionWidth,
     hyphenate: captionSyllableDivision,
   })
   const captionLineCount = captionLines.length
@@ -333,7 +401,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     ? Number.POSITIVE_INFINITY
     : pageHeight - marginsBottom
   const captionBottomLineLimit = captionPageBottomY + 0.0001
-  const captionModuleHeight = captionRowSpan * moduleHeight + Math.max(captionRowSpan - 1, 0) * gutterY
+  const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan)
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
   let captionMaxUsedRows = 0
   const captionCommands: TextDrawCommand[] = []
@@ -361,8 +429,9 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
       if (columnIndex >= captionSpan) break
       const rowIndex = lineIndex % captionMaxLinesPerColumn
-      const columnX = captionOrigin.x + columnIndex * (moduleWidth + gutterX)
-      const captionAnchorX = captionAlign === "right" ? columnX + moduleWidth : columnX
+      const columnX = captionOrigin.x + getColumnOffset(captionStartCol, columnIndex)
+      const columnWidth = getColumnWidthAt(captionStartCol + columnIndex)
+      const captionAnchorX = captionAlign === "right" ? columnX + columnWidth : columnX
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + rowIndex * captionLineStep
       const y = lineTopY + captionAscent

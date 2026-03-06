@@ -16,6 +16,13 @@ import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
 import type { HelpSectionId } from "@/lib/help-registry"
+import {
+  buildAxisStarts,
+  findAxisIndexAtOffset,
+  findNearestAxisIndex,
+  resolveAxisSizes,
+  sumAxisSpan,
+} from "@/lib/grid-rhythm"
 import { usePreviewDrag } from "@/hooks/usePreviewDrag"
 import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
@@ -296,7 +303,7 @@ export const GridPreview = memo(function GridPreview({
   const suppressReflowCheckRef = useRef(false)
   const suppressImageModuleRemapRef = useRef(false)
   const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
-  const previousImageModuleRowStepRef = useRef<number | null>(null)
+  const previousImageRowStartsRef = useRef<number[] | null>(null)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
@@ -849,24 +856,55 @@ export const GridPreview = memo(function GridPreview({
   const getGridMetrics = useCallback(() => {
     const { margins, gridMarginHorizontal, gridMarginVertical, gridUnit } = result.grid
     const { width: modW, height: modH } = result.module
-    const { gridCols } = result.settings
+    const { gridCols, gridRows } = result.settings
     const contentHeight = (result.pageSizePt.height - margins.top - margins.bottom) * scale
     const baselineStep = gridUnit * scale
+    const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
+    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
+    const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+    const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
+    const rowStartBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
+    const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+    const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
+    const getColumnX = (col: number) => (
+      col < 0
+        ? margins.left * scale + col * firstColumnStep * scale
+        : margins.left * scale + (colStarts[col] ?? col * firstColumnStep) * scale
+    )
+    const getNearestCol = (pageX: number) => {
+      const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
+      return findNearestAxisIndex(colStarts, relative)
+    }
+    const getNearestRowIndex = (pageY: number) => {
+      const relative = (pageY - margins.top * scale) / Math.max(scale, 0.0001)
+      return findNearestAxisIndex(rowStarts, relative)
+    }
+    const getRowStartBaseline = (rowIndex: number) => rowStartBaselines[rowIndex] ?? 0
     const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
 
     return {
       contentLeft: margins.left * scale,
       contentTop: margins.top * scale,
-      moduleWidth: modW * scale,
-      moduleHeight: modH * scale,
-      xStep: (modW + gridMarginHorizontal) * scale,
+      moduleWidth: (moduleWidths[0] ?? modW) * scale,
+      moduleHeight: (moduleHeights[0] ?? modH) * scale,
+      moduleWidths,
+      moduleHeights,
+      colStarts,
+      rowStarts,
+      rowStartBaselines,
+      xStep: firstColumnStep * scale,
       yStep: baselineStep,
       gridCols,
+      gridRows,
       maxBaselineRow,
       gutterX: gridMarginHorizontal * scale,
       baselineStep,
       baselineOriginTop: margins.top * scale - baselineStep,
-      moduleYStep: (modH + gridMarginVertical) * scale,
+      moduleYStep: firstRowStep * scale,
+      getColumnX,
+      getNearestCol,
+      getNearestRowIndex,
+      getRowStartBaseline,
     }
   }, [result.grid, result.module, result.pageSizePt.height, result.settings, scale])
 
@@ -955,9 +993,9 @@ export const GridPreview = memo(function GridPreview({
     const metrics = getGridMetrics()
     const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
     const safeRows = Math.max(1, Math.min(result.settings.gridRows, rows))
-    const rowStep = metrics.moduleYStep / metrics.baselineStep
     const maxCol = Math.max(0, metrics.gridCols - safeCols)
-    const maxRow = Math.max(0, (result.settings.gridRows - safeRows) * rowStep)
+    const maxRowStartIndex = Math.max(0, result.settings.gridRows - safeRows)
+    const maxRow = metrics.rowStartBaselines[maxRowStartIndex] ?? 0
     return {
       col: Math.max(0, Math.min(maxCol, position.col)),
       row: Math.max(0, Math.min(maxRow, position.row)),
@@ -981,16 +1019,15 @@ export const GridPreview = memo(function GridPreview({
 
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
-    const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
-    const rowStep = metrics.moduleYStep / metrics.baselineStep
-    const moduleIndex = Math.round((pageY - metrics.contentTop) / metrics.moduleYStep)
-    const rawRow = moduleIndex * rowStep
+    const rawCol = metrics.getNearestCol(pageX)
+    const moduleIndex = metrics.getNearestRowIndex(pageY)
+    const rawRow = metrics.getRowStartBaseline(moduleIndex)
     return clampModulePosition({ col: rawCol, row: rawRow }, key)
   }, [clampModulePosition, getGridMetrics])
 
   const snapToBaseline = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
-    const rawCol = Math.round((pageX - metrics.contentLeft) / metrics.xStep)
+    const rawCol = metrics.getNearestCol(pageX)
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
     return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
@@ -1067,13 +1104,17 @@ export const GridPreview = memo(function GridPreview({
     const style = result.typography.styles[styleKey]
     if (!style) return null
 
-    const { margins, gridUnit, gridMarginVertical } = result.grid
+    const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+    const metrics = getGridMetrics()
     const baselinePx = gridUnit * scale
     const baselineMultiplier = (typeof baselineMultiplierOverride === "number" && Number.isFinite(baselineMultiplierOverride) && baselineMultiplierOverride > 0)
       ? baselineMultiplierOverride
       : style.baselineMultiplier
     const lineStep = baselineMultiplier * baselinePx
-    const moduleHeightPx = rowSpan * result.module.height * scale + Math.max(rowSpan - 1, 0) * gridMarginVertical * scale
+    const startRowIndex = position
+      ? Math.max(0, Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, position.row)))
+      : 0
+    const moduleHeightPx = sumAxisSpan(metrics.moduleHeights, startRowIndex, rowSpan, gridMarginVertical) * scale
     let maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
 
     if (position) {
@@ -1092,7 +1133,10 @@ export const GridPreview = memo(function GridPreview({
     const fontWeight = isBlockBold(key) ? "700" : "400"
     const fontStyle = isBlockItalic(key) ? "italic " : ""
     ctx.font = `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
-    const columnWidth = result.module.width * scale
+    const startCol = position
+      ? Math.max(0, Math.min(result.settings.gridCols - 1, position.col))
+      : 0
+    const columnWidth = sumAxisSpan(metrics.moduleWidths, startCol, 1, gridMarginHorizontal) * scale
     const lines = getWrappedText(ctx, trimmed, columnWidth, syllableDivision)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
@@ -1114,11 +1158,11 @@ export const GridPreview = memo(function GridPreview({
     getWrappedText,
     isBlockBold,
     isBlockItalic,
+    getGridMetrics,
     result.grid,
-    result.module.height,
-    result.module.width,
     result.pageSizePt.height,
     result.settings.gridCols,
+    result.settings.gridRows,
     result.typography.styles,
     scale,
   ])
@@ -1387,7 +1431,7 @@ export const GridPreview = memo(function GridPreview({
     suppressReflowCheckRef.current = true
     suppressImageModuleRemapRef.current = true
     previousImageGridRef.current = null
-    previousImageModuleRowStepRef.current = null
+    previousImageRowStartsRef.current = null
     setDragState(null)
     setHoverState(null)
     setHoverImageKey(null)
@@ -1399,19 +1443,25 @@ export const GridPreview = memo(function GridPreview({
     gridCols: number,
     gridRows: number,
     sourcePositions: Partial<Record<BlockId, ModulePosition>> = blockModulePositions,
-  ): ReflowPlannerInput => ({
-    gridCols,
-    gridRows,
-    blockOrder,
-    blockColumnSpans,
-    sourcePositions,
-    pageHeight: result.pageSizePt.height,
-    marginTop: result.grid.margins.top,
-    marginBottom: result.grid.margins.bottom,
-    gridUnit: result.grid.gridUnit,
-    moduleHeight: result.module.height,
-    gridMarginVertical: result.grid.gridMarginVertical,
-  }), [
+  ): ReflowPlannerInput => {
+    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, result.module.height)
+    const rowStarts = buildAxisStarts(moduleHeights, result.grid.gridMarginVertical)
+    const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, result.grid.gridUnit))
+    return {
+      moduleRowStarts: rowStartsInBaselines,
+      gridCols,
+      gridRows,
+      blockOrder,
+      blockColumnSpans,
+      sourcePositions,
+      pageHeight: result.pageSizePt.height,
+      marginTop: result.grid.margins.top,
+      marginBottom: result.grid.margins.bottom,
+      gridUnit: result.grid.gridUnit,
+      moduleHeight: result.module.height,
+      gridMarginVertical: result.grid.gridMarginVertical,
+    }
+  }, [
     blockColumnSpans,
     blockModulePositions,
     blockOrder,
@@ -1419,6 +1469,7 @@ export const GridPreview = memo(function GridPreview({
     result.grid.gridUnit,
     result.grid.margins.bottom,
     result.grid.margins.top,
+    result.module.heights,
     result.module.height,
     result.pageSizePt.height,
   ])
@@ -1602,14 +1653,14 @@ export const GridPreview = memo(function GridPreview({
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-      const { width: modW, height: modH } = result.module
       const pageWidth = width * scale
       const pageHeight = height * scale
+      const metrics = getGridMetrics()
       const contentLeft = margins.left * scale
       const contentTop = margins.top * scale
       const baselineStep = gridUnit * scale
       const baselineOriginTop = contentTop - baselineStep
-      const moduleXStep = (modW + gridMarginHorizontal) * scale
+      const firstColumnStepPt = (metrics.moduleWidths[0] ?? result.module.width) + gridMarginHorizontal
 
       ctx.save()
       ctx.translate(cssWidth / 2, cssHeight / 2)
@@ -1623,10 +1674,16 @@ export const GridPreview = memo(function GridPreview({
         const columns = getImageSpan(key)
         const rows = getImageRows(key)
         const clamped = clampImageBaselinePosition(position, columns)
-        const x = contentLeft + clamped.col * moduleXStep
+        const x = clamped.col < 0
+          ? contentLeft + clamped.col * firstColumnStepPt * scale
+          : contentLeft + (metrics.colStarts[clamped.col] ?? clamped.col * firstColumnStepPt) * scale
         const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
-        const widthPx = columns * modW * scale + Math.max(columns - 1, 0) * gridMarginHorizontal * scale
-        const heightPx = rows * modH * scale + Math.max(rows - 1, 0) * gridMarginVertical * scale
+        const rowStartIndex = Math.max(
+          0,
+          Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, clamped.row)),
+        )
+        const widthPx = sumAxisSpan(metrics.moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale
+        const heightPx = sumAxisSpan(metrics.moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale
         imageRectsRef.current[key] = { x, y, width: widthPx, height: heightPx }
         const imageColor = getImageColor(key)
         ctx.fillStyle = imageColor
@@ -1647,6 +1704,7 @@ export const GridPreview = memo(function GridPreview({
     getImageColor,
     getImageRows,
     getImageSpan,
+    getGridMetrics,
     imageModulePositions,
     imageOrder,
     dragState,
@@ -1710,13 +1768,13 @@ export const GridPreview = memo(function GridPreview({
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-      const { width: modW, height: modH } = result.module
       const pageWidth = width * scale
       const pageHeight = height * scale
-      const moduleXStep = (modW + gridMarginHorizontal) * scale
       const baselineStep = gridUnit * scale
       const baselineOriginTop = margins.top * scale - baselineStep
       const contentLeft = margins.left * scale
+      const metrics = getGridMetrics()
+      const firstColumnStepPt = (metrics.moduleWidths[0] ?? result.module.width) + gridMarginHorizontal
 
       ctx.save()
       ctx.translate(cssWidth / 2, cssHeight / 2)
@@ -1725,10 +1783,16 @@ export const GridPreview = memo(function GridPreview({
       if (dragState) {
         const dragSpan = getPlacementSpan(dragState.key)
         const dragRows = getPlacementRows(dragState.key)
-        const snapX = contentLeft + dragState.preview.col * moduleXStep
+        const snapX = dragState.preview.col < 0
+          ? contentLeft + dragState.preview.col * firstColumnStepPt * scale
+          : contentLeft + (metrics.colStarts[dragState.preview.col] ?? dragState.preview.col * firstColumnStepPt) * scale
         const snapY = baselineOriginTop + dragState.preview.row * baselineStep
-        const snapWidth = dragSpan * modW * scale + Math.max(dragSpan - 1, 0) * gridMarginHorizontal * scale
-        const snapHeight = dragRows * modH * scale + Math.max(dragRows - 1, 0) * gridMarginVertical * scale
+        const dragRowStart = Math.max(
+          0,
+          Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, dragState.preview.row)),
+        )
+        const snapWidth = sumAxisSpan(metrics.moduleWidths, dragState.preview.col, dragSpan, gridMarginHorizontal) * scale
+        const snapHeight = sumAxisSpan(metrics.moduleHeights, dragRowStart, dragRows, gridMarginVertical) * scale
         ctx.strokeStyle = "#f97316"
         ctx.lineWidth = 1
         const lineY = snapY + baselineStep
@@ -1746,8 +1810,18 @@ export const GridPreview = memo(function GridPreview({
         const editorRows = getBlockRows(activeEditorPlan.key)
         const editorX = activeEditorPlan.rotationOriginX
         const editorY = activeEditorPlan.rotationOriginY
-        const editorWidth = editorSpan * modW * scale + Math.max(editorSpan - 1, 0) * gridMarginHorizontal * scale
-        const editorHeight = editorRows * modH * scale + Math.max(editorRows - 1, 0) * gridMarginVertical * scale
+        const manual = blockModulePositions[activeEditorPlan.key]
+        const startCol = manual
+          ? Math.max(-Math.max(0, editorSpan - 1), Math.min(result.settings.gridCols - 1, manual.col))
+          : 0
+        const startRow = manual
+          ? Math.max(
+              0,
+              Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, manual.row)),
+            )
+          : 0
+        const editorWidth = sumAxisSpan(metrics.moduleWidths, startCol, editorSpan, gridMarginHorizontal) * scale
+        const editorHeight = sumAxisSpan(metrics.moduleHeights, startRow, editorRows, gridMarginVertical) * scale
         const lineY = editorY + baselineStep
         ctx.strokeStyle = "#ef4444"
         ctx.lineWidth = 1.1
@@ -1785,11 +1859,13 @@ export const GridPreview = memo(function GridPreview({
     })
     return () => window.cancelAnimationFrame(frame)
   }, [
+    blockModulePositions,
     blockOrder,
     dragState,
     editorState,
     getBlockRows,
     getBlockSpan,
+    getGridMetrics,
     getPlacementRows,
     getPlacementSpan,
     overflowLinesByBlock,
@@ -1878,6 +1954,12 @@ export const GridPreview = memo(function GridPreview({
     gridRows: result.settings.gridRows,
     moduleWidth: result.module.width,
     moduleHeight: result.module.height,
+    moduleWidths: resolveAxisSizes(result.module.widths, result.settings.gridCols, result.module.width),
+    moduleHeights: resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height),
+    moduleRowStarts: buildAxisStarts(
+      resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height),
+      result.grid.gridMarginVertical,
+    ).map((value) => value / Math.max(0.0001, result.grid.gridUnit)),
     gridUnit: result.grid.gridUnit,
     gridMarginVertical: result.grid.gridMarginVertical,
     marginTop: result.grid.margins.top,
@@ -1916,10 +1998,9 @@ export const GridPreview = memo(function GridPreview({
 
   useEffect(() => {
     const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
-    const currentModuleRowStep = Math.max(
-      0.0001,
-      (result.module.height + result.grid.gridMarginVertical) / result.grid.gridUnit,
-    )
+    const moduleHeights = resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height)
+    const currentRowStarts = buildAxisStarts(moduleHeights, result.grid.gridMarginVertical)
+      .map((value) => value / Math.max(0.0001, result.grid.gridUnit))
     const maxBaselineRow = Math.max(
       0,
       Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit),
@@ -1927,25 +2008,28 @@ export const GridPreview = memo(function GridPreview({
 
     if (!previousImageGridRef.current) {
       previousImageGridRef.current = currentGrid
-      previousImageModuleRowStepRef.current = currentModuleRowStep
+      previousImageRowStartsRef.current = currentRowStarts
       return
     }
 
     if (suppressImageModuleRemapRef.current) {
       suppressImageModuleRemapRef.current = false
       previousImageGridRef.current = currentGrid
-      previousImageModuleRowStepRef.current = currentModuleRowStep
+      previousImageRowStartsRef.current = currentRowStarts
       return
     }
 
     const previousGrid = previousImageGridRef.current
-    const previousModuleRowStep = previousImageModuleRowStepRef.current ?? currentModuleRowStep
+    const previousRowStarts = previousImageRowStartsRef.current ?? currentRowStarts
     const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    const moduleRowStepChanged = Math.abs(previousModuleRowStep - currentModuleRowStep) > 0.0001
-    if (!gridChanged && !moduleRowStepChanged) return
+    const rowStartsChanged = (
+      previousRowStarts.length !== currentRowStarts.length
+      || previousRowStarts.some((value, index) => Math.abs(value - (currentRowStarts[index] ?? value)) > 0.0001)
+    )
+    if (!gridChanged && !rowStartsChanged) return
 
     const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
-    if (!hasGridReduction && moduleRowStepChanged) {
+    if (!hasGridReduction && rowStartsChanged) {
       setImageModulePositions((prev) => {
         let changed = false
         const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
@@ -1955,9 +2039,11 @@ export const GridPreview = memo(function GridPreview({
           const span = Math.max(1, Math.min(currentGrid.cols, imageColumnSpans[key] ?? 1))
           const minCol = -Math.max(0, span - 1)
           const maxCol = Math.max(0, currentGrid.cols - 1)
-          const moduleIndex = Math.trunc(position.row / previousModuleRowStep)
-          const baselineOffset = position.row - moduleIndex * previousModuleRowStep
-          const remappedRow = moduleIndex * currentModuleRowStep + baselineOffset
+          const moduleIndex = findNearestAxisIndex(previousRowStarts, position.row)
+          const previousStart = previousRowStarts[moduleIndex] ?? 0
+          const targetStart = currentRowStarts[Math.min(moduleIndex, Math.max(0, currentRowStarts.length - 1))] ?? 0
+          const baselineOffset = position.row - previousStart
+          const remappedRow = targetStart + baselineOffset
           const clampedRow = Math.max(-maxBaselineRow, Math.min(maxBaselineRow, remappedRow))
           const clampedCol = Math.max(minCol, Math.min(maxCol, position.col))
           if (Math.abs(clampedRow - position.row) > 0.0001 || clampedCol !== position.col) {
@@ -1970,7 +2056,7 @@ export const GridPreview = memo(function GridPreview({
     }
 
     previousImageGridRef.current = currentGrid
-    previousImageModuleRowStepRef.current = currentModuleRowStep
+    previousImageRowStartsRef.current = currentRowStarts
   }, [
     imageColumnSpans,
     imageOrder,
@@ -1978,6 +2064,7 @@ export const GridPreview = memo(function GridPreview({
     result.grid.gridUnit,
     result.grid.margins.bottom,
     result.grid.margins.top,
+    result.module.heights,
     result.module.height,
     result.pageSizePt.height,
     result.settings.gridCols,
@@ -2194,16 +2281,21 @@ export const GridPreview = memo(function GridPreview({
     }
 
     const metrics = getGridMetrics()
-    const rawColFloat = (pagePoint.x - metrics.contentLeft) / metrics.xStep
-    const rawRowFloat = (pagePoint.y - metrics.contentTop) / metrics.moduleYStep
-    const moduleColIndex = Math.floor(rawColFloat)
-    const moduleRowIndex = Math.floor(rawRowFloat)
-    const moduleX = metrics.contentLeft + moduleColIndex * metrics.xStep
-    const moduleY = metrics.contentTop + moduleRowIndex * metrics.moduleYStep
+    const relativeX = (pagePoint.x - metrics.contentLeft) / Math.max(scale, 0.0001)
+    const relativeY = (pagePoint.y - metrics.contentTop) / Math.max(scale, 0.0001)
+    const moduleColIndex = findAxisIndexAtOffset(metrics.colStarts, metrics.moduleWidths, relativeX)
+    const moduleRowIndex = findAxisIndexAtOffset(metrics.rowStarts, metrics.moduleHeights, relativeY)
+    if (moduleColIndex < 0 || moduleRowIndex < 0) {
+      return
+    }
+    const moduleX = metrics.contentLeft + (metrics.colStarts[moduleColIndex] ?? 0) * scale
+    const moduleY = metrics.contentTop + (metrics.rowStarts[moduleRowIndex] ?? 0) * scale
+    const moduleWidth = (metrics.moduleWidths[moduleColIndex] ?? metrics.moduleWidth / Math.max(scale, 0.0001)) * scale
+    const moduleHeight = (metrics.moduleHeights[moduleRowIndex] ?? metrics.moduleHeight / Math.max(scale, 0.0001)) * scale
     const localX = pagePoint.x - moduleX
     const localY = pagePoint.y - moduleY
-    const insideModuleX = localX >= 0 && localX <= metrics.moduleWidth
-    const insideModuleY = localY >= 0 && localY <= metrics.moduleHeight
+    const insideModuleX = localX >= 0 && localX <= moduleWidth
+    const insideModuleY = localY >= 0 && localY <= moduleHeight
     if (
       moduleColIndex < 0
       || moduleColIndex >= result.settings.gridCols
@@ -2214,10 +2306,9 @@ export const GridPreview = memo(function GridPreview({
     ) {
       return
     }
-    const rowStep = metrics.moduleYStep / metrics.baselineStep
     const rawPosition = {
       col: moduleColIndex,
-      row: moduleRowIndex * rowStep,
+      row: metrics.rowStartBaselines[moduleRowIndex] ?? 0,
     }
     const newKey = getNextImagePlaceholderId()
     const snapped = clampImageModulePosition(rawPosition, 1, 1)
@@ -2241,6 +2332,7 @@ export const GridPreview = memo(function GridPreview({
     defaultImageColor,
     result.settings.gridCols,
     result.settings.gridRows,
+    scale,
     showImagePlaceholders,
     showTypography,
     toPagePoint,

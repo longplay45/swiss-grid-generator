@@ -1,4 +1,5 @@
 import type { LayoutPreset, LayoutPresetUiSettings } from "@/lib/presets/types"
+import { isGridRhythm } from "@/lib/config/defaults"
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null
@@ -69,6 +70,8 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   const marginMethod = uiSettingsSource.marginMethod
   const baselineMultiple = uiSettingsSource.baselineMultiple
   const gutterMultiple = uiSettingsSource.gutterMultiple
+  const rhythmSource = uiSettingsSource.rhythm
+  const rhythmRotate90Source = uiSettingsSource.rhythmRotate90
 
   if (typeof gridCols !== "number" || !Number.isFinite(gridCols) || gridCols <= 0) {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.gridCols must be a positive number`)
@@ -91,6 +94,12 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   if (typeof gutterMultiple !== "number" || !Number.isFinite(gutterMultiple) || gutterMultiple <= 0) {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.gutterMultiple must be a positive number`)
   }
+  if (rhythmSource !== undefined && !isGridRhythm(rhythmSource)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythm must be \"repetitive\" or \"fibonacci\"`)
+  }
+  if (rhythmRotate90Source !== undefined && typeof rhythmRotate90Source !== "boolean") {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRotate90 must be a boolean`)
+  }
 
   const uiSettings: LayoutPresetUiSettings = {
     ...uiSettingsSource,
@@ -101,6 +110,8 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
     marginMethod,
     baselineMultiple,
     gutterMultiple,
+    rhythm: isGridRhythm(rhythmSource) ? rhythmSource : undefined,
+    rhythmRotate90: typeof rhythmRotate90Source === "boolean" ? rhythmRotate90Source : undefined,
   }
 
   return {

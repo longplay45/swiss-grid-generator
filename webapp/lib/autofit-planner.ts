@@ -1,4 +1,9 @@
 import { wrapText } from "./text-layout.ts"
+import {
+  findNearestAxisIndex,
+  resolveAxisSizes,
+  sumAxisSpan,
+} from "./grid-rhythm.ts"
 
 export type AutoFitStyle = {
   size: number
@@ -27,6 +32,9 @@ export type AutoFitPlannerInput = {
   gridCols: number
   moduleWidth: number
   moduleHeight: number
+  moduleWidths?: number[]
+  moduleHeights?: number[]
+  moduleRowStarts?: number[]
   gridMarginVertical: number
   gridUnit: number
   marginTop: number
@@ -48,14 +56,37 @@ export function computeAutoFitBatch(
     positionUpdates: {},
   }
 
+  const resolvedModuleWidths = resolveAxisSizes(input.moduleWidths, input.gridCols, input.moduleWidth)
+  const resolvedGridRows = Math.max(
+    1,
+    input.moduleHeights?.length
+      ?? input.moduleRowStarts?.length
+      ?? 1,
+  )
+  const resolvedModuleHeights = resolveAxisSizes(input.moduleHeights, resolvedGridRows, input.moduleHeight)
+  const fallbackRowStep = Math.max(0.0001, (input.moduleHeight + input.gridMarginVertical) / Math.max(0.0001, input.gridUnit))
+  const resolvedModuleRowStarts = (
+    input.moduleRowStarts && input.moduleRowStarts.length > 0
+      ? input.moduleRowStarts
+      : Array.from({ length: resolvedGridRows }, (_, index) => index * fallbackRowStep)
+  ).map((value) => Math.max(0, value))
+
   for (const item of input.items) {
     const trimmed = item.text.trim()
     if (!trimmed) continue
 
     const baselinePx = input.gridUnit * input.scale
     const lineStep = item.style.baselineMultiplier * baselinePx
-    const moduleHeightPx = item.rowSpan * input.moduleHeight * input.scale
-      + Math.max(item.rowSpan - 1, 0) * input.gridMarginVertical * input.scale
+    const rowStartIndex = Math.max(
+      0,
+      Math.min(resolvedGridRows - 1, findNearestAxisIndex(resolvedModuleRowStarts, item.position.row)),
+    )
+    const moduleHeightPx = sumAxisSpan(
+      resolvedModuleHeights,
+      rowStartIndex,
+      item.rowSpan,
+      input.gridMarginVertical,
+    ) * input.scale
     let maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
 
     const contentTop = input.marginTop * input.scale
@@ -69,7 +100,8 @@ export function computeAutoFitBatch(
 
     const fontSize = item.style.size * input.scale
     const fontSpec = `${item.style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
-    const columnWidth = input.moduleWidth * input.scale
+    const startCol = Math.max(0, Math.min(input.gridCols - 1, item.position.col))
+    const columnWidth = sumAxisSpan(resolvedModuleWidths, startCol, 1, 0) * input.scale
     const cachedMeasure = (text: string) => measureWidthForFont(fontSpec, text)
     const lines = wrapText(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))

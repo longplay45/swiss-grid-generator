@@ -2,9 +2,11 @@ import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import defaultPreset from "@/public/default_v001.json"
 import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import {
+  isGridRhythm,
   isDisplayUnit,
   isTypographyScale,
   type DisplayUnit,
+  type GridRhythm,
   type TypographyScale,
 } from "@/lib/config/defaults"
 import {
@@ -24,6 +26,8 @@ type UiSettingsLike = {
   displayUnit?: unknown
   baseFont?: unknown
   imageColorScheme?: unknown
+  rhythm?: unknown
+  rhythmRotate90?: unknown
   customBaseline?: unknown
 }
 
@@ -82,6 +86,14 @@ function resolveImageColorScheme(value: unknown): ImageColorSchemeId {
   return isImageColorSchemeId(value) ? value : DEFAULT_IMAGE_COLOR_SCHEME_ID
 }
 
+function resolveRhythm(value: unknown): GridRhythm {
+  return isGridRhythm(value) ? value : "repetitive"
+}
+
+function resolveRhythmRotate90(value: unknown): boolean {
+  return value === true
+}
+
 function resolveCustomBaseline(value: unknown, defaultA4Baseline: number): number {
   return typeof value === "number" ? value : defaultA4Baseline
 }
@@ -97,6 +109,8 @@ export function resolveUiDefaults(
   displayUnit: DisplayUnit
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
+  rhythm: GridRhythm
+  rhythmRotate90: boolean
   customBaseline: number
 } {
   return {
@@ -107,6 +121,8 @@ export function resolveUiDefaults(
     displayUnit: resolveDisplayUnit(uiSettings.displayUnit),
     baseFont: resolveBaseFont(uiSettings.baseFont),
     imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
+    rhythm: resolveRhythm(uiSettings.rhythm),
+    rhythmRotate90: resolveRhythmRotate90(uiSettings.rhythmRotate90),
     customBaseline: resolveCustomBaseline(uiSettings.customBaseline, defaultA4Baseline),
   }
 }

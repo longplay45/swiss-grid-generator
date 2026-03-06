@@ -1,5 +1,6 @@
 // Swiss Grid Calculator - Ported from Python to TypeScript
 // Based on Müller-Brockmann's "Grid Systems in Graphic Design" (1981)
+import { calculateModuleSizes, type GridRhythm } from "./grid-rhythm.ts"
 
 export interface FormatDimensions {
   width: number;
@@ -15,6 +16,8 @@ export interface GridSettings {
   baseline?: number;
   baselineMultiple?: number;
   gutterMultiple?: number;
+  rhythm?: GridRhythm;
+  rhythmRotate90?: boolean;
   customMargins?: { top: number; bottom: number; left: number; right: number };
   typographyScale?: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci";
 }
@@ -29,6 +32,8 @@ export interface GridResult {
     gridRows: number;
     baselineMultiple: number;
     customBaseline: number | undefined;
+    rhythm: GridRhythm;
+    rhythmRotate90: boolean;
   };
   pageSizePt: {
     width: number;
@@ -56,6 +61,8 @@ export interface GridResult {
     width: number;
     height: number;
     aspectRatio: number;
+    widths: number[];
+    heights: number[];
   };
   typography: {
     metadata: {
@@ -475,7 +482,19 @@ function generateTypographyStyles(
 }
 
 export function generateSwissGrid(settings: GridSettings): GridResult {
-  const { format, orientation, marginMethod, gridCols, gridRows, baseline: customBaseline, baselineMultiple = 1.0, gutterMultiple = 1.0, typographyScale = "swiss" } = settings;
+  const {
+    format,
+    orientation,
+    marginMethod,
+    gridCols,
+    gridRows,
+    baseline: customBaseline,
+    baselineMultiple = 1.0,
+    gutterMultiple = 1.0,
+    rhythm = "repetitive",
+    rhythmRotate90 = false,
+    typographyScale = "swiss",
+  } = settings;
 
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
@@ -550,8 +569,8 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   if (netW <= 0) {
     throw new Error("Invalid horizontal margins: content width must be > 0");
   }
-  const modW = (netW - (gridCols - 1) * gridMarginHorizontal) / gridCols;
-  if (modW <= 0) {
+  const moduleWidthBudget = netW - (gridCols - 1) * gridMarginHorizontal
+  if (moduleWidthBudget <= 0) {
     throw new Error("Invalid grid settings: module width must be > 0");
   }
 
@@ -575,10 +594,24 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     throw new Error("Invalid grid settings: module height must be > 0");
   }
 
-  const baselineUnitsPerCell = Math.round((modH + gridMarginVertical) / gridUnit * 1000) / 1000;
+  const moduleHeightDistributionBudget = gridRows * modH
+  const moduleSizes = calculateModuleSizes(
+    moduleWidthBudget,
+    moduleHeightDistributionBudget,
+    gridCols,
+    gridRows,
+    rhythm,
+    rhythmRotate90,
+  )
+  const moduleWidths = moduleSizes.widths
+  const moduleHeights = moduleSizes.heights
+  const modW = moduleWidths.reduce((acc, value) => acc + value, 0) / Math.max(1, moduleWidths.length)
+  const modHAverage = moduleHeights.reduce((acc, value) => acc + value, 0) / Math.max(1, moduleHeights.length)
+
+  const baselineUnitsPerCell = Math.round((modHAverage + gridMarginVertical) / gridUnit * 1000) / 1000;
 
   // Recalculate actual net_h to match aligned modules
-  const netHAligned = gridRows * modH + (gridRows - 1) * gridMarginVertical;
+  const netHAligned = moduleHeights.reduce((acc, value) => acc + value, 0) + (gridRows - 1) * gridMarginVertical;
 
 
   const typoSettings = generateTypographyStyles(scale_factor, gridUnit, format, typographyScale);
@@ -593,6 +626,8 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
       gridRows,
       baselineMultiple,
       customBaseline,
+      rhythm,
+      rhythmRotate90,
     },
     pageSizePt: {
       width: Math.round(w * 1000) / 1000,
@@ -618,8 +653,10 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     },
     module: {
       width: Math.round(modW * 1000) / 1000,
-      height: Math.round(modH * 1000) / 1000,
-      aspectRatio: Math.round((modW / modH) * 1000) / 1000,
+      height: Math.round(modHAverage * 1000) / 1000,
+      aspectRatio: Math.round((modW / modHAverage) * 1000) / 1000,
+      widths: moduleWidths.map((value) => Math.round(value * 1000) / 1000),
+      heights: moduleHeights.map((value) => Math.round(value * 1000) / 1000),
     },
     typography: typoSettings,
   };

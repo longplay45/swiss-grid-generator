@@ -47,9 +47,11 @@ import {
 } from "@/lib/config/fonts"
 import {
   BASELINE_OPTIONS,
+  isGridRhythm,
   isDisplayUnit,
   isTypographyScale,
   type DisplayUnit,
+  type GridRhythm,
   type TypographyScale
 } from "@/lib/config/defaults"
 import {
@@ -115,6 +117,8 @@ type GridUiState = Pick<
   | "gridRows"
   | "baselineMultiple"
   | "gutterMultiple"
+  | "rhythm"
+  | "rhythmRotate90"
   | "typographyScale"
   | "baseFont"
   | "imageColorScheme"
@@ -148,6 +152,8 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   gridRows: DEFAULT_UI.gridRows,
   baselineMultiple: Math.max(1, DEFAULT_UI.baselineMultiple),
   gutterMultiple: Math.max(1, DEFAULT_UI.gutterMultiple),
+  rhythm: RESOLVED_DEFAULTS.rhythm,
+  rhythmRotate90: RESOLVED_DEFAULTS.rhythmRotate90,
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
   imageColorScheme: RESOLVED_DEFAULTS.imageColorScheme,
@@ -192,6 +198,8 @@ type UiAction =
   | { type: "SET"; key: "gridRows"; value: number }
   | { type: "SET"; key: "baselineMultiple"; value: number }
   | { type: "SET"; key: "gutterMultiple"; value: number }
+  | { type: "SET"; key: "rhythm"; value: GridRhythm }
+  | { type: "SET"; key: "rhythmRotate90"; value: boolean }
   | { type: "SET"; key: "typographyScale"; value: TypographyScale }
   | { type: "SET"; key: "baseFont"; value: FontFamily }
   | { type: "SET"; key: "imageColorScheme"; value: ImageColorSchemeId }
@@ -222,6 +230,8 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "gridCols":
         case "gridRows":
         case "typographyScale":
+        case "rhythm":
+        case "rhythmRotate90":
         case "baseFont":
         case "imageColorScheme":
         case "customBaseline":
@@ -270,6 +280,8 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         gridRows: action.snapshot.gridRows,
         baselineMultiple: Math.max(1, action.snapshot.baselineMultiple),
         gutterMultiple: Math.max(1, action.snapshot.gutterMultiple),
+        rhythm: action.snapshot.rhythm,
+        rhythmRotate90: action.snapshot.rhythmRotate90,
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
         imageColorScheme: action.snapshot.imageColorScheme,
@@ -358,6 +370,8 @@ function buildUiActionsFromLoadedSettings(
   if (typeof loaded.gridRows === "number") set("gridRows", loaded.gridRows)
   if (typeof loaded.baselineMultiple === "number") set("baselineMultiple", loaded.baselineMultiple)
   if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
+  if (isGridRhythm(loaded.rhythm)) set("rhythm", loaded.rhythm)
+  if (typeof loaded.rhythmRotate90 === "boolean") set("rhythmRotate90", loaded.rhythmRotate90)
   if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
   if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
   if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
@@ -433,7 +447,7 @@ export default function Home() {
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
-    marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple,
+    marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm, rhythmRotate90,
     typographyScale, baseFont, imageColorScheme, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, collapsed,
@@ -447,6 +461,8 @@ export default function Home() {
   const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [dispatch])
   const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [dispatch])
   const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [dispatch])
+  const setRhythm = useCallback((v: GridRhythm) => dispatch({ type: "SET", key: "rhythm", value: v }), [dispatch])
+  const setRhythmRotate90 = useCallback((v: boolean) => dispatch({ type: "SET", key: "rhythmRotate90", value: v }), [dispatch])
   const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
   const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
   const setImageColorScheme = useCallback((v: ImageColorSchemeId) => dispatch({ type: "SET", key: "imageColorScheme", value: v }), [dispatch])
@@ -543,6 +559,8 @@ export default function Home() {
       baseline: customBaseline ?? DEFAULT_A4_BASELINE,
       baselineMultiple,
       gutterMultiple,
+      rhythm,
+      rhythmRotate90,
       customMargins,
       typographyScale,
     })
@@ -555,6 +573,8 @@ export default function Home() {
     customBaseline,
     baselineMultiple,
     gutterMultiple,
+    rhythm,
+    rhythmRotate90,
     useCustomMargins,
     customMarginMultipliers,
     gridUnit,
@@ -1113,6 +1133,10 @@ export default function Home() {
           onGridRowsChange={setGridRows}
           gutterMultiple={gutterMultiple}
           onGutterMultipleChange={setGutterMultiple}
+          rhythm={rhythm}
+          onRhythmChange={setRhythm}
+          rhythmRotate90={rhythmRotate90}
+          onRhythmRotate90Change={setRhythmRotate90}
           isDarkMode={isDarkUi}
         />
 
@@ -1149,6 +1173,8 @@ export default function Home() {
     gridRows,
     gridUnit,
     gutterMultiple,
+    rhythm,
+    rhythmRotate90,
     handleSectionHeaderDoubleClick,
     handleSectionHeaderClick,
     handleSectionHelpNavigate,
@@ -1166,6 +1192,8 @@ export default function Home() {
     setGutterMultiple,
     setGridCols,
     setGridRows,
+    setRhythm,
+    setRhythmRotate90,
     setImageColorScheme,
     setMarginMethod,
     setOrientation,

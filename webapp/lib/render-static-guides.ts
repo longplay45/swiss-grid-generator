@@ -1,4 +1,5 @@
 import type { GridResult } from "@/lib/grid-calculator"
+import { buildAxisStarts, resolveAxisSizes } from "@/lib/grid-rhythm"
 
 type StaticGuidesRenderOptions = {
   ctx: CanvasRenderingContext2D
@@ -29,6 +30,10 @@ export function renderStaticGuides({
   const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
   const { width: modW, height: modH } = result.module
   const { gridCols, gridRows } = result.settings
+  const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
+  const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
+  const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+  const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
   const pageWidth = width * scale
   const pageHeight = height * scale
   const showPageOutline = showMargins
@@ -75,10 +80,10 @@ export function renderStaticGuides({
 
     for (let row = 0; row < gridRows; row += 1) {
       for (let col = 0; col < gridCols; col += 1) {
-        const x = margins.left * scale + col * (modW + gridMarginHorizontal) * scale
-        const y = margins.top * scale + row * (modH + gridMarginVertical) * scale
-        const w = modW * scale
-        const h = modH * scale
+        const x = margins.left * scale + (colStarts[col] ?? 0) * scale
+        const y = margins.top * scale + (rowStarts[row] ?? 0) * scale
+        const w = (moduleWidths[col] ?? modW) * scale
+        const h = (moduleHeights[row] ?? modH) * scale
         ctx.strokeRect(x, y, w, h)
 
         if ((row + col) % 2 === 0) {
