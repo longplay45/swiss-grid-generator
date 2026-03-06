@@ -151,9 +151,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
-          <li>Row 1 controls: row span, column span, paragraph rotation (`-180..180`), and save.</li>
-          <li>Row 2 controls: font hierarchy and font family.</li>
-          <li>Row 3 controls: bold/italic, align left/right, newspaper reflow, syllable division, and delete (right side).</li>
+          <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
+          <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
+          <li>Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.</li>
+          <li>Color submenu: shema selector and swatches.</li>
+          <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
+          <li>Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
@@ -233,7 +236,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
-          <li>Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.</li>
+          <li>Display toggles include baselines, margins, modules, image placeholders, and typography.</li>
+          <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
+          <li>`i` toggles rollover info/tooltips globally across the app.</li>
+          <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
+          <li>Footer `Imprint` link toggles the imprint sidebar panel.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
         </ul>
@@ -247,8 +254,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Use the header Help icon to open or close the help sidebar.</li>
-          <li>When help is open, small `?` markers appear under header icons and next to section titles.</li>
-          <li>Hover a `?` marker to jump to the matching help topic without closing help.</li>
+          <li>When help is open, blue-highlighted targets become hover-jump sensitive in header, presets, and settings sections.</li>
+          <li>Hover a highlighted target to jump to the matching help topic without closing help.</li>
           <li>Use the small up-arrow beside each help title to jump back to the index at the top.</li>
         </ul>
       </section>
@@ -549,6 +556,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>If paragraph flow looks clipped, increase row span or disable reflow for that block.</li>
           <li>If layout jumps after reducing rows/cols, this is expected from structural reflow remapping.</li>
           <li>If custom margins seem odd, verify baseline value and side multipliers first.</li>
+          <li>If hover tooltips or rollover hints are missing, enable the header `i` toggle.</li>
           <li>If keyboard shortcuts do not trigger, focus outside active text inputs.</li>
         </ul>
       </section>

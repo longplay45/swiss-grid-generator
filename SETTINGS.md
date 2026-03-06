@@ -140,17 +140,19 @@ Default: `swiss`
 
 ### Sidebar Panels (icon selectors)
 
+- `Rollover Info` (`i` icon): toggles rollover info/tooltips globally
+- `Help` (`?` icon): opens help/reference panel
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
-- `Help` (help icon): opens help/reference panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
-- Behavior: only one of these panels can be open at a time; clicking the active icon closes the panel.
+- Behavior: only one right sidebar panel can be open at a time; clicking the active help/settings icon closes that panel.
+- Order of the right-side trio: `i`, `?`, `Settings`.
 
 ### Left Footer (always visible)
 
 - `Version` label: shows current app version string.
 - `Imprint` link: opens the right sidebar imprint panel.
 
-All header icons use styled rollover help tooltips with a second line showing the keyboard shortcut (including Undo/Redo).
+When `i` is active, header icons show rollover tooltips with a second line for keyboard shortcuts (including Undo/Redo).
 
 ### Header Keyboard Shortcuts
 
@@ -218,14 +220,16 @@ All header icons use styled rollover help tooltips with a second line showing th
 
 - Double-click text block to open editor
 - Drag to move (snaps to module columns + nearest module-top row anchors)
-- Hover shows style/span/alignment tooltip
+- Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
-- header layout: 2 columns x 3 rows
-- left column row 1: rows, cols, rotation (`-180..180`, integer degrees)
-- left column row 2: style hierarchy, font family
-- left column row 3: bold/italic, align left/right, newspaper reflow, syllable division (`Hy`)
-- right action controls: row 1 save, row 3 delete
+- left icon rail with contextual submenus: `Geometry`, `Type`, `Color`, `Info`
+- Geometry submenu: rows, cols, rotation (`-180..180`, integer degrees)
+- Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected
+- Color submenu: scheme selector and color swatches
+- Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
+- rail quick actions: bold/italic, align left/right, newspaper reflow, syllable division (`Hy`)
+- save is in the inline textarea toolbar; delete is in the rail
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns
 - font family
@@ -233,7 +237,7 @@ Editor controls:
 - cols (1..gridCols)
 - rows (1..gridRows)
 - textarea preview mirrors font family, bold/italic, and left/right alignment
-- live `Characters` + `Words` counts in footer
+- live `Characters` + `Words` counts in `Info` submenu
 
 Font behavior:
 - If a paragraph font is set to the current `Base Font`, it is stored as inherited (no explicit override entry).
@@ -255,8 +259,8 @@ Syllable division behavior:
 
 Drag behavior:
 - Default drag moves a paragraph.
-- `Ctrl` + drag snaps to nearest baseline row at drop point.
-- `Shift` + drag duplicates a paragraph and drops the copy at the snapped position.
+- `Alt/Option` + drag duplicates a paragraph and drops the copy.
+- `Shift` (or `Ctrl`) + drag snaps to nearest baseline row/column at drop point and allows overset placement.
 
 ## Grid Change Reflow Logic
 

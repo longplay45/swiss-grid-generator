@@ -38,10 +38,10 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - `Alt/Option` + drag duplicates a text block
   - `Shift` + drag snaps to baseline rows/columns and allows overset placement (left/right/top/bottom, `Ctrl` fallback)
   - double-click popup editor
-  - hover info tooltips
+  - rollover info/tooltips (`i` toggle)
   - per-paragraph font selection
   - per-paragraph italic toggle
-  - live character + word count in editor footer
+  - live character + word count in the editor `Info` submenu
   - per-block `cols` and `rows`
   - per-block rotation input (`-180..180`)
   - per-block reflow toggle (newspaper-style column flow)
@@ -60,11 +60,12 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Dark mode toggle
   - Presets (left of Load), Load JSON, Save JSON, Export PDF
   - Undo/Redo
-  - Display toggles (baselines, margins, gutter/modules, typo)
-  - Sidebar selectors: Settings, Help
+  - Display toggles (baselines, margins, gutter/modules, image placeholders, typo)
+  - Right-side trio: `i` (rollover info), `?` (help), `Settings`
+  - `i` toggles rollover info/tooltips globally
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
   - Divider separators are shown between Presets and Load, Export and Undo, and dark mode and baselines
-  - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo)
+  - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo) when `i` is active
 - Left panel footer:
   - always-visible `Version` label
   - `Version` value comes from `webapp/package.json` (`version`) via build env
@@ -267,13 +268,13 @@ webapp/
 - Added Shift-drag baseline snapping with overset placement support (left/right/top/bottom, Ctrl fallback).
 - Added centralized image color shemas with global selector (`VI. Color Shema`) and image-editor shema sync.
 - Added grouped font selectors (`Sans-Serif`, `Serif`, `Poster`) via shared component.
-- Added live character and word counts to the text editor footer.
+- Added live character and word counts in the text editor `Info` submenu.
 - Added complete keyboard coverage for preview-header actions and surfaced shortcut hints in icon tooltips.
 - Refactored UI primitives: shared `HeaderIconButton`, `HoverTooltip`, `PanelCard`, and centralized `preview-header-shortcuts`.
 - Added optical margin alignment (hanging punctuation) in preview and PDF export.
 - Reflow mode now supports newspaper-style multi-column flow constrained by selected row span.
 - Added base-font control in `V. Typo` with per-paragraph font override inheritance.
-- Added paragraph editor rollover tooltips and structured 3-row header layout.
+- Added paragraph editor rollover tooltips and the rail/submenu editor layout.
 - Added per-paragraph syllable-division toggle with defaults enabled for `body` and `caption`.
 - Drag-and-drop and structural repositioning now use module-top row anchors.
 - Grid structural changes now use deterministic scored auto-repositioning.

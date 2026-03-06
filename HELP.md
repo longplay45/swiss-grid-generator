@@ -48,18 +48,15 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Text Editor Popup
 
 - Open editor by double-clicking a block; double-click empty area creates a paragraph block.
-- Header layout is a 2-column, 3-row control grid.
-- Left column rows:
-  - Row 1: row span, column span, paragraph rotation (`-180..180`)
-  - Row 2: style hierarchy, font family
-  - Row 3: bold/italic, align left/right, newspaper reflow/syllable division
-- Right action controls:
-  - Row 1: save
-  - Row 3: delete
+- Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.
+- Geometry submenu: row span, column span, paragraph rotation (`-180..180`).
+- Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.
+- Color submenu: shema selector and swatches.
+- Info submenu includes style/font/geometry/color plus character and word counts.
+- Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.
 - Newspaper reflow is available only when paragraph columns are `2+`.
 - Reflow with `col > 1`: newspaper flow across configured columns (col 1 top-to-bottom, then col 2, etc.).
 - Textarea preview mirrors current paragraph style controls: font family, bold/italic, and left/right alignment.
-- Live counters show characters/words in the footer.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.
 
 ## Image Editor Popup
@@ -89,7 +86,11 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Header and Sidebars
 
 - Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.
-- Sidebar actions include Settings and Help; footer `Imprint` link toggles imprint sidebar.
+- Display toggles include baselines, margins, modules, image placeholders, and typography.
+- The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.
+- `i` toggles rollover info/tooltips globally across the app.
+- `?` opens/closes help; settings opens/closes the right settings panel.
+- Footer `Imprint` link toggles imprint sidebar.
 - Right-side content panels include close icons in their header rows.
 - Only one right-side panel is open at a time.
 
@@ -132,6 +133,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - If paragraph flow looks clipped, increase row span or disable reflow for that block.
 - If layout jumps after large grid changes, this is expected from structural reflow remapping.
 - If custom margins seem odd, verify baseline value and side multipliers first.
+- If hover tooltips or rollover hints are missing, enable the header `i` toggle.
 - If keyboard shortcuts do not trigger, focus outside active text inputs.
 
 ## Grid Theory Notes
