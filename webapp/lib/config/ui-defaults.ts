@@ -2,13 +2,18 @@ import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import defaultPreset from "@/public/default_v001.json"
 import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import {
+  defaultGridRhythmAxisSettings,
   isGridRhythm,
-  isGridRhythmRotation,
+  isGridRhythmColsDirection,
+  isGridRhythmRowsDirection,
   isDisplayUnit,
   isTypographyScale,
+  resolveLegacyGridRhythmAxisSettings,
   type DisplayUnit,
+  type GridRhythmAxisSettings,
+  type GridRhythmColsDirection,
   type GridRhythm,
-  type GridRhythmRotation,
+  type GridRhythmRowsDirection,
   type TypographyScale,
 } from "@/lib/config/defaults"
 import {
@@ -29,6 +34,10 @@ type UiSettingsLike = {
   baseFont?: unknown
   imageColorScheme?: unknown
   rhythm?: unknown
+  rhythmRowsEnabled?: unknown
+  rhythmRowsDirection?: unknown
+  rhythmColsEnabled?: unknown
+  rhythmColsDirection?: unknown
   rhythmRotation?: unknown
   rhythmRotate90?: unknown
   customBaseline?: unknown
@@ -93,10 +102,33 @@ function resolveRhythm(value: unknown): GridRhythm {
   return isGridRhythm(value) ? value : "repetitive"
 }
 
-function resolveRhythmRotation(value: unknown, legacyRotate90Value: unknown): GridRhythmRotation {
-  if (isGridRhythmRotation(value)) return value === 180 ? 180 : 0
-  if (legacyRotate90Value === true) return 180
-  return 0
+function resolveRhythmRowsDirection(value: unknown, fallback: GridRhythmRowsDirection): GridRhythmRowsDirection {
+  return isGridRhythmRowsDirection(value) ? value : fallback
+}
+
+function resolveRhythmColsDirection(value: unknown, fallback: GridRhythmColsDirection): GridRhythmColsDirection {
+  return isGridRhythmColsDirection(value) ? value : fallback
+}
+
+function resolveRhythmAxisSettings(uiSettings: UiSettingsLike): GridRhythmAxisSettings {
+  const fallback = resolveLegacyGridRhythmAxisSettings(uiSettings.rhythmRotation, uiSettings.rhythmRotate90)
+  const defaults = defaultGridRhythmAxisSettings()
+  return {
+    rhythmRowsEnabled: typeof uiSettings.rhythmRowsEnabled === "boolean"
+      ? uiSettings.rhythmRowsEnabled
+      : fallback.rhythmRowsEnabled ?? defaults.rhythmRowsEnabled,
+    rhythmRowsDirection: resolveRhythmRowsDirection(
+      uiSettings.rhythmRowsDirection,
+      fallback.rhythmRowsDirection ?? defaults.rhythmRowsDirection,
+    ),
+    rhythmColsEnabled: typeof uiSettings.rhythmColsEnabled === "boolean"
+      ? uiSettings.rhythmColsEnabled
+      : fallback.rhythmColsEnabled ?? defaults.rhythmColsEnabled,
+    rhythmColsDirection: resolveRhythmColsDirection(
+      uiSettings.rhythmColsDirection,
+      fallback.rhythmColsDirection ?? defaults.rhythmColsDirection,
+    ),
+  }
 }
 
 function resolveCustomBaseline(value: unknown, defaultA4Baseline: number): number {
@@ -115,9 +147,13 @@ export function resolveUiDefaults(
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
   rhythm: GridRhythm
-  rhythmRotation: GridRhythmRotation
+  rhythmRowsEnabled: boolean
+  rhythmRowsDirection: GridRhythmRowsDirection
+  rhythmColsEnabled: boolean
+  rhythmColsDirection: GridRhythmColsDirection
   customBaseline: number
 } {
+  const rhythmAxisSettings = resolveRhythmAxisSettings(uiSettings)
   return {
     canvasRatio: isCanvasRatioKey(uiSettings.canvasRatio) ? uiSettings.canvasRatio : "din_ab",
     orientation: resolveOrientation(uiSettings.orientation),
@@ -127,7 +163,10 @@ export function resolveUiDefaults(
     baseFont: resolveBaseFont(uiSettings.baseFont),
     imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
     rhythm: resolveRhythm(uiSettings.rhythm),
-    rhythmRotation: resolveRhythmRotation(uiSettings.rhythmRotation, uiSettings.rhythmRotate90),
+    rhythmRowsEnabled: rhythmAxisSettings.rhythmRowsEnabled,
+    rhythmRowsDirection: rhythmAxisSettings.rhythmRowsDirection,
+    rhythmColsEnabled: rhythmAxisSettings.rhythmColsEnabled,
+    rhythmColsDirection: rhythmAxisSettings.rhythmColsDirection,
     customBaseline: resolveCustomBaseline(uiSettings.customBaseline, defaultA4Baseline),
   }
 }

@@ -33,7 +33,8 @@ Comprehensive user reference for the in-app Help sidebar.
 - Grid range is `1..13` for both columns and rows.
 - Gutter multiple range is `1.0..4.0` in `0.5` steps.
 - `Rhythms` options: `Repetitive` (default) and `Fibonacci`.
-- Fibonacci rotation currently supports `0°` and `180°`.
+- Fibonacci rows: on/off plus direction `L>R` or `R>L` (default: on + `L>R`).
+- Fibonacci cols: on/off plus direction `T>B` or `B>T` (default: on + `T>B`).
 - Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).
 - Top/bottom margins snap to baseline grid units.
 - Custom margins are entered as baseline multiples per side.

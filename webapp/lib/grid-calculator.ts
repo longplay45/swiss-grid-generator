@@ -1,10 +1,15 @@
 // Swiss Grid Calculator - Ported from Python to TypeScript
 // Based on Müller-Brockmann's "Grid Systems in Graphic Design" (1981)
 import {
-  calculateModuleSizes,
-  type GridRhythm,
-  type GridRhythmRotation,
+  calculateModuleSizes
 } from "./grid-rhythm.ts"
+import {
+  resolveLegacyGridRhythmAxisSettings,
+  type GridRhythm,
+  type GridRhythmColsDirection,
+  type GridRhythmRowsDirection,
+  type LegacyGridRhythmRotation,
+} from "./config/defaults.ts"
 
 export interface FormatDimensions {
   width: number;
@@ -21,7 +26,12 @@ export interface GridSettings {
   baselineMultiple?: number;
   gutterMultiple?: number;
   rhythm?: GridRhythm;
-  rhythmRotation?: GridRhythmRotation;
+  rhythmRowsEnabled?: boolean;
+  rhythmRowsDirection?: GridRhythmRowsDirection;
+  rhythmColsEnabled?: boolean;
+  rhythmColsDirection?: GridRhythmColsDirection;
+  // Legacy compatibility for old saved settings payloads.
+  rhythmRotation?: LegacyGridRhythmRotation;
   // Legacy compatibility for old saved settings payloads.
   rhythmRotate90?: boolean;
   customMargins?: { top: number; bottom: number; left: number; right: number };
@@ -39,7 +49,10 @@ export interface GridResult {
     baselineMultiple: number;
     customBaseline: number | undefined;
     rhythm: GridRhythm;
-    rhythmRotation: GridRhythmRotation;
+    rhythmRowsEnabled: boolean;
+    rhythmRowsDirection: GridRhythmRowsDirection;
+    rhythmColsEnabled: boolean;
+    rhythmColsDirection: GridRhythmColsDirection;
   };
   pageSizePt: {
     width: number;
@@ -498,9 +511,25 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     baselineMultiple = 1.0,
     gutterMultiple = 1.0,
     rhythm = "repetitive",
-    rhythmRotation = settings.rhythmRotate90 === true ? 90 : 0,
+    rhythmRowsEnabled,
+    rhythmRowsDirection,
+    rhythmColsEnabled,
+    rhythmColsDirection,
     typographyScale = "swiss",
   } = settings;
+
+  const legacyRhythmAxisSettings = resolveLegacyGridRhythmAxisSettings(
+    settings.rhythmRotation,
+    settings.rhythmRotate90,
+  );
+  const resolvedRhythmRowsEnabled = typeof rhythmRowsEnabled === "boolean"
+    ? rhythmRowsEnabled
+    : legacyRhythmAxisSettings.rhythmRowsEnabled;
+  const resolvedRhythmRowsDirection = rhythmRowsDirection ?? legacyRhythmAxisSettings.rhythmRowsDirection;
+  const resolvedRhythmColsEnabled = typeof rhythmColsEnabled === "boolean"
+    ? rhythmColsEnabled
+    : legacyRhythmAxisSettings.rhythmColsEnabled;
+  const resolvedRhythmColsDirection = rhythmColsDirection ?? legacyRhythmAxisSettings.rhythmColsDirection;
 
   if (!FORMATS_PT[format]) {
     throw new Error(`Unsupported format: ${format}`);
@@ -607,7 +636,10 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     gridCols,
     gridRows,
     rhythm,
-    rhythmRotation,
+    resolvedRhythmRowsEnabled,
+    resolvedRhythmRowsDirection,
+    resolvedRhythmColsEnabled,
+    resolvedRhythmColsDirection,
   )
   const moduleWidths = moduleSizes.widths
   const moduleHeights = moduleSizes.heights
@@ -633,7 +665,10 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
       baselineMultiple,
       customBaseline,
       rhythm,
-      rhythmRotation,
+      rhythmRowsEnabled: resolvedRhythmRowsEnabled,
+      rhythmRowsDirection: resolvedRhythmRowsDirection,
+      rhythmColsEnabled: resolvedRhythmColsEnabled,
+      rhythmColsDirection: resolvedRhythmColsDirection,
     },
     pageSizePt: {
       width: Math.round(w * 1000) / 1000,

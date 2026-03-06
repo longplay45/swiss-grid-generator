@@ -1,5 +1,8 @@
-export type GridRhythm = "repetitive" | "fibonacci"
-export type GridRhythmRotation = 0 | 90 | 180 | 360
+import type {
+  GridRhythm,
+  GridRhythmColsDirection,
+  GridRhythmRowsDirection,
+} from "./config/defaults.ts"
 
 // NEW: Grid Rhythm (Fibonacci)
 export function calculateModuleSizes(
@@ -8,73 +11,43 @@ export function calculateModuleSizes(
   columns: number,
   rows: number,
   rhythm: GridRhythm,
-  rotation: GridRhythmRotation,
+  rhythmRowsEnabled: boolean,
+  rhythmRowsDirection: GridRhythmRowsDirection,
+  rhythmColsEnabled: boolean,
+  rhythmColsDirection: GridRhythmColsDirection,
 ): { widths: number[]; heights: number[] } {
+  const repetitiveWidths = Array(columns).fill(totalWidth / Math.max(columns, 1))
+  const repetitiveHeights = Array(rows).fill(totalHeight / Math.max(rows, 1))
+
   if (rhythm === "repetitive") {
     return {
-      widths: Array(columns).fill(totalWidth / columns),
-      heights: Array(rows).fill(totalHeight / rows),
+      widths: repetitiveWidths,
+      heights: repetitiveHeights,
     }
   }
 
-  const fib = (n: number) => {
-    const seq = [1]
-    for (let i = 1; i < n; i += 1) seq.push(seq[i - 1] + (seq[i - 2] || 1))
-    return seq
+  const fib = (count: number) => {
+    if (count <= 0) return []
+    const sequence = [1]
+    for (let i = 1; i < count; i += 1) sequence.push(sequence[i - 1] + (sequence[i - 2] || 1))
+    const total = sequence.reduce((sum, value) => sum + value, 0)
+    if (total <= 0) return Array(count).fill(1 / count)
+    return sequence.map((value) => value / total)
   }
 
-  let seq = fib(columns)
-  let totalParts = seq.reduce((a, b) => a + b, 0)
-  let widths = seq.map((v) => totalWidth * (v / totalParts))
+  const fibonacciWidthRatios = fib(columns)
+  const fibonacciHeightRatios = fib(rows)
+  let widths = rhythmRowsEnabled
+    ? fibonacciWidthRatios.map((ratio) => totalWidth * ratio)
+    : repetitiveWidths
+  let heights = rhythmColsEnabled
+    ? fibonacciHeightRatios.map((ratio) => totalHeight * ratio)
+    : repetitiveHeights
 
-  seq = fib(rows)
-  totalParts = seq.reduce((a, b) => a + b, 0)
-  let heights = seq.map((v) => totalHeight * (v / totalParts))
-
-  switch (rotation) {
-    case 90:
-      ;[widths, heights] = [
-        normalizeAxisToTotal([...heights].reverse(), columns, totalWidth),
-        normalizeAxisToTotal([...widths].reverse(), rows, totalHeight),
-      ]
-      break
-    case 180:
-      widths = normalizeAxisToTotal([...widths].reverse(), columns, totalWidth)
-      heights = normalizeAxisToTotal([...heights].reverse(), rows, totalHeight)
-      break
-    case 360:
-    case 0:
-    default:
-      break
-  }
+  if (rhythmRowsDirection === "rtl") widths = [...widths].reverse()
+  if (rhythmColsDirection === "btt") heights = [...heights].reverse()
 
   return { widths, heights }
-}
-
-function normalizeAxisToTotal(values: number[], count: number, total: number): number[] {
-  if (count <= 0) return []
-  if (values.length === count) {
-    const sum = values.reduce((acc, value) => acc + value, 0)
-    if (sum <= 0) return Array(count).fill(total / count)
-    return values.map((value) => total * (value / sum))
-  }
-  const source = values.length > 0 ? values : [1]
-  const sampled: number[] = []
-  for (let index = 0; index < count; index += 1) {
-    const ratio = count === 1 ? 0 : index / (count - 1)
-    const sourceIndex = ratio * (source.length - 1)
-    const left = Math.floor(sourceIndex)
-    const right = Math.min(source.length - 1, Math.ceil(sourceIndex))
-    if (left === right) {
-      sampled.push(source[left])
-    } else {
-      const mix = sourceIndex - left
-      sampled.push(source[left] * (1 - mix) + source[right] * mix)
-    }
-  }
-  const sum = sampled.reduce((acc, value) => acc + value, 0)
-  if (sum <= 0) return Array(count).fill(total / count)
-  return sampled.map((value) => total * (value / sum))
 }
 
 export function resolveAxisSizes(

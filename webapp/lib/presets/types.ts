@@ -7,6 +7,11 @@ export type LayoutPresetUiSettings = Record<string, unknown> & {
   baselineMultiple: number
   gutterMultiple: number
   rhythm?: "repetitive" | "fibonacci"
+  rhythmRowsEnabled?: boolean
+  rhythmRowsDirection?: "ltr" | "rtl"
+  rhythmColsEnabled?: boolean
+  rhythmColsDirection?: "ttb" | "btt"
+  // Legacy fallback for older saved presets.
   rhythmRotation?: 0 | 90 | 180 | 360
   // Legacy fallback for older saved presets.
   rhythmRotate90?: boolean

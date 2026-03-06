@@ -1,5 +1,11 @@
 import type { LayoutPreset, LayoutPresetUiSettings } from "@/lib/presets/types"
-import { isGridRhythm, isGridRhythmRotation } from "@/lib/config/defaults"
+import {
+  isGridRhythm,
+  isGridRhythmColsDirection,
+  isGridRhythmRowsDirection,
+  isLegacyGridRhythmRotation,
+  resolveLegacyGridRhythmAxisSettings,
+} from "@/lib/config/defaults"
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null
@@ -71,6 +77,10 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   const baselineMultiple = uiSettingsSource.baselineMultiple
   const gutterMultiple = uiSettingsSource.gutterMultiple
   const rhythmSource = uiSettingsSource.rhythm
+  const rhythmRowsEnabledSource = uiSettingsSource.rhythmRowsEnabled
+  const rhythmRowsDirectionSource = uiSettingsSource.rhythmRowsDirection
+  const rhythmColsEnabledSource = uiSettingsSource.rhythmColsEnabled
+  const rhythmColsDirectionSource = uiSettingsSource.rhythmColsDirection
   const rhythmRotationSource = uiSettingsSource.rhythmRotation
   const rhythmRotate90Source = uiSettingsSource.rhythmRotate90
 
@@ -98,12 +108,29 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   if (rhythmSource !== undefined && !isGridRhythm(rhythmSource)) {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythm must be \"repetitive\" or \"fibonacci\"`)
   }
-  if (rhythmRotationSource !== undefined && !isGridRhythmRotation(rhythmRotationSource)) {
+  if (rhythmRowsEnabledSource !== undefined && typeof rhythmRowsEnabledSource !== "boolean") {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRowsEnabled must be a boolean`)
+  }
+  if (rhythmRowsDirectionSource !== undefined && !isGridRhythmRowsDirection(rhythmRowsDirectionSource)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRowsDirection must be \"ltr\" or \"rtl\"`)
+  }
+  if (rhythmColsEnabledSource !== undefined && typeof rhythmColsEnabledSource !== "boolean") {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmColsEnabled must be a boolean`)
+  }
+  if (rhythmColsDirectionSource !== undefined && !isGridRhythmColsDirection(rhythmColsDirectionSource)) {
+    throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmColsDirection must be \"ttb\" or \"btt\"`)
+  }
+  if (rhythmRotationSource !== undefined && !isLegacyGridRhythmRotation(rhythmRotationSource)) {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRotation must be 0, 90, 180, or 360`)
   }
   if (rhythmRotate90Source !== undefined && typeof rhythmRotate90Source !== "boolean") {
     throw new Error(`Invalid preset "${sourcePath}": uiSettings.rhythmRotate90 must be a boolean`)
   }
+
+  const legacyRhythmAxisSettings = resolveLegacyGridRhythmAxisSettings(
+    rhythmRotationSource,
+    rhythmRotate90Source,
+  )
 
   const uiSettings: LayoutPresetUiSettings = {
     ...uiSettingsSource,
@@ -115,10 +142,18 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
     baselineMultiple,
     gutterMultiple,
     rhythm: isGridRhythm(rhythmSource) ? rhythmSource : undefined,
-    rhythmRotation: isGridRhythmRotation(rhythmRotationSource)
-      ? rhythmRotationSource
-      : (rhythmRotate90Source === true ? 90 : undefined),
-    rhythmRotate90: typeof rhythmRotate90Source === "boolean" ? rhythmRotate90Source : undefined,
+    rhythmRowsEnabled: typeof rhythmRowsEnabledSource === "boolean"
+      ? rhythmRowsEnabledSource
+      : legacyRhythmAxisSettings.rhythmRowsEnabled,
+    rhythmRowsDirection: isGridRhythmRowsDirection(rhythmRowsDirectionSource)
+      ? rhythmRowsDirectionSource
+      : legacyRhythmAxisSettings.rhythmRowsDirection,
+    rhythmColsEnabled: typeof rhythmColsEnabledSource === "boolean"
+      ? rhythmColsEnabledSource
+      : legacyRhythmAxisSettings.rhythmColsEnabled,
+    rhythmColsDirection: isGridRhythmColsDirection(rhythmColsDirectionSource)
+      ? rhythmColsDirectionSource
+      : legacyRhythmAxisSettings.rhythmColsDirection,
   }
 
   return {

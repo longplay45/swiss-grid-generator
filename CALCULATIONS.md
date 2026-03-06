@@ -197,10 +197,12 @@ Module distribution supports two rhythm modes:
 - `repetitive` (default): equal-width/equal-height modules
 - `fibonacci`: proportional module sizes from a normalized Fibonacci sequence per axis
 
-For Fibonacci mode, active rotation options are currently:
+For Fibonacci mode, each axis can be controlled independently:
 
-- `0°`: base sequence direction
-- `180°`: reverse both axes
+- rows axis (`widths`): on/off, direction `L>R` (`ltr`) or `R>L` (`rtl`)
+- cols axis (`heights`): on/off, direction `T>B` (`ttb`) or `B>T` (`btt`)
+
+Defaults are rows on + `L>R`, cols on + `T>B`.
 
 ---
 
@@ -228,6 +230,14 @@ fib = [1, 2, 3, 5, ...]
 widths[i] = moduleWidthBudget × fib[i] / sum(fib)
 ```
 
+If rows Fibonacci is disabled, widths fall back to equal distribution:
+
+```
+widths[i] = moduleWidthBudget / gridCols
+```
+
+If rows direction is `R>L`, the width sequence is reversed.
+
 The scalar `module.width` value in output is the axis average:
 
 ```
@@ -249,7 +259,9 @@ moduleHeightDistributionBudget = gridRows × modH
 Then rhythm is applied:
 
 - `repetitive`: equal heights
-- `fibonacci`: normalized Fibonacci proportions
+- `fibonacci`: normalized Fibonacci proportions (or equal heights if cols Fibonacci is disabled)
+
+If cols direction is `B>T`, the height sequence is reversed.
 
 The scalar `module.height` value in output is the axis average:
 

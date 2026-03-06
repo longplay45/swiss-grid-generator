@@ -455,7 +455,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
           <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
           <li>`Rhythms` options: `Repetitive` (default) and `Fibonacci`.</li>
-          <li>Fibonacci rotation currently supports `0°` and `180°`.</li>
+          <li>Fibonacci rows can be toggled on/off with direction `L&gt;R` or `R&gt;L` (default: on, `L&gt;R`).</li>
+          <li>Fibonacci cols can be toggled on/off with direction `T&gt;B` or `B&gt;T` (default: on, `T&gt;B`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
           <li>Reducing rows/cols may trigger reflow suggestions.</li>
         </ul>

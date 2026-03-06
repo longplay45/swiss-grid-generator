@@ -47,13 +47,17 @@ import {
 } from "@/lib/config/fonts"
 import {
   BASELINE_OPTIONS,
+  defaultGridRhythmAxisSettings,
   isGridRhythm,
-  isGridRhythmRotation,
+  isGridRhythmColsDirection,
+  isGridRhythmRowsDirection,
   isDisplayUnit,
   isTypographyScale,
+  resolveLegacyGridRhythmAxisSettings,
   type DisplayUnit,
   type GridRhythm,
-  type GridRhythmRotation,
+  type GridRhythmColsDirection,
+  type GridRhythmRowsDirection,
   type TypographyScale
 } from "@/lib/config/defaults"
 import {
@@ -81,10 +85,6 @@ type DocumentMetadata = {
   description: string
   author: string
   createdAt?: string
-}
-
-function normalizeRhythmRotation(value: GridRhythmRotation): GridRhythmRotation {
-  return value === 180 ? 180 : 0
 }
 
 function toNormalizedIsoDate(value: unknown): string | undefined {
@@ -124,7 +124,10 @@ type GridUiState = Pick<
   | "baselineMultiple"
   | "gutterMultiple"
   | "rhythm"
-  | "rhythmRotation"
+  | "rhythmRowsEnabled"
+  | "rhythmRowsDirection"
+  | "rhythmColsEnabled"
+  | "rhythmColsDirection"
   | "typographyScale"
   | "baseFont"
   | "imageColorScheme"
@@ -159,7 +162,10 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   baselineMultiple: Math.max(1, DEFAULT_UI.baselineMultiple),
   gutterMultiple: Math.max(1, DEFAULT_UI.gutterMultiple),
   rhythm: RESOLVED_DEFAULTS.rhythm,
-  rhythmRotation: RESOLVED_DEFAULTS.rhythmRotation,
+  rhythmRowsEnabled: RESOLVED_DEFAULTS.rhythmRowsEnabled,
+  rhythmRowsDirection: RESOLVED_DEFAULTS.rhythmRowsDirection,
+  rhythmColsEnabled: RESOLVED_DEFAULTS.rhythmColsEnabled,
+  rhythmColsDirection: RESOLVED_DEFAULTS.rhythmColsDirection,
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
   imageColorScheme: RESOLVED_DEFAULTS.imageColorScheme,
@@ -205,7 +211,10 @@ type UiAction =
   | { type: "SET"; key: "baselineMultiple"; value: number }
   | { type: "SET"; key: "gutterMultiple"; value: number }
   | { type: "SET"; key: "rhythm"; value: GridRhythm }
-  | { type: "SET"; key: "rhythmRotation"; value: GridRhythmRotation }
+  | { type: "SET"; key: "rhythmRowsEnabled"; value: boolean }
+  | { type: "SET"; key: "rhythmRowsDirection"; value: GridRhythmRowsDirection }
+  | { type: "SET"; key: "rhythmColsEnabled"; value: boolean }
+  | { type: "SET"; key: "rhythmColsDirection"; value: GridRhythmColsDirection }
   | { type: "SET"; key: "typographyScale"; value: TypographyScale }
   | { type: "SET"; key: "baseFont"; value: FontFamily }
   | { type: "SET"; key: "imageColorScheme"; value: ImageColorSchemeId }
@@ -237,6 +246,10 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "gridRows":
         case "typographyScale":
         case "rhythm":
+        case "rhythmRowsEnabled":
+        case "rhythmRowsDirection":
+        case "rhythmColsEnabled":
+        case "rhythmColsDirection":
         case "baseFont":
         case "imageColorScheme":
         case "customBaseline":
@@ -250,11 +263,6 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "collapsed":
           if (state[action.key] === action.value) return state
           return { ...state, [action.key]: action.value }
-        case "rhythmRotation": {
-          const nextRhythmRotation = normalizeRhythmRotation(action.value)
-          if (state.rhythmRotation === nextRhythmRotation) return state
-          return { ...state, rhythmRotation: nextRhythmRotation }
-        }
         case "baselineMultiple": {
           const nextBaselineMultiple = Math.max(1, action.value)
           if (state.baselineMultiple === nextBaselineMultiple) return state
@@ -291,7 +299,10 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         baselineMultiple: Math.max(1, action.snapshot.baselineMultiple),
         gutterMultiple: Math.max(1, action.snapshot.gutterMultiple),
         rhythm: action.snapshot.rhythm,
-        rhythmRotation: normalizeRhythmRotation(action.snapshot.rhythmRotation),
+        rhythmRowsEnabled: action.snapshot.rhythmRowsEnabled,
+        rhythmRowsDirection: action.snapshot.rhythmRowsDirection,
+        rhythmColsEnabled: action.snapshot.rhythmColsEnabled,
+        rhythmColsDirection: action.snapshot.rhythmColsDirection,
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
         imageColorScheme: action.snapshot.imageColorScheme,
@@ -382,13 +393,32 @@ function buildUiActionsFromLoadedSettings(
   if (typeof loaded.gutterMultiple === "number") set("gutterMultiple", loaded.gutterMultiple)
   if (isGridRhythm(loaded.rhythm)) set("rhythm", loaded.rhythm)
   else set("rhythm", "repetitive")
-  if (isGridRhythmRotation(loaded.rhythmRotation)) {
-    set("rhythmRotation", normalizeRhythmRotation(loaded.rhythmRotation))
-  } else if (typeof loaded.rhythmRotate90 === "boolean") {
-    set("rhythmRotation", loaded.rhythmRotate90 ? 180 : 0)
-  } else {
-    set("rhythmRotation", 0)
-  }
+  const defaultRhythmAxis = defaultGridRhythmAxisSettings()
+  const legacyRhythmAxis = resolveLegacyGridRhythmAxisSettings(loaded.rhythmRotation, loaded.rhythmRotate90)
+  set(
+    "rhythmRowsEnabled",
+    typeof loaded.rhythmRowsEnabled === "boolean"
+      ? loaded.rhythmRowsEnabled
+      : legacyRhythmAxis.rhythmRowsEnabled ?? defaultRhythmAxis.rhythmRowsEnabled,
+  )
+  set(
+    "rhythmRowsDirection",
+    isGridRhythmRowsDirection(loaded.rhythmRowsDirection)
+      ? loaded.rhythmRowsDirection
+      : legacyRhythmAxis.rhythmRowsDirection ?? defaultRhythmAxis.rhythmRowsDirection,
+  )
+  set(
+    "rhythmColsEnabled",
+    typeof loaded.rhythmColsEnabled === "boolean"
+      ? loaded.rhythmColsEnabled
+      : legacyRhythmAxis.rhythmColsEnabled ?? defaultRhythmAxis.rhythmColsEnabled,
+  )
+  set(
+    "rhythmColsDirection",
+    isGridRhythmColsDirection(loaded.rhythmColsDirection)
+      ? loaded.rhythmColsDirection
+      : legacyRhythmAxis.rhythmColsDirection ?? defaultRhythmAxis.rhythmColsDirection,
+  )
   if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
   if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
   if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
@@ -464,7 +494,8 @@ export default function Home() {
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
-    marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm, rhythmRotation,
+    marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm,
+    rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
     typographyScale, baseFont, imageColorScheme, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, collapsed,
@@ -479,9 +510,10 @@ export default function Home() {
   const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [dispatch])
   const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [dispatch])
   const setRhythm = useCallback((v: GridRhythm) => dispatch({ type: "SET", key: "rhythm", value: v }), [dispatch])
-  const setRhythmRotation = useCallback((v: GridRhythmRotation) => (
-    dispatch({ type: "SET", key: "rhythmRotation", value: normalizeRhythmRotation(v) })
-  ), [dispatch])
+  const setRhythmRowsEnabled = useCallback((v: boolean) => dispatch({ type: "SET", key: "rhythmRowsEnabled", value: v }), [dispatch])
+  const setRhythmRowsDirection = useCallback((v: GridRhythmRowsDirection) => dispatch({ type: "SET", key: "rhythmRowsDirection", value: v }), [dispatch])
+  const setRhythmColsEnabled = useCallback((v: boolean) => dispatch({ type: "SET", key: "rhythmColsEnabled", value: v }), [dispatch])
+  const setRhythmColsDirection = useCallback((v: GridRhythmColsDirection) => dispatch({ type: "SET", key: "rhythmColsDirection", value: v }), [dispatch])
   const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
   const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
   const setImageColorScheme = useCallback((v: ImageColorSchemeId) => dispatch({ type: "SET", key: "imageColorScheme", value: v }), [dispatch])
@@ -579,7 +611,10 @@ export default function Home() {
       baselineMultiple,
       gutterMultiple,
       rhythm,
-      rhythmRotation,
+      rhythmRowsEnabled,
+      rhythmRowsDirection,
+      rhythmColsEnabled,
+      rhythmColsDirection,
       customMargins,
       typographyScale,
     })
@@ -593,7 +628,10 @@ export default function Home() {
     baselineMultiple,
     gutterMultiple,
     rhythm,
-    rhythmRotation,
+    rhythmRowsEnabled,
+    rhythmRowsDirection,
+    rhythmColsEnabled,
+    rhythmColsDirection,
     useCustomMargins,
     customMarginMultipliers,
     gridUnit,
@@ -1154,8 +1192,14 @@ export default function Home() {
           onGutterMultipleChange={setGutterMultiple}
           rhythm={rhythm}
           onRhythmChange={setRhythm}
-          rhythmRotation={rhythmRotation}
-          onRhythmRotationChange={setRhythmRotation}
+          rhythmRowsEnabled={rhythmRowsEnabled}
+          onRhythmRowsEnabledChange={setRhythmRowsEnabled}
+          rhythmRowsDirection={rhythmRowsDirection}
+          onRhythmRowsDirectionChange={setRhythmRowsDirection}
+          rhythmColsEnabled={rhythmColsEnabled}
+          onRhythmColsEnabledChange={setRhythmColsEnabled}
+          rhythmColsDirection={rhythmColsDirection}
+          onRhythmColsDirectionChange={setRhythmColsDirection}
           isDarkMode={isDarkUi}
         />
 
@@ -1193,7 +1237,10 @@ export default function Home() {
     gridUnit,
     gutterMultiple,
     rhythm,
-    rhythmRotation,
+    rhythmRowsEnabled,
+    rhythmRowsDirection,
+    rhythmColsEnabled,
+    rhythmColsDirection,
     handleSectionHeaderDoubleClick,
     handleSectionHeaderClick,
     handleSectionHelpNavigate,
@@ -1212,7 +1259,10 @@ export default function Home() {
     setGridCols,
     setGridRows,
     setRhythm,
-    setRhythmRotation,
+    setRhythmRowsEnabled,
+    setRhythmRowsDirection,
+    setRhythmColsEnabled,
+    setRhythmColsDirection,
     setImageColorScheme,
     setMarginMethod,
     setOrientation,

@@ -2,6 +2,7 @@ import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { DebouncedSlider } from "@/components/ui/slider"
 import { PanelCard } from "@/components/settings/PanelCard"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -9,9 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { GridRhythm, GridRhythmRotation } from "@/lib/config/defaults"
-
-const RHYTHM_ROTATION_OPTIONS: GridRhythmRotation[] = [0, 180]
+import type {
+  GridRhythm,
+  GridRhythmColsDirection,
+  GridRhythmRowsDirection,
+} from "@/lib/config/defaults"
 
 type Props = {
   collapsed: boolean
@@ -25,8 +28,14 @@ type Props = {
   onGutterMultipleChange: (value: number) => void
   rhythm: GridRhythm
   onRhythmChange: (value: GridRhythm) => void
-  rhythmRotation: GridRhythmRotation
-  onRhythmRotationChange: (value: GridRhythmRotation) => void
+  rhythmRowsEnabled: boolean
+  onRhythmRowsEnabledChange: (value: boolean) => void
+  rhythmRowsDirection: GridRhythmRowsDirection
+  onRhythmRowsDirectionChange: (value: GridRhythmRowsDirection) => void
+  rhythmColsEnabled: boolean
+  onRhythmColsEnabledChange: (value: boolean) => void
+  rhythmColsDirection: GridRhythmColsDirection
+  onRhythmColsDirectionChange: (value: GridRhythmColsDirection) => void
   isDarkMode: boolean
 }
 
@@ -42,12 +51,16 @@ export const GutterPanel = memo(function GutterPanel({
   onGutterMultipleChange,
   rhythm,
   onRhythmChange,
-  rhythmRotation,
-  onRhythmRotationChange,
+  rhythmRowsEnabled,
+  onRhythmRowsEnabledChange,
+  rhythmRowsDirection,
+  onRhythmRowsDirectionChange,
+  rhythmColsEnabled,
+  onRhythmColsEnabledChange,
+  rhythmColsDirection,
+  onRhythmColsDirectionChange,
   isDarkMode,
 }: Props) {
-  const normalizedRotation = rhythmRotation === 180 ? 180 : 0
-  const rotationSliderIndex = Math.max(0, RHYTHM_ROTATION_OPTIONS.indexOf(normalizedRotation))
   return (
     <PanelCard
       title="IV. Grid Rhythm"
@@ -75,26 +88,55 @@ export const GutterPanel = memo(function GutterPanel({
         </Select>
       </div>
       {rhythm === "fibonacci" ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm text-gray-600">Rotation</Label>
-            <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
-              {normalizedRotation}°
-            </span>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-gray-600">Rows</Label>
+              <Switch
+                checked={rhythmRowsEnabled}
+                onCheckedChange={onRhythmRowsEnabledChange}
+                className="h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
+                thumbClassName="h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
+              />
+            </div>
+            <Select
+              value={rhythmRowsDirection}
+              onValueChange={(value) => onRhythmRowsDirectionChange(value as GridRhythmRowsDirection)}
+              disabled={!rhythmRowsEnabled}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ltr">L&gt;R</SelectItem>
+                <SelectItem value="rtl">R&gt;L</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <DebouncedSlider
-            value={[rotationSliderIndex]}
-            min={0}
-            max={1}
-            step={1}
-            onValueCommit={([value]) => {
-              const index = Math.max(0, Math.min(1, Math.round(value)))
-              onRhythmRotationChange(RHYTHM_ROTATION_OPTIONS[index] ?? 0)
-            }}
-          />
-          <div className="grid grid-cols-2 text-[10px] text-gray-500">
-            <span>0°</span>
-            <span className="text-right">180°</span>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-gray-600">Cols</Label>
+              <Switch
+                checked={rhythmColsEnabled}
+                onCheckedChange={onRhythmColsEnabledChange}
+                className="h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
+                thumbClassName="h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
+              />
+            </div>
+            <Select
+              value={rhythmColsDirection}
+              onValueChange={(value) => onRhythmColsDirectionChange(value as GridRhythmColsDirection)}
+              disabled={!rhythmColsEnabled}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ttb">T&gt;B</SelectItem>
+                <SelectItem value="btt">B&gt;T</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       ) : null}

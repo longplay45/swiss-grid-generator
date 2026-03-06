@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
-import type { DisplayUnit, GridRhythm, GridRhythmRotation, TypographyScale } from "@/lib/config/defaults"
+import type {
+  DisplayUnit,
+  GridRhythm,
+  GridRhythmColsDirection,
+  GridRhythmRowsDirection,
+  TypographyScale,
+} from "@/lib/config/defaults"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
 export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "color", "summary"] as const
@@ -22,7 +28,10 @@ export type UiSettingsSnapshot = {
   baselineMultiple: number
   gutterMultiple: number
   rhythm: GridRhythm
-  rhythmRotation: GridRhythmRotation
+  rhythmRowsEnabled: boolean
+  rhythmRowsDirection: GridRhythmRowsDirection
+  rhythmColsEnabled: boolean
+  rhythmColsDirection: GridRhythmColsDirection
   typographyScale: TypographyScale
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
@@ -56,7 +65,10 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.baselineMultiple === b.baselineMultiple
     && a.gutterMultiple === b.gutterMultiple
     && a.rhythm === b.rhythm
-    && a.rhythmRotation === b.rhythmRotation
+    && a.rhythmRowsEnabled === b.rhythmRowsEnabled
+    && a.rhythmRowsDirection === b.rhythmRowsDirection
+    && a.rhythmColsEnabled === b.rhythmColsEnabled
+    && a.rhythmColsDirection === b.rhythmColsDirection
     && a.typographyScale === b.typographyScale
     && a.baseFont === b.baseFont
     && a.imageColorScheme === b.imageColorScheme

@@ -89,7 +89,12 @@ Default: `swiss`
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
 - Gutter multiple: min `1.0`, max `4.0`, step `0.5`, default `1.0`
 - Rhythms (`rhythm`): `repetitive` (default), `fibonacci`
-- Fibonacci rotation (`rhythmRotation`): `0` or `180` (default `0`)
+- Fibonacci rows:
+  - enabled (`rhythmRowsEnabled`): `true|false` (default `true`)
+  - direction (`rhythmRowsDirection`): `ltr` (`L>R`) or `rtl` (`R>L`) (default `ltr`)
+- Fibonacci cols:
+  - enabled (`rhythmColsEnabled`): `true|false` (default `true`)
+  - direction (`rhythmColsDirection`): `ttb` (`T>B`) or `btt` (`B>T`) (default `ttb`)
 
 ### V. Typo
 
@@ -294,7 +299,7 @@ UX:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRotation`, `typographyScale`, `baseFont`, `imageColorScheme`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
 ## JSON Preview Layout Fields (current)
 
