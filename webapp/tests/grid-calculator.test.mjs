@@ -168,6 +168,33 @@ test("typography styles stay baseline-aligned across all scales", () => {
   }
 })
 
+test("non-repetitive rhythm row heights are baseline-aligned per module", () => {
+  const rhythms = ["fibonacci", "golden", "fourth", "fifth"]
+
+  for (const rhythm of rhythms) {
+    const result = generateSwissGrid({
+      format: "A4",
+      orientation: "portrait",
+      marginMethod: 1,
+      gridCols: 5,
+      gridRows: 7,
+      baseline: 12,
+      gutterMultiple: 1,
+      rhythm,
+      rhythmRowsEnabled: true,
+      rhythmRowsDirection: "rtl",
+      rhythmColsEnabled: true,
+      rhythmColsDirection: "btt",
+    })
+
+    for (const height of result.module.heights) {
+      const units = height / result.grid.gridUnit
+      assert.equal(Number.isInteger(units), true, `${rhythm} row height must be baseline-aligned`)
+      assert.ok(units >= 1, `${rhythm} row height baseline units must be >= 1`)
+    }
+  }
+})
+
 test("small page/high row count keeps module height minimum at 2 baselines", () => {
   const result = generateSwissGrid({
     format: "A6",

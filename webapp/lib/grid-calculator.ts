@@ -318,6 +318,56 @@ interface MarginResult {
   gutterV: number;
 }
 
+function quantizeHeightsToBaselineUnits(
+  heights: number[],
+  gridUnit: number,
+  targetUnits: number,
+): number[] {
+  if (!heights.length || !Number.isFinite(gridUnit) || gridUnit <= 0) return heights
+  if (!Number.isInteger(targetUnits) || targetUnits <= 0) return heights
+
+  const rawUnits = heights.map((value) => Math.max(0, value / gridUnit))
+  const quantizedUnits = rawUnits.map((value) => Math.max(1, Math.floor(value)))
+  let usedUnits = quantizedUnits.reduce((sum, value) => sum + value, 0)
+  let remaining = targetUnits - usedUnits
+
+  if (remaining > 0) {
+    const byFractionDesc = rawUnits
+      .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+      .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+
+    let cursor = 0
+    while (remaining > 0 && byFractionDesc.length > 0) {
+      const entry = byFractionDesc[cursor % byFractionDesc.length]
+      quantizedUnits[entry.index] += 1
+      remaining -= 1
+      cursor += 1
+    }
+  } else if (remaining < 0) {
+    const byLargestUnitsDesc = quantizedUnits
+      .map((value, index) => ({ index, value }))
+      .sort((a, b) => b.value - a.value || a.index - b.index)
+
+    let cursor = 0
+    while (remaining < 0 && byLargestUnitsDesc.length > 0) {
+      const entry = byLargestUnitsDesc[cursor % byLargestUnitsDesc.length]
+      if (quantizedUnits[entry.index] > 1) {
+        quantizedUnits[entry.index] -= 1
+        remaining += 1
+      }
+      cursor += 1
+      if (cursor > byLargestUnitsDesc.length * 4 && remaining < 0) break
+    }
+  }
+
+  usedUnits = quantizedUnits.reduce((sum, value) => sum + value, 0)
+  if (usedUnits !== targetUnits) {
+    return heights
+  }
+
+  return quantizedUnits.map((value) => value * gridUnit)
+}
+
 function calculateProgressiveMargins(
   gridUnit: number,
   w: number,
@@ -642,7 +692,11 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     resolvedRhythmColsDirection,
   )
   const moduleWidths = moduleSizes.widths
-  const moduleHeights = moduleSizes.heights
+  const moduleHeights = quantizeHeightsToBaselineUnits(
+    moduleSizes.heights,
+    gridUnit,
+    gridRows * moduleBaselineUnits,
+  )
   const modW = moduleWidths.reduce((acc, value) => acc + value, 0) / Math.max(1, moduleWidths.length)
   const modHAverage = moduleHeights.reduce((acc, value) => acc + value, 0) / Math.max(1, moduleHeights.length)
 
