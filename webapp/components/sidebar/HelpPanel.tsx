@@ -125,7 +125,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Pick a ratio in `I. Canvas Ratio` and set orientation/rotation.</li>
           <li>Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.</li>
           <li>Choose margin method in `III. Margins` or enable `Custom Margins`.</li>
-          <li>Set columns/rows, gutter, and rhythm in `IV. Grid Rhythm`.</li>
+          <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
           <li>Set type hierarchy and base font in `V. Typo`.</li>
           <li>Set default placeholder palette in `VI. Color Shema`.</li>
           <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
@@ -449,14 +449,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-gutter" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          IV. Grid Rhythm
+          IV. Grid &amp; Rhythms
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
           <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
           <li>`Rhythms` options: `Fibonacci`, `Golden Ratio`, `Perfect Fifth`, `Perfect Fourth`, `Repetitive` (default).</li>
-          <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `L&gt;R` or `R&gt;L` (default: on, `L&gt;R`).</li>
-          <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `T&gt;B` or `B&gt;T` (default: on, `T&gt;B`).</li>
+          <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>
+          <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `Top to Bottom` or `Bottom to top` (default: on, `Top to Bottom`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
           <li>Reducing rows/cols may trigger reflow suggestions.</li>
         </ul>

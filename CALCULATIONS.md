@@ -202,10 +202,10 @@ Module distribution supports these rhythm modes:
 
 For all non-repetitive rhythms, each axis can be controlled independently:
 
-- rows axis (`widths`): on/off, direction `L>R` (`ltr`) or `R>L` (`rtl`)
-- cols axis (`heights`): on/off, direction `T>B` (`ttb`) or `B>T` (`btt`)
+- rows axis (`widths`): on/off, direction `Left to right` (`ltr`) or `Right to left` (`rtl`)
+- cols axis (`heights`): on/off, direction `Top to Bottom` (`ttb`) or `Bottom to top` (`btt`)
 
-Defaults are rows on + `L>R`, cols on + `T>B`.
+Defaults are rows on + `Left to right`, cols on + `Top to Bottom`.
 
 ---
 
@@ -239,7 +239,7 @@ If rows Fibonacci is disabled, widths fall back to equal distribution:
 widths[i] = moduleWidthBudget / gridCols
 ```
 
-If rows direction is `R>L`, the width sequence is reversed.
+If rows direction is `Right to left`, the width sequence is reversed.
 
 For geometric rhythms, the sequence is:
 
@@ -271,7 +271,7 @@ Then rhythm is applied:
 - `repetitive`: equal heights
 - non-repetitive rhythms (`fibonacci`, `golden`, `fourth`, `fifth`): normalized sequence proportions (or equal heights if cols rhythm is disabled)
 
-If cols direction is `B>T`, the height sequence is reversed.
+If cols direction is `Bottom to top`, the height sequence is reversed.
 
 The scalar `module.height` value in output is the axis average:
 

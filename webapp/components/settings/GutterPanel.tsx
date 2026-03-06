@@ -71,7 +71,7 @@ export const GutterPanel = memo(function GutterPanel({
 }: Props) {
   return (
     <PanelCard
-      title="IV. Grid Rhythm"
+      title="IV. Grid & Rhythms"
       tooltip="Grid columns, rows, and gutter multiple"
       collapsed={collapsed}
       collapsedSummary={`${gridCols} cols, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`}
@@ -119,8 +119,8 @@ export const GutterPanel = memo(function GutterPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ltr">L&gt;R</SelectItem>
-                <SelectItem value="rtl">R&gt;L</SelectItem>
+                <SelectItem value="ltr">Left to right</SelectItem>
+                <SelectItem value="rtl">Right to left</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -144,8 +144,8 @@ export const GutterPanel = memo(function GutterPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ttb">T&gt;B</SelectItem>
-                <SelectItem value="btt">B&gt;T</SelectItem>
+                <SelectItem value="ttb">Top to Bottom</SelectItem>
+                <SelectItem value="btt">Bottom to top</SelectItem>
               </SelectContent>
             </Select>
           </div>

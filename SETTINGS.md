@@ -83,7 +83,7 @@ Default: `swiss`
 - toggle: on/off
 - per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
 
-### IV. Grid Rhythm
+### IV. Grid & Rhythms
 
 - Columns (`gridCols`): min `1`, max `13`, step `1`, default `3` (from `default_v001.json`)
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
@@ -91,10 +91,10 @@ Default: `swiss`
 - Rhythms (`rhythm`): `fibonacci`, `golden`, `fifth`, `fourth`, `repetitive` (default)
 - Non-repetitive rhythm rows:
   - enabled (`rhythmRowsEnabled`): `true|false` (default `true`)
-  - direction (`rhythmRowsDirection`): `ltr` (`L>R`) or `rtl` (`R>L`) (default `ltr`)
+  - direction (`rhythmRowsDirection`): `ltr` (`Left to right`) or `rtl` (`Right to left`) (default `ltr`)
 - Non-repetitive rhythm cols:
   - enabled (`rhythmColsEnabled`): `true|false` (default `true`)
-  - direction (`rhythmColsDirection`): `ttb` (`T>B`) or `btt` (`B>T`) (default `ttb`)
+  - direction (`rhythmColsDirection`): `ttb` (`Top to Bottom`) or `btt` (`Bottom to top`) (default `ttb`)
 
 ### V. Typo
 
