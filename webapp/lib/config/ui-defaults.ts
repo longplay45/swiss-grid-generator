@@ -3,10 +3,12 @@ import defaultPreset from "@/public/default_v001.json"
 import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import {
   isGridRhythm,
+  isGridRhythmRotation,
   isDisplayUnit,
   isTypographyScale,
   type DisplayUnit,
   type GridRhythm,
+  type GridRhythmRotation,
   type TypographyScale,
 } from "@/lib/config/defaults"
 import {
@@ -27,6 +29,7 @@ type UiSettingsLike = {
   baseFont?: unknown
   imageColorScheme?: unknown
   rhythm?: unknown
+  rhythmRotation?: unknown
   rhythmRotate90?: unknown
   customBaseline?: unknown
 }
@@ -90,8 +93,10 @@ function resolveRhythm(value: unknown): GridRhythm {
   return isGridRhythm(value) ? value : "repetitive"
 }
 
-function resolveRhythmRotate90(value: unknown): boolean {
-  return value === true
+function resolveRhythmRotation(value: unknown, legacyRotate90Value: unknown): GridRhythmRotation {
+  if (isGridRhythmRotation(value)) return value === 180 ? 180 : 0
+  if (legacyRotate90Value === true) return 180
+  return 0
 }
 
 function resolveCustomBaseline(value: unknown, defaultA4Baseline: number): number {
@@ -110,7 +115,7 @@ export function resolveUiDefaults(
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
   rhythm: GridRhythm
-  rhythmRotate90: boolean
+  rhythmRotation: GridRhythmRotation
   customBaseline: number
 } {
   return {
@@ -122,7 +127,7 @@ export function resolveUiDefaults(
     baseFont: resolveBaseFont(uiSettings.baseFont),
     imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
     rhythm: resolveRhythm(uiSettings.rhythm),
-    rhythmRotate90: resolveRhythmRotate90(uiSettings.rhythmRotate90),
+    rhythmRotation: resolveRhythmRotation(uiSettings.rhythmRotation, uiSettings.rhythmRotate90),
     customBaseline: resolveCustomBaseline(uiSettings.customBaseline, defaultA4Baseline),
   }
 }

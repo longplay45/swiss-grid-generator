@@ -83,11 +83,13 @@ Default: `swiss`
 - toggle: on/off
 - per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
 
-### IV. Gutter
+### IV. Grid Rhythm
 
 - Columns (`gridCols`): min `1`, max `13`, step `1`, default `3` (from `default_v001.json`)
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
 - Gutter multiple: min `1.0`, max `4.0`, step `0.5`, default `1.0`
+- Rhythms (`rhythm`): `repetitive` (default), `fibonacci`
+- Fibonacci rotation (`rhythmRotation`): `0` or `180` (default `0`)
 
 ### V. Typo
 
@@ -292,7 +294,7 @@ UX:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `typographyScale`, `baseFont`, `imageColorScheme`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRotation`, `typographyScale`, `baseFont`, `imageColorScheme`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
 ## JSON Preview Layout Fields (current)
 

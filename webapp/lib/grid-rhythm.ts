@@ -1,4 +1,5 @@
 export type GridRhythm = "repetitive" | "fibonacci"
+export type GridRhythmRotation = 0 | 90 | 180 | 360
 
 // NEW: Grid Rhythm (Fibonacci)
 export function calculateModuleSizes(
@@ -7,7 +8,7 @@ export function calculateModuleSizes(
   columns: number,
   rows: number,
   rhythm: GridRhythm,
-  rotate90: boolean,
+  rotation: GridRhythmRotation,
 ): { widths: number[]; heights: number[] } {
   if (rhythm === "repetitive") {
     return {
@@ -30,12 +31,21 @@ export function calculateModuleSizes(
   totalParts = seq.reduce((a, b) => a + b, 0)
   let heights = seq.map((v) => totalHeight * (v / totalParts))
 
-  // Keep the requested 90° swap behaviour while preserving axis lengths.
-  if (rotate90) {
-    ;[widths, heights] = [
-      normalizeAxisToTotal([...heights].reverse(), columns, totalWidth),
-      normalizeAxisToTotal([...widths].reverse(), rows, totalHeight),
-    ]
+  switch (rotation) {
+    case 90:
+      ;[widths, heights] = [
+        normalizeAxisToTotal([...heights].reverse(), columns, totalWidth),
+        normalizeAxisToTotal([...widths].reverse(), rows, totalHeight),
+      ]
+      break
+    case 180:
+      widths = normalizeAxisToTotal([...widths].reverse(), columns, totalWidth)
+      heights = normalizeAxisToTotal([...heights].reverse(), rows, totalHeight)
+      break
+    case 360:
+    case 0:
+    default:
+      break
   }
 
   return { widths, heights }

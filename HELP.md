@@ -23,7 +23,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Pick a ratio in `I. Canvas Ratio` and set orientation/rotation.
 - Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.
 - Choose margin method in `III. Margins` or enable `Custom Margins`.
-- Set columns/rows and gutter in `IV. Gutter`.
+- Set columns/rows, gutter, and rhythm in `IV. Grid Rhythm`.
 - Set type hierarchy and base font in `V. Typo`.
 - Set default image placeholder palette in `VI. Color Shema`.
 - Use display toggles in the header to inspect baselines, margins, modules, and type.
@@ -32,6 +32,8 @@ Comprehensive user reference for the in-app Help sidebar.
 
 - Grid range is `1..13` for both columns and rows.
 - Gutter multiple range is `1.0..4.0` in `0.5` steps.
+- `Rhythms` options: `Repetitive` (default) and `Fibonacci`.
+- Fibonacci rotation currently supports `0°` and `180°`.
 - Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).
 - Top/bottom margins snap to baseline grid units.
 - Custom margins are entered as baseline multiples per side.

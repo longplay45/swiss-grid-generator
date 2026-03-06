@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { GridRhythm } from "@/lib/config/defaults"
+import type { GridRhythm, GridRhythmRotation } from "@/lib/config/defaults"
+
+const RHYTHM_ROTATION_OPTIONS: GridRhythmRotation[] = [0, 180]
 
 type Props = {
   collapsed: boolean
@@ -23,8 +25,8 @@ type Props = {
   onGutterMultipleChange: (value: number) => void
   rhythm: GridRhythm
   onRhythmChange: (value: GridRhythm) => void
-  rhythmRotate90: boolean
-  onRhythmRotate90Change: (value: boolean) => void
+  rhythmRotation: GridRhythmRotation
+  onRhythmRotationChange: (value: GridRhythmRotation) => void
   isDarkMode: boolean
 }
 
@@ -40,13 +42,15 @@ export const GutterPanel = memo(function GutterPanel({
   onGutterMultipleChange,
   rhythm,
   onRhythmChange,
-  rhythmRotate90,
-  onRhythmRotate90Change,
+  rhythmRotation,
+  onRhythmRotationChange,
   isDarkMode,
 }: Props) {
+  const normalizedRotation = rhythmRotation === 180 ? 180 : 0
+  const rotationSliderIndex = Math.max(0, RHYTHM_ROTATION_OPTIONS.indexOf(normalizedRotation))
   return (
     <PanelCard
-      title="IV. Gutter"
+      title="IV. Grid Rhythm"
       tooltip="Grid columns, rows, and gutter multiple"
       collapsed={collapsed}
       collapsedSummary={`${gridCols} cols, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`}
@@ -56,7 +60,7 @@ export const GutterPanel = memo(function GutterPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Grid Rhythm</Label>
+        <Label className="text-sm text-gray-600">Rhythms</Label>
         <Select
           value={rhythm}
           onValueChange={(value) => onRhythmChange(value as GridRhythm)}
@@ -66,20 +70,34 @@ export const GutterPanel = memo(function GutterPanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="repetitive">Repetitive</SelectItem>
-            <SelectItem value="fibonacci">Fibonacci L→R</SelectItem>
+            <SelectItem value="fibonacci">Fibonacci</SelectItem>
           </SelectContent>
         </Select>
-        <label className={`inline-flex items-center gap-2 text-xs ${rhythm === "fibonacci" ? "text-gray-700" : "text-gray-400"}`}>
-          <input
-            type="checkbox"
-            className="h-3.5 w-3.5 rounded border-gray-300"
-            checked={rhythmRotate90}
-            disabled={rhythm !== "fibonacci"}
-            onChange={(event) => onRhythmRotate90Change(event.target.checked)}
-          />
-          Rotate rhythm 90°
-        </label>
       </div>
+      {rhythm === "fibonacci" ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm text-gray-600">Rotation</Label>
+            <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+              {normalizedRotation}°
+            </span>
+          </div>
+          <DebouncedSlider
+            value={[rotationSliderIndex]}
+            min={0}
+            max={1}
+            step={1}
+            onValueCommit={([value]) => {
+              const index = Math.max(0, Math.min(1, Math.round(value)))
+              onRhythmRotationChange(RHYTHM_ROTATION_OPTIONS[index] ?? 0)
+            }}
+          />
+          <div className="grid grid-cols-2 text-[10px] text-gray-500">
+            <span>0°</span>
+            <span className="text-right">180°</span>
+          </div>
+        </div>
+      ) : null}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label className="text-sm text-gray-600">Vertical Fields</Label>

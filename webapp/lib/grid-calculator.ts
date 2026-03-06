@@ -1,6 +1,10 @@
 // Swiss Grid Calculator - Ported from Python to TypeScript
 // Based on Müller-Brockmann's "Grid Systems in Graphic Design" (1981)
-import { calculateModuleSizes, type GridRhythm } from "./grid-rhythm.ts"
+import {
+  calculateModuleSizes,
+  type GridRhythm,
+  type GridRhythmRotation,
+} from "./grid-rhythm.ts"
 
 export interface FormatDimensions {
   width: number;
@@ -17,6 +21,8 @@ export interface GridSettings {
   baselineMultiple?: number;
   gutterMultiple?: number;
   rhythm?: GridRhythm;
+  rhythmRotation?: GridRhythmRotation;
+  // Legacy compatibility for old saved settings payloads.
   rhythmRotate90?: boolean;
   customMargins?: { top: number; bottom: number; left: number; right: number };
   typographyScale?: "swiss" | "golden" | "fourth" | "fifth" | "fibonacci";
@@ -33,7 +39,7 @@ export interface GridResult {
     baselineMultiple: number;
     customBaseline: number | undefined;
     rhythm: GridRhythm;
-    rhythmRotate90: boolean;
+    rhythmRotation: GridRhythmRotation;
   };
   pageSizePt: {
     width: number;
@@ -492,7 +498,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     baselineMultiple = 1.0,
     gutterMultiple = 1.0,
     rhythm = "repetitive",
-    rhythmRotate90 = false,
+    rhythmRotation = settings.rhythmRotate90 === true ? 90 : 0,
     typographyScale = "swiss",
   } = settings;
 
@@ -601,7 +607,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     gridCols,
     gridRows,
     rhythm,
-    rhythmRotate90,
+    rhythmRotation,
   )
   const moduleWidths = moduleSizes.widths
   const moduleHeights = moduleSizes.heights
@@ -627,7 +633,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
       baselineMultiple,
       customBaseline,
       rhythm,
-      rhythmRotate90,
+      rhythmRotation,
     },
     pageSizePt: {
       width: Math.round(w * 1000) / 1000,

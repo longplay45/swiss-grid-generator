@@ -23,3 +23,11 @@ const GRID_RHYTHM_SET = new Set(GRID_RHYTHMS)
 export function isGridRhythm(value: unknown): value is GridRhythm {
   return typeof value === "string" && GRID_RHYTHM_SET.has(value as GridRhythm)
 }
+
+export const GRID_RHYTHM_ROTATIONS = [0, 90, 180, 360] as const
+export type GridRhythmRotation = (typeof GRID_RHYTHM_ROTATIONS)[number]
+const GRID_RHYTHM_ROTATION_SET = new Set<number>(GRID_RHYTHM_ROTATIONS)
+
+export function isGridRhythmRotation(value: unknown): value is GridRhythmRotation {
+  return typeof value === "number" && GRID_RHYTHM_ROTATION_SET.has(value)
+}

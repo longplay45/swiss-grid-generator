@@ -114,6 +114,8 @@
     "gridRows": 8,
     "baselineMultiple": 2,
     "gutterMultiple": 1,
+    "rhythm": "repetitive",
+    "rhythmRotation": 0,
     "typographyScale": "swiss",
     "baseFont": "Inter",
     "imageColorScheme": "s1",

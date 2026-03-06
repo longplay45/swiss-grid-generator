@@ -164,7 +164,7 @@ Left and right margins are not snapped (they don't affect vertical baseline alig
 After calculating module heights (which are baseline-aligned), the actual content area height is computed from the aligned modules:
 
 ```
-netHAligned = gridRows × modH + (gridRows - 1) × gridMarginVertical
+netHAligned = sum(moduleHeights) + (gridRows - 1) × gridMarginVertical
 ```
 
 This value is used as `contentArea.height` in the output. The bottom margin remains the baseline-snapped value from the initial calculation.
@@ -180,63 +180,81 @@ gridMarginHorizontal = gridUnit × gutterMultiple
 gridMarginVertical   = gridUnit × gutterMultiple
 ```
 
-Where `gutterMultiple` defaults to 1.0 (range 0.5–4.0, step 0.5).
+Where `gutterMultiple` defaults to 1.0 (range 1.0–4.0, step 0.5).
 
 **Example with 12pt baseline:**
 
 | Gutter Multiple | Gutter Size |
 |-----------------|-------------|
-| 0.5×            | 6pt         |
 | 1.0× (default)  | 12pt        |
 | 1.5×            | 18pt        |
 | 2.0×            | 24pt        |
+
+### Grid Rhythm
+
+Module distribution supports two rhythm modes:
+
+- `repetitive` (default): equal-width/equal-height modules
+- `fibonacci`: proportional module sizes from a normalized Fibonacci sequence per axis
+
+For Fibonacci mode, active rotation options are currently:
+
+- `0°`: base sequence direction
+- `180°`: reverse both axes
 
 ---
 
 ## Modules
 
-Modules are the individual grid cells. Their dimensions are calculated to fill the content area.
+Modules are the individual grid cells. Their dimensions are calculated to fill the content area budget.
 
 ### Module Width
 
 ```
 netW = pageWidth - margin_left - margin_right
-modW = (netW - (gridCols - 1) × gridMarginHorizontal) / gridCols
+moduleWidthBudget = netW - (gridCols - 1) × gridMarginHorizontal
 ```
 
-**Example:** A4 portrait with 24pt left/right margins, 4 columns, 12pt gutters:
+For `repetitive` rhythm:
 
 ```
-netW = 595.276 - 24 - 24 = 547.276pt
-modW = (547.276 - 3 × 12) / 4 = 127.819pt
+widths[i] = moduleWidthBudget / gridCols
 ```
 
-### Module Height (Baseline-Aligned)
+For `fibonacci` rhythm:
 
-Module height must span an **integer number of baseline units**:
+```
+fib = [1, 2, 3, 5, ...]
+widths[i] = moduleWidthBudget × fib[i] / sum(fib)
+```
+
+The scalar `module.width` value in output is the axis average:
+
+```
+module.width = average(widths)
+```
+
+### Module Height (Baseline-Aligned Budget + Rhythm Distribution)
+
+First the vertical module budget is baseline-aligned:
 
 ```
 netH                 = pageHeight - margin_top - margin_bottom
-totalVerticalUnits   = round(netH / gridUnit)
-unitsPerCell         = totalVerticalUnits / gridRows
-baselineUnitsPerCell = floor(unitsPerCell)
-
-if baselineUnitsPerCell < 2:
-    baselineUnitsPerCell = 2    # minimum 2 baseline units per cell
-
-cellHeight = baselineUnitsPerCell × gridUnit
-modH       = cellHeight - gridMarginVertical
+moduleHeightBudget   = netH - (gridRows - 1) × gridMarginVertical
+moduleBaselineUnits  = floor(moduleHeightBudget / (gridRows × gridUnit))
+modH                 = max(2, moduleBaselineUnits) × gridUnit
+moduleHeightDistributionBudget = gridRows × modH
 ```
 
-**Example:** A4 portrait, 12pt baseline, 6 rows, margins 12pt top / 36pt bottom:
+Then rhythm is applied:
+
+- `repetitive`: equal heights
+- `fibonacci`: normalized Fibonacci proportions
+
+The scalar `module.height` value in output is the axis average:
 
 ```
-netH = 841.890 - 12 - 36 = 793.890pt
-totalVerticalUnits = round(793.890 / 12) = 66
-unitsPerCell = 66 / 6 = 11
-baselineUnitsPerCell = 11
-cellHeight = 11 × 12 = 132pt
-modH = 132 - 12 = 120pt
+module.height = average(heights)
 ```
 
 ### Aspect Ratio
@@ -454,10 +472,10 @@ Interactive placement is orchestrated in `webapp/components/grid-preview.tsx`, m
 Rows are stored in baseline-row units but snapped/repositioned to module-top anchors:
 
 ```
-moduleRowStep = (moduleHeight + verticalGutter) / gridUnit
-moduleRowStart(i) = i * moduleRowStep
+moduleRowStart(i) = cumulativeRowOffset(i) / gridUnit
 ```
 
+`cumulativeRowOffset(i)` is built from the current `moduleHeights[]` array plus inter-row gutters.
 Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
 
 Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
@@ -483,22 +501,22 @@ If `reflow = false`:
 
 If `reflow = true`:
 - newspaper flow by columns inside selected span
-- width per text column = one module width
+- width per text column = active module-column width at placement
 - lines per column constrained by selected row span height
 
 ```
-moduleHeightForBlock = rowSpan * moduleHeight + (rowSpan - 1) * verticalGutter
+moduleHeightForBlock = sumAxisSpan(moduleHeights, rowStartIndex, rowSpan, verticalGutter)
 maxLinesPerColumn = floor(moduleHeightForBlock / lineStep)
 neededCols = ceil(totalWrappedLines / maxLinesPerColumn)
 ```
 
 ### Grid/Baseline Structural Changes
 
-When horizontal fields (`gridRows`) or module row step change (e.g., baseline/gutter effects), existing rows remap by module index:
+When horizontal fields (`gridRows`) or module row starts change (e.g., baseline/gutter/rhythm effects), existing rows remap by module index:
 
 ```
-moduleIndex = round(oldRow / oldModuleRowStep)
-newRow = moduleIndex * newModuleRowStep
+moduleIndex = nearestIndex(oldModuleRowStarts, oldRow)
+newRow = newModuleRowStarts[moduleIndex] + baselineOffsetWithinOldModule
 ```
 
 Then the scored planner resolves collisions/out-of-bounds.
