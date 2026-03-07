@@ -94,15 +94,17 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
   )
 }
 
+type UseSettingsHistoryOptions = {
+  onRecordHistory?: () => void
+}
+
 export function useSettingsHistory(
   buildSnapshot: () => UiSettingsSnapshot,
-  canUndoPreview: boolean,
-  canRedoPreview: boolean,
+  options: UseSettingsHistoryOptions = {},
 ) {
+  const { onRecordHistory } = options
   const [settingsPast, setSettingsPast] = useState<UiSettingsSnapshot[]>([])
   const [settingsFuture, setSettingsFuture] = useState<UiSettingsSnapshot[]>([])
-  const [undoNonce, setUndoNonce] = useState(0)
-  const [redoNonce, setRedoNonce] = useState(0)
   const uiSnapshotRef = useRef<UiSettingsSnapshot | null>(null)
   const skipUiHistoryRef = useRef(false)
 
@@ -128,39 +130,34 @@ export function useSettingsHistory(
     })
     setSettingsFuture([])
     uiSnapshotRef.current = current
-  }, [buildSnapshot])
+    onRecordHistory?.()
+  }, [buildSnapshot, onRecordHistory])
 
-  const undoAny = useCallback(
+  const undo = useCallback(
     (applySnapshot: (s: UiSettingsSnapshot) => void) => {
-      if (settingsPast.length > 0) {
-        const current = buildSnapshot()
-        const previous = settingsPast[settingsPast.length - 1]
-        setSettingsPast((past) => past.slice(0, -1))
-        setSettingsFuture((future) => [current, ...future].slice(0, SETTINGS_HISTORY_LIMIT))
-        applySnapshot(previous)
-        return
-      }
-      setUndoNonce((n) => n + 1)
+      if (settingsPast.length === 0) return
+      const current = buildSnapshot()
+      const previous = settingsPast[settingsPast.length - 1]
+      setSettingsPast((past) => past.slice(0, -1))
+      setSettingsFuture((future) => [current, ...future].slice(0, SETTINGS_HISTORY_LIMIT))
+      applySnapshot(previous)
     },
     [buildSnapshot, settingsPast],
   )
 
-  const redoAny = useCallback(
+  const redo = useCallback(
     (applySnapshot: (s: UiSettingsSnapshot) => void) => {
-      if (settingsFuture.length > 0) {
-        const current = buildSnapshot()
-        const next = settingsFuture[0]
-        setSettingsFuture((future) => future.slice(1))
-        setSettingsPast((past) => {
-          const withCurrent = [...past, current]
-          return withCurrent.length > SETTINGS_HISTORY_LIMIT
-            ? withCurrent.slice(withCurrent.length - SETTINGS_HISTORY_LIMIT)
-            : withCurrent
-        })
-        applySnapshot(next)
-        return
-      }
-      setRedoNonce((n) => n + 1)
+      if (settingsFuture.length === 0) return
+      const current = buildSnapshot()
+      const next = settingsFuture[0]
+      setSettingsFuture((future) => future.slice(1))
+      setSettingsPast((past) => {
+        const withCurrent = [...past, current]
+        return withCurrent.length > SETTINGS_HISTORY_LIMIT
+          ? withCurrent.slice(withCurrent.length - SETTINGS_HISTORY_LIMIT)
+          : withCurrent
+      })
+      applySnapshot(next)
     },
     [buildSnapshot, settingsFuture],
   )
@@ -187,14 +184,12 @@ export function useSettingsHistory(
   return {
     settingsPast,
     settingsFuture,
-    undoNonce,
-    redoNonce,
     suppressNext,
     setCurrentSnapshot,
     reset,
-    canUndo: settingsPast.length > 0 || canUndoPreview,
-    canRedo: settingsFuture.length > 0 || canRedoPreview,
-    undoAny,
-    redoAny,
+    canUndo: settingsPast.length > 0,
+    canRedo: settingsFuture.length > 0,
+    undo,
+    redo,
   }
 }

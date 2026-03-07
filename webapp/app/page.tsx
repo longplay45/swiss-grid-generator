@@ -26,7 +26,7 @@ import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
-import { ColorShemaPanel } from "@/components/settings/ColorShemaPanel"
+import { ColorSchemePanel } from "@/components/settings/ColorSchemePanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import type { LayoutPreset } from "@/lib/presets"
@@ -78,6 +78,7 @@ const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
+const GLOBAL_HISTORY_LIMIT = 150
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 type DocumentMetadata = {
@@ -86,6 +87,7 @@ type DocumentMetadata = {
   author: string
   createdAt?: string
 }
+type HistoryDomain = "settings" | "preview"
 
 function toNormalizedIsoDate(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined
@@ -527,7 +529,10 @@ export default function Home() {
   const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
   const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
   const [canUndoPreview, setCanUndoPreview] = useState(false)
-  const [canRedoPreview, setCanRedoPreview] = useState(false)
+  const [previewUndoNonce, setPreviewUndoNonce] = useState(0)
+  const [previewRedoNonce, setPreviewRedoNonce] = useState(0)
+  const [undoDomains, setUndoDomains] = useState<HistoryDomain[]>([])
+  const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const showSectionHelpIcons = activeSidebarPanel === "help"
@@ -539,6 +544,29 @@ export default function Home() {
     description: "",
     author: "",
   })
+  const undoDomainsRef = useRef<HistoryDomain[]>([])
+  const redoDomainsRef = useRef<HistoryDomain[]>([])
+
+  useEffect(() => {
+    undoDomainsRef.current = undoDomains
+  }, [undoDomains])
+
+  useEffect(() => {
+    redoDomainsRef.current = redoDomains
+  }, [redoDomains])
+
+  const recordHistoryDomain = useCallback((domain: HistoryDomain) => {
+    setUndoDomains((prev) => {
+      const next = [...prev, domain]
+      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
+    })
+    setRedoDomains([])
+  }, [])
+
+  const resetHistoryDomains = useCallback(() => {
+    setUndoDomains([])
+    setRedoDomains([])
+  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -670,7 +698,9 @@ export default function Home() {
 
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
 
-  const history = useSettingsHistory(buildUiSnapshot, canUndoPreview, canRedoPreview)
+  const history = useSettingsHistory(buildUiSnapshot, {
+    onRecordHistory: () => recordHistoryDomain("settings"),
+  })
   const { suppressNext, setCurrentSnapshot, reset: resetSettingsHistory } = history
 
   const applyUiSnapshot = useCallback(
@@ -682,35 +712,61 @@ export default function Home() {
     [dispatch, suppressNext, setCurrentSnapshot],
   )
 
-  const undoAny = useCallback(
-    () => history.undoAny(applyUiSnapshot),
-    [history, applyUiSnapshot],
-  )
-  const redoAny = useCallback(
-    () => history.redoAny(applyUiSnapshot),
-    [history, applyUiSnapshot],
-  )
+  const canUndo = undoDomains.length > 0
+  const canRedo = redoDomains.length > 0
+
+  const undoAny = useCallback(() => {
+    const domain = undoDomainsRef.current[undoDomainsRef.current.length - 1]
+    if (!domain) return
+
+    if (domain === "settings") history.undo(applyUiSnapshot)
+    else setPreviewUndoNonce((nonce) => nonce + 1)
+
+    setUndoDomains((prev) => prev.slice(0, -1))
+    setRedoDomains((prev) => {
+      const next = [...prev, domain]
+      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
+    })
+  }, [applyUiSnapshot, history])
+
+  const redoAny = useCallback(() => {
+    const domain = redoDomainsRef.current[redoDomainsRef.current.length - 1]
+    if (!domain) return
+
+    if (domain === "settings") history.redo(applyUiSnapshot)
+    else setPreviewRedoNonce((nonce) => nonce + 1)
+
+    setRedoDomains((prev) => prev.slice(0, -1))
+    setUndoDomains((prev) => {
+      const next = [...prev, domain]
+      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
+    })
+  }, [applyUiSnapshot, history])
 
   const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
     setActiveHelpSectionId(sectionId)
     setActiveSidebarPanel("help")
   }, [])
 
-  const handlePreviewHistoryAvailabilityChange = useCallback((undoAvailable: boolean, redoAvailable: boolean) => {
+  const handlePreviewHistoryAvailabilityChange = useCallback((undoAvailable: boolean) => {
     setCanUndoPreview(undoAvailable)
-    setCanRedoPreview(redoAvailable)
   }, [])
+
+  const handlePreviewHistoryRecord = useCallback(() => {
+    recordHistoryDomain("preview")
+  }, [recordHistoryDomain])
 
   const applyLoadedUiActions = useCallback((actions: UiAction[]) => {
     const nextGridUi = actions.reduce(gridUiReducer, gridUi)
     const nextExportUi = actions.reduce(exportUiReducer, exportUi)
     const nextSnapshot = { ...nextGridUi, ...nextExportUi } as UiSettingsSnapshot
     resetSettingsHistory(nextSnapshot)
+    resetHistoryDomains()
     if (actions.length > 0) {
       suppressNext()
       dispatch({ type: "BATCH", actions })
     }
-  }, [dispatch, exportUi, gridUi, resetSettingsHistory, suppressNext])
+  }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNext])
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNext()
@@ -927,10 +983,10 @@ export default function Home() {
           exportActions.openExportDialog()
           return
         case "undo":
-          if (history.canUndo) undoAny()
+          if (canUndo) undoAny()
           return
         case "redo":
-          if (history.canRedo) redoAny()
+          if (canRedo) redoAny()
           return
         case "toggle_dark_mode":
           setIsDarkUi((prev) => !prev)
@@ -962,7 +1018,7 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [dispatch, exportActions, history.canRedo, history.canUndo, redoAny, toggleHelpPanelFromHeader, undoAny])
+  }, [canRedo, canUndo, dispatch, exportActions, redoAny, toggleHelpPanelFromHeader, undoAny])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -994,7 +1050,6 @@ export default function Home() {
         setDocumentMetadata(extractDocumentMetadata(parsed))
         setDocumentHistoryResetNonce((nonce) => nonce + 1)
         setCanUndoPreview(false)
-        setCanRedoPreview(false)
         setShowPresetsBrowser(false)
         isDirtyRef.current = false
       } catch (error) {
@@ -1056,8 +1111,8 @@ export default function Home() {
     showImagePlaceholders,
     showTypography,
     showRolloverInfo,
-    canUndo: history.canUndo,
-    canRedo: history.canRedo,
+    canUndo,
+    canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),
     onLoadJson: () => loadFileInputRef.current?.click(),
     onSaveJson: exportActions.openSaveDialog,
@@ -1130,7 +1185,6 @@ export default function Home() {
 
     setDocumentHistoryResetNonce((nonce) => nonce + 1)
     setCanUndoPreview(false)
-    setCanRedoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
   }, [applyLoadedUiActions, collapsed])
@@ -1214,12 +1268,12 @@ export default function Home() {
           isDarkMode={isDarkUi}
         />
 
-        <ColorShemaPanel
+        <ColorSchemePanel
           collapsed={collapsed.color}
           onHeaderClick={handleSectionHeaderClick("color")}
           onHeaderDoubleClick={handleSectionHeaderDoubleClick}
-          colorShema={imageColorScheme}
-          onColorShemaChange={setImageColorScheme}
+          colorScheme={imageColorScheme}
+          onColorSchemeChange={setImageColorScheme}
           isDarkMode={isDarkUi}
         />
       </SettingsHelpNavigationProvider>
@@ -1338,9 +1392,12 @@ export default function Home() {
               initialLayout={loadedPreviewLayout?.layout ?? null}
               initialLayoutKey={loadedPreviewLayout?.key ?? 0}
               rotation={rotation}
-              undoNonce={history.undoNonce}
-              redoNonce={history.redoNonce}
+              undoNonce={previewUndoNonce}
+              redoNonce={previewRedoNonce}
               historyResetToken={documentHistoryResetNonce}
+              onHistoryRecord={handlePreviewHistoryRecord}
+              onUndoRequest={undoAny}
+              onRedoRequest={redoAny}
               onOpenHelpSection={handlePreviewOpenHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
               onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
@@ -1418,15 +1475,17 @@ export default function Home() {
     handleLoadPresetLayout,
     handlePreviewGridRestore,
     handlePreviewHistoryAvailabilityChange,
+    handlePreviewHistoryRecord,
     handlePreviewOpenHelpSection,
-    history.redoNonce,
-    history.undoNonce,
+    previewRedoNonce,
+    previewUndoNonce,
     imageColorScheme,
     isDarkUi,
     loadLayout,
     loadedPreviewLayout,
     showPresetsBrowser,
     renderHeaderAction,
+    redoAny,
     result,
     rotation,
     setImageColorScheme,
@@ -1438,6 +1497,7 @@ export default function Home() {
     showTypography,
     showRolloverInfo,
     sidebarGroup,
+    undoAny,
     uiTheme.divider,
     uiTheme.bodyText,
     uiTheme.previewHeader,

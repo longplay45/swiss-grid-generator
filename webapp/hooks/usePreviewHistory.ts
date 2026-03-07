@@ -8,6 +8,7 @@ type Args<T> = {
   applySnapshot: (snapshot: T) => void
   onClearTransient?: () => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
+  onRecordHistory?: () => void
 }
 
 export function usePreviewHistory<T>({
@@ -18,6 +19,7 @@ export function usePreviewHistory<T>({
   applySnapshot,
   onClearTransient,
   onHistoryAvailabilityChange,
+  onRecordHistory,
 }: Args<T>) {
   const [historyPast, setHistoryPast] = useState<T[]>([])
   const [historyFuture, setHistoryFuture] = useState<T[]>([])
@@ -30,7 +32,8 @@ export function usePreviewHistory<T>({
       return next.length > historyLimit ? next.slice(next.length - historyLimit) : next
     })
     setHistoryFuture([])
-  }, [historyLimit])
+    onRecordHistory?.()
+  }, [historyLimit, onRecordHistory])
 
   const recordHistoryBeforeChange = useCallback(() => {
     pushHistory(buildSnapshot())

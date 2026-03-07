@@ -18,25 +18,25 @@ type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
   onHeaderDoubleClick: (event: React.MouseEvent) => void
-  colorShema: ImageColorSchemeId
-  onColorShemaChange: (value: ImageColorSchemeId) => void
+  colorScheme: ImageColorSchemeId
+  onColorSchemeChange: (value: ImageColorSchemeId) => void
   isDarkMode: boolean
 }
 
-export const ColorShemaPanel = memo(function ColorShemaPanel({
+export const ColorSchemePanel = memo(function ColorSchemePanel({
   collapsed,
   onHeaderClick,
   onHeaderDoubleClick,
-  colorShema,
-  onColorShemaChange,
+  colorScheme,
+  onColorSchemeChange,
   isDarkMode,
 }: Props) {
-  const selected = getImageColorScheme(colorShema)
+  const selected = getImageColorScheme(colorScheme)
 
   return (
     <PanelCard
-      title="VI. Color Shema"
-      tooltip="Base shema for image placeholders"
+      title="VI. Color Scheme"
+      tooltip="Base color scheme for image placeholders"
       collapsed={collapsed}
       collapsedSummary={(
         <div className="flex items-center gap-1.5">
@@ -56,10 +56,10 @@ export const ColorShemaPanel = memo(function ColorShemaPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Base Shema</Label>
+        <Label className="text-sm text-gray-600">Base Color Scheme</Label>
         <Select
-          value={colorShema}
-          onValueChange={(value) => onColorShemaChange(value as ImageColorSchemeId)}
+          value={colorScheme}
+          onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
         >
           <SelectTrigger>
             <SelectValue />
@@ -94,4 +94,4 @@ export const ColorShemaPanel = memo(function ColorShemaPanel({
   )
 })
 
-ColorShemaPanel.displayName = "ColorShemaPanel"
+ColorSchemePanel.displayName = "ColorSchemePanel"

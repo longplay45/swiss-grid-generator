@@ -21,7 +21,7 @@ export const GRID_SETTINGS_INDEX_ITEMS = [
   { id: "help-margins", label: "III. Margins" },
   { id: "help-gutter", label: "IV. Gutter" },
   { id: "help-typo", label: "V. Typo" },
-  { id: "help-color-shema", label: "VI. Color Shema" },
+  { id: "help-color-scheme", label: "VI. Color Scheme" },
 ] as const
 
 export const HEADER_CONTROLS_INDEX_ITEMS = [
@@ -64,7 +64,7 @@ export const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId>
   margins: "help-margins",
   gutter: "help-gutter",
   typo: "help-typo",
-  color: "help-color-shema",
+  color: "help-color-scheme",
   summary: "help-quick-start",
 }
 

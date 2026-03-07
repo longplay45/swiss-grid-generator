@@ -106,10 +106,10 @@ Default: `swiss`
   - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
   - Poster: `Playfair Display`
 
-### VI. Color Shema
+### VI. Color Scheme
 
-- Selects the global base shema for image placeholders.
-- Available shemas:
+- Selects the global base scheme for image placeholders.
+- Available schemes:
   - `s1`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `s2`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#f1f2f0`
   - `s3`: `#c7943e`, `#c7943e`, `#c7943e`, `#c7943e`

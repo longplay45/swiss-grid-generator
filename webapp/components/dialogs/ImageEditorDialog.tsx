@@ -77,7 +77,7 @@ export function ImageEditorDialog({
 
         <div className="space-y-3 px-3 py-3">
           <div className="space-y-1">
-            <div className="text-xs">Color Shema</div>
+            <div className="text-xs">Color Scheme</div>
             <Select
               value={selectedColorScheme}
               onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}

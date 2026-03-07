@@ -127,7 +127,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Choose margin method in `III. Margins` or enable `Custom Margins`.</li>
           <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
           <li>Set type hierarchy and base font in `V. Typo`.</li>
-          <li>Set default placeholder palette in `VI. Color Shema`.</li>
+          <li>Set default placeholder palette in `VI. Color Scheme`.</li>
           <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
         </ul>
       </section>
@@ -154,7 +154,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
           <li>Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.</li>
-          <li>Color submenu: shema selector and swatches.</li>
+          <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
           <li>Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
@@ -172,7 +172,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.</li>
-          <li>Controls: color shema selector, row span, column span, and color swatches.</li>
+          <li>Controls: color scheme selector, row span, column span, and color swatches.</li>
           <li>Save applies changes; delete removes the placeholder.</li>
           <li>`Esc` or click outside closes without saving.</li>
         </ul>
@@ -478,14 +478,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
-      <section id="help-color-shema" className="space-y-2">
+      <section id="help-color-scheme" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          VI. Color Shema
+          VI. Color Scheme
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Selects the base shema used for new image placeholders.</li>
+          <li>Selects the base scheme used for new image placeholders.</li>
           <li>The same selector appears in the image editor popup.</li>
-          <li>Image editor starts with the current global shema selected.</li>
+          <li>Image editor starts with the current global scheme selected.</li>
           <li>Each placeholder still stores its own final color value.</li>
         </ul>
       </section>

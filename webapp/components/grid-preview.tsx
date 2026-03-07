@@ -254,6 +254,9 @@ interface GridPreviewProps {
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
+  onHistoryRecord?: () => void
+  onUndoRequest?: () => void
+  onRedoRequest?: () => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   showEditorHelpIcon?: boolean
   baseFont?: FontFamily
@@ -282,6 +285,9 @@ export const GridPreview = memo(function GridPreview({
   onLayoutChange,
   onRequestGridRestore,
   onHistoryAvailabilityChange,
+  onHistoryRecord,
+  onUndoRequest,
+  onRedoRequest,
   onOpenHelpSection,
   showEditorHelpIcon = false,
   baseFont = DEFAULT_BASE_FONT,
@@ -851,6 +857,7 @@ export const GridPreview = memo(function GridPreview({
     buildSnapshot,
     applySnapshot,
     onHistoryAvailabilityChange,
+    onRecordHistory: onHistoryRecord,
   })
 
   const getGridMetrics = useCallback(() => {
@@ -2173,11 +2180,11 @@ export const GridPreview = memo(function GridPreview({
     setImageEditorState(null)
   }, [])
 
-  const handleImageColorSchemeChange = useCallback((nextShema: ImageColorSchemeId) => {
-    onImageColorSchemeChange?.(nextShema)
+  const handleImageColorSchemeChange = useCallback((nextScheme: ImageColorSchemeId) => {
+    onImageColorSchemeChange?.(nextScheme)
     setImageEditorState((prev) => {
       if (!prev) return prev
-      const nextPalette = getImageColorScheme(nextShema).colors
+      const nextPalette = getImageColorScheme(nextScheme).colors
       const hasCurrentColor = nextPalette.some((color) => color.toLowerCase() === prev.draftColor.toLowerCase())
       if (hasCurrentColor) return prev
       return { ...prev, draftColor: nextPalette[0] }
@@ -2353,8 +2360,8 @@ export const GridPreview = memo(function GridPreview({
     isEditorOpen: Boolean(editorState || imageEditorState),
     focusEditor,
     onCloseEditor: closeAnyEditor,
-    undo,
-    redo,
+    undo: onUndoRequest ?? undo,
+    redo: onRedoRequest ?? redo,
   })
 
   useEffect(() => {
@@ -2697,7 +2704,8 @@ export const GridPreview = memo(function GridPreview({
               variant="outline"
               className="h-7 px-2 text-xs"
               onClick={() => {
-                undo()
+                const performUndo = onUndoRequest ?? undo
+                performUndo()
                 dismissReflowToast()
               }}
             >

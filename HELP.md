@@ -25,7 +25,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Choose margin method in `III. Margins` or enable `Custom Margins`.
 - Set columns/rows, gutter, and rhythm in `IV. Grid & Rhythms`.
 - Set type hierarchy and base font in `V. Typo`.
-- Set default image placeholder palette in `VI. Color Shema`.
+- Set default image placeholder palette in `VI. Color Scheme`.
 - Use display toggles in the header to inspect baselines, margins, modules, and type.
 
 ## Canvas and Grid
@@ -54,7 +54,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.
 - Geometry submenu: row span, column span, paragraph rotation (`-180..180`).
 - Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.
-- Color submenu: shema selector and swatches.
+- Color submenu: scheme selector and swatches.
 - Info submenu includes style/font/geometry/color plus character and word counts.
 - Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.
 - Newspaper reflow is available only when paragraph columns are `2+`.
@@ -65,7 +65,7 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Image Editor Popup
 
 - Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.
-- Controls: color shema selector, row span, column span, and color swatches.
+- Controls: color scheme selector, row span, column span, and color swatches.
 - Save applies changes; delete removes the placeholder.
 - `Esc` or click outside closes without saving.
 
