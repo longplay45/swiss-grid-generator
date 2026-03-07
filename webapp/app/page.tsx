@@ -41,6 +41,7 @@ import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
+import { clampRotation } from "@/lib/block-constraints"
 import {
   isFontFamily,
   type FontFamily,
@@ -61,7 +62,8 @@ import {
   type TypographyScale
 } from "@/lib/config/defaults"
 import {
-  isImageColorSchemeId,
+  isImageColorInScheme,
+  normalizeImageColorSchemeId,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import {
@@ -133,6 +135,7 @@ type GridUiState = Pick<
   | "typographyScale"
   | "baseFont"
   | "imageColorScheme"
+  | "canvasBackground"
   | "customBaseline"
   | "useCustomMargins"
   | "customMarginMultipliers"
@@ -171,6 +174,7 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   typographyScale: RESOLVED_DEFAULTS.typographyScale,
   baseFont: RESOLVED_DEFAULTS.baseFont,
   imageColorScheme: RESOLVED_DEFAULTS.imageColorScheme,
+  canvasBackground: RESOLVED_DEFAULTS.canvasBackground,
   customBaseline: RESOLVED_DEFAULTS.customBaseline,
   useCustomMargins: DEFAULT_UI.useCustomMargins,
   customMarginMultipliers: DEFAULT_UI.customMarginMultipliers,
@@ -220,6 +224,7 @@ type UiAction =
   | { type: "SET"; key: "typographyScale"; value: TypographyScale }
   | { type: "SET"; key: "baseFont"; value: FontFamily }
   | { type: "SET"; key: "imageColorScheme"; value: ImageColorSchemeId }
+  | { type: "SET"; key: "canvasBackground"; value: string | null }
   | { type: "SET"; key: "customBaseline"; value: number }
   | { type: "SET"; key: "displayUnit"; value: DisplayUnit }
   | { type: "SET"; key: "useCustomMargins"; value: boolean }
@@ -242,7 +247,6 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
       switch (action.key) {
         case "canvasRatio":
         case "orientation":
-        case "rotation":
         case "marginMethod":
         case "gridCols":
         case "gridRows":
@@ -254,6 +258,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "rhythmColsDirection":
         case "baseFont":
         case "imageColorScheme":
+        case "canvasBackground":
         case "customBaseline":
         case "useCustomMargins":
         case "customMarginMultipliers":
@@ -265,6 +270,11 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "collapsed":
           if (state[action.key] === action.value) return state
           return { ...state, [action.key]: action.value }
+        case "rotation": {
+          const nextRotation = clampRotation(action.value)
+          if (state.rotation === nextRotation) return state
+          return { ...state, rotation: nextRotation }
+        }
         case "baselineMultiple": {
           const nextBaselineMultiple = Math.max(1, action.value)
           if (state.baselineMultiple === nextBaselineMultiple) return state
@@ -308,6 +318,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         typographyScale: action.snapshot.typographyScale,
         baseFont: action.snapshot.baseFont,
         imageColorScheme: action.snapshot.imageColorScheme,
+        canvasBackground: action.snapshot.canvasBackground,
         customBaseline: action.snapshot.customBaseline,
         useCustomMargins: action.snapshot.useCustomMargins,
         customMarginMultipliers: action.snapshot.customMarginMultipliers,
@@ -385,7 +396,7 @@ function buildUiActionsFromLoadedSettings(
     }
   }
   if (loaded.orientation === "portrait" || loaded.orientation === "landscape") set("orientation", loaded.orientation)
-  if (typeof loaded.rotation === "number") set("rotation", loaded.rotation)
+  if (typeof loaded.rotation === "number") set("rotation", clampRotation(loaded.rotation))
   if (loaded.marginMethod === 1 || loaded.marginMethod === 2 || loaded.marginMethod === 3) {
     set("marginMethod", loaded.marginMethod)
   }
@@ -423,7 +434,16 @@ function buildUiActionsFromLoadedSettings(
   )
   if (isTypographyScale(loaded.typographyScale)) set("typographyScale", loaded.typographyScale)
   if (isFontFamily(loaded.baseFont)) set("baseFont", loaded.baseFont)
-  if (isImageColorSchemeId(loaded.imageColorScheme)) set("imageColorScheme", loaded.imageColorScheme)
+  const loadedImageColorScheme = normalizeImageColorSchemeId(loaded.imageColorScheme)
+  if (loadedImageColorScheme) set("imageColorScheme", loadedImageColorScheme)
+  const backgroundScheme = loadedImageColorScheme ?? RESOLVED_DEFAULTS.imageColorScheme
+  if (loaded.canvasBackground === null) {
+    set("canvasBackground", null)
+  } else if (isImageColorInScheme(loaded.canvasBackground, backgroundScheme)) {
+    set("canvasBackground", loaded.canvasBackground)
+  } else {
+    set("canvasBackground", null)
+  }
   if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
   if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
   if (typeof loaded.useCustomMargins === "boolean") set("useCustomMargins", loaded.useCustomMargins)
@@ -498,14 +518,14 @@ export default function Home() {
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm,
     rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
-    typographyScale, baseFont, imageColorScheme, customBaseline, displayUnit,
+    typographyScale, baseFont, imageColorScheme, canvasBackground, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, collapsed,
   } = ui
   // Stable dispatch wrappers for child component props
   const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [dispatch])
   const setOrientation = useCallback((v: "portrait" | "landscape") => dispatch({ type: "SET", key: "orientation", value: v }), [dispatch])
-  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: v }), [dispatch])
+  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: clampRotation(v) }), [dispatch])
   const setMarginMethod = useCallback((v: 1 | 2 | 3) => dispatch({ type: "SET", key: "marginMethod", value: v }), [dispatch])
   const setGridCols = useCallback((v: number) => dispatch({ type: "SET", key: "gridCols", value: v }), [dispatch])
   const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [dispatch])
@@ -518,7 +538,16 @@ export default function Home() {
   const setRhythmColsDirection = useCallback((v: GridRhythmColsDirection) => dispatch({ type: "SET", key: "rhythmColsDirection", value: v }), [dispatch])
   const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
   const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
-  const setImageColorScheme = useCallback((v: ImageColorSchemeId) => dispatch({ type: "SET", key: "imageColorScheme", value: v }), [dispatch])
+  const setImageColorScheme = useCallback((v: ImageColorSchemeId) => {
+    const actions: UiAction[] = [{ type: "SET", key: "imageColorScheme", value: v }]
+    if (canvasBackground && !isImageColorInScheme(canvasBackground, v)) {
+      actions.push({ type: "SET", key: "canvasBackground", value: null })
+    }
+    dispatch(actions.length === 1 ? actions[0] : { type: "BATCH", actions })
+  }, [canvasBackground, dispatch])
+  const setCanvasBackground = useCallback((value: string | null) => {
+    dispatch({ type: "SET", key: "canvasBackground", value })
+  }, [dispatch])
   const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [dispatch])
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
@@ -886,6 +915,7 @@ export default function Home() {
       baseFont,
       orientation,
       rotation,
+      canvasBackground,
       showBaselines,
       showModules,
       showMargins,
@@ -918,6 +948,7 @@ export default function Home() {
       baseFont,
       orientation,
       rotation,
+      canvasBackground,
       showBaselines,
       showModules,
       showMargins,
@@ -1274,6 +1305,8 @@ export default function Home() {
           onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           colorScheme={imageColorScheme}
           onColorSchemeChange={setImageColorScheme}
+          canvasBackground={canvasBackground}
+          onCanvasBackgroundChange={setCanvasBackground}
           isDarkMode={isDarkUi}
         />
       </SettingsHelpNavigationProvider>
@@ -1298,6 +1331,7 @@ export default function Home() {
     handleSectionHeaderDoubleClick,
     handleSectionHeaderClick,
     handleSectionHelpNavigate,
+    canvasBackground,
     imageColorScheme,
     isDarkUi,
     marginMethod,
@@ -1307,6 +1341,7 @@ export default function Home() {
     setBaseFont,
     setBaselineMultiple,
     setCanvasRatio,
+    setCanvasBackground,
     setCustomBaseline,
     setCustomMarginMultipliers,
     setGutterMultiple,
@@ -1388,6 +1423,7 @@ export default function Home() {
               showRolloverInfo={showRolloverInfo}
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
+              canvasBackground={canvasBackground}
               onImageColorSchemeChange={setImageColorScheme}
               initialLayout={loadedPreviewLayout?.layout ?? null}
               initialLayoutKey={loadedPreviewLayout?.key ?? 0}
@@ -1467,6 +1503,7 @@ export default function Home() {
     activeHelpSectionId,
     activeSidebarPanel,
     baseFont,
+    canvasBackground,
     displayGroup,
     documentHistoryResetNonce,
     fileGroup,

@@ -35,6 +35,7 @@ export type UiSettingsSnapshot = {
   typographyScale: TypographyScale
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
+  canvasBackground: string | null
   customBaseline: number
   displayUnit: DisplayUnit
   useCustomMargins: boolean
@@ -72,6 +73,7 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.typographyScale === b.typographyScale
     && a.baseFont === b.baseFont
     && a.imageColorScheme === b.imageColorScheme
+    && a.canvasBackground === b.canvasBackground
     && a.customBaseline === b.customBaseline
     && a.displayUnit === b.displayUnit
     && a.useCustomMargins === b.useCustomMargins

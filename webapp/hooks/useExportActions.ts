@@ -42,6 +42,7 @@ export type ExportActionsContext = {
   baseFont: FontFamily
   orientation: "portrait" | "landscape"
   rotation: number
+  canvasBackground: string | null
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
@@ -87,6 +88,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     baseFont,
     orientation,
     rotation,
+    canvasBackground,
     showBaselines,
     showModules,
     showMargins,
@@ -94,7 +96,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     showTypography,
     isDinOrAnsiRatio,
     displayUnit,
-    setDisplayUnit,
     exportPaperSize,
     setExportPaperSize,
     exportPrintPro,
@@ -269,6 +270,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         baseFont,
         originX,
         originY,
+        canvasBackground,
         printPro: {
           enabled,
           bleedPt,
@@ -296,6 +298,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       previewLayout,
       result,
       rotation,
+      canvasBackground,
       showBaselines,
       showMargins,
       showModules,

@@ -20,6 +20,8 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   colorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
+  canvasBackground: string | null
+  onCanvasBackgroundChange: (value: string | null) => void
   isDarkMode: boolean
 }
 
@@ -29,14 +31,17 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   onHeaderDoubleClick,
   colorScheme,
   onColorSchemeChange,
+  canvasBackground,
+  onCanvasBackgroundChange,
   isDarkMode,
 }: Props) {
   const selected = getImageColorScheme(colorScheme)
+  const backgroundSelectValue = canvasBackground ?? "__none__"
 
   return (
     <PanelCard
       title="VI. Color Scheme"
-      tooltip="Base color scheme for image placeholders"
+      tooltip="Color scheme and page background for image placeholders"
       collapsed={collapsed}
       collapsedSummary={(
         <div className="flex items-center gap-1.5">
@@ -89,6 +94,31 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
             </span>
           </div>
         ))}
+      </div>
+      <div className="space-y-2">
+        <Label className="text-sm text-gray-600">Background</Label>
+        <Select
+          value={backgroundSelectValue}
+          onValueChange={(value) => onCanvasBackgroundChange(value === "__none__" ? null : value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">None</SelectItem>
+            {selected.colors.map((color) => (
+              <SelectItem key={`background-${selected.id}-${color}`} value={color}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="font-mono text-xs">{color.toLowerCase()}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </PanelCard>
   )

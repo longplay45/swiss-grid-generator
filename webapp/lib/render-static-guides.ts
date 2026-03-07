@@ -8,6 +8,7 @@ type StaticGuidesRenderOptions = {
   result: GridResult
   scale: number
   rotation: number
+  backgroundColor: string | null
   showMargins: boolean
   showModules: boolean
   showBaselines: boolean
@@ -21,6 +22,7 @@ export function renderStaticGuides({
   result,
   scale,
   rotation,
+  backgroundColor,
   showMargins,
   showModules,
   showBaselines,
@@ -53,6 +55,11 @@ export function renderStaticGuides({
   ctx.translate(canvasWidth / 2, canvasHeight / 2)
   ctx.rotate((rotation * Math.PI) / 180)
   ctx.translate(-pageWidth / 2, -pageHeight / 2)
+
+  if (backgroundColor) {
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(0, 0, pageWidth, pageHeight)
+  }
 
   if (showPageOutline) {
     ctx.strokeStyle = "#e5e5e5"

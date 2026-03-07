@@ -247,6 +247,7 @@ interface GridPreviewProps {
   initialLayout?: PreviewLayoutState | null
   initialLayoutKey?: number
   rotation?: number
+  canvasBackground?: string | null
   undoNonce?: number
   redoNonce?: number
   historyResetToken?: number
@@ -278,6 +279,7 @@ export const GridPreview = memo(function GridPreview({
   initialLayout = null,
   initialLayoutKey = 0,
   rotation = 0,
+  canvasBackground = null,
   undoNonce = 0,
   redoNonce = 0,
   historyResetToken = 0,
@@ -1626,6 +1628,7 @@ export const GridPreview = memo(function GridPreview({
         result,
         scale,
         rotation,
+        backgroundColor: canvasBackground,
         showMargins,
         showModules,
         showBaselines,
@@ -1642,7 +1645,7 @@ export const GridPreview = memo(function GridPreview({
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [isMobile, pixelRatio, result, rotation, scale, showBaselines, showMargins, showModules])
+  }, [canvasBackground, isMobile, pixelRatio, result, rotation, scale, showBaselines, showMargins, showModules])
 
   useEffect(() => {
     const canvas = imageCanvasRef.current

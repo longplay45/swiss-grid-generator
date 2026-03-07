@@ -17,8 +17,9 @@ import {
   type TypographyScale,
 } from "@/lib/config/defaults"
 import {
+  type CanvasBackgroundColor,
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
-  isImageColorSchemeId,
+  normalizeImageColorSchemeId,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 
@@ -33,6 +34,7 @@ type UiSettingsLike = {
   displayUnit?: unknown
   baseFont?: unknown
   imageColorScheme?: unknown
+  canvasBackground?: unknown
   rhythm?: unknown
   rhythmRowsEnabled?: unknown
   rhythmRowsDirection?: unknown
@@ -95,7 +97,11 @@ function resolveBaseFont(value: unknown): FontFamily {
 }
 
 function resolveImageColorScheme(value: unknown): ImageColorSchemeId {
-  return isImageColorSchemeId(value) ? value : DEFAULT_IMAGE_COLOR_SCHEME_ID
+  return normalizeImageColorSchemeId(value) ?? DEFAULT_IMAGE_COLOR_SCHEME_ID
+}
+
+function resolveCanvasBackground(value: unknown): CanvasBackgroundColor {
+  return typeof value === "string" && value.trim().length > 0 ? value : null
 }
 
 function resolveRhythm(value: unknown): GridRhythm {
@@ -146,6 +152,7 @@ export function resolveUiDefaults(
   displayUnit: DisplayUnit
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
+  canvasBackground: CanvasBackgroundColor
   rhythm: GridRhythm
   rhythmRowsEnabled: boolean
   rhythmRowsDirection: GridRhythmRowsDirection
@@ -162,6 +169,7 @@ export function resolveUiDefaults(
     displayUnit: resolveDisplayUnit(uiSettings.displayUnit),
     baseFont: resolveBaseFont(uiSettings.baseFont),
     imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
+    canvasBackground: resolveCanvasBackground(uiSettings.canvasBackground),
     rhythm: resolveRhythm(uiSettings.rhythm),
     rhythmRowsEnabled: rhythmAxisSettings.rhythmRowsEnabled,
     rhythmRowsDirection: rhythmAxisSettings.rhythmRowsDirection,

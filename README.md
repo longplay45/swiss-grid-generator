@@ -50,7 +50,8 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 - Typography controls:
   - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
   - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`
-  - `VI. Color Scheme` selector defines the default image placeholder palette
+  - `VI. Color Scheme` sets the default image placeholder palette and optional page background
+  - color schemes: `Swiss Modern`, `Stone Cyan`, `Fresh Contrast`
   - available base fonts:
     - Sans-Serif: `Inter`, `Work Sans`, `Nunito Sans`, `IBM Plex Sans`, `Libre Franklin`
     - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
@@ -135,7 +136,8 @@ See full reference in [`SETTINGS.md`](SETTINGS.md).
 Highlights:
 - Baseline options: `6,7,8,9,10,11,12,14,16,18,20,24,28,32,36,48,60,72`
 - Startup defaults are loaded from `webapp/public/default_v001.json`
-- Rotation: `-80..80`
+- Rotation: `-180..180`
+- Color Scheme background: `None` or any color from the selected scheme
 - Grid: cols/rows `1..13`
 
 ## Ratio Families and Paper Sizes

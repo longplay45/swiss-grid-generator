@@ -25,7 +25,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Choose margin method in `III. Margins` or enable `Custom Margins`.
 - Set columns/rows, gutter, and rhythm in `IV. Grid & Rhythms`.
 - Set type hierarchy and base font in `V. Typo`.
-- Set default image placeholder palette in `VI. Color Scheme`.
+- Set default image placeholder palette and optional page background in `VI. Color Scheme`.
 - Use display toggles in the header to inspect baselines, margins, modules, and type.
 
 ## Canvas and Grid
@@ -47,6 +47,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Font groups: `Sans-Serif`, `Serif`, `Poster`.
 - Style defaults define base weight and optional default italic per style.
 - Manual bold/italic in editor can override style defaults per paragraph.
+- `VI. Color Scheme` offers `Swiss Modern`, `Stone Cyan`, and `Fresh Contrast`, plus a `Background` dropdown with `None` or any color from the active scheme.
 
 ## Text Editor Popup
 

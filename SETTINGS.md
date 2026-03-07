@@ -50,8 +50,8 @@ Default: `swiss`
 
 #### Rotation
 
-- min: `-80`
-- max: `80`
+- min: `-180`
+- max: `180`
 - step: `1`
 - default: `0`
 
@@ -109,10 +109,11 @@ Default: `swiss`
 ### VI. Color Scheme
 
 - Selects the global base scheme for image placeholders.
+- `Background`: applies a page background color using `None` or any color from the selected scheme.
 - Available schemes:
-  - `s1`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
-  - `s2`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#f1f2f0`
-  - `s3`: `#c7943e`, `#c7943e`, `#c7943e`, `#c7943e`
+  - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
+  - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
+  - `Fresh Contrast`: `#fef9f7`, `#1aa9bc`, `#457c39`, `#ffeb00`
 - The same selector appears in the image editor popup and defaults to the current global selection.
 
 ## Preview Header
@@ -299,7 +300,7 @@ UX:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
 ## JSON Preview Layout Fields (current)
 

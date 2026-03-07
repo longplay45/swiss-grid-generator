@@ -412,7 +412,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Choose the base canvas ratio preset (DIN, ANSI, photo, square, editorial, etc.).</li>
           <li>Orientation changes between portrait and landscape at the layout level.</li>
-          <li>Rotation rotates the preview/export composition between `-80..80` degrees.</li>
+          <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
           <li>Paper sizing for DIN/ANSI exports is derived from this ratio selection.</li>
         </ul>
       </section>
@@ -484,6 +484,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Selects the base scheme used for new image placeholders.</li>
+          <li>`Background` applies `None` or any color from the selected scheme to the page.</li>
           <li>The same selector appears in the image editor popup.</li>
           <li>Image editor starts with the current global scheme selected.</li>
           <li>Each placeholder still stores its own final color value.</li>

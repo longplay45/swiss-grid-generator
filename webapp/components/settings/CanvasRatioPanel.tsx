@@ -81,8 +81,8 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
         </div>
         <DebouncedSlider
           value={[rotation]}
-          min={-80}
-          max={80}
+          min={-180}
+          max={180}
           step={1}
           onValueCommit={([v]) => onRotationChange(v)}
         />

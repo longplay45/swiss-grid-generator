@@ -112,7 +112,8 @@
     "rhythmColsDirection": "ttb",
     "typographyScale": "swiss",
     "baseFont": "Inter",
-    "imageColorScheme": "s1",
+    "imageColorScheme": "swiss-modern",
+    "canvasBackground": null,
     "customBaseline": 12,
     "useCustomMargins": true,
     "customMarginMultipliers": {

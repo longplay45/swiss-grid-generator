@@ -51,6 +51,7 @@ type ExportVectorPdfOptions = {
   baseFont?: FontFamily
   originX?: number
   originY?: number
+  canvasBackground?: string | null
   printPro?: PrintProOptions
   rotation: number
   showBaselines: boolean
@@ -158,6 +159,7 @@ export function renderSwissGridVectorPdf({
   baseFont = DEFAULT_BASE_FONT,
   originX = 0,
   originY = 0,
+  canvasBackground = null,
   printPro,
   rotation,
   showBaselines,
@@ -212,6 +214,12 @@ export function renderSwissGridVectorPdf({
     pdf.lineTo(bottomLeft.x, bottomLeft.y)
     pdf.close()
     pdf.fill()
+  }
+
+  const backgroundRgb = parseHexColor(canvasBackground ?? undefined)
+  if (backgroundRgb) {
+    setFillColorCmyk(pdf, backgroundRgb)
+    drawFilledRect(0, 0, sourceWidth, sourceHeight)
   }
 
   const drawCropMarks = (offset: number, length: number) => {
