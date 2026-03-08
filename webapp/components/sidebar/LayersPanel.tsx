@@ -191,6 +191,10 @@ export function LayersPanel({
     onLayerOrderChange([...withoutDragging].reverse())
   }
 
+  const getDropIndexForCard = (bounds: DOMRect, clientY: number, index: number) => (
+    clientY < bounds.top + bounds.height / 2 ? index : index + 1
+  )
+
   const renderDropMarker = (index: number) => {
     if (dropIndicatorIndex !== index) return null
     return (
@@ -241,11 +245,11 @@ export function LayersPanel({
               onDragOver={(event) => {
                 event.preventDefault()
                 const bounds = event.currentTarget.getBoundingClientRect()
-                const nextIndex = event.clientY < bounds.top + bounds.height / 2 ? index : index + 1
-                setDropIndicatorIndex(nextIndex)
+                setDropIndicatorIndex(getDropIndexForCard(bounds, event.clientY, index))
               }}
-              onDrop={() => {
-                moveLayer(dropIndicatorIndex ?? index)
+              onDrop={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect()
+                moveLayer(getDropIndexForCard(bounds, event.clientY, index))
                 setDraggingKey(null)
                 setDropIndicatorIndex(null)
               }}
