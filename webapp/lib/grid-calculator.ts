@@ -224,7 +224,7 @@ const BASE_GRID_UNIT = 12.0;
 
 // Typography defined as baseline ratios (A4 reference: size/12pt)
 // Font sizes scale proportionally with baseline across all formats
-// Leading is always an integer multiple of baseline (Swiss baseline alignment)
+// Leading is expressed as a baseline multiplier and may be fractional for hand-tuned styles
 type TypographyRatios = Record<string, {
   sizeRatio: number;
   leadingMult: number;
@@ -236,7 +236,7 @@ type TypographyRatios = Record<string, {
 // Swiss (hand-tuned) — original ratios from Müller-Brockmann reference
 const TYPOGRAPHY_RATIOS_SWISS: TypographyRatios = {
   fx:       { sizeRatio: 96 / 12, leadingMult: 8, bodyLines: 8, weight: "Bold" },      // 8.000× baseline
-  caption:  { sizeRatio:  7 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular", blockItalic: true },  // 0.583× baseline
+  caption:  { sizeRatio:  7 / 12, leadingMult: 8 / 12, bodyLines: 1, weight: "Regular", blockItalic: true },  // 7pt / 8pt on A4 baseline
   body:     { sizeRatio: 10 / 12, leadingMult: 1, bodyLines: 1, weight: "Regular" },  // 0.833× baseline
   subhead:  { sizeRatio: 20 / 12, leadingMult: 2, bodyLines: 2, weight: "Regular" },  // 1.667× baseline
   headline: { sizeRatio: 30 / 12, leadingMult: 3, bodyLines: 3, weight: "Bold" },     // 2.500× baseline

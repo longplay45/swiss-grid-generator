@@ -156,7 +156,7 @@ Comprehensive user reference for the in-app Help sidebar.
 
 ## Grid Theory Notes
 
-- Baseline alignment: leading is an integer multiple of baseline.
+- Baseline alignment: most leading follows baseline multiples, with Swiss caption using a tighter `7pt / 8pt` pairing.
 - Margins: use proportional baseline-unit systems to balance page weight.
 - Modules: define consistent content rhythm and repeatable placement anchors.
 - Typographic hierarchy: scale presets keep proportion while preserving baseline rhythm.

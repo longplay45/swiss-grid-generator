@@ -12,7 +12,7 @@ Current, implementation-accurate reference for all user-facing options and defau
 | `headline` | 30pt | 36pt | 3x | Bold |
 | `subhead` | 20pt | 24pt | 2x | Regular |
 | `body` | 10pt | 12pt | 1x | Regular |
-| `caption` | 7pt | 12pt | 1x | Regular |
+| `caption` | 7pt | 8pt | 0.667x | Regular |
 
 ### Typography Scale Presets
 

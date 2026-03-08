@@ -444,7 +444,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>The baseline unit controls vertical rhythm for grid and typography.</li>
-          <li>All style leading values are baseline multiples to preserve alignment.</li>
+          <li>Most style leading values follow baseline multiples; Swiss caption uses a tighter `7pt / 8pt` pairing.</li>
           <li>Top and bottom margins are snapped to baseline units.</li>
           <li>Changing baseline does not auto-reposition blocks.</li>
         </ul>
@@ -489,6 +489,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
+          <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
           <li>Manual bold/italic in the editor can override defaults per paragraph.</li>
