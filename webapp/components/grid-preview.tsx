@@ -336,6 +336,7 @@ export const GridPreview = memo(function GridPreview({
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
+  const [layoutEmissionVersion, setLayoutEmissionVersion] = useState(0)
   const [showPerfOverlay, setShowPerfOverlay] = useState(false)
   const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
@@ -2579,8 +2580,7 @@ export const GridPreview = memo(function GridPreview({
     }
     onLayoutChangeDebounceRef.current = window.setTimeout(() => {
       if (!pendingLayoutEmissionRef.current) return
-      onLayoutChange(pendingLayoutEmissionRef.current)
-      pendingLayoutEmissionRef.current = null
+      setLayoutEmissionVersion((prev) => prev + 1)
       onLayoutChangeDebounceRef.current = null
     }, LAYOUT_CHANGE_DEBOUNCE_MS)
     return () => {
@@ -2615,6 +2615,12 @@ export const GridPreview = memo(function GridPreview({
     styleAssignments,
     textContent,
   ])
+
+  useEffect(() => {
+    if (!onLayoutChange || !pendingLayoutEmissionRef.current) return
+    onLayoutChange(pendingLayoutEmissionRef.current)
+    pendingLayoutEmissionRef.current = null
+  }, [layoutEmissionVersion, onLayoutChange])
 
   const pageWidthCss = result.pageSizePt.width * scale
   const pageHeightCss = result.pageSizePt.height * scale

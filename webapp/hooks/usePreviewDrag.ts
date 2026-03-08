@@ -90,19 +90,18 @@ export function usePreviewDrag<Key extends string>({
     }
     const pending = pendingDragPreviewRef.current
     pendingDragPreviewRef.current = null
-    setDragState((prev) => {
-      if (!prev) return null
-      const nextPreview = pending?.preview ?? prev.preview
-      const nextMoved = pending?.moved ?? prev.moved
-      const nextCopyOnDrop = pending?.copyOnDrop ?? prev.copyOnDrop
+    if (dragState) {
+      const nextPreview = pending?.preview ?? dragState.preview
+      const nextMoved = pending?.moved ?? dragState.moved
+      const nextCopyOnDrop = pending?.copyOnDrop ?? dragState.copyOnDrop
       if (nextMoved) {
-        onDrop(prev, nextPreview, nextCopyOnDrop)
+        onDrop(dragState, nextPreview, nextCopyOnDrop)
         dragEndedAtRef.current = Date.now()
       }
-      return null
-    })
+    }
+    setDragState(null)
     activeDragPointerIdRef.current = null
-  }, [onDrop])
+  }, [dragState, onDrop])
 
   useEffect(() => {
     return () => {
