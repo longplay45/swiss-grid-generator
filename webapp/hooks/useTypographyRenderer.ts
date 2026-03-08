@@ -422,9 +422,6 @@ export function useTypographyRenderer<BlockId extends string>({
         bufferCtx.globalAlpha = 0.92
         bufferCtx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
         bufferCtx.globalAlpha = 1
-        bufferCtx.strokeStyle = imagePlan.color
-        bufferCtx.lineWidth = 1
-        bufferCtx.strokeRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
       }
 
       const orderedKeys = layerOrder.filter((key) => imagePlans.has(key) || draftPlans.has(key))
