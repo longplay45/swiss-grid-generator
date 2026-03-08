@@ -38,6 +38,7 @@ export const HEADER_CONTROLS_INDEX_ITEMS = [
   { id: "help-header-margins", label: "Margins Toggle" },
   { id: "help-header-modules", label: "Modules Toggle" },
   { id: "help-header-typography", label: "Typography Toggle" },
+  { id: "help-header-layers", label: "Layers Panel" },
   { id: "help-header-settings", label: "Settings Panel" },
   { id: "help-shortcuts", label: "Keyboard Shortcuts" },
 ] as const
@@ -81,6 +82,7 @@ export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
   modules: "help-header-modules",
   "image-placeholders": "help-sidebars-header",
   typography: "help-header-typography",
+  layers: "help-header-layers",
   "rollover-info": "help-sidebars-header",
   settings: "help-header-settings",
   help: "help-help-navigation",

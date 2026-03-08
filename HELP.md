@@ -12,6 +12,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - [Drag and Placement](#drag-and-placement)
 - [History and Reflow](#history-and-reflow)
 - [Header and Sidebars](#header-and-sidebars)
+- [Layers Panel](#layers-panel)
 - [Save and Load JSON](#save-and-load-json)
 - [Export PDF](#export-pdf)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -92,7 +93,8 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Header and Sidebars
 
 - Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.
-- Display toggles include baselines, margins, modules, image placeholders, and typography.
+- Display toggles include baselines, margins, modules, image placeholders, typography, and layers.
+- The layers toggle sits directly after typography, separated by a divider.
 - The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.
 - `i` toggles rollover info/tooltips globally across the app.
 - `?` opens/closes help; settings opens/closes the right settings panel.
@@ -100,9 +102,19 @@ Comprehensive user reference for the in-app Help sidebar.
 - Right-side content panels include close icons in their header rows.
 - Only one right-side panel is open at a time.
 
+## Layers Panel
+
+- Opens a right sidebar with a mixed stack of text paragraphs and image placeholders.
+- Text cards show rows/cols, hierarchy plus font, and a short text preview rendered in the paragraph's color and font.
+- Image cards show rows/cols, `Image Placeholder`, and a single color swatch.
+- Drag reorders z-index using an insertion marker between cards.
+- Clicking a layer card selects the matching item in preview; clicking a preview item selects and scrolls to the matching layer card.
+- Trash removes the layer from the document model.
+
 ## Save and Load JSON
 
 - Save JSON stores UI settings and full preview layout state.
+- Layer order is stored in preview layout JSON and restored on load.
 - Load JSON restores both settings and layout where valid.
 - Unknown font overrides are dropped during load normalization.
 - Overrides equal to inherited defaults are normalized away.

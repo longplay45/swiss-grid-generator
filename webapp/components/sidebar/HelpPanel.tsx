@@ -238,7 +238,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
-          <li>Display toggles include baselines, margins, modules, image placeholders, and typography.</li>
+          <li>Display toggles include baselines, margins, modules, image placeholders, typography, and layers.</li>
+          <li>The layers toggle sits directly after the typography toggle, separated by a divider.</li>
           <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
           <li>`i` toggles rollover info/tooltips globally across the app.</li>
           <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
@@ -384,6 +385,22 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <p className={`text-xs leading-relaxed ${tone.body}`}>
           Shows or hides text/style preview overlays. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+T</span>.
         </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-layers" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          Layers Panel
+        </SectionHeading>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Opens the right-side layers panel with a mixed stack of text paragraphs and image placeholders.</li>
+          <li>Text cards show rows/cols, hierarchy plus font, and a short text preview in the paragraph color and font.</li>
+          <li>Image cards show rows/cols, `Image Placeholder`, and a single color swatch.</li>
+          <li>Drag cards to reorder z-index; the drop marker appears between cards and opens real space at the insertion point.</li>
+          <li>Clicking a layer card selects the matching item in the preview; clicking a preview item selects and scrolls to the matching layer card.</li>
+          <li>Trash deletes the layer from the document and updates saved JSON layer data.</li>
+        </ul>
       </section>
 
       <hr className={tone.divider} />

@@ -29,6 +29,7 @@ import { TypographyPanel } from "@/components/settings/TypographyPanel"
 import { ColorSchemePanel } from "@/components/settings/ColorSchemePanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
+import { LayersPanel } from "@/components/sidebar/LayersPanel"
 import type { LayoutPreset } from "@/lib/presets"
 import {
   HELP_SECTION_BY_HEADER_ACTION,
@@ -144,6 +145,7 @@ type GridUiState = Pick<
   | "showMargins"
   | "showImagePlaceholders"
   | "showTypography"
+  | "showLayers"
   | "collapsed"
 >
 
@@ -183,6 +185,9 @@ const INITIAL_GRID_UI_STATE: GridUiState = {
   showMargins: DEFAULT_UI.showMargins,
   showImagePlaceholders: typeof DEFAULT_UI.showImagePlaceholders === "boolean" ? DEFAULT_UI.showImagePlaceholders : true,
   showTypography: DEFAULT_UI.showTypography,
+  showLayers: typeof (DEFAULT_UI as { showLayers?: unknown }).showLayers === "boolean"
+    ? (DEFAULT_UI as { showLayers?: boolean }).showLayers ?? false
+    : false,
   collapsed: SECTION_KEYS.reduce(
     (acc, key) => {
       const raw = (DEFAULT_UI.collapsed as Partial<Record<SectionKey, boolean>> | undefined)?.[key]
@@ -234,8 +239,9 @@ type UiAction =
   | { type: "SET"; key: "showMargins"; value: boolean }
   | { type: "SET"; key: "showImagePlaceholders"; value: boolean }
   | { type: "SET"; key: "showTypography"; value: boolean }
+  | { type: "SET"; key: "showLayers"; value: boolean }
   | { type: "SET"; key: "collapsed"; value: Record<SectionKey, boolean> }
-  | { type: "TOGGLE"; key: "showBaselines" | "showModules" | "showMargins" | "showImagePlaceholders" | "showTypography" }
+  | { type: "TOGGLE"; key: "showBaselines" | "showModules" | "showMargins" | "showImagePlaceholders" | "showTypography" | "showLayers" }
   | { type: "TOGGLE_SECTION"; key: SectionKey }
   | { type: "SET_ALL_SECTIONS"; value: boolean }
   | { type: "APPLY_SNAPSHOT"; snapshot: UiSettingsSnapshot }
@@ -267,6 +273,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         case "showMargins":
         case "showImagePlaceholders":
         case "showTypography":
+        case "showLayers":
         case "collapsed":
           if (state[action.key] === action.value) return state
           return { ...state, [action.key]: action.value }
@@ -327,6 +334,7 @@ function gridUiReducer(state: GridUiState, action: UiAction): GridUiState {
         showMargins: action.snapshot.showMargins,
         showImagePlaceholders: action.snapshot.showImagePlaceholders,
         showTypography: action.snapshot.showTypography,
+        showLayers: action.snapshot.showLayers,
         collapsed: action.snapshot.collapsed,
       }
     case "BATCH":
@@ -475,6 +483,7 @@ function buildUiActionsFromLoadedSettings(
   if (typeof loaded.showMargins === "boolean") set("showMargins", loaded.showMargins)
   if (typeof loaded.showImagePlaceholders === "boolean") set("showImagePlaceholders", loaded.showImagePlaceholders)
   if (typeof loaded.showTypography === "boolean") set("showTypography", loaded.showTypography)
+  if (typeof loaded.showLayers === "boolean") set("showLayers", loaded.showLayers)
 
   if (loaded.collapsed && typeof loaded.collapsed === "object") {
     const collapsedSettings = loaded.collapsed as Partial<Record<SectionKey, unknown>>
@@ -486,6 +495,15 @@ function buildUiActionsFromLoadedSettings(
   }
 
   return actions
+}
+
+function omitRecordKey<Value>(
+  source: Partial<Record<string, Value>> | Record<string, Value> | undefined,
+  key: string,
+): Partial<Record<string, Value>> {
+  const next = { ...(source ?? {}) }
+  delete next[key]
+  return next
 }
 
 export default function Home() {
@@ -501,6 +519,15 @@ export default function Home() {
   } | null>(() =>
     DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
   )
+  const [requestedLayerOrderState, setRequestedLayerOrderState] = useState<{
+    key: number
+    order: string[]
+  } | null>(null)
+  const [requestedLayerDeleteState, setRequestedLayerDeleteState] = useState<{
+    key: number
+    target: string
+  } | null>(null)
+  const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -520,7 +547,7 @@ export default function Home() {
     rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
     typographyScale, baseFont, imageColorScheme, canvasBackground, customBaseline, displayUnit,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
-    showMargins, showImagePlaceholders, showTypography, collapsed,
+    showMargins, showImagePlaceholders, showTypography, showLayers, collapsed,
   } = ui
   // Stable dispatch wrappers for child component props
   const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [dispatch])
@@ -553,7 +580,7 @@ export default function Home() {
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<
-    "settings" | "help" | "imprint" | null
+    "settings" | "help" | "imprint" | "layers" | null
   >(null)
   const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
   const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
@@ -583,6 +610,27 @@ export default function Home() {
   useEffect(() => {
     redoDomainsRef.current = redoDomains
   }, [redoDomains])
+
+  useEffect(() => {
+    if (showLayers && activeSidebarPanel !== "layers") {
+      setActiveSidebarPanel("layers")
+      return
+    }
+    if (!showLayers && activeSidebarPanel === "layers") {
+      setActiveSidebarPanel(null)
+    }
+  }, [activeSidebarPanel, showLayers])
+
+  useEffect(() => {
+    if (!selectedLayerKey || !previewLayout) return
+    const validKeys = new Set<string>([
+      ...previewLayout.blockOrder,
+      ...(previewLayout.imageOrder ?? []),
+    ])
+    if (!validKeys.has(selectedLayerKey)) {
+      setSelectedLayerKey(null)
+    }
+  }, [previewLayout, selectedLayerKey])
 
   const recordHistoryDomain = useCallback((domain: HistoryDomain) => {
     setUndoDomains((prev) => {
@@ -772,11 +820,6 @@ export default function Home() {
     })
   }, [applyUiSnapshot, history])
 
-  const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
-    setActiveHelpSectionId(sectionId)
-    setActiveSidebarPanel("help")
-  }, [])
-
   const handlePreviewHistoryAvailabilityChange = useCallback((undoAvailable: boolean) => {
     setCanUndoPreview(undoAvailable)
   }, [])
@@ -843,13 +886,101 @@ export default function Home() {
     setActiveHelpSectionId(targetSectionId)
   }, [])
 
+  const openSidebarPanel = useCallback((panel: "settings" | "help" | "imprint" | "layers" | null) => {
+    setActiveSidebarPanel(panel)
+    dispatch({ type: "SET", key: "showLayers", value: panel === "layers" })
+  }, [dispatch])
+
+  const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
+    setActiveHelpSectionId(sectionId)
+    openSidebarPanel("help")
+  }, [openSidebarPanel])
+
   const toggleHelpPanelFromHeader = useCallback(() => {
     setActiveSidebarPanel((prev) => {
-      if (prev === "help") return null
+      const next = prev === "help" ? null : "help"
+      dispatch({ type: "SET", key: "showLayers", value: false })
       setActiveHelpSectionId(null)
-      return "help"
+      return next
     })
+  }, [dispatch])
+
+  const toggleLayersPanelFromHeader = useCallback(() => {
+    setActiveSidebarPanel((prev) => {
+      const next = prev === "layers" ? null : "layers"
+      dispatch({ type: "SET", key: "showLayers", value: next === "layers" })
+      return next
+    })
+  }, [dispatch])
+
+  const handleLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
+    const nextPreviewLayout = {
+      ...((previewLayout ?? DEFAULT_PREVIEW_LAYOUT ?? {}) as PreviewLayoutState),
+      layerOrder: [...nextLayerOrder],
+    } as PreviewLayoutState
+    setPreviewLayout(nextPreviewLayout)
+    setRequestedLayerOrderState({
+      key: Date.now(),
+      order: [...nextLayerOrder],
+    })
+  }, [previewLayout])
+
+  const handleDeleteLayer = useCallback((target: string, kind: "text" | "image") => {
+    setPreviewLayout((current) => {
+      if (!current) return current
+
+      if (kind === "image") {
+        return {
+          ...current,
+          layerOrder: (current.layerOrder ?? []).filter((key) => key !== target),
+          imageOrder: (current.imageOrder ?? []).filter((key) => key !== target),
+          imageModulePositions: omitRecordKey(current.imageModulePositions, target),
+          imageColumnSpans: omitRecordKey(current.imageColumnSpans, target),
+          imageRowSpans: omitRecordKey(current.imageRowSpans, target),
+          imageColors: omitRecordKey(current.imageColors, target),
+        }
+      }
+
+      return {
+        ...current,
+        blockOrder: current.blockOrder.filter((key) => key !== target),
+        textContent: omitRecordKey(current.textContent, target) as Record<string, string>,
+        blockTextEdited: omitRecordKey(current.blockTextEdited, target) as Record<string, boolean>,
+        styleAssignments: omitRecordKey(current.styleAssignments, target) as Record<string, TypographyStyleKey>,
+        blockFontFamilies: omitRecordKey(current.blockFontFamilies, target) as Partial<Record<string, FontFamily>>,
+        blockColumnSpans: omitRecordKey(current.blockColumnSpans, target) as Record<string, number>,
+        blockRowSpans: omitRecordKey(current.blockRowSpans, target) as Record<string, number>,
+        blockTextAlignments: omitRecordKey(current.blockTextAlignments, target) as Record<string, "left" | "right">,
+        blockTextReflow: omitRecordKey(current.blockTextReflow, target) as Record<string, boolean>,
+        blockSyllableDivision: omitRecordKey(current.blockSyllableDivision, target) as Record<string, boolean>,
+        blockBold: omitRecordKey(current.blockBold, target) as Record<string, boolean>,
+        blockItalic: omitRecordKey(current.blockItalic, target) as Record<string, boolean>,
+        blockRotations: omitRecordKey(current.blockRotations, target) as Record<string, number>,
+        blockCustomSizes: omitRecordKey(current.blockCustomSizes, target),
+        blockCustomLeadings: omitRecordKey(current.blockCustomLeadings, target),
+        blockTextColors: omitRecordKey(current.blockTextColors, target),
+        blockModulePositions: omitRecordKey(current.blockModulePositions, target),
+        layerOrder: (current.layerOrder ?? []).filter((key) => key !== target),
+      } as PreviewLayoutState
+    })
+
+    setRequestedLayerDeleteState({
+      key: Date.now(),
+      target,
+    })
+    setSelectedLayerKey((current) => (current === target ? null : current))
   }, [])
+
+  const handlePreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
+    setPreviewLayout(layout)
+    setRequestedLayerOrderState(null)
+    setRequestedLayerDeleteState(null)
+  }, [])
+
+  const handlePreviewLayerSelect = useCallback((key: string | null) => {
+    if (activeSidebarPanel !== "layers") return
+    setSelectedLayerKey(key)
+  }, [activeSidebarPanel])
 
   useEffect(() => {
     return () => {
@@ -1035,13 +1166,13 @@ export default function Home() {
           dispatch({ type: "TOGGLE", key: "showTypography" })
           return
         case "toggle_settings_panel":
-          setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings"))
+          openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings")
           return
         case "toggle_help_panel":
           toggleHelpPanelFromHeader()
           return
         case "toggle_imprint_panel":
-          setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))
+          openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
           return
         case "toggle_example_panel":
           setShowPresetsBrowser(true)
@@ -1049,7 +1180,7 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [canRedo, canUndo, dispatch, exportActions, redoAny, toggleHelpPanelFromHeader, undoAny])
+  }, [activeSidebarPanel, canRedo, canUndo, dispatch, exportActions, openSidebarPanel, redoAny, toggleHelpPanelFromHeader, undoAny])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -1078,6 +1209,9 @@ export default function Home() {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
         }
+        setSelectedLayerKey(null)
+        setRequestedLayerOrderState(null)
+        setRequestedLayerDeleteState(null)
         setDocumentMetadata(extractDocumentMetadata(parsed))
         setDocumentHistoryResetNonce((nonce) => nonce + 1)
         setCanUndoPreview(false)
@@ -1141,6 +1275,7 @@ export default function Home() {
     showModules,
     showImagePlaceholders,
     showTypography,
+    showLayers,
     showRolloverInfo,
     canUndo,
     canRedo,
@@ -1156,8 +1291,9 @@ export default function Home() {
     onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
     onToggleImagePlaceholders: () => dispatch({ type: "TOGGLE", key: "showImagePlaceholders" }),
     onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleLayersPanel: toggleLayersPanelFromHeader,
     onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
-    onToggleSettingsPanel: () => setActiveSidebarPanel((prev) => (prev === "settings" ? null : "settings")),
+    onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
     onToggleHelpPanel: toggleHelpPanelFromHeader,
   })
 
@@ -1191,8 +1327,8 @@ export default function Home() {
   }, [handleHeaderHelpNavigate, showRolloverInfo, showSectionHelpIcons])
 
   const handleCloseSidebar = useCallback(() => {
-    setActiveSidebarPanel(null)
-  }, [])
+    openSidebarPanel(null)
+  }, [openSidebarPanel])
 
   const handleLoadPresetLayout = useCallback((preset: LayoutPreset) => {
     const actions = buildUiActionsFromLoadedSettings(preset.uiSettings, collapsed)
@@ -1207,6 +1343,9 @@ export default function Home() {
       setPreviewLayout(null)
       setLoadedPreviewLayout(null)
     }
+    setSelectedLayerKey(null)
+    setRequestedLayerOrderState(null)
+    setRequestedLayerDeleteState(null)
     setDocumentMetadata({
       title: preset.title ?? "",
       description: preset.description ?? "",
@@ -1438,8 +1577,14 @@ export default function Home() {
               showEditorHelpIcon={showSectionHelpIcons}
               onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
               onRequestGridRestore={handlePreviewGridRestore}
+              requestedLayerOrder={requestedLayerOrderState?.order ?? null}
+              requestedLayerOrderKey={requestedLayerOrderState?.key ?? 0}
+              requestedLayerDeleteTarget={requestedLayerDeleteState?.target ?? null}
+              requestedLayerDeleteKey={requestedLayerDeleteState?.key ?? 0}
+              selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
+              onSelectLayer={handlePreviewLayerSelect}
               isDarkMode={isDarkUi}
-              onLayoutChange={setPreviewLayout}
+              onLayoutChange={handlePreviewLayoutChange}
             />
           )}
         </div>
@@ -1481,6 +1626,18 @@ export default function Home() {
                 activeSectionId={activeHelpSectionId}
               />
             )}
+            {activeSidebarPanel === "layers" && (
+              <LayersPanel
+                layout={previewLayout}
+                baseFont={baseFont}
+                selectedLayerKey={selectedLayerKey}
+                onLayerOrderChange={handleLayerOrderChange}
+                onSelectLayer={setSelectedLayerKey}
+                onDeleteLayer={handleDeleteLayer}
+                onClose={handleCloseSidebar}
+                isDarkMode={isDarkUi}
+              />
+            )}
             {activeSidebarPanel === "imprint" && (
               <ImprintPanel
                 isDarkMode={isDarkUi}
@@ -1508,14 +1665,22 @@ export default function Home() {
     documentHistoryResetNonce,
     fileGroup,
     handleCloseSidebar,
+    handleDeleteLayer,
     handleHeaderHelpNavigate,
+    handleLayerOrderChange,
     handleLoadPresetLayout,
+    handlePreviewLayoutChange,
+    handlePreviewLayerSelect,
     handlePreviewGridRestore,
     handlePreviewHistoryAvailabilityChange,
     handlePreviewHistoryRecord,
     handlePreviewOpenHelpSection,
     previewRedoNonce,
+    previewLayout,
     previewUndoNonce,
+    requestedLayerDeleteState,
+    requestedLayerOrderState,
+    selectedLayerKey,
     imageColorScheme,
     isDarkUi,
     loadLayout,
@@ -1580,7 +1745,7 @@ export default function Home() {
               <button
                 type="button"
                 className={uiTheme.link}
-                onClick={() => setActiveSidebarPanel((prev) => (prev === "imprint" ? null : "imprint"))}
+                onClick={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
               >
                 Imprint
               </button>

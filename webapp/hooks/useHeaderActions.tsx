@@ -7,6 +7,7 @@ import {
   Image,
   LayoutGrid,
   LayoutTemplate,
+  Layers3,
   Moon,
   Redo2,
   Rows3,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
-export type SidebarPanel = "settings" | "help" | "imprint" | null
+export type SidebarPanel = "settings" | "help" | "imprint" | "layers" | null
 
 export type HeaderAction = {
   key: string
@@ -44,6 +45,7 @@ type Args = {
   showModules: boolean
   showImagePlaceholders: boolean
   showTypography: boolean
+  showLayers: boolean
   showRolloverInfo: boolean
   canUndo: boolean
   canRedo: boolean
@@ -59,6 +61,7 @@ type Args = {
   onToggleModules: () => void
   onToggleImagePlaceholders: () => void
   onToggleTypography: () => void
+  onToggleLayersPanel: () => void
   onToggleRolloverInfo: () => void
   onToggleSettingsPanel: () => void
   onToggleHelpPanel: () => void
@@ -217,6 +220,19 @@ export function useHeaderActions(args: Args) {
         pressed: args.showTypography,
         onClick: args.onToggleTypography,
         icon: <Type className="h-4 w-4" />,
+      },
+    },
+    { type: "divider", key: "divider-typography-layers" },
+    {
+      type: "action",
+      action: {
+        key: "layers",
+        ariaLabel: args.showLayers ? "Hide layers" : "Show layers",
+        tooltip: "Layers",
+        variant: args.showLayers ? "default" : "outline",
+        pressed: args.showLayers,
+        onClick: args.onToggleLayersPanel,
+        icon: <Layers3 className="h-4 w-4" />,
       },
     },
   ]

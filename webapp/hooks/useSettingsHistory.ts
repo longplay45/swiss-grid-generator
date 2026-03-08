@@ -45,6 +45,7 @@ export type UiSettingsSnapshot = {
   showMargins: boolean
   showImagePlaceholders: boolean
   showTypography: boolean
+  showLayers: boolean
   collapsed: Record<SectionKey, boolean>
 }
 
@@ -86,6 +87,7 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.showMargins === b.showMargins
     && a.showImagePlaceholders === b.showImagePlaceholders
     && a.showTypography === b.showTypography
+    && a.showLayers === b.showLayers
     && a.collapsed.format === b.collapsed.format
     && a.collapsed.baseline === b.collapsed.baseline
     && a.collapsed.margins === b.collapsed.margins

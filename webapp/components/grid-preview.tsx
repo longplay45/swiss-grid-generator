@@ -183,6 +183,53 @@ const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => (
 const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 const getNextImagePlaceholderId = () => `image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
+function areStringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) return false
+  }
+  return true
+}
+
+function reconcileLayerOrder(
+  current: readonly BlockId[],
+  blockOrder: readonly BlockId[],
+  imageOrder: readonly BlockId[],
+): BlockId[] {
+  const validKeys = new Set<BlockId>([...imageOrder, ...blockOrder])
+  const next: BlockId[] = []
+  const seen = new Set<BlockId>()
+
+  for (const key of current) {
+    if (!validKeys.has(key) || seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  for (const key of imageOrder) {
+    if (seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  for (const key of blockOrder) {
+    if (seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  return next
+}
+
+function omitRecordKey<Value>(
+  source: Partial<Record<BlockId, Value>> | Record<BlockId, Value>,
+  key: BlockId,
+): Partial<Record<BlockId, Value>> {
+  const next = { ...source }
+  delete next[key]
+  return next
+}
+
 function createInitialBlockCollectionsState(): BlockCollectionsState {
   return {
     blockOrder: [...BASE_BLOCK_IDS],
@@ -258,6 +305,12 @@ interface GridPreviewProps {
   onHistoryRecord?: () => void
   onUndoRequest?: () => void
   onRedoRequest?: () => void
+  requestedLayerOrder?: BlockId[] | null
+  requestedLayerOrderKey?: number
+  requestedLayerDeleteTarget?: BlockId | null
+  requestedLayerDeleteKey?: number
+  selectedLayerKey?: BlockId | null
+  onSelectLayer?: (key: BlockId | null) => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   showEditorHelpIcon?: boolean
   baseFont?: FontFamily
@@ -290,6 +343,12 @@ export const GridPreview = memo(function GridPreview({
   onHistoryRecord,
   onUndoRequest,
   onRedoRequest,
+  requestedLayerOrder = null,
+  requestedLayerOrderKey = 0,
+  requestedLayerDeleteTarget = null,
+  requestedLayerDeleteKey = 0,
+  selectedLayerKey = null,
+  onSelectLayer,
   onOpenHelpSection,
   showEditorHelpIcon = false,
   baseFont = DEFAULT_BASE_FONT,
@@ -308,6 +367,9 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayoutKeyRef = useRef(0)
   const lastAppliedImageLayoutKeyRef = useRef(0)
   const lastAppliedCustomSizeLayoutKeyRef = useRef(0)
+  const lastAppliedLayerLayoutKeyRef = useRef(0)
+  const lastAppliedLayerRequestKeyRef = useRef(0)
+  const lastAppliedLayerDeleteRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const suppressImageModuleRemapRef = useRef(false)
   const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
@@ -342,6 +404,7 @@ export const GridPreview = memo(function GridPreview({
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
   const [imageOrder, setImageOrder] = useState<BlockId[]>([])
+  const [layerOrder, setLayerOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
   const [imageModulePositions, setImageModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
   const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
   const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<BlockId, number>>>({})
@@ -519,6 +582,18 @@ export const GridPreview = memo(function GridPreview({
     key.startsWith("image-")
     || imageOrder.includes(key)
   ), [imageOrder])
+
+  const resolvedLayerOrder = useMemo(
+    () => reconcileLayerOrder(layerOrder, blockOrder, imageOrder),
+    [blockOrder, imageOrder, layerOrder],
+  )
+
+  useEffect(() => {
+    setLayerOrder((prev) => {
+      const next = reconcileLayerOrder(prev, blockOrder, imageOrder)
+      return areStringArraysEqual(prev, next) ? prev : next
+    })
+  }, [blockOrder, imageOrder])
 
   const getPlacementSpan = useCallback((key: BlockId): number => (
     isImagePlaceholderKey(key) ? getImageSpan(key) : getBlockSpan(key)
@@ -723,6 +798,7 @@ export const GridPreview = memo(function GridPreview({
       acc[key] = raw
       return acc
     }, {} as Partial<Record<BlockId, string>>),
+    layerOrder: [...resolvedLayerOrder],
     imageOrder: [...imageOrder],
     imageModulePositions: { ...imageModulePositions },
     imageColumnSpans: imageOrder.reduce((acc, key) => {
@@ -748,6 +824,7 @@ export const GridPreview = memo(function GridPreview({
     getImageSpan,
     imageModulePositions,
     imageOrder,
+    resolvedLayerOrder,
     styleAssignments,
   ])
 
@@ -809,6 +886,18 @@ export const GridPreview = memo(function GridPreview({
     scale,
   ])
 
+  const applyLayerOrderSnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    const rawLayerOrder = Array.isArray(snapshot.layerOrder) ? snapshot.layerOrder : []
+    const normalizedLayerOrder = rawLayerOrder
+      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
+      .filter((key, index, source) => source.indexOf(key) === index)
+    const fallbackBlockOrder = (Array.isArray(snapshot.blockOrder) ? snapshot.blockOrder : [])
+      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
+    const fallbackImageOrder = (Array.isArray(snapshot.imageOrder) ? snapshot.imageOrder : [])
+      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
+    setLayerOrder(reconcileLayerOrder(normalizedLayerOrder, fallbackBlockOrder, fallbackImageOrder))
+  }, [])
+
   const applyCustomSizeSnapshot = useCallback((snapshot: PreviewLayoutState) => {
     const normalizedOrder = (Array.isArray(snapshot.blockOrder) ? snapshot.blockOrder : [])
       .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
@@ -845,8 +934,9 @@ export const GridPreview = memo(function GridPreview({
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
     applyTextSnapshot(snapshot)
     applyImageSnapshot(snapshot)
+    applyLayerOrderSnapshot(snapshot)
     applyCustomSizeSnapshot(snapshot)
-  }, [applyCustomSizeSnapshot, applyImageSnapshot, applyTextSnapshot])
+  }, [applyCustomSizeSnapshot, applyImageSnapshot, applyLayerOrderSnapshot, applyTextSnapshot])
 
   const {
     pushHistory,
@@ -1043,29 +1133,12 @@ export const GridPreview = memo(function GridPreview({
     return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
 
-  const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    // Hit-test in reverse draw order so visually top blocks win when overlaps happen.
-    for (let index = blockOrder.length - 1; index >= 0; index -= 1) {
-      const key = blockOrder[index]
-      const block = blockRectsRef.current[key]
-      if (!block || block.width <= 0 || block.height <= 0) continue
-      if (
-        pageX >= block.x
-        && pageX <= block.x + block.width
-        && pageY >= block.y
-        && pageY <= block.y + block.height
-      ) {
-        return key
-      }
-    }
-    return null
-  }, [blockOrder])
-
-  const findTopmostImageAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    if (!showImagePlaceholders) return null
-    for (let index = imageOrder.length - 1; index >= 0; index -= 1) {
-      const key = imageOrder[index]
-      const rect = imageRectsRef.current[key]
+  const findTopmostLayerAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    for (let index = resolvedLayerOrder.length - 1; index >= 0; index -= 1) {
+      const key = resolvedLayerOrder[index]
+      const isImage = imageOrder.includes(key)
+      if (isImage && !showImagePlaceholders) continue
+      const rect = isImage ? imageRectsRef.current[key] : blockRectsRef.current[key]
       if (!rect || rect.width <= 0 || rect.height <= 0) continue
       if (
         pageX >= rect.x
@@ -1077,13 +1150,32 @@ export const GridPreview = memo(function GridPreview({
       }
     }
     return null
-  }, [imageOrder, showImagePlaceholders])
+  }, [imageOrder, resolvedLayerOrder, showImagePlaceholders])
 
-  const findTopmostDraggableAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    const textKey = findTopmostBlockAtPoint(pageX, pageY)
-    if (textKey) return textKey
-    return findTopmostImageAtPoint(pageX, pageY)
-  }, [findTopmostBlockAtPoint, findTopmostImageAtPoint])
+  const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    const key = findTopmostLayerAtPoint(pageX, pageY)
+    if (!key || imageOrder.includes(key)) return null
+    return key
+  }, [findTopmostLayerAtPoint, imageOrder])
+
+  const findTopmostImageAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
+    const key = findTopmostLayerAtPoint(pageX, pageY)
+    if (!key || !imageOrder.includes(key)) return null
+    return key
+  }, [findTopmostLayerAtPoint, imageOrder])
+
+  const findTopmostDraggableAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => (
+    findTopmostLayerAtPoint(pageX, pageY)
+  ), [findTopmostLayerAtPoint])
+
+  const resolveSelectedLayerAtClientPoint = useCallback((clientX: number, clientY: number): BlockId | null => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    const pagePoint = toPagePoint(clientX - rect.left, clientY - rect.top)
+    if (!pagePoint) return null
+    return findTopmostDraggableAtPoint(pagePoint.x, pagePoint.y)
+  }, [findTopmostDraggableAtPoint, toPagePoint])
 
   const getAutoFitForPlacement = useCallback(({
     key,
@@ -1439,6 +1531,9 @@ export const GridPreview = memo(function GridPreview({
     lastAppliedLayoutKeyRef.current = 0
     lastAppliedImageLayoutKeyRef.current = 0
     lastAppliedCustomSizeLayoutKeyRef.current = 0
+    lastAppliedLayerLayoutKeyRef.current = 0
+    lastAppliedLayerRequestKeyRef.current = 0
+    lastAppliedLayerDeleteRequestKeyRef.current = 0
     suppressReflowCheckRef.current = true
     suppressImageModuleRemapRef.current = true
     previousImageGridRef.current = null
@@ -1606,10 +1701,80 @@ export const GridPreview = memo(function GridPreview({
 
   useEffect(() => {
     if (!initialLayout || initialLayoutKey === 0) return
+    if (lastAppliedLayerLayoutKeyRef.current === initialLayoutKey) return
+    lastAppliedLayerLayoutKeyRef.current = initialLayoutKey
+    applyLayerOrderSnapshot(initialLayout)
+  }, [applyLayerOrderSnapshot, initialLayout, initialLayoutKey])
+
+  useEffect(() => {
+    if (!initialLayout || initialLayoutKey === 0) return
     if (lastAppliedCustomSizeLayoutKeyRef.current === initialLayoutKey) return
     lastAppliedCustomSizeLayoutKeyRef.current = initialLayoutKey
     applyCustomSizeSnapshot(initialLayout)
   }, [applyCustomSizeSnapshot, initialLayout, initialLayoutKey])
+
+  useEffect(() => {
+    if (!requestedLayerOrder || requestedLayerOrderKey === 0) return
+    if (lastAppliedLayerRequestKeyRef.current === requestedLayerOrderKey) return
+    lastAppliedLayerRequestKeyRef.current = requestedLayerOrderKey
+    const nextLayerOrder = reconcileLayerOrder(requestedLayerOrder, blockOrder, imageOrder)
+    if (areStringArraysEqual(layerOrder, nextLayerOrder)) return
+    recordHistoryBeforeChange()
+    setLayerOrder(nextLayerOrder)
+  }, [blockOrder, imageOrder, layerOrder, recordHistoryBeforeChange, requestedLayerOrder, requestedLayerOrderKey])
+
+  const deleteLayerByKey = useCallback((key: BlockId) => {
+    if (imageOrder.includes(key)) {
+      setImageOrder((prev) => prev.filter((item) => item !== key))
+      setImageModulePositions((prev) => omitRecordKey(prev, key))
+      setImageColumnSpans((prev) => omitRecordKey(prev, key))
+      setImageRowSpans((prev) => omitRecordKey(prev, key))
+      setImageColors((prev) => omitRecordKey(prev, key))
+      setLayerOrder((prev) => prev.filter((item) => item !== key))
+      setImageEditorState((prev) => (prev?.target === key ? null : prev))
+      return
+    }
+
+    setBlockCollections((prev) => {
+      return {
+        ...prev,
+        blockOrder: prev.blockOrder.filter((item) => item !== key),
+        textContent: omitRecordKey(prev.textContent, key) as Record<BlockId, string>,
+        blockTextEdited: omitRecordKey(prev.blockTextEdited, key) as Record<BlockId, boolean>,
+        styleAssignments: omitRecordKey(prev.styleAssignments, key) as Record<BlockId, TypographyStyleKey>,
+        blockFontFamilies: omitRecordKey(prev.blockFontFamilies, key) as Partial<Record<BlockId, FontFamily>>,
+        blockColumnSpans: omitRecordKey(prev.blockColumnSpans, key),
+        blockRowSpans: omitRecordKey(prev.blockRowSpans, key),
+        blockTextAlignments: omitRecordKey(prev.blockTextAlignments, key) as Partial<Record<BlockId, TextAlignMode>>,
+        blockTextReflow: omitRecordKey(prev.blockTextReflow, key),
+        blockSyllableDivision: omitRecordKey(prev.blockSyllableDivision, key),
+        blockBold: omitRecordKey(prev.blockBold, key),
+        blockItalic: omitRecordKey(prev.blockItalic, key),
+        blockRotations: omitRecordKey(prev.blockRotations, key),
+        blockModulePositions: omitRecordKey(prev.blockModulePositions, key),
+      }
+    })
+
+    setBlockCustomSizes((prev) => omitRecordKey(prev, key))
+    setBlockCustomLeadings((prev) => omitRecordKey(prev, key))
+    setBlockTextColors((prev) => omitRecordKey(prev, key))
+    setLayerOrder((prev) => prev.filter((item) => item !== key))
+
+    setEditorState((prev) => (prev?.target === key ? null : prev))
+  }, [imageOrder, setBlockCollections])
+
+  useEffect(() => {
+    if (!requestedLayerDeleteTarget || requestedLayerDeleteKey === 0) return
+    if (lastAppliedLayerDeleteRequestKeyRef.current === requestedLayerDeleteKey) return
+    lastAppliedLayerDeleteRequestKeyRef.current = requestedLayerDeleteKey
+    recordHistoryBeforeChange()
+    deleteLayerByKey(requestedLayerDeleteTarget)
+  }, [deleteLayerByKey, recordHistoryBeforeChange, requestedLayerDeleteKey, requestedLayerDeleteTarget])
+
+  const handlePreviewPointerDown = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
+    onSelectLayer?.(resolveSelectedLayerAtClientPoint(event.clientX, event.clientY))
+    handleCanvasPointerDown(event)
+  }, [handleCanvasPointerDown, onSelectLayer, resolveSelectedLayerAtClientPoint])
 
   useEffect(() => {
     const canvas = staticCanvasRef.current
@@ -1660,76 +1825,15 @@ export const GridPreview = memo(function GridPreview({
       const cssHeight = canvas.height / pixelRatio
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.clearRect(0, 0, cssWidth, cssHeight)
-      imageRectsRef.current = {}
-      if (!showImagePlaceholders || imageOrder.length === 0) return
-
-      const { width, height } = result.pageSizePt
-      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-      const pageWidth = width * scale
-      const pageHeight = height * scale
-      const metrics = getGridMetrics()
-      const contentLeft = margins.left * scale
-      const contentTop = margins.top * scale
-      const baselineStep = gridUnit * scale
-      const baselineOriginTop = contentTop - baselineStep
-      const firstColumnStepPt = (metrics.moduleWidths[0] ?? result.module.width) + gridMarginHorizontal
-
-      ctx.save()
-      ctx.translate(cssWidth / 2, cssHeight / 2)
-      ctx.rotate((rotation * Math.PI) / 180)
-      ctx.translate(-pageWidth / 2, -pageHeight / 2)
-
-      for (const key of imageOrder) {
-        const basePosition = imageModulePositions[key]
-        const position = dragState?.key === key ? dragState.preview : basePosition
-        if (!position) continue
-        const columns = getImageSpan(key)
-        const rows = getImageRows(key)
-        const clamped = clampImageBaselinePosition(position, columns)
-        const x = clamped.col < 0
-          ? contentLeft + clamped.col * firstColumnStepPt * scale
-          : contentLeft + (metrics.colStarts[clamped.col] ?? clamped.col * firstColumnStepPt) * scale
-        const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
-        const rowStartIndex = Math.max(
-          0,
-          Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, clamped.row)),
-        )
-        const widthPx = sumAxisSpan(metrics.moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale
-        const heightPx = sumAxisSpan(metrics.moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale
-        imageRectsRef.current[key] = { x, y, width: widthPx, height: heightPx }
-        const imageColor = getImageColor(key)
-        ctx.fillStyle = imageColor
-        ctx.globalAlpha = 0.92
-        ctx.fillRect(x, y, widthPx, heightPx)
-        ctx.globalAlpha = 1
-        ctx.strokeStyle = imageColor
-        ctx.lineWidth = 1
-        ctx.strokeRect(x, y, widthPx, heightPx)
-      }
-
-      ctx.restore()
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [
-    clampImageBaselinePosition,
-    getImageColor,
-    getImageRows,
-    getImageSpan,
-    getGridMetrics,
-    imageModulePositions,
-    imageOrder,
-    dragState,
-    pixelRatio,
-    result,
-    rotation,
-    scale,
-    showImagePlaceholders,
-  ])
+  }, [pixelRatio])
 
   useTypographyRenderer<BlockId>({
     canvasRef,
     blockRectsRef,
+    imageRectsRef,
     typographyBufferRef,
     previousPlansRef,
     typographyBufferTransformRef,
@@ -1738,11 +1842,15 @@ export const GridPreview = memo(function GridPreview({
     fontRenderEpoch,
     rotation,
     showTypography,
+    showImagePlaceholders,
     blockOrder,
+    imageOrder,
+    layerOrder: resolvedLayerOrder,
     textContent,
     styleAssignments,
     blockTextAlignments,
     blockModulePositions,
+    imageModulePositions,
     dragState,
     getBlockFont,
     isBlockItalic,
@@ -1753,6 +1861,10 @@ export const GridPreview = memo(function GridPreview({
     getBlockFontSize,
     getBlockBaselineMultiplier,
     getBlockTextColor,
+    getImageSpan,
+    getImageRows,
+    getImageColor,
+    clampImageBaselinePosition,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     getWrappedText,
@@ -1776,7 +1888,12 @@ export const GridPreview = memo(function GridPreview({
       if (!showTypography) return
       const hasOverflow = blockOrder.some((key) => (overflowLinesByBlock[key] ?? 0) > 0)
       const activeEditorPlan = editorState ? previousPlansRef.current.get(editorState.target) : null
-      if (!dragState && !hasOverflow && !activeEditorPlan) return
+      const selectedImageRect = selectedLayerKey && imageOrder.includes(selectedLayerKey)
+        ? imageRectsRef.current[selectedLayerKey]
+        : null
+      const selectedTextPlan = selectedLayerKey ? previousPlansRef.current.get(selectedLayerKey) : null
+      const hasSelectedLayer = Boolean(selectedImageRect || selectedTextPlan)
+      if (!dragState && !hasOverflow && !activeEditorPlan && !hasSelectedLayer) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -1792,6 +1909,18 @@ export const GridPreview = memo(function GridPreview({
       ctx.translate(cssWidth / 2, cssHeight / 2)
       ctx.rotate((rotation * Math.PI) / 180)
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
+      const drawPlacementGuide = (x: number, lineY: number, width: number, height: number) => {
+        ctx.strokeStyle = "#f97316"
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(x, lineY)
+        ctx.lineTo(x + width, lineY)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(x, lineY)
+        ctx.lineTo(x, lineY + height)
+        ctx.stroke()
+      }
       if (dragState) {
         const dragSpan = getPlacementSpan(dragState.key)
         const dragRows = getPlacementRows(dragState.key)
@@ -1805,17 +1934,21 @@ export const GridPreview = memo(function GridPreview({
         )
         const snapWidth = sumAxisSpan(metrics.moduleWidths, dragState.preview.col, dragSpan, gridMarginHorizontal) * scale
         const snapHeight = sumAxisSpan(metrics.moduleHeights, dragRowStart, dragRows, gridMarginVertical) * scale
-        ctx.strokeStyle = "#f97316"
-        ctx.lineWidth = 1
-        const lineY = snapY + baselineStep
-        ctx.beginPath()
-        ctx.moveTo(snapX, lineY)
-        ctx.lineTo(snapX + snapWidth, lineY)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(snapX, lineY)
-        ctx.lineTo(snapX, lineY + snapHeight)
-        ctx.stroke()
+        drawPlacementGuide(snapX, snapY + baselineStep, snapWidth, snapHeight)
+      } else if (selectedImageRect) {
+        drawPlacementGuide(
+          selectedImageRect.x,
+          selectedImageRect.y,
+          selectedImageRect.width,
+          selectedImageRect.height,
+        )
+      } else if (selectedTextPlan) {
+        drawPlacementGuide(
+          selectedTextPlan.rotationOriginX,
+          selectedTextPlan.rotationOriginY + baselineStep,
+          selectedTextPlan.rect.width,
+          selectedTextPlan.rect.height,
+        )
       }
       if (activeEditorPlan) {
         const editorSpan = getBlockSpan(activeEditorPlan.key)
@@ -1875,6 +2008,7 @@ export const GridPreview = memo(function GridPreview({
     blockOrder,
     dragState,
     editorState,
+    imageOrder,
     getBlockRows,
     getBlockSpan,
     getGridMetrics,
@@ -1885,6 +2019,7 @@ export const GridPreview = memo(function GridPreview({
     result,
     rotation,
     scale,
+    selectedLayerKey,
     showTypography,
   ])
 
@@ -2560,6 +2695,7 @@ export const GridPreview = memo(function GridPreview({
         return acc
       }, {} as Partial<Record<BlockId, string>>),
       blockModulePositions,
+      layerOrder: [...resolvedLayerOrder],
       imageOrder: [...imageOrder],
       imageModulePositions: { ...imageModulePositions },
       imageColumnSpans: imageOrder.reduce((acc, key) => {
@@ -2612,6 +2748,7 @@ export const GridPreview = memo(function GridPreview({
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onLayoutChange,
+    resolvedLayerOrder,
     styleAssignments,
     textContent,
   ])
@@ -2685,7 +2822,7 @@ export const GridPreview = memo(function GridPreview({
           height={pageHeightPx}
           style={{ width: pageWidthCss, height: pageHeightCss }}
           className={`absolute inset-0 block touch-none ${canvasCursorClass}`}
-          onPointerDown={handleCanvasPointerDown}
+          onPointerDown={handlePreviewPointerDown}
           onPointerMove={handleCanvasPointerMove}
           onPointerUp={handleCanvasPointerUp}
           onPointerCancel={handleCanvasPointerCancel}

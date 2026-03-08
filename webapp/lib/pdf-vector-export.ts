@@ -150,6 +150,36 @@ function parseHexColor(value: string | undefined): RgbColor | null {
   }
 }
 
+function reconcileLayerOrder(
+  current: readonly BlockId[],
+  blockOrder: readonly BlockId[],
+  imageOrder: readonly BlockId[],
+): BlockId[] {
+  const validKeys = new Set<BlockId>([...imageOrder, ...blockOrder])
+  const next: BlockId[] = []
+  const seen = new Set<BlockId>()
+
+  for (const key of current) {
+    if (!validKeys.has(key) || seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  for (const key of imageOrder) {
+    if (seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  for (const key of blockOrder) {
+    if (seen.has(key)) continue
+    next.push(key)
+    seen.add(key)
+  }
+
+  return next
+}
+
 export function renderSwissGridVectorPdf({
   pdf,
   width,
@@ -377,16 +407,17 @@ export function renderSwissGridVectorPdf({
     }
   }
 
-  if (showImagePlaceholders) {
-    const imageOrder = layout?.imageOrder?.filter(
-      (key): key is BlockId => typeof key === "string" && key.length > 0,
-    ) ?? []
-    const imageModulePositions = layout?.imageModulePositions ?? {}
-    const imageColumnSpans = layout?.imageColumnSpans ?? {}
-    const imageRowSpans = layout?.imageRowSpans ?? {}
-    const imageColors = layout?.imageColors ?? {}
-    const fallbackImageColor: RgbColor = { r: 11, g: 53, b: 54 }
+  const imageOrder = layout?.imageOrder?.filter(
+    (key): key is BlockId => typeof key === "string" && key.length > 0,
+  ) ?? []
+  const imageModulePositions = layout?.imageModulePositions ?? {}
+  const imageColumnSpans = layout?.imageColumnSpans ?? {}
+  const imageRowSpans = layout?.imageRowSpans ?? {}
+  const imageColors = layout?.imageColors ?? {}
+  const fallbackImageColor: RgbColor = { r: 11, g: 53, b: 54 }
+  const imagePlans = new Map<BlockId, { x: number; y: number; width: number; height: number; fillColor: RgbColor }>()
 
+  if (showImagePlaceholders) {
     for (const key of imageOrder) {
       const manual = imageModulePositions[key]
       if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") continue
@@ -408,12 +439,9 @@ export function renderSwissGridVectorPdf({
       const blockWidth = sumAxisSpan(moduleWidths, col, span, gridMarginHorizontal)
       const blockHeight = sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical)
       const fillColor = parseHexColor(imageColors[key]) ?? fallbackImageColor
-      setFillColorCmyk(pdf, fillColor)
-      drawFilledRect(x, y, blockWidth, blockHeight)
+      imagePlans.set(key, { x, y, width: blockWidth, height: blockHeight, fillColor })
     }
   }
-
-  if (!showTypography) return
 
   const styleDefinitions = result.typography.styles
   const blockOrder = layout?.blockOrder?.filter((key): key is BlockId => typeof key === "string" && key.length > 0) ?? [...BASE_BLOCK_IDS]
@@ -436,7 +464,25 @@ export function renderSwissGridVectorPdf({
   const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
   const blockTextColors = layout?.blockTextColors ?? {}
   const blockModulePositions = layout?.blockModulePositions ?? {}
+  const resolvedLayerOrder = reconcileLayerOrder(
+    layout?.layerOrder?.filter((key): key is BlockId => typeof key === "string" && key.length > 0) ?? [],
+    blockOrder,
+    imageOrder,
+  )
   const textMeasureContext = createTextMeasureContext()
+
+  const drawImagePlan = (imagePlan: { x: number; y: number; width: number; height: number; fillColor: RgbColor }) => {
+    setFillColorCmyk(pdf, imagePlan.fillColor)
+    drawFilledRect(imagePlan.x, imagePlan.y, imagePlan.width, imagePlan.height)
+  }
+
+  if (!showTypography) {
+    for (const key of resolvedLayerOrder) {
+      const imagePlan = imagePlans.get(key)
+      if (imagePlan) drawImagePlan(imagePlan)
+    }
+    return
+  }
 
   const getBlockSpan = (key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
@@ -606,7 +652,23 @@ export function renderSwissGridVectorPdf({
       }),
   })
 
-  for (const plan of layoutOutput.plans) {
+  const textPlans = new Map(layoutOutput.plans.map((plan) => [plan.key, plan] as const))
+  const orderedKeys = resolvedLayerOrder.filter((key) => imagePlans.has(key) || textPlans.has(key))
+  for (const key of imageOrder) {
+    if ((imagePlans.has(key) || textPlans.has(key)) && !orderedKeys.includes(key)) orderedKeys.push(key)
+  }
+  for (const key of blockOrder) {
+    if ((imagePlans.has(key) || textPlans.has(key)) && !orderedKeys.includes(key)) orderedKeys.push(key)
+  }
+
+  for (const key of orderedKeys) {
+    const imagePlan = imagePlans.get(key)
+    if (imagePlan) {
+      drawImagePlan(imagePlan)
+      continue
+    }
+    const plan = textPlans.get(key)
+    if (!plan) continue
     const blockFont = getBlockFont(plan.key)
     const blockIsBold = isBlockBold(plan.key, plan.styleKey)
     const blockIsItalic = isBlockItalic(plan.key, plan.styleKey)

@@ -144,16 +144,28 @@ Default: `swiss`
 - Margins
 - Gutter/modules
 - Typo
+- Layers
 - Divider placement: dark mode and baselines are separated by a divider
+- Divider placement: typography and layers are separated by a divider
 
 ### Sidebar Panels (icon selectors)
 
+- `Layers` (layers icon): opens the right sidebar layers panel
 - `Rollover Info` (`i` icon): toggles rollover info/tooltips globally
 - `Help` (`?` icon): opens help/reference panel
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
-- Behavior: only one right sidebar panel can be open at a time; clicking the active help/settings icon closes that panel.
+- Behavior: only one right sidebar panel can be open at a time; clicking the active layers/help/settings icon closes that panel.
 - Order of the right-side trio: `i`, `?`, `Settings`.
+
+### Layers Panel
+
+- Shows a mixed stack of text and image layers using current `layerOrder`.
+- Text cards display `Rows`, `Cols`, hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
+- Image cards display `Rows`, `Cols`, `Image Placeholder`, and a single color swatch.
+- Dragging cards changes z-index using a visible insertion marker between cards.
+- Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
+- Deleting from the panel removes the layer from the document model and saved JSON.
 
 ### Left Footer (always visible)
 
