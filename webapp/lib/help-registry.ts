@@ -6,7 +6,7 @@ export const QUICK_START_INDEX_ITEMS = [
 
 export const GENERAL_INDEX_ITEMS = [
   { id: "help-editor", label: "Text Editor Popup" },
-  { id: "help-image-editor", label: "Image Editor Popup" },
+  { id: "help-image-editor", label: "Image Editor" },
   { id: "help-drag-placement", label: "Drag and Placement" },
   { id: "help-history-reflow", label: "History and Reflow" },
   { id: "help-save-load", label: "Save and Load JSON" },

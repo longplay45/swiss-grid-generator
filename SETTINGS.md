@@ -114,7 +114,7 @@ Default: `swiss`
   - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
   - `Fresh Contrast`: `#fef9f7`, `#1aa9bc`, `#457c39`, `#ffeb00`
-- The same selector appears in the image editor popup and defaults to the current global selection.
+- The same selector appears in the image editor and defaults to the current global selection.
 
 ## Preview Header
 

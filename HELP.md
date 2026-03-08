@@ -8,7 +8,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - [Canvas and Grid](#canvas-and-grid)
 - [Typography and Fonts](#typography-and-fonts)
 - [Text Editor Popup](#text-editor-popup)
-- [Image Editor Popup](#image-editor-popup)
+- [Image Editor](#image-editor)
 - [Drag and Placement](#drag-and-placement)
 - [History and Reflow](#history-and-reflow)
 - [Header and Sidebars](#header-and-sidebars)
@@ -63,12 +63,14 @@ Comprehensive user reference for the in-app Help sidebar.
 - Textarea preview mirrors current paragraph style controls: font family, bold/italic, and left/right alignment.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.
 
-## Image Editor Popup
+## Image Editor
 
 - Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.
-- Controls: color scheme selector, row span, column span, and color swatches.
-- Save applies changes; delete removes the placeholder.
-- `Esc` or click outside closes without saving.
+- Layout uses a left icon rail with contextual submenus for geometry and color.
+- Geometry submenu: row span and column span.
+- Color submenu: scheme selector and swatches.
+- Delete lives in the rail and removes the placeholder immediately.
+- `Esc` or click outside closes the editor.
 
 ## Drag and Placement
 

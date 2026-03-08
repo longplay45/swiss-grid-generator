@@ -168,13 +168,15 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-image-editor" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Image Editor Popup
+          Image Editor
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.</li>
-          <li>Controls: color scheme selector, row span, column span, and color swatches.</li>
-          <li>Save applies changes; delete removes the placeholder.</li>
-          <li>`Esc` or click outside closes without saving.</li>
+          <li>Layout uses a left icon rail with contextual submenus for geometry and color.</li>
+          <li>Geometry submenu: row span and column span.</li>
+          <li>Color submenu: scheme selector and swatches.</li>
+          <li>Delete lives in the rail and removes the placeholder immediately.</li>
+          <li>`Esc` or click outside closes the editor.</li>
         </ul>
       </section>
 
@@ -485,7 +487,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Selects the base scheme used for new image placeholders.</li>
           <li>`Background` applies `None` or any color from the selected scheme to the page.</li>
-          <li>The same selector appears in the image editor popup.</li>
+          <li>The same selector appears in the image editor.</li>
           <li>Image editor starts with the current global scheme selected.</li>
           <li>Each placeholder still stores its own final color value.</li>
         </ul>

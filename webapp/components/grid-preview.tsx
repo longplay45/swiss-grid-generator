@@ -324,6 +324,7 @@ export const GridPreview = memo(function GridPreview({
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
   const mouseMoveRafRef = useRef<number | null>(null)
   const lastLiveEditorSignatureRef = useRef("")
+  const lastLiveImageEditorSignatureRef = useRef("")
   const perfStateRef = useRef<PerfState>({
     drawMs: [],
     reflowMs: [],
@@ -2169,15 +2170,72 @@ export const GridPreview = memo(function GridPreview({
     applyEditorDraftLive(editorState)
   }, [applyEditorDraftLive, editorState])
 
-  const openImageEditor = useCallback((key: BlockId) => {
+  useEffect(() => {
+    if (!imageEditorState) {
+      lastLiveImageEditorSignatureRef.current = ""
+      return
+    }
+    const signature = [
+      imageEditorState.target,
+      imageEditorState.draftColumns,
+      imageEditorState.draftRows,
+      imageEditorState.draftColor,
+    ].join("|")
+    if (lastLiveImageEditorSignatureRef.current === signature) return
+    lastLiveImageEditorSignatureRef.current = signature
+
+    const key = imageEditorState.target
+    const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
+    const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
+    const color = isImagePlaceholderColor(imageEditorState.draftColor)
+      ? imageEditorState.draftColor
+      : defaultImageColor
+    const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
+    const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
+
+    setImageColumnSpans((prev) => (
+      prev[key] === columns
+        ? prev
+        : { ...prev, [key]: columns }
+    ))
+    setImageRowSpans((prev) => (
+      prev[key] === rows
+        ? prev
+        : { ...prev, [key]: rows }
+    ))
+    setImageColors((prev) => (
+      prev[key] === color
+        ? prev
+        : { ...prev, [key]: color }
+    ))
+    setImageModulePositions((prev) => {
+      const current = prev[key]
+      if (current && current.col === clampedPosition.col && current.row === clampedPosition.row) {
+        return prev
+      }
+      return { ...prev, [key]: clampedPosition }
+    })
+  }, [
+    clampImageBaselinePosition,
+    defaultImageColor,
+    imageEditorState,
+    imageModulePositions,
+    result.settings.gridCols,
+    result.settings.gridRows,
+  ])
+
+  const openImageEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
     setEditorState(null)
+    if (options?.recordHistory !== false) {
+      recordHistoryBeforeChange()
+    }
     setImageEditorState({
       target: key,
       draftColumns: getImageSpan(key),
       draftRows: getImageRows(key),
       draftColor: getImageColor(key),
     })
-  }, [getImageColor, getImageRows, getImageSpan])
+  }, [getImageColor, getImageRows, getImageSpan, recordHistoryBeforeChange])
 
   const closeImageEditor = useCallback(() => {
     setImageEditorState(null)
@@ -2202,32 +2260,6 @@ export const GridPreview = memo(function GridPreview({
       return { ...prev, draftColor: defaultImageColor }
     })
   }, [defaultImageColor, imagePalette])
-
-  const saveImageEditor = useCallback(() => {
-    if (!imageEditorState) return
-    recordHistoryBeforeChange()
-    const key = imageEditorState.target
-    const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
-    const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
-    const color = isImagePlaceholderColor(imageEditorState.draftColor)
-      ? imageEditorState.draftColor
-      : defaultImageColor
-    const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
-    const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
-    setImageColumnSpans((prev) => ({ ...prev, [key]: columns }))
-    setImageRowSpans((prev) => ({ ...prev, [key]: rows }))
-    setImageColors((prev) => ({ ...prev, [key]: color }))
-    setImageModulePositions((prev) => ({ ...prev, [key]: clampedPosition }))
-    setImageEditorState(null)
-  }, [
-    clampImageBaselinePosition,
-    imageEditorState,
-    imageModulePositions,
-    defaultImageColor,
-    recordHistoryBeforeChange,
-    result.settings.gridCols,
-    result.settings.gridRows,
-  ])
 
   const deleteImagePlaceholder = useCallback(() => {
     if (!imageEditorState) return
@@ -2328,7 +2360,7 @@ export const GridPreview = memo(function GridPreview({
     setImageColumnSpans((prev) => ({ ...prev, [newKey]: 1 }))
     setImageRowSpans((prev) => ({ ...prev, [newKey]: 1 }))
     setImageColors((prev) => ({ ...prev, [newKey]: defaultImageColor }))
-    openImageEditor(newKey)
+    openImageEditor(newKey, { recordHistory: false })
   }, [
     canvasRef,
     clampImageModulePosition,
@@ -2338,8 +2370,8 @@ export const GridPreview = memo(function GridPreview({
     getGridMetrics,
     handleTextCanvasDoubleClick,
     openImageEditor,
-    recordHistoryBeforeChange,
     defaultImageColor,
+    recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
     scale,
@@ -2368,22 +2400,23 @@ export const GridPreview = memo(function GridPreview({
   })
 
   useEffect(() => {
-    if (!editorState) return
+    if (!editorState && !imageEditorState) return
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target
       if (!(target instanceof Element)) {
-        closeEditor()
+        closeAnyEditor()
         return
       }
       if (textareaRef.current?.contains(target)) return
       if (target.closest('[data-text-editor-panel="true"]')) return
+      if (target.closest('[data-image-editor-panel="true"]')) return
       if (target.closest('[data-text-editor-select-content="true"]')) return
       if (target.closest('[data-preview-header-action="help"]')) return
-      closeEditor()
+      closeAnyEditor()
     }
     window.addEventListener("pointerdown", handlePointerDown, true)
     return () => window.removeEventListener("pointerdown", handlePointerDown, true)
-  }, [closeEditor, editorState])
+  }, [closeAnyEditor, editorState, imageEditorState])
 
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
     mouseMoveRafRef.current = null
@@ -2773,22 +2806,28 @@ export const GridPreview = memo(function GridPreview({
           />
         </div>
       ) : null}
-      <ImageEditorDialog
-        editorState={imageEditorState}
-        setEditorState={setImageEditorState}
-        closeEditor={closeImageEditor}
-        saveEditor={saveImageEditor}
-        deleteEditor={deleteImagePlaceholder}
-        gridRows={result.settings.gridRows}
-        gridCols={result.settings.gridCols}
-        colorSchemes={IMAGE_COLOR_SCHEMES}
-        selectedColorScheme={imageColorScheme}
-        onColorSchemeChange={handleImageColorSchemeChange}
-        palette={imagePalette}
-        isDarkMode={isDarkMode}
-        showEditorHelpIcon={showEditorHelpIcon}
-        onOpenHelpSection={onOpenHelpSection}
-      />
+      {imageEditorState ? (
+        <div
+          data-image-editor-panel="true"
+          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
+          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
+        >
+          <ImageEditorDialog
+            editorState={imageEditorState}
+            setEditorState={setImageEditorState}
+            deleteEditor={deleteImagePlaceholder}
+            gridRows={result.settings.gridRows}
+            gridCols={result.settings.gridCols}
+            colorSchemes={IMAGE_COLOR_SCHEMES}
+            selectedColorScheme={imageColorScheme}
+            onColorSchemeChange={handleImageColorSchemeChange}
+            palette={imagePalette}
+            rowTriggerMinWidthCh={rowTriggerMinWidthCh}
+            colTriggerMinWidthCh={colTriggerMinWidthCh}
+            isHelpActive={showEditorHelpIcon}
+          />
+        </div>
+      ) : null}
 
     </div>
   )
