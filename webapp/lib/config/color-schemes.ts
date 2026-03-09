@@ -20,6 +20,31 @@ export const IMAGE_COLOR_SCHEMES = [
     label: "Fresh Contrast",
     colors: ["#fef9f7", "#1aa9bc", "#457c39", "#ffeb00"],
   },
+  {
+    id: "new-1",
+    label: "New 1",
+    colors: ["#e0e5db", "#de3d83", "#00b8b8", "#e4bd0b"],
+  },
+  {
+    id: "new-2",
+    label: "New 2",
+    colors: ["#dddddd", "#fe9f97", "#fbae17", "#0095a3"],
+  },
+  {
+    id: "new-3",
+    label: "New 3",
+    colors: ["#777870", "#ec6b2d", "#333333", "#0d0f05"],
+  },
+  {
+    id: "new-4",
+    label: "New 4",
+    colors: ["#bfbabe", "#a63e14", "#558a86", "#f1f2f0"],
+  },
+  {
+    id: "new-5",
+    label: "New 5",
+    colors: ["#f43530", "#46454b", "#00aabb", "#e0e5da"],
+  },
 ] as const satisfies readonly ImageColorScheme[]
 
 export type ImageColorSchemeId = (typeof IMAGE_COLOR_SCHEMES)[number]["id"]
