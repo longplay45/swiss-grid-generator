@@ -63,8 +63,11 @@ import {
   type TypographyScale
 } from "@/lib/config/defaults"
 import {
+  getImageSchemeColorToken,
   isImageColorInScheme,
+  isImageSchemeColorToken,
   normalizeImageColorSchemeId,
+  resolveImageSchemeColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import {
@@ -446,11 +449,11 @@ function buildUiActionsFromLoadedSettings(
   if (loadedImageColorScheme) set("imageColorScheme", loadedImageColorScheme)
   const backgroundScheme = loadedImageColorScheme ?? RESOLVED_DEFAULTS.imageColorScheme
   if (loaded.canvasBackground === null) {
-    set("canvasBackground", null)
-  } else if (isImageColorInScheme(loaded.canvasBackground, backgroundScheme)) {
+    set("canvasBackground", getImageSchemeColorToken(0))
+  } else if (isImageSchemeColorToken(loaded.canvasBackground) || isImageColorInScheme(loaded.canvasBackground, backgroundScheme)) {
     set("canvasBackground", loaded.canvasBackground)
   } else {
-    set("canvasBackground", null)
+    set("canvasBackground", getImageSchemeColorToken(0))
   }
   if (typeof loaded.customBaseline === "number") set("customBaseline", loaded.customBaseline)
   if (isDisplayUnit(loaded.displayUnit)) set("displayUnit", loaded.displayUnit)
@@ -567,14 +570,17 @@ export default function Home() {
   const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
   const setImageColorScheme = useCallback((v: ImageColorSchemeId) => {
     const actions: UiAction[] = [{ type: "SET", key: "imageColorScheme", value: v }]
-    if (canvasBackground && !isImageColorInScheme(canvasBackground, v)) {
-      actions.push({ type: "SET", key: "canvasBackground", value: null })
+    if (canvasBackground && !isImageSchemeColorToken(canvasBackground) && !isImageColorInScheme(canvasBackground, v)) {
+      actions.push({ type: "SET", key: "canvasBackground", value: getImageSchemeColorToken(0) })
     }
     dispatch(actions.length === 1 ? actions[0] : { type: "BATCH", actions })
   }, [canvasBackground, dispatch])
   const setCanvasBackground = useCallback((value: string | null) => {
     dispatch({ type: "SET", key: "canvasBackground", value })
   }, [dispatch])
+  const resetParagraphColorsToScheme = useCallback(() => {
+    setParagraphColorResetNonce((nonce) => nonce + 1)
+  }, [])
   const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [dispatch])
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
@@ -595,6 +601,7 @@ export default function Home() {
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
+  const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
   const [documentMetadata, setDocumentMetadata] = useState<DocumentMetadata>({
     title: "",
     description: "",
@@ -1038,6 +1045,10 @@ export default function Home() {
   const setExportBleedMm = useCallback((v: number) => dispatch({ type: "SET", key: "exportBleedMm", value: v }), [dispatch])
   const setExportRegistrationMarks = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportRegistrationMarks", value: v }), [dispatch])
   const setExportFinalSafeGuides = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportFinalSafeGuides", value: v }), [dispatch])
+  const resolvedCanvasBackground = useMemo(
+    () => (canvasBackground ? resolveImageSchemeColor(canvasBackground, imageColorScheme) : null),
+    [canvasBackground, imageColorScheme],
+  )
 
   const exportActionsContext = useMemo(
     () => ({
@@ -1046,7 +1057,7 @@ export default function Home() {
       baseFont,
       orientation,
       rotation,
-      canvasBackground,
+      canvasBackground: resolvedCanvasBackground,
       showBaselines,
       showModules,
       showMargins,
@@ -1079,7 +1090,7 @@ export default function Home() {
       baseFont,
       orientation,
       rotation,
-      canvasBackground,
+      resolvedCanvasBackground,
       showBaselines,
       showModules,
       showMargins,
@@ -1444,6 +1455,7 @@ export default function Home() {
           onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           colorScheme={imageColorScheme}
           onColorSchemeChange={setImageColorScheme}
+          onResetParagraphColors={resetParagraphColorsToScheme}
           canvasBackground={canvasBackground}
           onCanvasBackgroundChange={setCanvasBackground}
           isDarkMode={isDarkUi}
@@ -1494,6 +1506,7 @@ export default function Home() {
     setImageColorScheme,
     setMarginMethod,
     setOrientation,
+    resetParagraphColorsToScheme,
     setRotation,
     setTypographyScale,
     setUseCustomMargins,
@@ -1562,7 +1575,7 @@ export default function Home() {
               showRolloverInfo={showRolloverInfo}
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
-              canvasBackground={canvasBackground}
+              canvasBackground={resolvedCanvasBackground}
               onImageColorSchemeChange={setImageColorScheme}
               initialLayout={loadedPreviewLayout?.layout ?? null}
               initialLayoutKey={loadedPreviewLayout?.key ?? 0}
@@ -1570,6 +1583,7 @@ export default function Home() {
               undoNonce={previewUndoNonce}
               redoNonce={previewRedoNonce}
               historyResetToken={documentHistoryResetNonce}
+              paragraphColorResetToken={paragraphColorResetNonce}
               onHistoryRecord={handlePreviewHistoryRecord}
               onUndoRequest={undoAny}
               onRedoRequest={redoAny}
@@ -1630,6 +1644,7 @@ export default function Home() {
               <LayersPanel
                 layout={previewLayout}
                 baseFont={baseFont}
+                imageColorScheme={imageColorScheme}
                 selectedLayerKey={selectedLayerKey}
                 onLayerOrderChange={handleLayerOrderChange}
                 onSelectLayer={setSelectedLayerKey}
@@ -1660,7 +1675,6 @@ export default function Home() {
     activeHelpSectionId,
     activeSidebarPanel,
     baseFont,
-    canvasBackground,
     displayGroup,
     documentHistoryResetNonce,
     fileGroup,
@@ -1675,6 +1689,7 @@ export default function Home() {
     handlePreviewHistoryAvailabilityChange,
     handlePreviewHistoryRecord,
     handlePreviewOpenHelpSection,
+    paragraphColorResetNonce,
     previewRedoNonce,
     previewLayout,
     previewUndoNonce,
@@ -1685,6 +1700,7 @@ export default function Home() {
     isDarkUi,
     loadLayout,
     loadedPreviewLayout,
+    resolvedCanvasBackground,
     showPresetsBrowser,
     renderHeaderAction,
     redoAny,

@@ -63,9 +63,13 @@ import {
   type FontFamily,
 } from "@/lib/config/fonts"
 import {
+  getClosestImageSchemeColorToken,
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
   getDefaultImagePlaceholderColor,
+  getDefaultTextSchemeColor,
   getImageColorScheme,
+  getImageSchemeColorReference,
+  resolveImageSchemeColor,
   IMAGE_COLOR_SCHEMES,
   isImagePlaceholderColor,
   type ImageColorSchemeId,
@@ -273,7 +277,6 @@ const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
 const OVERFLOW_BADGE_RADIUS = 11
 const OVERFLOW_BADGE_PADDING = 6
 const OVERFLOW_BADGE_FILL = "rgba(255, 80, 80, 0.85)"
-const DEFAULT_TEXT_COLOR = "#1f2937"
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
@@ -298,6 +301,7 @@ interface GridPreviewProps {
   undoNonce?: number
   redoNonce?: number
   historyResetToken?: number
+  paragraphColorResetToken?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
@@ -336,6 +340,7 @@ export const GridPreview = memo(function GridPreview({
   undoNonce = 0,
   redoNonce = 0,
   historyResetToken = 0,
+  paragraphColorResetToken = 0,
   onCanvasReady,
   onLayoutChange,
   onRequestGridRestore,
@@ -382,6 +387,7 @@ export const GridPreview = memo(function GridPreview({
   const typographyBufferTransformRef = useRef("")
   const reflowPlanCacheRef = useRef<Map<string, ReflowPlan>>(new Map())
   const lastHistoryResetTokenRef = useRef(historyResetToken)
+  const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
   const onLayoutChangeDebounceRef = useRef<number | null>(null)
   const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
   const mouseMoveRafRef = useRef<number | null>(null)
@@ -439,12 +445,17 @@ export const GridPreview = memo(function GridPreview({
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [editorState, setEditorState] = useState<EditorState | null>(null)
   const [imageEditorState, setImageEditorState] = useState<PlaceholderEditorState | null>(null)
+  const previousImageColorSchemeRef = useRef(imageColorScheme)
   const imagePalette = useMemo(
     () => getImageColorScheme(imageColorScheme).colors,
     [imageColorScheme],
   )
   const defaultImageColor = useMemo(
     () => getDefaultImagePlaceholderColor(imageColorScheme),
+    [imageColorScheme],
+  )
+  const defaultTextColor = useMemo(
+    () => getDefaultTextSchemeColor(imageColorScheme),
     [imageColorScheme],
   )
   const HISTORY_LIMIT = 50
@@ -570,13 +581,32 @@ export const GridPreview = memo(function GridPreview({
     return Math.max(1, Math.min(result.settings.gridRows, raw))
   }, [imageRowSpans, result.settings.gridRows])
 
-  const getImageColor = useCallback((key: BlockId): string => {
+  const getImageColorReference = useCallback((key: BlockId): string => {
     const raw = imageColors[key]
-    if (isImagePlaceholderColor(raw)) {
-      return raw
+    if (typeof raw === "string") {
+      return getImageSchemeColorReference(raw, imageColorScheme)
     }
-    return defaultImageColor
-  }, [defaultImageColor, imageColors])
+    return getImageSchemeColorReference(defaultImageColor, imageColorScheme)
+  }, [defaultImageColor, imageColorScheme, imageColors])
+
+  const getImageColor = useCallback((key: BlockId): string => {
+    return resolveImageSchemeColor(getImageColorReference(key), imageColorScheme)
+  }, [getImageColorReference, imageColorScheme])
+
+  const normalizeImageColorReferences = useCallback((
+    colors: Partial<Record<BlockId, string>>,
+    schemeId: ImageColorSchemeId,
+  ): Partial<Record<BlockId, string>> => {
+    let changed = false
+    const next = { ...colors }
+    for (const [key, value] of Object.entries(colors)) {
+      const normalized = getImageSchemeColorReference(value, schemeId)
+      if (normalized === value) continue
+      next[key] = normalized
+      changed = true
+    }
+    return changed ? next : colors
+  }, [])
 
   const isImagePlaceholderKey = useCallback((key: BlockId): boolean => (
     key.startsWith("image-")
@@ -661,8 +691,8 @@ export const GridPreview = memo(function GridPreview({
   const getBlockTextColor = useCallback((key: BlockId): string => {
     const raw = blockTextColors[key]
     if (isImagePlaceholderColor(raw)) return raw
-    return DEFAULT_TEXT_COLOR
-  }, [blockTextColors])
+    return defaultTextColor
+  }, [blockTextColors, defaultTextColor])
 
   const getStyleDefaultBold = useCallback((key: BlockId): boolean => {
     return getStyleForBlock(key)?.weight === "Bold"
@@ -809,17 +839,17 @@ export const GridPreview = memo(function GridPreview({
       acc[key] = getImageRows(key)
       return acc
     }, {} as Partial<Record<BlockId, number>>),
-    imageColors: imageOrder.reduce((acc, key) => {
-      acc[key] = getImageColor(key)
-      return acc
-    }, {} as Partial<Record<BlockId, string>>),
+      imageColors: imageOrder.reduce((acc, key) => {
+        acc[key] = getImageColorReference(key)
+        return acc
+      }, {} as Partial<Record<BlockId, string>>),
   }), [
     blockCustomLeadings,
     blockTextColors,
     blockCustomSizes,
     blockOrder,
     buildTextSnapshot,
-    getImageColor,
+    getImageColorReference,
     getImageRows,
     getImageSpan,
     imageModulePositions,
@@ -860,11 +890,7 @@ export const GridPreview = memo(function GridPreview({
     }, {} as Partial<Record<BlockId, number>>)
     const nextColors = normalizedOrder.reduce((acc, key) => {
       const raw = snapshot.imageColors?.[key]
-      if (isImagePlaceholderColor(raw)) {
-        acc[key] = raw
-      } else {
-        acc[key] = defaultImageColor
-      }
+      acc[key] = getImageSchemeColorReference(raw ?? defaultImageColor, imageColorScheme)
       return acc
     }, {} as Partial<Record<BlockId, string>>)
 
@@ -877,6 +903,7 @@ export const GridPreview = memo(function GridPreview({
     setImageEditorState(null)
   }, [
     defaultImageColor,
+    imageColorScheme,
     result.grid.gridUnit,
     result.grid.margins.bottom,
     result.grid.margins.top,
@@ -1274,7 +1301,7 @@ export const GridPreview = memo(function GridPreview({
     if (isImagePlaceholderKey(drag.key)) {
       const sourceColumns = getImageSpan(drag.key)
       const sourceRows = getImageRows(drag.key)
-      const sourceColor = getImageColor(drag.key)
+      const sourceColor = getImageColorReference(drag.key)
       const metrics = getGridMetrics()
       const minCol = -Math.max(0, sourceColumns - 1)
       const minRow = -Math.max(0, metrics.maxBaselineRow)
@@ -1463,7 +1490,7 @@ export const GridPreview = memo(function GridPreview({
     blockOrder,
     getBlockRows,
     getBlockSpan,
-    getImageColor,
+    getImageColorReference,
     getImageRows,
     getImageSpan,
     getGridMetrics,
@@ -1544,6 +1571,41 @@ export const GridPreview = memo(function GridPreview({
     setEditorState(null)
     setImageEditorState(null)
   }, [historyResetToken, resetHistory, setDragState])
+
+  useEffect(() => {
+    if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
+    lastParagraphColorResetTokenRef.current = paragraphColorResetToken
+    const hasCustomParagraphColors = Object.keys(blockTextColors).length > 0
+    const nextImageColors = imageOrder.reduce((acc, key) => {
+      acc[key] = getClosestImageSchemeColorToken(imageColors[key] ?? defaultImageColor, imageColorScheme)
+      return acc
+    }, {} as Partial<Record<BlockId, string>>)
+    const hasCustomImageColors = imageOrder.some((key) => nextImageColors[key] !== imageColors[key])
+      || Object.keys(imageColors).some((key) => !imageOrder.includes(key))
+    setEditorState((prev) => {
+      if (!prev) return prev
+      if (prev.draftColor.toLowerCase() === defaultTextColor.toLowerCase()) return prev
+      return { ...prev, draftColor: defaultTextColor }
+    })
+    if (!hasCustomParagraphColors && !hasCustomImageColors) return
+    recordHistoryBeforeChange()
+    if (hasCustomParagraphColors) {
+      setBlockTextColors({})
+    }
+    if (hasCustomImageColors) {
+      setImageColors(nextImageColors)
+    }
+  }, [
+    blockTextColors,
+    defaultImageColor,
+    defaultTextColor,
+    imageColorScheme,
+    imageColors,
+    imageOrder,
+    paragraphColorResetToken,
+    recordHistoryBeforeChange,
+    setBlockTextColors,
+  ])
 
   const buildReflowPlannerInput = useCallback((
     gridCols: number,
@@ -2262,7 +2324,7 @@ export const GridPreview = memo(function GridPreview({
     getStyleSize,
     getStyleLeading,
     getBlockTextColor,
-    defaultTextColor: DEFAULT_TEXT_COLOR,
+    defaultTextColor,
     getDefaultColumnSpan,
     resultGridUnit: result.grid.gridUnit,
     toPagePoint,
@@ -2323,9 +2385,7 @@ export const GridPreview = memo(function GridPreview({
     const key = imageEditorState.target
     const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
     const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
-    const color = isImagePlaceholderColor(imageEditorState.draftColor)
-      ? imageEditorState.draftColor
-      : defaultImageColor
+    const color = getImageSchemeColorReference(imageEditorState.draftColor, imageColorScheme)
     const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
     const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
 
@@ -2354,6 +2414,7 @@ export const GridPreview = memo(function GridPreview({
   }, [
     clampImageBaselinePosition,
     defaultImageColor,
+    imageColorScheme,
     imageEditorState,
     imageModulePositions,
     result.settings.gridCols,
@@ -2378,24 +2439,25 @@ export const GridPreview = memo(function GridPreview({
   }, [])
 
   const handleImageColorSchemeChange = useCallback((nextScheme: ImageColorSchemeId) => {
+    setImageColors((prev) => normalizeImageColorReferences(prev, imageColorScheme))
     onImageColorSchemeChange?.(nextScheme)
-    setImageEditorState((prev) => {
-      if (!prev) return prev
-      const nextPalette = getImageColorScheme(nextScheme).colors
-      const hasCurrentColor = nextPalette.some((color) => color.toLowerCase() === prev.draftColor.toLowerCase())
-      if (hasCurrentColor) return prev
-      return { ...prev, draftColor: nextPalette[0] }
-    })
-  }, [onImageColorSchemeChange])
+  }, [imageColorScheme, normalizeImageColorReferences, onImageColorSchemeChange])
+
+  useEffect(() => {
+    const previousScheme = previousImageColorSchemeRef.current
+    if (previousScheme === imageColorScheme) return
+    setImageColors((prev) => normalizeImageColorReferences(prev, previousScheme))
+    previousImageColorSchemeRef.current = imageColorScheme
+  }, [imageColorScheme, normalizeImageColorReferences])
 
   useEffect(() => {
     setImageEditorState((prev) => {
       if (!prev) return prev
-      const hasCurrentColor = imagePalette.some((color) => color.toLowerCase() === prev.draftColor.toLowerCase())
-      if (hasCurrentColor) return prev
-      return { ...prev, draftColor: defaultImageColor }
+      const nextColor = resolveImageSchemeColor(imageColors[prev.target], imageColorScheme)
+      if (prev.draftColor.toLowerCase() === nextColor.toLowerCase()) return prev
+      return { ...prev, draftColor: nextColor }
     })
-  }, [defaultImageColor, imagePalette])
+  }, [defaultImageColor, imageColorScheme, imageColors])
 
   const deleteImagePlaceholder = useCallback(() => {
     if (!imageEditorState) return
@@ -2495,7 +2557,7 @@ export const GridPreview = memo(function GridPreview({
     setImageModulePositions((prev) => ({ ...prev, [newKey]: snapped }))
     setImageColumnSpans((prev) => ({ ...prev, [newKey]: 1 }))
     setImageRowSpans((prev) => ({ ...prev, [newKey]: 1 }))
-    setImageColors((prev) => ({ ...prev, [newKey]: defaultImageColor }))
+    setImageColors((prev) => ({ ...prev, [newKey]: getImageSchemeColorReference(defaultImageColor, imageColorScheme) }))
     openImageEditor(newKey, { recordHistory: false })
   }, [
     canvasRef,
@@ -2507,6 +2569,7 @@ export const GridPreview = memo(function GridPreview({
     handleTextCanvasDoubleClick,
     openImageEditor,
     defaultImageColor,
+    imageColorScheme,
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
@@ -2707,7 +2770,7 @@ export const GridPreview = memo(function GridPreview({
         return acc
       }, {} as Partial<Record<BlockId, number>>),
       imageColors: imageOrder.reduce((acc, key) => {
-        acc[key] = getImageColor(key)
+        acc[key] = getImageColorReference(key)
         return acc
       }, {} as Partial<Record<BlockId, string>>),
     }
@@ -2737,7 +2800,7 @@ export const GridPreview = memo(function GridPreview({
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
-    getImageColor,
+    getImageColorReference,
     getImageRows,
     getImageSpan,
     imageColors,

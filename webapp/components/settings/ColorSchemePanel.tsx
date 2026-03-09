@@ -1,4 +1,5 @@
-import { memo } from "react"
+import { memo, useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -9,10 +10,13 @@ import {
 } from "@/components/ui/select"
 import { PanelCard } from "@/components/settings/PanelCard"
 import {
+  getImageSchemeColorToken,
   getImageColorScheme,
   IMAGE_COLOR_SCHEMES,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
+
+const COLOR_SLOT_LABELS = ["Paper", "Light", "Mid", "Dark"] as const
 
 type Props = {
   collapsed: boolean
@@ -20,6 +24,7 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   colorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
+  onResetParagraphColors: () => void
   canvasBackground: string | null
   onCanvasBackgroundChange: (value: string | null) => void
   isDarkMode: boolean
@@ -31,11 +36,15 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   onHeaderDoubleClick,
   colorScheme,
   onColorSchemeChange,
+  onResetParagraphColors,
   canvasBackground,
   onCanvasBackgroundChange,
   isDarkMode,
 }: Props) {
   const selected = getImageColorScheme(colorScheme)
+  const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
+  const displayedScheme = previewColorScheme ? getImageColorScheme(previewColorScheme) : selected
+  const paperBackgroundValue = getImageSchemeColorToken(0)
   const backgroundSelectValue = canvasBackground ?? "__none__"
 
   return (
@@ -64,14 +73,22 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
         <Label className="text-sm text-gray-600">Base Color Scheme</Label>
         <Select
           value={colorScheme}
+          onOpenChange={(open) => {
+            if (!open) setPreviewColorScheme(null)
+          }}
           onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
             {IMAGE_COLOR_SCHEMES.map((scheme) => (
-              <SelectItem key={scheme.id} value={scheme.id}>
+              <SelectItem
+                key={scheme.id}
+                value={scheme.id}
+                onFocus={() => setPreviewColorScheme(scheme.id)}
+                onPointerMove={() => setPreviewColorScheme(scheme.id)}
+              >
                 {scheme.label}
               </SelectItem>
             ))}
@@ -79,9 +96,9 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
         </Select>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        {selected.colors.map((color, index) => (
+        {displayedScheme.colors.map((color, index) => (
           <div
-            key={`${selected.id}-${index}-${color}`}
+            key={`${displayedScheme.id}-${index}-${color}`}
             className="flex flex-col items-start gap-1"
           >
             <div
@@ -106,19 +123,42 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none__">None</SelectItem>
-            {selected.colors.map((color) => (
+            <SelectItem value={paperBackgroundValue}>
+              <span className="flex items-center gap-2">
+                <span
+                  className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
+                  style={{ backgroundColor: selected.colors[0] }}
+                />
+                <span>{COLOR_SLOT_LABELS[0]}</span>
+                <span className="font-mono text-xs">{selected.colors[0].toLowerCase()}</span>
+              </span>
+            </SelectItem>
+            {selected.colors.slice(1).map((color, index) => (
               <SelectItem key={`background-${selected.id}-${color}`} value={color}>
-                <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2">
                   <span
                     className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
                     style={{ backgroundColor: color }}
                   />
+                  <span>{COLOR_SLOT_LABELS[index + 1]}</span>
                   <span className="font-mono text-xs">{color.toLowerCase()}</span>
-                </div>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-sm text-gray-600">Paragraph Colors</Label>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full justify-start"
+          onClick={onResetParagraphColors}
+        >
+          Reset Colors To Scheme
+        </Button>
       </div>
     </PanelCard>
   )

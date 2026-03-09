@@ -68,6 +68,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [fxSizeInput, setFxSizeInput] = useState("")
   const [fxLeadingInput, setFxLeadingInput] = useState("")
+  const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 
   const editorText = controls.editorState.draftText ?? ""
@@ -78,6 +79,13 @@ export function TextEditorPanel<StyleKey extends string>({
     ?? controls.editorState.draftStyle
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === controls.selectedColorScheme)?.label
     ?? controls.selectedColorScheme
+  const colorSchemeTriggerWidthCh = Math.max(
+    ...controls.colorSchemes.map((scheme) => scheme.label.length),
+    12,
+  ) + 3
+  const previewPalette = previewColorScheme
+    ? (controls.colorSchemes.find((scheme) => scheme.id === previewColorScheme)?.colors ?? controls.palette)
+    : controls.palette
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
@@ -410,6 +418,9 @@ export function TextEditorPanel<StyleKey extends string>({
             <>
               <Select
                 value={controls.selectedColorScheme}
+                onOpenChange={(open) => {
+                  if (!open) setPreviewColorScheme(null)
+                }}
                 onValueChange={(value) => {
                   const nextScheme = value as typeof controls.selectedColorScheme
                   controls.onColorSchemeChange(nextScheme)
@@ -420,23 +431,31 @@ export function TextEditorPanel<StyleKey extends string>({
                   }
                 }}
               >
-                <SelectTrigger className={`h-8 min-w-[120px] text-xs ${tone.input}`}>
+                <SelectTrigger
+                  className={`h-8 text-xs ${tone.input}`}
+                  style={{ width: `${colorSchemeTriggerWidthCh}ch` }}
+                >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
                   {controls.colorSchemes.map((scheme) => (
-                    <SelectItem key={scheme.id} value={scheme.id}>
+                    <SelectItem
+                      key={scheme.id}
+                      value={scheme.id}
+                      onFocus={() => setPreviewColorScheme(scheme.id)}
+                      onPointerMove={() => setPreviewColorScheme(scheme.id)}
+                    >
                       {scheme.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-1">
-                {controls.palette.map((color, index) => {
+                {previewPalette.map((color, index) => {
                   const selected = controls.editorState.draftColor.toLowerCase() === color.toLowerCase()
                   return (
                     <button
-                      key={`${controls.selectedColorScheme}-${index}-${color}`}
+                      key={`${previewColorScheme ?? controls.selectedColorScheme}-${index}-${color}`}
                       type="button"
                       onClick={() => {
                         controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))

@@ -27,7 +27,7 @@ type ImageEditorDialogProps = {
   deleteEditor: () => void
   gridRows: number
   gridCols: number
-  colorSchemes: readonly { id: ImageColorSchemeId; label: string }[]
+  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
   selectedColorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
@@ -51,8 +51,17 @@ export function ImageEditorDialog({
   isHelpActive = false,
 }: ImageEditorDialogProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
+  const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
 
   if (!editorState) return null
+
+  const colorSchemeTriggerWidthCh = Math.max(
+    ...colorSchemes.map((scheme) => scheme.label.length),
+    12,
+  ) + 3
+  const previewPalette = previewColorScheme
+    ? (colorSchemes.find((scheme) => scheme.id === previewColorScheme)?.colors ?? palette)
+    : palette
 
   const tone = {
     rail: isHelpActive ? "border-blue-500 bg-white" : "border-gray-300 bg-white",
@@ -158,25 +167,36 @@ export function ImageEditorDialog({
             <>
               <Select
                 value={selectedColorScheme}
+                onOpenChange={(open) => {
+                  if (!open) setPreviewColorScheme(null)
+                }}
                 onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
               >
-                <SelectTrigger className={`h-8 min-w-[120px] text-xs ${tone.input}`}>
+                <SelectTrigger
+                  className={`h-8 text-xs ${tone.input}`}
+                  style={{ width: `${colorSchemeTriggerWidthCh}ch` }}
+                >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
                   {colorSchemes.map((scheme) => (
-                    <SelectItem key={scheme.id} value={scheme.id}>
+                    <SelectItem
+                      key={scheme.id}
+                      value={scheme.id}
+                      onFocus={() => setPreviewColorScheme(scheme.id)}
+                      onPointerMove={() => setPreviewColorScheme(scheme.id)}
+                    >
                       {scheme.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-1">
-                {palette.map((color, index) => {
+                {previewPalette.map((color, index) => {
                   const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
                   return (
                     <button
-                      key={`${selectedColorScheme}-${index}-${color}`}
+                      key={`${previewColorScheme ?? selectedColorScheme}-${index}-${color}`}
                       type="button"
                       onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
                       className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}

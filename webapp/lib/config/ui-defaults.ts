@@ -19,6 +19,7 @@ import {
 import {
   type CanvasBackgroundColor,
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
+  getImageSchemeColorToken,
   normalizeImageColorSchemeId,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
@@ -101,7 +102,7 @@ function resolveImageColorScheme(value: unknown): ImageColorSchemeId {
 }
 
 function resolveCanvasBackground(value: unknown): CanvasBackgroundColor {
-  return typeof value === "string" && value.trim().length > 0 ? value : null
+  return typeof value === "string" && value.trim().length > 0 ? value : getImageSchemeColorToken(0)
 }
 
 function resolveRhythm(value: unknown): GridRhythm {

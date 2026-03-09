@@ -3,6 +3,12 @@
 import { Trash2, X } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 
+import {
+  getDefaultTextSchemeColor,
+  isImagePlaceholderColor,
+  resolveImageSchemeColor,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 import { DEFAULT_BASE_FONT, getFontFamilyCss, isFontFamily } from "@/lib/config/fonts"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
@@ -11,6 +17,7 @@ type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
 type Props = {
   layout: PreviewLayoutState | null
   baseFont: string
+  imageColorScheme: ImageColorSchemeId
   selectedLayerKey: string | null
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectLayer: (key: string | null) => void
@@ -76,12 +83,13 @@ function reconcileLayerOrder(
 function getTextPreview(value: string): string {
   const normalized = value.replace(/\s+/g, " ").trim()
   if (!normalized) return "Empty"
-  return normalized.length > 10 ? `${normalized.slice(0, 10)}...` : normalized
+  return normalized.length > 75 ? `${normalized.slice(0, 75)}...` : normalized
 }
 
 export function LayersPanel({
   layout,
   baseFont,
+  imageColorScheme,
   selectedLayerKey,
   onLayerOrderChange,
   onSelectLayer,
@@ -102,8 +110,10 @@ export function LayersPanel({
 
   const thumbs = useMemo(() => {
     const next = new Map<string, LayerThumb>()
+    const defaultTextColor = getDefaultTextSchemeColor(imageColorScheme)
     for (const key of blockOrder) {
       const rawText = layout?.textContent?.[key] ?? ""
+      const rawColor = layout?.blockTextColors?.[key]
       next.set(key, {
         key,
         kind: "text",
@@ -112,10 +122,13 @@ export function LayersPanel({
         hierarchy: toLabel(layout?.styleAssignments?.[key] ?? "body"),
         font: layout?.blockFontFamilies?.[key] ?? baseFont,
         textPreview: getTextPreview(rawText),
-        color: layout?.blockTextColors?.[key] ?? "#1f2937",
+        color: typeof rawColor === "string" && isImagePlaceholderColor(rawColor)
+          ? rawColor.toLowerCase()
+          : defaultTextColor,
       })
     }
     for (const key of imageOrder) {
+      const rawColor = layout?.imageColors?.[key]
       next.set(key, {
         key,
         kind: "image",
@@ -124,11 +137,11 @@ export function LayersPanel({
         hierarchy: "Image Placeholder",
         font: "—",
         textPreview: "",
-        color: layout?.imageColors?.[key] ?? "#0b3536",
+        color: resolveImageSchemeColor(rawColor, imageColorScheme),
       })
     }
     return next
-  }, [baseFont, blockOrder, imageOrder, layout])
+  }, [baseFont, blockOrder, imageColorScheme, imageOrder, layout])
 
   const visibleOrder = useMemo(() => [...layerOrder].reverse(), [layerOrder])
   const visibleThumbs = visibleOrder
@@ -262,8 +275,10 @@ export function LayersPanel({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className={`font-medium ${tone.cardMuted}`}>Rows: {thumb.rows} - Cols: {thumb.cols}</div>
-                  <div className="truncate font-medium">{thumb.hierarchy} Font: {thumb.font}</div>
+                  <div className={`text-[11px] ${tone.cardMuted}`}>Rows: {thumb.rows} - Cols: {thumb.cols}</div>
+                  <div className={`truncate text-[11px] ${tone.cardMuted}`}>
+                    {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
+                  </div>
                   {thumb.kind === "text" ? (
                     <div
                       className="truncate"

@@ -305,7 +305,9 @@ export function useBlockEditorActions({
     })
     setBlockTextColors((prev) => {
       const next = { ...prev }
-      if (isImagePlaceholderColor(draft.draftColor)) {
+      if (draft.draftColor.toLowerCase() === defaultTextColor.toLowerCase()) {
+        delete next[draft.target]
+      } else if (isImagePlaceholderColor(draft.draftColor)) {
         next[draft.target] = draft.draftColor
       } else {
         delete next[draft.target]
