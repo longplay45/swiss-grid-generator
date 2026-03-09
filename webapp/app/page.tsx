@@ -1772,7 +1772,7 @@ export default function Home() {
       <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
         {/* Header - always visible */}
         <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
-          <h1 className="text-2xl font-bold tracking-tight">Swiss Grid Generator</h1>
+          <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
           <p className={`text-sm ${uiTheme.bodyText}`}>
             Based on Müller-Brockmann&apos;s <em><a href="https://amzn.to/40kfiUL">Grid Systems in Graphic Design</a></em> (1981).
             Copyleft &amp; -right 2026 by{" "}
