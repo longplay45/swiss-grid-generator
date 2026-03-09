@@ -243,6 +243,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
           <li>`i` toggles rollover info/tooltips globally across the app.</li>
           <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
+          <li>While the presets browser is open, side panels and the header layers toggle are temporarily disabled.</li>
           <li>Footer `Imprint` link toggles the imprint sidebar panel.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
@@ -272,6 +273,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Opens the presets browser in the preview area.</li>
           <li>Double-click a thumbnail to load it.</li>
+          <li>Press `Esc` to close the browser without loading a preset.</li>
           <li>When help is open, hovering the presets panel (or its `?` marker) jumps here.</li>
           <li>Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.</li>
         </ul>

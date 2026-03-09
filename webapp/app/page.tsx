@@ -623,6 +623,11 @@ export default function Home() {
   }, [redoDomains])
 
   useEffect(() => {
+    if (showPresetsBrowser) {
+      setActiveSidebarPanel(null)
+      dispatch({ type: "SET", key: "showLayers", value: false })
+      return
+    }
     if (showLayers && activeSidebarPanel !== "layers") {
       setActiveSidebarPanel("layers")
       return
@@ -630,7 +635,7 @@ export default function Home() {
     if (!showLayers && activeSidebarPanel === "layers") {
       setActiveSidebarPanel(null)
     }
-  }, [activeSidebarPanel, showLayers])
+  }, [activeSidebarPanel, dispatch, showLayers, showPresetsBrowser])
 
   useEffect(() => {
     if (!selectedLayerKey || !previewLayout) return
@@ -898,9 +903,10 @@ export default function Home() {
   }, [])
 
   const openSidebarPanel = useCallback((panel: "settings" | "help" | "imprint" | "layers" | null) => {
+    if (showPresetsBrowser && panel !== null) return
     setActiveSidebarPanel(panel)
     dispatch({ type: "SET", key: "showLayers", value: panel === "layers" })
-  }, [dispatch])
+  }, [dispatch, showPresetsBrowser])
 
   const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
     setActiveHelpSectionId(sectionId)
@@ -908,21 +914,23 @@ export default function Home() {
   }, [openSidebarPanel])
 
   const toggleHelpPanelFromHeader = useCallback(() => {
+    if (showPresetsBrowser) return
     setActiveSidebarPanel((prev) => {
       const next = prev === "help" ? null : "help"
       dispatch({ type: "SET", key: "showLayers", value: false })
       setActiveHelpSectionId(null)
       return next
     })
-  }, [dispatch])
+  }, [dispatch, showPresetsBrowser])
 
   const toggleLayersPanelFromHeader = useCallback(() => {
+    if (showPresetsBrowser) return
     setActiveSidebarPanel((prev) => {
       const next = prev === "layers" ? null : "layers"
       dispatch({ type: "SET", key: "showLayers", value: next === "layers" })
       return next
     })
-  }, [dispatch])
+  }, [dispatch, showPresetsBrowser])
 
   const handleLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
     const nextPreviewLayout = {
@@ -1205,6 +1213,17 @@ export default function Home() {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [activeSidebarPanel, canRedo, canUndo, dispatch, exportActions, openSidebarPanel, redoAny, toggleHelpPanelFromHeader, undoAny])
+
+  useEffect(() => {
+    if (!showPresetsBrowser) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      event.preventDefault()
+      setShowPresetsBrowser(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [showPresetsBrowser])
 
   // ─── Load JSON layout ─────────────────────────────────────────────────────
 
@@ -1617,7 +1636,7 @@ export default function Home() {
             />
           )}
         </div>
-        {activeSidebarPanel && (
+        {!showPresetsBrowser && activeSidebarPanel && (
           <div
             data-help-scroll-root="true"
             className={`w-[280px] shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
@@ -1757,32 +1776,41 @@ export default function Home() {
           </p>
         </div>
 
-        {settingsPanels}
+        <div className={`relative flex min-h-0 flex-1 flex-col ${showPresetsBrowser ? "opacity-50" : ""}`}>
+          {showPresetsBrowser ? (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-10 cursor-not-allowed"
+            />
+          ) : null}
 
-        <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
-          <div className="flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2">
-              {SHOW_BETA_BADGE ? (
-                <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
-              ) : null}
-              <span>Version {APP_VERSION}</span>
-            </span>
-            <div className="flex items-center gap-3">
-              <a
-                href="/survey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={uiTheme.link}
-              >
-                Survey
-              </a>
-              <button
-                type="button"
-                className={uiTheme.link}
-                onClick={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
-              >
-                Imprint
-              </button>
+          {settingsPanels}
+
+          <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2">
+                {SHOW_BETA_BADGE ? (
+                  <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
+                ) : null}
+                <span>Version {APP_VERSION}</span>
+              </span>
+              <div className="flex items-center gap-3">
+                <a
+                  href="/survey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={uiTheme.link}
+                >
+                  Survey
+                </a>
+                <button
+                  type="button"
+                  className={uiTheme.link}
+                  onClick={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
+                >
+                  Imprint
+                </button>
+              </div>
             </div>
           </div>
         </div>

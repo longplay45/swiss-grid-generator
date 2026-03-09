@@ -49,7 +49,9 @@ export function PresetLayoutsPanel({
               </span>
             ) : null}
           </h3>
-          <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Double-click a thumbnail to load a preset layout.</p>
+          <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+            Double-click a thumbnail to load a preset layout, or press `Esc` to close the browser.
+          </p>
         </>
       ) : null}
       {compact && showHelpHints ? (

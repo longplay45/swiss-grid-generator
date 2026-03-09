@@ -109,7 +109,7 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
     id: "toggle_example_panel",
     combo: "Cmd/Ctrl+Shift+4",
-    description: "Open presets browser",
+    description: "Toggle presets browser",
     bindings: [{ key: "4", shift: true }],
   },
 ]

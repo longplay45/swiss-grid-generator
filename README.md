@@ -64,6 +64,7 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - Display toggles (baselines, margins, gutter/modules, image placeholders, typo)
   - Right-side trio: `i` (rollover info), `?` (help), `Settings`
   - `i` toggles rollover info/tooltips globally
+  - While the presets browser is open, the left settings panel and header layers toggle are disabled
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
   - Divider separators are shown between Presets and Load, Export and Undo, and dark mode and baselines
   - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo) when `i` is active
@@ -173,7 +174,8 @@ All preview-header actions are keyboard accessible:
 - `Cmd/Ctrl+Shift+1` Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2` Toggle help sidebar
 - `Cmd/Ctrl+Shift+3` Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4` Open presets browser
+- `Cmd/Ctrl+Shift+4` Toggle presets browser
+- `Esc` Close presets browser without loading a preset
 
 Includes:
 - settings changes (ratio, grid, margins, toggles, etc.)

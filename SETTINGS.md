@@ -125,6 +125,7 @@ Default: `swiss`
 - `Save` (save icon): opens Save JSON popup
 - `Export PDF` (download icon): opens Export PDF popup
 - Divider placement: between `Presets` and `Load`, and between `Export PDF` and `Undo`
+- `Esc` closes the presets browser without loading a preset
 
 ### Undo / Redo (icon buttons)
 
@@ -156,6 +157,7 @@ Default: `swiss`
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
 - Behavior: only one right sidebar panel can be open at a time; clicking the active layers/help/settings icon closes that panel.
+- Behavior: while presets are open, the left settings panel and header layers toggle are disabled.
 - Order of the right-side trio: `i`, `?`, `Settings`.
 
 ### Layers Panel
@@ -189,7 +191,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4`: Open presets browser
+- `Cmd/Ctrl+Shift+4`: Toggle presets browser
+- `Esc`: Close presets browser without loading a preset
 
 ## Popups
 
