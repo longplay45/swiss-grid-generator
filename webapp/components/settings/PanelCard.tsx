@@ -35,8 +35,7 @@ export function PanelCard({
         isDarkMode
           ? "border-gray-700 text-gray-100"
           : "border-gray-200 text-gray-900"
-      } ${showHelpIcons ? "outline outline-1 outline-blue-500 outline-offset-4" : ""}`}
-      onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
+      }`}
     >
       <HoverTooltip
         label={tooltip}
@@ -45,12 +44,17 @@ export function PanelCard({
         tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
         <header
-          className={`cursor-pointer select-none ${collapsed ? "pt-3 pb-[8px]" : "pt-3 pb-2"}`}
+          className="cursor-pointer select-none pt-3"
           onClick={onHeaderClick}
           onDoubleClick={onHeaderDoubleClick}
+          onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
-          <h3 className="text-sm font-bold leading-tight">
-            <div className="min-w-0">
+          <div
+            className={`rounded-md px-2 py-2 ${
+              showHelpIcons ? "ring-1 ring-blue-500" : ""
+            }`}
+          >
+            <h3 className="text-sm font-bold leading-tight">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex items-center gap-2">
                   <span>{title}</span>
@@ -73,8 +77,8 @@ export function PanelCard({
                   {collapsedSummary}
                 </div>
               ) : null}
-            </div>
-          </h3>
+            </h3>
+          </div>
         </header>
       </HoverTooltip>
       {!collapsed && <div className="space-y-4 pb-4 pt-1">{children}</div>}
