@@ -149,6 +149,14 @@ export function LayersPanel({
   const visibleThumbs = visibleOrder
     .map((key) => thumbs.get(key))
     .filter((thumb): thumb is LayerThumb => Boolean(thumb))
+  const stationaryVisibleOrder = useMemo(
+    () => visibleOrder.filter((key) => key !== draggingKey),
+    [draggingKey, visibleOrder],
+  )
+  const stationaryIndexByKey = useMemo(
+    () => new Map(stationaryVisibleOrder.map((key, index) => [key, index])),
+    [stationaryVisibleOrder],
+  )
 
   useEffect(() => {
     if (!selectedLayerKey) return
@@ -196,21 +204,30 @@ export function LayersPanel({
 
   const moveLayer = (targetIndex: number) => {
     if (!draggingKey) return
-    const draggingIndex = visibleOrder.indexOf(draggingKey)
-    if (draggingIndex < 0) return
     const withoutDragging = visibleOrder.filter((key) => key !== draggingKey)
     const normalizedIndex = Math.max(0, Math.min(targetIndex, withoutDragging.length))
-    const insertIndex = draggingIndex < targetIndex ? normalizedIndex - 1 : normalizedIndex
-    if (insertIndex < 0 || insertIndex > withoutDragging.length) return
-    withoutDragging.splice(insertIndex, 0, draggingKey)
-    onLayerOrderChange([...withoutDragging].reverse())
+    withoutDragging.splice(normalizedIndex, 0, draggingKey)
+    const nextLayerOrder = [...withoutDragging].reverse()
+    if (nextLayerOrder.every((key, index) => key === layerOrder[index]) && nextLayerOrder.length === layerOrder.length) {
+      return
+    }
+    onLayerOrderChange(nextLayerOrder)
   }
 
-  const getDropIndexForCard = (bounds: DOMRect, clientY: number, index: number) => (
-    clientY < bounds.top + bounds.height / 2 ? index : index + 1
-  )
+  const getDropIndexForPointer = (clientY: number) => {
+    for (let index = 0; index < stationaryVisibleOrder.length; index += 1) {
+      const key = stationaryVisibleOrder[index]
+      const card = cardRefs.current[key]
+      if (!card) continue
+      const bounds = card.getBoundingClientRect()
+      if (clientY < bounds.top + bounds.height / 2) {
+        return index
+      }
+    }
+    return stationaryVisibleOrder.length
+  }
 
-  const renderDropMarker = (index: number) => {
+  const renderDropMarker = (index: number | null) => {
     if (dropIndicatorIndex !== index) return null
     return (
       <div className="relative h-4 shrink-0">
@@ -240,10 +257,25 @@ export function LayersPanel({
         </button>
       </div>
 
-      <div className="flex flex-col">
+      <div
+        className="flex flex-col"
+        onDragOver={(event) => {
+          if (!draggingKey) return
+          event.preventDefault()
+          event.dataTransfer.dropEffect = "move"
+          setDropIndicatorIndex(getDropIndexForPointer(event.clientY))
+        }}
+        onDrop={(event) => {
+          if (!draggingKey) return
+          event.preventDefault()
+          moveLayer(dropIndicatorIndex ?? getDropIndexForPointer(event.clientY))
+          setDraggingKey(null)
+          setDropIndicatorIndex(null)
+        }}
+      >
         {visibleThumbs.map((thumb, index) => (
           <Fragment key={thumb.key}>
-            {renderDropMarker(index)}
+            {thumb.key !== draggingKey ? renderDropMarker(stationaryIndexByKey.get(thumb.key) ?? null) : null}
             <div
               ref={(node) => {
                 cardRefs.current[thumb.key] = node
@@ -254,27 +286,17 @@ export function LayersPanel({
                 event.dataTransfer.setData("text/plain", thumb.key)
                 onSelectLayer(thumb.key)
                 setDraggingKey(thumb.key)
+                setDropIndicatorIndex(stationaryVisibleOrder.indexOf(thumb.key))
               }}
               onDragEnd={() => {
                 setDraggingKey(null)
                 setDropIndicatorIndex(null)
               }}
-              onDragOver={(event) => {
-                event.preventDefault()
-                const bounds = event.currentTarget.getBoundingClientRect()
-                setDropIndicatorIndex(getDropIndexForCard(bounds, event.clientY, index))
-              }}
-              onDrop={(event) => {
-                const bounds = event.currentTarget.getBoundingClientRect()
-                moveLayer(getDropIndexForCard(bounds, event.clientY, index))
-                setDraggingKey(null)
-                setDropIndicatorIndex(null)
-              }}
               onClick={() => onSelectLayer(thumb.key)}
               onDoubleClick={() => onToggleEditor(thumb.key)}
-              className={`${index > 0 && dropIndicatorIndex !== index ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
+              className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                 draggingKey === thumb.key || selectedLayerKey === thumb.key
-                  ? `${tone.cardActive} ${draggingKey === thumb.key ? "cursor-grabbing" : ""}`.trim()
+                  ? `${tone.cardActive} ${draggingKey === thumb.key ? "cursor-grabbing opacity-45" : ""}`.trim()
                   : tone.card
               }`}
             >
@@ -316,7 +338,7 @@ export function LayersPanel({
             </div>
           </Fragment>
         ))}
-        {renderDropMarker(visibleThumbs.length)}
+        {renderDropMarker(stationaryVisibleOrder.length)}
       </div>
     </div>
   )
