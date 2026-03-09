@@ -12,7 +12,6 @@ import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import { GridPreview } from "@/components/grid-preview"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { Button } from "@/components/ui/button"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import { X } from "lucide-react"
 import { formatValue } from "@/lib/units"
@@ -603,7 +602,6 @@ export default function Home() {
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const showSectionHelpIcons = activeSidebarPanel === "help"
   const [isSmartphone, setIsSmartphone] = useState(false)
-  const [smartphoneNoticeDismissed, setSmartphoneNoticeDismissed] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
   const [documentMetadata, setDocumentMetadata] = useState<DocumentMetadata>({
@@ -1032,14 +1030,6 @@ export default function Home() {
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [])
-
-  useEffect(() => {
-    try {
-      setSmartphoneNoticeDismissed(window.sessionStorage.getItem("sgg-smartphone-notice-dismissed") === "1")
-    } catch {
-      setSmartphoneNoticeDismissed(false)
-    }
   }, [])
 
   useEffect(() => {
@@ -1762,6 +1752,20 @@ export default function Home() {
     uiTheme.sidebarHeading,
   ])
 
+  if (isSmartphone) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-6 text-white">
+        <div className="w-full max-w-md rounded-lg border border-white/20 bg-white/5 p-6">
+          <h2 className="text-lg font-semibold">Screen Too Small</h2>
+          <p className="mt-3 text-sm leading-relaxed text-white/85">
+            Swiss Grid Generator requires a viewport width of at least 768 pixels.
+            Open it on a tablet, laptop, or desktop screen, or enlarge this window to continue.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
       {/* Left Panel - Controls */}
@@ -1865,32 +1869,6 @@ export default function Home() {
         orientation={orientation}
         rotation={rotation}
       />
-
-      {isSmartphone && !smartphoneNoticeDismissed ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 text-white">
-          <div className="w-full max-w-md rounded-lg border border-white/30 bg-black/40 p-6">
-            <h2 className="text-lg font-semibold">Best On Bigger Screens</h2>
-            <p className="mt-3 text-sm text-white/85">
-              Swiss Grid Generator is optimized for tablets, laptops, and desktop screens.
-              Smartphone screens offer a limited editing experience.
-            </p>
-            <div className="mt-5 flex justify-end">
-              <Button
-                onClick={() => {
-                  setSmartphoneNoticeDismissed(true)
-                  try {
-                    window.sessionStorage.setItem("sgg-smartphone-notice-dismissed", "1")
-                  } catch {
-                    // no-op
-                  }
-                }}
-              >
-                Continue
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
