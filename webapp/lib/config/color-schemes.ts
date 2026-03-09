@@ -21,28 +21,28 @@ export const IMAGE_COLOR_SCHEMES = [
     colors: ["#fef9f7", "#1aa9bc", "#457c39", "#ffeb00"],
   },
   {
-    id: "new-1",
-    label: "New 1",
+    id: "sage-pop",
+    label: "Sage Pop",
     colors: ["#e0e5db", "#de3d83", "#00b8b8", "#e4bd0b"],
   },
   {
-    id: "new-2",
-    label: "New 2",
+    id: "coral-bay",
+    label: "Coral Bay",
     colors: ["#dddddd", "#fe9f97", "#fbae17", "#0095a3"],
   },
   {
-    id: "new-3",
-    label: "New 3",
+    id: "industrial-ember",
+    label: "Industrial Ember",
     colors: ["#777870", "#ec6b2d", "#333333", "#0d0f05"],
   },
   {
-    id: "new-4",
-    label: "New 4",
+    id: "patina-clay",
+    label: "Patina Clay",
     colors: ["#bfbabe", "#a63e14", "#558a86", "#f1f2f0"],
   },
   {
-    id: "new-5",
-    label: "New 5",
+    id: "signal-cyan",
+    label: "Signal Cyan",
     colors: ["#f43530", "#46454b", "#00aabb", "#e0e5da"],
   },
 ] as const satisfies readonly ImageColorScheme[]
