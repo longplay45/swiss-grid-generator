@@ -21,6 +21,7 @@ type Props = {
   selectedLayerKey: string | null
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectLayer: (key: string | null) => void
+  onToggleEditor: (key: string) => void
   onDeleteLayer: (key: string, kind: "text" | "image") => void
   onClose: () => void
   isDarkMode?: boolean
@@ -93,6 +94,7 @@ export function LayersPanel({
   selectedLayerKey,
   onLayerOrderChange,
   onSelectLayer,
+  onToggleEditor,
   onDeleteLayer,
   onClose,
   isDarkMode = false,
@@ -224,7 +226,9 @@ export function LayersPanel({
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className={`text-sm font-semibold ${tone.heading}`}>Layers</h3>
-          <p className={`mt-1 text-xs ${tone.body}`}>Drag to change z-index. Top item is frontmost.</p>
+          <p className={`mt-1 text-xs ${tone.body}`}>
+            Click to select. Double-click to toggle edit mode. Drag to change z-index. Use delete to remove a layer.
+          </p>
         </div>
         <button
           type="button"
@@ -267,6 +271,7 @@ export function LayersPanel({
                 setDropIndicatorIndex(null)
               }}
               onClick={() => onSelectLayer(thumb.key)}
+              onDoubleClick={() => onToggleEditor(thumb.key)}
               className={`${index > 0 && dropIndicatorIndex !== index ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                 draggingKey === thumb.key || selectedLayerKey === thumb.key
                   ? `${tone.cardActive} ${draggingKey === thumb.key ? "cursor-grabbing" : ""}`.trim()

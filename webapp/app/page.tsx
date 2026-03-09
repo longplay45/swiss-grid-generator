@@ -530,6 +530,10 @@ export default function Home() {
     key: number
     target: string
   } | null>(null)
+  const [requestedLayerEditorState, setRequestedLayerEditorState] = useState<{
+    key: number
+    target: string
+  } | null>(null)
   const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
@@ -982,12 +986,21 @@ export default function Home() {
     setPreviewLayout(layout)
     setRequestedLayerOrderState(null)
     setRequestedLayerDeleteState(null)
+    setRequestedLayerEditorState(null)
   }, [])
 
   const handlePreviewLayerSelect = useCallback((key: string | null) => {
     if (activeSidebarPanel !== "layers") return
     setSelectedLayerKey(key)
   }, [activeSidebarPanel])
+
+  const handleToggleLayerEditor = useCallback((target: string) => {
+    setRequestedLayerEditorState({
+      key: Date.now(),
+      target,
+    })
+    setSelectedLayerKey(target)
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -1595,6 +1608,8 @@ export default function Home() {
               requestedLayerOrderKey={requestedLayerOrderState?.key ?? 0}
               requestedLayerDeleteTarget={requestedLayerDeleteState?.target ?? null}
               requestedLayerDeleteKey={requestedLayerDeleteState?.key ?? 0}
+              requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
+              requestedLayerEditorKey={requestedLayerEditorState?.key ?? 0}
               selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
               onSelectLayer={handlePreviewLayerSelect}
               isDarkMode={isDarkUi}
@@ -1648,6 +1663,7 @@ export default function Home() {
                 selectedLayerKey={selectedLayerKey}
                 onLayerOrderChange={handleLayerOrderChange}
                 onSelectLayer={setSelectedLayerKey}
+                onToggleEditor={handleToggleLayerEditor}
                 onDeleteLayer={handleDeleteLayer}
                 onClose={handleCloseSidebar}
                 isDarkMode={isDarkUi}
@@ -1685,6 +1701,7 @@ export default function Home() {
     handleLoadPresetLayout,
     handlePreviewLayoutChange,
     handlePreviewLayerSelect,
+    handleToggleLayerEditor,
     handlePreviewGridRestore,
     handlePreviewHistoryAvailabilityChange,
     handlePreviewHistoryRecord,
@@ -1694,6 +1711,7 @@ export default function Home() {
     previewLayout,
     previewUndoNonce,
     requestedLayerDeleteState,
+    requestedLayerEditorState,
     requestedLayerOrderState,
     selectedLayerKey,
     imageColorScheme,

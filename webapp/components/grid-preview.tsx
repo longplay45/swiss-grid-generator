@@ -35,6 +35,7 @@ import { useBlockEditorActions } from "@/hooks/useBlockEditorActions"
 import { useStateCommands } from "@/hooks/useStateCommands"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
@@ -313,6 +314,8 @@ interface GridPreviewProps {
   requestedLayerOrderKey?: number
   requestedLayerDeleteTarget?: BlockId | null
   requestedLayerDeleteKey?: number
+  requestedLayerEditorTarget?: BlockId | null
+  requestedLayerEditorKey?: number
   selectedLayerKey?: BlockId | null
   onSelectLayer?: (key: BlockId | null) => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
@@ -352,6 +355,8 @@ export const GridPreview = memo(function GridPreview({
   requestedLayerOrderKey = 0,
   requestedLayerDeleteTarget = null,
   requestedLayerDeleteKey = 0,
+  requestedLayerEditorTarget = null,
+  requestedLayerEditorKey = 0,
   selectedLayerKey = null,
   onSelectLayer,
   onOpenHelpSection,
@@ -375,6 +380,7 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayerLayoutKeyRef = useRef(0)
   const lastAppliedLayerRequestKeyRef = useRef(0)
   const lastAppliedLayerDeleteRequestKeyRef = useRef(0)
+  const lastAppliedLayerEditorRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const suppressImageModuleRemapRef = useRef(false)
   const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
@@ -2438,10 +2444,92 @@ export const GridPreview = memo(function GridPreview({
     setImageEditorState(null)
   }, [])
 
+  const openTextEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
+    setImageEditorState(null)
+    if (options?.recordHistory !== false) {
+      recordHistoryBeforeChange()
+    }
+    const styleKey = styleAssignments[key] ?? "body"
+    setEditorState({
+      target: key,
+      draftText: normalizeInlineEditorText(textContent[key] ?? ""),
+      draftStyle: styleKey,
+      draftFxSize: styleKey === "fx"
+        ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
+        : getStyleSize("fx"),
+      draftFxLeading: styleKey === "fx"
+        ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading("fx"))
+        : getStyleLeading("fx"),
+      draftFont: getBlockFont(key),
+      draftColumns: getBlockSpan(key),
+      draftRows: getBlockRows(key),
+      draftAlign: blockTextAlignments[key] ?? "left",
+      draftColor: getBlockTextColor(key),
+      draftReflow: isTextReflowEnabled(key),
+      draftSyllableDivision: isSyllableDivisionEnabled(key),
+      draftBold: isBlockBold(key),
+      draftItalic: isBlockItalic(key),
+      draftRotation: getBlockRotation(key),
+      draftTextEdited: blockTextEdited[key] ?? true,
+    })
+  }, [
+    blockCustomLeadings,
+    blockCustomSizes,
+    blockTextAlignments,
+    blockTextEdited,
+    getBlockFont,
+    getBlockRotation,
+    getBlockRows,
+    getBlockSpan,
+    getBlockTextColor,
+    getStyleLeading,
+    getStyleSize,
+    isBlockBold,
+    isBlockItalic,
+    isSyllableDivisionEnabled,
+    isTextReflowEnabled,
+    recordHistoryBeforeChange,
+    styleAssignments,
+    textContent,
+  ])
+
   const handleImageColorSchemeChange = useCallback((nextScheme: ImageColorSchemeId) => {
     setImageColors((prev) => normalizeImageColorReferences(prev, imageColorScheme))
     onImageColorSchemeChange?.(nextScheme)
   }, [imageColorScheme, normalizeImageColorReferences, onImageColorSchemeChange])
+
+  useEffect(() => {
+    if (!requestedLayerEditorTarget || requestedLayerEditorKey === 0) return
+    if (lastAppliedLayerEditorRequestKeyRef.current === requestedLayerEditorKey) return
+    lastAppliedLayerEditorRequestKeyRef.current = requestedLayerEditorKey
+
+    if (imageOrder.includes(requestedLayerEditorTarget)) {
+      if (imageEditorState?.target === requestedLayerEditorTarget) {
+        closeImageEditor()
+      } else {
+        openImageEditor(requestedLayerEditorTarget)
+      }
+      return
+    }
+
+    if (!blockOrder.includes(requestedLayerEditorTarget)) return
+    if (editorState?.target === requestedLayerEditorTarget) {
+      closeEditor()
+    } else {
+      openTextEditor(requestedLayerEditorTarget)
+    }
+  }, [
+    blockOrder,
+    closeEditor,
+    closeImageEditor,
+    editorState?.target,
+    imageEditorState?.target,
+    imageOrder,
+    openImageEditor,
+    openTextEditor,
+    requestedLayerEditorKey,
+    requestedLayerEditorTarget,
+  ])
 
   useEffect(() => {
     const previousScheme = previousImageColorSchemeRef.current
