@@ -96,7 +96,8 @@ Comprehensive user reference for the in-app Help sidebar.
 - Display toggles include baselines, margins, modules, image placeholders, typography, and layers.
 - The layers toggle sits directly after typography, separated by a divider.
 - The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.
-- `i` toggles rollover info/tooltips globally across the app.
+- `i` toggles rollover info/tooltips globally across the app. Shortcut: `Cmd/Ctrl+Shift+6`.
+- Layers also have a shortcut: `Cmd/Ctrl+Shift+5`.
 - `?` opens/closes help; settings opens/closes the right settings panel.
 - Footer `Imprint` link toggles imprint sidebar.
 - Right-side content panels include close icons in their header rows.
@@ -105,8 +106,8 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Layers Panel
 
 - Opens a right sidebar with a mixed stack of text paragraphs and image placeholders.
-- Text cards show rows/cols, hierarchy plus font, and a short text preview rendered in the paragraph's color and font.
-- Image cards show rows/cols, `Image Placeholder`, and a single color swatch.
+- Text cards show hierarchy plus font, and a short text preview rendered in the paragraph's color and font.
+- Image cards show `Image Placeholder` and a single color swatch.
 - Drag reorders z-index using an insertion marker between cards.
 - Clicking a layer card selects the matching item in preview; clicking a preview item selects and scrolls to the matching layer card.
 - Trash removes the layer from the document model.
@@ -140,6 +141,8 @@ Comprehensive user reference for the in-app Help sidebar.
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules and gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
+- `Cmd/Ctrl+Shift+5`: Toggle layers sidebar
+- `Cmd/Ctrl+Shift+6`: Toggle rollover info
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar

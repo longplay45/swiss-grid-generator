@@ -1205,6 +1205,12 @@ export default function Home() {
         case "toggle_typography":
           dispatch({ type: "TOGGLE", key: "showTypography" })
           return
+        case "toggle_layers_panel":
+          toggleLayersPanelFromHeader()
+          return
+        case "toggle_rollover_info":
+          setShowRolloverInfo((prev) => !prev)
+          return
         case "toggle_settings_panel":
           openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings")
           return
@@ -1220,7 +1226,7 @@ export default function Home() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [activeSidebarPanel, canRedo, canUndo, dispatch, exportActions, openSidebarPanel, redoAny, toggleHelpPanelFromHeader, undoAny])
+  }, [activeSidebarPanel, canRedo, canUndo, dispatch, exportActions, openSidebarPanel, redoAny, toggleHelpPanelFromHeader, toggleLayersPanelFromHeader, undoAny])
 
   useEffect(() => {
     if (!showPresetsBrowser) return

@@ -153,6 +153,7 @@ Default: `swiss`
 
 - `Layers` (layers icon): opens the right sidebar layers panel
 - `Rollover Info` (`i` icon): toggles rollover info/tooltips globally
+- Shortcuts: `Cmd/Ctrl+Shift+5` toggles Layers, `Cmd/Ctrl+Shift+6` toggles Rollover Info
 - `Help` (`?` icon): opens help/reference panel
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
@@ -163,8 +164,8 @@ Default: `swiss`
 ### Layers Panel
 
 - Shows a mixed stack of text and image layers using current `layerOrder`.
-- Text cards display `Rows`, `Cols`, hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
-- Image cards display `Rows`, `Cols`, `Image Placeholder`, and a single color swatch.
+- Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
+- Image cards display `Image Placeholder` and a single color swatch.
 - Dragging cards changes z-index using a visible insertion marker between cards.
 - Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the document model and saved JSON.
@@ -188,6 +189,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
+- `Cmd/Ctrl+Shift+5`: Toggle layers sidebar
+- `Cmd/Ctrl+Shift+6`: Toggle rollover info
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar

@@ -9,6 +9,8 @@ export type PreviewHeaderShortcutId =
   | "toggle_margins"
   | "toggle_modules"
   | "toggle_typography"
+  | "toggle_layers_panel"
+  | "toggle_rollover_info"
   | "toggle_settings_panel"
   | "toggle_help_panel"
   | "toggle_imprint_panel"
@@ -87,6 +89,18 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
     combo: "Cmd/Ctrl+Shift+T",
     description: "Toggle typography",
     bindings: [{ key: "t", shift: true }],
+  },
+  {
+    id: "toggle_layers_panel",
+    combo: "Cmd/Ctrl+Shift+5",
+    description: "Toggle layers sidebar",
+    bindings: [{ key: "5", shift: true }],
+  },
+  {
+    id: "toggle_rollover_info",
+    combo: "Cmd/Ctrl+Shift+6",
+    description: "Toggle rollover info",
+    bindings: [{ key: "6", shift: true }],
   },
   {
     id: "toggle_settings_panel",

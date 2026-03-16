@@ -241,7 +241,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Display toggles include baselines, margins, modules, image placeholders, typography, and layers.</li>
           <li>The layers toggle sits directly after the typography toggle, separated by a divider.</li>
           <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
-          <li>`i` toggles rollover info/tooltips globally across the app.</li>
+          <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+6</span>.</li>
+          <li>Layers can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+5</span>.</li>
           <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
           <li>While the presets browser is open, side panels and the header layers toggle are temporarily disabled.</li>
           <li>Footer `Imprint` link toggles the imprint sidebar panel.</li>
@@ -397,8 +398,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Opens the right-side layers panel with a mixed stack of text paragraphs and image placeholders.</li>
-          <li>Text cards show rows/cols, hierarchy plus font, and a short text preview in the paragraph color and font.</li>
-          <li>Image cards show rows/cols, `Image Placeholder`, and a single color swatch.</li>
+          <li>Text cards show hierarchy plus font, and a short text preview in the paragraph color and font.</li>
+          <li>Image cards show `Image Placeholder` and a single color swatch.</li>
           <li>Drag cards to reorder z-index; the drop marker appears between cards and opens real space at the insertion point.</li>
           <li>Clicking a layer card selects the matching item in the preview; clicking a preview item selects and scrolls to the matching layer card.</li>
           <li>Trash deletes the layer from the document and updates saved JSON layer data.</li>
