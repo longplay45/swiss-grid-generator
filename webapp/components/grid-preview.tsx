@@ -1330,6 +1330,7 @@ export const GridPreview = memo(function GridPreview({
         setImageColumnSpans((current) => ({ ...current, [newKey]: sourceColumns }))
         setImageRowSpans((current) => ({ ...current, [newKey]: sourceRows }))
         setImageColors((current) => ({ ...current, [newKey]: sourceColor }))
+        onSelectLayer?.(newKey)
         return
       }
 
@@ -1474,6 +1475,7 @@ export const GridPreview = memo(function GridPreview({
         }
         return next
       })
+      onSelectLayer?.(newKey)
     } else {
       recordHistoryBeforeChange()
       const span = getBlockSpan(drag.key)
@@ -1504,6 +1506,7 @@ export const GridPreview = memo(function GridPreview({
     isImagePlaceholderKey,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
+    onSelectLayer,
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
@@ -2546,6 +2549,16 @@ export const GridPreview = memo(function GridPreview({
       return { ...prev, draftColor: nextColor }
     })
   }, [defaultImageColor, imageColorScheme, imageColors])
+
+  useEffect(() => {
+    if (imageEditorState?.target) {
+      onSelectLayer?.(imageEditorState.target)
+      return
+    }
+    if (editorState?.target) {
+      onSelectLayer?.(editorState.target)
+    }
+  }, [editorState?.target, imageEditorState?.target, onSelectLayer])
 
   const deleteImagePlaceholder = useCallback(() => {
     if (!imageEditorState) return

@@ -78,6 +78,7 @@ import {
 } from "@/lib/config/ui-defaults"
 
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
+const LAYER_SELECTION_GRACE_MS = 300
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
@@ -534,6 +535,7 @@ export default function Home() {
     target: string
   } | null>(null)
   const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
+  const selectedLayerGraceRef = useRef<{ key: string | null; until: number }>({ key: null, until: 0 })
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -642,9 +644,25 @@ export default function Home() {
       ...(previewLayout.imageOrder ?? []),
     ])
     if (!validKeys.has(selectedLayerKey)) {
+      const grace = selectedLayerGraceRef.current
+      if (grace.key === selectedLayerKey && grace.until > Date.now()) {
+        return
+      }
       setSelectedLayerKey(null)
     }
   }, [previewLayout, selectedLayerKey])
+
+  const setSelectedLayerKeyWithGrace = useCallback((key: string | null) => {
+    if (key) {
+      selectedLayerGraceRef.current = {
+        key,
+        until: Date.now() + LAYER_SELECTION_GRACE_MS,
+      }
+    } else {
+      selectedLayerGraceRef.current = { key: null, until: 0 }
+    }
+    setSelectedLayerKey(key)
+  }, [])
 
   const recordHistoryDomain = useCallback((domain: HistoryDomain) => {
     setUndoDomains((prev) => {
@@ -997,16 +1015,16 @@ export default function Home() {
 
   const handlePreviewLayerSelect = useCallback((key: string | null) => {
     if (activeSidebarPanel !== "layers") return
-    setSelectedLayerKey(key)
-  }, [activeSidebarPanel])
+    setSelectedLayerKeyWithGrace(key)
+  }, [activeSidebarPanel, setSelectedLayerKeyWithGrace])
 
   const handleToggleLayerEditor = useCallback((target: string) => {
     setRequestedLayerEditorState({
       key: Date.now(),
       target,
     })
-    setSelectedLayerKey(target)
-  }, [])
+    setSelectedLayerKeyWithGrace(target)
+  }, [setSelectedLayerKeyWithGrace])
 
   useEffect(() => {
     return () => {
@@ -1671,7 +1689,7 @@ export default function Home() {
                 imageColorScheme={imageColorScheme}
                 selectedLayerKey={selectedLayerKey}
                 onLayerOrderChange={handleLayerOrderChange}
-                onSelectLayer={setSelectedLayerKey}
+                onSelectLayer={setSelectedLayerKeyWithGrace}
                 onToggleEditor={handleToggleLayerEditor}
                 onDeleteLayer={handleDeleteLayer}
                 onClose={handleCloseSidebar}
@@ -1734,6 +1752,7 @@ export default function Home() {
     result,
     rotation,
     setImageColorScheme,
+    setSelectedLayerKeyWithGrace,
     showBaselines,
     showMargins,
     showImagePlaceholders,

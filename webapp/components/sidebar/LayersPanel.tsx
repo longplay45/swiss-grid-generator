@@ -188,7 +188,7 @@ export function LayersPanel({
         body: "text-gray-400",
         card: "border-gray-700 bg-gray-800 text-gray-100",
         cardMuted: "text-gray-400",
-        cardActive: "border-blue-400 bg-gray-700",
+        activeAccent: "bg-orange-500",
         stripeBg: "bg-gray-900",
         close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
       }
@@ -197,7 +197,7 @@ export function LayersPanel({
         body: "text-gray-600",
         card: "border-gray-200 bg-gray-50 text-gray-900",
         cardMuted: "text-gray-500",
-        cardActive: "border-blue-500 bg-blue-50",
+        activeAccent: "bg-orange-500",
         stripeBg: "bg-white",
         close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
       }
@@ -273,71 +273,79 @@ export function LayersPanel({
           setDropIndicatorIndex(null)
         }}
       >
-        {visibleThumbs.map((thumb, index) => (
-          <Fragment key={thumb.key}>
-            {thumb.key !== draggingKey ? renderDropMarker(stationaryIndexByKey.get(thumb.key) ?? null) : null}
-            <div
-              ref={(node) => {
-                cardRefs.current[thumb.key] = node
-              }}
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move"
-                event.dataTransfer.setData("text/plain", thumb.key)
-                onSelectLayer(thumb.key)
-                setDraggingKey(thumb.key)
-                setDropIndicatorIndex(stationaryVisibleOrder.indexOf(thumb.key))
-              }}
-              onDragEnd={() => {
-                setDraggingKey(null)
-                setDropIndicatorIndex(null)
-              }}
-              onClick={() => onSelectLayer(thumb.key)}
-              onDoubleClick={() => onToggleEditor(thumb.key)}
-              className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
-                draggingKey === thumb.key || selectedLayerKey === thumb.key
-                  ? `${tone.cardActive} ${draggingKey === thumb.key ? "cursor-grabbing opacity-45" : ""}`.trim()
-                  : tone.card
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className={`text-[11px] ${tone.cardMuted}`}>Rows: {thumb.rows} - Cols: {thumb.cols}</div>
-                  <div className={`truncate text-[11px] ${tone.cardMuted}`}>
-                    {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
-                  </div>
-                  {thumb.kind === "text" ? (
-                    <div
-                      className="truncate"
-                      style={{
-                        color: thumb.color,
-                        fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
-                      }}
-                    >
-                      {thumb.textPreview}
+        {visibleThumbs.map((thumb, index) => {
+          const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
+          return (
+            <Fragment key={thumb.key}>
+              {thumb.key !== draggingKey ? renderDropMarker(stationaryIndexByKey.get(thumb.key) ?? null) : null}
+              <div
+                ref={(node) => {
+                  cardRefs.current[thumb.key] = node
+                }}
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move"
+                  event.dataTransfer.setData("text/plain", thumb.key)
+                  onSelectLayer(thumb.key)
+                  setDraggingKey(thumb.key)
+                  setDropIndicatorIndex(stationaryVisibleOrder.indexOf(thumb.key))
+                }}
+                onDragEnd={() => {
+                  setDraggingKey(null)
+                  setDropIndicatorIndex(null)
+                }}
+                onClick={() => onSelectLayer(thumb.key)}
+                onDoubleClick={() => onToggleEditor(thumb.key)}
+                className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
+                  draggingKey === thumb.key
+                    ? `${tone.card} cursor-grabbing opacity-45`
+                    : tone.card
+                }`}
+              >
+                {isActive ? (
+                  <>
+                    <div className={`pointer-events-none absolute left-0 top-0 h-px w-full ${tone.activeAccent}`} />
+                    <div className={`pointer-events-none absolute left-0 top-0 h-full w-px ${tone.activeAccent}`} />
+                  </>
+                ) : null}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className={`truncate text-[11px] ${tone.cardMuted}`}>
+                      {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
                     </div>
-                  ) : (
-                    <div
-                      className={`mt-1 h-4 rounded-sm border border-black/10 ${tone.stripeBg}`}
-                      style={{ backgroundColor: thumb.color }}
-                    />
-                  )}
+                    {thumb.kind === "text" ? (
+                      <div
+                        className="truncate"
+                        style={{
+                          color: thumb.color,
+                          fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
+                        }}
+                      >
+                        {thumb.textPreview}
+                      </div>
+                    ) : (
+                      <div
+                        className={`mt-1 h-4 rounded-sm border border-black/10 ${tone.stripeBg}`}
+                        style={{ backgroundColor: thumb.color }}
+                      />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
+                    className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onDeleteLayer(thumb.key, thumb.kind)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
-                  className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onDeleteLayer(thumb.key, thumb.kind)
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
               </div>
-            </div>
-          </Fragment>
-        ))}
+            </Fragment>
+          )
+        })}
         {renderDropMarker(stationaryVisibleOrder.length)}
       </div>
     </div>
