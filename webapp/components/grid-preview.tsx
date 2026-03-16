@@ -3099,6 +3099,7 @@ export const GridPreview = memo(function GridPreview({
         >
           <TextEditorPanel
             isHelpActive={showEditorHelpIcon}
+            showRolloverInfo={showRolloverInfo}
             controls={{
               editorState,
               setEditorState,
@@ -3141,6 +3142,7 @@ export const GridPreview = memo(function GridPreview({
             rowTriggerMinWidthCh={rowTriggerMinWidthCh}
             colTriggerMinWidthCh={colTriggerMinWidthCh}
             isHelpActive={showEditorHelpIcon}
+            showRolloverInfo={showRolloverInfo}
           />
         </div>
       ) : null}

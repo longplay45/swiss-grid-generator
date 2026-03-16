@@ -314,14 +314,20 @@ export function LayersPanel({
                       {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
                     </div>
                     {thumb.kind === "text" ? (
-                      <div
-                        className="truncate"
-                        style={{
-                          color: thumb.color,
-                          fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
-                        }}
-                      >
-                        {thumb.textPreview}
+                      <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                        <div
+                          className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/10"
+                          style={{ backgroundColor: thumb.color }}
+                          aria-hidden="true"
+                        />
+                        <div
+                          className="truncate text-[12px] text-gray-900 dark:text-gray-100"
+                          style={{
+                            fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
+                          }}
+                        >
+                          {thumb.textPreview}
+                        </div>
                       </div>
                     ) : (
                       <div

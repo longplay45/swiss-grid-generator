@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import { FontSelect } from "@/components/ui/font-select"
 import {
   Select,
@@ -38,6 +39,7 @@ import type { Dispatch, SetStateAction } from "react"
 type TextEditorPanelProps<StyleKey extends string> = {
   controls: TextEditorPanelControls<StyleKey>
   isHelpActive?: boolean
+  showRolloverInfo?: boolean
 }
 
 type MainSubmenu = "geometry" | "type" | "color" | "info" | null
@@ -66,6 +68,7 @@ type TextEditorPanelControls<StyleKey extends string> = {
 export function TextEditorPanel<StyleKey extends string>({
   controls,
   isHelpActive = false,
+  showRolloverInfo = true,
 }: TextEditorPanelProps<StyleKey>) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [fxSizeInput, setFxSizeInput] = useState("")
@@ -106,14 +109,36 @@ export function TextEditorPanel<StyleKey extends string>({
   }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
+  const railTooltipClassName = "left-full top-1/2 ml-2 w-max -translate-y-1/2 whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const submenuTooltipClassName = "left-1/2 top-full mt-2 w-max max-w-[24rem] -translate-x-1/2 whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
   const toggleSubmenu = (next: Exclude<MainSubmenu, null>) => {
     setActiveSubmenu((prev) => (prev === next ? null : next))
   }
+  const withRailTooltip = (label: string, child: React.ReactNode) => (
+    <HoverTooltip
+      className="block"
+      label={label}
+      disabled={!showRolloverInfo}
+      tooltipClassName={railTooltipClassName}
+    >
+      {child}
+    </HoverTooltip>
+  )
+  const withSubmenuTooltip = (label: string, child: React.ReactNode) => (
+    <HoverTooltip
+      className="block"
+      label={label}
+      disabled={!showRolloverInfo}
+      tooltipClassName={submenuTooltipClassName}
+    >
+      {child}
+    </HoverTooltip>
+  )
 
   return (
     <div className="flex items-start gap-2">
       <div className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
-        <Button
+        {withRailTooltip("Rows, columns, and rotation", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -122,8 +147,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Rows, columns, rotation"
         >
           <Rows3 className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Font family, hierarchy, and FX size/leading", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -132,8 +157,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Font and hierarchy"
         >
           <Type className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Color scheme and paragraph color", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -142,11 +167,11 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Color controls"
         >
           <Palette className="h-4 w-4" />
-        </Button>
+        </Button>)}
 
         <div className={`my-1 h-px w-full ${tone.divider}`} />
 
-        <Button
+        {withRailTooltip(controls.editorState.draftBold ? "Disable bold" : "Enable bold", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -155,8 +180,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label={controls.editorState.draftBold ? "Disable bold" : "Enable bold"}
         >
           <Bold className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip(controls.editorState.draftItalic ? "Disable italic" : "Enable italic", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -165,8 +190,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label={controls.editorState.draftItalic ? "Disable italic" : "Enable italic"}
         >
           <Italic className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Align text left", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -175,8 +200,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Align left"
         >
           <AlignLeft className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Align text right", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -185,8 +210,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Align right"
         >
           <AlignRight className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
           type="button"
           size="sm"
           variant="ghost"
@@ -201,8 +226,8 @@ export function TextEditorPanel<StyleKey extends string>({
           title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
         >
           Re
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
           type="button"
           size="sm"
           variant="ghost"
@@ -211,8 +236,8 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
         >
           Hy
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Paragraph summary, words, and characters", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -221,10 +246,10 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Word and character count"
         >
           <Info className="h-4 w-4" />
-        </Button>
+        </Button>)}
 
         <div className={`my-1 h-px w-full ${tone.divider}`} />
-        <Button
+        {withRailTooltip("Delete paragraph", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -233,7 +258,7 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Delete paragraph"
         >
           <Trash2 className="h-4 w-4" />
-        </Button>
+        </Button>)}
       </div>
 
       {activeSubmenu ? (
@@ -249,7 +274,7 @@ export function TextEditorPanel<StyleKey extends string>({
           {activeSubmenu === "geometry" ? (
             <>
               <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <Select
+              {withSubmenuTooltip("Set the row span of this paragraph", <Select
                 value={String(controls.editorState.draftRows)}
                 onValueChange={(value) => {
                   controls.setEditorState((prev) => prev ? {
@@ -268,10 +293,10 @@ export function TextEditorPanel<StyleKey extends string>({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
 
               <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <Select
+              {withSubmenuTooltip("Set the column span of this paragraph", <Select
                 value={String(controls.editorState.draftColumns)}
                 onValueChange={(value) => {
                   const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
@@ -292,10 +317,10 @@ export function TextEditorPanel<StyleKey extends string>({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
 
               <RotateCw className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <input
+              {withSubmenuTooltip("Rotate the paragraph in degrees", <input
                 type="number"
                 min={-180}
                 max={180}
@@ -310,7 +335,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   } : prev)
                 }}
                 className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
-              />
+              />)}
             </>
           ) : null}
 
@@ -318,7 +343,7 @@ export function TextEditorPanel<StyleKey extends string>({
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-                <FontSelect
+                {withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
                   value={controls.editorState.draftFont}
                   onValueChange={(value) => {
                     controls.setEditorState((prev) => prev ? { ...prev, draftFont: value as FontFamily } : prev)
@@ -326,10 +351,10 @@ export function TextEditorPanel<StyleKey extends string>({
                   options={FONT_OPTIONS}
                   fitToLongestOption
                   triggerClassName={`h-8 text-xs ${tone.input}`}
-                />
+                />)}
 
                 <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-                <Select
+                {withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
                   value={controls.editorState.draftStyle}
                   onValueChange={(value) => {
                     const nextStyle = value as StyleKey
@@ -356,12 +381,12 @@ export function TextEditorPanel<StyleKey extends string>({
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select>)}
               </div>
 
               {fxSelected ? (
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                  {withSubmenuTooltip("Set the FX font size in points", <label className="flex items-center gap-1 text-[11px] text-gray-600">
                     <TypeOutline className="h-4 w-4 shrink-0 text-gray-500" />
                     <input
                       type="text"
@@ -390,8 +415,8 @@ export function TextEditorPanel<StyleKey extends string>({
                       className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
                       aria-label="FX font size"
                     />
-                  </label>
-                  <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                  </label>)}
+                  {withSubmenuTooltip("Set the FX leading in points", <label className="flex items-center gap-1 text-[11px] text-gray-600">
                     <Baseline className="h-4 w-4 shrink-0 text-gray-500" />
                     <input
                       type="text"
@@ -420,7 +445,7 @@ export function TextEditorPanel<StyleKey extends string>({
                       className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
                       aria-label="FX line leading"
                     />
-                  </label>
+                  </label>)}
                 </div>
               ) : null}
             </div>
@@ -428,7 +453,7 @@ export function TextEditorPanel<StyleKey extends string>({
 
           {activeSubmenu === "color" ? (
             <>
-              <Select
+              {withSubmenuTooltip("Choose the active color scheme", <Select
                 value={controls.selectedColorScheme}
                 onOpenChange={(open) => {
                   if (!open) setPreviewColorScheme(null)
@@ -461,12 +486,12 @@ export function TextEditorPanel<StyleKey extends string>({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
               <div className="flex items-center gap-1">
                 {previewPalette.map((color, index) => {
                   const selected = controls.editorState.draftColor.toLowerCase() === color.toLowerCase()
                   return (
-                    <button
+                    withSubmenuTooltip(`Set the paragraph color to ${color}`, <button
                       key={`${previewColorScheme ?? controls.selectedColorScheme}-${index}-${color}`}
                       type="button"
                       onClick={() => {
@@ -476,7 +501,7 @@ export function TextEditorPanel<StyleKey extends string>({
                       style={{ backgroundColor: color }}
                       aria-label={`Select ${color}`}
                       title={color}
-                    />
+                    />)
                   )
                 })}
               </div>

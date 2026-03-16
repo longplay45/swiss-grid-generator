@@ -3,7 +3,6 @@ export const ROTATION_MAX = 180
 export const ROTATION_EPSILON = 0.001
 
 export const FX_SIZE_MIN = 1
-export const FX_SIZE_MAX = 400
 export const FX_LEADING_MIN = 1
 export const FX_LEADING_MAX = 800
 
@@ -16,7 +15,7 @@ export function hasSignificantRotation(value: number): boolean {
 }
 
 export function clampFxSize(value: number): number {
-  return Math.max(FX_SIZE_MIN, Math.min(FX_SIZE_MAX, value))
+  return Math.max(FX_SIZE_MIN, value)
 }
 
 export function clampFxLeading(value: number): number {

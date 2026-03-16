@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ type ImageEditorDialogProps = {
   rowTriggerMinWidthCh?: number
   colTriggerMinWidthCh?: number
   isHelpActive?: boolean
+  showRolloverInfo?: boolean
 }
 
 export function ImageEditorDialog({
@@ -49,6 +51,7 @@ export function ImageEditorDialog({
   rowTriggerMinWidthCh = 10,
   colTriggerMinWidthCh = 10,
   isHelpActive = false,
+  showRolloverInfo = true,
 }: ImageEditorDialogProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
@@ -75,14 +78,26 @@ export function ImageEditorDialog({
   }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
+  const railTooltipClassName = "left-full top-1/2 ml-2 w-max -translate-y-1/2 whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const submenuTooltipClassName = "left-1/2 top-full mt-2 w-max max-w-[24rem] -translate-x-1/2 whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
   const toggleSubmenu = (next: Exclude<MainSubmenu, null>) => {
     setActiveSubmenu((prev) => (prev === next ? null : next))
   }
+  const withRailTooltip = (label: string, child: React.ReactNode) => (
+    <HoverTooltip className="block" label={label} disabled={!showRolloverInfo} tooltipClassName={railTooltipClassName}>
+      {child}
+    </HoverTooltip>
+  )
+  const withSubmenuTooltip = (label: string, child: React.ReactNode) => (
+    <HoverTooltip className="block" label={label} disabled={!showRolloverInfo} tooltipClassName={submenuTooltipClassName}>
+      {child}
+    </HoverTooltip>
+  )
 
   return (
     <div className="flex items-start gap-2">
       <div className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
-        <Button
+        {withRailTooltip("Rows and columns for the image placeholder", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -91,8 +106,8 @@ export function ImageEditorDialog({
           aria-label="Rows and columns"
         >
           <Rows3 className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button>)}
+        {withRailTooltip("Color scheme and placeholder color", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -101,11 +116,11 @@ export function ImageEditorDialog({
           aria-label="Color controls"
         >
           <Palette className="h-4 w-4" />
-        </Button>
+        </Button>)}
 
         <div className={`my-1 h-px w-full ${tone.divider}`} />
 
-        <Button
+        {withRailTooltip("Delete image placeholder", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -114,7 +129,7 @@ export function ImageEditorDialog({
           aria-label="Delete image placeholder"
         >
           <Trash2 className="h-4 w-4" />
-        </Button>
+        </Button>)}
       </div>
 
       {activeSubmenu ? (
@@ -122,7 +137,7 @@ export function ImageEditorDialog({
           {activeSubmenu === "geometry" ? (
             <>
               <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <Select
+              {withSubmenuTooltip("Set the row span of this image placeholder", <Select
                 value={String(editorState.draftRows)}
                 onValueChange={(value) => {
                   const rows = Math.max(1, Math.min(gridRows, Number(value)))
@@ -139,10 +154,10 @@ export function ImageEditorDialog({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
 
               <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <Select
+              {withSubmenuTooltip("Set the column span of this image placeholder", <Select
                 value={String(editorState.draftColumns)}
                 onValueChange={(value) => {
                   const columns = Math.max(1, Math.min(gridCols, Number(value)))
@@ -159,13 +174,13 @@ export function ImageEditorDialog({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
             </>
           ) : null}
 
           {activeSubmenu === "color" ? (
             <>
-              <Select
+              {withSubmenuTooltip("Choose the active color scheme", <Select
                 value={selectedColorScheme}
                 onOpenChange={(open) => {
                   if (!open) setPreviewColorScheme(null)
@@ -190,12 +205,12 @@ export function ImageEditorDialog({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>)}
               <div className="flex items-center gap-1">
                 {previewPalette.map((color, index) => {
                   const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
                   return (
-                    <button
+                    withSubmenuTooltip(`Set the placeholder color to ${color}`, <button
                       key={`${previewColorScheme ?? selectedColorScheme}-${index}-${color}`}
                       type="button"
                       onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
@@ -203,7 +218,7 @@ export function ImageEditorDialog({
                       style={{ backgroundColor: color }}
                       aria-label={`Select ${color}`}
                       title={color}
-                    />
+                    />)
                   )
                 })}
               </div>
