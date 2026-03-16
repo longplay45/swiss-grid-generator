@@ -1796,7 +1796,7 @@ export default function Home() {
                 {SHOW_BETA_BADGE ? (
                   <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
                 ) : null}
-                <span>Version {APP_VERSION}</span>
+                <span>V {APP_VERSION}</span>
               </span>
               <div className="flex items-center gap-3">
                 <a

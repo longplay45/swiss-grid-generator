@@ -2937,11 +2937,20 @@ export const GridPreview = memo(function GridPreview({
     const rect = blockRectsRef.current[editorState.target]
     if (!rect) return null
     const plan = previousPlansRef.current.get(editorState.target)
+    const firstLineTop = (plan?.rotationOriginY ?? rect.y) + result.grid.gridUnit * scale
+    const textOffsetX = plan?.commands[0]
+      ? plan.commands[0].x - rect.x
+      : 0
+    const textAscent = plan?.commands[0]
+      ? Math.max(0, plan.commands[0].y - firstLineTop)
+      : result.grid.gridUnit * scale
     return {
       rect,
       blockRotation: plan?.blockRotation ?? editorState.draftRotation,
       rotationOriginX: plan?.rotationOriginX ?? rect.x,
       rotationOriginY: plan?.rotationOriginY ?? rect.y,
+      textOffsetX,
+      textAscent,
     }
   })() : null
 

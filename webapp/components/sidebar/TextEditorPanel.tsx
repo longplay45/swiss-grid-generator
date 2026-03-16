@@ -19,6 +19,7 @@ import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import {
   AlignLeft,
   AlignRight,
+  Baseline,
   Bold,
   CaseSensitive,
   Columns3,
@@ -29,6 +30,7 @@ import {
   Rows3,
   Trash2,
   Type,
+  TypeOutline,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { Dispatch, SetStateAction } from "react"
@@ -239,6 +241,8 @@ export function TextEditorPanel<StyleKey extends string>({
           className={`max-w-[min(62vw,44rem)] overflow-x-auto rounded-md border ${tone.submenu} ${
             activeSubmenu === "info"
               ? "min-h-10 px-2 py-2"
+              : activeSubmenu === "type"
+                ? "px-2 py-2"
               : "flex h-10 items-center gap-2 px-2"
           }`}
         >
@@ -311,107 +315,115 @@ export function TextEditorPanel<StyleKey extends string>({
           ) : null}
 
           {activeSubmenu === "type" ? (
-            <>
-              <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <Select
-                value={controls.editorState.draftStyle}
-                onValueChange={(value) => {
-                  const nextStyle = value as StyleKey
-                  controls.setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftStyle: nextStyle,
-                    draftFxSize: controls.isFxStyle(nextStyle)
-                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
-                      : prev.draftFxSize,
-                    draftFxLeading: controls.isFxStyle(nextStyle)
-                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
-                      : prev.draftFxLeading,
-                    draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${controls.hierarchyTriggerMinWidthCh}ch` }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {controls.styleOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label} ({controls.getStyleSizeLabel(option.value)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
+                <FontSelect
+                  value={controls.editorState.draftFont}
+                  onValueChange={(value) => {
+                    controls.setEditorState((prev) => prev ? { ...prev, draftFont: value as FontFamily } : prev)
+                  }}
+                  options={FONT_OPTIONS}
+                  fitToLongestOption
+                  triggerClassName={`h-8 text-xs ${tone.input}`}
+                />
 
-              <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              <FontSelect
-                value={controls.editorState.draftFont}
-                onValueChange={(value) => {
-                  controls.setEditorState((prev) => prev ? { ...prev, draftFont: value as FontFamily } : prev)
-                }}
-                options={FONT_OPTIONS}
-                fitToLongestOption
-                triggerClassName={`h-8 text-xs ${tone.input}`}
-              />
+                <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
+                <Select
+                  value={controls.editorState.draftStyle}
+                  onValueChange={(value) => {
+                    const nextStyle = value as StyleKey
+                    controls.setEditorState((prev) => prev ? {
+                      ...prev,
+                      draftStyle: nextStyle,
+                      draftFxSize: controls.isFxStyle(nextStyle)
+                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
+                        : prev.draftFxSize,
+                      draftFxLeading: controls.isFxStyle(nextStyle)
+                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+                        : prev.draftFxLeading,
+                      draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
+                    } : prev)
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${controls.hierarchyTriggerMinWidthCh}ch` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {controls.styleOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label} ({controls.getStyleSizeLabel(option.value)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {fxSelected ? (
-                <>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={fxSizeInput}
-                    onChange={(event) => {
-                      const normalized = event.target.value.replace(",", ".")
-                      if (!/^\d*\.?\d*$/.test(normalized)) return
-                      setFxSizeInput(normalized)
-                    }}
-                    onBlur={() => {
-                      const parsed = Number(fxSizeInput)
-                      if (!Number.isFinite(parsed) || parsed <= 0) {
-                        setFxSizeInput(String(controls.editorState.draftFxSize))
-                        return
-                      }
-                      const clamped = clampFxSize(Math.round(parsed * 10) / 10)
-                      controls.setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
-                      setFxSizeInput(String(clamped))
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return
-                      event.preventDefault()
-                      ;(event.currentTarget as HTMLInputElement).blur()
-                    }}
-                    className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
-                    aria-label="FX font size"
-                  />
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={fxLeadingInput}
-                    onChange={(event) => {
-                      const normalized = event.target.value.replace(",", ".")
-                      if (!/^\d*\.?\d*$/.test(normalized)) return
-                      setFxLeadingInput(normalized)
-                    }}
-                    onBlur={() => {
-                      const parsed = Number(fxLeadingInput)
-                      if (!Number.isFinite(parsed) || parsed <= 0) {
-                        setFxLeadingInput(String(controls.editorState.draftFxLeading))
-                        return
-                      }
-                      const clamped = clampFxLeading(Math.round(parsed * 10) / 10)
-                      controls.setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
-                      setFxLeadingInput(String(clamped))
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return
-                      event.preventDefault()
-                      ;(event.currentTarget as HTMLInputElement).blur()
-                    }}
-                    className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
-                    aria-label="FX line leading"
-                  />
-                </>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                    <TypeOutline className="h-4 w-4 shrink-0 text-gray-500" />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={fxSizeInput}
+                      onChange={(event) => {
+                        const normalized = event.target.value.replace(",", ".")
+                        if (!/^\d*\.?\d*$/.test(normalized)) return
+                        setFxSizeInput(normalized)
+                      }}
+                      onBlur={() => {
+                        const parsed = Number(fxSizeInput)
+                        if (!Number.isFinite(parsed) || parsed <= 0) {
+                          setFxSizeInput(String(controls.editorState.draftFxSize))
+                          return
+                        }
+                        const clamped = clampFxSize(Math.round(parsed * 10) / 10)
+                        controls.setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
+                        setFxSizeInput(String(clamped))
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return
+                        event.preventDefault()
+                        ;(event.currentTarget as HTMLInputElement).blur()
+                      }}
+                      className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      aria-label="FX font size"
+                    />
+                  </label>
+                  <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                    <Baseline className="h-4 w-4 shrink-0 text-gray-500" />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={fxLeadingInput}
+                      onChange={(event) => {
+                        const normalized = event.target.value.replace(",", ".")
+                        if (!/^\d*\.?\d*$/.test(normalized)) return
+                        setFxLeadingInput(normalized)
+                      }}
+                      onBlur={() => {
+                        const parsed = Number(fxLeadingInput)
+                        if (!Number.isFinite(parsed) || parsed <= 0) {
+                          setFxLeadingInput(String(controls.editorState.draftFxLeading))
+                          return
+                        }
+                        const clamped = clampFxLeading(Math.round(parsed * 10) / 10)
+                        controls.setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
+                        setFxLeadingInput(String(clamped))
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return
+                        event.preventDefault()
+                        ;(event.currentTarget as HTMLInputElement).blur()
+                      }}
+                      className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      aria-label="FX line leading"
+                    />
+                  </label>
+                </div>
               ) : null}
-            </>
+            </div>
           ) : null}
 
           {activeSubmenu === "color" ? (

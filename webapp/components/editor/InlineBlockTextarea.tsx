@@ -16,6 +16,8 @@ type InlineEditorLayout = {
   blockRotation: number
   rotationOriginX: number
   rotationOriginY: number
+  textOffsetX: number
+  textAscent: number
 }
 
 type InlineBlockTextareaProps<StyleKey extends string> = {
@@ -70,8 +72,13 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const scaledFontSize = Math.max(1, styleFontSize * scale)
   const scaledLeading = Math.max(scaledFontSize, styleLeading * scale)
   const firstLineTop = layout.rotationOriginY + baselineStep
+  const fxCaretOffsetY = isFxStyle(editorState.draftStyle)
+    ? Math.max(0, (scaledLeading - layout.textAscent) / 2)
+    : 0
   const consumedTop = Math.max(0, firstLineTop - layout.rect.y)
   const minHeight = Math.max(Math.max(0, layout.rect.height - consumedTop), scaledLeading * 3)
+  const textareaLeft = layout.rect.x + layout.textOffsetX
+  const textareaWidth = Math.max(1, layout.rect.width - layout.textOffsetX)
 
   return (
     <div
@@ -112,9 +119,9 @@ export function InlineBlockTextarea<StyleKey extends string>({
             }
           }}
           style={{
-            left: layout.rect.x,
-            top: firstLineTop,
-            width: layout.rect.width,
+            left: textareaLeft,
+            top: firstLineTop - fxCaretOffsetY,
+            width: textareaWidth,
             minHeight,
             transform: transform.blockTransform,
             transformOrigin: transform.blockTransformOrigin,
@@ -134,7 +141,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             caretColor: editorState.draftColor,
             WebkitTextFillColor: "transparent",
           }}
-          className="pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none"
+          className="scrollbar-none pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none"
           aria-label={`Inline editor for ${editorState.target}`}
         />
       </div>
