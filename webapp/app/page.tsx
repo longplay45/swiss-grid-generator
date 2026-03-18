@@ -10,16 +10,14 @@ import {
 } from "@/lib/grid-calculator"
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
-import { GridPreview } from "@/components/grid-preview"
+import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
+import { ControlSidebar } from "@/components/layout/ControlSidebar"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { HeaderIconButton } from "@/components/ui/header-icon-button"
-import { X } from "lucide-react"
 import { formatValue } from "@/lib/units"
 import { useSettingsHistory, SECTION_KEYS } from "@/hooks/useSettingsHistory"
 import type { UiSettingsSnapshot, SectionKey } from "@/hooks/useSettingsHistory"
 import { useExportActions } from "@/hooks/useExportActions"
 import { useHeaderActions } from "@/hooks/useHeaderActions"
-import type { HeaderAction } from "@/hooks/useHeaderActions"
 import { CanvasRatioPanel } from "@/components/settings/CanvasRatioPanel"
 import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
@@ -27,19 +25,13 @@ import { GutterPanel } from "@/components/settings/GutterPanel"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
 import { ColorSchemePanel } from "@/components/settings/ColorSchemePanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
-import { HelpPanel } from "@/components/sidebar/HelpPanel"
-import { LayersPanel } from "@/components/sidebar/LayersPanel"
 import {
   HELP_SECTION_BY_HEADER_ACTION,
   HELP_SECTION_BY_SETTINGS_SECTION,
 } from "@/lib/help-registry"
-import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
-import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
-import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
-import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
 import { clampRotation } from "@/lib/block-constraints"
 import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewCommands } from "@/hooks/usePreviewCommands"
@@ -1158,35 +1150,6 @@ export default function Home() {
     onToggleHelpPanel: toggleHelpPanel,
   })
 
-  const renderHeaderAction = useCallback((action: HeaderAction) => {
-    const shortcut = action.shortcutId
-      ? PREVIEW_HEADER_SHORTCUTS.find((item) => item.id === action.shortcutId)?.combo
-      : null
-    const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
-    const isHelpButton = action.key === "help"
-    return (
-      <div
-        key={action.key}
-        data-preview-header-action={action.key}
-        className="inline-flex w-8 items-center justify-center"
-        onMouseEnter={showSectionHelpIcons ? () => handleHeaderHelpNavigate(action.key) : undefined}
-      >
-        <HeaderIconButton
-          ariaLabel={action.ariaLabel}
-          tooltip={tooltip}
-          variant={action.variant ?? "outline"}
-          aria-pressed={action.pressed}
-          disabled={action.disabled}
-          onClick={action.onClick}
-          showTooltip={showRolloverInfo}
-          buttonClassName={showSectionHelpIcons ? isHelpButton ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-500" : "ring-1 ring-blue-500" : undefined}
-        >
-          {action.icon}
-        </HeaderIconButton>
-      </div>
-    )
-  }, [handleHeaderHelpNavigate, showRolloverInfo, showSectionHelpIcons])
-
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
@@ -1333,222 +1296,65 @@ export default function Home() {
     useCustomMargins,
   ])
 
-  const previewWorkspace = useMemo(() => (
-    <div
-      className={`flex-1 flex flex-col min-h-[50vh] md:min-h-full ${uiTheme.previewShell}`}
-    >
-      <input
-        ref={loadFileInputRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={loadLayout}
-      />
-      <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
-        <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
-          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-            {fileGroup.map((item) =>
-              item.type === "divider"
-                ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                : renderHeaderAction(item.action),
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-            {displayGroup.map((item) =>
-              item.type === "divider"
-                ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                : renderHeaderAction(item.action),
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-            {sidebarGroup.map((action) => renderHeaderAction(action))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          {showPresetsBrowser ? (
-            <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
-              <PresetLayoutsPanel
-                isDarkMode={isDarkUi}
-                onLoadPreset={handleLoadPresetLayout}
-                showRolloverInfo={showRolloverInfo}
-                showHelpHints={showSectionHelpIcons}
-                onHelpNavigate={() => handleHeaderHelpNavigate("presets")}
-                compact
-              />
-            </div>
-          ) : (
-            <GridPreview
-              result={result}
-              showBaselines={showBaselines}
-              showModules={showModules}
-              showMargins={showMargins}
-              showImagePlaceholders={showImagePlaceholders}
-              showTypography={showTypography}
-              showRolloverInfo={showRolloverInfo}
-              baseFont={baseFont}
-              imageColorScheme={imageColorScheme}
-              canvasBackground={resolvedCanvasBackground}
-	              onImageColorSchemeChange={setImageColorScheme}
-	              initialLayout={loadedPreviewLayout?.layout ?? null}
-	              initialLayoutToken={loadedPreviewLayout?.token ?? 0}
-	              rotation={rotation}
-              undoNonce={previewUndoNonce}
-              redoNonce={previewRedoNonce}
-              historyResetToken={documentHistoryResetNonce}
-              paragraphColorResetToken={paragraphColorResetNonce}
-              onHistoryRecord={handlePreviewHistoryRecord}
-              onUndoRequest={undoAny}
-              onRedoRequest={redoAny}
-              onOpenHelpSection={openHelpSection}
-              showEditorHelpIcon={showSectionHelpIcons}
-	              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
-	              onRequestGridRestore={handlePreviewGridRestore}
-	              onRequestNotice={handleRequestNotice}
-	              requestedLayerOrder={requestedLayerOrderState?.order ?? null}
-	              requestedLayerOrderToken={requestedLayerOrderState?.token ?? 0}
-	              requestedLayerDeleteTarget={requestedLayerDeleteState?.target ?? null}
-	              requestedLayerDeleteToken={requestedLayerDeleteState?.token ?? 0}
-	              requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
-	              requestedLayerEditorToken={requestedLayerEditorState?.token ?? 0}
-	              selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
-              onSelectLayer={handlePreviewLayerSelect}
-              isDarkMode={isDarkUi}
-              onLayoutChange={handlePreviewLayoutChange}
-            />
-          )}
-        </div>
-        {!showPresetsBrowser && activeSidebarPanel && (
-          <div
-            data-help-scroll-root="true"
-            className={`w-[280px] shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
-              activeSidebarPanel === "help"
-                ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
-                : "p-4 md:p-6"
-            }`}
-          >
-            {activeSidebarPanel === "settings" && (
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Settings</h3>
-                  <button
-                    type="button"
-                    aria-label="Close settings panel"
-                    onClick={closeSidebarPanel}
-                    className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
-                  <p>This is a placeholder settings page.</p>
-                  <p>
-                    Future settings can be added here (profile, defaults, shortcuts, language,
-                    etc.).
-                  </p>
-                </div>
-              </div>
-            )}
-            {activeSidebarPanel === "help" && (
-              <HelpPanel
-                isDarkMode={isDarkUi}
-                onClose={closeSidebarPanel}
-                activeSectionId={activeHelpSectionId}
-              />
-            )}
-            {activeSidebarPanel === "layers" && (
-              <LayersPanel
-                layout={previewLayout}
-                baseFont={baseFont}
-                imageColorScheme={imageColorScheme}
-                selectedLayerKey={selectedLayerKey}
-                onLayerOrderChange={handleLayerOrderChange}
-                onSelectLayer={setSelectedLayerKeyWithGrace}
-                onToggleEditor={handleToggleLayerEditor}
-                onDeleteLayer={handleDeleteLayer}
-                onClose={closeSidebarPanel}
-                isDarkMode={isDarkUi}
-              />
-            )}
-            {activeSidebarPanel === "imprint" && (
-              <ImprintPanel
-                isDarkMode={isDarkUi}
-                onClose={closeSidebarPanel}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      {!showPresetsBrowser && showRolloverInfo ? (
-        <div className={`shrink-0 h-11 border-t px-4 text-[11px] md:px-6 ${uiTheme.previewHeader} ${uiTheme.bodyText} flex items-center`}>
-          <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-            {PREVIEW_INTERACTION_HINT_SINGLE_LINE}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  ), [
-    activeHelpSectionId,
-    activeSidebarPanel,
-    baseFont,
-    displayGroup,
-    documentHistoryResetNonce,
-    fileGroup,
-    handleDeleteLayer,
-    handleHeaderHelpNavigate,
-    handleLayerOrderChange,
-	    handleLoadPresetLayout,
-	    handlePreviewLayoutChange,
-	    handlePreviewLayerSelect,
-	    handleToggleLayerEditor,
-	    handlePreviewGridRestore,
-	    handlePreviewHistoryAvailabilityChange,
-	    handlePreviewHistoryRecord,
-	    handleRequestNotice,
-    closeSidebarPanel,
-    openHelpSection,
-	    paragraphColorResetNonce,
-    previewRedoNonce,
-    previewLayout,
-    previewUndoNonce,
-    requestedLayerDeleteState,
-    requestedLayerEditorState,
-    requestedLayerOrderState,
-    selectedLayerKey,
-    imageColorScheme,
-    isDarkUi,
-    loadLayout,
-    loadedPreviewLayout,
-    resolvedCanvasBackground,
-    showPresetsBrowser,
-    renderHeaderAction,
-    redoAny,
-    result,
-    rotation,
-    setImageColorScheme,
-    setSelectedLayerKeyWithGrace,
-    showBaselines,
-    showMargins,
-    showImagePlaceholders,
-    showModules,
-    showSectionHelpIcons,
-    showTypography,
-    showRolloverInfo,
-    sidebarGroup,
-    undoAny,
-    uiTheme.divider,
-    uiTheme.bodyText,
-    uiTheme.previewHeader,
-    uiTheme.previewShell,
-    uiTheme.sidebar,
-    uiTheme.sidebarBody,
-    uiTheme.sidebarHeading,
-  ])
+  const previewWorkspace = (
+    <PreviewWorkspace
+      fileGroup={fileGroup}
+      displayGroup={displayGroup}
+      sidebarGroup={sidebarGroup}
+      activeSidebarPanel={activeSidebarPanel}
+      activeHelpSectionId={activeHelpSectionId}
+      showPresetsBrowser={showPresetsBrowser}
+      isDarkUi={isDarkUi}
+      showSectionHelpIcons={showSectionHelpIcons}
+      showRolloverInfo={showRolloverInfo}
+      showBaselines={showBaselines}
+      showModules={showModules}
+      showMargins={showMargins}
+      showImagePlaceholders={showImagePlaceholders}
+      showTypography={showTypography}
+      baseFont={baseFont}
+      imageColorScheme={imageColorScheme}
+      resolvedCanvasBackground={resolvedCanvasBackground}
+      rotation={rotation}
+      previewUndoNonce={previewUndoNonce}
+      previewRedoNonce={previewRedoNonce}
+      documentHistoryResetNonce={documentHistoryResetNonce}
+      paragraphColorResetNonce={paragraphColorResetNonce}
+      selectedLayerKey={selectedLayerKey}
+      previewLayout={previewLayout}
+      loadedPreviewLayout={loadedPreviewLayout}
+      requestedLayerOrderState={requestedLayerOrderState}
+      requestedLayerDeleteState={requestedLayerDeleteState}
+      requestedLayerEditorState={requestedLayerEditorState}
+      uiTheme={{
+        divider: uiTheme.divider,
+        bodyText: uiTheme.bodyText,
+        previewHeader: uiTheme.previewHeader,
+        previewShell: uiTheme.previewShell,
+        sidebar: uiTheme.sidebar,
+        sidebarBody: uiTheme.sidebarBody,
+        sidebarHeading: uiTheme.sidebarHeading,
+      }}
+      result={result}
+      onLoadPreset={handleLoadPresetLayout}
+      onHeaderHelpNavigate={handleHeaderHelpNavigate}
+      onOpenHelpSection={openHelpSection}
+      onHistoryRecord={handlePreviewHistoryRecord}
+      onUndoRequest={undoAny}
+      onRedoRequest={redoAny}
+      onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
+      onRequestGridRestore={handlePreviewGridRestore}
+      onRequestNotice={handleRequestNotice}
+      onLayoutChange={handlePreviewLayoutChange}
+      onLayerOrderChange={handleLayerOrderChange}
+      onLayerSelect={handlePreviewLayerSelect}
+      onLayerEditorToggle={handleToggleLayerEditor}
+      onLayerDelete={handleDeleteLayer}
+      onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
+      onImageColorSchemeChange={setImageColorScheme}
+      closeSidebarPanel={closeSidebarPanel}
+    />
+  )
 
   if (isSmartphone) {
     return (
@@ -1565,115 +1371,86 @@ export default function Home() {
   }
 
   return (
-    <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
-      {/* Left Panel - Controls */}
-      <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
-        {/* Header - always visible */}
-        <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
-          <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
-          <p className={`text-sm ${uiTheme.bodyText}`}>
-            Based on Müller-Brockmann&apos;s <em><a href="https://amzn.to/40kfiUL">Grid Systems in Graphic Design</a></em> (1981).
-            Copyleft &amp; -right 2026 by{" "}
-            <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.
-          </p>
-        </div>
+    <>
+      <input
+        ref={loadFileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={loadLayout}
+      />
+      <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
+        <ControlSidebar
+          showPresetsBrowser={showPresetsBrowser}
+          showBetaBadge={SHOW_BETA_BADGE}
+          appVersion={APP_VERSION}
+          uiTheme={{
+            leftPanel: uiTheme.leftPanel,
+            subtleBorder: uiTheme.subtleBorder,
+            bodyText: uiTheme.bodyText,
+            link: uiTheme.link,
+          }}
+          settingsPanels={settingsPanels}
+          onToggleImprintPanel={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
+        />
 
-        <div className={`relative flex min-h-0 flex-1 flex-col ${showPresetsBrowser ? "opacity-50" : ""}`}>
-          {showPresetsBrowser ? (
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 z-10 cursor-not-allowed"
-            />
-          ) : null}
+        {previewWorkspace}
 
-          {settingsPanels}
+        <ExportPdfDialog
+          isOpen={exportActions.isExportDialogOpen}
+          onClose={() => exportActions.setIsExportDialogOpen(false)}
+          ratioLabel={selectedCanvasRatio.label}
+          orientation={orientation}
+          rotation={rotation}
+          isDinOrAnsiRatio={isDinOrAnsiRatio}
+          displayUnit={displayUnit}
+          onDisplayUnitChange={setDisplayUnit}
+          exportPaperSizeDraft={exportActions.exportPaperSizeDraft}
+          onExportPaperSizeChange={exportActions.setExportPaperSizeDraft}
+          paperSizeOptions={paperSizeOptions}
+          exportWidthDraft={exportActions.exportWidthDraft}
+          onExportWidthChange={exportActions.setExportWidthDraft}
+          exportFilenameDraft={exportActions.exportFilenameDraft}
+          onExportFilenameChange={exportActions.setExportFilenameDraft}
+          defaultPdfFilename={defaultPdfFilename}
+          exportPrintProDraft={exportActions.exportPrintProDraft}
+          onExportPrintProChange={exportActions.setExportPrintProDraft}
+          onApplyPrintPreset={exportActions.applyPrintPreset}
+          exportBleedMmDraft={exportActions.exportBleedMmDraft}
+          onExportBleedMmChange={exportActions.setExportBleedMmDraft}
+          exportRegistrationMarksDraft={exportActions.exportRegistrationMarksDraft}
+          onExportRegistrationMarksChange={exportActions.setExportRegistrationMarksDraft}
+          exportFinalSafeGuidesDraft={exportActions.exportFinalSafeGuidesDraft}
+          onExportFinalSafeGuidesChange={exportActions.setExportFinalSafeGuidesDraft}
+          onConfirm={exportActions.confirmExportPDF}
+          getOrientedDimensions={exportActions.getOrientedDimensions}
+        />
 
-          <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
-            <div className="flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2">
-                {SHOW_BETA_BADGE ? (
-                  <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
-                ) : null}
-                <span>V {APP_VERSION}</span>
-              </span>
-              <div className="flex items-center gap-3">
-                <a
-                  href="/survey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={uiTheme.link}
-                >
-                  Survey
-                </a>
-                <button
-                  type="button"
-                  className={uiTheme.link}
-                  onClick={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
-                >
-                  Imprint
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SaveJsonDialog
+          isOpen={exportActions.isSaveDialogOpen}
+          onClose={() => exportActions.setIsSaveDialogOpen(false)}
+          filename={exportActions.saveFilenameDraft}
+          onFilenameChange={exportActions.setSaveFilenameDraft}
+          title={exportActions.saveTitleDraft}
+          onTitleChange={exportActions.setSaveTitleDraft}
+          description={exportActions.saveDescriptionDraft}
+          onDescriptionChange={exportActions.setSaveDescriptionDraft}
+          author={exportActions.saveAuthorDraft}
+          onAuthorChange={exportActions.setSaveAuthorDraft}
+          onConfirm={handleConfirmSaveJSON}
+          defaultFilename={defaultJsonFilename}
+          ratioLabel={selectedCanvasRatio.label}
+          orientation={orientation}
+          rotation={rotation}
+        />
+
+        <NoticeDialog
+          isOpen={noticeState !== null}
+          title={noticeState?.title ?? ""}
+          message={noticeState?.message ?? ""}
+          onClose={() => setNoticeState(null)}
+        />
       </div>
-
-      {previewWorkspace}
-
-      <ExportPdfDialog
-        isOpen={exportActions.isExportDialogOpen}
-        onClose={() => exportActions.setIsExportDialogOpen(false)}
-        ratioLabel={selectedCanvasRatio.label}
-        orientation={orientation}
-        rotation={rotation}
-        isDinOrAnsiRatio={isDinOrAnsiRatio}
-        displayUnit={displayUnit}
-        onDisplayUnitChange={setDisplayUnit}
-        exportPaperSizeDraft={exportActions.exportPaperSizeDraft}
-        onExportPaperSizeChange={exportActions.setExportPaperSizeDraft}
-        paperSizeOptions={paperSizeOptions}
-        exportWidthDraft={exportActions.exportWidthDraft}
-        onExportWidthChange={exportActions.setExportWidthDraft}
-        exportFilenameDraft={exportActions.exportFilenameDraft}
-        onExportFilenameChange={exportActions.setExportFilenameDraft}
-        defaultPdfFilename={defaultPdfFilename}
-        exportPrintProDraft={exportActions.exportPrintProDraft}
-        onExportPrintProChange={exportActions.setExportPrintProDraft}
-        onApplyPrintPreset={exportActions.applyPrintPreset}
-        exportBleedMmDraft={exportActions.exportBleedMmDraft}
-        onExportBleedMmChange={exportActions.setExportBleedMmDraft}
-        exportRegistrationMarksDraft={exportActions.exportRegistrationMarksDraft}
-        onExportRegistrationMarksChange={exportActions.setExportRegistrationMarksDraft}
-        exportFinalSafeGuidesDraft={exportActions.exportFinalSafeGuidesDraft}
-        onExportFinalSafeGuidesChange={exportActions.setExportFinalSafeGuidesDraft}
-        onConfirm={exportActions.confirmExportPDF}
-        getOrientedDimensions={exportActions.getOrientedDimensions}
-      />
-
-      <SaveJsonDialog
-        isOpen={exportActions.isSaveDialogOpen}
-        onClose={() => exportActions.setIsSaveDialogOpen(false)}
-        filename={exportActions.saveFilenameDraft}
-        onFilenameChange={exportActions.setSaveFilenameDraft}
-        title={exportActions.saveTitleDraft}
-        onTitleChange={exportActions.setSaveTitleDraft}
-        description={exportActions.saveDescriptionDraft}
-        onDescriptionChange={exportActions.setSaveDescriptionDraft}
-        author={exportActions.saveAuthorDraft}
-        onAuthorChange={exportActions.setSaveAuthorDraft}
-        onConfirm={handleConfirmSaveJSON}
-        defaultFilename={defaultJsonFilename}
-        ratioLabel={selectedCanvasRatio.label}
-        orientation={orientation}
-        rotation={rotation}
-      />
-
-      <NoticeDialog
-        isOpen={noticeState !== null}
-        title={noticeState?.title ?? ""}
-        message={noticeState?.message ?? ""}
-        onClose={() => setNoticeState(null)}
-      />
-    </div>
+    </>
   )
 }

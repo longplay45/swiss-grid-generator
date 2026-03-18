@@ -2,16 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import { InlineBlockTextarea } from "@/components/editor/InlineBlockTextarea"
+import { GridPreviewOverlays } from "@/components/preview/GridPreviewOverlays"
 import {
   type BlockEditorState,
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
 } from "@/components/editor/block-editor-types"
-import {
-  ImageEditorDialog,
-  type ImageEditorState,
-} from "@/components/dialogs/ImageEditorDialog"
-import { TextEditorPanel } from "@/components/sidebar/TextEditorPanel"
+import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
@@ -77,7 +74,6 @@ import {
   isImagePlaceholderColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
-import { PREVIEW_INTERACTION_HINT_LINES } from "@/lib/preview-interaction-hints"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -2955,85 +2951,46 @@ export const GridPreview = memo(function GridPreview({
         </div>
       ) : null}
 
-      {(showRolloverInfo && hoverState) || (PERF_ENABLED && showPerfOverlay && perfOverlay) ? (
-        <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
-          {showRolloverInfo && hoverState ? (
-            <div className="w-72 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-              <div className="text-[11px] font-medium text-gray-900">Interaction</div>
-              {PREVIEW_INTERACTION_HINT_LINES.map((line, index) => (
-                <div key={line} className={`${index === 0 ? "mt-1" : ""} text-[11px] text-gray-600`}>
-                  {line}
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {PERF_ENABLED && showPerfOverlay && perfOverlay ? (
-            <div className="rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
-              <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>
-              <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
-              <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
-              <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {editorState ? (
-        <div
-          data-text-editor-panel="true"
-          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
-          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
-        >
-          <TextEditorPanel
-            isHelpActive={showEditorHelpIcon}
-            showRolloverInfo={showRolloverInfo}
-            controls={{
-              editorState,
-              setEditorState,
-              deleteEditorBlock,
-              gridRows: result.settings.gridRows,
-              gridCols: result.settings.gridCols,
-              hierarchyTriggerMinWidthCh,
-              rowTriggerMinWidthCh,
-              colTriggerMinWidthCh,
-              styleOptions: STYLE_OPTIONS,
-              getStyleSizeLabel: (styleKey) => formatPtSize(getStyleSize(styleKey)),
-              getStyleSizeValue: getStyleSize,
-              getStyleLeadingValue: getStyleLeading,
-              isFxStyle: (styleKey) => styleKey === "fx",
-              getDummyTextForStyle,
-              colorSchemes: IMAGE_COLOR_SCHEMES,
-              selectedColorScheme: imageColorScheme,
-              onColorSchemeChange: handleImageColorSchemeChange,
-              palette: imagePalette,
-            }}
-          />
-        </div>
-      ) : null}
-      {imageEditorState ? (
-        <div
-          data-image-editor-panel="true"
-          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
-          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
-        >
-          <ImageEditorDialog
-            editorState={imageEditorState}
-            setEditorState={setImageEditorState}
-            deleteEditor={deleteImagePlaceholder}
-            gridRows={result.settings.gridRows}
-            gridCols={result.settings.gridCols}
-            colorSchemes={IMAGE_COLOR_SCHEMES}
-            selectedColorScheme={imageColorScheme}
-            onColorSchemeChange={handleImageColorSchemeChange}
-            palette={imagePalette}
-            rowTriggerMinWidthCh={rowTriggerMinWidthCh}
-            colTriggerMinWidthCh={colTriggerMinWidthCh}
-            isHelpActive={showEditorHelpIcon}
-            showRolloverInfo={showRolloverInfo}
-          />
-        </div>
-      ) : null}
+      <GridPreviewOverlays
+        showInteractionHint={showRolloverInfo && Boolean(hoverState)}
+        showPerfOverlay={PERF_ENABLED && showPerfOverlay}
+        perfOverlay={perfOverlay}
+        showEditorHelpIcon={showEditorHelpIcon}
+        showRolloverInfo={showRolloverInfo}
+        editorState={editorState}
+        imageEditorState={imageEditorState}
+        textEditorControls={editorState ? {
+          editorState,
+          setEditorState,
+          deleteEditorBlock,
+          gridRows: result.settings.gridRows,
+          gridCols: result.settings.gridCols,
+          hierarchyTriggerMinWidthCh,
+          rowTriggerMinWidthCh,
+          colTriggerMinWidthCh,
+          styleOptions: STYLE_OPTIONS,
+          getStyleSizeLabel: (styleKey) => formatPtSize(getStyleSize(styleKey)),
+          getStyleSizeValue: getStyleSize,
+          getStyleLeadingValue: getStyleLeading,
+          isFxStyle: (styleKey) => styleKey === "fx",
+          getDummyTextForStyle,
+          colorSchemes: IMAGE_COLOR_SCHEMES,
+          selectedColorScheme: imageColorScheme,
+          onColorSchemeChange: handleImageColorSchemeChange,
+          palette: imagePalette,
+        } : null}
+        setImageEditorState={setImageEditorState}
+        deleteImagePlaceholder={deleteImagePlaceholder}
+        gridRows={result.settings.gridRows}
+        gridCols={result.settings.gridCols}
+        imageColorScheme={imageColorScheme}
+        handleImageColorSchemeChange={handleImageColorSchemeChange}
+        imagePalette={imagePalette}
+        rowTriggerMinWidthCh={rowTriggerMinWidthCh}
+        colTriggerMinWidthCh={colTriggerMinWidthCh}
+        imageColorSchemes={IMAGE_COLOR_SCHEMES}
+        onOpenHelpSection={onOpenHelpSection}
+      />
 
     </div>
   )
