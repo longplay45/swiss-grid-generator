@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { PointerEvent as ReactPointerEvent, RefObject } from "react"
+import type { MutableRefObject, PointerEvent as ReactPointerEvent, RefObject } from "react"
 
 export type DragModulePosition = {
   col: number
@@ -44,6 +44,7 @@ type Args<Key extends string> = {
   onClearHover: () => void
   touchLongPressMs: number
   touchCancelDistancePx: number
+  dragEndedAtRef?: MutableRefObject<number>
 }
 
 export function usePreviewDrag<Key extends string>({
@@ -61,9 +62,11 @@ export function usePreviewDrag<Key extends string>({
   onClearHover,
   touchLongPressMs,
   touchCancelDistancePx,
+  dragEndedAtRef: externalDragEndedAtRef,
 }: Args<Key>) {
   const [dragState, setDragState] = useState<DragState<Key> | null>(null)
-  const dragEndedAtRef = useRef<number>(0)
+  const internalDragEndedAtRef = useRef<number>(0)
+  const dragEndedAtRef = externalDragEndedAtRef ?? internalDragEndedAtRef
   const dragRafRef = useRef<number | null>(null)
   const pendingDragPreviewRef = useRef<{ preview: DragModulePosition; moved: boolean; copyOnDrop: boolean } | null>(null)
   const activeDragPointerIdRef = useRef<number | null>(null)

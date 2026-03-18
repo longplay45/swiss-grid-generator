@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { InlineBlockTextarea } from "@/components/editor/InlineBlockTextarea"
 import { GridPreviewOverlays } from "@/components/preview/GridPreviewOverlays"
 import {
-  type BlockEditorState,
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
 } from "@/components/editor/block-editor-types"
@@ -24,19 +23,15 @@ import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
-import { useCloseEditorsOnOutsidePointer } from "@/hooks/useCloseEditorsOnOutsidePointer"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { useImagePlaceholderState } from "@/hooks/useImagePlaceholderState"
 import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
-import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
-import { useBlockEditorActions } from "@/hooks/useBlockEditorActions"
 import { useStateCommands } from "@/hooks/useStateCommands"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
@@ -74,6 +69,7 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
+import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 type BlockId = string
@@ -114,7 +110,6 @@ type ModulePosition = {
 }
 
 type DragState = PreviewDragState<BlockId>
-type EditorState = BlockEditorState<TypographyStyleKey>
 
 type BlockCollectionsState = {
   blockOrder: BlockId[]
@@ -347,6 +342,7 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayerDeleteRequestKeyRef = useRef(0)
   const lastAppliedLayerEditorRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
+  const dragEndedAtRef = useRef(0)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
@@ -357,7 +353,6 @@ export const GridPreview = memo(function GridPreview({
   const lastHistoryResetTokenRef = useRef(historyResetToken)
   const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
   const mouseMoveRafRef = useRef<number | null>(null)
-  const lastLiveEditorSignatureRef = useRef("")
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [scale, setScale] = useState(1)
@@ -394,7 +389,6 @@ export const GridPreview = memo(function GridPreview({
   } = blockCollectionsState
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
-  const [editorState, setEditorState] = useState<EditorState | null>(null)
   const imagePalette = useMemo(
     () => getImageColorScheme(imageColorScheme).colors,
     [imageColorScheme],
@@ -1130,6 +1124,84 @@ export const GridPreview = memo(function GridPreview({
     scale,
   ])
 
+  const {
+    editorState,
+    setEditorState,
+    closeEditor,
+    openImageEditor,
+    saveEditor,
+    deleteEditorBlock,
+    handleTextCanvasDoubleClick,
+  } = usePreviewTextEditor({
+    blockEditorArgs: {
+      showTypography,
+      dragEndedAtRef,
+      canvasRef,
+      baseFont,
+      resultGridCols: result.settings.gridCols,
+      resultGridRows: result.settings.gridRows,
+      resultTypographyStyles: result.typography.styles,
+      blockOrder,
+      textContent,
+      blockTextEdited,
+      styleAssignments,
+      blockCustomSizes,
+      blockCustomLeadings,
+      blockTextAlignments,
+      blockModulePositions,
+      recordHistoryBeforeChange,
+      setBlockCollections,
+      setBlockOrder,
+      setTextContent,
+      setBlockTextEdited,
+      setStyleAssignments,
+      setBlockCustomSizes,
+      setBlockCustomLeadings,
+      setBlockTextColors,
+      setBlockColumnSpans,
+      setBlockTextAlignments,
+      setBlockModulePositions,
+      getAutoFitForPlacement,
+      getGridMetrics,
+      isBaseBlockId,
+      getNextCustomBlockId,
+      getDummyTextForStyle,
+      getStyleSize,
+      getStyleLeading,
+      getBlockTextColor,
+      defaultTextColor,
+      getDefaultColumnSpan,
+      resultGridUnit: result.grid.gridUnit,
+      toPagePoint,
+      findTopmostBlockAtPoint,
+      snapToModule,
+      getBlockFont,
+      getBlockSpan,
+      getBlockRows,
+      isTextReflowEnabled,
+      isSyllableDivisionEnabled,
+      isBlockBold,
+      isBlockItalic,
+      getBlockRotation,
+      onRequestNotice,
+    },
+    blockOrder,
+    imageOrder,
+    imageEditorState,
+    setImageEditorState,
+    openImageEditorState,
+    closeImageEditorState,
+    requestedLayerEditorTarget,
+    requestedLayerEditorToken,
+    lastAppliedLayerEditorRequestKeyRef,
+    onSelectLayer,
+    textareaRef,
+    onUndoRequest,
+    onRedoRequest,
+    undo,
+    redo,
+  })
+
   const applyDragDrop = useCallback((drag: DragState, nextPreview: ModulePosition, copyOnDrop: boolean) => {
     if (isImagePlaceholderKey(drag.key)) {
       const sourceColumns = getImageSpan(drag.key)
@@ -1358,7 +1430,6 @@ export const GridPreview = memo(function GridPreview({
   const {
     dragState,
     setDragState,
-    dragEndedAtRef,
     handleCanvasPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,
@@ -1382,6 +1453,7 @@ export const GridPreview = memo(function GridPreview({
     },
     touchLongPressMs: TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
+    dragEndedAtRef,
   })
 
   useEffect(() => {
@@ -1400,7 +1472,7 @@ export const GridPreview = memo(function GridPreview({
     setHoverState(null)
     setHoverImageKey(null)
     setEditorState(null)
-  }, [historyResetToken, resetHistory, resetImageTransientState, setDragState])
+  }, [historyResetToken, resetHistory, resetImageTransientState, setDragState, setEditorState])
 
   useEffect(() => {
     if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
@@ -1435,6 +1507,7 @@ export const GridPreview = memo(function GridPreview({
     paragraphColorResetToken,
     recordHistoryBeforeChange,
     setBlockTextColors,
+    setEditorState,
     setImageColors,
   ])
 
@@ -2009,200 +2082,6 @@ export const GridPreview = memo(function GridPreview({
     recordPerfMetric,
   })
 
-  const {
-    closeEditor,
-    saveEditor,
-    applyEditorDraftLive,
-    deleteEditorBlock,
-    handleCanvasDoubleClick: handleTextCanvasDoubleClick,
-  } = useBlockEditorActions({
-    showTypography,
-    dragEndedAtRef,
-    canvasRef,
-    editorState,
-    setEditorState,
-    baseFont,
-    resultGridCols: result.settings.gridCols,
-    resultGridRows: result.settings.gridRows,
-    resultTypographyStyles: result.typography.styles,
-    blockOrder,
-    textContent,
-    blockTextEdited,
-    styleAssignments,
-    blockCustomSizes,
-    blockCustomLeadings,
-    blockTextAlignments,
-    blockModulePositions,
-    recordHistoryBeforeChange,
-    setBlockCollections,
-    setBlockOrder,
-    setTextContent,
-    setBlockTextEdited,
-    setStyleAssignments,
-    setBlockCustomSizes,
-    setBlockCustomLeadings,
-    setBlockTextColors,
-    setBlockColumnSpans,
-    setBlockTextAlignments,
-    setBlockModulePositions,
-    getAutoFitForPlacement,
-    getGridMetrics,
-    isBaseBlockId,
-    getNextCustomBlockId,
-    getDummyTextForStyle,
-    getStyleSize,
-    getStyleLeading,
-    getBlockTextColor,
-    defaultTextColor,
-    getDefaultColumnSpan,
-    resultGridUnit: result.grid.gridUnit,
-    toPagePoint,
-    findTopmostBlockAtPoint,
-    snapToModule,
-    getBlockFont,
-    getBlockSpan,
-    getBlockRows,
-    isTextReflowEnabled,
-    isSyllableDivisionEnabled,
-    isBlockBold,
-    isBlockItalic,
-    getBlockRotation,
-    onRequestNotice,
-  })
-
-  useEffect(() => {
-    if (!editorState) {
-      lastLiveEditorSignatureRef.current = ""
-      return
-    }
-    const signature = [
-      editorState.target,
-      editorState.draftStyle,
-      editorState.draftFont,
-      editorState.draftColumns,
-      editorState.draftRows,
-      editorState.draftAlign,
-      editorState.draftColor,
-      editorState.draftReflow ? "1" : "0",
-      editorState.draftSyllableDivision ? "1" : "0",
-      editorState.draftBold ? "1" : "0",
-      editorState.draftItalic ? "1" : "0",
-      editorState.draftRotation.toFixed(3),
-      editorState.draftFxSize,
-      editorState.draftFxLeading,
-      editorState.draftTextEdited ? "1" : "0",
-      editorState.draftText,
-    ].join("|")
-    if (lastLiveEditorSignatureRef.current === signature) return
-    lastLiveEditorSignatureRef.current = signature
-    applyEditorDraftLive(editorState)
-  }, [applyEditorDraftLive, editorState])
-
-  const openImageEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
-    setEditorState(null)
-    if (options?.recordHistory !== false) {
-      recordHistoryBeforeChange()
-    }
-    openImageEditorState(key)
-  }, [openImageEditorState, recordHistoryBeforeChange])
-
-  const closeImageEditor = useCallback(() => {
-    closeImageEditorState()
-  }, [closeImageEditorState])
-
-  const openTextEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
-    setImageEditorState(null)
-    if (options?.recordHistory !== false) {
-      recordHistoryBeforeChange()
-    }
-    const styleKey = styleAssignments[key] ?? "body"
-    setEditorState({
-      target: key,
-      draftText: normalizeInlineEditorText(textContent[key] ?? ""),
-      draftStyle: styleKey,
-      draftFxSize: styleKey === "fx"
-        ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
-        : getStyleSize("fx"),
-      draftFxLeading: styleKey === "fx"
-        ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading("fx"))
-        : getStyleLeading("fx"),
-      draftFont: getBlockFont(key),
-      draftColumns: getBlockSpan(key),
-      draftRows: getBlockRows(key),
-      draftAlign: blockTextAlignments[key] ?? "left",
-      draftColor: getBlockTextColor(key),
-      draftReflow: isTextReflowEnabled(key),
-      draftSyllableDivision: isSyllableDivisionEnabled(key),
-      draftBold: isBlockBold(key),
-      draftItalic: isBlockItalic(key),
-      draftRotation: getBlockRotation(key),
-      draftTextEdited: blockTextEdited[key] ?? true,
-    })
-  }, [
-    blockCustomLeadings,
-    blockCustomSizes,
-    blockTextAlignments,
-    blockTextEdited,
-    getBlockFont,
-    getBlockRotation,
-    getBlockRows,
-    getBlockSpan,
-    getBlockTextColor,
-    getStyleLeading,
-    getStyleSize,
-    isBlockBold,
-    isBlockItalic,
-    isSyllableDivisionEnabled,
-    isTextReflowEnabled,
-    recordHistoryBeforeChange,
-    setImageEditorState,
-    styleAssignments,
-    textContent,
-  ])
-
-  useEffect(() => {
-    if (!requestedLayerEditorTarget || requestedLayerEditorToken === 0) return
-    if (lastAppliedLayerEditorRequestKeyRef.current === requestedLayerEditorToken) return
-    lastAppliedLayerEditorRequestKeyRef.current = requestedLayerEditorToken
-
-    if (imageOrder.includes(requestedLayerEditorTarget)) {
-      if (imageEditorState?.target === requestedLayerEditorTarget) {
-        closeImageEditor()
-      } else {
-        openImageEditor(requestedLayerEditorTarget)
-      }
-      return
-    }
-
-    if (!blockOrder.includes(requestedLayerEditorTarget)) return
-    if (editorState?.target === requestedLayerEditorTarget) {
-      closeEditor()
-    } else {
-      openTextEditor(requestedLayerEditorTarget)
-    }
-  }, [
-    blockOrder,
-    closeEditor,
-    closeImageEditor,
-    editorState?.target,
-    imageEditorState?.target,
-    imageOrder,
-    openImageEditor,
-    openTextEditor,
-    requestedLayerEditorToken,
-    requestedLayerEditorTarget,
-  ])
-
-  useEffect(() => {
-    if (imageEditorState?.target) {
-      onSelectLayer?.(imageEditorState.target)
-      return
-    }
-    if (editorState?.target) {
-      onSelectLayer?.(editorState.target)
-    }
-  }, [editorState?.target, imageEditorState?.target, onSelectLayer])
-
   const deleteImagePlaceholder = useCallback(() => {
     if (!imageEditorState) return
     recordHistoryBeforeChange()
@@ -2296,30 +2175,6 @@ export const GridPreview = memo(function GridPreview({
     showTypography,
     toPagePoint,
   ])
-
-  const focusEditor = useCallback(() => {
-    if (!editorState) return
-    textareaRef.current?.focus()
-  }, [editorState])
-
-  const closeAnyEditor = useCallback(() => {
-    closeEditor()
-    closeImageEditor()
-  }, [closeEditor, closeImageEditor])
-
-  usePreviewKeyboard({
-    editorTarget: editorState?.target ?? imageEditorState?.target ?? null,
-    isEditorOpen: Boolean(editorState || imageEditorState),
-    focusEditor,
-    onCloseEditor: closeAnyEditor,
-    undo: onUndoRequest ?? undo,
-    redo: onRedoRequest ?? redo,
-  })
-  useCloseEditorsOnOutsidePointer({
-    isEditorOpen: Boolean(editorState || imageEditorState),
-    textareaRef,
-    onCloseEditors: closeAnyEditor,
-  })
 
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
     mouseMoveRafRef.current = null
