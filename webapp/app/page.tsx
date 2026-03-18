@@ -43,6 +43,7 @@ import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
 import { clampRotation } from "@/lib/block-constraints"
+import { usePreviewCommands } from "@/hooks/usePreviewCommands"
 import {
   isFontFamily,
   type FontFamily,
@@ -95,7 +96,6 @@ type DocumentMetadata = {
   createdAt?: string
 }
 type HistoryDomain = "settings" | "preview"
-type CommandToken = number
 type NoticeState = {
   title: string
   message: string
@@ -518,29 +518,23 @@ function omitRecordKey<Value>(
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
-  const commandTokenRef = useRef<CommandToken>(1)
   const isDirtyRef = useRef(false)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
     DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
   )
-  const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{
-    token: CommandToken
-    layout: PreviewLayoutState
-  } | null>(() =>
-    DEFAULT_PREVIEW_LAYOUT ? { token: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
-  )
-  const [requestedLayerOrderState, setRequestedLayerOrderState] = useState<{
-    token: CommandToken
-    order: string[]
-  } | null>(null)
-  const [requestedLayerDeleteState, setRequestedLayerDeleteState] = useState<{
-    token: CommandToken
-    target: string
-  } | null>(null)
-  const [requestedLayerEditorState, setRequestedLayerEditorState] = useState<{
-    token: CommandToken
-    target: string
-  } | null>(null)
+  const {
+    loadedLayoutState: loadedPreviewLayout,
+    layerOrderRequest: requestedLayerOrderState,
+    layerDeleteRequest: requestedLayerDeleteState,
+    layerEditorRequest: requestedLayerEditorState,
+    requestLayerOrder,
+    requestLayerDelete,
+    requestLayerEditor,
+    loadLayout: loadPreviewLayout,
+    clearLayerRequests,
+  } = usePreviewCommands<PreviewLayoutState>({
+    defaultLayout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
+  })
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
   const selectedLayerGraceRef = useRef<{ key: string | null; until: number }>({ key: null, until: 0 })
@@ -556,10 +550,6 @@ export default function Home() {
     dispatchExport(action)
   }, [dispatchExport, dispatchGrid])
   const ui = useMemo(() => ({ ...gridUi, ...exportUi }), [gridUi, exportUi])
-  const issueCommandToken = useCallback(() => {
-    commandTokenRef.current += 1
-    return commandTokenRef.current
-  }, [])
   const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
     setNoticeState(notice)
   }, [])
@@ -969,11 +959,8 @@ export default function Home() {
       layerOrder: [...nextLayerOrder],
     } as PreviewLayoutState
     setPreviewLayout(nextPreviewLayout)
-    setRequestedLayerOrderState({
-      token: issueCommandToken(),
-      order: [...nextLayerOrder],
-    })
-  }, [issueCommandToken, previewLayout])
+    requestLayerOrder(nextLayerOrder)
+  }, [previewLayout, requestLayerOrder])
 
   const handleDeleteLayer = useCallback((target: string, kind: "text" | "image") => {
     setPreviewLayout((current) => {
@@ -1014,19 +1001,14 @@ export default function Home() {
       } as PreviewLayoutState
     })
 
-    setRequestedLayerDeleteState({
-      token: issueCommandToken(),
-      target,
-    })
+    requestLayerDelete(target)
     setSelectedLayerKey((current) => (current === target ? null : current))
-  }, [issueCommandToken])
+  }, [requestLayerDelete])
 
   const handlePreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
     setPreviewLayout(layout)
-    setRequestedLayerOrderState(null)
-    setRequestedLayerDeleteState(null)
-    setRequestedLayerEditorState(null)
-  }, [])
+    clearLayerRequests()
+  }, [clearLayerRequests])
 
   const handlePreviewLayerSelect = useCallback((key: string | null) => {
     if (activeSidebarPanel !== "layers") return
@@ -1034,12 +1016,9 @@ export default function Home() {
   }, [activeSidebarPanel, setSelectedLayerKeyWithGrace])
 
   const handleToggleLayerEditor = useCallback((target: string) => {
-    setRequestedLayerEditorState({
-      token: issueCommandToken(),
-      target,
-    })
+    requestLayerEditor(target)
     setSelectedLayerKeyWithGrace(target)
-  }, [issueCommandToken, setSelectedLayerKeyWithGrace])
+  }, [requestLayerEditor, setSelectedLayerKeyWithGrace])
 
   useEffect(() => {
     return () => {
@@ -1273,17 +1252,15 @@ export default function Home() {
         applyLoadedUiActions(actions)
 
         if (parsed?.previewLayout) {
-          const nextToken = issueCommandToken()
           const layout = parsed.previewLayout as PreviewLayoutState
           setPreviewLayout(layout)
-          setLoadedPreviewLayout({ token: nextToken, layout })
+          loadPreviewLayout(layout)
         } else {
           setPreviewLayout(null)
-          setLoadedPreviewLayout(null)
+          loadPreviewLayout(null)
         }
         setSelectedLayerKey(null)
-        setRequestedLayerOrderState(null)
-        setRequestedLayerDeleteState(null)
+        clearLayerRequests()
         setDocumentMetadata(extractDocumentMetadata(parsed))
         setDocumentHistoryResetNonce((nonce) => nonce + 1)
         setCanUndoPreview(false)
@@ -1300,7 +1277,7 @@ export default function Home() {
       }
     }
     reader.readAsText(file)
-  }, [applyLoadedUiActions, collapsed, handleRequestNotice, issueCommandToken])
+  }, [applyLoadedUiActions, clearLayerRequests, collapsed, handleRequestNotice, loadPreviewLayout])
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1410,17 +1387,15 @@ export default function Home() {
     applyLoadedUiActions(actions)
 
     if (preset.previewLayout) {
-      const nextToken = issueCommandToken()
       const layout = preset.previewLayout as PreviewLayoutState
       setPreviewLayout(layout)
-      setLoadedPreviewLayout({ token: nextToken, layout })
+      loadPreviewLayout(layout)
     } else {
       setPreviewLayout(null)
-      setLoadedPreviewLayout(null)
+      loadPreviewLayout(null)
     }
     setSelectedLayerKey(null)
-    setRequestedLayerOrderState(null)
-    setRequestedLayerDeleteState(null)
+    clearLayerRequests()
     setDocumentMetadata({
       title: preset.title ?? "",
       description: preset.description ?? "",
@@ -1432,7 +1407,7 @@ export default function Home() {
     setCanUndoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
-  }, [applyLoadedUiActions, collapsed, issueCommandToken])
+  }, [applyLoadedUiActions, clearLayerRequests, collapsed, loadPreviewLayout])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
