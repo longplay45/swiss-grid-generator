@@ -7,8 +7,8 @@ import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/ty
 
 type Args<StyleKey extends string, BlockKey extends string> = {
   initialLayout: PreviewLayoutState<StyleKey, FontFamily, BlockKey> | null
-  initialLayoutKey: number
-  lastAppliedLayoutKeyRef: MutableRefObject<number>
+  initialLayoutToken: number
+  lastAppliedLayoutTokenRef: MutableRefObject<number>
   pushHistory: (snapshot: PreviewLayoutState<StyleKey, FontFamily, BlockKey>) => void
   buildSnapshot: () => PreviewLayoutState<StyleKey, FontFamily, BlockKey>
   baseFont: FontFamily
@@ -43,8 +43,8 @@ type Args<StyleKey extends string, BlockKey extends string> = {
 
 export function useInitialLayoutHydration<StyleKey extends string, BlockKey extends string>({
   initialLayout,
-  initialLayoutKey,
-  lastAppliedLayoutKeyRef,
+  initialLayoutToken,
+  lastAppliedLayoutTokenRef,
   pushHistory,
   buildSnapshot,
   baseFont,
@@ -62,12 +62,12 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
   onAfterApply,
 }: Args<StyleKey, BlockKey>) {
   useEffect(() => {
-    if (!initialLayout || initialLayoutKey === 0) return
-    if (lastAppliedLayoutKeyRef.current === initialLayoutKey) return
-    if (lastAppliedLayoutKeyRef.current !== 0) {
+    if (!initialLayout || initialLayoutToken === 0) return
+    if (lastAppliedLayoutTokenRef.current === initialLayoutToken) return
+    if (lastAppliedLayoutTokenRef.current !== 0) {
       pushHistory(buildSnapshot())
     }
-    lastAppliedLayoutKeyRef.current = initialLayoutKey
+    lastAppliedLayoutTokenRef.current = initialLayoutToken
     onBeforeApply()
 
     const normalizedKeys = (Array.isArray(initialLayout.blockOrder) ? initialLayout.blockOrder : [])
@@ -200,10 +200,10 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
     gridCols,
     gridRows,
     initialLayout,
-    initialLayoutKey,
+    initialLayoutToken,
     isBaseBlockId,
     isFontFamily,
-    lastAppliedLayoutKeyRef,
+    lastAppliedLayoutTokenRef,
     onAfterApply,
     onBeforeApply,
     pushHistory,

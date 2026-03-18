@@ -6,6 +6,8 @@ import {
   isLegacyGridRhythmRotation,
   resolveLegacyGridRhythmAxisSettings,
 } from "@/lib/config/defaults"
+import presetDinAbPortrait4x4Method1 from "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json"
+import presetDinAbPortrait4x4Method1Alt from "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json"
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null
@@ -168,19 +170,19 @@ function parseLayoutPreset(source: unknown, sourcePath: string): LayoutPreset {
   }
 }
 
-type PresetContext = {
-  keys: () => string[]
-  <T>(id: string): T
-}
+const PRESET_SOURCES = [
+  {
+    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json",
+    source: presetDinAbPortrait4x4Method1,
+  },
+  {
+    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json",
+    source: presetDinAbPortrait4x4Method1Alt,
+  },
+] as const
 
-const webpackRequire = require as unknown as {
-  context: (path: string, deep?: boolean, filter?: RegExp) => PresetContext
-}
-const presetContext = webpackRequire.context("./data", false, /\.json$/)
-
-export const LAYOUT_PRESETS: LayoutPreset[] = presetContext
-  .keys()
-  .sort((a, b) => a.localeCompare(b))
-  .map((filePath) => parseLayoutPreset(presetContext<Record<string, unknown>>(filePath), filePath))
+export const LAYOUT_PRESETS: LayoutPreset[] = [...PRESET_SOURCES]
+  .sort((a, b) => a.path.localeCompare(b.path))
+  .map(({ path, source }) => parseLayoutPreset(source, path))
 
 export type { LayoutPreset }

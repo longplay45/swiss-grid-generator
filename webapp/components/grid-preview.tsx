@@ -41,7 +41,6 @@ import {
   BASE_BLOCK_IDS,
   DEFAULT_STYLE_ASSIGNMENTS,
   DEFAULT_TEXT_CONTENT,
-  createDefaultStyleAssignments,
   createDefaultTextContent,
   isBaseBlockId,
 } from "@/lib/document-defaults"
@@ -164,6 +163,10 @@ type HoverState = {
 }
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
+type NoticeRequest = {
+  title: string
+  message: string
+}
 
 function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   if (!values.length) return null
@@ -183,10 +186,16 @@ const getDefaultTextContent = (): Record<BlockId, string> => (
   createDefaultTextContent() as Record<BlockId, string>
 )
 const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => (
-  createDefaultStyleAssignments() as unknown as Record<BlockId, TypographyStyleKey>
+  Object.fromEntries(BASE_BLOCK_IDS.map((key) => [key, key])) as Record<BlockId, TypographyStyleKey>
 )
-const getNextCustomBlockId = () => `paragraph-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-const getNextImagePlaceholderId = () => `image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+function createRuntimeId(prefix: "paragraph" | "image"): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+const getNextCustomBlockId = () => createRuntimeId("paragraph")
+const getNextImagePlaceholderId = () => createRuntimeId("image")
 
 function areStringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) return false
@@ -296,7 +305,7 @@ interface GridPreviewProps {
   showTypography: boolean
   showRolloverInfo?: boolean
   initialLayout?: PreviewLayoutState | null
-  initialLayoutKey?: number
+  initialLayoutToken?: number
   rotation?: number
   canvasBackground?: string | null
   undoNonce?: number
@@ -311,14 +320,15 @@ interface GridPreviewProps {
   onUndoRequest?: () => void
   onRedoRequest?: () => void
   requestedLayerOrder?: BlockId[] | null
-  requestedLayerOrderKey?: number
+  requestedLayerOrderToken?: number
   requestedLayerDeleteTarget?: BlockId | null
-  requestedLayerDeleteKey?: number
+  requestedLayerDeleteToken?: number
   requestedLayerEditorTarget?: BlockId | null
-  requestedLayerEditorKey?: number
+  requestedLayerEditorToken?: number
   selectedLayerKey?: BlockId | null
   onSelectLayer?: (key: BlockId | null) => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
+  onRequestNotice?: (notice: NoticeRequest) => void
   showEditorHelpIcon?: boolean
   baseFont?: FontFamily
   imageColorScheme?: ImageColorSchemeId
@@ -337,7 +347,7 @@ export const GridPreview = memo(function GridPreview({
   showTypography,
   showRolloverInfo = true,
   initialLayout = null,
-  initialLayoutKey = 0,
+  initialLayoutToken = 0,
   rotation = 0,
   canvasBackground = null,
   undoNonce = 0,
@@ -352,14 +362,15 @@ export const GridPreview = memo(function GridPreview({
   onUndoRequest,
   onRedoRequest,
   requestedLayerOrder = null,
-  requestedLayerOrderKey = 0,
+  requestedLayerOrderToken = 0,
   requestedLayerDeleteTarget = null,
-  requestedLayerDeleteKey = 0,
+  requestedLayerDeleteToken = 0,
   requestedLayerEditorTarget = null,
-  requestedLayerEditorKey = 0,
+  requestedLayerEditorToken = 0,
   selectedLayerKey = null,
   onSelectLayer,
   onOpenHelpSection,
+  onRequestNotice,
   showEditorHelpIcon = false,
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
@@ -1347,7 +1358,10 @@ export const GridPreview = memo(function GridPreview({
       const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
       const activeParagraphCount = blockOrder.filter((key) => (textContent[key] ?? "").trim().length > 0).length
       if (sourceText.trim().length > 0 && activeParagraphCount >= maxParagraphCount) {
-        window.alert(`Maximum paragraphs reached (${maxParagraphCount}).`)
+        onRequestNotice?.({
+          title: "Paragraph Limit Reached",
+          message: `Maximum paragraphs reached (${maxParagraphCount}).`,
+        })
         return
       }
 
@@ -1506,6 +1520,7 @@ export const GridPreview = memo(function GridPreview({
     isImagePlaceholderKey,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
+    onRequestNotice,
     onSelectLayer,
     recordHistoryBeforeChange,
     result.settings.gridCols,
@@ -1736,8 +1751,8 @@ export const GridPreview = memo(function GridPreview({
 
   useInitialLayoutHydration<TypographyStyleKey, BlockId>({
     initialLayout,
-    initialLayoutKey,
-    lastAppliedLayoutKeyRef,
+    initialLayoutToken,
+    lastAppliedLayoutTokenRef: lastAppliedLayoutKeyRef,
     pushHistory,
     buildSnapshot,
     baseFont,
@@ -1746,7 +1761,9 @@ export const GridPreview = memo(function GridPreview({
     typographyStyles: result.typography.styles,
     isBaseBlockId,
     defaultTextContent: DEFAULT_TEXT_CONTENT as Record<string, string>,
-    defaultStyleAssignments: DEFAULT_STYLE_ASSIGNMENTS as unknown as Record<string, TypographyStyleKey>,
+    defaultStyleAssignments: Object.fromEntries(
+      BASE_BLOCK_IDS.map((key) => [key, DEFAULT_STYLE_ASSIGNMENTS[key]]),
+    ) as Record<string, TypographyStyleKey>,
     isFontFamily,
     getDefaultColumnSpan,
     getGridMetrics,
@@ -1764,35 +1781,35 @@ export const GridPreview = memo(function GridPreview({
   })
 
   useEffect(() => {
-    if (!initialLayout || initialLayoutKey === 0) return
-    if (lastAppliedImageLayoutKeyRef.current === initialLayoutKey) return
-    lastAppliedImageLayoutKeyRef.current = initialLayoutKey
+    if (!initialLayout || initialLayoutToken === 0) return
+    if (lastAppliedImageLayoutKeyRef.current === initialLayoutToken) return
+    lastAppliedImageLayoutKeyRef.current = initialLayoutToken
     applyImageSnapshot(initialLayout)
-  }, [applyImageSnapshot, initialLayout, initialLayoutKey])
+  }, [applyImageSnapshot, initialLayout, initialLayoutToken])
 
   useEffect(() => {
-    if (!initialLayout || initialLayoutKey === 0) return
-    if (lastAppliedLayerLayoutKeyRef.current === initialLayoutKey) return
-    lastAppliedLayerLayoutKeyRef.current = initialLayoutKey
+    if (!initialLayout || initialLayoutToken === 0) return
+    if (lastAppliedLayerLayoutKeyRef.current === initialLayoutToken) return
+    lastAppliedLayerLayoutKeyRef.current = initialLayoutToken
     applyLayerOrderSnapshot(initialLayout)
-  }, [applyLayerOrderSnapshot, initialLayout, initialLayoutKey])
+  }, [applyLayerOrderSnapshot, initialLayout, initialLayoutToken])
 
   useEffect(() => {
-    if (!initialLayout || initialLayoutKey === 0) return
-    if (lastAppliedCustomSizeLayoutKeyRef.current === initialLayoutKey) return
-    lastAppliedCustomSizeLayoutKeyRef.current = initialLayoutKey
+    if (!initialLayout || initialLayoutToken === 0) return
+    if (lastAppliedCustomSizeLayoutKeyRef.current === initialLayoutToken) return
+    lastAppliedCustomSizeLayoutKeyRef.current = initialLayoutToken
     applyCustomSizeSnapshot(initialLayout)
-  }, [applyCustomSizeSnapshot, initialLayout, initialLayoutKey])
+  }, [applyCustomSizeSnapshot, initialLayout, initialLayoutToken])
 
   useEffect(() => {
-    if (!requestedLayerOrder || requestedLayerOrderKey === 0) return
-    if (lastAppliedLayerRequestKeyRef.current === requestedLayerOrderKey) return
-    lastAppliedLayerRequestKeyRef.current = requestedLayerOrderKey
+    if (!requestedLayerOrder || requestedLayerOrderToken === 0) return
+    if (lastAppliedLayerRequestKeyRef.current === requestedLayerOrderToken) return
+    lastAppliedLayerRequestKeyRef.current = requestedLayerOrderToken
     const nextLayerOrder = reconcileLayerOrder(requestedLayerOrder, blockOrder, imageOrder)
     if (areStringArraysEqual(layerOrder, nextLayerOrder)) return
     recordHistoryBeforeChange()
     setLayerOrder(nextLayerOrder)
-  }, [blockOrder, imageOrder, layerOrder, recordHistoryBeforeChange, requestedLayerOrder, requestedLayerOrderKey])
+  }, [blockOrder, imageOrder, layerOrder, recordHistoryBeforeChange, requestedLayerOrder, requestedLayerOrderToken])
 
   const deleteLayerByKey = useCallback((key: BlockId) => {
     if (imageOrder.includes(key)) {
@@ -1835,12 +1852,12 @@ export const GridPreview = memo(function GridPreview({
   }, [imageOrder, setBlockCollections])
 
   useEffect(() => {
-    if (!requestedLayerDeleteTarget || requestedLayerDeleteKey === 0) return
-    if (lastAppliedLayerDeleteRequestKeyRef.current === requestedLayerDeleteKey) return
-    lastAppliedLayerDeleteRequestKeyRef.current = requestedLayerDeleteKey
+    if (!requestedLayerDeleteTarget || requestedLayerDeleteToken === 0) return
+    if (lastAppliedLayerDeleteRequestKeyRef.current === requestedLayerDeleteToken) return
+    lastAppliedLayerDeleteRequestKeyRef.current = requestedLayerDeleteToken
     recordHistoryBeforeChange()
     deleteLayerByKey(requestedLayerDeleteTarget)
-  }, [deleteLayerByKey, recordHistoryBeforeChange, requestedLayerDeleteKey, requestedLayerDeleteTarget])
+  }, [deleteLayerByKey, recordHistoryBeforeChange, requestedLayerDeleteToken, requestedLayerDeleteTarget])
 
   const handlePreviewPointerDown = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
     onSelectLayer?.(resolveSelectedLayerAtClientPoint(event.clientX, event.clientY))
@@ -2347,6 +2364,7 @@ export const GridPreview = memo(function GridPreview({
     isBlockBold,
     isBlockItalic,
     getBlockRotation,
+    onRequestNotice,
   })
 
   useEffect(() => {
@@ -2502,9 +2520,9 @@ export const GridPreview = memo(function GridPreview({
   }, [imageColorScheme, normalizeImageColorReferences, onImageColorSchemeChange])
 
   useEffect(() => {
-    if (!requestedLayerEditorTarget || requestedLayerEditorKey === 0) return
-    if (lastAppliedLayerEditorRequestKeyRef.current === requestedLayerEditorKey) return
-    lastAppliedLayerEditorRequestKeyRef.current = requestedLayerEditorKey
+    if (!requestedLayerEditorTarget || requestedLayerEditorToken === 0) return
+    if (lastAppliedLayerEditorRequestKeyRef.current === requestedLayerEditorToken) return
+    lastAppliedLayerEditorRequestKeyRef.current = requestedLayerEditorToken
 
     if (imageOrder.includes(requestedLayerEditorTarget)) {
       if (imageEditorState?.target === requestedLayerEditorTarget) {
@@ -2530,7 +2548,7 @@ export const GridPreview = memo(function GridPreview({
     imageOrder,
     openImageEditor,
     openTextEditor,
-    requestedLayerEditorKey,
+    requestedLayerEditorToken,
     requestedLayerEditorTarget,
   ])
 

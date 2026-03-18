@@ -38,6 +38,7 @@ import type { HelpSectionId } from "@/lib/help-registry"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
+import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
@@ -94,6 +95,11 @@ type DocumentMetadata = {
   createdAt?: string
 }
 type HistoryDomain = "settings" | "preview"
+type CommandToken = number
+type NoticeState = {
+  title: string
+  message: string
+} | null
 
 function toNormalizedIsoDate(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined
@@ -512,28 +518,30 @@ function omitRecordKey<Value>(
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
+  const commandTokenRef = useRef<CommandToken>(1)
   const isDirtyRef = useRef(false)
   const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
     DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null,
   )
   const [loadedPreviewLayout, setLoadedPreviewLayout] = useState<{
-    key: number
+    token: CommandToken
     layout: PreviewLayoutState
   } | null>(() =>
-    DEFAULT_PREVIEW_LAYOUT ? { key: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
+    DEFAULT_PREVIEW_LAYOUT ? { token: 1, layout: DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState } : null,
   )
   const [requestedLayerOrderState, setRequestedLayerOrderState] = useState<{
-    key: number
+    token: CommandToken
     order: string[]
   } | null>(null)
   const [requestedLayerDeleteState, setRequestedLayerDeleteState] = useState<{
-    key: number
+    token: CommandToken
     target: string
   } | null>(null)
   const [requestedLayerEditorState, setRequestedLayerEditorState] = useState<{
-    key: number
+    token: CommandToken
     target: string
   } | null>(null)
+  const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
   const selectedLayerGraceRef = useRef<{ key: string | null; until: number }>({ key: null, until: 0 })
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
@@ -548,6 +556,13 @@ export default function Home() {
     dispatchExport(action)
   }, [dispatchExport, dispatchGrid])
   const ui = useMemo(() => ({ ...gridUi, ...exportUi }), [gridUi, exportUi])
+  const issueCommandToken = useCallback(() => {
+    commandTokenRef.current += 1
+    return commandTokenRef.current
+  }, [])
+  const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
+    setNoticeState(notice)
+  }, [])
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
@@ -955,10 +970,10 @@ export default function Home() {
     } as PreviewLayoutState
     setPreviewLayout(nextPreviewLayout)
     setRequestedLayerOrderState({
-      key: Date.now(),
+      token: issueCommandToken(),
       order: [...nextLayerOrder],
     })
-  }, [previewLayout])
+  }, [issueCommandToken, previewLayout])
 
   const handleDeleteLayer = useCallback((target: string, kind: "text" | "image") => {
     setPreviewLayout((current) => {
@@ -1000,11 +1015,11 @@ export default function Home() {
     })
 
     setRequestedLayerDeleteState({
-      key: Date.now(),
+      token: issueCommandToken(),
       target,
     })
     setSelectedLayerKey((current) => (current === target ? null : current))
-  }, [])
+  }, [issueCommandToken])
 
   const handlePreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
     setPreviewLayout(layout)
@@ -1020,11 +1035,11 @@ export default function Home() {
 
   const handleToggleLayerEditor = useCallback((target: string) => {
     setRequestedLayerEditorState({
-      key: Date.now(),
+      token: issueCommandToken(),
       target,
     })
     setSelectedLayerKeyWithGrace(target)
-  }, [setSelectedLayerKeyWithGrace])
+  }, [issueCommandToken, setSelectedLayerKeyWithGrace])
 
   useEffect(() => {
     return () => {
@@ -1258,10 +1273,10 @@ export default function Home() {
         applyLoadedUiActions(actions)
 
         if (parsed?.previewLayout) {
-          const nextKey = Date.now()
+          const nextToken = issueCommandToken()
           const layout = parsed.previewLayout as PreviewLayoutState
           setPreviewLayout(layout)
-          setLoadedPreviewLayout({ key: nextKey, layout })
+          setLoadedPreviewLayout({ token: nextToken, layout })
         } else {
           setPreviewLayout(null)
           setLoadedPreviewLayout(null)
@@ -1276,13 +1291,16 @@ export default function Home() {
         isDirtyRef.current = false
       } catch (error) {
         console.error(error)
-        window.alert("Could not load layout JSON.")
+        handleRequestNotice({
+          title: "Load Failed",
+          message: "Could not load layout JSON.",
+        })
       } finally {
         event.target.value = ""
       }
     }
     reader.readAsText(file)
-  }, [applyLoadedUiActions, collapsed])
+  }, [applyLoadedUiActions, collapsed, handleRequestNotice, issueCommandToken])
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1392,10 +1410,10 @@ export default function Home() {
     applyLoadedUiActions(actions)
 
     if (preset.previewLayout) {
-      const nextKey = Date.now()
+      const nextToken = issueCommandToken()
       const layout = preset.previewLayout as PreviewLayoutState
       setPreviewLayout(layout)
-      setLoadedPreviewLayout({ key: nextKey, layout })
+      setLoadedPreviewLayout({ token: nextToken, layout })
     } else {
       setPreviewLayout(null)
       setLoadedPreviewLayout(null)
@@ -1414,7 +1432,7 @@ export default function Home() {
     setCanUndoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
-  }, [applyLoadedUiActions, collapsed])
+  }, [applyLoadedUiActions, collapsed, issueCommandToken])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -1622,10 +1640,10 @@ export default function Home() {
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
               canvasBackground={resolvedCanvasBackground}
-              onImageColorSchemeChange={setImageColorScheme}
-              initialLayout={loadedPreviewLayout?.layout ?? null}
-              initialLayoutKey={loadedPreviewLayout?.key ?? 0}
-              rotation={rotation}
+	              onImageColorSchemeChange={setImageColorScheme}
+	              initialLayout={loadedPreviewLayout?.layout ?? null}
+	              initialLayoutToken={loadedPreviewLayout?.token ?? 0}
+	              rotation={rotation}
               undoNonce={previewUndoNonce}
               redoNonce={previewRedoNonce}
               historyResetToken={documentHistoryResetNonce}
@@ -1635,15 +1653,16 @@ export default function Home() {
               onRedoRequest={redoAny}
               onOpenHelpSection={handlePreviewOpenHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
-              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
-              onRequestGridRestore={handlePreviewGridRestore}
-              requestedLayerOrder={requestedLayerOrderState?.order ?? null}
-              requestedLayerOrderKey={requestedLayerOrderState?.key ?? 0}
-              requestedLayerDeleteTarget={requestedLayerDeleteState?.target ?? null}
-              requestedLayerDeleteKey={requestedLayerDeleteState?.key ?? 0}
-              requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
-              requestedLayerEditorKey={requestedLayerEditorState?.key ?? 0}
-              selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
+	              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
+	              onRequestGridRestore={handlePreviewGridRestore}
+	              onRequestNotice={handleRequestNotice}
+	              requestedLayerOrder={requestedLayerOrderState?.order ?? null}
+	              requestedLayerOrderToken={requestedLayerOrderState?.token ?? 0}
+	              requestedLayerDeleteTarget={requestedLayerDeleteState?.target ?? null}
+	              requestedLayerDeleteToken={requestedLayerDeleteState?.token ?? 0}
+	              requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
+	              requestedLayerEditorToken={requestedLayerEditorState?.token ?? 0}
+	              selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
               onSelectLayer={handlePreviewLayerSelect}
               isDarkMode={isDarkUi}
               onLayoutChange={handlePreviewLayoutChange}
@@ -1731,15 +1750,16 @@ export default function Home() {
     handleDeleteLayer,
     handleHeaderHelpNavigate,
     handleLayerOrderChange,
-    handleLoadPresetLayout,
-    handlePreviewLayoutChange,
-    handlePreviewLayerSelect,
-    handleToggleLayerEditor,
-    handlePreviewGridRestore,
-    handlePreviewHistoryAvailabilityChange,
-    handlePreviewHistoryRecord,
-    handlePreviewOpenHelpSection,
-    paragraphColorResetNonce,
+	    handleLoadPresetLayout,
+	    handlePreviewLayoutChange,
+	    handlePreviewLayerSelect,
+	    handleToggleLayerEditor,
+	    handlePreviewGridRestore,
+	    handlePreviewHistoryAvailabilityChange,
+	    handlePreviewHistoryRecord,
+	    handlePreviewOpenHelpSection,
+	    handleRequestNotice,
+	    paragraphColorResetNonce,
     previewRedoNonce,
     previewLayout,
     previewUndoNonce,
@@ -1893,6 +1913,13 @@ export default function Home() {
         ratioLabel={selectedCanvasRatio.label}
         orientation={orientation}
         rotation={rotation}
+      />
+
+      <NoticeDialog
+        isOpen={noticeState !== null}
+        title={noticeState?.title ?? ""}
+        message={noticeState?.message ?? ""}
+        onClose={() => setNoticeState(null)}
       />
     </div>
   )

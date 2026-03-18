@@ -56,6 +56,10 @@ type PagePoint = {
 }
 
 type AutoFitResult = { span: number; position: ModulePosition | null } | null
+type NoticeRequest = {
+  title: string
+  message: string
+}
 
 type Args = {
   showTypography: boolean
@@ -118,6 +122,7 @@ type Args = {
   isBlockBold: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   getBlockRotation: (key: string) => number
+  onRequestNotice?: (notice: NoticeRequest) => void
 }
 
 export function useBlockEditorActions({
@@ -172,6 +177,7 @@ export function useBlockEditorActions({
   isBlockBold,
   isBlockItalic,
   getBlockRotation,
+  onRequestNotice,
 }: Args) {
   const applyEditorDraftLive = useCallback((draft: EditorState) => {
     const effectiveReflow = draft.draftReflow && draft.draftColumns > 1
@@ -442,7 +448,10 @@ export function useBlockEditorActions({
     const maxParagraphCount = resultGridCols * resultGridRows
     const activeParagraphCount = blockOrder.filter((blockKey) => (textContent[blockKey] ?? "").trim().length > 0).length
     if (activeParagraphCount >= maxParagraphCount) {
-      window.alert(`Maximum paragraphs reached (${maxParagraphCount}).`)
+      onRequestNotice?.({
+        title: "Paragraph Limit Reached",
+        message: `Maximum paragraphs reached (${maxParagraphCount}).`,
+      })
       return
     }
 
@@ -545,6 +554,7 @@ export function useBlockEditorActions({
     styleAssignments,
     textContent,
     toPagePoint,
+    onRequestNotice,
   ])
 
   return {
