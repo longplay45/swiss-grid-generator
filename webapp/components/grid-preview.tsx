@@ -2708,6 +2708,7 @@ export const GridPreview = memo(function GridPreview({
         return
       }
       if (textareaRef.current?.contains(target)) return
+      if (target.closest('[data-inline-editor-layer="true"]')) return
       if (target.closest('[data-text-editor-panel="true"]')) return
       if (target.closest('[data-image-editor-panel="true"]')) return
       if (target.closest('[data-text-editor-select-content="true"]')) return
@@ -2960,7 +2961,6 @@ export const GridPreview = memo(function GridPreview({
       rotationOriginY: plan?.rotationOriginY ?? rect.y,
       textAscent,
       textAlign: plan?.textAlign ?? editorState.draftAlign,
-      font: plan?.font ?? "",
       commands: plan?.commands ?? [],
     }
   })() : null

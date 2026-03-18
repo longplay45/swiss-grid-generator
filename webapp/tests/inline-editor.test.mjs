@@ -2,10 +2,12 @@ import test from "node:test"
 import assert from "node:assert/strict"
 
 import {
+  computeInlineEditorSelectionRects,
   buildInlineEditorTransform,
   computeInlineEditorCaret,
   computeInlineEditorTextBox,
   computeSidebarWithEditorSession,
+  hitTestInlineEditorIndex,
   resolveInlineEditorLineMatches,
 } from "../lib/inline-editor.ts"
 
@@ -82,4 +84,43 @@ test("computeInlineEditorCaret returns the visual caret at the right-aligned lin
     top: 16,
     height: 24,
   })
+})
+
+test("computeInlineEditorSelectionRects matches the visual segment on a right-aligned line", () => {
+  const rects = computeInlineEditorSelectionRects({
+    text: "Hello world",
+    textAlign: "right",
+    commands: [
+      { text: "Hello world", x: 240, y: 136 },
+    ],
+    selectionStart: 6,
+    selectionEnd: 11,
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(rects, [{
+    left: 190,
+    top: 126,
+    width: 50,
+    height: 24,
+  }])
+})
+
+test("hitTestInlineEditorIndex returns the nearest character index on a right-aligned line", () => {
+  const index = hitTestInlineEditorIndex({
+    text: "Hello world",
+    textAlign: "right",
+    commands: [
+      { text: "Hello world", x: 240, y: 136 },
+    ],
+    x: 191,
+    y: 130,
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.equal(index, 6)
 })

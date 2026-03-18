@@ -5,7 +5,9 @@ import { getFontFamilyCss } from "@/lib/config/fonts"
 import {
   buildInlineEditorTransform,
   computeInlineEditorCaret,
+  computeInlineEditorSelectionRects,
   computeInlineEditorTextBox,
+  hitTestInlineEditorIndex,
 } from "@/lib/inline-editor"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import {
@@ -28,7 +30,6 @@ type InlineEditorLayout = {
   rotationOriginY: number
   textAscent: number
   textAlign: "left" | "right"
-  font: string
   commands: Array<{
     text: string
     x: number
@@ -69,7 +70,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
   getStyleLeadingValue,
   isFxStyle,
 }: InlineBlockTextareaProps<StyleKey>) {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [selection, setSelection] = useState({ start: 0, end: 0, focused: false })
+  const dragAnchorRef = useRef<number | null>(null)
+  const dragPointerIdRef = useRef<number | null>(null)
   const measureContextRef = useRef<CanvasRenderingContext2D | null>(null)
 
   const syncSelectionFromTextarea = useCallback((focused = selection.focused) => {
@@ -100,33 +104,45 @@ export function InlineBlockTextarea<StyleKey extends string>({
   }, [editorState, textareaRef])
 
   const measureText = useCallback((text: string) => {
-    if (!layout || typeof document === "undefined") return 0
+    if (typeof document === "undefined") return 0
     if (!measureContextRef.current) {
       measureContextRef.current = document.createElement("canvas").getContext("2d")
     }
     const ctx = measureContextRef.current
     if (!ctx) return 0
-    ctx.font = layout.font
     return ctx.measureText(text).width
-  }, [layout])
+  }, [])
 
   if (!editorState || !layout) return null
-
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
   const styleFontSize = isFxStyle(editorState.draftStyle) ? editorState.draftFxSize : fallbackStyleSize
   const fallbackStyleLeading = getStyleLeadingValue(editorState.draftStyle)
   const styleLeading = isFxStyle(editorState.draftStyle) ? editorState.draftFxLeading : fallbackStyleLeading
   const scaledFontSize = Math.max(1, styleFontSize * scale)
   const scaledLeading = Math.max(scaledFontSize, styleLeading * scale)
+  const canvasFont = `${editorState.draftItalic ? "italic " : ""}${editorState.draftBold ? "700" : "400"} ${scaledFontSize}px ${getFontFamilyCss(editorState.draftFont)}`
+  measureContextRef.current ??= typeof document !== "undefined"
+    ? document.createElement("canvas").getContext("2d")
+    : null
+  if (measureContextRef.current) {
+    measureContextRef.current.font = canvasFont
+  }
   const firstLineTop = layout.rotationOriginY + baselineStep
   const fxCaretOffsetY = isFxStyle(editorState.draftStyle)
     ? Math.max(0, (scaledLeading - layout.textAscent) / 2)
     : 0
+  const visualCommands = layout.commands.length
+    ? layout.commands
+    : [{
+      text: "",
+      x: layout.textAlign === "right" ? layout.rect.x + layout.rect.width : layout.rect.x,
+      y: layout.rotationOriginY + baselineStep + layout.textAscent,
+    }]
   const textBoxTop = firstLineTop - fxCaretOffsetY
   const textBox = computeInlineEditorTextBox({
     rect: layout.rect,
     textAlign: layout.textAlign,
-    commands: layout.commands,
+    commands: visualCommands,
     measureText,
   })
   const consumedTop = Math.max(0, firstLineTop - layout.rect.y)
@@ -145,7 +161,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     ? computeInlineEditorCaret({
       text: editorState.draftText,
       textAlign: layout.textAlign,
-      commands: layout.commands,
+      commands: visualCommands,
       selectionStart: selection.start,
       textAscent: layout.textAscent,
       textBoxTop,
@@ -153,9 +169,97 @@ export function InlineBlockTextarea<StyleKey extends string>({
       measureText,
     })
     : null
+  const selectionRects = computeInlineEditorSelectionRects({
+    text: editorState.draftText,
+    textAlign: layout.textAlign,
+    commands: visualCommands,
+    selectionStart: selection.start,
+    selectionEnd: selection.end,
+    textAscent: layout.textAscent,
+    lineHeight: scaledLeading,
+    measureText,
+  })
+  const hiddenCaret = caret ?? computeInlineEditorCaret({
+    text: editorState.draftText,
+    textAlign: layout.textAlign,
+    commands: visualCommands,
+    selectionStart: selection.end,
+    textAscent: layout.textAscent,
+    textBoxTop,
+    lineHeight: scaledLeading,
+    measureText,
+  })
+
+  const setTextareaSelection = (start: number, end: number, focused = true) => {
+    const element = textareaRef.current
+    if (!element) return
+    if (focused) {
+      element.focus()
+    }
+    element.setSelectionRange(start, end)
+    setSelection({
+      start,
+      end,
+      focused,
+    })
+  }
+
+  const rotatePoint = (x: number, y: number, originX: number, originY: number, angleDeg: number) => {
+    const radians = (angleDeg * Math.PI) / 180
+    const cos = Math.cos(radians)
+    const sin = Math.sin(radians)
+    const dx = x - originX
+    const dy = y - originY
+    return {
+      x: originX + dx * cos - dy * sin,
+      y: originY + dx * sin + dy * cos,
+    }
+  }
+
+  const toEditorLocalPoint = (clientX: number, clientY: number) => {
+    const root = rootRef.current
+    if (!root) return null
+    const rect = root.getBoundingClientRect()
+    const pagePoint = {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    }
+    const pageUnrotated = rotatePoint(pagePoint.x, pagePoint.y, pageWidth / 2, pageHeight / 2, -pageRotation)
+    const blockUnrotated = rotatePoint(
+      pageUnrotated.x,
+      pageUnrotated.y,
+      layout.rotationOriginX,
+      layout.rotationOriginY,
+      -layout.blockRotation,
+    )
+    return {
+      x: blockUnrotated.x - textBox.left,
+      y: blockUnrotated.y - textBoxTop,
+    }
+  }
+
+  const updateSelectionFromPointer = (clientX: number, clientY: number, extendFromAnchor: boolean) => {
+    const localPoint = toEditorLocalPoint(clientX, clientY)
+    if (!localPoint) return
+    const nextIndex = hitTestInlineEditorIndex({
+      text: editorState.draftText,
+      textAlign: layout.textAlign,
+      commands: visualCommands,
+      x: localPoint.x + textBox.left,
+      y: localPoint.y + textBoxTop,
+      textAscent: layout.textAscent,
+      lineHeight: scaledLeading,
+      measureText,
+    })
+    const anchor = extendFromAnchor && dragAnchorRef.current !== null
+      ? dragAnchorRef.current
+      : nextIndex
+    setTextareaSelection(anchor, nextIndex, true)
+  }
 
   return (
     <div
+      ref={rootRef}
       className="absolute inset-0 z-20"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) closeEditor()
@@ -169,7 +273,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
         }}
       >
         <div
-          className="absolute"
+          className="pointer-events-auto absolute"
+          data-inline-editor-layer="true"
           style={{
             left: textBox.left,
             top: textBoxTop,
@@ -179,6 +284,18 @@ export function InlineBlockTextarea<StyleKey extends string>({
             transformOrigin: transform.blockTransformOrigin,
           }}
         >
+          {selectionRects.map((rect, index) => (
+            <div
+              key={`${rect.left}:${rect.top}:${rect.width}:${index}`}
+              className="pointer-events-none absolute bg-sky-500/20"
+              style={{
+                left: rect.left - textBox.left,
+                top: rect.top - textBoxTop,
+                width: rect.width,
+                height: rect.height,
+              }}
+            />
+          ))}
           {caret ? (
             <div
               className="pointer-events-none absolute"
@@ -192,12 +309,39 @@ export function InlineBlockTextarea<StyleKey extends string>({
               }}
             />
           ) : null}
+          <div
+            className="pointer-events-auto absolute inset-0 cursor-text"
+            onPointerDown={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              dragPointerIdRef.current = event.pointerId
+              event.currentTarget.setPointerCapture(event.pointerId)
+              updateSelectionFromPointer(event.clientX, event.clientY, false)
+              const element = textareaRef.current
+              dragAnchorRef.current = element?.selectionStart ?? selection.start
+            }}
+            onPointerMove={(event) => {
+              if (dragPointerIdRef.current !== event.pointerId) return
+              updateSelectionFromPointer(event.clientX, event.clientY, true)
+            }}
+            onPointerUp={(event) => {
+              if (dragPointerIdRef.current !== event.pointerId) return
+              updateSelectionFromPointer(event.clientX, event.clientY, true)
+              dragPointerIdRef.current = null
+              dragAnchorRef.current = null
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId)
+              }
+            }}
+            onLostPointerCapture={() => {
+              dragPointerIdRef.current = null
+              dragAnchorRef.current = null
+            }}
+          />
           <textarea
             ref={textareaRef}
             value={editorState.draftText}
             spellCheck={false}
-            onMouseDown={(event) => event.stopPropagation()}
-            onMouseUp={() => syncSelectionFromTextarea(true)}
             onSelect={() => syncSelectionFromTextarea(true)}
             onFocus={() => syncSelectionFromTextarea(true)}
             onBlur={() => syncSelectionFromTextarea(false)}
@@ -227,10 +371,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
               }
             }}
             style={{
-              left: 0,
-              top: 0,
-              width: "100%",
-              minHeight,
+              left: hiddenCaret ? hiddenCaret.x - textBox.left : 0,
+              top: hiddenCaret ? hiddenCaret.top : 0,
+              width: 1,
+              height: hiddenCaret?.height ?? scaledLeading,
               fontFamily: getFontFamilyCss(editorState.draftFont),
               fontStyle: editorState.draftItalic ? "italic" : "normal",
               fontWeight: editorState.draftBold ? 700 : 400,
@@ -238,16 +382,15 @@ export function InlineBlockTextarea<StyleKey extends string>({
               color: "transparent",
               fontSize: `${scaledFontSize}px`,
               lineHeight: `${scaledLeading}px`,
-              fontKerning: "normal",
-              textRendering: "geometricPrecision",
-              hyphens: "none",
-              overflowWrap: "normal",
-              wordBreak: "normal",
-              whiteSpace: "pre-wrap",
-              caretColor: "transparent",
-              WebkitTextFillColor: "transparent",
+              opacity: 0,
+              pointerEvents: "none",
+              resize: "none",
+              overflow: "hidden",
+              border: 0,
+              padding: 0,
+              margin: 0,
             }}
-            className="scrollbar-none pointer-events-auto absolute resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 outline-none focus:outline-none"
+            className="absolute bg-transparent outline-none"
             aria-label={`Inline editor for ${editorState.target}`}
           />
         </div>

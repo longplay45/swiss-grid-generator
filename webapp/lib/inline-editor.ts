@@ -50,6 +50,39 @@ export type InlineEditorCaret = {
   height: number
 }
 
+export type InlineEditorLineLayout = InlineEditorLineMatch & {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export type InlineEditorSelectionRect = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export type InlineEditorLineLayoutInput = {
+  text: string
+  textAlign: InlineEditorTextAlign
+  commands: InlineEditorCommand[]
+  textAscent: number
+  lineHeight: number
+  measureText: (text: string) => number
+}
+
+export type InlineEditorSelectionRectInput = InlineEditorLineLayoutInput & {
+  selectionStart: number
+  selectionEnd: number
+}
+
+export type InlineEditorHitTestInput = InlineEditorLineLayoutInput & {
+  x: number
+  y: number
+}
+
 export type InlineEditorTransformInput = {
   pageWidth: number
   pageHeight: number
@@ -91,6 +124,36 @@ function normalizeVisibleText(text: string): string {
 
 function normalizePrefixText(text: string): string {
   return normalizeVisibleText(text).replace(/[^\S\n]+/g, " ")
+}
+
+function clampSelectionIndex(text: string, index: number): number {
+  return Math.max(0, Math.min(normalizeVisibleText(text).length, index))
+}
+
+function getLineStartX(
+  line: Pick<InlineEditorLineMatch, "x" | "renderedText">,
+  textAlign: InlineEditorTextAlign,
+  measureText: (text: string) => number,
+): number {
+  if (textAlign === "right") {
+    return line.x - measureText(line.renderedText)
+  }
+  return line.x
+}
+
+function measurePrefixWidthForIndex(
+  text: string,
+  line: InlineEditorLineMatch,
+  sourceIndex: number,
+  measureText: (text: string) => number,
+): number {
+  const clampedIndex = Math.max(line.sourceStart, Math.min(line.sourceEnd, sourceIndex))
+  const sourcePrefix = text.slice(line.sourceStart, clampedIndex)
+  const normalizedPrefix = normalizePrefixText(sourcePrefix)
+  const renderedPrefix = clampedIndex >= line.sourceEnd && line.renderedText.endsWith("-")
+    ? line.renderedText
+    : normalizedPrefix
+  return measureText(renderedPrefix)
 }
 
 export function computeInlineEditorTextBox({
@@ -161,6 +224,26 @@ export function resolveInlineEditorLineMatches(
   })
 }
 
+export function buildInlineEditorLineLayouts({
+  text,
+  textAlign,
+  commands,
+  textAscent,
+  lineHeight,
+  measureText,
+}: InlineEditorLineLayoutInput): InlineEditorLineLayout[] {
+  return resolveInlineEditorLineMatches(text, commands).map((line) => {
+    const left = getLineStartX(line, textAlign, measureText)
+    return {
+      ...line,
+      left,
+      top: line.y - textAscent,
+      width: measureText(line.renderedText),
+      height: lineHeight,
+    }
+  })
+}
+
 export function computeInlineEditorCaret({
   text,
   textAlign,
@@ -174,7 +257,7 @@ export function computeInlineEditorCaret({
   if (!commands.length) return null
 
   const lines = resolveInlineEditorLineMatches(text, commands)
-  const clampedSelection = Math.max(0, Math.min(normalizeVisibleText(text).length, selectionStart))
+  const clampedSelection = clampSelectionIndex(text, selectionStart)
   let activeLine = lines[lines.length - 1]
 
   for (const line of lines) {
@@ -187,18 +270,8 @@ export function computeInlineEditorCaret({
     }
   }
 
-  const lineSelection = Math.max(activeLine.sourceStart, Math.min(activeLine.sourceEnd, clampedSelection))
-  const sourcePrefix = text.slice(activeLine.sourceStart, lineSelection)
-  const normalizedPrefix = normalizePrefixText(sourcePrefix)
-  const renderedLine = activeLine.renderedText
-  const lineWidth = measureText(renderedLine)
-  const lineStartX = textAlign === "right"
-    ? activeLine.x - lineWidth
-    : activeLine.x
-  const prefixForMeasurement = clampedSelection >= activeLine.sourceEnd && renderedLine.endsWith("-")
-    ? renderedLine
-    : normalizedPrefix
-  const caretX = lineStartX + measureText(prefixForMeasurement)
+  const caretX = getLineStartX(activeLine, textAlign, measureText)
+    + measurePrefixWidthForIndex(text, activeLine, clampedSelection, measureText)
   const lineTop = activeLine.y - textAscent
 
   return {
@@ -206,6 +279,112 @@ export function computeInlineEditorCaret({
     top: lineTop - textBoxTop,
     height: lineHeight,
   }
+}
+
+export function computeInlineEditorSelectionRects({
+  text,
+  textAlign,
+  commands,
+  selectionStart,
+  selectionEnd,
+  textAscent,
+  lineHeight,
+  measureText,
+}: InlineEditorSelectionRectInput): InlineEditorSelectionRect[] {
+  if (!commands.length) return []
+
+  const start = clampSelectionIndex(text, Math.min(selectionStart, selectionEnd))
+  const end = clampSelectionIndex(text, Math.max(selectionStart, selectionEnd))
+  if (start === end) return []
+
+  const lines = buildInlineEditorLineLayouts({
+    text,
+    textAlign,
+    commands,
+    textAscent,
+    lineHeight,
+    measureText,
+  })
+  const rects: InlineEditorSelectionRect[] = []
+
+  for (const line of lines) {
+    const lineStart = Math.max(line.sourceStart, start)
+    const lineEnd = Math.min(line.sourceEnd, end)
+    if (lineStart > lineEnd) continue
+    if (lineStart === lineEnd && !(lineEnd === line.sourceEnd && end > line.sourceEnd)) continue
+
+    const left = line.left + measurePrefixWidthForIndex(text, line, lineStart, measureText)
+    const right = line.left + measurePrefixWidthForIndex(
+      text,
+      line,
+      lineEnd === line.sourceEnd && end > line.sourceStart ? line.sourceEnd : lineEnd,
+      measureText,
+    )
+    if (right <= left) continue
+    rects.push({
+      left,
+      top: line.top,
+      width: right - left,
+      height: line.height,
+    })
+  }
+
+  return rects
+}
+
+export function hitTestInlineEditorIndex({
+  text,
+  textAlign,
+  commands,
+  x,
+  y,
+  textAscent,
+  lineHeight,
+  measureText,
+}: InlineEditorHitTestInput): number {
+  if (!commands.length) return clampSelectionIndex(text, 0)
+
+  const lines = buildInlineEditorLineLayouts({
+    text,
+    textAlign,
+    commands,
+    textAscent,
+    lineHeight,
+    measureText,
+  })
+
+  let activeLine = lines[0]
+  let bestScore = Number.POSITIVE_INFINITY
+  for (const line of lines) {
+    const verticalDistance = y < line.top
+      ? line.top - y
+      : y > line.top + line.height
+        ? y - (line.top + line.height)
+        : 0
+    const horizontalDistance = x < line.left
+      ? line.left - x
+      : x > line.left + line.width
+        ? x - (line.left + line.width)
+        : 0
+    const score = verticalDistance * 10000 + horizontalDistance
+    if (score < bestScore) {
+      bestScore = score
+      activeLine = line
+    }
+  }
+
+  let bestIndex = activeLine.sourceStart
+  let bestDistance = Number.POSITIVE_INFINITY
+  for (let index = activeLine.sourceStart; index <= activeLine.sourceEnd; index += 1) {
+    const caretX = activeLine.left + measurePrefixWidthForIndex(text, activeLine, index, measureText)
+    const distance = Math.abs(x - caretX)
+    if (distance <= bestDistance) {
+      bestDistance = distance
+      bestIndex = index
+    }
+  }
+
+  return bestIndex
 }
 
 export function computeSidebarWithEditorSession(
