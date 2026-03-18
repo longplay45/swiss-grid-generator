@@ -34,11 +34,10 @@ import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { clampRotation } from "@/lib/block-constraints"
 import { useDocumentController } from "@/hooks/useDocumentController"
-import { usePreviewCommands } from "@/hooks/usePreviewCommands"
+import { usePreviewDocumentState } from "@/hooks/usePreviewDocumentState"
 import { useShellKeyboardShortcuts } from "@/hooks/useShellKeyboardShortcuts"
 import { useSidebarPanels } from "@/hooks/useSidebarPanels"
-import { getPreviewLayoutSeed, type LoadedDocument } from "@/lib/document-session"
-import { removeLayerFromPreviewLayout } from "@/lib/preview-layer-state"
+import { type LoadedDocument } from "@/lib/document-session"
 import {
   isFontFamily,
   type FontFamily,
@@ -75,7 +74,6 @@ import {
 } from "@/lib/config/ui-defaults"
 
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
-const LAYER_SELECTION_GRACE_MS = 300
 const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
@@ -476,25 +474,7 @@ export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const isDirtyRef = useRef(false)
-  const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState | null>(
-    DEFAULT_PAGE_PREVIEW_LAYOUT,
-  )
-  const {
-    loadedLayoutState: loadedPreviewLayout,
-    layerOrderRequest: requestedLayerOrderState,
-    layerDeleteRequest: requestedLayerDeleteState,
-    layerEditorRequest: requestedLayerEditorState,
-    requestLayerOrder,
-    requestLayerDelete,
-    requestLayerEditor,
-    loadLayout: loadPreviewLayout,
-    clearLayerRequests,
-  } = usePreviewCommands<PreviewLayoutState>({
-    defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
-  })
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
-  const [selectedLayerKey, setSelectedLayerKey] = useState<string | null>(null)
-  const selectedLayerGraceRef = useRef<{ key: string | null; until: number }>({ key: null, until: 0 })
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -552,15 +532,11 @@ export default function Home() {
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
-  const [canUndoPreview, setCanUndoPreview] = useState(false)
-  const [previewUndoNonce, setPreviewUndoNonce] = useState(0)
-  const [previewRedoNonce, setPreviewRedoNonce] = useState(0)
   const [undoDomains, setUndoDomains] = useState<HistoryDomain[]>([])
   const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
-  const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
   const undoDomainsRef = useRef<HistoryDomain[]>([])
   const redoDomainsRef = useRef<HistoryDomain[]>([])
@@ -589,33 +565,31 @@ export default function Home() {
     showLayers,
     onShowLayersChange: (next) => dispatch({ type: "SET", key: "showLayers", value: next }),
   })
-
-  useEffect(() => {
-    if (!selectedLayerKey || !previewLayout) return
-    const validKeys = new Set<string>([
-      ...previewLayout.blockOrder,
-      ...(previewLayout.imageOrder ?? []),
-    ])
-    if (!validKeys.has(selectedLayerKey)) {
-      const grace = selectedLayerGraceRef.current
-      if (grace.key === selectedLayerKey && grace.until > Date.now()) {
-        return
-      }
-      setSelectedLayerKey(null)
-    }
-  }, [previewLayout, selectedLayerKey])
-
-  const setSelectedLayerKeyWithGrace = useCallback((key: string | null) => {
-    if (key) {
-      selectedLayerGraceRef.current = {
-        key,
-        until: Date.now() + LAYER_SELECTION_GRACE_MS,
-      }
-    } else {
-      selectedLayerGraceRef.current = { key: null, until: 0 }
-    }
-    setSelectedLayerKey(key)
-  }, [])
+  const {
+    previewLayout,
+    loadedPreviewLayout,
+    requestedLayerOrderState,
+    requestedLayerDeleteState,
+    requestedLayerEditorState,
+    selectedLayerKey,
+    setSelectedLayerKeyWithGrace,
+    canUndoPreview,
+    previewUndoNonce,
+    previewRedoNonce,
+    documentHistoryResetNonce,
+    requestPreviewUndo,
+    requestPreviewRedo,
+    handlePreviewHistoryAvailabilityChange,
+    applyLoadedPreviewLayout,
+    handleLayerOrderChange,
+    handleDeleteLayer,
+    handlePreviewLayoutChange,
+    handlePreviewLayerSelect,
+    handleToggleLayerEditor,
+  } = usePreviewDocumentState<TypographyStyleKey, FontFamily>({
+    activeSidebarPanel,
+    defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
+  })
 
   const recordHistoryDomain = useCallback((domain: HistoryDomain) => {
     setUndoDomains((prev) => {
@@ -782,32 +756,28 @@ export default function Home() {
     if (!domain) return
 
     if (domain === "settings") history.undo(applyUiSnapshot)
-    else setPreviewUndoNonce((nonce) => nonce + 1)
+    else requestPreviewUndo()
 
     setUndoDomains((prev) => prev.slice(0, -1))
     setRedoDomains((prev) => {
       const next = [...prev, domain]
       return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
     })
-  }, [applyUiSnapshot, history])
+  }, [applyUiSnapshot, history, requestPreviewUndo])
 
   const redoAny = useCallback(() => {
     const domain = redoDomainsRef.current[redoDomainsRef.current.length - 1]
     if (!domain) return
 
     if (domain === "settings") history.redo(applyUiSnapshot)
-    else setPreviewRedoNonce((nonce) => nonce + 1)
+    else requestPreviewRedo()
 
     setRedoDomains((prev) => prev.slice(0, -1))
     setUndoDomains((prev) => {
       const next = [...prev, domain]
       return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
     })
-  }, [applyUiSnapshot, history])
-
-  const handlePreviewHistoryAvailabilityChange = useCallback((undoAvailable: boolean) => {
-    setCanUndoPreview(undoAvailable)
-  }, [])
+  }, [applyUiSnapshot, history, requestPreviewRedo])
 
   const handlePreviewHistoryRecord = useCallback(() => {
     recordHistoryDomain("preview")
@@ -828,15 +798,10 @@ export default function Home() {
   const handleApplyLoadedDocument = useCallback((document: LoadedDocument<PreviewLayoutState>) => {
     const actions = buildUiActionsFromLoadedSettings(document.uiSettings, collapsed)
     applyLoadedUiActions(actions)
-    setPreviewLayout(document.previewLayout)
-    loadPreviewLayout(document.previewLayout)
-    clearLayerRequests()
-    setSelectedLayerKey(null)
-    setDocumentHistoryResetNonce((nonce) => nonce + 1)
-    setCanUndoPreview(false)
+    applyLoadedPreviewLayout(document.previewLayout)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
-  }, [applyLoadedUiActions, clearLayerRequests, collapsed, loadPreviewLayout, setShowPresetsBrowser])
+  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, setShowPresetsBrowser])
 
   const {
     documentMetadata,
@@ -898,40 +863,6 @@ export default function Home() {
     if (!targetSectionId) return
     setActiveHelpSectionId(targetSectionId)
   }, [setActiveHelpSectionId])
-
-  const handleLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
-    const nextPreviewLayout = {
-      ...getPreviewLayoutSeed(previewLayout, DEFAULT_PAGE_PREVIEW_LAYOUT),
-      layerOrder: [...nextLayerOrder],
-    }
-    setPreviewLayout(nextPreviewLayout)
-    requestLayerOrder(nextLayerOrder)
-  }, [previewLayout, requestLayerOrder])
-
-  const handleDeleteLayer = useCallback((target: string, kind: "text" | "image") => {
-    setPreviewLayout((current) => {
-      if (!current) return current
-      return removeLayerFromPreviewLayout(current, target, kind)
-    })
-
-    requestLayerDelete(target)
-    setSelectedLayerKey((current) => (current === target ? null : current))
-  }, [requestLayerDelete])
-
-  const handlePreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
-    setPreviewLayout(layout)
-    clearLayerRequests()
-  }, [clearLayerRequests])
-
-  const handlePreviewLayerSelect = useCallback((key: string | null) => {
-    if (activeSidebarPanel !== "layers") return
-    setSelectedLayerKeyWithGrace(key)
-  }, [activeSidebarPanel, setSelectedLayerKeyWithGrace])
-
-  const handleToggleLayerEditor = useCallback((target: string) => {
-    requestLayerEditor(target)
-    setSelectedLayerKeyWithGrace(target)
-  }, [requestLayerEditor, setSelectedLayerKeyWithGrace])
 
   useEffect(() => {
     return () => {
