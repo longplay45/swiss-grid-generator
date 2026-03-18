@@ -8,7 +8,6 @@ import {
   type BlockEditorStyleOption,
   type BlockEditorTextAlign,
 } from "@/components/editor/block-editor-types"
-import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
@@ -28,6 +27,8 @@ import { useLayoutReflow } from "@/hooks/useLayoutReflow"
 import { useCloseEditorsOnOutsidePointer } from "@/hooks/useCloseEditorsOnOutsidePointer"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
+import { useImagePlaceholderState } from "@/hooks/useImagePlaceholderState"
+import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
 import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
@@ -68,8 +69,6 @@ import {
   getDefaultImagePlaceholderColor,
   getDefaultTextSchemeColor,
   getImageColorScheme,
-  getImageSchemeColorReference,
-  resolveImageSchemeColor,
   IMAGE_COLOR_SCHEMES,
   isImagePlaceholderColor,
   type ImageColorSchemeId,
@@ -116,7 +115,6 @@ type ModulePosition = {
 
 type DragState = PreviewDragState<BlockId>
 type EditorState = BlockEditorState<TypographyStyleKey>
-type PlaceholderEditorState = ImageEditorState
 
 type BlockCollectionsState = {
   blockOrder: BlockId[]
@@ -349,9 +347,6 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayerDeleteRequestKeyRef = useRef(0)
   const lastAppliedLayerEditorRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
-  const suppressImageModuleRemapRef = useRef(false)
-  const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
-  const previousImageRowStartsRef = useRef<number[] | null>(null)
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
   const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
@@ -361,25 +356,16 @@ export const GridPreview = memo(function GridPreview({
   const reflowPlanCacheRef = useRef<Map<string, ReflowPlan>>(new Map())
   const lastHistoryResetTokenRef = useRef(historyResetToken)
   const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
-  const onLayoutChangeDebounceRef = useRef<number | null>(null)
-  const pendingLayoutEmissionRef = useRef<PreviewLayoutState | null>(null)
   const mouseMoveRafRef = useRef<number | null>(null)
   const lastLiveEditorSignatureRef = useRef("")
-  const lastLiveImageEditorSignatureRef = useRef("")
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
-  const [layoutEmissionVersion, setLayoutEmissionVersion] = useState(0)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
-  const [imageOrder, setImageOrder] = useState<BlockId[]>([])
   const [layerOrder, setLayerOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
-  const [imageModulePositions, setImageModulePositions] = useState<Partial<Record<BlockId, ModulePosition>>>({})
-  const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<BlockId, number>>>({})
-  const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<BlockId, number>>>({})
-  const [imageColors, setImageColors] = useState<Partial<Record<BlockId, string>>>({})
   const [blockCustomSizes, setBlockCustomSizes] = useState<Partial<Record<BlockId, number>>>({})
   const [blockCustomLeadings, setBlockCustomLeadings] = useState<Partial<Record<BlockId, number>>>({})
   const [blockTextColors, setBlockTextColors] = useState<Partial<Record<BlockId, string>>>({})
@@ -409,8 +395,6 @@ export const GridPreview = memo(function GridPreview({
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [editorState, setEditorState] = useState<EditorState | null>(null)
-  const [imageEditorState, setImageEditorState] = useState<PlaceholderEditorState | null>(null)
-  const previousImageColorSchemeRef = useRef(imageColorScheme)
   const imagePalette = useMemo(
     () => getImageColorScheme(imageColorScheme).colors,
     [imageColorScheme],
@@ -490,6 +474,76 @@ export const GridPreview = memo(function GridPreview({
     })
   }, [])
 
+  const getGridMetrics = useCallback(() => {
+    const { margins, gridMarginHorizontal, gridMarginVertical, gridUnit } = result.grid
+    const { width: modW, height: modH } = result.module
+    const { gridCols, gridRows } = result.settings
+    const contentHeight = (result.pageSizePt.height - margins.top - margins.bottom) * scale
+    const baselineStep = gridUnit * scale
+    const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
+    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
+    const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+    const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
+    const rowStartBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
+    const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+    const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
+    const getColumnX = (col: number) => (
+      col < 0
+        ? margins.left * scale + col * firstColumnStep * scale
+        : margins.left * scale + (colStarts[col] ?? col * firstColumnStep) * scale
+    )
+    const getNearestCol = (pageX: number) => {
+      const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
+      return findNearestAxisIndex(colStarts, relative)
+    }
+    const getNearestRowIndex = (pageY: number) => {
+      const relative = (pageY - margins.top * scale) / Math.max(scale, 0.0001)
+      return findNearestAxisIndex(rowStarts, relative)
+    }
+    const getRowStartBaseline = (rowIndex: number) => rowStartBaselines[rowIndex] ?? 0
+    const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
+
+    return {
+      contentLeft: margins.left * scale,
+      contentTop: margins.top * scale,
+      moduleWidth: (moduleWidths[0] ?? modW) * scale,
+      moduleHeight: (moduleHeights[0] ?? modH) * scale,
+      moduleWidths,
+      moduleHeights,
+      colStarts,
+      rowStarts,
+      rowStartBaselines,
+      xStep: firstColumnStep * scale,
+      yStep: baselineStep,
+      gridCols,
+      gridRows,
+      maxBaselineRow,
+      gutterX: gridMarginHorizontal * scale,
+      baselineStep,
+      baselineOriginTop: margins.top * scale - baselineStep,
+      moduleYStep: firstRowStep * scale,
+      getColumnX,
+      getNearestCol,
+      getNearestRowIndex,
+      getRowStartBaseline,
+    }
+  }, [result.grid, result.module, result.pageSizePt.height, result.settings, scale])
+
+  const clampImageBaselinePosition = useCallback((
+    position: ModulePosition,
+    columns: number,
+  ): ModulePosition => {
+    const metrics = getGridMetrics()
+    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
+    const minCol = -Math.max(0, safeCols - 1)
+    const maxCol = Math.max(0, metrics.gridCols - 1)
+    const minRow = -Math.max(0, metrics.maxBaselineRow)
+    return {
+      col: Math.max(minCol, Math.min(maxCol, position.col)),
+      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
+    }
+  }, [getGridMetrics, result.settings.gridCols])
+
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
     return Math.max(1, Math.min(result.settings.gridCols, raw))
@@ -500,47 +554,39 @@ export const GridPreview = memo(function GridPreview({
     return Math.max(1, Math.min(result.settings.gridRows, raw))
   }, [blockRowSpans, result.settings.gridRows])
 
-  const getImageSpan = useCallback((key: BlockId) => {
-    const raw = imageColumnSpans[key] ?? 1
-    return Math.max(1, Math.min(result.settings.gridCols, raw))
-  }, [imageColumnSpans, result.settings.gridCols])
-
-  const getImageRows = useCallback((key: BlockId) => {
-    const raw = imageRowSpans[key] ?? 1
-    return Math.max(1, Math.min(result.settings.gridRows, raw))
-  }, [imageRowSpans, result.settings.gridRows])
-
-  const getImageColorReference = useCallback((key: BlockId): string => {
-    const raw = imageColors[key]
-    if (typeof raw === "string") {
-      return getImageSchemeColorReference(raw, imageColorScheme)
-    }
-    return getImageSchemeColorReference(defaultImageColor, imageColorScheme)
-  }, [defaultImageColor, imageColorScheme, imageColors])
-
-  const getImageColor = useCallback((key: BlockId): string => {
-    return resolveImageSchemeColor(getImageColorReference(key), imageColorScheme)
-  }, [getImageColorReference, imageColorScheme])
-
-  const normalizeImageColorReferences = useCallback((
-    colors: Partial<Record<BlockId, string>>,
-    schemeId: ImageColorSchemeId,
-  ): Partial<Record<BlockId, string>> => {
-    let changed = false
-    const next = { ...colors }
-    for (const [key, value] of Object.entries(colors)) {
-      const normalized = getImageSchemeColorReference(value, schemeId)
-      if (normalized === value) continue
-      next[key] = normalized
-      changed = true
-    }
-    return changed ? next : colors
-  }, [])
-
-  const isImagePlaceholderKey = useCallback((key: BlockId): boolean => (
-    key.startsWith("image-")
-    || imageOrder.includes(key)
-  ), [imageOrder])
+  const {
+    imageOrder,
+    setImageOrder,
+    imageModulePositions,
+    setImageModulePositions,
+    setImageColumnSpans,
+    setImageRowSpans,
+    imageColors,
+    setImageColors,
+    imageEditorState,
+    setImageEditorState,
+    getImageSpan,
+    getImageRows,
+    getImageColorReference,
+    getImageColor,
+    isImagePlaceholderKey,
+    buildImageSnapshotState,
+    applyImageSnapshot,
+    openImageEditor: openImageEditorState,
+    closeImageEditor: closeImageEditorState,
+    insertImagePlaceholder,
+    deleteImagePlaceholder: deleteImagePlaceholderState,
+    handleImageColorSchemeChange,
+    resetImageTransientState,
+  } = useImagePlaceholderState<BlockId>({
+    imageColorScheme,
+    defaultImageColor,
+    gridCols: result.settings.gridCols,
+    gridRows: result.settings.gridRows,
+    getGridMetrics,
+    clampImageBaselinePosition,
+    onImageColorSchemeChange,
+  })
 
   const resolvedLayerOrder = useMemo(
     () => reconcileLayerOrder(layerOrder, blockOrder, imageOrder),
@@ -758,88 +804,16 @@ export const GridPreview = memo(function GridPreview({
       return acc
     }, {} as Partial<Record<BlockId, string>>),
     layerOrder: [...resolvedLayerOrder],
-    imageOrder: [...imageOrder],
-    imageModulePositions: { ...imageModulePositions },
-    imageColumnSpans: imageOrder.reduce((acc, key) => {
-      acc[key] = getImageSpan(key)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>),
-    imageRowSpans: imageOrder.reduce((acc, key) => {
-      acc[key] = getImageRows(key)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>),
-      imageColors: imageOrder.reduce((acc, key) => {
-        acc[key] = getImageColorReference(key)
-        return acc
-      }, {} as Partial<Record<BlockId, string>>),
+    ...buildImageSnapshotState(),
   }), [
     blockCustomLeadings,
     blockTextColors,
     blockCustomSizes,
     blockOrder,
+    buildImageSnapshotState,
     buildTextSnapshot,
-    getImageColorReference,
-    getImageRows,
-    getImageSpan,
-    imageModulePositions,
-    imageOrder,
     resolvedLayerOrder,
     styleAssignments,
-  ])
-
-  const applyImageSnapshot = useCallback((snapshot: PreviewLayoutState) => {
-    const normalizedOrder = (Array.isArray(snapshot.imageOrder) ? snapshot.imageOrder : [])
-      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
-      .filter((key, index, source) => source.indexOf(key) === index)
-
-    const contentHeight = (result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) * scale
-    const baselineStep = result.grid.gridUnit * scale
-    const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
-    const nextPositions = normalizedOrder.reduce((acc, key) => {
-      const raw = snapshot.imageModulePositions?.[key]
-      if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
-      const span = Math.max(1, Math.min(result.settings.gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
-      const minCol = -Math.max(0, span - 1)
-      const maxCol = Math.max(0, result.settings.gridCols - 1)
-      const minRow = -Math.max(0, maxBaselineRow)
-      acc[key] = {
-        col: Math.max(minCol, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(minRow, Math.min(maxBaselineRow, raw.row)),
-      }
-      return acc
-    }, {} as Partial<Record<BlockId, ModulePosition>>)
-
-    const nextSpans = normalizedOrder.reduce((acc, key) => {
-      acc[key] = Math.max(1, Math.min(result.settings.gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
-      return acc
-    }, {} as Partial<Record<BlockId, number>>)
-    const nextRows = normalizedOrder.reduce((acc, key) => {
-      acc[key] = Math.max(1, Math.min(result.settings.gridRows, snapshot.imageRowSpans?.[key] ?? 1))
-      return acc
-    }, {} as Partial<Record<BlockId, number>>)
-    const nextColors = normalizedOrder.reduce((acc, key) => {
-      const raw = snapshot.imageColors?.[key]
-      acc[key] = getImageSchemeColorReference(raw ?? defaultImageColor, imageColorScheme)
-      return acc
-    }, {} as Partial<Record<BlockId, string>>)
-
-    suppressImageModuleRemapRef.current = true
-    setImageOrder(normalizedOrder)
-    setImageModulePositions(nextPositions)
-    setImageColumnSpans(nextSpans)
-    setImageRowSpans(nextRows)
-    setImageColors(nextColors)
-    setImageEditorState(null)
-  }, [
-    defaultImageColor,
-    imageColorScheme,
-    result.grid.gridUnit,
-    result.grid.margins.bottom,
-    result.grid.margins.top,
-    result.pageSizePt.height,
-    result.settings.gridCols,
-    result.settings.gridRows,
-    scale,
   ])
 
   const applyLayerOrderSnapshot = useCallback((snapshot: PreviewLayoutState) => {
@@ -909,61 +883,6 @@ export const GridPreview = memo(function GridPreview({
     onHistoryAvailabilityChange,
     onRecordHistory: onHistoryRecord,
   })
-
-  const getGridMetrics = useCallback(() => {
-    const { margins, gridMarginHorizontal, gridMarginVertical, gridUnit } = result.grid
-    const { width: modW, height: modH } = result.module
-    const { gridCols, gridRows } = result.settings
-    const contentHeight = (result.pageSizePt.height - margins.top - margins.bottom) * scale
-    const baselineStep = gridUnit * scale
-    const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
-    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-    const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
-    const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
-    const rowStartBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
-    const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
-    const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
-    const getColumnX = (col: number) => (
-      col < 0
-        ? margins.left * scale + col * firstColumnStep * scale
-        : margins.left * scale + (colStarts[col] ?? col * firstColumnStep) * scale
-    )
-    const getNearestCol = (pageX: number) => {
-      const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
-      return findNearestAxisIndex(colStarts, relative)
-    }
-    const getNearestRowIndex = (pageY: number) => {
-      const relative = (pageY - margins.top * scale) / Math.max(scale, 0.0001)
-      return findNearestAxisIndex(rowStarts, relative)
-    }
-    const getRowStartBaseline = (rowIndex: number) => rowStartBaselines[rowIndex] ?? 0
-    const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
-
-    return {
-      contentLeft: margins.left * scale,
-      contentTop: margins.top * scale,
-      moduleWidth: (moduleWidths[0] ?? modW) * scale,
-      moduleHeight: (moduleHeights[0] ?? modH) * scale,
-      moduleWidths,
-      moduleHeights,
-      colStarts,
-      rowStarts,
-      rowStartBaselines,
-      xStep: firstColumnStep * scale,
-      yStep: baselineStep,
-      gridCols,
-      gridRows,
-      maxBaselineRow,
-      gutterX: gridMarginHorizontal * scale,
-      baselineStep,
-      baselineOriginTop: margins.top * scale - baselineStep,
-      moduleYStep: firstRowStep * scale,
-      getColumnX,
-      getNearestCol,
-      getNearestRowIndex,
-      getRowStartBaseline,
-    }
-  }, [result.grid, result.module, result.pageSizePt.height, result.settings, scale])
 
   const getMeasuredTextWidth = useCallback((ctx: CanvasRenderingContext2D, text: string): number => {
     const key = `${ctx.font}::${text}`
@@ -1058,21 +977,6 @@ export const GridPreview = memo(function GridPreview({
       row: Math.max(0, Math.min(maxRow, position.row)),
     }
   }, [getGridMetrics, result.settings.gridCols, result.settings.gridRows])
-
-  const clampImageBaselinePosition = useCallback((
-    position: ModulePosition,
-    columns: number,
-  ): ModulePosition => {
-    const metrics = getGridMetrics()
-    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
-    const minCol = -Math.max(0, safeCols - 1)
-    const maxCol = Math.max(0, metrics.gridCols - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
-    return {
-      col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
-    }
-  }, [getGridMetrics, result.settings.gridCols])
 
   const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
     const metrics = getGridMetrics()
@@ -1242,17 +1146,13 @@ export const GridPreview = memo(function GridPreview({
       if (copyOnDrop) {
         const newKey = getNextImagePlaceholderId()
         recordHistoryBeforeChange()
-        setImageOrder((current) => {
-          const sourceIndex = current.indexOf(drag.key)
-          const next = [...current]
-          if (sourceIndex >= 0) next.splice(sourceIndex + 1, 0, newKey)
-          else next.push(newKey)
-          return next
+        insertImagePlaceholder(newKey, {
+          position: resolvedPosition,
+          columns: sourceColumns,
+          rows: sourceRows,
+          color: sourceColor,
+          afterKey: drag.key,
         })
-        setImageModulePositions((current) => ({ ...current, [newKey]: resolvedPosition }))
-        setImageColumnSpans((current) => ({ ...current, [newKey]: sourceColumns }))
-        setImageRowSpans((current) => ({ ...current, [newKey]: sourceRows }))
-        setImageColors((current) => ({ ...current, [newKey]: sourceColor }))
         onSelectLayer?.(newKey)
         return
       }
@@ -1437,15 +1337,12 @@ export const GridPreview = memo(function GridPreview({
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
-    setImageColors,
-    setImageColumnSpans,
-    setImageModulePositions,
-    setImageOrder,
-    setImageRowSpans,
+    insertImagePlaceholder,
     setBlockCollections,
     setBlockCustomLeadings,
     setBlockTextColors,
     setBlockCustomSizes,
+    setImageModulePositions,
     setBlockModulePositions,
     textContent,
   ])
@@ -1498,15 +1395,12 @@ export const GridPreview = memo(function GridPreview({
     lastAppliedLayerRequestKeyRef.current = 0
     lastAppliedLayerDeleteRequestKeyRef.current = 0
     suppressReflowCheckRef.current = true
-    suppressImageModuleRemapRef.current = true
-    previousImageGridRef.current = null
-    previousImageRowStartsRef.current = null
+    resetImageTransientState()
     setDragState(null)
     setHoverState(null)
     setHoverImageKey(null)
     setEditorState(null)
-    setImageEditorState(null)
-  }, [historyResetToken, resetHistory, setDragState])
+  }, [historyResetToken, resetHistory, resetImageTransientState, setDragState])
 
   useEffect(() => {
     if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
@@ -1541,6 +1435,7 @@ export const GridPreview = memo(function GridPreview({
     paragraphColorResetToken,
     recordHistoryBeforeChange,
     setBlockTextColors,
+    setImageColors,
   ])
 
   const buildReflowPlannerInput = useCallback((
@@ -2114,81 +2009,6 @@ export const GridPreview = memo(function GridPreview({
     recordPerfMetric,
   })
 
-  useEffect(() => {
-    const currentGrid = { cols: result.settings.gridCols, rows: result.settings.gridRows }
-    const moduleHeights = resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height)
-    const currentRowStarts = buildAxisStarts(moduleHeights, result.grid.gridMarginVertical)
-      .map((value) => value / Math.max(0.0001, result.grid.gridUnit))
-    const maxBaselineRow = Math.max(
-      0,
-      Math.floor((result.pageSizePt.height - result.grid.margins.top - result.grid.margins.bottom) / result.grid.gridUnit),
-    )
-
-    if (!previousImageGridRef.current) {
-      previousImageGridRef.current = currentGrid
-      previousImageRowStartsRef.current = currentRowStarts
-      return
-    }
-
-    if (suppressImageModuleRemapRef.current) {
-      suppressImageModuleRemapRef.current = false
-      previousImageGridRef.current = currentGrid
-      previousImageRowStartsRef.current = currentRowStarts
-      return
-    }
-
-    const previousGrid = previousImageGridRef.current
-    const previousRowStarts = previousImageRowStartsRef.current ?? currentRowStarts
-    const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    const rowStartsChanged = (
-      previousRowStarts.length !== currentRowStarts.length
-      || previousRowStarts.some((value, index) => Math.abs(value - (currentRowStarts[index] ?? value)) > 0.0001)
-    )
-    if (!gridChanged && !rowStartsChanged) return
-
-    const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
-    if (!hasGridReduction && rowStartsChanged) {
-      setImageModulePositions((prev) => {
-        let changed = false
-        const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
-        for (const key of imageOrder) {
-          const position = prev[key]
-          if (!position) continue
-          const span = Math.max(1, Math.min(currentGrid.cols, imageColumnSpans[key] ?? 1))
-          const minCol = -Math.max(0, span - 1)
-          const maxCol = Math.max(0, currentGrid.cols - 1)
-          const moduleIndex = findNearestAxisIndex(previousRowStarts, position.row)
-          const previousStart = previousRowStarts[moduleIndex] ?? 0
-          const targetStart = currentRowStarts[Math.min(moduleIndex, Math.max(0, currentRowStarts.length - 1))] ?? 0
-          const baselineOffset = position.row - previousStart
-          const remappedRow = targetStart + baselineOffset
-          const clampedRow = Math.max(-maxBaselineRow, Math.min(maxBaselineRow, remappedRow))
-          const clampedCol = Math.max(minCol, Math.min(maxCol, position.col))
-          if (Math.abs(clampedRow - position.row) > 0.0001 || clampedCol !== position.col) {
-            next[key] = { col: clampedCol, row: clampedRow }
-            changed = true
-          }
-        }
-        return changed ? next : prev
-      })
-    }
-
-    previousImageGridRef.current = currentGrid
-    previousImageRowStartsRef.current = currentRowStarts
-  }, [
-    imageColumnSpans,
-    imageOrder,
-    result.grid.gridMarginVertical,
-    result.grid.gridUnit,
-    result.grid.margins.bottom,
-    result.grid.margins.top,
-    result.module.heights,
-    result.module.height,
-    result.pageSizePt.height,
-    result.settings.gridCols,
-    result.settings.gridRows,
-  ])
-
   const {
     closeEditor,
     saveEditor,
@@ -2278,75 +2098,17 @@ export const GridPreview = memo(function GridPreview({
     applyEditorDraftLive(editorState)
   }, [applyEditorDraftLive, editorState])
 
-  useEffect(() => {
-    if (!imageEditorState) {
-      lastLiveImageEditorSignatureRef.current = ""
-      return
-    }
-    const signature = [
-      imageEditorState.target,
-      imageEditorState.draftColumns,
-      imageEditorState.draftRows,
-      imageEditorState.draftColor,
-    ].join("|")
-    if (lastLiveImageEditorSignatureRef.current === signature) return
-    lastLiveImageEditorSignatureRef.current = signature
-
-    const key = imageEditorState.target
-    const columns = Math.max(1, Math.min(result.settings.gridCols, imageEditorState.draftColumns))
-    const rows = Math.max(1, Math.min(result.settings.gridRows, imageEditorState.draftRows))
-    const color = getImageSchemeColorReference(imageEditorState.draftColor, imageColorScheme)
-    const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
-    const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
-
-    setImageColumnSpans((prev) => (
-      prev[key] === columns
-        ? prev
-        : { ...prev, [key]: columns }
-    ))
-    setImageRowSpans((prev) => (
-      prev[key] === rows
-        ? prev
-        : { ...prev, [key]: rows }
-    ))
-    setImageColors((prev) => (
-      prev[key] === color
-        ? prev
-        : { ...prev, [key]: color }
-    ))
-    setImageModulePositions((prev) => {
-      const current = prev[key]
-      if (current && current.col === clampedPosition.col && current.row === clampedPosition.row) {
-        return prev
-      }
-      return { ...prev, [key]: clampedPosition }
-    })
-  }, [
-    clampImageBaselinePosition,
-    defaultImageColor,
-    imageColorScheme,
-    imageEditorState,
-    imageModulePositions,
-    result.settings.gridCols,
-    result.settings.gridRows,
-  ])
-
   const openImageEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
     setEditorState(null)
     if (options?.recordHistory !== false) {
       recordHistoryBeforeChange()
     }
-    setImageEditorState({
-      target: key,
-      draftColumns: getImageSpan(key),
-      draftRows: getImageRows(key),
-      draftColor: getImageColor(key),
-    })
-  }, [getImageColor, getImageRows, getImageSpan, recordHistoryBeforeChange])
+    openImageEditorState(key)
+  }, [openImageEditorState, recordHistoryBeforeChange])
 
   const closeImageEditor = useCallback(() => {
-    setImageEditorState(null)
-  }, [])
+    closeImageEditorState()
+  }, [closeImageEditorState])
 
   const openTextEditor = useCallback((key: BlockId, options?: { recordHistory?: boolean }) => {
     setImageEditorState(null)
@@ -2393,14 +2155,10 @@ export const GridPreview = memo(function GridPreview({
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     recordHistoryBeforeChange,
+    setImageEditorState,
     styleAssignments,
     textContent,
   ])
-
-  const handleImageColorSchemeChange = useCallback((nextScheme: ImageColorSchemeId) => {
-    setImageColors((prev) => normalizeImageColorReferences(prev, imageColorScheme))
-    onImageColorSchemeChange?.(nextScheme)
-  }, [imageColorScheme, normalizeImageColorReferences, onImageColorSchemeChange])
 
   useEffect(() => {
     if (!requestedLayerEditorTarget || requestedLayerEditorToken === 0) return
@@ -2436,22 +2194,6 @@ export const GridPreview = memo(function GridPreview({
   ])
 
   useEffect(() => {
-    const previousScheme = previousImageColorSchemeRef.current
-    if (previousScheme === imageColorScheme) return
-    setImageColors((prev) => normalizeImageColorReferences(prev, previousScheme))
-    previousImageColorSchemeRef.current = imageColorScheme
-  }, [imageColorScheme, normalizeImageColorReferences])
-
-  useEffect(() => {
-    setImageEditorState((prev) => {
-      if (!prev) return prev
-      const nextColor = resolveImageSchemeColor(imageColors[prev.target], imageColorScheme)
-      if (prev.draftColor.toLowerCase() === nextColor.toLowerCase()) return prev
-      return { ...prev, draftColor: nextColor }
-    })
-  }, [defaultImageColor, imageColorScheme, imageColors])
-
-  useEffect(() => {
     if (imageEditorState?.target) {
       onSelectLayer?.(imageEditorState.target)
       return
@@ -2463,31 +2205,9 @@ export const GridPreview = memo(function GridPreview({
 
   const deleteImagePlaceholder = useCallback(() => {
     if (!imageEditorState) return
-    const key = imageEditorState.target
     recordHistoryBeforeChange()
-    setImageOrder((prev) => prev.filter((item) => item !== key))
-    setImageModulePositions((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setImageColumnSpans((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setImageRowSpans((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setImageColors((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setImageEditorState(null)
-  }, [imageEditorState, recordHistoryBeforeChange])
+    deleteImagePlaceholderState()
+  }, [deleteImagePlaceholderState, imageEditorState, recordHistoryBeforeChange])
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
@@ -2555,11 +2275,7 @@ export const GridPreview = memo(function GridPreview({
     const newKey = getNextImagePlaceholderId()
     const snapped = clampImageModulePosition(rawPosition, 1, 1)
     recordHistoryBeforeChange()
-    setImageOrder((prev) => [...prev, newKey])
-    setImageModulePositions((prev) => ({ ...prev, [newKey]: snapped }))
-    setImageColumnSpans((prev) => ({ ...prev, [newKey]: 1 }))
-    setImageRowSpans((prev) => ({ ...prev, [newKey]: 1 }))
-    setImageColors((prev) => ({ ...prev, [newKey]: getImageSchemeColorReference(defaultImageColor, imageColorScheme) }))
+    insertImagePlaceholder(newKey, { position: snapped })
     openImageEditor(newKey, { recordHistory: false })
   }, [
     canvasRef,
@@ -2569,13 +2285,13 @@ export const GridPreview = memo(function GridPreview({
     findTopmostImageAtPoint,
     getGridMetrics,
     handleTextCanvasDoubleClick,
+    insertImagePlaceholder,
     openImageEditor,
-    defaultImageColor,
-    imageColorScheme,
     recordHistoryBeforeChange,
     result.settings.gridCols,
     result.settings.gridRows,
     scale,
+    setImageEditorState,
     showImagePlaceholders,
     showTypography,
     toPagePoint,
@@ -2672,143 +2388,11 @@ export const GridPreview = memo(function GridPreview({
     }
   }, [])
 
-  useEffect(() => {
-    if (!onLayoutChange) {
-      if (onLayoutChangeDebounceRef.current !== null) {
-        window.clearTimeout(onLayoutChangeDebounceRef.current)
-        onLayoutChangeDebounceRef.current = null
-      }
-      pendingLayoutEmissionRef.current = null
-      return
-    }
-
-    const resolvedSpans = blockOrder.reduce((acc, key) => {
-      acc[key] = getBlockSpan(key)
-      return acc
-    }, {} as Record<BlockId, number>)
-    const resolvedAlignments = blockOrder.reduce((acc, key) => {
-      acc[key] = blockTextAlignments[key] ?? "left"
-      return acc
-    }, {} as Record<BlockId, TextAlignMode>)
-
-    pendingLayoutEmissionRef.current = {
-      blockOrder,
-      textContent,
-      blockTextEdited,
-      styleAssignments,
-      blockFontFamilies: { ...blockFontFamilies },
-      blockColumnSpans: resolvedSpans,
-      blockRowSpans: blockOrder.reduce((acc, key) => {
-        acc[key] = getBlockRows(key)
-        return acc
-      }, {} as Record<BlockId, number>),
-      blockTextAlignments: resolvedAlignments,
-      blockTextReflow: blockOrder.reduce((acc, key) => {
-        acc[key] = isTextReflowEnabled(key)
-        return acc
-      }, {} as Record<BlockId, boolean>),
-      blockSyllableDivision: blockOrder.reduce((acc, key) => {
-        acc[key] = isSyllableDivisionEnabled(key)
-        return acc
-      }, {} as Record<BlockId, boolean>),
-      blockBold: blockOrder.reduce((acc, key) => {
-        acc[key] = isBlockBold(key)
-        return acc
-      }, {} as Record<BlockId, boolean>),
-      blockItalic: blockOrder.reduce((acc, key) => {
-        acc[key] = isBlockItalic(key)
-        return acc
-      }, {} as Record<BlockId, boolean>),
-      blockRotations: blockOrder.reduce((acc, key) => {
-        acc[key] = getBlockRotation(key)
-        return acc
-      }, {} as Record<BlockId, number>),
-      blockCustomSizes: blockOrder.reduce((acc, key) => {
-        const styleKey = styleAssignments[key] ?? "body"
-        if (styleKey !== "fx") return acc
-        const raw = blockCustomSizes[key]
-        if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = clampFxSize(raw)
-        return acc
-      }, {} as Partial<Record<BlockId, number>>),
-      blockCustomLeadings: blockOrder.reduce((acc, key) => {
-        const styleKey = styleAssignments[key] ?? "body"
-        if (styleKey !== "fx") return acc
-        const raw = blockCustomLeadings[key]
-        if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-        acc[key] = clampFxLeading(raw)
-        return acc
-      }, {} as Partial<Record<BlockId, number>>),
-      blockTextColors: blockOrder.reduce((acc, key) => {
-        const raw = blockTextColors[key]
-        if (!isImagePlaceholderColor(raw)) return acc
-        acc[key] = raw
-        return acc
-      }, {} as Partial<Record<BlockId, string>>),
-      blockModulePositions,
-      layerOrder: [...resolvedLayerOrder],
-      imageOrder: [...imageOrder],
-      imageModulePositions: { ...imageModulePositions },
-      imageColumnSpans: imageOrder.reduce((acc, key) => {
-        acc[key] = getImageSpan(key)
-        return acc
-      }, {} as Partial<Record<BlockId, number>>),
-      imageRowSpans: imageOrder.reduce((acc, key) => {
-        acc[key] = getImageRows(key)
-        return acc
-      }, {} as Partial<Record<BlockId, number>>),
-      imageColors: imageOrder.reduce((acc, key) => {
-        acc[key] = getImageColorReference(key)
-        return acc
-      }, {} as Partial<Record<BlockId, string>>),
-    }
-    if (onLayoutChangeDebounceRef.current !== null) {
-      window.clearTimeout(onLayoutChangeDebounceRef.current)
-    }
-    onLayoutChangeDebounceRef.current = window.setTimeout(() => {
-      if (!pendingLayoutEmissionRef.current) return
-      setLayoutEmissionVersion((prev) => prev + 1)
-      onLayoutChangeDebounceRef.current = null
-    }, LAYOUT_CHANGE_DEBOUNCE_MS)
-    return () => {
-      if (onLayoutChangeDebounceRef.current !== null) {
-        window.clearTimeout(onLayoutChangeDebounceRef.current)
-        onLayoutChangeDebounceRef.current = null
-      }
-    }
-  }, [
-    blockFontFamilies,
-    blockCustomLeadings,
-    blockTextColors,
-    blockCustomSizes,
-    blockModulePositions,
-    blockOrder,
-    blockTextAlignments,
-    blockTextEdited,
-    getBlockRotation,
-    getBlockRows,
-    getBlockSpan,
-    getImageColorReference,
-    getImageRows,
-    getImageSpan,
-    imageColors,
-    imageModulePositions,
-    imageOrder,
-    isBlockBold,
-    isBlockItalic,
-    isSyllableDivisionEnabled,
-    isTextReflowEnabled,
+  usePreviewLayoutEmission({
+    buildSnapshot,
+    debounceMs: LAYOUT_CHANGE_DEBOUNCE_MS,
     onLayoutChange,
-    resolvedLayerOrder,
-    styleAssignments,
-    textContent,
-  ])
-
-  useEffect(() => {
-    if (!onLayoutChange || !pendingLayoutEmissionRef.current) return
-    onLayoutChange(pendingLayoutEmissionRef.current)
-    pendingLayoutEmissionRef.current = null
-  }, [layoutEmissionVersion, onLayoutChange])
+  })
 
   const pageWidthCss = result.pageSizePt.width * scale
   const pageHeightCss = result.pageSizePt.height * scale
