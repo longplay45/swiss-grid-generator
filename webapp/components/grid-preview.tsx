@@ -29,6 +29,7 @@ import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
+import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
 import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
 import { useBlockEditorActions } from "@/hooks/useBlockEditorActions"
@@ -36,7 +37,8 @@ import { useStateCommands } from "@/hooks/useStateCommands"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
-import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
+import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
+import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
@@ -110,34 +112,6 @@ type BlockRenderPlan = {
 }
 
 type ReflowPlan = PlannerReflowPlan
-type PerfMetricName = "drawMs" | "reflowMs" | "autofitMs"
-
-type PerfSnapshot = {
-  timestamp: number
-  sampleCount: number
-  p50: number
-  p95: number
-  avg: number
-}
-
-type PerfState = {
-  drawMs: number[]
-  reflowMs: number[]
-  autofitMs: number[]
-  lastLogAt: number
-}
-
-type PerfPayload = {
-  draw: PerfSnapshot | null
-  reflow: PerfSnapshot | null
-  autofit: PerfSnapshot | null
-}
-
-declare global {
-  interface Window {
-    __sggPerf?: PerfPayload
-  }
-}
 
 type ModulePosition = {
   col: number
@@ -173,20 +147,6 @@ type OverflowLinesByBlock = Partial<Record<BlockId, number>>
 type NoticeRequest = {
   title: string
   message: string
-}
-
-function computePerfSnapshot(values: number[]): PerfSnapshot | null {
-  if (!values.length) return null
-  const sorted = [...values].sort((a, b) => a - b)
-  const pick = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))]
-  const sum = sorted.reduce((acc, value) => acc + value, 0)
-  return {
-    timestamp: Date.now(),
-    sampleCount: sorted.length,
-    p50: pick(0.5),
-    p95: pick(0.95),
-    avg: sum / sorted.length,
-  }
 }
 
 const getDefaultTextContent = (): Record<BlockId, string> => (
@@ -242,14 +202,6 @@ function reconcileLayerOrder(
   }
 
   return next
-}
-
-function readPerfPayload(): PerfPayload | undefined {
-  return window.__sggPerf
-}
-
-function writePerfPayload(payload: PerfPayload) {
-  window.__sggPerf = payload
 }
 
 function createInitialBlockCollectionsState(): BlockCollectionsState {
@@ -418,20 +370,12 @@ export const GridPreview = memo(function GridPreview({
   const mouseMoveRafRef = useRef<number | null>(null)
   const lastLiveEditorSignatureRef = useRef("")
   const lastLiveImageEditorSignatureRef = useRef("")
-  const perfStateRef = useRef<PerfState>({
-    drawMs: [],
-    reflowMs: [],
-    autofitMs: [],
-    lastLogAt: 0,
-  })
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutEmissionVersion, setLayoutEmissionVersion] = useState(0)
-  const [showPerfOverlay, setShowPerfOverlay] = useState(false)
-  const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
   const [imageOrder, setImageOrder] = useState<BlockId[]>([])
@@ -532,23 +476,11 @@ export const GridPreview = memo(function GridPreview({
     setBlockCollectionField("blockModulePositions", next)
   }, [setBlockCollectionField])
 
-  const recordPerfMetric = useCallback((metric: PerfMetricName, valueMs: number) => {
-    if (!PERF_ENABLED || !Number.isFinite(valueMs)) return
-    const state = perfStateRef.current
-    const bucket = state[metric]
-    bucket.push(valueMs)
-    if (bucket.length > PERF_SAMPLE_LIMIT) bucket.shift()
-    const draw = computePerfSnapshot(state.drawMs)
-    const reflow = computePerfSnapshot(state.reflowMs)
-    const autofit = computePerfSnapshot(state.autofitMs)
-    const payload = { draw, reflow, autofit }
-    writePerfPayload(payload)
-    setPerfOverlay(payload)
-    const now = Date.now()
-    if (now - state.lastLogAt < PERF_LOG_INTERVAL_MS) return
-    state.lastLogAt = now
-    console.debug("[SGG perf]", payload)
-  }, [PERF_ENABLED, PERF_LOG_INTERVAL_MS, PERF_SAMPLE_LIMIT])
+  const { showPerfOverlay, perfOverlay, recordPerfMetric } = usePreviewPerf({
+    enabled: PERF_ENABLED,
+    logIntervalMs: PERF_LOG_INTERVAL_MS,
+    sampleLimit: PERF_SAMPLE_LIMIT,
+  })
 
   const handleOverflowLinesChange = useCallback((next: OverflowLinesByBlock) => {
     setOverflowLinesByBlock((prev) => {
@@ -561,30 +493,6 @@ export const GridPreview = memo(function GridPreview({
       return prev
     })
   }, [])
-
-  useEffect(() => {
-    if (!PERF_ENABLED) return
-    const readPerf = () => {
-      const perf = readPerfPayload()
-      if (!perf) return
-      setPerfOverlay(perf)
-    }
-    readPerf()
-    const timer = window.setInterval(readPerf, 500)
-    return () => window.clearInterval(timer)
-  }, [PERF_ENABLED])
-
-  useEffect(() => {
-    if (!PERF_ENABLED) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) return
-      if (event.key.toLowerCase() !== "p") return
-      event.preventDefault()
-      setShowPerfOverlay((prev) => !prev)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [PERF_ENABLED])
 
   const getBlockSpan = useCallback((key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, result.settings.gridCols)
@@ -1832,23 +1740,7 @@ export const GridPreview = memo(function GridPreview({
     }
 
     setBlockCollections((prev) => {
-      return {
-        ...prev,
-        blockOrder: prev.blockOrder.filter((item) => item !== key),
-        textContent: omitRequiredRecordKey(prev.textContent, key),
-        blockTextEdited: omitRequiredRecordKey(prev.blockTextEdited, key),
-        styleAssignments: omitRequiredRecordKey(prev.styleAssignments, key),
-        blockFontFamilies: omitOptionalRecordKey(prev.blockFontFamilies, key),
-        blockColumnSpans: omitRequiredRecordKey(prev.blockColumnSpans, key),
-        blockRowSpans: omitOptionalRecordKey(prev.blockRowSpans, key),
-        blockTextAlignments: omitRequiredRecordKey(prev.blockTextAlignments, key),
-        blockTextReflow: omitOptionalRecordKey(prev.blockTextReflow, key),
-        blockSyllableDivision: omitOptionalRecordKey(prev.blockSyllableDivision, key),
-        blockBold: omitOptionalRecordKey(prev.blockBold, key),
-        blockItalic: omitOptionalRecordKey(prev.blockItalic, key),
-        blockRotations: omitOptionalRecordKey(prev.blockRotations, key),
-        blockModulePositions: omitOptionalRecordKey(prev.blockModulePositions, key),
-      }
+      return removeTextLayerFromCollections(prev, key)
     })
 
     setBlockCustomSizes((prev) => omitOptionalRecordKey(prev, key))

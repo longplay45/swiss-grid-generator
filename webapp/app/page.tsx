@@ -29,7 +29,6 @@ import { ColorSchemePanel } from "@/components/settings/ColorSchemePanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { LayersPanel } from "@/components/sidebar/LayersPanel"
-import type { LayoutPreset } from "@/lib/presets"
 import {
   HELP_SECTION_BY_HEADER_ACTION,
   HELP_SECTION_BY_SETTINGS_SECTION,
@@ -43,8 +42,10 @@ import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
 import { clampRotation } from "@/lib/block-constraints"
+import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewCommands } from "@/hooks/usePreviewCommands"
-import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
+import { getPreviewLayoutSeed, type LoadedDocument } from "@/lib/document-session"
+import { removeLayerFromPreviewLayout } from "@/lib/preview-layer-state"
 import {
   isFontFamily,
   type FontFamily,
@@ -91,85 +92,11 @@ const GLOBAL_HISTORY_LIMIT = 150
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null
-type DocumentMetadata = {
-  title: string
-  description: string
-  author: string
-  createdAt?: string
-}
-type LoadedDocument<Layout> = {
-  uiSettings: Record<string, unknown>
-  previewLayout: Layout | null
-  metadata: DocumentMetadata
-}
 type HistoryDomain = "settings" | "preview"
 type NoticeState = {
   title: string
   message: string
 } | null
-
-function toNormalizedIsoDate(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined
-  const parsed = Date.parse(value)
-  if (Number.isNaN(parsed)) return undefined
-  return new Date(parsed).toISOString()
-}
-
-function toDocumentText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : ""
-}
-
-function extractDocumentMetadata(source: unknown): DocumentMetadata {
-  if (typeof source !== "object" || source === null) {
-    return { title: "", description: "", author: "" }
-  }
-  const payload = source as Record<string, unknown>
-  return {
-    title: toDocumentText(payload.title),
-    description: toDocumentText(payload.description),
-    author: toDocumentText(payload.author),
-    createdAt: toNormalizedIsoDate(payload.createdAt) ?? toNormalizedIsoDate(payload.exportedAt),
-  }
-}
-
-function toLoadedPreviewLayout(value: unknown): PreviewLayoutState | null {
-  return value && typeof value === "object" ? value as PreviewLayoutState : null
-}
-
-function parseLoadedDocument(source: unknown): LoadedDocument<PreviewLayoutState> {
-  if (typeof source !== "object" || source === null) {
-    throw new Error("Invalid layout JSON: expected an object payload.")
-  }
-  const payload = source as Record<string, unknown>
-  if (!payload.uiSettings || typeof payload.uiSettings !== "object") {
-    throw new Error("Invalid layout JSON: missing uiSettings.")
-  }
-
-  return {
-    uiSettings: payload.uiSettings as Record<string, unknown>,
-    previewLayout: toLoadedPreviewLayout(payload.previewLayout),
-    metadata: extractDocumentMetadata(payload),
-  }
-}
-
-function presetToLoadedDocument(preset: LayoutPreset): LoadedDocument<PreviewLayoutState> {
-  return {
-    uiSettings: preset.uiSettings,
-    previewLayout: preset.previewLayout ? preset.previewLayout as PreviewLayoutState : null,
-    metadata: {
-      title: preset.title ?? "",
-      description: preset.description ?? "",
-      author: preset.author ?? "",
-      createdAt: toNormalizedIsoDate(preset.createdAt),
-    },
-  }
-}
-
-function getPreviewLayoutSeed(layout: PreviewLayoutState | null): PreviewLayoutState {
-  if (layout) return layout
-  if (DEFAULT_PAGE_PREVIEW_LAYOUT) return DEFAULT_PAGE_PREVIEW_LAYOUT
-  throw new Error("Default preview layout is unavailable.")
-}
 
 // ─── Split UI state (Grid/Preview + Export) ───────────────────────────────
 
@@ -648,11 +575,6 @@ export default function Home() {
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
-  const [documentMetadata, setDocumentMetadata] = useState<DocumentMetadata>({
-    title: "",
-    description: "",
-    author: "",
-  })
   const undoDomainsRef = useRef<HistoryDomain[]>([])
   const redoDomainsRef = useRef<HistoryDomain[]>([])
 
@@ -914,19 +836,33 @@ export default function Home() {
     }
   }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNext])
 
-  const applyLoadedDocument = useCallback((document: LoadedDocument<PreviewLayoutState>) => {
+  const handleApplyLoadedDocument = useCallback((document: LoadedDocument<PreviewLayoutState>) => {
     const actions = buildUiActionsFromLoadedSettings(document.uiSettings, collapsed)
     applyLoadedUiActions(actions)
     setPreviewLayout(document.previewLayout)
     loadPreviewLayout(document.previewLayout)
     clearLayerRequests()
     setSelectedLayerKey(null)
-    setDocumentMetadata(document.metadata)
     setDocumentHistoryResetNonce((nonce) => nonce + 1)
     setCanUndoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
   }, [applyLoadedUiActions, clearLayerRequests, collapsed, loadPreviewLayout])
+
+  const {
+    documentMetadata,
+    setDocumentMetadata,
+    loadDocumentFromInput: loadLayout,
+    loadPresetDocument: handleLoadPresetLayout,
+  } = useDocumentController<PreviewLayoutState>({
+    onApplyDocument: handleApplyLoadedDocument,
+    onLoadFailed: () => {
+      handleRequestNotice({
+        title: "Load Failed",
+        message: "Could not load layout JSON.",
+      })
+    },
+  })
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNext()
@@ -1006,7 +942,7 @@ export default function Home() {
 
   const handleLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
     const nextPreviewLayout = {
-      ...getPreviewLayoutSeed(previewLayout),
+      ...getPreviewLayoutSeed(previewLayout, DEFAULT_PAGE_PREVIEW_LAYOUT),
       layerOrder: [...nextLayerOrder],
     }
     setPreviewLayout(nextPreviewLayout)
@@ -1016,40 +952,7 @@ export default function Home() {
   const handleDeleteLayer = useCallback((target: string, kind: "text" | "image") => {
     setPreviewLayout((current) => {
       if (!current) return current
-
-      if (kind === "image") {
-        return {
-          ...current,
-          layerOrder: (current.layerOrder ?? []).filter((key) => key !== target),
-          imageOrder: (current.imageOrder ?? []).filter((key) => key !== target),
-          imageModulePositions: omitOptionalRecordKey(current.imageModulePositions, target),
-          imageColumnSpans: omitOptionalRecordKey(current.imageColumnSpans, target),
-          imageRowSpans: omitOptionalRecordKey(current.imageRowSpans, target),
-          imageColors: omitOptionalRecordKey(current.imageColors, target),
-        }
-      }
-
-      return {
-        ...current,
-        blockOrder: current.blockOrder.filter((key) => key !== target),
-        textContent: omitRequiredRecordKey(current.textContent, target),
-        blockTextEdited: omitRequiredRecordKey(current.blockTextEdited, target),
-        styleAssignments: omitRequiredRecordKey(current.styleAssignments, target),
-        blockFontFamilies: omitOptionalRecordKey(current.blockFontFamilies, target),
-        blockColumnSpans: omitRequiredRecordKey(current.blockColumnSpans, target),
-        blockRowSpans: omitOptionalRecordKey(current.blockRowSpans, target),
-        blockTextAlignments: omitRequiredRecordKey(current.blockTextAlignments, target),
-        blockTextReflow: omitOptionalRecordKey(current.blockTextReflow, target),
-        blockSyllableDivision: omitOptionalRecordKey(current.blockSyllableDivision, target),
-        blockBold: omitOptionalRecordKey(current.blockBold, target),
-        blockItalic: omitOptionalRecordKey(current.blockItalic, target),
-        blockRotations: omitOptionalRecordKey(current.blockRotations, target),
-        blockCustomSizes: omitOptionalRecordKey(current.blockCustomSizes, target),
-        blockCustomLeadings: omitOptionalRecordKey(current.blockCustomLeadings, target),
-        blockTextColors: omitOptionalRecordKey(current.blockTextColors, target),
-        blockModulePositions: omitOptionalRecordKey(current.blockModulePositions, target),
-        layerOrder: (current.layerOrder ?? []).filter((key) => key !== target),
-      } as PreviewLayoutState
+      return removeLayerFromPreviewLayout(current, target, kind)
     })
 
     requestLayerDelete(target)
@@ -1188,6 +1091,7 @@ export default function Home() {
       defaultPdfFilename,
       defaultJsonFilename,
       documentMetadata,
+      setDocumentMetadata,
       buildUiSettingsPayload,
     ],
   )
@@ -1283,29 +1187,6 @@ export default function Home() {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [showPresetsBrowser])
-
-  // ─── Load JSON layout ─────────────────────────────────────────────────────
-
-  const loadLayout = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        applyLoadedDocument(parseLoadedDocument(JSON.parse(String(reader.result))))
-      } catch (error) {
-        console.error(error)
-        handleRequestNotice({
-          title: "Load Failed",
-          message: "Could not load layout JSON.",
-        })
-      } finally {
-        event.target.value = ""
-      }
-    }
-    reader.readAsText(file)
-  }, [applyLoadedDocument, handleRequestNotice])
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1409,10 +1290,6 @@ export default function Home() {
   const handleCloseSidebar = useCallback(() => {
     openSidebarPanel(null)
   }, [openSidebarPanel])
-
-  const handleLoadPresetLayout = useCallback((preset: LayoutPreset) => {
-    applyLoadedDocument(presetToLoadedDocument(preset))
-  }, [applyLoadedDocument])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
