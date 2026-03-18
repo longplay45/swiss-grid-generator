@@ -2,7 +2,7 @@ import type { PreviewLayoutState } from "@/lib/types/preview-layout"
 
 import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
 
-type TextLayerCollections<
+export type TextLayerCollections<
   Key extends string,
   StyleKey extends string,
   Family extends string,

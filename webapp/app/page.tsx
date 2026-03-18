@@ -33,7 +33,6 @@ import {
   HELP_SECTION_BY_HEADER_ACTION,
   HELP_SECTION_BY_SETTINGS_SECTION,
 } from "@/lib/help-registry"
-import type { HelpSectionId } from "@/lib/help-registry"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
@@ -44,6 +43,8 @@ import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-
 import { clampRotation } from "@/lib/block-constraints"
 import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewCommands } from "@/hooks/usePreviewCommands"
+import { useShellKeyboardShortcuts } from "@/hooks/useShellKeyboardShortcuts"
+import { useSidebarPanels } from "@/hooks/useSidebarPanels"
 import { getPreviewLayoutSeed, type LoadedDocument } from "@/lib/document-session"
 import { removeLayerFromPreviewLayout } from "@/lib/preview-layer-state"
 import {
@@ -559,11 +560,6 @@ export default function Home() {
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
-  const [activeSidebarPanel, setActiveSidebarPanel] = useState<
-    "settings" | "help" | "imprint" | "layers" | null
-  >(null)
-  const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
-  const [activeHelpSectionId, setActiveHelpSectionId] = useState<HelpSectionId | null>(null)
   const [canUndoPreview, setCanUndoPreview] = useState(false)
   const [previewUndoNonce, setPreviewUndoNonce] = useState(0)
   const [previewRedoNonce, setPreviewRedoNonce] = useState(0)
@@ -571,7 +567,6 @@ export default function Home() {
   const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
-  const showSectionHelpIcons = activeSidebarPanel === "help"
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [documentHistoryResetNonce, setDocumentHistoryResetNonce] = useState(0)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
@@ -586,20 +581,22 @@ export default function Home() {
     redoDomainsRef.current = redoDomains
   }, [redoDomains])
 
-  useEffect(() => {
-    if (showPresetsBrowser) {
-      setActiveSidebarPanel(null)
-      dispatch({ type: "SET", key: "showLayers", value: false })
-      return
-    }
-    if (showLayers && activeSidebarPanel !== "layers") {
-      setActiveSidebarPanel("layers")
-      return
-    }
-    if (!showLayers && activeSidebarPanel === "layers") {
-      setActiveSidebarPanel(null)
-    }
-  }, [activeSidebarPanel, dispatch, showLayers, showPresetsBrowser])
+  const {
+    activeSidebarPanel,
+    activeHelpSectionId,
+    showPresetsBrowser,
+    showSectionHelpIcons,
+    setActiveHelpSectionId,
+    setShowPresetsBrowser,
+    openSidebarPanel,
+    closeSidebarPanel,
+    openHelpSection,
+    toggleHelpPanel,
+    toggleLayersPanel,
+  } = useSidebarPanels({
+    showLayers,
+    onShowLayersChange: (next) => dispatch({ type: "SET", key: "showLayers", value: next }),
+  })
 
   useEffect(() => {
     if (!selectedLayerKey || !previewLayout) return
@@ -847,7 +844,7 @@ export default function Home() {
     setCanUndoPreview(false)
     setShowPresetsBrowser(false)
     isDirtyRef.current = false
-  }, [applyLoadedUiActions, clearLayerRequests, collapsed, loadPreviewLayout])
+  }, [applyLoadedUiActions, clearLayerRequests, collapsed, loadPreviewLayout, setShowPresetsBrowser])
 
   const {
     documentMetadata,
@@ -903,42 +900,12 @@ export default function Home() {
   const handleSectionHelpNavigate = useCallback((key: SectionKey) => {
     const targetSectionId = HELP_SECTION_BY_SETTINGS_SECTION[key]
     setActiveHelpSectionId(targetSectionId)
-  }, [])
+  }, [setActiveHelpSectionId])
   const handleHeaderHelpNavigate = useCallback((actionKey: string) => {
     const targetSectionId = HELP_SECTION_BY_HEADER_ACTION[actionKey]
     if (!targetSectionId) return
     setActiveHelpSectionId(targetSectionId)
-  }, [])
-
-  const openSidebarPanel = useCallback((panel: "settings" | "help" | "imprint" | "layers" | null) => {
-    if (showPresetsBrowser && panel !== null) return
-    setActiveSidebarPanel(panel)
-    dispatch({ type: "SET", key: "showLayers", value: panel === "layers" })
-  }, [dispatch, showPresetsBrowser])
-
-  const handlePreviewOpenHelpSection = useCallback((sectionId: HelpSectionId) => {
-    setActiveHelpSectionId(sectionId)
-    openSidebarPanel("help")
-  }, [openSidebarPanel])
-
-  const toggleHelpPanelFromHeader = useCallback(() => {
-    if (showPresetsBrowser) return
-    setActiveSidebarPanel((prev) => {
-      const next = prev === "help" ? null : "help"
-      dispatch({ type: "SET", key: "showLayers", value: false })
-      setActiveHelpSectionId(null)
-      return next
-    })
-  }, [dispatch, showPresetsBrowser])
-
-  const toggleLayersPanelFromHeader = useCallback(() => {
-    if (showPresetsBrowser) return
-    setActiveSidebarPanel((prev) => {
-      const next = prev === "layers" ? null : "layers"
-      dispatch({ type: "SET", key: "showLayers", value: next === "layers" })
-      return next
-    })
-  }, [dispatch, showPresetsBrowser])
+  }, [setActiveHelpSectionId])
 
   const handleLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
     const nextPreviewLayout = {
@@ -1098,95 +1065,28 @@ export default function Home() {
 
   const exportActions = useExportActions(exportActionsContext)
 
-  // Global keyboard shortcuts for preview-header actions
-  useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null): boolean => {
-      if (!(target instanceof HTMLElement)) return false
-      const tag = target.tagName
-      return target.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey)) return
-      const key = event.key.toLowerCase()
-      const shifted = event.shiftKey
-      const alted = event.altKey
-      const editable = isEditableTarget(event.target)
-      const shortcut = PREVIEW_HEADER_SHORTCUTS.find((item) =>
-        item.bindings.some(
-          (binding) =>
-            binding.key === key
-            && (binding.shift ?? false) === shifted
-            && (binding.alt ?? false) === alted,
-        ),
-      )
-      if (!shortcut || editable) return
-
-      event.preventDefault()
-      switch (shortcut.id) {
-        case "load_json":
-          loadFileInputRef.current?.click()
-          return
-        case "save_json":
-          exportActions.openSaveDialog()
-          return
-        case "export_pdf":
-          exportActions.openExportDialog()
-          return
-        case "undo":
-          if (canUndo) undoAny()
-          return
-        case "redo":
-          if (canRedo) redoAny()
-          return
-        case "toggle_dark_mode":
-          setIsDarkUi((prev) => !prev)
-          return
-        case "toggle_baselines":
-          dispatch({ type: "TOGGLE", key: "showBaselines" })
-          return
-        case "toggle_margins":
-          dispatch({ type: "TOGGLE", key: "showMargins" })
-          return
-        case "toggle_modules":
-          dispatch({ type: "TOGGLE", key: "showModules" })
-          return
-        case "toggle_typography":
-          dispatch({ type: "TOGGLE", key: "showTypography" })
-          return
-        case "toggle_layers_panel":
-          toggleLayersPanelFromHeader()
-          return
-        case "toggle_rollover_info":
-          setShowRolloverInfo((prev) => !prev)
-          return
-        case "toggle_settings_panel":
-          openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings")
-          return
-        case "toggle_help_panel":
-          toggleHelpPanelFromHeader()
-          return
-        case "toggle_imprint_panel":
-          openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
-          return
-        case "toggle_example_panel":
-          setShowPresetsBrowser(true)
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [activeSidebarPanel, canRedo, canUndo, dispatch, exportActions, openSidebarPanel, redoAny, toggleHelpPanelFromHeader, toggleLayersPanelFromHeader, undoAny])
-
-  useEffect(() => {
-    if (!showPresetsBrowser) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return
-      event.preventDefault()
-      setShowPresetsBrowser(false)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [showPresetsBrowser])
+  useShellKeyboardShortcuts({
+    canUndo,
+    canRedo,
+    showPresetsBrowser,
+    onLoadJson: () => loadFileInputRef.current?.click(),
+    onSaveJson: exportActions.openSaveDialog,
+    onExportPdf: exportActions.openExportDialog,
+    onUndo: undoAny,
+    onRedo: redoAny,
+    onToggleDarkMode: () => setIsDarkUi((prev) => !prev),
+    onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
+    onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
+    onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
+    onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleLayersPanel: toggleLayersPanel,
+    onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
+    onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
+    onToggleHelpPanel: toggleHelpPanel,
+    onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
+    onOpenPresets: () => setShowPresetsBrowser(true),
+    onClosePresets: () => setShowPresetsBrowser(false),
+  })
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1252,10 +1152,10 @@ export default function Home() {
     onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
     onToggleImagePlaceholders: () => dispatch({ type: "TOGGLE", key: "showImagePlaceholders" }),
     onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
-    onToggleLayersPanel: toggleLayersPanelFromHeader,
+    onToggleLayersPanel: toggleLayersPanel,
     onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
     onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
-    onToggleHelpPanel: toggleHelpPanelFromHeader,
+    onToggleHelpPanel: toggleHelpPanel,
   })
 
   const renderHeaderAction = useCallback((action: HeaderAction) => {
@@ -1286,10 +1186,6 @@ export default function Home() {
       </div>
     )
   }, [handleHeaderHelpNavigate, showRolloverInfo, showSectionHelpIcons])
-
-  const handleCloseSidebar = useCallback(() => {
-    openSidebarPanel(null)
-  }, [openSidebarPanel])
 
   const settingsPanels = useMemo(() => (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -1508,7 +1404,7 @@ export default function Home() {
               onHistoryRecord={handlePreviewHistoryRecord}
               onUndoRequest={undoAny}
               onRedoRequest={redoAny}
-              onOpenHelpSection={handlePreviewOpenHelpSection}
+              onOpenHelpSection={openHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
 	              onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
 	              onRequestGridRestore={handlePreviewGridRestore}
@@ -1542,7 +1438,7 @@ export default function Home() {
                   <button
                     type="button"
                     aria-label="Close settings panel"
-                    onClick={handleCloseSidebar}
+                    onClick={closeSidebarPanel}
                     className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
                   >
                     <X className="h-4 w-4" />
@@ -1560,7 +1456,7 @@ export default function Home() {
             {activeSidebarPanel === "help" && (
               <HelpPanel
                 isDarkMode={isDarkUi}
-                onClose={handleCloseSidebar}
+                onClose={closeSidebarPanel}
                 activeSectionId={activeHelpSectionId}
               />
             )}
@@ -1574,14 +1470,14 @@ export default function Home() {
                 onSelectLayer={setSelectedLayerKeyWithGrace}
                 onToggleEditor={handleToggleLayerEditor}
                 onDeleteLayer={handleDeleteLayer}
-                onClose={handleCloseSidebar}
+                onClose={closeSidebarPanel}
                 isDarkMode={isDarkUi}
               />
             )}
             {activeSidebarPanel === "imprint" && (
               <ImprintPanel
                 isDarkMode={isDarkUi}
-                onClose={handleCloseSidebar}
+                onClose={closeSidebarPanel}
               />
             )}
           </div>
@@ -1603,7 +1499,6 @@ export default function Home() {
     displayGroup,
     documentHistoryResetNonce,
     fileGroup,
-    handleCloseSidebar,
     handleDeleteLayer,
     handleHeaderHelpNavigate,
     handleLayerOrderChange,
@@ -1614,8 +1509,9 @@ export default function Home() {
 	    handlePreviewGridRestore,
 	    handlePreviewHistoryAvailabilityChange,
 	    handlePreviewHistoryRecord,
-	    handlePreviewOpenHelpSection,
 	    handleRequestNotice,
+    closeSidebarPanel,
+    openHelpSection,
 	    paragraphColorResetNonce,
     previewRedoNonce,
     previewLayout,

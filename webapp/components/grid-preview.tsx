@@ -28,7 +28,9 @@ import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
+import { useCloseEditorsOnOutsidePointer } from "@/hooks/useCloseEditorsOnOutsidePointer"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
+import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
 import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
@@ -37,8 +39,6 @@ import { useStateCommands } from "@/hooks/useStateCommands"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
-import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
-import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
@@ -1726,38 +1726,25 @@ export const GridPreview = memo(function GridPreview({
     recordHistoryBeforeChange()
     setLayerOrder(nextLayerOrder)
   }, [blockOrder, imageOrder, layerOrder, recordHistoryBeforeChange, requestedLayerOrder, requestedLayerOrderToken])
-
-  const deleteLayerByKey = useCallback((key: BlockId) => {
-    if (imageOrder.includes(key)) {
-      setImageOrder((prev) => prev.filter((item) => item !== key))
-      setImageModulePositions((prev) => omitOptionalRecordKey(prev, key))
-      setImageColumnSpans((prev) => omitOptionalRecordKey(prev, key))
-      setImageRowSpans((prev) => omitOptionalRecordKey(prev, key))
-      setImageColors((prev) => omitOptionalRecordKey(prev, key))
-      setLayerOrder((prev) => prev.filter((item) => item !== key))
-      setImageEditorState((prev) => (prev?.target === key ? null : prev))
-      return
-    }
-
-    setBlockCollections((prev) => {
-      return removeTextLayerFromCollections(prev, key)
-    })
-
-    setBlockCustomSizes((prev) => omitOptionalRecordKey(prev, key))
-    setBlockCustomLeadings((prev) => omitOptionalRecordKey(prev, key))
-    setBlockTextColors((prev) => omitOptionalRecordKey(prev, key))
-    setLayerOrder((prev) => prev.filter((item) => item !== key))
-
-    setEditorState((prev) => (prev?.target === key ? null : prev))
-  }, [imageOrder, setBlockCollections])
-
-  useEffect(() => {
-    if (!requestedLayerDeleteTarget || requestedLayerDeleteToken === 0) return
-    if (lastAppliedLayerDeleteRequestKeyRef.current === requestedLayerDeleteToken) return
-    lastAppliedLayerDeleteRequestKeyRef.current = requestedLayerDeleteToken
-    recordHistoryBeforeChange()
-    deleteLayerByKey(requestedLayerDeleteTarget)
-  }, [deleteLayerByKey, recordHistoryBeforeChange, requestedLayerDeleteToken, requestedLayerDeleteTarget])
+  usePreviewLayerDelete({
+    imageOrder,
+    requestedLayerDeleteTarget,
+    requestedLayerDeleteToken,
+    lastAppliedLayerDeleteRequestKeyRef,
+    recordHistoryBeforeChange,
+    setImageOrder,
+    setImageModulePositions,
+    setImageColumnSpans,
+    setImageRowSpans,
+    setImageColors,
+    setLayerOrder,
+    setImageEditorState,
+    setBlockCollections,
+    setBlockCustomSizes,
+    setBlockCustomLeadings,
+    setBlockTextColors,
+    setEditorState,
+  })
 
   const handlePreviewPointerDown = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
     onSelectLayer?.(resolveSelectedLayerAtClientPoint(event.clientX, event.clientY))
@@ -2616,26 +2603,11 @@ export const GridPreview = memo(function GridPreview({
     undo: onUndoRequest ?? undo,
     redo: onRedoRequest ?? redo,
   })
-
-  useEffect(() => {
-    if (!editorState && !imageEditorState) return
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target
-      if (!(target instanceof Element)) {
-        closeAnyEditor()
-        return
-      }
-      if (textareaRef.current?.contains(target)) return
-      if (target.closest('[data-inline-editor-layer="true"]')) return
-      if (target.closest('[data-text-editor-panel="true"]')) return
-      if (target.closest('[data-image-editor-panel="true"]')) return
-      if (target.closest('[data-text-editor-select-content="true"]')) return
-      if (target.closest('[data-preview-header-action="help"]')) return
-      closeAnyEditor()
-    }
-    window.addEventListener("pointerdown", handlePointerDown, true)
-    return () => window.removeEventListener("pointerdown", handlePointerDown, true)
-  }, [closeAnyEditor, editorState, imageEditorState])
+  useCloseEditorsOnOutsidePointer({
+    isEditorOpen: Boolean(editorState || imageEditorState),
+    textareaRef,
+    onCloseEditors: closeAnyEditor,
+  })
 
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
     mouseMoveRafRef.current = null
