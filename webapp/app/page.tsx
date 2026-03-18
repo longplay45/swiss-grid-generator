@@ -14,7 +14,7 @@ import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
 import { ControlSidebar } from "@/components/layout/ControlSidebar"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { formatValue } from "@/lib/units"
-import { useSettingsHistory, SECTION_KEYS } from "@/hooks/useSettingsHistory"
+import { SECTION_KEYS } from "@/hooks/useSettingsHistory"
 import type { UiSettingsSnapshot, SectionKey } from "@/hooks/useSettingsHistory"
 import { useExportActions } from "@/hooks/useExportActions"
 import { useHeaderActions } from "@/hooks/useHeaderActions"
@@ -37,6 +37,7 @@ import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewDocumentState } from "@/hooks/usePreviewDocumentState"
 import { useShellKeyboardShortcuts } from "@/hooks/useShellKeyboardShortcuts"
 import { useSidebarPanels } from "@/hooks/useSidebarPanels"
+import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { type LoadedDocument } from "@/lib/document-session"
 import {
   isFontFamily,
@@ -79,11 +80,9 @@ const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
-const GLOBAL_HISTORY_LIMIT = 150
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null
-type HistoryDomain = "settings" | "preview"
 type NoticeState = {
   title: string
   message: string
@@ -473,7 +472,6 @@ function buildUiActionsFromLoadedSettings(
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
-  const isDirtyRef = useRef(false)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
@@ -532,22 +530,10 @@ export default function Home() {
   const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
   const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
 
-  const [undoDomains, setUndoDomains] = useState<HistoryDomain[]>([])
-  const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
   const [isDarkUi, setIsDarkUi] = useState(false)
   const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
-  const undoDomainsRef = useRef<HistoryDomain[]>([])
-  const redoDomainsRef = useRef<HistoryDomain[]>([])
-
-  useEffect(() => {
-    undoDomainsRef.current = undoDomains
-  }, [undoDomains])
-
-  useEffect(() => {
-    redoDomainsRef.current = redoDomains
-  }, [redoDomains])
 
   const {
     activeSidebarPanel,
@@ -590,19 +576,6 @@ export default function Home() {
     activeSidebarPanel,
     defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
   })
-
-  const recordHistoryDomain = useCallback((domain: HistoryDomain) => {
-    setUndoDomains((prev) => {
-      const next = [...prev, domain]
-      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
-    })
-    setRedoDomains([])
-  }, [])
-
-  const resetHistoryDomains = useCallback(() => {
-    setUndoDomains([])
-    setRedoDomains([])
-  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -733,55 +706,25 @@ export default function Home() {
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
-
-  const history = useSettingsHistory(buildUiSnapshot, {
-    onRecordHistory: () => recordHistoryDomain("settings"),
-  })
-  const { suppressNext, setCurrentSnapshot, reset: resetSettingsHistory } = history
-
-  const applyUiSnapshot = useCallback(
-    (snapshot: UiSettingsSnapshot) => {
-      suppressNext()
+  const {
+    suppressNextSettingsHistory,
+    resetSettingsHistory,
+    resetHistoryDomains,
+    canUndo,
+    canRedo,
+    undoAny,
+    redoAny,
+    handlePreviewHistoryRecord,
+    markClean,
+  } = useWorkspaceHistory({
+    buildUiSnapshot,
+    onApplyUiSnapshot: (snapshot) => {
       dispatch({ type: "APPLY_SNAPSHOT", snapshot })
-      setCurrentSnapshot(snapshot)
     },
-    [dispatch, suppressNext, setCurrentSnapshot],
-  )
-
-  const canUndo = undoDomains.length > 0
-  const canRedo = redoDomains.length > 0
-
-  const undoAny = useCallback(() => {
-    const domain = undoDomainsRef.current[undoDomainsRef.current.length - 1]
-    if (!domain) return
-
-    if (domain === "settings") history.undo(applyUiSnapshot)
-    else requestPreviewUndo()
-
-    setUndoDomains((prev) => prev.slice(0, -1))
-    setRedoDomains((prev) => {
-      const next = [...prev, domain]
-      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
-    })
-  }, [applyUiSnapshot, history, requestPreviewUndo])
-
-  const redoAny = useCallback(() => {
-    const domain = redoDomainsRef.current[redoDomainsRef.current.length - 1]
-    if (!domain) return
-
-    if (domain === "settings") history.redo(applyUiSnapshot)
-    else requestPreviewRedo()
-
-    setRedoDomains((prev) => prev.slice(0, -1))
-    setUndoDomains((prev) => {
-      const next = [...prev, domain]
-      return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
-    })
-  }, [applyUiSnapshot, history, requestPreviewRedo])
-
-  const handlePreviewHistoryRecord = useCallback(() => {
-    recordHistoryDomain("preview")
-  }, [recordHistoryDomain])
+    canUndoPreview,
+    requestPreviewUndo,
+    requestPreviewRedo,
+  })
 
   const applyLoadedUiActions = useCallback((actions: UiAction[]) => {
     const nextGridUi = actions.reduce(gridUiReducer, gridUi)
@@ -790,18 +733,18 @@ export default function Home() {
     resetSettingsHistory(nextSnapshot)
     resetHistoryDomains()
     if (actions.length > 0) {
-      suppressNext()
+      suppressNextSettingsHistory()
       dispatch({ type: "BATCH", actions })
     }
-  }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNext])
+  }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNextSettingsHistory])
 
   const handleApplyLoadedDocument = useCallback((document: LoadedDocument<PreviewLayoutState>) => {
     const actions = buildUiActionsFromLoadedSettings(document.uiSettings, collapsed)
     applyLoadedUiActions(actions)
     applyLoadedPreviewLayout(document.previewLayout)
     setShowPresetsBrowser(false)
-    isDirtyRef.current = false
-  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, setShowPresetsBrowser])
+    markClean()
+  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, markClean, setShowPresetsBrowser])
 
   const {
     documentMetadata,
@@ -819,12 +762,12 @@ export default function Home() {
   })
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
-    suppressNext()
+    suppressNextSettingsHistory()
     dispatch({ type: "BATCH", actions: [
       { type: "SET", key: "gridCols", value: cols },
       { type: "SET", key: "gridRows", value: rows },
     ] })
-  }, [dispatch, suppressNext])
+  }, [dispatch, suppressNextSettingsHistory])
 
   // ─── Section collapse helpers ─────────────────────────────────────────────
 
@@ -868,24 +811,6 @@ export default function Home() {
     return () => {
       if (headerClickTimeoutRef.current !== null) window.clearTimeout(headerClickTimeoutRef.current)
     }
-  }, [])
-
-  // Mark dirty whenever the settings or layout history accumulate unsaved changes
-  useEffect(() => {
-    if (history.settingsPast.length > 0 || canUndoPreview) {
-      isDirtyRef.current = true
-    }
-  }, [history.settingsPast.length, canUndoPreview])
-
-  // Warn before reload / tab close when there are unsaved edits
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isDirtyRef.current) return
-      e.preventDefault()
-      e.returnValue = ""
-    }
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [])
 
   useEffect(() => {
@@ -1047,8 +972,8 @@ export default function Home() {
 
   const handleConfirmSaveJSON = useCallback(() => {
     exportActions.confirmSaveJSON()
-    isDirtyRef.current = false
-  }, [exportActions])
+    markClean()
+  }, [exportActions, markClean])
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
