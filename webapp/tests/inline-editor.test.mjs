@@ -3,7 +3,10 @@ import assert from "node:assert/strict"
 
 import {
   buildInlineEditorTransform,
+  computeInlineEditorCaret,
+  computeInlineEditorTextBox,
   computeSidebarWithEditorSession,
+  resolveInlineEditorLineMatches,
 } from "../lib/inline-editor.ts"
 
 test("buildInlineEditorTransform composes page and block rotations with explicit origins", () => {
@@ -32,4 +35,51 @@ test("computeSidebarWithEditorSession restores prior sidebar after text-editor c
   const closed = computeSidebarWithEditorSession(opened.nextPanel, opened.nextPreviousPanelBeforeEditor, false)
   assert.equal(closed.nextPanel, "help")
   assert.equal(closed.nextPreviousPanelBeforeEditor, "help")
+})
+
+test("computeInlineEditorTextBox preserves right-aligned editor width and adds optical hang room", () => {
+  const textBox = computeInlineEditorTextBox({
+    rect: { x: 40, y: 80, width: 200, height: 120 },
+    textAlign: "right",
+    commands: [
+      { text: "Right aligned.", x: 244, y: 140 },
+    ],
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.equal(textBox.left, 40)
+  assert.equal(textBox.width, 204)
+})
+
+test("resolveInlineEditorLineMatches keeps sequential line ranges for wrapped text", () => {
+  const lines = resolveInlineEditorLineMatches("Hello world\nSecond line", [
+    { text: "Hello world", x: 40, y: 120 },
+    { text: "Second line", x: 40, y: 144 },
+  ])
+
+  assert.deepEqual(lines.map((line) => [line.sourceStart, line.sourceEnd]), [
+    [0, 11],
+    [12, 23],
+  ])
+})
+
+test("computeInlineEditorCaret returns the visual caret at the right-aligned line end", () => {
+  const caret = computeInlineEditorCaret({
+    text: "Hello world",
+    textAlign: "right",
+    commands: [
+      { text: "Hello world", x: 240, y: 136 },
+    ],
+    selectionStart: 11,
+    textAscent: 10,
+    textBoxTop: 110,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(caret, {
+    x: 240,
+    top: 16,
+    height: 24,
+  })
 })
