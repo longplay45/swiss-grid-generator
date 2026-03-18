@@ -36,6 +36,7 @@ import { useStateCommands } from "@/hooks/useStateCommands"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
@@ -132,6 +133,12 @@ type PerfPayload = {
   autofit: PerfSnapshot | null
 }
 
+declare global {
+  interface Window {
+    __sggPerf?: PerfPayload
+  }
+}
+
 type ModulePosition = {
   col: number
   row: number
@@ -188,11 +195,13 @@ const getDefaultTextContent = (): Record<BlockId, string> => (
 const getDefaultStyleAssignments = (): Record<BlockId, TypographyStyleKey> => (
   Object.fromEntries(BASE_BLOCK_IDS.map((key) => [key, key])) as Record<BlockId, TypographyStyleKey>
 )
+let runtimeIdCounter = 0
 function createRuntimeId(prefix: "paragraph" | "image"): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `${prefix}-${crypto.randomUUID()}`
   }
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  runtimeIdCounter += 1
+  return `${prefix}-${Date.now()}-${runtimeIdCounter}`
 }
 const getNextCustomBlockId = () => createRuntimeId("paragraph")
 const getNextImagePlaceholderId = () => createRuntimeId("image")
@@ -235,13 +244,12 @@ function reconcileLayerOrder(
   return next
 }
 
-function omitRecordKey<Value>(
-  source: Partial<Record<BlockId, Value>> | Record<BlockId, Value>,
-  key: BlockId,
-): Partial<Record<BlockId, Value>> {
-  const next = { ...source }
-  delete next[key]
-  return next
+function readPerfPayload(): PerfPayload | undefined {
+  return window.__sggPerf
+}
+
+function writePerfPayload(payload: PerfPayload) {
+  window.__sggPerf = payload
 }
 
 function createInitialBlockCollectionsState(): BlockCollectionsState {
@@ -534,7 +542,7 @@ export const GridPreview = memo(function GridPreview({
     const reflow = computePerfSnapshot(state.reflowMs)
     const autofit = computePerfSnapshot(state.autofitMs)
     const payload = { draw, reflow, autofit }
-    ;(window as unknown as { __sggPerf?: typeof payload }).__sggPerf = payload
+    writePerfPayload(payload)
     setPerfOverlay(payload)
     const now = Date.now()
     if (now - state.lastLogAt < PERF_LOG_INTERVAL_MS) return
@@ -557,7 +565,7 @@ export const GridPreview = memo(function GridPreview({
   useEffect(() => {
     if (!PERF_ENABLED) return
     const readPerf = () => {
-      const perf = (window as unknown as { __sggPerf?: PerfPayload }).__sggPerf
+      const perf = readPerfPayload()
       if (!perf) return
       setPerfOverlay(perf)
     }
@@ -1814,10 +1822,10 @@ export const GridPreview = memo(function GridPreview({
   const deleteLayerByKey = useCallback((key: BlockId) => {
     if (imageOrder.includes(key)) {
       setImageOrder((prev) => prev.filter((item) => item !== key))
-      setImageModulePositions((prev) => omitRecordKey(prev, key))
-      setImageColumnSpans((prev) => omitRecordKey(prev, key))
-      setImageRowSpans((prev) => omitRecordKey(prev, key))
-      setImageColors((prev) => omitRecordKey(prev, key))
+      setImageModulePositions((prev) => omitOptionalRecordKey(prev, key))
+      setImageColumnSpans((prev) => omitOptionalRecordKey(prev, key))
+      setImageRowSpans((prev) => omitOptionalRecordKey(prev, key))
+      setImageColors((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
       setImageEditorState((prev) => (prev?.target === key ? null : prev))
       return
@@ -1827,25 +1835,25 @@ export const GridPreview = memo(function GridPreview({
       return {
         ...prev,
         blockOrder: prev.blockOrder.filter((item) => item !== key),
-        textContent: omitRecordKey(prev.textContent, key) as Record<BlockId, string>,
-        blockTextEdited: omitRecordKey(prev.blockTextEdited, key) as Record<BlockId, boolean>,
-        styleAssignments: omitRecordKey(prev.styleAssignments, key) as Record<BlockId, TypographyStyleKey>,
-        blockFontFamilies: omitRecordKey(prev.blockFontFamilies, key) as Partial<Record<BlockId, FontFamily>>,
-        blockColumnSpans: omitRecordKey(prev.blockColumnSpans, key),
-        blockRowSpans: omitRecordKey(prev.blockRowSpans, key),
-        blockTextAlignments: omitRecordKey(prev.blockTextAlignments, key) as Partial<Record<BlockId, TextAlignMode>>,
-        blockTextReflow: omitRecordKey(prev.blockTextReflow, key),
-        blockSyllableDivision: omitRecordKey(prev.blockSyllableDivision, key),
-        blockBold: omitRecordKey(prev.blockBold, key),
-        blockItalic: omitRecordKey(prev.blockItalic, key),
-        blockRotations: omitRecordKey(prev.blockRotations, key),
-        blockModulePositions: omitRecordKey(prev.blockModulePositions, key),
+        textContent: omitRequiredRecordKey(prev.textContent, key),
+        blockTextEdited: omitRequiredRecordKey(prev.blockTextEdited, key),
+        styleAssignments: omitRequiredRecordKey(prev.styleAssignments, key),
+        blockFontFamilies: omitOptionalRecordKey(prev.blockFontFamilies, key),
+        blockColumnSpans: omitRequiredRecordKey(prev.blockColumnSpans, key),
+        blockRowSpans: omitOptionalRecordKey(prev.blockRowSpans, key),
+        blockTextAlignments: omitRequiredRecordKey(prev.blockTextAlignments, key),
+        blockTextReflow: omitOptionalRecordKey(prev.blockTextReflow, key),
+        blockSyllableDivision: omitOptionalRecordKey(prev.blockSyllableDivision, key),
+        blockBold: omitOptionalRecordKey(prev.blockBold, key),
+        blockItalic: omitOptionalRecordKey(prev.blockItalic, key),
+        blockRotations: omitOptionalRecordKey(prev.blockRotations, key),
+        blockModulePositions: omitOptionalRecordKey(prev.blockModulePositions, key),
       }
     })
 
-    setBlockCustomSizes((prev) => omitRecordKey(prev, key))
-    setBlockCustomLeadings((prev) => omitRecordKey(prev, key))
-    setBlockTextColors((prev) => omitRecordKey(prev, key))
+    setBlockCustomSizes((prev) => omitOptionalRecordKey(prev, key))
+    setBlockCustomLeadings((prev) => omitOptionalRecordKey(prev, key))
+    setBlockTextColors((prev) => omitOptionalRecordKey(prev, key))
     setLayerOrder((prev) => prev.filter((item) => item !== key))
 
     setEditorState((prev) => (prev?.target === key ? null : prev))
