@@ -12,18 +12,18 @@ import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { renderStaticGuides } from "@/lib/render-static-guides"
 import type { HelpSectionId } from "@/lib/help-registry"
 import {
-  buildAxisStarts,
   findNearestAxisIndex,
-  resolveAxisSizes,
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
 import { usePreviewDrag } from "@/hooks/usePreviewDrag"
 import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { useGridPreviewDocumentState } from "@/hooks/useGridPreviewDocumentState"
 import { usePreviewGeometry } from "@/hooks/usePreviewGeometry"
+import { usePreviewHoverState, type PreviewHoverState } from "@/hooks/usePreviewHoverState"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { usePreviewHitTesting } from "@/hooks/usePreviewHitTesting"
-import { useLayoutReflow } from "@/hooks/useLayoutReflow"
+import { usePreviewLayoutReflowController } from "@/hooks/usePreviewLayoutReflowController"
+import { usePreviewOverlayCanvas } from "@/hooks/usePreviewOverlayCanvas"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
@@ -39,16 +39,6 @@ import {
 } from "@/lib/document-defaults"
 import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
 import {
-  computeAutoFitBatch,
-  type AutoFitPlannerInput,
-} from "@/lib/autofit-planner"
-import {
-  computeReflowPlan as computeReflowPlanPure,
-  createReflowPlanSignature,
-  type ReflowPlan as PlannerReflowPlan,
-  type ReflowPlannerInput,
-} from "@/lib/reflow-planner"
-import {
   DEFAULT_BASE_FONT,
   getFontFamilyCss,
   isFontFamily,
@@ -62,7 +52,6 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
-import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -96,18 +85,12 @@ type BlockRenderPlan = {
   commands: TextDrawCommand[]
 }
 
-type ReflowPlan = PlannerReflowPlan
-
 type ModulePosition = {
   col: number
   row: number
 }
 
 type DragState = PreviewDragState<BlockId>
-
-type HoverState = {
-  key: BlockId
-}
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
 type NoticeRequest = {
@@ -142,10 +125,6 @@ const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
   body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
   caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
 }
-
-const OVERFLOW_BADGE_RADIUS = 11
-const OVERFLOW_BADGE_PADDING = 6
-const OVERFLOW_BADGE_FILL = "rgba(255, 80, 80, 0.85)"
 
 function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
@@ -259,10 +238,8 @@ export const GridPreview = memo(function GridPreview({
   const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
   const typographyBufferTransformRef = useRef("")
-  const reflowPlanCacheRef = useRef<Map<string, ReflowPlan>>(new Map())
   const lastHistoryResetTokenRef = useRef(historyResetToken)
   const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
-  const mouseMoveRafRef = useRef<number | null>(null)
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [scale, setScale] = useState(1)
@@ -270,11 +247,10 @@ export const GridPreview = memo(function GridPreview({
   const [isMobile, setIsMobile] = useState(false)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
-  const [hoverState, setHoverState] = useState<HoverState | null>(null)
+  const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const HISTORY_LIMIT = 50
   const TEXT_CACHE_LIMIT = 5000
-  const REFLOW_PLAN_CACHE_LIMIT = 200
   const LAYOUT_CHANGE_DEBOUNCE_MS = 120
   const TOUCH_LONG_PRESS_MS = 180
   const TOUCH_CANCEL_DISTANCE_PX = 10
@@ -449,7 +425,6 @@ export const GridPreview = memo(function GridPreview({
         measureWidthCacheRef.current.clear()
         wrapTextCacheRef.current.clear()
         opticalOffsetCacheRef.current.clear()
-        reflowPlanCacheRef.current.clear()
         setFontRenderEpoch((value) => value + 1)
       })
 
@@ -915,6 +890,11 @@ export const GridPreview = memo(function GridPreview({
     [blockModulePositions, imageModulePositions],
   )
 
+  const clearHover = useCallback(() => {
+    setHoverState(null)
+    setHoverImageKey(null)
+  }, [])
+
   const {
     dragState,
     setDragState,
@@ -935,13 +915,26 @@ export const GridPreview = memo(function GridPreview({
     snapToModule,
     snapToBaseline,
     onDrop: applyDragDrop,
-    onClearHover: () => {
-      setHoverState(null)
-      setHoverImageKey(null)
-    },
+    onClearHover: clearHover,
     touchLongPressMs: TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
     dragEndedAtRef,
+  })
+
+  const {
+    handleCanvasMouseMove,
+    canvasCursorClass,
+  } = usePreviewHoverState<BlockId>({
+    showTypography,
+    editorOpen: Boolean(editorState || imageEditorState),
+    dragState,
+    hoverState,
+    hoverImageKey,
+    setHoverState,
+    setHoverImageKey,
+    findTopmostBlockAtPoint,
+    findTopmostImageAtPoint,
+    toPagePointFromClient,
   })
 
   useEffect(() => {
@@ -957,10 +950,9 @@ export const GridPreview = memo(function GridPreview({
     suppressReflowCheckRef.current = true
     resetImageTransientState()
     setDragState(null)
-    setHoverState(null)
-    setHoverImageKey(null)
+    clearHover()
     setEditorState(null)
-  }, [historyResetToken, resetHistory, resetImageTransientState, setDragState, setEditorState])
+  }, [clearHover, historyResetToken, resetHistory, resetImageTransientState, setDragState, setEditorState])
 
   useEffect(() => {
     if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
@@ -999,124 +991,6 @@ export const GridPreview = memo(function GridPreview({
     setImageColors,
   ])
 
-  const buildReflowPlannerInput = useCallback((
-    gridCols: number,
-    gridRows: number,
-    sourcePositions: Partial<Record<BlockId, ModulePosition>> = blockModulePositions,
-  ): ReflowPlannerInput => {
-    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, result.module.height)
-    const rowStarts = buildAxisStarts(moduleHeights, result.grid.gridMarginVertical)
-    const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, result.grid.gridUnit))
-    return {
-      moduleRowStarts: rowStartsInBaselines,
-      gridCols,
-      gridRows,
-      blockOrder,
-      blockColumnSpans,
-      sourcePositions,
-      pageHeight: result.pageSizePt.height,
-      marginTop: result.grid.margins.top,
-      marginBottom: result.grid.margins.bottom,
-      gridUnit: result.grid.gridUnit,
-      moduleHeight: result.module.height,
-      gridMarginVertical: result.grid.gridMarginVertical,
-    }
-  }, [
-    blockColumnSpans,
-    blockModulePositions,
-    blockOrder,
-    result.grid.gridMarginVertical,
-    result.grid.gridUnit,
-    result.grid.margins.bottom,
-    result.grid.margins.top,
-    result.module.heights,
-    result.module.height,
-    result.pageSizePt.height,
-  ])
-
-  const computeReflowPlan = useCallback((input: ReflowPlannerInput): ReflowPlan => {
-    const signature = createReflowPlanSignature(input)
-    const cached = reflowPlanCacheRef.current.get(signature)
-    if (cached) return cached
-    const plan = computeReflowPlanPure(input)
-    reflowPlanCacheRef.current.set(signature, plan)
-    if (reflowPlanCacheRef.current.size > REFLOW_PLAN_CACHE_LIMIT) {
-      const firstKey = reflowPlanCacheRef.current.keys().next().value
-      if (firstKey) reflowPlanCacheRef.current.delete(firstKey)
-    }
-    return plan
-  }, [])
-
-  const {
-    postRequest: postReflowWorkerRequest,
-    cancelRequest: cancelReflowWorkerRequest,
-  } = useWorkerBridge<ReflowPlannerInput, ReflowPlan>({
-    strategy: "latest",
-    createWorker: () => new Worker(new URL("../workers/reflowPlanner.worker.ts", import.meta.url)),
-    parseMessage: (data) => {
-      if (!data || typeof data !== "object") return null
-      const typed = data as { id?: unknown; plan?: ReflowPlan }
-      if (typeof typed.id !== "number" || !typed.plan) return null
-      return { id: typed.id, result: typed.plan }
-    },
-  })
-
-  const postReflowPlanRequest = useCallback((input: ReflowPlannerInput) => {
-    const workerRequest = postReflowWorkerRequest(input)
-    if (!workerRequest) {
-      return {
-        requestId: -1,
-        promise: Promise.resolve(computeReflowPlan(input)),
-      }
-    }
-    return workerRequest
-  }, [computeReflowPlan, postReflowWorkerRequest])
-
-  const {
-    postRequest: postAutoFitWorkerRequest,
-    cancelRequest: cancelAutoFitWorkerRequest,
-  } = useWorkerBridge<
-    AutoFitPlannerInput,
-    {
-      spanUpdates: Partial<Record<string, number>>
-      positionUpdates: Partial<Record<string, ModulePosition>>
-    }
-  >({
-    enabled: typeof OffscreenCanvas !== "undefined",
-    strategy: "latest",
-    createWorker: () => new Worker(new URL("../workers/autoFit.worker.ts", import.meta.url)),
-    parseMessage: (data) => {
-      if (!data || typeof data !== "object") return null
-      const typed = data as {
-        id?: unknown
-        output?: {
-          spanUpdates: Partial<Record<string, number>>
-          positionUpdates: Partial<Record<string, ModulePosition>>
-        }
-      }
-      if (typeof typed.id !== "number" || !typed.output) return null
-      return { id: typed.id, result: typed.output }
-    },
-  })
-
-  const postAutoFitRequest = useCallback((input: AutoFitPlannerInput) => {
-    const workerRequest = postAutoFitWorkerRequest(input)
-    if (!workerRequest) {
-      return {
-        requestId: -1,
-        promise: Promise.resolve(computeAutoFitBatch(input, (font, text) => {
-          const canvas = canvasRef.current
-          if (!canvas) return 0
-          const ctx = canvas.getContext("2d")
-          if (!ctx) return 0
-          ctx.font = font
-          return ctx.measureText(text).width
-        })),
-      }
-    }
-    return workerRequest
-  }, [postAutoFitWorkerRequest])
-
   useInitialLayoutHydration<TypographyStyleKey, BlockId>({
     initialLayout,
     initialLayoutToken,
@@ -1141,8 +1015,7 @@ export const GridPreview = memo(function GridPreview({
     },
     onAfterApply: () => {
       setDragState(null)
-      setHoverState(null)
-      setHoverImageKey(null)
+      clearHover()
       setEditorState(null)
       setImageEditorState(null)
     },
@@ -1302,153 +1175,29 @@ export const GridPreview = memo(function GridPreview({
     pixelRatio,
   })
 
-  useEffect(() => {
-    const canvas = overlayCanvasRef.current
-    if (!canvas) return
-    const frame = window.requestAnimationFrame(() => {
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-      const cssWidth = canvas.width / pixelRatio
-      const cssHeight = canvas.height / pixelRatio
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      ctx.clearRect(0, 0, cssWidth, cssHeight)
-      if (!showTypography) return
-      const hasOverflow = blockOrder.some((key) => (overflowLinesByBlock[key] ?? 0) > 0)
-      const activeEditorPlan = editorState ? previousPlansRef.current.get(editorState.target) : null
-      const selectedImageRect = selectedLayerKey && imageOrder.includes(selectedLayerKey)
-        ? imageRectsRef.current[selectedLayerKey]
-        : null
-      const selectedTextPlan = selectedLayerKey ? previousPlansRef.current.get(selectedLayerKey) : null
-      const hasSelectedLayer = Boolean(selectedImageRect || selectedTextPlan)
-      if (!dragState && !hasOverflow && !activeEditorPlan && !hasSelectedLayer) return
-
-      const { width, height } = result.pageSizePt
-      const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
-      const pageWidth = width * scale
-      const pageHeight = height * scale
-      const baselineStep = gridUnit * scale
-      const baselineOriginTop = margins.top * scale - baselineStep
-      const contentLeft = margins.left * scale
-      const metrics = getGridMetrics()
-      const firstColumnStepPt = (metrics.moduleWidths[0] ?? result.module.width) + gridMarginHorizontal
-
-      ctx.save()
-      ctx.translate(cssWidth / 2, cssHeight / 2)
-      ctx.rotate((rotation * Math.PI) / 180)
-      ctx.translate(-pageWidth / 2, -pageHeight / 2)
-      const drawPlacementGuide = (x: number, lineY: number, width: number, height: number) => {
-        ctx.strokeStyle = "#f97316"
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(x, lineY)
-        ctx.lineTo(x + width, lineY)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(x, lineY)
-        ctx.lineTo(x, lineY + height)
-        ctx.stroke()
-      }
-      if (dragState) {
-        const dragSpan = getPlacementSpan(dragState.key)
-        const dragRows = getPlacementRows(dragState.key)
-        const snapX = dragState.preview.col < 0
-          ? contentLeft + dragState.preview.col * firstColumnStepPt * scale
-          : contentLeft + (metrics.colStarts[dragState.preview.col] ?? dragState.preview.col * firstColumnStepPt) * scale
-        const snapY = baselineOriginTop + dragState.preview.row * baselineStep
-        const dragRowStart = Math.max(
-          0,
-          Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, dragState.preview.row)),
-        )
-        const snapWidth = sumAxisSpan(metrics.moduleWidths, dragState.preview.col, dragSpan, gridMarginHorizontal) * scale
-        const snapHeight = sumAxisSpan(metrics.moduleHeights, dragRowStart, dragRows, gridMarginVertical) * scale
-        drawPlacementGuide(snapX, snapY + baselineStep, snapWidth, snapHeight)
-      } else if (selectedImageRect) {
-        drawPlacementGuide(
-          selectedImageRect.x,
-          selectedImageRect.y,
-          selectedImageRect.width,
-          selectedImageRect.height,
-        )
-      } else if (selectedTextPlan) {
-        drawPlacementGuide(
-          selectedTextPlan.rotationOriginX,
-          selectedTextPlan.rotationOriginY + baselineStep,
-          selectedTextPlan.rect.width,
-          selectedTextPlan.rect.height,
-        )
-      }
-      if (activeEditorPlan) {
-        const editorSpan = getBlockSpan(activeEditorPlan.key)
-        const editorRows = getBlockRows(activeEditorPlan.key)
-        const editorX = activeEditorPlan.rotationOriginX
-        const editorY = activeEditorPlan.rotationOriginY
-        const manual = blockModulePositions[activeEditorPlan.key]
-        const startCol = manual
-          ? Math.max(-Math.max(0, editorSpan - 1), Math.min(result.settings.gridCols - 1, manual.col))
-          : 0
-        const startRow = manual
-          ? Math.max(
-              0,
-              Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, manual.row)),
-            )
-          : 0
-        const editorWidth = sumAxisSpan(metrics.moduleWidths, startCol, editorSpan, gridMarginHorizontal) * scale
-        const editorHeight = sumAxisSpan(metrics.moduleHeights, startRow, editorRows, gridMarginVertical) * scale
-        const lineY = editorY + baselineStep
-        ctx.strokeStyle = "#ef4444"
-        ctx.lineWidth = 1.1
-        ctx.beginPath()
-        ctx.moveTo(editorX, lineY)
-        ctx.lineTo(editorX + editorWidth, lineY)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(editorX, lineY)
-        ctx.lineTo(editorX, lineY + editorHeight)
-        ctx.stroke()
-      }
-      if (hasOverflow) {
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-        ctx.font = `700 ${Math.max(10, OVERFLOW_BADGE_RADIUS * 1.2)}px Inter, system-ui, -apple-system, sans-serif`
-        for (const key of blockOrder) {
-          const overflowLines = overflowLinesByBlock[key] ?? 0
-          if (overflowLines <= 0) continue
-          const rect = blockRectsRef.current[key]
-          if (!rect || rect.width <= 0 || rect.height <= 0) continue
-          const cx = rect.x + rect.width - OVERFLOW_BADGE_RADIUS - OVERFLOW_BADGE_PADDING
-          const cy = rect.y + rect.height - OVERFLOW_BADGE_RADIUS - OVERFLOW_BADGE_PADDING
-          ctx.save()
-          ctx.beginPath()
-          ctx.fillStyle = OVERFLOW_BADGE_FILL
-          ctx.arc(cx, cy, OVERFLOW_BADGE_RADIUS, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.fillStyle = "#ffffff"
-          ctx.fillText("…", cx, cy + 0.5)
-          ctx.restore()
-        }
-      }
-      ctx.restore()
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [
-    blockModulePositions,
+  usePreviewOverlayCanvas({
+    overlayCanvasRef,
+    blockRectsRef,
+    imageRectsRef,
+    previousPlansRef,
+    result,
+    scale,
+    pixelRatio,
+    rotation,
+    showTypography,
     blockOrder,
-    dragState,
-    editorState,
     imageOrder,
+    selectedLayerKey,
+    overflowLinesByBlock,
+    dragState,
+    editorTarget: editorState?.target ?? null,
+    blockModulePositions,
     getBlockRows,
     getBlockSpan,
-    getGridMetrics,
     getPlacementRows,
     getPlacementSpan,
-    overflowLinesByBlock,
-    pixelRatio,
-    result,
-    rotation,
-    scale,
-    selectedLayerKey,
-    showTypography,
-  ])
+    getGridMetrics,
+  })
 
   useEffect(() => {
     const calculateScale = () => {
@@ -1517,29 +1266,14 @@ export const GridPreview = memo(function GridPreview({
     applyPendingReflow,
     cancelPendingReflow,
     dismissReflowToast,
-  } = useLayoutReflow<BlockId, ReflowPlannerInput, PreviewLayoutState>({
+  } = usePreviewLayoutReflowController<BlockId, PreviewLayoutState>({
     suppressReflowCheckRef,
     blockOrder,
     blockColumnSpans,
     blockModulePositions,
     textContent,
     scale,
-    gridCols: result.settings.gridCols,
-    gridRows: result.settings.gridRows,
-    moduleWidth: result.module.width,
-    moduleHeight: result.module.height,
-    moduleWidths: resolveAxisSizes(result.module.widths, result.settings.gridCols, result.module.width),
-    moduleHeights: resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height),
-    moduleRowStarts: buildAxisStarts(
-      resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height),
-      result.grid.gridMarginVertical,
-    ).map((value) => value / Math.max(0.0001, result.grid.gridUnit)),
-    gridUnit: result.grid.gridUnit,
-    gridMarginVertical: result.grid.gridMarginVertical,
-    marginTop: result.grid.margins.top,
-    marginBottom: result.grid.margins.bottom,
-    pageHeight: result.pageSizePt.height,
-    typographyStyles: result.typography.styles,
+    result,
     getDefaultColumnSpan,
     getBlockRows,
     getBlockSpan,
@@ -1553,20 +1287,7 @@ export const GridPreview = memo(function GridPreview({
     onRequestGridRestore,
     setBlockColumnSpans,
     setBlockModulePositions,
-    buildReflowPlannerInput,
-    postReflowPlanRequest,
-    cancelReflowWorkerRequest,
-    computeReflowPlan,
-    postAutoFitRequest,
-    cancelAutoFitWorkerRequest,
-    computeAutoFitFallback: (input) => computeAutoFitBatch(input, (font, text) => {
-      const canvas = canvasRef.current
-      if (!canvas) return 0
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return 0
-      ctx.font = font
-      return ctx.measureText(text).width
-    }),
+    canvasRef,
     recordPerfMetric,
   })
 
@@ -1629,67 +1350,6 @@ export const GridPreview = memo(function GridPreview({
     toPagePointFromClient,
   ])
 
-  const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
-    mouseMoveRafRef.current = null
-
-    if (!showTypography || editorState || imageEditorState || dragState) {
-      if (hoverState) setHoverState(null)
-      if (hoverImageKey) setHoverImageKey(null)
-      return
-    }
-
-    const pagePoint = toPagePointFromClient(clientX, clientY)
-    if (!pagePoint) {
-      if (hoverState) setHoverState(null)
-      if (hoverImageKey) setHoverImageKey(null)
-      return
-    }
-
-    const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
-    if (textKey) {
-      if (hoverImageKey) setHoverImageKey(null)
-      setHoverState((prev) => {
-        if (prev && prev.key === textKey) {
-          return prev
-        }
-        return { key: textKey }
-      })
-      return
-    }
-
-    const imageKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
-    if (imageKey) {
-      if (hoverState) setHoverState(null)
-      if (hoverImageKey !== imageKey) setHoverImageKey(imageKey)
-      return
-    }
-
-    if (hoverState) setHoverState(null)
-    if (hoverImageKey) setHoverImageKey(null)
-  }, [
-    dragState,
-    editorState,
-    findTopmostBlockAtPoint,
-    findTopmostImageAtPoint,
-    hoverImageKey,
-    hoverState,
-    imageEditorState,
-    showTypography,
-    toPagePointFromClient,
-  ])
-
-  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (mouseMoveRafRef.current !== null) return
-    const { clientX, clientY } = event
-    mouseMoveRafRef.current = requestAnimationFrame(() => handleCanvasMouseMoveInner(clientX, clientY))
-  }, [handleCanvasMouseMoveInner])
-
-  useEffect(() => {
-    return () => {
-      if (mouseMoveRafRef.current !== null) cancelAnimationFrame(mouseMoveRafRef.current)
-    }
-  }, [])
-
   usePreviewLayoutEmission({
     buildSnapshot,
     debounceMs: LAYOUT_CHANGE_DEBOUNCE_MS,
@@ -1701,11 +1361,6 @@ export const GridPreview = memo(function GridPreview({
   const pageWidthPx = Math.max(1, Math.round(pageWidthCss * pixelRatio))
   const pageHeightPx = Math.max(1, Math.round(pageHeightCss * pixelRatio))
 
-  const canvasCursorClass = dragState
-    ? (dragState.copyOnDrop ? "cursor-copy" : "cursor-grabbing")
-    : (hoverState || hoverImageKey)
-      ? "cursor-grab"
-      : "cursor-default"
   const hierarchyOptionLabels = useMemo(
     () =>
       STYLE_OPTIONS.map(
@@ -1771,10 +1426,7 @@ export const GridPreview = memo(function GridPreview({
           onPointerCancel={handleCanvasPointerCancel}
           onLostPointerCapture={handleCanvasLostPointerCapture}
           onMouseMove={handleCanvasMouseMove}
-          onMouseLeave={() => {
-            setHoverState(null)
-            setHoverImageKey(null)
-          }}
+          onMouseLeave={clearHover}
           onDoubleClick={handleCanvasDoubleClick}
         />
         <canvas
