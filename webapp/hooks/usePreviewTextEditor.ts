@@ -3,8 +3,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react"
 
 import { type BlockEditorState } from "@/components/editor/block-editor-types"
 import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
-import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
-import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import { buildExistingBlockEditorState } from "@/lib/preview-block-editor-state"
 import { useBlockEditorActions } from "@/hooks/useBlockEditorActions"
 import { useCloseEditorsOnOutsidePointer } from "@/hooks/useCloseEditorsOnOutsidePointer"
 import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
@@ -135,29 +134,28 @@ export function usePreviewTextEditor({
     if (options?.recordHistory !== false) {
       recordHistoryBeforeChange()
     }
-    const styleKey = styleAssignments[key] ?? "body"
-    setEditorState({
-      target: key,
-      draftText: normalizeInlineEditorText(textContent[key] ?? ""),
-      draftStyle: styleKey,
-      draftFxSize: styleKey === "fx"
-        ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
-        : getStyleSize("fx"),
-      draftFxLeading: styleKey === "fx"
-        ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading("fx"))
-        : getStyleLeading("fx"),
-      draftFont: getBlockFont(key),
-      draftColumns: getBlockSpan(key),
-      draftRows: getBlockRows(key),
-      draftAlign: blockTextAlignments[key] ?? "left",
-      draftColor: getBlockTextColor(key),
-      draftReflow: isTextReflowEnabled(key),
-      draftSyllableDivision: isSyllableDivisionEnabled(key),
-      draftBold: isBlockBold(key),
-      draftItalic: isBlockItalic(key),
-      draftRotation: getBlockRotation(key),
-      draftTextEdited: blockTextEdited[key] ?? true,
-    })
+    setEditorState(buildExistingBlockEditorState({
+      key,
+      styleAssignments,
+      textContent,
+      blockCustomSizes,
+      blockCustomLeadings,
+      blockTextAlignments,
+      blockTextEdited,
+      getBlockFont,
+      getBlockRotation,
+      getBlockRows,
+      getBlockSpan,
+      getBlockTextColor,
+      getStyleLeading,
+      getStyleSize,
+      isBlockBold,
+      isBlockItalic,
+      isSyllableDivisionEnabled,
+      isTextReflowEnabled,
+      fallbackStyle: "body",
+      fxStyle: "fx",
+    }))
   }, [
     blockCustomLeadings,
     blockCustomSizes,

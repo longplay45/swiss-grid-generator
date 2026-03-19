@@ -1,11 +1,14 @@
 import { useCallback } from "react"
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react"
 
+import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampFxLeading, clampFxSize, clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
-import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import { buildExistingBlockEditorState, buildNewBlockEditorState } from "@/lib/preview-block-editor-state"
+import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
 import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
+import type { PreviewTextBlockCollectionsState } from "@/hooks/usePreviewTextBlockState"
 import type { Updater } from "@/hooks/useStateCommands"
 
 type ModulePosition = {
@@ -13,41 +16,7 @@ type ModulePosition = {
   row: number
 }
 
-type EditorState = {
-  target: string
-  draftText: string
-  draftStyle: string
-  draftFxSize: number
-  draftFxLeading: number
-  draftFont: FontFamily
-  draftColumns: number
-  draftRows: number
-  draftAlign: TextAlignMode
-  draftColor: string
-  draftReflow: boolean
-  draftSyllableDivision: boolean
-  draftBold: boolean
-  draftItalic: boolean
-  draftRotation: number
-  draftTextEdited: boolean
-}
-
-type BlockCollectionsState = {
-  blockOrder: string[]
-  textContent: Record<string, string>
-  blockTextEdited: Record<string, boolean>
-  styleAssignments: Record<string, string>
-  blockModulePositions: Partial<Record<string, ModulePosition>>
-  blockColumnSpans: Partial<Record<string, number>>
-  blockRowSpans: Partial<Record<string, number>>
-  blockTextAlignments: Partial<Record<string, TextAlignMode>>
-  blockTextReflow: Partial<Record<string, boolean>>
-  blockSyllableDivision: Partial<Record<string, boolean>>
-  blockFontFamilies: Partial<Record<string, FontFamily>>
-  blockBold: Partial<Record<string, boolean>>
-  blockItalic: Partial<Record<string, boolean>>
-  blockRotations: Partial<Record<string, number>>
-}
+type EditorState = BlockEditorState<string>
 
 type AutoFitResult = { span: number; position: ModulePosition | null } | null
 
@@ -70,7 +39,9 @@ type Args = {
   blockTextAlignments: Partial<Record<string, TextAlignMode>>
   blockModulePositions: Partial<Record<string, ModulePosition>>
   recordHistoryBeforeChange: () => void
-  setBlockCollections: (updater: (prev: BlockCollectionsState) => BlockCollectionsState) => void
+  setBlockCollections: (
+    updater: (prev: PreviewTextBlockCollectionsState) => PreviewTextBlockCollectionsState,
+  ) => void
   setBlockOrder: (next: Updater<string[]>) => void
   setTextContent: (next: Updater<Record<string, string>>) => void
   setBlockTextEdited: (next: Updater<Record<string, boolean>>) => void
@@ -352,29 +323,7 @@ export function useBlockEditorActions({
           })(),
         }
       }
-      const nextOrder = prev.blockOrder.filter((key) => key !== target)
-      const omitTarget = <T extends object>(source: T) => {
-        const next = { ...source } as Record<string, unknown>
-        delete next[target]
-        return next
-      }
-      return {
-        ...prev,
-        blockOrder: nextOrder,
-        textContent: omitTarget(prev.textContent) as Record<string, string>,
-        blockTextEdited: omitTarget(prev.blockTextEdited) as Record<string, boolean>,
-        styleAssignments: omitTarget(prev.styleAssignments) as Record<string, string>,
-        blockFontFamilies: omitTarget(prev.blockFontFamilies) as Partial<Record<string, FontFamily>>,
-        blockColumnSpans: omitTarget(prev.blockColumnSpans) as Partial<Record<string, number>>,
-        blockRowSpans: omitTarget(prev.blockRowSpans) as Partial<Record<string, number>>,
-        blockTextAlignments: omitTarget(prev.blockTextAlignments) as Partial<Record<string, TextAlignMode>>,
-        blockTextReflow: omitTarget(prev.blockTextReflow) as Partial<Record<string, boolean>>,
-        blockSyllableDivision: omitTarget(prev.blockSyllableDivision) as Partial<Record<string, boolean>>,
-        blockBold: omitTarget(prev.blockBold) as Partial<Record<string, boolean>>,
-        blockItalic: omitTarget(prev.blockItalic) as Partial<Record<string, boolean>>,
-        blockRotations: omitTarget(prev.blockRotations) as Partial<Record<string, number>>,
-        blockModulePositions: omitTarget(prev.blockModulePositions) as Partial<Record<string, ModulePosition>>,
-      }
+      return removeTextLayerFromCollections(prev, target)
     })
     if (!isBaseBlockId(target)) {
       setBlockCustomSizes((prev) => {
@@ -409,29 +358,28 @@ export function useBlockEditorActions({
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (key) {
       recordHistoryBeforeChange()
-      const styleKey = styleAssignments[key] ?? "body"
-      setEditorState({
-        target: key,
-        draftText: normalizeInlineEditorText(textContent[key] ?? ""),
-        draftStyle: styleKey,
-        draftFxSize: styleKey === "fx"
-          ? clampFxSize(blockCustomSizes[key] ?? getStyleSize("fx"))
-          : getStyleSize("fx"),
-        draftFxLeading: styleKey === "fx"
-          ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading("fx"))
-          : getStyleLeading("fx"),
-        draftFont: getBlockFont(key),
-        draftColumns: getBlockSpan(key),
-        draftRows: getBlockRows(key),
-        draftAlign: blockTextAlignments[key] ?? "left",
-        draftColor: getBlockTextColor(key),
-        draftReflow: isTextReflowEnabled(key),
-        draftSyllableDivision: isSyllableDivisionEnabled(key),
-        draftBold: isBlockBold(key),
-        draftItalic: isBlockItalic(key),
-        draftRotation: getBlockRotation(key),
-        draftTextEdited: blockTextEdited[key] ?? true,
-      })
+      setEditorState(buildExistingBlockEditorState({
+        key,
+        styleAssignments,
+        textContent,
+        blockCustomSizes,
+        blockCustomLeadings,
+        blockTextAlignments,
+        blockTextEdited,
+        getBlockFont,
+        getBlockRotation,
+        getBlockRows,
+        getBlockSpan,
+        getBlockTextColor,
+        getStyleLeading,
+        getStyleSize,
+        isBlockBold,
+        isBlockItalic,
+        isSyllableDivisionEnabled,
+        isTextReflowEnabled,
+        fallbackStyle: "body",
+        fxStyle: "fx",
+      }))
       return
     }
 
@@ -485,24 +433,18 @@ export function useBlockEditorActions({
       ...prev,
       [newKey]: snapped,
     }))
-    setEditorState({
-      target: newKey,
-      draftText: normalizeInlineEditorText(getDummyTextForStyle("body")),
-      draftStyle: "body",
-      draftFxSize: getStyleSize("fx"),
-      draftFxLeading: getStyleLeading("fx"),
-      draftFont: baseFont,
-      draftColumns: defaultSpan,
-      draftRows: 1,
-      draftAlign: "left",
-      draftColor: defaultTextColor,
-      draftReflow: false,
-      draftSyllableDivision: true,
-      draftBold: false,
-      draftItalic: false,
-      draftRotation: 0,
-      draftTextEdited: false,
-    })
+    setEditorState(buildNewBlockEditorState({
+      key: newKey,
+      style: "body",
+      text: getDummyTextForStyle("body"),
+      columns: defaultSpan,
+      rows: 1,
+      baseFont,
+      defaultTextColor,
+      getStyleLeading,
+      getStyleSize,
+      fxStyle: "fx",
+    }))
   }, [
     baseFont,
     blockCustomLeadings,
