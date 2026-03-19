@@ -7,7 +7,6 @@ import {
   getMaxBaseline,
   CANVAS_RATIOS,
 } from "@/lib/grid-calculator"
-import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
 import { ControlSidebar } from "@/components/layout/ControlSidebar"
@@ -23,30 +22,18 @@ import {
   HELP_SECTION_BY_SETTINGS_SECTION,
 } from "@/lib/help-registry"
 import { WorkspaceDialogs } from "@/components/dialogs/WorkspaceDialogs"
-import { clampRotation } from "@/lib/block-constraints"
 import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewDocumentState } from "@/hooks/usePreviewDocumentState"
 import { useShellKeyboardShortcuts } from "@/hooks/useShellKeyboardShortcuts"
 import { useSidebarPanels } from "@/hooks/useSidebarPanels"
+import { useWorkspaceChrome } from "@/hooks/useWorkspaceChrome"
 import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
+import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
 import { type LoadedDocument } from "@/lib/document-session"
+import { type FontFamily } from "@/lib/config/fonts"
+import { BASELINE_OPTIONS } from "@/lib/config/defaults"
 import {
-  type FontFamily,
-} from "@/lib/config/fonts"
-import {
-  BASELINE_OPTIONS,
-  type DisplayUnit,
-  type GridRhythm,
-  type GridRhythmColsDirection,
-  type GridRhythmRowsDirection,
-  type TypographyScale
-} from "@/lib/config/defaults"
-import {
-  getImageSchemeColorToken,
-  isImageColorInScheme,
-  isImageSchemeColorToken,
   resolveImageSchemeColor,
-  type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import {
   DEFAULT_PREVIEW_LAYOUT,
@@ -102,43 +89,54 @@ export default function Home() {
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, showLayers, collapsed,
   } = ui
-  // Stable dispatch wrappers for child component props
-  const setCanvasRatio = useCallback((v: CanvasRatioKey) => dispatch({ type: "SET", key: "canvasRatio", value: v }), [dispatch])
-  const setOrientation = useCallback((v: "portrait" | "landscape") => dispatch({ type: "SET", key: "orientation", value: v }), [dispatch])
-  const setRotation = useCallback((v: number) => dispatch({ type: "SET", key: "rotation", value: clampRotation(v) }), [dispatch])
-  const setMarginMethod = useCallback((v: 1 | 2 | 3) => dispatch({ type: "SET", key: "marginMethod", value: v }), [dispatch])
-  const setGridCols = useCallback((v: number) => dispatch({ type: "SET", key: "gridCols", value: v }), [dispatch])
-  const setGridRows = useCallback((v: number) => dispatch({ type: "SET", key: "gridRows", value: v }), [dispatch])
-  const setBaselineMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "baselineMultiple", value: v }), [dispatch])
-  const setGutterMultiple = useCallback((v: number) => dispatch({ type: "SET", key: "gutterMultiple", value: v }), [dispatch])
-  const setRhythm = useCallback((v: GridRhythm) => dispatch({ type: "SET", key: "rhythm", value: v }), [dispatch])
-  const setRhythmRowsEnabled = useCallback((v: boolean) => dispatch({ type: "SET", key: "rhythmRowsEnabled", value: v }), [dispatch])
-  const setRhythmRowsDirection = useCallback((v: GridRhythmRowsDirection) => dispatch({ type: "SET", key: "rhythmRowsDirection", value: v }), [dispatch])
-  const setRhythmColsEnabled = useCallback((v: boolean) => dispatch({ type: "SET", key: "rhythmColsEnabled", value: v }), [dispatch])
-  const setRhythmColsDirection = useCallback((v: GridRhythmColsDirection) => dispatch({ type: "SET", key: "rhythmColsDirection", value: v }), [dispatch])
-  const setTypographyScale = useCallback((v: TypographyScale) => dispatch({ type: "SET", key: "typographyScale", value: v }), [dispatch])
-  const setBaseFont = useCallback((v: FontFamily) => dispatch({ type: "SET", key: "baseFont", value: v }), [dispatch])
-  const setImageColorScheme = useCallback((v: ImageColorSchemeId) => {
-    const actions: UiAction[] = [{ type: "SET", key: "imageColorScheme", value: v }]
-    if (canvasBackground && !isImageSchemeColorToken(canvasBackground) && !isImageColorInScheme(canvasBackground, v)) {
-      actions.push({ type: "SET", key: "canvasBackground", value: getImageSchemeColorToken(0) })
-    }
-    dispatch(actions.length === 1 ? actions[0] : { type: "BATCH", actions })
-  }, [canvasBackground, dispatch])
-  const setCanvasBackground = useCallback((value: string | null) => {
-    dispatch({ type: "SET", key: "canvasBackground", value })
-  }, [dispatch])
-  const resetParagraphColorsToScheme = useCallback(() => {
-    setParagraphColorResetNonce((nonce) => nonce + 1)
-  }, [])
-  const setCustomBaseline = useCallback((v: number) => dispatch({ type: "SET", key: "customBaseline", value: v }), [dispatch])
-  const setUseCustomMargins = useCallback((v: boolean) => dispatch({ type: "SET", key: "useCustomMargins", value: v }), [dispatch])
-  const setCustomMarginMultipliers = useCallback((v: { top: number; left: number; right: number; bottom: number }) => dispatch({ type: "SET", key: "customMarginMultipliers", value: v }), [dispatch])
-
-  const [isDarkUi, setIsDarkUi] = useState(false)
-  const [showRolloverInfo, setShowRolloverInfo] = useState(true)
-  const [isSmartphone, setIsSmartphone] = useState(false)
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
+  const {
+    setCanvasRatio,
+    setOrientation,
+    setRotation,
+    setMarginMethod,
+    setGridCols,
+    setGridRows,
+    setBaselineMultiple,
+    setGutterMultiple,
+    setRhythm,
+    setRhythmRowsEnabled,
+    setRhythmRowsDirection,
+    setRhythmColsEnabled,
+    setRhythmColsDirection,
+    setTypographyScale,
+    setBaseFont,
+    setImageColorScheme,
+    setCanvasBackground,
+    resetParagraphColorsToScheme,
+    setCustomBaseline,
+    setUseCustomMargins,
+    setCustomMarginMultipliers,
+    setDisplayUnit,
+    setExportPaperSize,
+    setExportPrintPro,
+    setExportBleedMm,
+    setExportRegistrationMarks,
+    setExportFinalSafeGuides,
+    setShowLayers,
+    toggleShowBaselines,
+    toggleShowMargins,
+    toggleShowModules,
+    toggleShowImagePlaceholders,
+    toggleShowTypography,
+  } = useWorkspaceUiActions({
+    dispatch,
+    canvasBackground,
+    setParagraphColorResetNonce,
+  })
+  const {
+    isDarkUi,
+    toggleDarkUi,
+    showRolloverInfo,
+    toggleRolloverInfo,
+    isSmartphone,
+    uiTheme,
+  } = useWorkspaceChrome()
 
   const {
     activeSidebarPanel,
@@ -154,7 +152,7 @@ export default function Home() {
     toggleLayersPanel,
   } = useSidebarPanels({
     showLayers,
-    onShowLayersChange: (next) => dispatch({ type: "SET", key: "showLayers", value: next }),
+    onShowLayersChange: setShowLayers,
   })
   const {
     previewLayout,
@@ -181,23 +179,6 @@ export default function Home() {
     activeSidebarPanel,
     defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
   })
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const applyTheme = (matches: boolean) => setIsDarkUi(matches)
-    applyTheme(mediaQuery.matches)
-
-    const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches)
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleChange)
-      return () => mediaQuery.removeEventListener("change", handleChange)
-    }
-
-    mediaQuery.addListener(handleChange)
-    return () => mediaQuery.removeListener(handleChange)
-  }, [])
 
   // ─── Derived values ───────────────────────────────────────────────────────
 
@@ -418,17 +399,6 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    const checkSmartphone = () => {
-      const isSmallViewport = window.matchMedia("(max-width: 767px)").matches
-      setIsSmartphone(isSmallViewport)
-    }
-
-    checkSmartphone()
-    window.addEventListener("resize", checkSmartphone)
-    return () => window.removeEventListener("resize", checkSmartphone)
-  }, [])
-
   // ─── Export / Save actions ────────────────────────────────────────────────
 
   const buildUiSettingsPayload = useCallback(
@@ -436,12 +406,6 @@ export default function Home() {
     [ui, previewFormat],
   )
 
-  const setDisplayUnit = useCallback((v: DisplayUnit) => dispatch({ type: "SET", key: "displayUnit", value: v }), [dispatch])
-  const setExportPaperSize = useCallback((v: string) => dispatch({ type: "SET", key: "exportPaperSize", value: v }), [dispatch])
-  const setExportPrintPro = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportPrintPro", value: v }), [dispatch])
-  const setExportBleedMm = useCallback((v: number) => dispatch({ type: "SET", key: "exportBleedMm", value: v }), [dispatch])
-  const setExportRegistrationMarks = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportRegistrationMarks", value: v }), [dispatch])
-  const setExportFinalSafeGuides = useCallback((v: boolean) => dispatch({ type: "SET", key: "exportFinalSafeGuides", value: v }), [dispatch])
   const resolvedCanvasBackground = useMemo(
     () => (canvasBackground ? resolveImageSchemeColor(canvasBackground, imageColorScheme) : null),
     [canvasBackground, imageColorScheme],
@@ -527,53 +491,19 @@ export default function Home() {
     onExportPdf: exportActions.openExportDialog,
     onUndo: undoAny,
     onRedo: redoAny,
-    onToggleDarkMode: () => setIsDarkUi((prev) => !prev),
-    onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
-    onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
-    onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
-    onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleDarkMode: toggleDarkUi,
+    onToggleBaselines: toggleShowBaselines,
+    onToggleMargins: toggleShowMargins,
+    onToggleModules: toggleShowModules,
+    onToggleTypography: toggleShowTypography,
     onToggleLayersPanel: toggleLayersPanel,
-    onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
+    onToggleRolloverInfo: toggleRolloverInfo,
     onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
     onToggleHelpPanel: toggleHelpPanel,
     onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
     onOpenPresets: () => setShowPresetsBrowser(true),
     onClosePresets: () => setShowPresetsBrowser(false),
   })
-
-  // ─── Render ───────────────────────────────────────────────────────────────
-
-  const uiTheme = useMemo(() =>
-    (isDarkUi
-      ? {
-          root: "bg-gray-950",
-          leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
-          subtleBorder: "border-gray-700",
-          bodyText: "text-gray-300",
-          headingText: "text-gray-300",
-          link: "text-gray-100 underline",
-          previewShell: "bg-gray-950",
-          previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
-          divider: "bg-gray-700",
-          sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
-          sidebarHeading: "text-gray-100",
-          sidebarBody: "text-gray-400",
-        }
-      : {
-          root: "bg-gray-100",
-          leftPanel: "border-gray-200 bg-white",
-          subtleBorder: "border-gray-200",
-          bodyText: "text-gray-600",
-          headingText: "text-gray-700",
-          link: "underline",
-          previewShell: "bg-white",
-          previewHeader: "border-gray-200 bg-white",
-          divider: "bg-gray-200",
-          sidebar: "border-gray-200 bg-white text-gray-700",
-          sidebarHeading: "text-gray-900",
-          sidebarBody: "text-gray-600",
-        }),
-  [isDarkUi])
 
   const handleConfirmSaveJSON = useCallback(() => {
     exportActions.confirmSaveJSON()
@@ -599,14 +529,14 @@ export default function Home() {
     onExportPdf: exportActions.openExportDialog,
     onUndo: undoAny,
     onRedo: redoAny,
-    onToggleDarkMode: () => setIsDarkUi((prev) => !prev),
-    onToggleBaselines: () => dispatch({ type: "TOGGLE", key: "showBaselines" }),
-    onToggleMargins: () => dispatch({ type: "TOGGLE", key: "showMargins" }),
-    onToggleModules: () => dispatch({ type: "TOGGLE", key: "showModules" }),
-    onToggleImagePlaceholders: () => dispatch({ type: "TOGGLE", key: "showImagePlaceholders" }),
-    onToggleTypography: () => dispatch({ type: "TOGGLE", key: "showTypography" }),
+    onToggleDarkMode: toggleDarkUi,
+    onToggleBaselines: toggleShowBaselines,
+    onToggleMargins: toggleShowMargins,
+    onToggleModules: toggleShowModules,
+    onToggleImagePlaceholders: toggleShowImagePlaceholders,
+    onToggleTypography: toggleShowTypography,
     onToggleLayersPanel: toggleLayersPanel,
-    onToggleRolloverInfo: () => setShowRolloverInfo((prev) => !prev),
+    onToggleRolloverInfo: toggleRolloverInfo,
     onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
     onToggleHelpPanel: toggleHelpPanel,
   })
