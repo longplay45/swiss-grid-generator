@@ -1,0 +1,348 @@
+import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import type { FontFamily } from "@/lib/config/fonts"
+import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import type { ModulePosition } from "@/lib/types/preview-layout"
+
+export type PreviewTextLayerCollectionsState<
+  Key extends string = string,
+  StyleKey extends string = string,
+> = TextLayerCollections<Key, StyleKey, FontFamily, BlockEditorTextAlign, ModulePosition>
+
+type TypographyStyleDefaults = {
+  weight?: string
+  blockItalic?: boolean
+}
+
+type ClampTextBlockPositionArgs = {
+  position: ModulePosition
+  span: number
+  gridCols: number
+  maxBaselineRow: number
+  fitWithinGrid?: boolean
+}
+
+type ApplyDraftArgs<StyleKey extends string> = {
+  draft: BlockEditorState<StyleKey>
+  baseFont: FontFamily
+  gridCols: number
+  maxBaselineRow: number
+  desiredPosition?: ModulePosition | null
+  typographyStyles: Record<string, TypographyStyleDefaults>
+}
+
+type InsertTextLayerArgs<Key extends string, StyleKey extends string> = {
+  newKey: Key
+  text: string
+  styleKey: StyleKey
+  columns: number
+  rows: number
+  position: ModulePosition
+  afterKey?: Key | null
+  textEdited?: boolean
+  textAlign?: BlockEditorTextAlign
+  reflow?: boolean
+  syllableDivision?: boolean
+}
+
+type DuplicateTextLayerArgs<Key extends string, StyleKey extends string> = {
+  sourceKey: Key
+  newKey: Key
+  styleKey: StyleKey
+  columns: number
+  rows: number
+  reflow: boolean
+  syllableDivision: boolean
+  position: ModulePosition
+  baseFont: FontFamily
+}
+
+export function clampTextBlockPosition({
+  position,
+  span,
+  gridCols,
+  maxBaselineRow,
+  fitWithinGrid = false,
+}: ClampTextBlockPositionArgs): ModulePosition {
+  const minCol = -Math.max(0, span - 1)
+  const maxCol = fitWithinGrid
+    ? Math.max(0, gridCols - span)
+    : Math.max(0, gridCols - 1)
+  const minRow = -Math.max(0, maxBaselineRow)
+  return {
+    col: Math.max(minCol, Math.min(maxCol, position.col)),
+    row: Math.max(minRow, Math.min(maxBaselineRow, position.row)),
+  }
+}
+
+export function applyBlockEditorDraftToCollections<
+  Key extends string,
+  StyleKey extends string,
+>(
+  current: PreviewTextLayerCollectionsState<Key, StyleKey>,
+  {
+    draft,
+    baseFont,
+    gridCols,
+    maxBaselineRow,
+    desiredPosition,
+    typographyStyles,
+  }: ApplyDraftArgs<StyleKey>,
+): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const nextFonts = { ...current.blockFontFamilies }
+  if (draft.draftFont === baseFont) {
+    delete nextFonts[draft.target as Key]
+  } else {
+    nextFonts[draft.target as Key] = draft.draftFont
+  }
+
+  const nextBold = { ...current.blockBold }
+  const defaultBold = typographyStyles[draft.draftStyle]?.weight === "Bold"
+  if (draft.draftBold === defaultBold) {
+    delete nextBold[draft.target as Key]
+  } else {
+    nextBold[draft.target as Key] = draft.draftBold
+  }
+
+  const nextItalic = { ...current.blockItalic }
+  const defaultItalic = typographyStyles[draft.draftStyle]?.blockItalic === true
+  if (draft.draftItalic === defaultItalic) {
+    delete nextItalic[draft.target as Key]
+  } else {
+    nextItalic[draft.target as Key] = draft.draftItalic
+  }
+
+  const nextRotations = { ...current.blockRotations }
+  const clampedRotation = clampRotation(draft.draftRotation)
+  if (hasSignificantRotation(clampedRotation)) {
+    nextRotations[draft.target as Key] = clampedRotation
+  } else {
+    delete nextRotations[draft.target as Key]
+  }
+
+  const nextPositions = { ...current.blockModulePositions }
+  const existingPosition = nextPositions[draft.target as Key]
+  const candidatePosition = desiredPosition ?? existingPosition
+  if (candidatePosition) {
+    const clampedPosition = clampTextBlockPosition({
+      position: candidatePosition,
+      span: draft.draftColumns,
+      gridCols,
+      maxBaselineRow,
+      fitWithinGrid: true,
+    })
+    const originalPosition = existingPosition ?? candidatePosition
+    if (
+      clampedPosition.col !== originalPosition.col
+      || clampedPosition.row !== originalPosition.row
+    ) {
+      nextPositions[draft.target as Key] = clampedPosition
+    }
+  }
+
+  return {
+    ...current,
+    textContent: {
+      ...current.textContent,
+      [draft.target as Key]: draft.draftText,
+    },
+    blockTextEdited: {
+      ...current.blockTextEdited,
+      [draft.target as Key]: draft.draftTextEdited,
+    },
+    styleAssignments: {
+      ...current.styleAssignments,
+      [draft.target as Key]: draft.draftStyle,
+    },
+    blockFontFamilies: nextFonts,
+    blockColumnSpans: {
+      ...current.blockColumnSpans,
+      [draft.target as Key]: draft.draftColumns,
+    },
+    blockRowSpans: {
+      ...current.blockRowSpans,
+      [draft.target as Key]: draft.draftRows,
+    },
+    blockTextAlignments: {
+      ...current.blockTextAlignments,
+      [draft.target as Key]: draft.draftAlign,
+    },
+    blockTextReflow: {
+      ...current.blockTextReflow,
+      [draft.target as Key]: draft.draftReflow && draft.draftColumns > 1,
+    },
+    blockSyllableDivision: {
+      ...current.blockSyllableDivision,
+      [draft.target as Key]: draft.draftSyllableDivision,
+    },
+    blockBold: nextBold,
+    blockItalic: nextItalic,
+    blockRotations: nextRotations,
+    blockModulePositions: nextPositions,
+  }
+}
+
+export function insertTextLayerIntoCollections<
+  Key extends string,
+  StyleKey extends string,
+>(
+  current: PreviewTextLayerCollectionsState<Key, StyleKey>,
+  {
+    newKey,
+    text,
+    styleKey,
+    columns,
+    rows,
+    position,
+    afterKey = null,
+    textEdited = false,
+    textAlign = "left",
+    reflow = false,
+    syllableDivision = true,
+  }: InsertTextLayerArgs<Key, StyleKey>,
+): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const nextOrder = [...current.blockOrder]
+  if (afterKey) {
+    const afterIndex = nextOrder.indexOf(afterKey)
+    if (afterIndex >= 0) nextOrder.splice(afterIndex + 1, 0, newKey)
+    else nextOrder.push(newKey)
+  } else {
+    nextOrder.push(newKey)
+  }
+
+  return {
+    ...current,
+    blockOrder: nextOrder,
+    textContent: {
+      ...current.textContent,
+      [newKey]: text,
+    },
+    blockTextEdited: {
+      ...current.blockTextEdited,
+      [newKey]: textEdited,
+    },
+    styleAssignments: {
+      ...current.styleAssignments,
+      [newKey]: styleKey,
+    },
+    blockColumnSpans: {
+      ...current.blockColumnSpans,
+      [newKey]: columns,
+    },
+    blockRowSpans: {
+      ...current.blockRowSpans,
+      [newKey]: rows,
+    },
+    blockTextAlignments: {
+      ...current.blockTextAlignments,
+      [newKey]: textAlign,
+    },
+    blockTextReflow: {
+      ...current.blockTextReflow,
+      [newKey]: reflow,
+    },
+    blockSyllableDivision: {
+      ...current.blockSyllableDivision,
+      [newKey]: syllableDivision,
+    },
+    blockModulePositions: {
+      ...current.blockModulePositions,
+      [newKey]: position,
+    },
+  }
+}
+
+export function duplicateTextLayerInCollections<
+  Key extends string,
+  StyleKey extends string,
+>(
+  current: PreviewTextLayerCollectionsState<Key, StyleKey>,
+  {
+    sourceKey,
+    newKey,
+    styleKey,
+    columns,
+    rows,
+    reflow,
+    syllableDivision,
+    position,
+    baseFont,
+  }: DuplicateTextLayerArgs<Key, StyleKey>,
+): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const nextOrder = [...current.blockOrder]
+  const sourceIndex = nextOrder.indexOf(sourceKey)
+  if (sourceIndex >= 0) nextOrder.splice(sourceIndex + 1, 0, newKey)
+  else nextOrder.push(newKey)
+
+  const sourceFont = current.blockFontFamilies[sourceKey] ?? baseFont
+  const nextFonts = { ...current.blockFontFamilies }
+  if (sourceFont === baseFont) delete nextFonts[newKey]
+  else nextFonts[newKey] = sourceFont
+
+  const nextBold = { ...current.blockBold }
+  if (current.blockBold[sourceKey] === true || current.blockBold[sourceKey] === false) {
+    nextBold[newKey] = current.blockBold[sourceKey]
+  } else {
+    delete nextBold[newKey]
+  }
+
+  const nextItalic = { ...current.blockItalic }
+  if (current.blockItalic[sourceKey] === true || current.blockItalic[sourceKey] === false) {
+    nextItalic[newKey] = current.blockItalic[sourceKey]
+  } else {
+    delete nextItalic[newKey]
+  }
+
+  const nextRotations = { ...current.blockRotations }
+  const sourceRotation = current.blockRotations[sourceKey]
+  if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && hasSignificantRotation(sourceRotation)) {
+    nextRotations[newKey] = clampRotation(sourceRotation)
+  } else {
+    delete nextRotations[newKey]
+  }
+
+  return {
+    ...current,
+    blockOrder: nextOrder,
+    textContent: {
+      ...current.textContent,
+      [newKey]: current.textContent[sourceKey] ?? "",
+    },
+    blockTextEdited: {
+      ...current.blockTextEdited,
+      [newKey]: current.blockTextEdited[sourceKey] ?? true,
+    },
+    styleAssignments: {
+      ...current.styleAssignments,
+      [newKey]: styleKey,
+    },
+    blockFontFamilies: nextFonts,
+    blockBold: nextBold,
+    blockItalic: nextItalic,
+    blockRotations: nextRotations,
+    blockColumnSpans: {
+      ...current.blockColumnSpans,
+      [newKey]: columns,
+    },
+    blockRowSpans: {
+      ...current.blockRowSpans,
+      [newKey]: rows,
+    },
+    blockTextAlignments: {
+      ...current.blockTextAlignments,
+      [newKey]: current.blockTextAlignments[sourceKey] ?? "left",
+    },
+    blockTextReflow: {
+      ...current.blockTextReflow,
+      [newKey]: reflow,
+    },
+    blockSyllableDivision: {
+      ...current.blockSyllableDivision,
+      [newKey]: syllableDivision,
+    },
+    blockModulePositions: {
+      ...current.blockModulePositions,
+      [newKey]: position,
+    },
+  }
+}

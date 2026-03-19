@@ -2,11 +2,15 @@ import { useCallback, useMemo } from "react"
 import type { Dispatch, MutableRefObject, RefObject, SetStateAction } from "react"
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react"
 
-import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
+import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import { type FontFamily } from "@/lib/config/fonts"
-import type { TextLayerCollections } from "@/lib/preview-layer-state"
 import type { BlockRect, NoticeRequest, PagePoint } from "@/lib/preview-types"
+import {
+  clampTextBlockPosition,
+  duplicateTextLayerInCollections,
+  type PreviewTextLayerCollectionsState,
+} from "@/lib/preview-text-layer-state"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 import { usePreviewDrag, type DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 
@@ -66,8 +70,8 @@ type Args<Key extends string, StyleKey extends string> = {
   setImageModulePositions: Dispatch<SetStateAction<Partial<Record<Key, ModulePosition>>>>
   setBlockCollections: (
     updater: (
-      prev: TextLayerCollections<Key, StyleKey, FontFamily, "left" | "right", ModulePosition>,
-    ) => TextLayerCollections<Key, StyleKey, FontFamily, "left" | "right", ModulePosition>,
+      prev: PreviewTextLayerCollectionsState<Key, StyleKey>,
+    ) => PreviewTextLayerCollectionsState<Key, StyleKey>,
   ) => void
   setBlockCustomSizes: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setBlockCustomLeadings: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
@@ -207,93 +211,26 @@ export function usePreviewCanvasInteractions<Key extends string, StyleKey extend
       const sourceCustomLeading = blockCustomLeadings[drag.key]
       const sourceTextColor = blockTextColors[drag.key]
       const metrics = getGridMetrics()
-      const minCol = -Math.max(0, sourceSpan - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
-      const resolvedPosition = {
-        col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), nextPreview.col)),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-      }
+      const resolvedPosition = clampTextBlockPosition({
+        position: nextPreview,
+        span: sourceSpan,
+        gridCols,
+        maxBaselineRow: metrics.maxBaselineRow,
+      })
       const newKey = getNextCustomBlockId()
 
       recordHistoryBeforeChange()
-      setBlockCollections((current) => {
-        const sourceIndex = current.blockOrder.indexOf(drag.key)
-        const nextOrder = [...current.blockOrder]
-        if (sourceIndex >= 0) nextOrder.splice(sourceIndex + 1, 0, newKey)
-        else nextOrder.push(newKey)
-
-        const sourceFont = current.blockFontFamilies[drag.key] ?? baseFont
-        const nextFonts = { ...current.blockFontFamilies }
-        if (sourceFont === baseFont) delete nextFonts[newKey]
-        else nextFonts[newKey] = sourceFont
-
-        const nextItalic = { ...current.blockItalic }
-        if (current.blockItalic[drag.key] === true || current.blockItalic[drag.key] === false) {
-          nextItalic[newKey] = current.blockItalic[drag.key]
-        } else {
-          delete nextItalic[newKey]
-        }
-
-        const nextBold = { ...current.blockBold }
-        if (current.blockBold[drag.key] === true || current.blockBold[drag.key] === false) {
-          nextBold[newKey] = current.blockBold[drag.key]
-        } else {
-          delete nextBold[newKey]
-        }
-
-        const nextRotations = { ...current.blockRotations }
-        const sourceRotation = current.blockRotations[drag.key]
-        if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && Math.abs(sourceRotation) > 0.001) {
-          nextRotations[newKey] = clampRotation(sourceRotation)
-        } else {
-          delete nextRotations[newKey]
-        }
-
-        return {
-          ...current,
-          blockOrder: nextOrder,
-          textContent: {
-            ...current.textContent,
-            [newKey]: current.textContent[drag.key] ?? "",
-          },
-          blockTextEdited: {
-            ...current.blockTextEdited,
-            [newKey]: current.blockTextEdited[drag.key] ?? true,
-          },
-          styleAssignments: {
-            ...current.styleAssignments,
-            [newKey]: styleKey,
-          },
-          blockFontFamilies: nextFonts,
-          blockBold: nextBold,
-          blockItalic: nextItalic,
-          blockRotations: nextRotations,
-          blockColumnSpans: {
-            ...current.blockColumnSpans,
-            [newKey]: sourceSpan,
-          },
-          blockRowSpans: {
-            ...current.blockRowSpans,
-            [newKey]: sourceRows,
-          },
-          blockTextAlignments: {
-            ...current.blockTextAlignments,
-            [newKey]: current.blockTextAlignments[drag.key] ?? "left",
-          },
-          blockTextReflow: {
-            ...current.blockTextReflow,
-            [newKey]: sourceReflow,
-          },
-          blockSyllableDivision: {
-            ...current.blockSyllableDivision,
-            [newKey]: sourceSyllableDivision,
-          },
-          blockModulePositions: {
-            ...current.blockModulePositions,
-            [newKey]: resolvedPosition,
-          },
-        }
-      })
+      setBlockCollections((current) => duplicateTextLayerInCollections(current, {
+        sourceKey: drag.key,
+        newKey,
+        styleKey,
+        columns: sourceSpan,
+        rows: sourceRows,
+        reflow: sourceReflow,
+        syllableDivision: sourceSyllableDivision,
+        position: resolvedPosition,
+        baseFont,
+      }))
       setBlockCustomSizes((current) => {
         const next = { ...current }
         if (styleKey === "fx" && typeof sourceCustomSize === "number" && Number.isFinite(sourceCustomSize) && sourceCustomSize > 0) {
@@ -325,14 +262,14 @@ export function usePreviewCanvasInteractions<Key extends string, StyleKey extend
     recordHistoryBeforeChange()
     const span = getBlockSpan(drag.key)
     const metrics = getGridMetrics()
-    const minCol = -Math.max(0, span - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
     setBlockModulePositions((current) => ({
       ...current,
-      [drag.key]: {
-        col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), nextPreview.col)),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-      },
+      [drag.key]: clampTextBlockPosition({
+        position: nextPreview,
+        span,
+        gridCols,
+        maxBaselineRow: metrics.maxBaselineRow,
+      }),
     }))
   }, [
     baseFont,

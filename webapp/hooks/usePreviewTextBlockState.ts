@@ -12,7 +12,7 @@ import {
   isBaseBlockId,
 } from "@/lib/document-defaults"
 import type { GridResult } from "@/lib/grid-calculator"
-import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import type { PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
 import type { ModulePosition, PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
@@ -22,13 +22,7 @@ type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type TextAlignMode = BlockEditorTextAlign
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 
-export type PreviewTextBlockCollectionsState = TextLayerCollections<
-  BlockId,
-  TypographyStyleKey,
-  FontFamily,
-  TextAlignMode,
-  ModulePosition
->
+export type PreviewTextBlockCollectionsState = PreviewTextLayerCollectionsState<BlockId, TypographyStyleKey>
 
 type Args = {
   result: GridResult

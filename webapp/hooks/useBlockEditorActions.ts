@@ -4,11 +4,15 @@ import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
-import { clampFxLeading, clampFxSize, clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import { buildExistingBlockEditorState, buildNewBlockEditorState } from "@/lib/preview-block-editor-state"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
+import {
+  applyBlockEditorDraftToCollections,
+  insertTextLayerIntoCollections,
+  type PreviewTextLayerCollectionsState,
+} from "@/lib/preview-text-layer-state"
 import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
-import type { PreviewTextBlockCollectionsState } from "@/hooks/usePreviewTextBlockState"
 import type { Updater } from "@/hooks/useStateCommands"
 
 type ModulePosition = {
@@ -40,18 +44,11 @@ type Args = {
   blockModulePositions: Partial<Record<string, ModulePosition>>
   recordHistoryBeforeChange: () => void
   setBlockCollections: (
-    updater: (prev: PreviewTextBlockCollectionsState) => PreviewTextBlockCollectionsState,
+    updater: (prev: PreviewTextLayerCollectionsState) => PreviewTextLayerCollectionsState,
   ) => void
-  setBlockOrder: (next: Updater<string[]>) => void
-  setTextContent: (next: Updater<Record<string, string>>) => void
-  setBlockTextEdited: (next: Updater<Record<string, boolean>>) => void
-  setStyleAssignments: (next: Updater<Record<string, string>>) => void
   setBlockCustomSizes: (next: Updater<Partial<Record<string, number>>>) => void
   setBlockCustomLeadings: (next: Updater<Partial<Record<string, number>>>) => void
   setBlockTextColors: (next: Updater<Partial<Record<string, string>>>) => void
-  setBlockColumnSpans: (next: Updater<Partial<Record<string, number>>>) => void
-  setBlockTextAlignments: (next: Updater<Partial<Record<string, TextAlignMode>>>) => void
-  setBlockModulePositions: (next: Updater<Partial<Record<string, ModulePosition>>>) => void
   getAutoFitForPlacement: (args: {
     key: string
     text: string
@@ -106,16 +103,9 @@ export function useBlockEditorActions({
   blockModulePositions,
   recordHistoryBeforeChange,
   setBlockCollections,
-  setBlockOrder,
-  setTextContent,
-  setBlockTextEdited,
-  setStyleAssignments,
   setBlockCustomSizes,
   setBlockCustomLeadings,
   setBlockTextColors,
-  setBlockColumnSpans,
-  setBlockTextAlignments,
-  setBlockModulePositions,
   getAutoFitForPlacement,
   getGridMetrics,
   isBaseBlockId,
@@ -155,102 +145,19 @@ export function useBlockEditorActions({
         : undefined,
       position: existingPosition,
     })
-    const nextSpan = draft.draftColumns
+    const metrics = getGridMetrics()
     setBlockCollections((prev) => {
-      const nextTextContent = {
-        ...prev.textContent,
-        [draft.target]: draft.draftText,
-      }
-      const nextTextEdited = {
-        ...prev.blockTextEdited,
-        [draft.target]: draft.draftTextEdited,
-      }
-      const nextStyles = {
-        ...prev.styleAssignments,
-        [draft.target]: draft.draftStyle,
-      }
-      const nextFonts = { ...prev.blockFontFamilies }
-      if (draft.draftFont === baseFont) {
-        delete nextFonts[draft.target]
-      } else {
-        nextFonts[draft.target] = draft.draftFont
-      }
-      const nextColumnSpans = {
-        ...prev.blockColumnSpans,
-        [draft.target]: nextSpan,
-      }
-      const nextRowSpans = {
-        ...prev.blockRowSpans,
-        [draft.target]: draft.draftRows,
-      }
-      const nextAlignments = {
-        ...prev.blockTextAlignments,
-        [draft.target]: draft.draftAlign,
-      }
-      const nextReflow = {
-        ...prev.blockTextReflow,
-        [draft.target]: effectiveReflow,
-      }
-      const nextSyllableDivision = {
-        ...prev.blockSyllableDivision,
-        [draft.target]: draft.draftSyllableDivision,
-      }
-      const nextBold = { ...prev.blockBold }
-      const defaultBold = resultTypographyStyles[draft.draftStyle]?.weight === "Bold"
-      if (draft.draftBold === defaultBold) {
-        delete nextBold[draft.target]
-      } else {
-        nextBold[draft.target] = draft.draftBold
-      }
-      const nextItalic = { ...prev.blockItalic }
-      const defaultItalic = resultTypographyStyles[draft.draftStyle]?.blockItalic === true
-      if (draft.draftItalic === defaultItalic) {
-        delete nextItalic[draft.target]
-      } else {
-        nextItalic[draft.target] = draft.draftItalic
-      }
-      const nextRotations = { ...prev.blockRotations }
-      const clampedRotation = clampRotation(draft.draftRotation)
-      if (hasSignificantRotation(clampedRotation)) {
-        nextRotations[draft.target] = clampedRotation
-      } else {
-        delete nextRotations[draft.target]
-      }
-
-      const nextPositions = { ...prev.blockModulePositions }
-      const pos = nextPositions[draft.target]
-      const desired = autoFit?.position ?? pos
-      if (desired) {
-        const metrics = getGridMetrics()
-        const minCol = -Math.max(0, nextSpan - 1)
-        const maxCol = Math.max(0, resultGridCols - nextSpan)
-        const minRow = -Math.max(0, metrics.maxBaselineRow)
-        const clamped = {
-          col: Math.max(minCol, Math.min(maxCol, desired.col)),
-          row: Math.max(minRow, Math.min(metrics.maxBaselineRow, desired.row)),
-        }
-        const original = pos ?? desired
-        if (clamped.col !== original.col || clamped.row !== original.row) {
-          nextPositions[draft.target] = clamped
-        }
-      }
-
-      return {
-        ...prev,
-        textContent: nextTextContent,
-        blockTextEdited: nextTextEdited,
-        styleAssignments: nextStyles,
-        blockFontFamilies: nextFonts,
-        blockColumnSpans: nextColumnSpans,
-        blockRowSpans: nextRowSpans,
-        blockTextAlignments: nextAlignments,
-        blockTextReflow: nextReflow,
-        blockSyllableDivision: nextSyllableDivision,
-        blockBold: nextBold,
-        blockItalic: nextItalic,
-        blockRotations: nextRotations,
-        blockModulePositions: nextPositions,
-      }
+      return applyBlockEditorDraftToCollections(prev, {
+        draft: {
+          ...draft,
+          draftReflow: effectiveReflow,
+        },
+        baseFont,
+        gridCols: resultGridCols,
+        maxBaselineRow: metrics.maxBaselineRow,
+        desiredPosition: autoFit?.position ?? null,
+        typographyStyles: resultTypographyStyles,
+      })
     })
     setBlockCustomSizes((prev) => {
       const next = { ...prev }
@@ -396,42 +303,14 @@ export function useBlockEditorActions({
     const newKey = getNextCustomBlockId()
     recordHistoryBeforeChange()
     const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
-    setBlockOrder((prev) => [...prev, newKey])
-    setTextContent((prev) => ({
-      ...prev,
-      [newKey]: getDummyTextForStyle("body"),
-    }))
-    setBlockTextEdited((prev) => ({
-      ...prev,
-      [newKey]: false,
-    }))
-    setStyleAssignments((prev) => ({
-      ...prev,
-      [newKey]: "body",
-    }))
     const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
-    setBlockColumnSpans((prev) => ({
-      ...prev,
-      [newKey]: defaultSpan,
-    }))
-    setBlockTextAlignments((prev) => ({
-      ...prev,
-      [newKey]: "left",
-    }))
-    setBlockCollections((prev) => ({
-      ...prev,
-      blockTextReflow: {
-        ...prev.blockTextReflow,
-        [newKey]: false,
-      },
-      blockSyllableDivision: {
-        ...prev.blockSyllableDivision,
-        [newKey]: true,
-      },
-    }))
-    setBlockModulePositions((prev) => ({
-      ...prev,
-      [newKey]: snapped,
+    setBlockCollections((prev) => insertTextLayerIntoCollections(prev, {
+      newKey,
+      text: getDummyTextForStyle("body"),
+      styleKey: "body",
+      columns: defaultSpan,
+      rows: 1,
+      position: snapped,
     }))
     setEditorState(buildNewBlockEditorState({
       key: newKey,
@@ -473,14 +352,7 @@ export function useBlockEditorActions({
     resultGridCols,
     resultGridRows,
     defaultTextColor,
-    setBlockColumnSpans,
-    setBlockModulePositions,
-    setBlockOrder,
-    setBlockTextAlignments,
-    setBlockTextEdited,
     setEditorState,
-    setStyleAssignments,
-    setTextContent,
     showTypography,
     snapToModule,
     styleAssignments,

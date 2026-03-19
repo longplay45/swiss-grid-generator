@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useImagePlaceholderState } from "@/hooks/useImagePlaceholderState"
 import { usePreviewTextBlockState } from "@/hooks/usePreviewTextBlockState"
-import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
+import { usePreviewTextBlockOverrides } from "@/hooks/usePreviewTextBlockOverrides"
 import {
   getDefaultImagePlaceholderColor,
   getDefaultTextSchemeColor,
   getImageColorScheme,
-  isImagePlaceholderColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { type FontFamily } from "@/lib/config/fonts"
@@ -45,9 +44,6 @@ export function useGridPreviewDocumentState({
   onImageColorSchemeChange,
 }: Args) {
   const [layerOrder, setLayerOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
-  const [blockCustomSizes, setBlockCustomSizes] = useState<Partial<Record<BlockId, number>>>({})
-  const [blockCustomLeadings, setBlockCustomLeadings] = useState<Partial<Record<BlockId, number>>>({})
-  const [blockTextColors, setBlockTextColors] = useState<Partial<Record<BlockId, string>>>({})
   const {
     blockCollectionsState,
     setBlockCollections,
@@ -101,6 +97,27 @@ export function useGridPreviewDocumentState({
     () => getDefaultTextSchemeColor(imageColorScheme),
     [imageColorScheme],
   )
+  const {
+    blockCustomSizes,
+    setBlockCustomSizes,
+    blockCustomLeadings,
+    setBlockCustomLeadings,
+    blockTextColors,
+    setBlockTextColors,
+    getBlockFontSize,
+    getBlockBaselineMultiplier,
+    getBlockTextColor,
+    buildTextOverridesSnapshot,
+    applyTextOverridesSnapshot,
+  } = usePreviewTextBlockOverrides<BlockId, TypographyStyleKey>({
+    blockOrder,
+    styleAssignments,
+    defaultTextColor,
+    gridUnit: result.grid.gridUnit,
+    getStyleSize,
+    getStyleLeading,
+    typographyStyles: result.typography.styles,
+  })
 
   const {
     imageOrder,
@@ -159,65 +176,16 @@ export function useGridPreviewDocumentState({
     isImagePlaceholderKey(key) ? getImageRows(key) : getBlockRows(key)
   ), [getBlockRows, getImageRows, isImagePlaceholderKey])
 
-  const getBlockFontSize = useCallback((key: BlockId, styleKey: TypographyStyleKey): number => {
-    const defaultSize = getStyleSize(styleKey)
-    if (styleKey !== "fx") return defaultSize
-    const raw = blockCustomSizes[key]
-    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultSize
-    return clampFxSize(raw)
-  }, [blockCustomSizes, getStyleSize])
-
-  const getBlockBaselineMultiplier = useCallback((key: BlockId, styleKey: TypographyStyleKey): number => {
-    const defaultLeading = getStyleLeading(styleKey)
-    const defaultMultiplier = result.typography.styles[styleKey]?.baselineMultiplier
-      ?? Math.max(0.01, defaultLeading / result.grid.gridUnit)
-    if (styleKey !== "fx") return defaultMultiplier
-    const raw = blockCustomLeadings[key]
-    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultMultiplier
-    return Math.max(0.01, Math.min(800, raw) / result.grid.gridUnit)
-  }, [blockCustomLeadings, getStyleLeading, result.grid.gridUnit, result.typography.styles])
-
-  const getBlockTextColor = useCallback((key: BlockId): string => {
-    const raw = blockTextColors[key]
-    if (isImagePlaceholderColor(raw)) return raw
-    return defaultTextColor
-  }, [blockTextColors, defaultTextColor])
-
   const buildSnapshot = useCallback((): PreviewLayoutState => ({
     ...buildTextSnapshot(),
-    blockCustomSizes: blockOrder.reduce((acc, key) => {
-      const styleKey = styleAssignments[key] ?? "body"
-      if (styleKey !== "fx") return acc
-      const raw = blockCustomSizes[key]
-      if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = clampFxSize(raw)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>),
-    blockCustomLeadings: blockOrder.reduce((acc, key) => {
-      const styleKey = styleAssignments[key] ?? "body"
-      if (styleKey !== "fx") return acc
-      const raw = blockCustomLeadings[key]
-      if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = clampFxLeading(raw)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>),
-    blockTextColors: blockOrder.reduce((acc, key) => {
-      const raw = blockTextColors[key]
-      if (!isImagePlaceholderColor(raw)) return acc
-      acc[key] = raw
-      return acc
-    }, {} as Partial<Record<BlockId, string>>),
+    ...buildTextOverridesSnapshot(),
     layerOrder: [...resolvedLayerOrder],
     ...buildImageSnapshotState(),
   }), [
-    blockCustomLeadings,
-    blockCustomSizes,
-    blockOrder,
-    blockTextColors,
     buildImageSnapshotState,
+    buildTextOverridesSnapshot,
     buildTextSnapshot,
     resolvedLayerOrder,
-    styleAssignments,
   ])
 
   const applyLayerOrderSnapshot = useCallback((snapshot: PreviewLayoutState) => {
@@ -232,42 +200,12 @@ export function useGridPreviewDocumentState({
     setLayerOrder(reconcileLayerOrder(normalizedLayerOrder, fallbackBlockOrder, fallbackImageOrder))
   }, [])
 
-  const applyCustomSizeSnapshot = useCallback((snapshot: PreviewLayoutState) => {
-    const normalizedOrder = (Array.isArray(snapshot.blockOrder) ? snapshot.blockOrder : [])
-      .filter((key): key is BlockId => typeof key === "string" && key.length > 0)
-    const nextSizes = normalizedOrder.reduce((acc, key) => {
-      const styleKey = snapshot.styleAssignments?.[key] ?? "body"
-      if (styleKey !== "fx") return acc
-      const raw = snapshot.blockCustomSizes?.[key]
-      if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = clampFxSize(raw)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>)
-    const nextLeadings = normalizedOrder.reduce((acc, key) => {
-      const styleKey = snapshot.styleAssignments?.[key] ?? "body"
-      if (styleKey !== "fx") return acc
-      const raw = snapshot.blockCustomLeadings?.[key]
-      if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return acc
-      acc[key] = clampFxLeading(raw)
-      return acc
-    }, {} as Partial<Record<BlockId, number>>)
-    const nextTextColors = normalizedOrder.reduce((acc, key) => {
-      const raw = snapshot.blockTextColors?.[key]
-      if (!isImagePlaceholderColor(raw)) return acc
-      acc[key] = raw
-      return acc
-    }, {} as Partial<Record<BlockId, string>>)
-    setBlockCustomSizes(nextSizes)
-    setBlockCustomLeadings(nextLeadings)
-    setBlockTextColors(nextTextColors)
-  }, [])
-
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
     applyTextSnapshot(snapshot)
     applyImageSnapshot(snapshot)
     applyLayerOrderSnapshot(snapshot)
-    applyCustomSizeSnapshot(snapshot)
-  }, [applyCustomSizeSnapshot, applyImageSnapshot, applyLayerOrderSnapshot, applyTextSnapshot])
+    applyTextOverridesSnapshot(snapshot)
+  }, [applyImageSnapshot, applyLayerOrderSnapshot, applyTextOverridesSnapshot, applyTextSnapshot])
 
   return {
     blockCollectionsState,
@@ -346,7 +284,7 @@ export function useGridPreviewDocumentState({
     getBlockRotation,
     buildSnapshot,
     applyLayerOrderSnapshot,
-    applyCustomSizeSnapshot,
+    applyCustomSizeSnapshot: applyTextOverridesSnapshot,
     applySnapshot,
   }
 }
