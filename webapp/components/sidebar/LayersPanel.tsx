@@ -2,6 +2,7 @@
 
 import { Trash2, X } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import type { DragEvent } from "react"
 
 import {
   getDefaultTextSchemeColor,
@@ -102,6 +103,7 @@ export function LayersPanel({
   const [draggingKey, setDraggingKey] = useState<string | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const dropIndicatorIndexRef = useRef<number | null>(null)
 
   const blockOrder = useMemo(() => layout?.blockOrder ?? [], [layout?.blockOrder])
   const imageOrder = useMemo(() => layout?.imageOrder ?? [], [layout?.imageOrder])
@@ -188,7 +190,6 @@ export function LayersPanel({
         body: "text-gray-400",
         card: "border-gray-700 bg-gray-800 text-gray-100",
         cardMuted: "text-gray-400",
-        activeAccent: "bg-orange-500",
         stripeBg: "bg-gray-900",
         close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
       }
@@ -197,21 +198,48 @@ export function LayersPanel({
         body: "text-gray-600",
         card: "border-gray-200 bg-gray-50 text-gray-900",
         cardMuted: "text-gray-500",
-        activeAccent: "bg-orange-500",
         stripeBg: "bg-white",
         close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
       }
 
   const moveLayer = (targetIndex: number) => {
     if (!draggingKey) return
-    const withoutDragging = visibleOrder.filter((key) => key !== draggingKey)
-    const normalizedIndex = Math.max(0, Math.min(targetIndex, withoutDragging.length))
-    withoutDragging.splice(normalizedIndex, 0, draggingKey)
-    const nextLayerOrder = [...withoutDragging].reverse()
+    const nextVisibleOrder = [...stationaryVisibleOrder]
+    const normalizedIndex = Math.max(0, Math.min(targetIndex, nextVisibleOrder.length))
+    nextVisibleOrder.splice(normalizedIndex, 0, draggingKey)
+    const nextLayerOrder = [...nextVisibleOrder].reverse()
     if (nextLayerOrder.every((key, index) => key === layerOrder[index]) && nextLayerOrder.length === layerOrder.length) {
       return
     }
     onLayerOrderChange(nextLayerOrder)
+  }
+
+  const updateDropIndicator = (nextIndex: number | null) => {
+    dropIndicatorIndexRef.current = nextIndex
+    setDropIndicatorIndex((current) => (current === nextIndex ? current : nextIndex))
+  }
+
+  const clearDragState = () => {
+    setDraggingKey(null)
+    updateDropIndicator(null)
+  }
+
+  const handleListDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!draggingKey) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "move"
+    updateDropIndicator(getDropIndexForPointer(event.clientY))
+  }
+
+  const handleListDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (!draggingKey) return
+    event.preventDefault()
+    event.stopPropagation()
+    const targetIndex = dropIndicatorIndexRef.current
+    if (targetIndex !== null) {
+      moveLayer(targetIndex)
+    }
+    clearDragState()
   }
 
   const getDropIndexForPointer = (clientY: number) => {
@@ -259,25 +287,24 @@ export function LayersPanel({
 
       <div
         className="flex flex-col"
-        onDragOver={(event) => {
-          if (!draggingKey) return
-          event.preventDefault()
-          event.dataTransfer.dropEffect = "move"
-          setDropIndicatorIndex(getDropIndexForPointer(event.clientY))
-        }}
-        onDrop={(event) => {
-          if (!draggingKey) return
-          event.preventDefault()
-          moveLayer(dropIndicatorIndex ?? getDropIndexForPointer(event.clientY))
-          setDraggingKey(null)
-          setDropIndicatorIndex(null)
-        }}
+        onDragOver={handleListDragOver}
+        onDrop={handleListDrop}
       >
+        <div
+          className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
+          onDragOver={handleListDragOver}
+          onDrop={handleListDrop}
+        >
+          {renderDropMarker(0)}
+        </div>
         {visibleThumbs.map((thumb, index) => {
           const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
+          const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
           return (
             <Fragment key={thumb.key}>
-              {thumb.key !== draggingKey ? renderDropMarker(stationaryIndexByKey.get(thumb.key) ?? null) : null}
+              {thumb.key !== draggingKey && stationaryIndex !== null && stationaryIndex > 0
+                ? renderDropMarker(stationaryIndex)
+                : null}
               <div
                 ref={(node) => {
                   cardRefs.current[thumb.key] = node
@@ -288,26 +315,19 @@ export function LayersPanel({
                   event.dataTransfer.setData("text/plain", thumb.key)
                   onSelectLayer(thumb.key)
                   setDraggingKey(thumb.key)
-                  setDropIndicatorIndex(stationaryVisibleOrder.indexOf(thumb.key))
+                  updateDropIndicator(stationaryVisibleOrder.indexOf(thumb.key))
                 }}
-                onDragEnd={() => {
-                  setDraggingKey(null)
-                  setDropIndicatorIndex(null)
-                }}
+                onDragEnd={clearDragState}
+                onDragOver={handleListDragOver}
+                onDrop={handleListDrop}
                 onClick={() => onSelectLayer(thumb.key)}
                 onDoubleClick={() => onToggleEditor(thumb.key)}
                 className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                   draggingKey === thumb.key
                     ? `${tone.card} cursor-grabbing opacity-45`
                     : tone.card
-                }`}
+                } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""}`}
               >
-                {isActive ? (
-                  <>
-                    <div className={`pointer-events-none absolute left-0 top-0 h-px w-full ${tone.activeAccent}`} />
-                    <div className={`pointer-events-none absolute left-0 top-0 h-full w-px ${tone.activeAccent}`} />
-                  </>
-                ) : null}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className={`truncate text-[11px] ${tone.cardMuted}`}>
@@ -352,7 +372,13 @@ export function LayersPanel({
             </Fragment>
           )
         })}
-        {renderDropMarker(stationaryVisibleOrder.length)}
+        <div
+          className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
+          onDragOver={handleListDragOver}
+          onDrop={handleListDrop}
+        >
+          {renderDropMarker(stationaryVisibleOrder.length)}
+        </div>
       </div>
     </div>
   )

@@ -490,18 +490,26 @@ export function TextEditorPanel<StyleKey extends string>({
               <div className="flex items-center gap-1">
                 {previewPalette.map((color, index) => {
                   const selected = controls.editorState.draftColor.toLowerCase() === color.toLowerCase()
+                  const swatchKey = `${previewColorScheme ?? controls.selectedColorScheme}-${index}-${color}`
                   return (
-                    withSubmenuTooltip(`Set the paragraph color to ${color}`, <button
-                      key={`${previewColorScheme ?? controls.selectedColorScheme}-${index}-${color}`}
-                      type="button"
-                      onClick={() => {
-                        controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))
-                      }}
-                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`Select ${color}`}
-                      title={color}
-                    />)
+                    <HoverTooltip
+                      key={swatchKey}
+                      className="block"
+                      label={`Set the paragraph color to ${color}`}
+                      disabled={!showRolloverInfo}
+                      tooltipClassName={submenuTooltipClassName}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))
+                        }}
+                        className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Select ${color}`}
+                        title={color}
+                      />
+                    </HoverTooltip>
                   )
                 })}
               </div>
