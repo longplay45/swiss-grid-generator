@@ -9,14 +9,13 @@ import {
 } from "@/components/editor/block-editor-types"
 import { GridResult } from "@/lib/grid-calculator"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
-import { renderStaticGuides } from "@/lib/render-static-guides"
 import type { HelpSectionId } from "@/lib/help-registry"
 import {
   findNearestAxisIndex,
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
-import { usePreviewDrag } from "@/hooks/usePreviewDrag"
-import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
+import { usePreviewCanvasInteractions } from "@/hooks/usePreviewCanvasInteractions"
+import { usePreviewGuideCanvases } from "@/hooks/usePreviewGuideCanvases"
 import { useGridPreviewDocumentState } from "@/hooks/useGridPreviewDocumentState"
 import { usePreviewGeometry } from "@/hooks/usePreviewGeometry"
 import { usePreviewHoverState, type PreviewHoverState } from "@/hooks/usePreviewHoverState"
@@ -24,6 +23,7 @@ import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { usePreviewHitTesting } from "@/hooks/usePreviewHitTesting"
 import { usePreviewLayoutReflowController } from "@/hooks/usePreviewLayoutReflowController"
 import { usePreviewOverlayCanvas } from "@/hooks/usePreviewOverlayCanvas"
+import { usePreviewViewport } from "@/hooks/usePreviewViewport"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
@@ -37,7 +37,6 @@ import {
   DEFAULT_TEXT_CONTENT,
   isBaseBlockId,
 } from "@/lib/document-defaults"
-import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
 import {
   DEFAULT_BASE_FONT,
   getFontFamilyCss,
@@ -48,7 +47,6 @@ import {
   getClosestImageSchemeColorToken,
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
   IMAGE_COLOR_SCHEMES,
-  isImagePlaceholderColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
@@ -89,8 +87,6 @@ type ModulePosition = {
   col: number
   row: number
 }
-
-type DragState = PreviewDragState<BlockId>
 
 type OverflowLinesByBlock = Partial<Record<BlockId, number>>
 type NoticeRequest = {
@@ -242,9 +238,6 @@ export const GridPreview = memo(function GridPreview({
   const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
-  const [scale, setScale] = useState(1)
-  const [pixelRatio, setPixelRatio] = useState(1)
-  const [isMobile, setIsMobile] = useState(false)
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
@@ -256,6 +249,20 @@ export const GridPreview = memo(function GridPreview({
   const TOUCH_CANCEL_DISTANCE_PX = 10
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
+
+  const {
+    scale,
+    pixelRatio,
+    isMobile,
+    pageWidthCss,
+    pageHeightCss,
+    pageWidthPx,
+    pageHeightPx,
+  } = usePreviewViewport({
+    previewContainerRef,
+    pageWidthPt: result.pageSizePt.width,
+    pageHeightPt: result.pageSizePt.height,
+  })
 
   const makeCachedValue = useCallback(
     <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
@@ -665,231 +672,6 @@ export const GridPreview = memo(function GridPreview({
     redo,
   })
 
-  const applyDragDrop = useCallback((drag: DragState, nextPreview: ModulePosition, copyOnDrop: boolean) => {
-    if (isImagePlaceholderKey(drag.key)) {
-      const sourceColumns = getImageSpan(drag.key)
-      const sourceRows = getImageRows(drag.key)
-      const sourceColor = getImageColorReference(drag.key)
-      const metrics = getGridMetrics()
-      const minCol = -Math.max(0, sourceColumns - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
-      const resolvedPosition = {
-        col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-      }
-
-      if (copyOnDrop) {
-        const newKey = getNextImagePlaceholderId()
-        recordHistoryBeforeChange()
-        insertImagePlaceholder(newKey, {
-          position: resolvedPosition,
-          columns: sourceColumns,
-          rows: sourceRows,
-          color: sourceColor,
-          afterKey: drag.key,
-        })
-        onSelectLayer?.(newKey)
-        return
-      }
-
-      recordHistoryBeforeChange()
-      setImageModulePositions((current) => ({
-        ...current,
-        [drag.key]: resolvedPosition,
-      }))
-      return
-    }
-
-    if (copyOnDrop) {
-      const sourceText = textContent[drag.key] ?? ""
-      const maxParagraphCount = result.settings.gridCols * result.settings.gridRows
-      const activeParagraphCount = blockOrder.filter((key) => (textContent[key] ?? "").trim().length > 0).length
-      if (sourceText.trim().length > 0 && activeParagraphCount >= maxParagraphCount) {
-        onRequestNotice?.({
-          title: "Paragraph Limit Reached",
-          message: `Maximum paragraphs reached (${maxParagraphCount}).`,
-        })
-        return
-      }
-
-      const styleKey = getStyleKeyForBlock(drag.key)
-      const sourceRows = getBlockRows(drag.key)
-      const sourceReflow = isTextReflowEnabled(drag.key)
-      const sourceSyllableDivision = isSyllableDivisionEnabled(drag.key)
-      const sourceSpan = getBlockSpan(drag.key)
-      const sourceCustomSize = blockCustomSizes[drag.key]
-      const sourceCustomLeading = blockCustomLeadings[drag.key]
-      const sourceTextColor = blockTextColors[drag.key]
-      const nextSpan = sourceSpan
-      const metrics = getGridMetrics()
-      const minCol = -Math.max(0, nextSpan - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
-      const resolvedPosition = {
-        col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-      }
-      const newKey = getNextCustomBlockId()
-
-      recordHistoryBeforeChange()
-      setBlockCollections((current) => {
-        const sourceIndex = current.blockOrder.indexOf(drag.key)
-        const nextOrder = [...current.blockOrder]
-        if (sourceIndex >= 0) nextOrder.splice(sourceIndex + 1, 0, newKey)
-        else nextOrder.push(newKey)
-
-        const sourceFont = current.blockFontFamilies[drag.key] ?? baseFont
-        const nextFonts = { ...current.blockFontFamilies }
-        if (sourceFont === baseFont) {
-          delete nextFonts[newKey]
-        } else {
-          nextFonts[newKey] = sourceFont
-        }
-        const nextItalic = { ...current.blockItalic }
-        if (current.blockItalic[drag.key] === true || current.blockItalic[drag.key] === false) {
-          nextItalic[newKey] = current.blockItalic[drag.key]
-        } else {
-          delete nextItalic[newKey]
-        }
-        const nextBold = { ...current.blockBold }
-        if (current.blockBold[drag.key] === true || current.blockBold[drag.key] === false) {
-          nextBold[newKey] = current.blockBold[drag.key]
-        } else {
-          delete nextBold[newKey]
-        }
-        const nextRotations = { ...current.blockRotations }
-        const sourceRotation = current.blockRotations[drag.key]
-        if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && Math.abs(sourceRotation) > 0.001) {
-          nextRotations[newKey] = clampRotation(sourceRotation)
-        } else {
-          delete nextRotations[newKey]
-        }
-
-        return {
-          ...current,
-          blockOrder: nextOrder,
-          textContent: {
-            ...current.textContent,
-            [newKey]: current.textContent[drag.key] ?? "",
-          },
-          blockTextEdited: {
-            ...current.blockTextEdited,
-            [newKey]: current.blockTextEdited[drag.key] ?? true,
-          },
-          styleAssignments: {
-            ...current.styleAssignments,
-            [newKey]: styleKey,
-          },
-          blockFontFamilies: nextFonts,
-          blockBold: nextBold,
-          blockItalic: nextItalic,
-          blockRotations: nextRotations,
-          blockColumnSpans: {
-            ...current.blockColumnSpans,
-            [newKey]: nextSpan,
-          },
-          blockRowSpans: {
-            ...current.blockRowSpans,
-            [newKey]: sourceRows,
-          },
-          blockTextAlignments: {
-            ...current.blockTextAlignments,
-            [newKey]: current.blockTextAlignments[drag.key] ?? "left",
-          },
-          blockTextReflow: {
-            ...current.blockTextReflow,
-            [newKey]: sourceReflow,
-          },
-          blockSyllableDivision: {
-            ...current.blockSyllableDivision,
-            [newKey]: sourceSyllableDivision,
-          },
-          blockModulePositions: {
-            ...current.blockModulePositions,
-            [newKey]: resolvedPosition,
-          },
-        }
-      })
-      setBlockCustomSizes((current) => {
-        const next = { ...current }
-        if (styleKey === "fx" && typeof sourceCustomSize === "number" && Number.isFinite(sourceCustomSize) && sourceCustomSize > 0) {
-          next[newKey] = clampFxSize(sourceCustomSize)
-        } else {
-          delete next[newKey]
-        }
-        return next
-      })
-      setBlockCustomLeadings((current) => {
-        const next = { ...current }
-        if (styleKey === "fx" && typeof sourceCustomLeading === "number" && Number.isFinite(sourceCustomLeading) && sourceCustomLeading > 0) {
-          next[newKey] = clampFxLeading(sourceCustomLeading)
-        } else {
-          delete next[newKey]
-        }
-        return next
-      })
-      setBlockTextColors((current) => {
-        const next = { ...current }
-        if (isImagePlaceholderColor(sourceTextColor)) {
-          next[newKey] = sourceTextColor
-        } else {
-          delete next[newKey]
-        }
-        return next
-      })
-      onSelectLayer?.(newKey)
-    } else {
-      recordHistoryBeforeChange()
-      const span = getBlockSpan(drag.key)
-      const metrics = getGridMetrics()
-      const minCol = -Math.max(0, span - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
-      setBlockModulePositions((current) => ({
-        ...current,
-        [drag.key]: {
-          col: Math.max(minCol, Math.min(Math.max(0, result.settings.gridCols - 1), nextPreview.col)),
-          row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
-        },
-      }))
-    }
-  }, [
-    baseFont,
-    blockCustomLeadings,
-    blockTextColors,
-    blockCustomSizes,
-    blockOrder,
-    getBlockRows,
-    getBlockSpan,
-    getImageColorReference,
-    getImageRows,
-    getImageSpan,
-    getGridMetrics,
-    getStyleKeyForBlock,
-    isImagePlaceholderKey,
-    isSyllableDivisionEnabled,
-    isTextReflowEnabled,
-    onRequestNotice,
-    onSelectLayer,
-    recordHistoryBeforeChange,
-    result.settings.gridCols,
-    result.settings.gridRows,
-    insertImagePlaceholder,
-    setBlockCollections,
-    setBlockCustomLeadings,
-    setBlockTextColors,
-    setBlockCustomSizes,
-    setImageModulePositions,
-    setBlockModulePositions,
-    textContent,
-  ])
-
-  const draggableModulePositions = useMemo(
-    () => ({
-      ...blockModulePositions,
-      ...imageModulePositions,
-    }),
-    [blockModulePositions, imageModulePositions],
-  )
-
   const clearHover = useCallback(() => {
     setHoverState(null)
     setHoverImageKey(null)
@@ -898,27 +680,68 @@ export const GridPreview = memo(function GridPreview({
   const {
     dragState,
     setDragState,
-    handleCanvasPointerDown,
+    handlePreviewPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,
     handleCanvasPointerCancel,
     handleCanvasLostPointerCapture,
-  } = usePreviewDrag<BlockId>({
+    handleCanvasDoubleClick,
+  } = usePreviewCanvasInteractions<BlockId, TypographyStyleKey>({
     showTypography,
-    isEditorOpen: Boolean(editorState || imageEditorState),
+    showImagePlaceholders,
+    editorOpen: Boolean(editorState || imageEditorState),
     canvasRef,
     blockRectsRef,
-    getBlockRect: (key) => blockRectsRef.current[key] ?? imageRectsRef.current[key] ?? null,
-    blockModulePositions: draggableModulePositions,
-    findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
+    imageRectsRef,
+    blockModulePositions,
+    imageModulePositions,
     toPagePoint,
+    toPagePointFromClient,
     snapToModule,
     snapToBaseline,
-    onDrop: applyDragDrop,
-    onClearHover: clearHover,
+    getGridMetrics,
+    findTopmostDraggableAtPoint,
+    findTopmostBlockAtPoint,
+    findTopmostImageAtPoint,
+    resolveSelectedLayerAtClientPoint,
+    resolveModulePositionAtPagePoint,
+    clampImageModulePosition,
+    isImagePlaceholderKey,
+    getImageSpan,
+    getImageRows,
+    getImageColorReference,
+    getBlockRows,
+    getBlockSpan,
+    getStyleKeyForBlock,
+    isTextReflowEnabled,
+    isSyllableDivisionEnabled,
+    blockOrder,
+    textContent,
+    blockCustomSizes,
+    blockCustomLeadings,
+    blockTextColors,
+    baseFont,
+    gridCols: result.settings.gridCols,
+    gridRows: result.settings.gridRows,
+    recordHistoryBeforeChange,
+    insertImagePlaceholder,
+    setImageModulePositions,
+    setBlockCollections,
+    setBlockCustomSizes,
+    setBlockCustomLeadings,
+    setBlockTextColors,
+    setBlockModulePositions,
+    onSelectLayer,
+    onRequestNotice,
+    getNextCustomBlockId,
+    getNextImagePlaceholderId,
+    handleTextCanvasDoubleClick,
+    openImageEditor,
+    closeImageEditorPanel: closeImageEditorState,
+    clearHover,
+    dragEndedAtRef,
     touchLongPressMs: TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
-    dragEndedAtRef,
   })
 
   const {
@@ -1071,64 +894,19 @@ export const GridPreview = memo(function GridPreview({
     setEditorState,
   })
 
-  const handlePreviewPointerDown = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
-    onSelectLayer?.(resolveSelectedLayerAtClientPoint(event.clientX, event.clientY))
-    handleCanvasPointerDown(event)
-  }, [handleCanvasPointerDown, onSelectLayer, resolveSelectedLayerAtClientPoint])
-
-  useEffect(() => {
-    const canvas = staticCanvasRef.current
-    if (!canvas) return
-
-    const frame = window.requestAnimationFrame(() => {
-      const markName = "sgg:guides"
-      if (typeof performance.mark === "function") performance.mark(`${markName}:start`)
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-      const cssWidth = canvas.width / pixelRatio
-      const cssHeight = canvas.height / pixelRatio
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      renderStaticGuides({
-        ctx,
-        canvasWidth: cssWidth,
-        canvasHeight: cssHeight,
-        result,
-        scale,
-        rotation,
-        backgroundColor: canvasBackground,
-        showMargins,
-        showModules,
-        showBaselines,
-        isMobile,
-      })
-      if (typeof performance.mark === "function" && typeof performance.measure === "function") {
-        performance.mark(`${markName}:end`)
-        try {
-          performance.measure(markName, `${markName}:start`, `${markName}:end`)
-        } catch {
-          // Ignore missing/invalid marks.
-        }
-      }
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [canvasBackground, isMobile, pixelRatio, result, rotation, scale, showBaselines, showMargins, showModules])
-
-  useEffect(() => {
-    const canvas = imageCanvasRef.current
-    if (!canvas) return
-
-    const frame = window.requestAnimationFrame(() => {
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-      const cssWidth = canvas.width / pixelRatio
-      const cssHeight = canvas.height / pixelRatio
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      ctx.clearRect(0, 0, cssWidth, cssHeight)
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [pixelRatio])
+  usePreviewGuideCanvases({
+    staticCanvasRef,
+    imageCanvasRef,
+    pixelRatio,
+    result,
+    scale,
+    rotation,
+    canvasBackground,
+    showMargins,
+    showModules,
+    showBaselines,
+    isMobile,
+  })
 
   useTypographyRenderer<BlockId>({
     canvasRef,
@@ -1199,67 +977,6 @@ export const GridPreview = memo(function GridPreview({
     getGridMetrics,
   })
 
-  useEffect(() => {
-    const calculateScale = () => {
-      const container = previewContainerRef.current
-      if (!container) return
-
-      const { width, height } = result.pageSizePt
-      const containerWidth = container.clientWidth - 40
-      const containerHeight = container.clientHeight - 40
-
-      const nextScale = Math.min(containerWidth / width, containerHeight / height)
-      setScale((prev) => (Math.abs(prev - nextScale) < 0.0001 ? prev : nextScale))
-    }
-
-    calculateScale()
-    const observer = typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(calculateScale)
-      : null
-    if (observer && previewContainerRef.current) observer.observe(previewContainerRef.current)
-    window.addEventListener("resize", calculateScale)
-    return () => {
-      observer?.disconnect()
-      window.removeEventListener("resize", calculateScale)
-    }
-  }, [result])
-
-  useEffect(() => {
-    const readDevicePixelRatio = () => Math.max(1, window.devicePixelRatio || 1)
-    const applyDevicePixelRatio = () => {
-      const nextRatio = readDevicePixelRatio()
-      setPixelRatio((prev) => (Math.abs(prev - nextRatio) < 0.01 ? prev : nextRatio))
-    }
-
-    applyDevicePixelRatio()
-    let mediaQuery = window.matchMedia(`(resolution: ${readDevicePixelRatio()}dppx)`)
-    const handleDprChange = () => {
-      applyDevicePixelRatio()
-      mediaQuery.removeEventListener("change", handleDprChange)
-      mediaQuery = window.matchMedia(`(resolution: ${readDevicePixelRatio()}dppx)`)
-      mediaQuery.addEventListener("change", handleDprChange)
-    }
-
-    mediaQuery.addEventListener("change", handleDprChange)
-    window.addEventListener("resize", applyDevicePixelRatio)
-    window.addEventListener("orientationchange", applyDevicePixelRatio)
-    window.visualViewport?.addEventListener("resize", applyDevicePixelRatio)
-    return () => {
-      mediaQuery.removeEventListener("change", handleDprChange)
-      window.removeEventListener("resize", applyDevicePixelRatio)
-      window.removeEventListener("orientationchange", applyDevicePixelRatio)
-      window.visualViewport?.removeEventListener("resize", applyDevicePixelRatio)
-    }
-  }, [])
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
   const {
     pendingReflow,
     reflowToast,
@@ -1297,69 +1014,11 @@ export const GridPreview = memo(function GridPreview({
     deleteImagePlaceholderState()
   }, [deleteImagePlaceholderState, imageEditorState, recordHistoryBeforeChange])
 
-  const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
-    const pagePoint = toPagePointFromClient(event.clientX, event.clientY)
-    if (!pagePoint) return
-
-    const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
-    if (textKey) {
-      setImageEditorState(null)
-      handleTextCanvasDoubleClick(event)
-      return
-    }
-
-    if (!showImagePlaceholders) {
-      setImageEditorState(null)
-      handleTextCanvasDoubleClick(event)
-      return
-    }
-
-    const imageKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
-    if (imageKey) {
-      openImageEditor(imageKey)
-      return
-    }
-
-    if (!(event.shiftKey || event.ctrlKey)) {
-      setImageEditorState(null)
-      handleTextCanvasDoubleClick(event)
-      return
-    }
-
-    const rawPosition = resolveModulePositionAtPagePoint(pagePoint.x, pagePoint.y)
-    if (!rawPosition) return
-    const newKey = getNextImagePlaceholderId()
-    const snapped = clampImageModulePosition(rawPosition, 1, 1)
-    recordHistoryBeforeChange()
-    insertImagePlaceholder(newKey, { position: snapped })
-    openImageEditor(newKey, { recordHistory: false })
-  }, [
-    clampImageModulePosition,
-    dragEndedAtRef,
-    findTopmostBlockAtPoint,
-    findTopmostImageAtPoint,
-    handleTextCanvasDoubleClick,
-    insertImagePlaceholder,
-    openImageEditor,
-    recordHistoryBeforeChange,
-    resolveModulePositionAtPagePoint,
-    setImageEditorState,
-    showImagePlaceholders,
-    showTypography,
-    toPagePointFromClient,
-  ])
-
   usePreviewLayoutEmission({
     buildSnapshot,
     debounceMs: LAYOUT_CHANGE_DEBOUNCE_MS,
     onLayoutChange,
   })
-
-  const pageWidthCss = result.pageSizePt.width * scale
-  const pageHeightCss = result.pageSizePt.height * scale
-  const pageWidthPx = Math.max(1, Math.round(pageWidthCss * pixelRatio))
-  const pageHeightPx = Math.max(1, Math.round(pageHeightCss * pixelRatio))
 
   const hierarchyOptionLabels = useMemo(
     () =>
