@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { InlineBlockTextarea } from "@/components/editor/InlineBlockTextarea"
+import { GridPreviewCanvasStage } from "@/components/preview/GridPreviewCanvasStage"
+import { GridPreviewFeedback } from "@/components/preview/GridPreviewFeedback"
 import { GridPreviewOverlays } from "@/components/preview/GridPreviewOverlays"
 import {
   type BlockEditorStyleOption,
@@ -837,95 +837,46 @@ export const GridPreview = memo(function GridPreview({
         isDarkMode ? "bg-gray-900" : "bg-gray-50"
       }`}
     >
-      <div className="relative" style={{ width: pageWidthCss, height: pageHeightCss }}>
-        <canvas
-          ref={staticCanvasRef}
-          width={pageWidthPx}
-          height={pageHeightPx}
-          style={{ width: pageWidthCss, height: pageHeightCss }}
-          className="absolute inset-0 block shadow-lg"
-        />
-        <canvas
-          ref={imageCanvasRef}
-          width={pageWidthPx}
-          height={pageHeightPx}
-          style={{ width: pageWidthCss, height: pageHeightCss }}
-          className="pointer-events-none absolute inset-0 block"
-        />
-        <canvas
-          ref={canvasRef}
-          width={pageWidthPx}
-          height={pageHeightPx}
-          style={{ width: pageWidthCss, height: pageHeightCss }}
-          className={`absolute inset-0 block touch-none ${canvasCursorClass}`}
-          onPointerDown={handlePreviewPointerDown}
-          onPointerMove={handleCanvasPointerMove}
-          onPointerUp={handleCanvasPointerUp}
-          onPointerCancel={handleCanvasPointerCancel}
-          onLostPointerCapture={handleCanvasLostPointerCapture}
-          onMouseMove={handleCanvasMouseMove}
-          onMouseLeave={clearHover}
-          onDoubleClick={handleCanvasDoubleClick}
-        />
-        <canvas
-          ref={overlayCanvasRef}
-          width={pageWidthPx}
-          height={pageHeightPx}
-          style={{ width: pageWidthCss, height: pageHeightCss }}
-          className="pointer-events-none absolute inset-0 block"
-        />
-        <InlineBlockTextarea
-          editorState={editorState}
-          setEditorState={setEditorState}
-          textareaRef={textareaRef}
-          layout={inlineEditorLayout}
-          pageWidth={pageWidthCss}
-          pageHeight={pageHeightCss}
-          pageRotation={rotation}
-          scale={scale}
-          baselineStep={result.grid.gridUnit * scale}
-          closeEditor={closeEditor}
-          saveEditor={saveEditor}
-          getStyleSizeValue={getStyleSize}
-          getStyleLeadingValue={getStyleLeading}
-          isFxStyle={(styleKey) => styleKey === "fx"}
-        />
-      </div>
+      <GridPreviewCanvasStage
+        staticCanvasRef={staticCanvasRef}
+        imageCanvasRef={imageCanvasRef}
+        canvasRef={canvasRef}
+        overlayCanvasRef={overlayCanvasRef}
+        textareaRef={textareaRef}
+        pageWidthCss={pageWidthCss}
+        pageHeightCss={pageHeightCss}
+        pageWidthPx={pageWidthPx}
+        pageHeightPx={pageHeightPx}
+        canvasCursorClass={canvasCursorClass}
+        handlePreviewPointerDown={handlePreviewPointerDown}
+        handleCanvasPointerMove={handleCanvasPointerMove}
+        handleCanvasPointerUp={handleCanvasPointerUp}
+        handleCanvasPointerCancel={handleCanvasPointerCancel}
+        handleCanvasLostPointerCapture={handleCanvasLostPointerCapture}
+        handleCanvasMouseMove={handleCanvasMouseMove}
+        handleCanvasDoubleClick={handleCanvasDoubleClick}
+        clearHover={clearHover}
+        editorState={editorState}
+        setEditorState={setEditorState}
+        inlineEditorLayout={inlineEditorLayout}
+        rotation={rotation}
+        scale={scale}
+        baselineStep={result.grid.gridUnit * scale}
+        closeEditor={closeEditor}
+        saveEditor={saveEditor}
+        getStyleSizeValue={getStyleSize}
+        getStyleLeadingValue={getStyleLeading}
+        isFxStyle={(styleKey) => styleKey === "fx"}
+      />
 
-      {pendingReflow ? (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-sm rounded-md border border-gray-300 bg-white p-4 shadow-xl">
-            <div className="text-sm font-semibold text-gray-900">Rearrange Layout?</div>
-            <div className="mt-2 text-xs text-gray-600">
-              This grid change will rearrange {pendingReflow.movedCount} block{pendingReflow.movedCount === 1 ? "" : "s"}.
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <Button size="sm" variant="outline" onClick={cancelPendingReflow}>Cancel</Button>
-              <Button size="sm" onClick={applyPendingReflow}>Apply</Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {reflowToast ? (
-        <div className="absolute bottom-3 right-3 z-30 rounded-md border border-gray-300 bg-white px-3 py-2 shadow-lg">
-          <div className="text-xs text-gray-700">Layout rearranged.</div>
-          <div className="mt-1 flex items-center justify-end">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => {
-                const performUndo = onUndoRequest ?? undo
-                performUndo()
-                dismissReflowToast()
-              }}
-            >
-              Undo
-            </Button>
-          </div>
-        </div>
-      ) : null}
+      <GridPreviewFeedback
+        pendingReflow={pendingReflow}
+        reflowToast={reflowToast}
+        cancelPendingReflow={cancelPendingReflow}
+        applyPendingReflow={applyPendingReflow}
+        performUndo={onUndoRequest ?? undo}
+        dismissReflowToast={dismissReflowToast}
+      />
 
       <GridPreviewOverlays
         showInteractionHint={showRolloverInfo && Boolean(hoverState)}

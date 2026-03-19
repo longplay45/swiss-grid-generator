@@ -18,7 +18,7 @@ import {
 } from "react"
 import type { RefObject, SetStateAction, Dispatch } from "react"
 
-type InlineEditorLayout = {
+export type InlineEditorLayout = {
   rect: {
     x: number
     y: number
