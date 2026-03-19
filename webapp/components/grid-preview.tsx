@@ -13,7 +13,6 @@ import { renderStaticGuides } from "@/lib/render-static-guides"
 import type { HelpSectionId } from "@/lib/help-registry"
 import {
   buildAxisStarts,
-  findAxisIndexAtOffset,
   findNearestAxisIndex,
   resolveAxisSizes,
   sumAxisSpan,
@@ -21,7 +20,9 @@ import {
 import { usePreviewDrag } from "@/hooks/usePreviewDrag"
 import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { useGridPreviewDocumentState } from "@/hooks/useGridPreviewDocumentState"
+import { usePreviewGeometry } from "@/hooks/usePreviewGeometry"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
+import { usePreviewHitTesting } from "@/hooks/usePreviewHitTesting"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
@@ -310,75 +311,21 @@ export const GridPreview = memo(function GridPreview({
     })
   }, [])
 
-  const getGridMetrics = useCallback(() => {
-    const { margins, gridMarginHorizontal, gridMarginVertical, gridUnit } = result.grid
-    const { width: modW, height: modH } = result.module
-    const { gridCols, gridRows } = result.settings
-    const contentHeight = (result.pageSizePt.height - margins.top - margins.bottom) * scale
-    const baselineStep = gridUnit * scale
-    const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
-    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-    const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
-    const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
-    const rowStartBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
-    const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
-    const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
-    const getColumnX = (col: number) => (
-      col < 0
-        ? margins.left * scale + col * firstColumnStep * scale
-        : margins.left * scale + (colStarts[col] ?? col * firstColumnStep) * scale
-    )
-    const getNearestCol = (pageX: number) => {
-      const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
-      return findNearestAxisIndex(colStarts, relative)
-    }
-    const getNearestRowIndex = (pageY: number) => {
-      const relative = (pageY - margins.top * scale) / Math.max(scale, 0.0001)
-      return findNearestAxisIndex(rowStarts, relative)
-    }
-    const getRowStartBaseline = (rowIndex: number) => rowStartBaselines[rowIndex] ?? 0
-    const maxBaselineRow = Math.max(0, Math.floor(contentHeight / baselineStep))
+  const {
+    getGridMetrics,
+    toPagePoint,
+    toPagePointFromClient,
+    clampImageBaselinePosition,
+    clampImageModulePosition,
+    resolveModulePositionAtPagePoint,
+  } = usePreviewGeometry({
+    canvasRef,
+    result,
+    scale,
+    pixelRatio,
+    rotation,
+  })
 
-    return {
-      contentLeft: margins.left * scale,
-      contentTop: margins.top * scale,
-      moduleWidth: (moduleWidths[0] ?? modW) * scale,
-      moduleHeight: (moduleHeights[0] ?? modH) * scale,
-      moduleWidths,
-      moduleHeights,
-      colStarts,
-      rowStarts,
-      rowStartBaselines,
-      xStep: firstColumnStep * scale,
-      yStep: baselineStep,
-      gridCols,
-      gridRows,
-      maxBaselineRow,
-      gutterX: gridMarginHorizontal * scale,
-      baselineStep,
-      baselineOriginTop: margins.top * scale - baselineStep,
-      moduleYStep: firstRowStep * scale,
-      getColumnX,
-      getNearestCol,
-      getNearestRowIndex,
-      getRowStartBaseline,
-    }
-  }, [result.grid, result.module, result.pageSizePt.height, result.settings, scale])
-
-  const clampImageBaselinePosition = useCallback((
-    position: ModulePosition,
-    columns: number,
-  ): ModulePosition => {
-    const metrics = getGridMetrics()
-    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
-    const minCol = -Math.max(0, safeCols - 1)
-    const maxCol = Math.max(0, metrics.gridCols - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
-    return {
-      col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
-    }
-  }, [getGridMetrics, result.settings.gridCols])
   const {
     blockOrder,
     textContent,
@@ -456,6 +403,24 @@ export const GridPreview = memo(function GridPreview({
     getGridMetrics,
     clampImageBaselinePosition,
     onImageColorSchemeChange,
+  })
+
+  const {
+    snapToModule,
+    snapToBaseline,
+    findTopmostBlockAtPoint,
+    findTopmostImageAtPoint,
+    findTopmostDraggableAtPoint,
+    resolveSelectedLayerAtClientPoint,
+  } = usePreviewHitTesting({
+    blockRectsRef,
+    imageRectsRef,
+    resolvedLayerOrder,
+    imageOrder,
+    showImagePlaceholders,
+    getGridMetrics,
+    getPlacementSpan,
+    toPagePointFromClient,
   })
 
   useEffect(() => {
@@ -553,124 +518,6 @@ export const GridPreview = memo(function GridPreview({
       }),
     )
   }, [getMeasuredTextWidth, makeCachedValue])
-
-  const toPagePoint = useCallback((canvasX: number, canvasY: number) => {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-
-    const pageWidth = result.pageSizePt.width * scale
-    const pageHeight = result.pageSizePt.height * scale
-    const centerCanvasX = canvas.width / (2 * pixelRatio)
-    const centerCanvasY = canvas.height / (2 * pixelRatio)
-    const theta = (rotation * Math.PI) / 180
-    const cos = Math.cos(theta)
-    const sin = Math.sin(theta)
-    const dx = canvasX - centerCanvasX
-    const dy = canvasY - centerCanvasY
-
-    return {
-      x: dx * cos + dy * sin + pageWidth / 2,
-      y: -dx * sin + dy * cos + pageHeight / 2,
-    }
-  }, [pixelRatio, result.pageSizePt.height, result.pageSizePt.width, rotation, scale])
-
-  const clampModulePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
-    const metrics = getGridMetrics()
-    const span = getPlacementSpan(key)
-    const maxCol = Math.max(0, metrics.gridCols - span)
-    return {
-      col: Math.max(0, Math.min(maxCol, position.col)),
-      row: Math.max(0, Math.min(metrics.maxBaselineRow, position.row)),
-    }
-  }, [getGridMetrics, getPlacementSpan])
-
-  const clampBaselinePosition = useCallback((position: ModulePosition, key: BlockId): ModulePosition => {
-    const metrics = getGridMetrics()
-    const span = getPlacementSpan(key)
-    const minCol = -Math.max(0, span - 1)
-    const maxCol = Math.max(0, metrics.gridCols - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
-    return {
-      col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
-    }
-  }, [getGridMetrics, getPlacementSpan])
-
-  const clampImageModulePosition = useCallback((
-    position: ModulePosition,
-    columns: number,
-    rows: number,
-  ): ModulePosition => {
-    const metrics = getGridMetrics()
-    const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
-    const safeRows = Math.max(1, Math.min(result.settings.gridRows, rows))
-    const maxCol = Math.max(0, metrics.gridCols - safeCols)
-    const maxRowStartIndex = Math.max(0, result.settings.gridRows - safeRows)
-    const maxRow = metrics.rowStartBaselines[maxRowStartIndex] ?? 0
-    return {
-      col: Math.max(0, Math.min(maxCol, position.col)),
-      row: Math.max(0, Math.min(maxRow, position.row)),
-    }
-  }, [getGridMetrics, result.settings.gridCols, result.settings.gridRows])
-
-  const snapToModule = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
-    const metrics = getGridMetrics()
-    const rawCol = metrics.getNearestCol(pageX)
-    const moduleIndex = metrics.getNearestRowIndex(pageY)
-    const rawRow = metrics.getRowStartBaseline(moduleIndex)
-    return clampModulePosition({ col: rawCol, row: rawRow }, key)
-  }, [clampModulePosition, getGridMetrics])
-
-  const snapToBaseline = useCallback((pageX: number, pageY: number, key: BlockId): ModulePosition => {
-    const metrics = getGridMetrics()
-    const rawCol = metrics.getNearestCol(pageX)
-    const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
-    return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
-  }, [clampBaselinePosition, getGridMetrics])
-
-  const findTopmostLayerAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    for (let index = resolvedLayerOrder.length - 1; index >= 0; index -= 1) {
-      const key = resolvedLayerOrder[index]
-      const isImage = imageOrder.includes(key)
-      if (isImage && !showImagePlaceholders) continue
-      const rect = isImage ? imageRectsRef.current[key] : blockRectsRef.current[key]
-      if (!rect || rect.width <= 0 || rect.height <= 0) continue
-      if (
-        pageX >= rect.x
-        && pageX <= rect.x + rect.width
-        && pageY >= rect.y
-        && pageY <= rect.y + rect.height
-      ) {
-        return key
-      }
-    }
-    return null
-  }, [imageOrder, resolvedLayerOrder, showImagePlaceholders])
-
-  const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    const key = findTopmostLayerAtPoint(pageX, pageY)
-    if (!key || imageOrder.includes(key)) return null
-    return key
-  }, [findTopmostLayerAtPoint, imageOrder])
-
-  const findTopmostImageAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => {
-    const key = findTopmostLayerAtPoint(pageX, pageY)
-    if (!key || !imageOrder.includes(key)) return null
-    return key
-  }, [findTopmostLayerAtPoint, imageOrder])
-
-  const findTopmostDraggableAtPoint = useCallback((pageX: number, pageY: number): BlockId | null => (
-    findTopmostLayerAtPoint(pageX, pageY)
-  ), [findTopmostLayerAtPoint])
-
-  const resolveSelectedLayerAtClientPoint = useCallback((clientX: number, clientY: number): BlockId | null => {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const rect = canvas.getBoundingClientRect()
-    const pagePoint = toPagePoint(clientX - rect.left, clientY - rect.top)
-    if (!pagePoint) return null
-    return findTopmostDraggableAtPoint(pagePoint.x, pagePoint.y)
-  }, [findTopmostDraggableAtPoint, toPagePoint])
 
   const getAutoFitForPlacement = useCallback(({
     key,
@@ -1731,10 +1578,7 @@ export const GridPreview = memo(function GridPreview({
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
+    const pagePoint = toPagePointFromClient(event.clientX, event.clientY)
     if (!pagePoint) return
 
     const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
@@ -1762,59 +1606,27 @@ export const GridPreview = memo(function GridPreview({
       return
     }
 
-    const metrics = getGridMetrics()
-    const relativeX = (pagePoint.x - metrics.contentLeft) / Math.max(scale, 0.0001)
-    const relativeY = (pagePoint.y - metrics.contentTop) / Math.max(scale, 0.0001)
-    const moduleColIndex = findAxisIndexAtOffset(metrics.colStarts, metrics.moduleWidths, relativeX)
-    const moduleRowIndex = findAxisIndexAtOffset(metrics.rowStarts, metrics.moduleHeights, relativeY)
-    if (moduleColIndex < 0 || moduleRowIndex < 0) {
-      return
-    }
-    const moduleX = metrics.contentLeft + (metrics.colStarts[moduleColIndex] ?? 0) * scale
-    const moduleY = metrics.contentTop + (metrics.rowStarts[moduleRowIndex] ?? 0) * scale
-    const moduleWidth = (metrics.moduleWidths[moduleColIndex] ?? metrics.moduleWidth / Math.max(scale, 0.0001)) * scale
-    const moduleHeight = (metrics.moduleHeights[moduleRowIndex] ?? metrics.moduleHeight / Math.max(scale, 0.0001)) * scale
-    const localX = pagePoint.x - moduleX
-    const localY = pagePoint.y - moduleY
-    const insideModuleX = localX >= 0 && localX <= moduleWidth
-    const insideModuleY = localY >= 0 && localY <= moduleHeight
-    if (
-      moduleColIndex < 0
-      || moduleColIndex >= result.settings.gridCols
-      || moduleRowIndex < 0
-      || moduleRowIndex >= result.settings.gridRows
-      || !insideModuleX
-      || !insideModuleY
-    ) {
-      return
-    }
-    const rawPosition = {
-      col: moduleColIndex,
-      row: metrics.rowStartBaselines[moduleRowIndex] ?? 0,
-    }
+    const rawPosition = resolveModulePositionAtPagePoint(pagePoint.x, pagePoint.y)
+    if (!rawPosition) return
     const newKey = getNextImagePlaceholderId()
     const snapped = clampImageModulePosition(rawPosition, 1, 1)
     recordHistoryBeforeChange()
     insertImagePlaceholder(newKey, { position: snapped })
     openImageEditor(newKey, { recordHistory: false })
   }, [
-    canvasRef,
     clampImageModulePosition,
     dragEndedAtRef,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,
-    getGridMetrics,
     handleTextCanvasDoubleClick,
     insertImagePlaceholder,
     openImageEditor,
     recordHistoryBeforeChange,
-    result.settings.gridCols,
-    result.settings.gridRows,
-    scale,
+    resolveModulePositionAtPagePoint,
     setImageEditorState,
     showImagePlaceholders,
     showTypography,
-    toPagePoint,
+    toPagePointFromClient,
   ])
 
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number) => {
@@ -1826,13 +1638,7 @@ export const GridPreview = memo(function GridPreview({
       return
     }
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const canvasX = clientX - rect.left
-    const canvasY = clientY - rect.top
-    const pagePoint = toPagePoint(canvasX, canvasY)
+    const pagePoint = toPagePointFromClient(clientX, clientY)
     if (!pagePoint) {
       if (hoverState) setHoverState(null)
       if (hoverImageKey) setHoverImageKey(null)
@@ -1869,7 +1675,7 @@ export const GridPreview = memo(function GridPreview({
     hoverState,
     imageEditorState,
     showTypography,
-    toPagePoint,
+    toPagePointFromClient,
   ])
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
