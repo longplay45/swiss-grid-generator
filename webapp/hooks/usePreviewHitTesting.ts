@@ -1,21 +1,10 @@
 import { useCallback, useMemo } from "react"
 import type { RefObject } from "react"
 
+import type { BlockRect, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
-
-type BlockRect = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-type PagePoint = {
-  x: number
-  y: number
-}
 
 type Args<Key extends string> = {
   blockRectsRef: RefObject<Record<Key, BlockRect>>

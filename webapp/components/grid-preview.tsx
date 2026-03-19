@@ -3,10 +3,7 @@
 import { GridPreviewCanvasStage } from "@/components/preview/GridPreviewCanvasStage"
 import { GridPreviewFeedback } from "@/components/preview/GridPreviewFeedback"
 import { GridPreviewOverlays } from "@/components/preview/GridPreviewOverlays"
-import {
-  type BlockEditorStyleOption,
-  type BlockEditorTextAlign,
-} from "@/components/editor/block-editor-types"
+import type { BlockEditorStyleOption } from "@/components/editor/block-editor-types"
 import { GridResult } from "@/lib/grid-calculator"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { usePreviewAutoFitPlacement } from "@/hooks/usePreviewAutoFitPlacement"
@@ -28,6 +25,13 @@ import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
+import {
+  type BlockRect,
+  type BlockRenderPlan,
+  type NoticeRequest,
+  type OverflowLinesByBlock,
+} from "@/lib/preview-types"
+import { PREVIEW_STYLE_OPTIONS, formatPtSize, getDummyTextForStyle } from "@/lib/preview-text-config"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import {
@@ -51,39 +55,6 @@ import { memo, useCallback, useMemo, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
-type TextAlignMode = BlockEditorTextAlign
-
-type BlockRect = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-type TextDrawCommand = {
-  text: string
-  x: number
-  y: number
-}
-
-type BlockRenderPlan = {
-  key: BlockId
-  rect: BlockRect
-  signature: string
-  font: string
-  textColor: string
-  textAlign: TextAlignMode
-  blockRotation: number
-  rotationOriginX: number
-  rotationOriginY: number
-  commands: TextDrawCommand[]
-}
-
-type OverflowLinesByBlock = Partial<Record<BlockId, number>>
-type NoticeRequest = {
-  title: string
-  message: string
-}
 let runtimeIdCounter = 0
 function createRuntimeId(prefix: "paragraph" | "image"): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -94,32 +65,6 @@ function createRuntimeId(prefix: "paragraph" | "image"): string {
 }
 const getNextCustomBlockId = () => createRuntimeId("paragraph")
 const getNextImagePlaceholderId = () => createRuntimeId("image")
-
-const STYLE_OPTIONS: BlockEditorStyleOption<TypographyStyleKey>[] = [
-  { value: "fx", label: "FX" },
-  { value: "display", label: "Display" },
-  { value: "headline", label: "Headline" },
-  { value: "subhead", label: "Subhead" },
-  { value: "body", label: "Body" },
-  { value: "caption", label: "Caption" },
-]
-
-const DUMMY_TEXT_BY_STYLE: Record<TypographyStyleKey, string> = {
-  fx: "Swiss Design",
-  display: "Swiss Design",
-  headline: "Modular Grid Systems",
-  subhead: "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
-  body: "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
-  caption: "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
-}
-
-function formatPtSize(size: number): string {
-  return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
-}
-
-function getDummyTextForStyle(style: TypographyStyleKey): string {
-  return DUMMY_TEXT_BY_STYLE[style] ?? DUMMY_TEXT_BY_STYLE.body
-}
 
 interface GridPreviewProps {
   result: GridResult
@@ -220,13 +165,13 @@ export const GridPreview = memo(function GridPreview({
   const suppressReflowCheckRef = useRef(false)
   const dragEndedAtRef = useRef(0)
   const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
-  const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
+  const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan<BlockId>>>(new Map())
   const typographyBufferTransformRef = useRef("")
   const lastHistoryResetTokenRef = useRef(historyResetToken)
   const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
-  const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
+  const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock<BlockId>>({})
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const HISTORY_LIMIT = 50
@@ -256,7 +201,7 @@ export const GridPreview = memo(function GridPreview({
     sampleLimit: PERF_SAMPLE_LIMIT,
   })
 
-  const handleOverflowLinesChange = useCallback((next: OverflowLinesByBlock) => {
+  const handleOverflowLinesChange = useCallback((next: OverflowLinesByBlock<BlockId>) => {
     setOverflowLinesByBlock((prev) => {
       const prevKeys = Object.keys(prev)
       const nextKeys = Object.keys(next)
@@ -791,7 +736,7 @@ export const GridPreview = memo(function GridPreview({
 
   const hierarchyOptionLabels = useMemo(
     () =>
-      STYLE_OPTIONS.map(
+      PREVIEW_STYLE_OPTIONS.map(
         (option) => `${option.label} (${formatPtSize(result.typography.styles[option.value].size)})`,
       ),
     [result.typography.styles],
@@ -818,7 +763,7 @@ export const GridPreview = memo(function GridPreview({
     hierarchyTriggerMinWidthCh,
     rowTriggerMinWidthCh,
     colTriggerMinWidthCh,
-    styleOptions: STYLE_OPTIONS,
+    styleOptions: PREVIEW_STYLE_OPTIONS as BlockEditorStyleOption<TypographyStyleKey>[],
     getStyleSizeLabel: (styleKey) => formatPtSize(getStyleSize(styleKey)),
     getStyleSizeValue: getStyleSize,
     getStyleLeadingValue: getStyleLeading,

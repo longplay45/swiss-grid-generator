@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import type { MouseEvent as ReactMouseEvent } from "react"
 import type { Dispatch, SetStateAction } from "react"
-
-type PagePoint = {
-  x: number
-  y: number
-}
+import type { PagePoint } from "@/lib/preview-types"
 
 export type PreviewHoverState<Key extends string> = {
   key: Key

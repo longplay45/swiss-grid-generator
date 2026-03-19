@@ -1,21 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { MutableRefObject, PointerEvent as ReactPointerEvent, RefObject } from "react"
 
+import type { BlockRect, PagePoint } from "@/lib/preview-types"
+
 export type DragModulePosition = {
   col: number
   row: number
-}
-
-type PagePoint = {
-  x: number
-  y: number
-}
-
-type BlockRect = {
-  x: number
-  y: number
-  width: number
-  height: number
 }
 
 export type DragState<Key extends string = string> = {

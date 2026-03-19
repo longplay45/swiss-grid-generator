@@ -5,9 +5,8 @@ import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampFxLeading, clampFxSize, clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
 import type { Updater } from "@/hooks/useStateCommands"
-
-type TextAlignMode = "left" | "right"
 
 type ModulePosition = {
   col: number
@@ -50,16 +49,7 @@ type BlockCollectionsState = {
   blockRotations: Partial<Record<string, number>>
 }
 
-type PagePoint = {
-  x: number
-  y: number
-}
-
 type AutoFitResult = { span: number; position: ModulePosition | null } | null
-type NoticeRequest = {
-  title: string
-  message: string
-}
 
 type Args = {
   showTypography: boolean

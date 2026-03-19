@@ -8,12 +8,8 @@ import {
   findNearestAxisIndex,
   resolveAxisSizes,
 } from "@/lib/grid-rhythm"
+import type { PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
-
-type PagePoint = {
-  x: number
-  y: number
-}
 
 export type PreviewGridMetrics = {
   contentLeft: number

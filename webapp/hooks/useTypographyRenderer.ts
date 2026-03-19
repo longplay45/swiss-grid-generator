@@ -4,39 +4,12 @@ import type { MutableRefObject, RefObject } from "react"
 import type { GridResult } from "@/lib/grid-calculator"
 import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
+import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
-
-type TextAlignMode = "left" | "right"
-
-type BlockRect = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
 
 type ModulePosition = {
   col: number
   row: number
-}
-
-type TextDrawCommand = {
-  text: string
-  x: number
-  y: number
-}
-
-type BlockRenderPlan<BlockId extends string> = {
-  key: BlockId
-  rect: BlockRect
-  signature: string
-  font: string
-  textColor: string
-  textAlign: TextAlignMode
-  blockRotation: number
-  rotationOriginX: number
-  rotationOriginY: number
-  commands: TextDrawCommand[]
 }
 
 type DragState<BlockId extends string> = {

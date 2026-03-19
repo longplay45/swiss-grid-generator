@@ -4,35 +4,15 @@ import type { Dispatch, SetStateAction } from "react"
 
 import { ImageEditorDialog, type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
 import { TextEditorPanel } from "@/components/sidebar/TextEditorPanel"
+import type { BlockEditorState } from "@/components/editor/block-editor-types"
+import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
 import { PREVIEW_INTERACTION_HINT_LINES } from "@/lib/preview-interaction-hints"
-import type { BlockEditorState, BlockEditorStyleOption } from "@/components/editor/block-editor-types"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
 type PerfPayload = {
   draw: { p50: number; p95: number } | null
   reflow: { p50: number; p95: number } | null
   autofit: { p50: number; p95: number } | null
-}
-
-type TextEditorControls<StyleKey extends string> = {
-  editorState: BlockEditorState<StyleKey>
-  setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
-  deleteEditorBlock: () => void
-  gridRows: number
-  gridCols: number
-  hierarchyTriggerMinWidthCh: number
-  rowTriggerMinWidthCh: number
-  colTriggerMinWidthCh: number
-  styleOptions: Array<BlockEditorStyleOption<StyleKey>>
-  getStyleSizeLabel: (styleKey: StyleKey) => string
-  getStyleSizeValue: (styleKey: StyleKey) => number
-  getStyleLeadingValue: (styleKey: StyleKey) => number
-  isFxStyle: (styleKey: StyleKey) => boolean
-  getDummyTextForStyle: (styleKey: StyleKey) => string
-  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
-  selectedColorScheme: ImageColorSchemeId
-  onColorSchemeChange: (value: ImageColorSchemeId) => void
-  palette: readonly string[]
 }
 
 type Props<StyleKey extends string> = {
@@ -53,7 +33,7 @@ type Props<StyleKey extends string> = {
   imagePalette: readonly string[]
   rowTriggerMinWidthCh: number
   colTriggerMinWidthCh: number
-  imageColorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
+  imageColorSchemes: readonly PreviewColorSchemeOption[]
   onOpenHelpSection?: (sectionId: "help-editor" | "help-image-editor") => void
 }
 

@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react"
 
 import type { BlockEditorState, BlockEditorStyleOption } from "@/components/editor/block-editor-types"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
 
 type Args<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey> | null
@@ -19,7 +20,7 @@ type Args<StyleKey extends string> = {
   getStyleLeadingValue: (styleKey: StyleKey) => number
   isFxStyle: (styleKey: StyleKey) => boolean
   getDummyTextForStyle: (styleKey: StyleKey) => string
-  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
+  colorSchemes: readonly PreviewColorSchemeOption[]
   selectedColorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
@@ -45,7 +46,7 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   onColorSchemeChange,
   palette,
 }: Args<StyleKey>) {
-  return useMemo(() => {
+  return useMemo<TextEditorControls<StyleKey> | null>(() => {
     if (!editorState) return null
     return {
       editorState,

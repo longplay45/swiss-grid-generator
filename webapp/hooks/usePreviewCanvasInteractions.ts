@@ -6,6 +6,7 @@ import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constrai
 import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import { type FontFamily } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import type { BlockRect, NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 import { usePreviewDrag, type DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 
@@ -13,25 +14,8 @@ type OpenImageEditorOptions = {
   recordHistory?: boolean
 }
 
-type NoticeRequest = {
-  title: string
-  message: string
-}
-
-type BlockRect = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
 type GridMetrics = {
   maxBaselineRow: number
-}
-
-type PagePoint = {
-  x: number
-  y: number
 }
 
 type Args<Key extends string, StyleKey extends string> = {
