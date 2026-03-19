@@ -8,29 +8,30 @@ import {
   type BlockEditorTextAlign,
 } from "@/components/editor/block-editor-types"
 import { GridResult } from "@/lib/grid-calculator"
-import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import type { HelpSectionId } from "@/lib/help-registry"
 import {
   findNearestAxisIndex,
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
 import { usePreviewCanvasInteractions } from "@/hooks/usePreviewCanvasInteractions"
+import { usePreviewDocumentLifecycle } from "@/hooks/usePreviewDocumentLifecycle"
 import { usePreviewGuideCanvases } from "@/hooks/usePreviewGuideCanvases"
 import { useGridPreviewDocumentState } from "@/hooks/useGridPreviewDocumentState"
 import { usePreviewGeometry } from "@/hooks/usePreviewGeometry"
 import { usePreviewHoverState, type PreviewHoverState } from "@/hooks/usePreviewHoverState"
 import { usePreviewHistory } from "@/hooks/usePreviewHistory"
 import { usePreviewHitTesting } from "@/hooks/usePreviewHitTesting"
+import { usePreviewInlineEditorLayout } from "@/hooks/usePreviewInlineEditorLayout"
 import { usePreviewLayoutReflowController } from "@/hooks/usePreviewLayoutReflowController"
 import { usePreviewOverlayCanvas } from "@/hooks/usePreviewOverlayCanvas"
+import { usePreviewTypographyMetrics } from "@/hooks/usePreviewTypographyMetrics"
 import { usePreviewViewport } from "@/hooks/usePreviewViewport"
-import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 import { usePreviewLayerDelete } from "@/hooks/usePreviewLayerDelete"
 import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
+import { getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   BASE_BLOCK_IDS,
   DEFAULT_STYLE_ASSIGNMENTS,
@@ -44,14 +45,12 @@ import {
   type FontFamily,
 } from "@/lib/config/fonts"
 import {
-  getClosestImageSchemeColorToken,
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
   IMAGE_COLOR_SCHEMES,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
-import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useMemo, useRef, useState } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -228,9 +227,6 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayerEditorRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const dragEndedAtRef = useRef(0)
-  const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
-  const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
-  const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
   const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan>>(new Map())
   const typographyBufferTransformRef = useRef("")
@@ -239,11 +235,9 @@ export const GridPreview = memo(function GridPreview({
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock>({})
-  const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const HISTORY_LIMIT = 50
-  const TEXT_CACHE_LIMIT = 5000
   const LAYOUT_CHANGE_DEBOUNCE_MS = 120
   const TOUCH_LONG_PRESS_MS = 180
   const TOUCH_CANCEL_DISTANCE_PX = 10
@@ -263,18 +257,6 @@ export const GridPreview = memo(function GridPreview({
     pageWidthPt: result.pageSizePt.width,
     pageHeightPt: result.pageSizePt.height,
   })
-
-  const makeCachedValue = useCallback(
-    <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
-      const existing = cache.get(key)
-      if (existing !== undefined) return existing
-      const value = compute()
-      cache.set(key, value)
-      if (cache.size > TEXT_CACHE_LIMIT) cache.clear()
-      return value
-    },
-    [],
-  )
 
   const { showPerfOverlay, perfOverlay, recordPerfMetric } = usePreviewPerf({
     enabled: PERF_ENABLED,
@@ -406,49 +388,21 @@ export const GridPreview = memo(function GridPreview({
     toPagePointFromClient,
   })
 
-  useEffect(() => {
-    if (!showTypography || typeof document === "undefined" || !("fonts" in document)) return
-
-    let cancelled = false
-    const fontFaceSet = document.fonts
-    const specs = new Set<string>()
-    for (const key of blockOrder) {
-      const styleKey = getStyleKeyForBlock(key)
-      const style = result.typography.styles[styleKey]
-      if (!style) continue
-      const fontFamily = getBlockFont(key)
-      const fontWeight = isBlockBold(key) ? "700" : "400"
-      const fontStyle = isBlockItalic(key) ? "italic" : "normal"
-      const fontSize = getBlockFontSize(key, styleKey) * scale
-      specs.add(`${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}"`)
-    }
-
-    if (!specs.size) return
-
-    void Promise
-      .allSettled([...specs].map((spec) => fontFaceSet.load(spec)))
-      .then(() => {
-        if (cancelled) return
-        measureWidthCacheRef.current.clear()
-        wrapTextCacheRef.current.clear()
-        opticalOffsetCacheRef.current.clear()
-        setFontRenderEpoch((value) => value + 1)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [
+  const {
+    fontRenderEpoch,
+    getWrappedText,
+    getOpticalOffset,
+  } = usePreviewTypographyMetrics<BlockId, TypographyStyleKey>({
+    showTypography,
     blockOrder,
-    getBlockFont,
-    getBlockFontSize,
+    typographyStyles: result.typography.styles,
     getStyleKeyForBlock,
+    getBlockFont,
     isBlockBold,
     isBlockItalic,
-    result.typography.styles,
+    getBlockFontSize,
     scale,
-    showTypography,
-  ])
+  })
 
   const {
     pushHistory,
@@ -465,41 +419,6 @@ export const GridPreview = memo(function GridPreview({
     onHistoryAvailabilityChange,
     onRecordHistory: onHistoryRecord,
   })
-
-  const getMeasuredTextWidth = useCallback((ctx: CanvasRenderingContext2D, text: string): number => {
-    const key = `${ctx.font}::${text}`
-    return makeCachedValue(measureWidthCacheRef.current, key, () => ctx.measureText(text).width)
-  }, [makeCachedValue])
-
-  const getWrappedText = useCallback((
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxWidth: number,
-    hyphenate: boolean,
-  ): string[] => {
-    const key = `${ctx.font}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
-    const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
-      wrapText(text, maxWidth, hyphenate, (sample) => getMeasuredTextWidth(ctx, sample)),
-    )
-    return [...cached]
-  }, [getMeasuredTextWidth, makeCachedValue])
-
-  const getOpticalOffset = useCallback((
-    ctx: CanvasRenderingContext2D,
-    line: string,
-    align: TextAlignMode,
-    fontSize: number,
-  ): number => {
-    const key = `${ctx.font}::${line}::${align}::${fontSize.toFixed(4)}`
-    return makeCachedValue(opticalOffsetCacheRef.current, key, () =>
-      getOpticalMarginAnchorOffset({
-        line,
-        align,
-        fontSize,
-        measureWidth: (sample) => getMeasuredTextWidth(ctx, sample),
-      }),
-    )
-  }, [getMeasuredTextWidth, makeCachedValue])
 
   const getAutoFitForPlacement = useCallback(({
     key,
@@ -760,64 +679,37 @@ export const GridPreview = memo(function GridPreview({
     toPagePointFromClient,
   })
 
-  useEffect(() => {
-    if (historyResetToken === lastHistoryResetTokenRef.current) return
-    lastHistoryResetTokenRef.current = historyResetToken
-    resetHistory()
-    lastAppliedLayoutKeyRef.current = 0
-    lastAppliedImageLayoutKeyRef.current = 0
-    lastAppliedCustomSizeLayoutKeyRef.current = 0
-    lastAppliedLayerLayoutKeyRef.current = 0
-    lastAppliedLayerRequestKeyRef.current = 0
-    lastAppliedLayerDeleteRequestKeyRef.current = 0
-    suppressReflowCheckRef.current = true
-    resetImageTransientState()
-    setDragState(null)
-    clearHover()
-    setEditorState(null)
-  }, [clearHover, historyResetToken, resetHistory, resetImageTransientState, setDragState, setEditorState])
-
-  useEffect(() => {
-    if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
-    lastParagraphColorResetTokenRef.current = paragraphColorResetToken
-    const hasCustomParagraphColors = Object.keys(blockTextColors).length > 0
-    const nextImageColors = imageOrder.reduce((acc, key) => {
-      acc[key] = getClosestImageSchemeColorToken(imageColors[key] ?? defaultImageColor, imageColorScheme)
-      return acc
-    }, {} as Partial<Record<BlockId, string>>)
-    const hasCustomImageColors = imageOrder.some((key) => nextImageColors[key] !== imageColors[key])
-      || Object.keys(imageColors).some((key) => !imageOrder.includes(key))
-    setEditorState((prev) => {
-      if (!prev) return prev
-      if (prev.draftColor.toLowerCase() === defaultTextColor.toLowerCase()) return prev
-      return { ...prev, draftColor: defaultTextColor }
-    })
-    if (!hasCustomParagraphColors && !hasCustomImageColors) return
-    recordHistoryBeforeChange()
-    if (hasCustomParagraphColors) {
-      setBlockTextColors({})
-    }
-    if (hasCustomImageColors) {
-      setImageColors(nextImageColors)
-    }
-  }, [
+  usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
+    historyResetToken,
+    paragraphColorResetToken,
+    initialLayout,
+    initialLayoutToken,
+    requestedLayerOrder,
+    requestedLayerOrderToken,
+    lastHistoryResetTokenRef,
+    lastParagraphColorResetTokenRef,
+    lastAppliedLayoutKeyRef,
+    lastAppliedImageLayoutKeyRef,
+    lastAppliedCustomSizeLayoutKeyRef,
+    lastAppliedLayerLayoutKeyRef,
+    lastAppliedLayerRequestKeyRef,
+    lastAppliedLayerDeleteRequestKeyRef,
+    suppressReflowCheckRef,
+    resetHistory,
+    resetImageTransientState,
+    clearHover,
+    setDragState,
+    setEditorState,
+    setImageEditorState,
     blockTextColors,
+    setBlockTextColors,
+    imageOrder,
+    imageColors,
+    setImageColors,
     defaultImageColor,
     defaultTextColor,
     imageColorScheme,
-    imageColors,
-    imageOrder,
-    paragraphColorResetToken,
     recordHistoryBeforeChange,
-    setBlockTextColors,
-    setEditorState,
-    setImageColors,
-  ])
-
-  useInitialLayoutHydration<TypographyStyleKey, BlockId>({
-    initialLayout,
-    initialLayoutToken,
-    lastAppliedLayoutTokenRef: lastAppliedLayoutKeyRef,
     pushHistory,
     buildSnapshot,
     baseFont,
@@ -833,47 +725,13 @@ export const GridPreview = memo(function GridPreview({
     getDefaultColumnSpan,
     getGridMetrics,
     setBlockCollections,
-    onBeforeApply: () => {
-      suppressReflowCheckRef.current = true
-    },
-    onAfterApply: () => {
-      setDragState(null)
-      clearHover()
-      setEditorState(null)
-      setImageEditorState(null)
-    },
+    applyImageSnapshot,
+    applyLayerOrderSnapshot,
+    applyCustomSizeSnapshot,
+    blockOrder,
+    layerOrder,
+    setLayerOrder,
   })
-
-  useEffect(() => {
-    if (!initialLayout || initialLayoutToken === 0) return
-    if (lastAppliedImageLayoutKeyRef.current === initialLayoutToken) return
-    lastAppliedImageLayoutKeyRef.current = initialLayoutToken
-    applyImageSnapshot(initialLayout)
-  }, [applyImageSnapshot, initialLayout, initialLayoutToken])
-
-  useEffect(() => {
-    if (!initialLayout || initialLayoutToken === 0) return
-    if (lastAppliedLayerLayoutKeyRef.current === initialLayoutToken) return
-    lastAppliedLayerLayoutKeyRef.current = initialLayoutToken
-    applyLayerOrderSnapshot(initialLayout)
-  }, [applyLayerOrderSnapshot, initialLayout, initialLayoutToken])
-
-  useEffect(() => {
-    if (!initialLayout || initialLayoutToken === 0) return
-    if (lastAppliedCustomSizeLayoutKeyRef.current === initialLayoutToken) return
-    lastAppliedCustomSizeLayoutKeyRef.current = initialLayoutToken
-    applyCustomSizeSnapshot(initialLayout)
-  }, [applyCustomSizeSnapshot, initialLayout, initialLayoutToken])
-
-  useEffect(() => {
-    if (!requestedLayerOrder || requestedLayerOrderToken === 0) return
-    if (lastAppliedLayerRequestKeyRef.current === requestedLayerOrderToken) return
-    lastAppliedLayerRequestKeyRef.current = requestedLayerOrderToken
-    const nextLayerOrder = reconcileLayerOrder(requestedLayerOrder, blockOrder, imageOrder)
-    if (areLayerOrdersEqual(layerOrder, nextLayerOrder)) return
-    recordHistoryBeforeChange()
-    setLayerOrder(nextLayerOrder)
-  }, [blockOrder, imageOrder, layerOrder, recordHistoryBeforeChange, requestedLayerOrder, requestedLayerOrderToken, setLayerOrder])
   usePreviewLayerDelete({
     imageOrder,
     requestedLayerDeleteTarget,
@@ -1033,23 +891,13 @@ export const GridPreview = memo(function GridPreview({
   )
   const rowTriggerMinWidthCh = 10
   const colTriggerMinWidthCh = 10
-  const inlineEditorLayout = editorState ? (() => {
-    const rect = blockRectsRef.current[editorState.target]
-    if (!rect) return null
-    const plan = previousPlansRef.current.get(editorState.target)
-    const textAscent = plan?.commands[0]
-      ? Math.max(0, plan.commands[0].y - ((plan?.rotationOriginY ?? rect.y) + result.grid.gridUnit * scale))
-      : result.grid.gridUnit * scale
-    return {
-      rect,
-      blockRotation: plan?.blockRotation ?? editorState.draftRotation,
-      rotationOriginX: plan?.rotationOriginX ?? rect.x,
-      rotationOriginY: plan?.rotationOriginY ?? rect.y,
-      textAscent,
-      textAlign: plan?.textAlign ?? editorState.draftAlign,
-      commands: plan?.commands ?? [],
-    }
-  })() : null
+  const inlineEditorLayout = usePreviewInlineEditorLayout({
+    editorState,
+    blockRectsRef,
+    previousPlansRef,
+    gridUnit: result.grid.gridUnit,
+    scale,
+  })
 
   return (
     <div
