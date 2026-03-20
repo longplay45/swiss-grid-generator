@@ -30,6 +30,7 @@ import {
   PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
   PREVIEW_TOUCH_LONG_PRESS_MS,
 } from "@/lib/preview-interaction-constants"
+import { getHoveredPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import {
   type BlockRect,
   type BlockRenderPlan,
@@ -56,7 +57,7 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
-import { memo, useCallback, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -370,6 +371,7 @@ export const GridPreview = memo(function GridPreview({
     editorState,
     setEditorState,
     closeEditor,
+    openTextEditor,
     openImageEditor,
     saveEditor,
     deleteEditorBlock,
@@ -441,6 +443,14 @@ export const GridPreview = memo(function GridPreview({
     setHoverState(null)
     setHoverImageKey(null)
   }, [])
+
+  const handleCanvasMouseLeave = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    const nextTarget = event.relatedTarget
+    if (nextTarget instanceof HTMLElement && nextTarget.closest("[data-preview-edit-affordance='true']")) {
+      return
+    }
+    clearHover()
+  }, [clearHover])
 
   const {
     dragState,
@@ -764,6 +774,13 @@ export const GridPreview = memo(function GridPreview({
     onColorSchemeChange: handleImageColorSchemeChange,
     palette: imagePalette,
   })
+  const hoveredTextPlan = hoverState?.key ? previousPlansRef.current.get(hoverState.key) ?? null : null
+  const hoveredTextRect = hoverState?.key ? blockRectsRef.current[hoverState.key] ?? null : null
+  const hoveredTextGuideRect = hoveredTextPlan
+    ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null, result.grid.gridUnit * scale)
+    : hoveredTextRect
+  const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
+  const hoveredImageRect = hoverImageKey ? imageRectsRef.current[hoverImageKey] ?? null : null
 
   return (
     <div
@@ -789,8 +806,8 @@ export const GridPreview = memo(function GridPreview({
         handleCanvasPointerCancel={handleCanvasPointerCancel}
         handleCanvasLostPointerCapture={handleCanvasLostPointerCapture}
         handleCanvasMouseMove={handleCanvasMouseMove}
+        handleCanvasMouseLeave={handleCanvasMouseLeave}
         handleCanvasDoubleClick={handleCanvasDoubleClick}
-        clearHover={clearHover}
         editorState={editorState}
         setEditorState={setEditorState}
         inlineEditorLayout={inlineEditorLayout}
@@ -814,14 +831,25 @@ export const GridPreview = memo(function GridPreview({
       />
 
       <GridPreviewOverlays
-        showInteractionHint={showRolloverInfo && Boolean(hoverState)}
+        showInteractionHint={showRolloverInfo && Boolean(hoverState || hoverImageKey)}
         showPerfOverlay={PERF_ENABLED && showPerfOverlay}
         perfOverlay={perfOverlay}
         showEditorHelpIcon={showEditorHelpIcon}
         showRolloverInfo={showRolloverInfo}
+        pageWidthCss={pageWidthCss}
+        pageHeightCss={pageHeightCss}
+        pageRotation={rotation}
         editorState={editorState}
         imageEditorState={imageEditorState}
         textEditorControls={textEditorControls}
+        hoveredTextKey={hoverState?.key ?? null}
+        hoveredTextRect={hoveredTextGuideRect}
+        hoveredTextAlign={hoveredTextAlign}
+        hoveredImageKey={hoverImageKey}
+        hoveredImageRect={hoveredImageRect}
+        openTextEditor={openTextEditor}
+        openImageEditor={openImageEditor}
+        clearHover={clearHover}
         setImageEditorState={setImageEditorState}
         deleteImagePlaceholder={deleteImagePlaceholder}
         gridRows={result.settings.gridRows}

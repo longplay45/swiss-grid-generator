@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef } from "react"
 import type { MouseEvent as ReactMouseEvent } from "react"
 import type { Dispatch, SetStateAction } from "react"
 import type { PagePoint } from "@/lib/preview-types"
-
 export type PreviewHoverState<Key extends string> = {
   key: Key
+  point: PagePoint
 }
 
 type DragCursorState = {
@@ -60,7 +60,13 @@ export function usePreviewHoverState<Key extends string>({
     const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (textKey) {
       setHoverImageKey(null)
-      setHoverState((prev) => (prev?.key === textKey ? prev : { key: textKey }))
+      setHoverState((prev) => (
+        prev?.key === textKey
+        && prev.point.x === pagePoint.x
+        && prev.point.y === pagePoint.y
+          ? prev
+          : { key: textKey, point: pagePoint }
+      ))
       return
     }
 

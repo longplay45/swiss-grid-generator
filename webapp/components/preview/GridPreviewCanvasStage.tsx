@@ -23,8 +23,8 @@ type Props<StyleKey extends string> = {
   handleCanvasPointerCancel: PointerEventHandler<HTMLCanvasElement>
   handleCanvasLostPointerCapture: PointerEventHandler<HTMLCanvasElement>
   handleCanvasMouseMove: MouseEventHandler<HTMLCanvasElement>
+  handleCanvasMouseLeave: MouseEventHandler<HTMLCanvasElement>
   handleCanvasDoubleClick: MouseEventHandler<HTMLCanvasElement>
-  clearHover: () => void
   editorState: BlockEditorState<StyleKey> | null
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
   inlineEditorLayout: InlineEditorLayout | null
@@ -55,8 +55,8 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
   handleCanvasPointerCancel,
   handleCanvasLostPointerCapture,
   handleCanvasMouseMove,
+  handleCanvasMouseLeave,
   handleCanvasDoubleClick,
-  clearHover,
   editorState,
   setEditorState,
   inlineEditorLayout,
@@ -97,7 +97,7 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
         onPointerCancel={handleCanvasPointerCancel}
         onLostPointerCapture={handleCanvasLostPointerCapture}
         onMouseMove={handleCanvasMouseMove}
-        onMouseLeave={clearHover}
+        onMouseLeave={handleCanvasMouseLeave}
         onDoubleClick={handleCanvasDoubleClick}
       />
       <canvas

@@ -150,13 +150,13 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Text Editor Popup
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Open editor by double-clicking a block; double-click empty area creates a paragraph block.</li>
+          <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
           <li>Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.</li>
           <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
-          <li>Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.</li>
+          <li>Quick actions on the rail: alignment submenu, bold/italic, newspaper reflow, syllable division, and delete.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
@@ -171,7 +171,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Image Editor
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Open by double-clicking an image placeholder or by `Shift` + double-click on an empty module.</li>
+          <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
           <li>Layout uses a left icon rail with contextual submenus for geometry and color.</li>
           <li>Geometry submenu: row span and column span.</li>
           <li>Color submenu: scheme selector and swatches.</li>

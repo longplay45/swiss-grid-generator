@@ -29,6 +29,7 @@ export type TypographyLayoutPlan<BlockId extends string, StyleKey extends string
   rowSpan: number
   columnReflow: boolean
   rect: BlockRect
+  guideRects: BlockRect[]
   textAlign: TextAlignMode
   blockRotation: number
   rotationOriginX: number
@@ -269,6 +270,19 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         ? moduleHeightForBlock + hitTopPadding
         : (Math.max(lines.length, 1) * baselineMult + 1) * baselineStep + hitTopPadding,
     }
+    const guideRects: BlockRect[] = columnReflow
+      ? Array.from({ length: Math.max(1, span) }, (_, columnIndex) => ({
+        x: origin.x + getColumnOffset(startCol, columnIndex),
+        y: origin.y + baselineStep,
+        width: getColumnWidthAt(startCol + columnIndex),
+        height: rect.height,
+      }))
+      : [{
+        x: origin.x,
+        y: origin.y + baselineStep,
+        width: wrapWidth,
+        height: rect.height,
+      }]
 
     if (!columnReflow) {
       const anchorX = textAlign === "right"
@@ -327,6 +341,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       rowSpan,
       columnReflow,
       rect,
+      guideRects,
       textAlign,
       blockRotation: getBlockRotation(key),
       rotationOriginX: origin.x,
@@ -477,6 +492,19 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       ? captionModuleHeight + captionHitTopPadding
       : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselineStep + captionHitTopPadding,
   }
+  const captionGuideRects: BlockRect[] = captionColumnReflow
+    ? Array.from({ length: Math.max(1, captionSpan) }, (_, columnIndex) => ({
+      x: captionOrigin.x + getColumnOffset(captionStartCol, columnIndex),
+      y: captionOrigin.y + baselineStep,
+      width: getColumnWidthAt(captionStartCol + columnIndex),
+      height: captionRect.height,
+    }))
+    : [{
+      x: captionOrigin.x,
+      y: captionOrigin.y + baselineStep,
+      width: captionWidth,
+      height: captionRect.height,
+    }]
   rects[captionKey] = captionRect
   plans.push({
     key: captionKey,
@@ -486,6 +514,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     rowSpan: captionRowSpan,
     columnReflow: captionColumnReflow,
     rect: captionRect,
+    guideRects: captionGuideRects,
     textAlign: captionAlign,
     blockRotation: getBlockRotation(captionKey),
     rotationOriginX: captionOrigin.x,

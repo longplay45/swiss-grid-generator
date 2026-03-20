@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
+import { getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { BlockRect } from "@/lib/typography-layout-plan"
 import type { ModulePosition } from "@/lib/types/preview-layout"
@@ -143,11 +144,12 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           selectedImageRect.height,
         )
       } else if (selectedTextPlan) {
+        const guideRect = getPreviewTextGuideRect(selectedTextPlan, baselineStep)
         drawPlacementGuide(
-          selectedTextPlan.rotationOriginX,
-          selectedTextPlan.rotationOriginY + baselineStep,
-          selectedTextPlan.rect.width,
-          selectedTextPlan.rect.height,
+          guideRect.x,
+          guideRect.y,
+          guideRect.width,
+          guideRect.height,
         )
       }
 

@@ -296,6 +296,7 @@ export function useTypographyRenderer<BlockId extends string>({
           draftPlans.set(plan.key, {
             key: plan.key,
             rect: plan.rect,
+            guideRects: plan.guideRects,
             signature: [
               plan.styleKey,
               blockFont,
@@ -311,6 +312,9 @@ export function useTypographyRenderer<BlockId extends string>({
               plan.rotationOriginY.toFixed(3),
               plan.rect.width.toFixed(3),
               plan.rect.height.toFixed(3),
+              plan.guideRects
+                .map((guideRect) => `${guideRect.x.toFixed(3)},${guideRect.y.toFixed(3)},${guideRect.width.toFixed(3)},${guideRect.height.toFixed(3)}`)
+                .join("||"),
               plan.commands
                 .map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`)
                 .join("||"),

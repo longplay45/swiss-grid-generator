@@ -18,6 +18,7 @@ export type OverflowLinesByBlock<Key extends string> = Partial<Record<Key, numbe
 export type BlockRenderPlan<Key extends string> = {
   key: Key
   rect: BlockRect
+  guideRects: BlockRect[]
   signature: string
   font: string
   textColor: string
