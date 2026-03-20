@@ -1,7 +1,11 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 
-import { getOpticalMarginAnchorOffset } from "../lib/optical-margin.ts"
+import {
+  getOpticalMarginAnchorOffset,
+  resolveConservativeContourBoundaryPx,
+  resolveDominantStemBoundaryPx,
+} from "../lib/optical-margin.ts"
 
 const monoMeasure = (text) => text.length
 
@@ -25,7 +29,7 @@ test("right-aligned trailing punctuation receives positive optical offset", () =
   assert.ok(offset > 0)
 })
 
-test("leading uppercase letter receives optical offset", () => {
+test("leading uppercase letter receives negative fallback optical offset", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Swiss",
     align: "left",
@@ -53,4 +57,73 @@ test("right-aligned trailing uppercase letter also receives subtle offset", () =
     measureWidth: monoMeasure,
   })
   assert.ok(offset > 0)
+})
+
+test("measured left optical boundary is used as the alignment source of truth", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Swiss",
+    align: "left",
+    fontSize: 220,
+    styleKey: "fx",
+    measureWidth: () => 140,
+    measureGlyphBounds: (char) => (
+      char === "S"
+        ? { advanceWidth: 150, leftBoundary: 18, rightBoundary: 132 }
+        : null
+    ),
+  })
+  assert.equal(offset, -18)
+})
+
+test("measured right optical boundary is used as the alignment source of truth", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "System",
+    align: "right",
+    fontSize: 220,
+    styleKey: "display",
+    measureWidth: () => 140,
+    measureGlyphBounds: (char) => (
+      char === "m"
+        ? { advanceWidth: 146, leftBoundary: 14, rightBoundary: 138 }
+        : null
+    ),
+  })
+  assert.equal(offset, 8)
+})
+
+test("measured glyph bounds override fallback style heuristics for straight-sided letters", () => {
+  const bodyOffset = getOpticalMarginAnchorOffset({
+    line: "m",
+    align: "left",
+    fontSize: 220,
+    styleKey: "body",
+    measureWidth: () => 140,
+    measureGlyphBounds: () => ({ advanceWidth: 140, leftBoundary: 12, rightBoundary: 128 }),
+  })
+  const fxOffset = getOpticalMarginAnchorOffset({
+    line: "m",
+    align: "left",
+    fontSize: 220,
+    styleKey: "fx",
+    measureWidth: () => 140,
+    measureGlyphBounds: () => ({ advanceWidth: 140, leftBoundary: 12, rightBoundary: 128 }),
+  })
+  assert.equal(fxOffset, bodyOffset)
+})
+
+test("dominant left stem collapses optical boundary back to the bbox edge", () => {
+  const boundary = resolveDominantStemBoundaryPx([0, 0, 0, 0.2, 0.2, 0.4, 0.1], 40, "left", 1.2)
+  assert.equal(boundary, 40)
+})
+
+test("curved left edge does not get treated as a dominant stem", () => {
+  const boundary = resolveDominantStemBoundaryPx([0, 0.8, 1.7, 2.8, 3.4, 2.4, 1.6, 0.7], 40, "left", 1.2)
+  assert.equal(boundary, null)
+})
+
+test("conservative contour boundary stays closer to the outer edge for curved letters", () => {
+  const boundary = resolveConservativeContourBoundaryPx([0, 0.4, 1.2, 2.6, 3.1, 2.2, 1.1, 0.3], 40, "left", 0.18)
+  assert.ok(boundary !== null)
+  assert.ok(boundary > 40)
+  assert.ok(boundary < 41.5)
 })

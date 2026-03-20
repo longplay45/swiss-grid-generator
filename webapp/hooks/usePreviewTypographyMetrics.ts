@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
+import {
+  clearOpticalMarginMeasurementCache,
+  getOpticalMarginAnchorOffset,
+} from "@/lib/optical-margin"
 import { wrapText } from "@/lib/text-layout"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
@@ -51,6 +54,7 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     measureWidthCacheRef.current.clear()
     wrapTextCacheRef.current.clear()
     opticalOffsetCacheRef.current.clear()
+    clearOpticalMarginMeasurementCache()
   }, [])
 
   useEffect(() => {
@@ -116,16 +120,19 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
 
   const getOpticalOffset = useCallback((
     ctx: CanvasRenderingContext2D,
+    styleKey: StyleKey,
     line: string,
     align: TextAlignMode,
     fontSize: number,
   ): number => {
-    const key = `${ctx.font}::${line}::${align}::${fontSize.toFixed(4)}`
+    const key = `${ctx.font}::${styleKey}::${line}::${align}::${fontSize.toFixed(4)}`
     return makeCachedValue(opticalOffsetCacheRef.current, key, () =>
       getOpticalMarginAnchorOffset({
         line,
         align,
         fontSize,
+        styleKey,
+        font: ctx.font,
         measureWidth: (sample) => getMeasuredTextWidth(ctx, sample),
       }),
     )

@@ -52,7 +52,13 @@ type Args<BlockId extends string> = {
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   getWrappedText: (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, hyphenate: boolean) => string[]
-  getOpticalOffset: (ctx: CanvasRenderingContext2D, line: string, align: TextAlignMode, fontSize: number) => number
+  getOpticalOffset: (
+    ctx: CanvasRenderingContext2D,
+    styleKey: keyof GridResult["typography"]["styles"],
+    line: string,
+    align: TextAlignMode,
+    fontSize: number,
+  ) => number
   onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   recordPerfMetric: (metric: "drawMs", valueMs: number) => void
@@ -277,8 +283,8 @@ export function useTypographyRenderer<BlockId extends string>({
           wrapText: ({ context, text, maxWidth, hyphenate }) =>
             getWrappedText(context, text, maxWidth, hyphenate),
           textAscent: ({ context, fontSize }) => getTextAscentPx(context, fontSize),
-          opticalOffset: ({ context, line, align, fontSize }) =>
-            getOpticalOffset(context, line, align, fontSize),
+          opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
+            getOpticalOffset(context, styleKey, line, align, fontSize),
         })
 
         for (const plan of layoutOutput.plans) {

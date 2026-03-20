@@ -9,7 +9,10 @@ import {
   type FontFamily,
 } from "@/lib/config/fonts"
 import { resolvePdfFontFamily } from "@/lib/pdf-font-registry"
-import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
+import {
+  clearOpticalMarginMeasurementCache,
+  getOpticalMarginAnchorOffset,
+} from "@/lib/optical-margin"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import {
@@ -198,6 +201,7 @@ export function renderSwissGridVectorPdf({
   showImagePlaceholders,
   showTypography,
 }: ExportVectorPdfOptions): void {
+  clearOpticalMarginMeasurementCache()
   const sourceWidth = result.pageSizePt.width
   const sourceHeight = result.pageSizePt.height
   const sx = width / sourceWidth
@@ -643,11 +647,13 @@ export function renderSwissGridVectorPdf({
       wrapText(text, maxWidth, hyphenate, context.measureWidth),
     textAscent: ({ context, fontSize }) =>
       estimateTextAscent(textMeasureContext, context.canvasFont, fontSize),
-    opticalOffset: ({ context, line, align, fontSize }) =>
+    opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
       getOpticalMarginAnchorOffset({
         line,
         align,
         fontSize,
+        styleKey,
+        font: context.canvasFont,
         measureWidth: context.measureWidth,
       }),
   })
