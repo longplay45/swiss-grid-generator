@@ -1,18 +1,22 @@
 import { useCallback } from "react"
-import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react"
+import type { Dispatch, RefObject, SetStateAction } from "react"
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
-import { isImagePlaceholderColor } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
-import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
-import { buildExistingBlockEditorState, buildNewBlockEditorState } from "@/lib/preview-block-editor-state"
+import { clampFxLeading } from "@/lib/block-constraints"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
 import {
+  applyEditorDraftLeadingOverride,
+  applyEditorDraftSizeOverride,
+  applyEditorDraftTextColorOverride,
+  removeEditorOverrideKey,
+} from "@/lib/preview-block-editor-overrides"
+import {
   applyBlockEditorDraftToCollections,
-  insertTextLayerIntoCollections,
   type PreviewTextLayerCollectionsState,
 } from "@/lib/preview-text-layer-state"
 import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
+import { useBlockEditorCanvasDoubleClick } from "@/hooks/useBlockEditorCanvasDoubleClick"
 import type { Updater } from "@/hooks/useStateCommands"
 
 type ModulePosition = {
@@ -160,33 +164,13 @@ export function useBlockEditorActions({
       })
     })
     setBlockCustomSizes((prev) => {
-      const next = { ...prev }
-      if (draft.draftStyle === "fx") {
-        next[draft.target] = clampFxSize(draft.draftFxSize)
-      } else {
-        delete next[draft.target]
-      }
-      return next
+      return applyEditorDraftSizeOverride(prev, draft, "fx")
     })
     setBlockCustomLeadings((prev) => {
-      const next = { ...prev }
-      if (draft.draftStyle === "fx") {
-        next[draft.target] = clampFxLeading(draft.draftFxLeading)
-      } else {
-        delete next[draft.target]
-      }
-      return next
+      return applyEditorDraftLeadingOverride(prev, draft, "fx")
     })
     setBlockTextColors((prev) => {
-      const next = { ...prev }
-      if (draft.draftColor.toLowerCase() === defaultTextColor.toLowerCase()) {
-        delete next[draft.target]
-      } else if (isImagePlaceholderColor(draft.draftColor)) {
-        next[draft.target] = draft.draftColor
-      } else {
-        delete next[draft.target]
-      }
-      return next
+      return applyEditorDraftTextColorOverride(prev, draft, defaultTextColor)
     })
   }, [
     baseFont,
@@ -233,133 +217,50 @@ export function useBlockEditorActions({
       return removeTextLayerFromCollections(prev, target)
     })
     if (!isBaseBlockId(target)) {
-      setBlockCustomSizes((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockCustomLeadings((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
-      setBlockTextColors((prev) => {
-        const next = { ...prev }
-        delete next[target]
-        return next
-      })
+      setBlockCustomSizes((prev) => removeEditorOverrideKey(prev, target))
+      setBlockCustomLeadings((prev) => removeEditorOverrideKey(prev, target))
+      setBlockTextColors((prev) => removeEditorOverrideKey(prev, target))
     }
     setEditorState(null)
   }, [editorState, isBaseBlockId, recordHistoryBeforeChange, setBlockCollections, setBlockCustomLeadings, setBlockCustomSizes, setBlockTextColors, setEditorState])
 
-  const handleCanvasDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
-    if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
-
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const pagePoint = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
-    if (!pagePoint) return
-
-    const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
-    if (key) {
-      recordHistoryBeforeChange()
-      setEditorState(buildExistingBlockEditorState({
-        key,
-        styleAssignments,
-        textContent,
-        blockCustomSizes,
-        blockCustomLeadings,
-        blockTextAlignments,
-        blockTextEdited,
-        getBlockFont,
-        getBlockRotation,
-        getBlockRows,
-        getBlockSpan,
-        getBlockTextColor,
-        getStyleLeading,
-        getStyleSize,
-        isBlockBold,
-        isBlockItalic,
-        isSyllableDivisionEnabled,
-        isTextReflowEnabled,
-        fallbackStyle: "body",
-        fxStyle: "fx",
-      }))
-      return
-    }
-
-    const maxParagraphCount = resultGridCols * resultGridRows
-    const activeParagraphCount = blockOrder.filter((blockKey) => (textContent[blockKey] ?? "").trim().length > 0).length
-    if (activeParagraphCount >= maxParagraphCount) {
-      onRequestNotice?.({
-        title: "Paragraph Limit Reached",
-        message: `Maximum paragraphs reached (${maxParagraphCount}).`,
-      })
-      return
-    }
-
-    const newKey = getNextCustomBlockId()
-    recordHistoryBeforeChange()
-    const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
-    const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
-    setBlockCollections((prev) => insertTextLayerIntoCollections(prev, {
-      newKey,
-      text: getDummyTextForStyle("body"),
-      styleKey: "body",
-      columns: defaultSpan,
-      rows: 1,
-      position: snapped,
-    }))
-    setEditorState(buildNewBlockEditorState({
-      key: newKey,
-      style: "body",
-      text: getDummyTextForStyle("body"),
-      columns: defaultSpan,
-      rows: 1,
-      baseFont,
-      defaultTextColor,
-      getStyleLeading,
-      getStyleSize,
-      fxStyle: "fx",
-    }))
-  }, [
+  const handleCanvasDoubleClick = useBlockEditorCanvasDoubleClick({
+    showTypography,
+    dragEndedAtRef,
+    canvasRef,
+    setEditorState,
     baseFont,
+    resultGridCols,
+    resultGridRows,
+    blockOrder,
+    textContent,
+    blockTextEdited,
+    styleAssignments,
     blockCustomLeadings,
     blockCustomSizes,
-    blockOrder,
     blockTextAlignments,
-    blockTextEdited,
-    canvasRef,
-    dragEndedAtRef,
-    findTopmostBlockAtPoint,
     getBlockFont,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
-    getDefaultColumnSpan,
-    getDummyTextForStyle,
     getBlockTextColor,
+    recordHistoryBeforeChange,
+    setBlockCollections,
+    getNextCustomBlockId,
+    getDummyTextForStyle,
     getStyleLeading,
     getStyleSize,
-    getNextCustomBlockId,
+    defaultTextColor,
+    getDefaultColumnSpan,
+    toPagePoint,
+    findTopmostBlockAtPoint,
+    snapToModule,
+    isTextReflowEnabled,
+    isSyllableDivisionEnabled,
     isBlockBold,
     isBlockItalic,
-    isSyllableDivisionEnabled,
-    isTextReflowEnabled,
-    recordHistoryBeforeChange,
-    resultGridCols,
-    resultGridRows,
-    defaultTextColor,
-    setEditorState,
-    showTypography,
-    snapToModule,
-    styleAssignments,
-    textContent,
-    toPagePoint,
     onRequestNotice,
-  ])
+  })
 
   return {
     closeEditor,
