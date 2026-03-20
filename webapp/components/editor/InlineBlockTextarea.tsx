@@ -29,7 +29,7 @@ export type InlineEditorLayout = {
   rotationOriginX: number
   rotationOriginY: number
   textAscent: number
-  textAlign: "left" | "right"
+  textAlign: "left" | "center" | "right"
   commands: Array<{
     text: string
     x: number
@@ -135,7 +135,11 @@ export function InlineBlockTextarea<StyleKey extends string>({
     ? layout.commands
     : [{
       text: "",
-      x: layout.textAlign === "right" ? layout.rect.x + layout.rect.width : layout.rect.x,
+      x: layout.textAlign === "right"
+        ? layout.rect.x + layout.rect.width
+        : layout.textAlign === "center"
+          ? layout.rect.x + layout.rect.width / 2
+          : layout.rect.x,
       y: layout.rotationOriginY + baselineStep + layout.textAscent,
     }]
   const textBoxTop = firstLineTop - fxCaretOffsetY
@@ -194,7 +198,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     const element = textareaRef.current
     if (!element) return
     if (focused) {
-      element.focus()
+      element.focus({ preventScroll: true })
     }
     element.setSelectionRange(start, end)
     setSelection({

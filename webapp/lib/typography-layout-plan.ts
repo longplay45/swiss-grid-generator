@@ -271,7 +271,11 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
 
     if (!columnReflow) {
-      const anchorX = textAlign === "right" ? origin.x + wrapWidth : origin.x
+      const anchorX = textAlign === "right"
+        ? origin.x + wrapWidth
+        : textAlign === "center"
+          ? origin.x + wrapWidth / 2
+          : origin.x
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
@@ -288,7 +292,11 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const rowIndex = lineIndex % maxLinesPerColumn
         const columnX = origin.x + getColumnOffset(startCol, columnIndex)
         const columnWidth = getColumnWidthAt(startCol + columnIndex)
-        const anchorX = textAlign === "right" ? columnX + columnWidth : columnX
+        const anchorX = textAlign === "right"
+          ? columnX + columnWidth
+          : textAlign === "center"
+            ? columnX + columnWidth / 2
+            : columnX
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + rowIndex * lineStep
         const y = lineTopY + ascent

@@ -1,4 +1,4 @@
-export type TextAlignMode = "left" | "right"
+export type TextAlignMode = "left" | "center" | "right"
 
 export type ModulePosition = {
   col: number

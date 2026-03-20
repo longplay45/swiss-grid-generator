@@ -19,6 +19,7 @@ import type {
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import {
   AlignLeft,
+  AlignCenter,
   AlignRight,
   Baseline,
   Bold,
@@ -42,7 +43,7 @@ type TextEditorPanelProps<StyleKey extends string> = {
   showRolloverInfo?: boolean
 }
 
-type MainSubmenu = "geometry" | "type" | "color" | "info" | null
+type MainSubmenu = "geometry" | "type" | "align" | "color" | "info" | null
 
 type TextEditorPanelControls<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey>
@@ -134,6 +135,9 @@ export function TextEditorPanel<StyleKey extends string>({
       {child}
     </HoverTooltip>
   )
+  const getStyleOptionLabel = (styleKey: StyleKey, label: string) => (
+    controls.isFxStyle(styleKey) ? label : `${label} (${controls.getStyleSizeLabel(styleKey)})`
+  )
 
   return (
     <div className="flex items-start gap-2">
@@ -171,6 +175,16 @@ export function TextEditorPanel<StyleKey extends string>({
 
         <div className={`my-1 h-px w-full ${tone.divider}`} />
 
+        {withRailTooltip("Text alignment", <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className={railBtn(activeSubmenu === "align")}
+          onClick={() => toggleSubmenu("align")}
+          aria-label="Text alignment"
+        >
+          <AlignCenter className="h-4 w-4" />
+        </Button>)}
         {withRailTooltip(controls.editorState.draftBold ? "Disable bold" : "Enable bold", <Button
           type="button"
           size="icon"
@@ -190,26 +204,6 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label={controls.editorState.draftItalic ? "Disable italic" : "Enable italic"}
         >
           <Italic className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip("Align text left", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(controls.editorState.draftAlign === "left")}
-          onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)}
-          aria-label="Align left"
-        >
-          <AlignLeft className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip("Align text right", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(controls.editorState.draftAlign === "right")}
-          onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)}
-          aria-label="Align right"
-        >
-          <AlignRight className="h-4 w-4" />
         </Button>)}
         {withRailTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
           type="button"
@@ -339,6 +333,41 @@ export function TextEditorPanel<StyleKey extends string>({
             </>
           ) : null}
 
+          {activeSubmenu === "align" ? (
+            <>
+              {withSubmenuTooltip("Align text left", <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={railBtn(controls.editorState.draftAlign === "left")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)}
+                aria-label="Align left"
+              >
+                <AlignLeft className="h-4 w-4" />
+              </Button>)}
+              {withSubmenuTooltip("Align text center", <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={railBtn(controls.editorState.draftAlign === "center")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "center" } : prev)}
+                aria-label="Align center"
+              >
+                <AlignCenter className="h-4 w-4" />
+              </Button>)}
+              {withSubmenuTooltip("Align text right", <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={railBtn(controls.editorState.draftAlign === "right")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)}
+                aria-label="Align right"
+              >
+                <AlignRight className="h-4 w-4" />
+              </Button>)}
+            </>
+          ) : null}
+
           {activeSubmenu === "type" ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
@@ -377,7 +406,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectContent>
                     {controls.styleOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label} ({controls.getStyleSizeLabel(option.value)})
+                        {getStyleOptionLabel(option.value, option.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

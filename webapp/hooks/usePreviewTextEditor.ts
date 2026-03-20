@@ -224,7 +224,7 @@ export function usePreviewTextEditor({
 
   const focusEditor = useCallback(() => {
     if (!editorState) return
-    textareaRef.current?.focus()
+    textareaRef.current?.focus({ preventScroll: true })
   }, [editorState, textareaRef])
 
   const closeAnyEditor = useCallback(() => {

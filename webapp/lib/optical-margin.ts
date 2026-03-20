@@ -545,6 +545,7 @@ export function getOpticalMarginAnchorOffset({
 }: OpticalMarginOptions): number {
   const { first, last } = getEdgeCharacters(line)
   if (!first || !last || fontSize <= 0) return 0
+  if (align === "center") return 0
   const profile = resolveOpticalMarginProfile(styleKey)
 
   // Left-aligned lines hang opening punctuation into the left margin.

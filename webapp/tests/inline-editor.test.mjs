@@ -53,6 +53,20 @@ test("computeInlineEditorTextBox preserves right-aligned editor width and adds o
   assert.equal(textBox.width, 204)
 })
 
+test("computeInlineEditorTextBox keeps centered text symmetric around its anchor", () => {
+  const textBox = computeInlineEditorTextBox({
+    rect: { x: 40, y: 80, width: 200, height: 120 },
+    textAlign: "center",
+    commands: [
+      { text: "Center", x: 140, y: 140 },
+    ],
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.equal(textBox.left, 40)
+  assert.equal(textBox.width, 200)
+})
+
 test("resolveInlineEditorLineMatches keeps sequential line ranges for wrapped text", () => {
   const lines = resolveInlineEditorLineMatches("Hello world\nSecond line", [
     { text: "Hello world", x: 40, y: 120 },
@@ -123,4 +137,25 @@ test("hitTestInlineEditorIndex returns the nearest character index on a right-al
   })
 
   assert.equal(index, 6)
+})
+
+test("computeInlineEditorCaret returns the visual caret at the centered line midpoint", () => {
+  const caret = computeInlineEditorCaret({
+    text: "Hello world",
+    textAlign: "center",
+    commands: [
+      { text: "Hello world", x: 200, y: 136 },
+    ],
+    selectionStart: 5,
+    textAscent: 10,
+    textBoxTop: 110,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(caret, {
+    x: 195,
+    top: 16,
+    height: 24,
+  })
 })

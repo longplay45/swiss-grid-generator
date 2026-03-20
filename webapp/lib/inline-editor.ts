@@ -1,6 +1,6 @@
 export type SidebarPanel = "settings" | "help" | "imprint" | "example" | "text-editor" | null
 export type NonEditorSidebarPanel = Exclude<SidebarPanel, "text-editor">
-export type InlineEditorTextAlign = "left" | "right"
+export type InlineEditorTextAlign = "left" | "center" | "right"
 
 export type InlineEditorRect = {
   x: number
@@ -135,6 +135,9 @@ function getLineStartX(
   textAlign: InlineEditorTextAlign,
   measureText: (text: string) => number,
 ): number {
+  if (textAlign === "center") {
+    return line.x - measureText(line.renderedText) / 2
+  }
   if (textAlign === "right") {
     return line.x - measureText(line.renderedText)
   }
@@ -170,10 +173,14 @@ export function computeInlineEditorTextBox({
     const renderedWidth = measureText(renderedText)
     const lineLeft = textAlign === "right"
       ? command.x - renderedWidth
-      : command.x
+      : textAlign === "center"
+        ? command.x - renderedWidth / 2
+        : command.x
     const lineRight = textAlign === "right"
       ? command.x
-      : command.x + renderedWidth
+      : textAlign === "center"
+        ? command.x + renderedWidth / 2
+        : command.x + renderedWidth
     minX = Math.min(minX, lineLeft)
     maxX = Math.max(maxX, lineRight)
   }

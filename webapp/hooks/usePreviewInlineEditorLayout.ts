@@ -10,7 +10,7 @@ type InlineEditorPlan<Key extends string> = {
   blockRotation: number
   rotationOriginX: number
   rotationOriginY: number
-  textAlign: "left" | "right"
+  textAlign: "left" | "center" | "right"
   commands: TextDrawCommand[]
 }
 
