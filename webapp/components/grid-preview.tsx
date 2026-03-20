@@ -26,6 +26,11 @@ import { usePreviewLayoutEmission } from "@/hooks/usePreviewLayoutEmission"
 import { usePreviewPerf } from "@/hooks/usePreviewPerf"
 import { useTypographyRenderer } from "@/hooks/useTypographyRenderer"
 import {
+  PREVIEW_LAYOUT_CHANGE_DEBOUNCE_MS,
+  PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
+  PREVIEW_TOUCH_LONG_PRESS_MS,
+} from "@/lib/preview-interaction-constants"
+import {
   type BlockRect,
   type BlockRenderPlan,
   type NoticeRequest,
@@ -175,9 +180,6 @@ export const GridPreview = memo(function GridPreview({
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const HISTORY_LIMIT = 50
-  const LAYOUT_CHANGE_DEBOUNCE_MS = 120
-  const TOUCH_LONG_PRESS_MS = 180
-  const TOUCH_CANCEL_DISTANCE_PX = 10
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
 
@@ -503,8 +505,8 @@ export const GridPreview = memo(function GridPreview({
     closeImageEditorPanel: closeImageEditorState,
     clearHover,
     dragEndedAtRef,
-    touchLongPressMs: TOUCH_LONG_PRESS_MS,
-    touchCancelDistancePx: TOUCH_CANCEL_DISTANCE_PX,
+    touchLongPressMs: PREVIEW_TOUCH_LONG_PRESS_MS,
+    touchCancelDistancePx: PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
   })
 
   const {
@@ -718,7 +720,7 @@ export const GridPreview = memo(function GridPreview({
 
   usePreviewLayoutEmission({
     buildSnapshot,
-    debounceMs: LAYOUT_CHANGE_DEBOUNCE_MS,
+    debounceMs: PREVIEW_LAYOUT_CHANGE_DEBOUNCE_MS,
     onLayoutChange,
   })
 

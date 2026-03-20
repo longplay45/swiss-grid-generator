@@ -1,6 +1,7 @@
 import type { FontFamily } from "@/lib/config/fonts"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
-export type BlockEditorTextAlign = "left" | "right"
+export type BlockEditorTextAlign = TextAlignMode
 
 export type BlockEditorState<StyleKey extends string = string> = {
   target: string

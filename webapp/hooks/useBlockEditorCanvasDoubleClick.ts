@@ -3,14 +3,11 @@ import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { buildExistingBlockEditorState, buildNewBlockEditorState } from "@/lib/preview-block-editor-state"
+import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants"
 import { insertTextLayerIntoCollections, type PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
 import type { FontFamily } from "@/lib/config/fonts"
-import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
-
-type ModulePosition = {
-  col: number
-  row: number
-}
+import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
+import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 
 type Args = {
   showTypography: boolean
@@ -90,7 +87,7 @@ export function useBlockEditorCanvasDoubleClick({
   onRequestNotice,
 }: Args) {
   return useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
-    if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
+    if (!showTypography || Date.now() - dragEndedAtRef.current < PREVIEW_DRAG_CLICK_GUARD_MS) return
 
     const canvas = canvasRef.current
     if (!canvas) return

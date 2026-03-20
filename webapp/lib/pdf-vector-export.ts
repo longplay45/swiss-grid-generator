@@ -1,5 +1,6 @@
 import type jsPDF from "jspdf"
 import type { GridResult } from "@/lib/grid-calculator"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import {
   DEFAULT_BASE_FONT,
@@ -28,7 +29,6 @@ import {
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
-type TextAlignMode = "left" | "right"
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 type RgbColor = { r: number; g: number; b: number }
 type CmykColor = { c: number; m: number; y: number; k: number }

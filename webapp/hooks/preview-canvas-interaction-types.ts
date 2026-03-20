@@ -4,7 +4,7 @@ import type { MouseEvent as ReactMouseEvent } from "react"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { BlockRect, NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
-import type { ModulePosition } from "@/lib/types/preview-layout"
+import type { ModulePosition } from "@/lib/types/layout-primitives"
 
 export type OpenImageEditorOptions = {
   recordHistory?: boolean

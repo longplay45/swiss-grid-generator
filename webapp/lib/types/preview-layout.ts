@@ -1,10 +1,7 @@
-export type BlockId = string
-export type TextAlignMode = "left" | "right"
+import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 
-export type ModulePosition = {
-  col: number
-  row: number
-}
+export type BlockId = string
+export type { ModulePosition, TextAlignMode }
 
 export type PreviewLayoutState<
   StyleKey extends string = string,

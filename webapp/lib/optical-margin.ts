@@ -1,4 +1,4 @@
-type TextAlignMode = "left" | "right"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
 type OpticalMarginOptions = {
   line: string

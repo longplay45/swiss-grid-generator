@@ -15,14 +15,10 @@ import {
   applyBlockEditorDraftToCollections,
   type PreviewTextLayerCollectionsState,
 } from "@/lib/preview-text-layer-state"
-import type { NoticeRequest, PagePoint, TextAlignMode } from "@/lib/preview-types"
+import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
+import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 import { useBlockEditorCanvasDoubleClick } from "@/hooks/useBlockEditorCanvasDoubleClick"
 import type { Updater } from "@/hooks/useStateCommands"
-
-type ModulePosition = {
-  col: number
-  row: number
-}
 
 type EditorState = BlockEditorState<string>
 

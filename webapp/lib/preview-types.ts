@@ -1,4 +1,5 @@
-import type { BlockRect, TextAlignMode, TextDrawCommand } from "@/lib/typography-layout-plan"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import type { BlockRect, TextDrawCommand } from "@/lib/typography-layout-plan"
 
 export type { BlockRect, TextAlignMode, TextDrawCommand }
 

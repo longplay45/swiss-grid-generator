@@ -2,10 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { usePreviewCommands } from "@/hooks/usePreviewCommands"
 import { getPreviewLayoutSeed } from "@/lib/document-session"
+import { PREVIEW_LAYER_SELECTION_GRACE_MS } from "@/lib/preview-interaction-constants"
 import { removeLayerFromPreviewLayout } from "@/lib/preview-layer-state"
 import type { PreviewLayoutState } from "@/lib/types/preview-layout"
-
-const LAYER_SELECTION_GRACE_MS = 300
 
 type Args<StyleKey extends string, Family extends string> = {
   activeSidebarPanel: string | null
@@ -56,7 +55,7 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     if (key) {
       selectedLayerGraceRef.current = {
         key,
-        until: Date.now() + LAYER_SELECTION_GRACE_MS,
+        until: Date.now() + PREVIEW_LAYER_SELECTION_GRACE_MS,
       }
     } else {
       selectedLayerGraceRef.current = { key: null, until: 0 }

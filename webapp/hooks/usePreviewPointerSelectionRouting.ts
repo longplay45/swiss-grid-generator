@@ -3,7 +3,8 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 
 import type { PreviewCanvasInteractionArgs } from "@/hooks/preview-canvas-interaction-types"
 import { usePreviewDrag, type DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
-import type { ModulePosition } from "@/lib/types/preview-layout"
+import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants"
+import type { ModulePosition } from "@/lib/types/layout-primitives"
 
 type Args<Key extends string, StyleKey extends string> = Pick<
   PreviewCanvasInteractionArgs<Key, StyleKey>,
@@ -111,7 +112,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   }, [handleCanvasPointerDown, onSelectLayer, resolveSelectedLayerAtClientPoint])
 
   const handleCanvasDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
-    if (!showTypography || Date.now() - dragEndedAtRef.current < 250) return
+    if (!showTypography || Date.now() - dragEndedAtRef.current < PREVIEW_DRAG_CLICK_GUARD_MS) return
     const pagePoint = toPagePointFromClient(event.clientX, event.clientY)
     if (!pagePoint) return
 

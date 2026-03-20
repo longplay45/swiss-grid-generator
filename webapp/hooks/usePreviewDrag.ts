@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { MutableRefObject, PointerEvent as ReactPointerEvent, RefObject } from "react"
 
+import { PREVIEW_DRAG_MOVE_THRESHOLD_PX } from "@/lib/preview-interaction-constants"
 import type { BlockRect, PagePoint } from "@/lib/preview-types"
+import type { ModulePosition } from "@/lib/types/layout-primitives"
 
-export type DragModulePosition = {
-  col: number
-  row: number
-}
+export type DragModulePosition = ModulePosition
 
 export type DragState<Key extends string = string> = {
   key: Key
@@ -211,7 +210,9 @@ export function usePreviewDrag<Key extends string>({
     const snap = useBaselineSnap
       ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
       : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
-    const moved = dragState.moved || Math.abs(point.x - dragState.startPageX) > 3 || Math.abs(point.y - dragState.startPageY) > 3
+    const moved = dragState.moved
+      || Math.abs(point.x - dragState.startPageX) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
+      || Math.abs(point.y - dragState.startPageY) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
     const copyOnDrop = event.pointerType !== "touch" && event.altKey
     pendingDragPreviewRef.current = { preview: snap, moved, copyOnDrop }
     if (dragRafRef.current !== null) return

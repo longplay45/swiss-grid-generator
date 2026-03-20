@@ -5,12 +5,8 @@ import type { GridResult } from "@/lib/grid-calculator"
 import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
+import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
-
-type ModulePosition = {
-  col: number
-  row: number
-}
 
 type DragState<BlockId extends string> = {
   key: BlockId

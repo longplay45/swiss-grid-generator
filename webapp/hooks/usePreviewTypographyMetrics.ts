@@ -3,8 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { wrapText } from "@/lib/text-layout"
 import type { FontFamily } from "@/lib/config/fonts"
-
-type TextAlignMode = "left" | "right"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
 type Args<Key extends string, StyleKey extends string> = {
   showTypography: boolean

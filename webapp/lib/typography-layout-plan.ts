@@ -1,6 +1,7 @@
 import { sumAxisSpan } from "@/lib/grid-rhythm"
+import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
-export type TextAlignMode = "left" | "right"
+export type { TextAlignMode }
 
 export type BlockRect = {
   x: number

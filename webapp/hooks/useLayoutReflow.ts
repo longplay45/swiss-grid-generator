@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { AutoFitPlannerInput } from "@/lib/autofit-planner"
 import { findNearestAxisIndex } from "@/lib/grid-rhythm"
-
-type ModulePosition = {
-  col: number
-  row: number
-}
+import type { ModulePosition } from "@/lib/types/layout-primitives"
 
 type PendingReflow<BlockId extends string> = {
   previousGrid: { cols: number; rows: number }
