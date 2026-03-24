@@ -540,8 +540,8 @@ export const GridPreview = memo(function GridPreview({
   })
 
   useEffect(() => {
-    onHoverLayerChange?.(hoverState?.key ?? null)
-  }, [hoverState?.key, onHoverLayerChange])
+    onHoverLayerChange?.(hoverState?.key ?? hoverImageKey ?? null)
+  }, [hoverImageKey, hoverState?.key, onHoverLayerChange])
 
   usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
     historyResetToken,
@@ -680,13 +680,18 @@ export const GridPreview = memo(function GridPreview({
   const linkedHoveredTextPlan = !hoverState?.key && hoveredLayerKey
     ? previousPlansRef.current.get(hoveredLayerKey) ?? null
     : null
+  const linkedHoveredImageRect = !hoverState?.key && !hoverImageKey && hoveredLayerKey
+    ? imageRectsRef.current[hoveredLayerKey] ?? null
+    : null
   const hoveredTextGuideRect = hoveredTextPlan
     ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null, result.grid.gridUnit * scale)
     : linkedHoveredTextPlan
       ? getPreviewTextGuideRect(linkedHoveredTextPlan, result.grid.gridUnit * scale)
       : hoveredTextRect
   const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
-  const hoveredImageRect = hoverImageKey ? imageRectsRef.current[hoverImageKey] ?? null : null
+  const hoveredImageRect = hoverImageKey
+    ? imageRectsRef.current[hoverImageKey] ?? null
+    : linkedHoveredImageRect
 
   usePreviewOverlayCanvas({
     overlayCanvasRef,
@@ -701,6 +706,7 @@ export const GridPreview = memo(function GridPreview({
     blockOrder,
     imageOrder,
     hoveredTextGuideRect,
+    hoveredImageRect,
     selectedLayerKey,
     overflowLinesByBlock,
     dragState,

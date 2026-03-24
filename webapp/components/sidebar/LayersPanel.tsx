@@ -303,7 +303,7 @@ export function LayersPanel({
         </div>
         {visibleThumbs.map((thumb, index) => {
           const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
-          const isHovered = thumb.kind === "text" && hoveredLayerKey === thumb.key
+          const isHovered = hoveredLayerKey === thumb.key
           const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
           return (
             <Fragment key={thumb.key}>
@@ -325,7 +325,7 @@ export function LayersPanel({
                 onDragEnd={clearDragState}
                 onDragOver={handleListDragOver}
                 onDrop={handleListDrop}
-                onMouseEnter={() => onHoverLayerChange(thumb.kind === "text" ? thumb.key : null)}
+                onMouseEnter={() => onHoverLayerChange(thumb.key)}
                 onMouseLeave={() => onHoverLayerChange(null)}
                 onClick={() => onSelectLayer(thumb.key)}
                 onDoubleClick={() => onToggleEditor(thumb.key)}

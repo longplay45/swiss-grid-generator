@@ -38,6 +38,7 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   blockOrder: Key[]
   imageOrder: Key[]
   hoveredTextGuideRect: BlockRect | null
+  hoveredImageRect: BlockRect | null
   selectedLayerKey: Key | null
   overflowLinesByBlock: Partial<Record<Key, number>>
   dragState: DragState<Key> | null
@@ -63,6 +64,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   blockOrder,
   imageOrder,
   hoveredTextGuideRect,
+  hoveredImageRect,
   selectedLayerKey,
   overflowLinesByBlock,
   dragState,
@@ -94,8 +96,9 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         : null
       const selectedTextPlan = selectedLayerKey ? previousPlansRef.current.get(selectedLayerKey) ?? null : null
       const hasHoveredTextGuide = Boolean(hoveredTextGuideRect)
+      const hasHoveredImageGuide = Boolean(hoveredImageRect)
       const hasSelectedLayer = Boolean(selectedImageRect || selectedTextPlan)
-      if (!dragState && !hasOverflow && !activeEditorPlan && !hasHoveredTextGuide && !hasSelectedLayer) return
+      if (!dragState && !hasOverflow && !activeEditorPlan && !hasHoveredTextGuide && !hasHoveredImageGuide && !hasSelectedLayer) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -145,6 +148,13 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           hoveredTextGuideRect.y,
           hoveredTextGuideRect.width,
           hoveredTextGuideRect.height,
+        )
+      } else if (hoveredImageRect) {
+        drawPlacementGuide(
+          hoveredImageRect.x,
+          hoveredImageRect.y,
+          hoveredImageRect.width,
+          hoveredImageRect.height,
         )
       } else if (selectedImageRect) {
         drawPlacementGuide(
@@ -229,6 +239,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
     getPlacementRows,
     getPlacementSpan,
     hoveredTextGuideRect,
+    hoveredImageRect,
     imageOrder,
     imageRectsRef,
     overflowLinesByBlock,
