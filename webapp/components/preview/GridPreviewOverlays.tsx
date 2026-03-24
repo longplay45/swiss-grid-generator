@@ -7,7 +7,6 @@ import { ImageEditorDialog, type ImageEditorState } from "@/components/dialogs/I
 import { TextEditorPanel } from "@/components/sidebar/TextEditorPanel"
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
-import { PREVIEW_INTERACTION_HINT_LINES } from "@/lib/preview-interaction-hints"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
 
@@ -18,7 +17,6 @@ type PerfPayload = {
 }
 
 type Props<StyleKey extends string> = {
-  showInteractionHint: boolean
   showPerfOverlay: boolean
   perfOverlay: PerfPayload | null
   showEditorHelpIcon: boolean
@@ -51,7 +49,6 @@ type Props<StyleKey extends string> = {
 }
 
 export function GridPreviewOverlays<StyleKey extends string>({
-  showInteractionHint,
   showPerfOverlay,
   perfOverlay,
   showEditorHelpIcon,
@@ -115,19 +112,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
 
   return (
     <>
-      {(showInteractionHint || showPerfOverlay) ? (
+      {showPerfOverlay ? (
         <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
-          {showInteractionHint ? (
-            <div className="w-72 rounded-md border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-              <div className="text-[11px] font-medium text-gray-900">Interaction</div>
-              {PREVIEW_INTERACTION_HINT_LINES.map((line, index) => (
-                <div key={line} className={`${index === 0 ? "mt-1" : ""} text-[11px] text-gray-600`}>
-                  {line}
-                </div>
-              ))}
-            </div>
-          ) : null}
-
           {showPerfOverlay && perfOverlay ? (
             <div className="rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
               <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>

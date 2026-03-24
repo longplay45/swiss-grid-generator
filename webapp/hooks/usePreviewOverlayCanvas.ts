@@ -37,6 +37,7 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   showTypography: boolean
   blockOrder: Key[]
   imageOrder: Key[]
+  hoveredTextGuideRect: BlockRect | null
   selectedLayerKey: Key | null
   overflowLinesByBlock: Partial<Record<Key, number>>
   dragState: DragState<Key> | null
@@ -61,6 +62,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   showTypography,
   blockOrder,
   imageOrder,
+  hoveredTextGuideRect,
   selectedLayerKey,
   overflowLinesByBlock,
   dragState,
@@ -91,8 +93,9 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         ? imageRectsRef.current[selectedLayerKey]
         : null
       const selectedTextPlan = selectedLayerKey ? previousPlansRef.current.get(selectedLayerKey) ?? null : null
+      const hasHoveredTextGuide = Boolean(hoveredTextGuideRect)
       const hasSelectedLayer = Boolean(selectedImageRect || selectedTextPlan)
-      if (!dragState && !hasOverflow && !activeEditorPlan && !hasSelectedLayer) return
+      if (!dragState && !hasOverflow && !activeEditorPlan && !hasHoveredTextGuide && !hasSelectedLayer) return
 
       const { width, height } = result.pageSizePt
       const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -136,6 +139,13 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         const snapWidth = sumAxisSpan(metrics.moduleWidths, dragState.preview.col, dragSpan, gridMarginHorizontal) * scale
         const snapHeight = sumAxisSpan(metrics.moduleHeights, dragRowStart, dragRows, gridMarginVertical) * scale
         drawPlacementGuide(snapX, snapY + baselineStep, snapWidth, snapHeight)
+      } else if (hoveredTextGuideRect) {
+        drawPlacementGuide(
+          hoveredTextGuideRect.x,
+          hoveredTextGuideRect.y,
+          hoveredTextGuideRect.width,
+          hoveredTextGuideRect.height,
+        )
       } else if (selectedImageRect) {
         drawPlacementGuide(
           selectedImageRect.x,
@@ -218,6 +228,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
     getGridMetrics,
     getPlacementRows,
     getPlacementSpan,
+    hoveredTextGuideRect,
     imageOrder,
     imageRectsRef,
     overflowLinesByBlock,

@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DebouncedSlider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { PanelCard } from "@/components/settings/PanelCard"
+import { BASELINE_MULTIPLE_RANGE } from "@/lib/config/defaults"
 
 type CustomMarginMultipliers = { top: number; left: number; right: number; bottom: number }
 
@@ -41,22 +42,44 @@ export const MarginsPanel = memo(function MarginsPanel({
   gridUnit,
   isDarkMode,
 }: Props) {
+  const clampCustomMarginMultiplier = (value: number) => Math.max(1, Math.min(9, Math.round(value)))
+
   const handleCustomMarginsToggle = (checked: boolean) => {
     if (checked) {
-      const methodBottomRatio: Record<number, number> = { 1: 3.0, 2: 3.0, 3: 1.0 }
+      const defaultBaselineMultiple = BASELINE_MULTIPLE_RANGE.min
+      const customMarginScale = gridUnit * defaultBaselineMultiple
+      onBaselineMultipleChange(defaultBaselineMultiple)
       onCustomMarginMultipliersChange({
-        top: Math.max(1, Math.min(9, Math.round(currentMargins.top / gridUnit))),
-        left: Math.max(1, Math.min(9, Math.round(currentMargins.left / gridUnit))),
-        right: Math.max(1, Math.min(9, Math.round(currentMargins.right / gridUnit))),
-        bottom: Math.max(1, Math.min(9, Math.round(methodBottomRatio[marginMethod] * baselineMultiple))),
+        top: clampCustomMarginMultiplier(currentMargins.top / customMarginScale),
+        left: clampCustomMarginMultiplier(currentMargins.left / customMarginScale),
+        right: clampCustomMarginMultiplier(currentMargins.right / customMarginScale),
+        bottom: clampCustomMarginMultiplier(currentMargins.bottom / customMarginScale),
       })
     }
     onUseCustomMarginsChange(checked)
   }
 
   const collapsedSummary = useCustomMargins
-    ? `Custom: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
+    ? `Custom ${baselineMultiple.toFixed(1)}x: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
     : `${marginMethod === 1 ? "Progressive" : marginMethod === 2 ? "Van de Graaf" : "Baseline"}, ${baselineMultiple.toFixed(1)}x`
+
+  const baselineMultipleControl = (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm text-gray-600">Baseline Multiple</Label>
+        <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+          {baselineMultiple.toFixed(1)}×
+        </span>
+      </div>
+      <DebouncedSlider
+        value={[baselineMultiple]}
+        min={BASELINE_MULTIPLE_RANGE.min}
+        max={BASELINE_MULTIPLE_RANGE.max}
+        step={BASELINE_MULTIPLE_RANGE.step}
+        onValueCommit={([v]) => onBaselineMultipleChange(v)}
+      />
+    </div>
+  )
 
   return (
     <PanelCard
@@ -97,21 +120,7 @@ export const MarginsPanel = memo(function MarginsPanel({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-gray-600">Baseline Multiple</Label>
-              <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
-                {baselineMultiple.toFixed(1)}×
-              </span>
-            </div>
-            <DebouncedSlider
-              value={[baselineMultiple]}
-              min={1}
-              max={7}
-              step={0.5}
-              onValueCommit={([v]) => onBaselineMultipleChange(v)}
-            />
-          </div>
+          {baselineMultipleControl}
         </>
       ) : (
         <div className="space-y-4">
@@ -151,6 +160,7 @@ export const MarginsPanel = memo(function MarginsPanel({
               }
             />
           </div>
+          {baselineMultipleControl}
         </div>
       )}
     </PanelCard>

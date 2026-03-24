@@ -20,8 +20,10 @@ type Props = {
   baseFont: string
   imageColorScheme: ImageColorSchemeId
   selectedLayerKey: string | null
+  hoveredLayerKey: string | null
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectLayer: (key: string | null) => void
+  onHoverLayerChange: (key: string | null) => void
   onToggleEditor: (key: string) => void
   onDeleteLayer: (key: string, kind: "text" | "image") => void
   onClose: () => void
@@ -93,8 +95,10 @@ export function LayersPanel({
   baseFont,
   imageColorScheme,
   selectedLayerKey,
+  hoveredLayerKey,
   onLayerOrderChange,
   onSelectLayer,
+  onHoverLayerChange,
   onToggleEditor,
   onDeleteLayer,
   onClose,
@@ -299,6 +303,7 @@ export function LayersPanel({
         </div>
         {visibleThumbs.map((thumb, index) => {
           const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
+          const isHovered = thumb.kind === "text" && hoveredLayerKey === thumb.key
           const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
           return (
             <Fragment key={thumb.key}>
@@ -320,13 +325,15 @@ export function LayersPanel({
                 onDragEnd={clearDragState}
                 onDragOver={handleListDragOver}
                 onDrop={handleListDrop}
+                onMouseEnter={() => onHoverLayerChange(thumb.kind === "text" ? thumb.key : null)}
+                onMouseLeave={() => onHoverLayerChange(null)}
                 onClick={() => onSelectLayer(thumb.key)}
                 onDoubleClick={() => onToggleEditor(thumb.key)}
                 className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                   draggingKey === thumb.key
                     ? `${tone.card} cursor-grabbing opacity-45`
                     : tone.card
-                } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""}`}
+                } ${isActive || isHovered ? "border-l-orange-500 border-t-orange-500" : ""}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

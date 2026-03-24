@@ -2,6 +2,8 @@ import type { CanvasRatioKey } from "@/lib/grid-calculator"
 import { FORMATS_PT, FORMAT_BASELINES } from "@/lib/grid-calculator"
 import { clampRotation } from "@/lib/block-constraints"
 import {
+  BASELINE_MULTIPLE_RANGE,
+  GUTTER_MULTIPLE_RANGE,
   defaultGridRhythmAxisSettings,
   isDisplayUnit,
   isGridRhythm,
@@ -78,6 +80,14 @@ export type ExportUiState = Pick<
 export const DEFAULT_A4_BASELINE = FORMAT_BASELINES["A4"] ?? 12
 const RESOLVED_DEFAULTS = resolveUiDefaults(DEFAULT_UI, DEFAULT_A4_BASELINE)
 
+function clampBaselineMultiple(value: number): number {
+  return Math.min(BASELINE_MULTIPLE_RANGE.max, Math.max(BASELINE_MULTIPLE_RANGE.min, value))
+}
+
+function clampGutterMultiple(value: number): number {
+  return Math.min(GUTTER_MULTIPLE_RANGE.max, Math.max(GUTTER_MULTIPLE_RANGE.min, value))
+}
+
 export const INITIAL_GRID_UI_STATE: GridUiState = {
   canvasRatio: RESOLVED_DEFAULTS.canvasRatio,
   orientation: RESOLVED_DEFAULTS.orientation,
@@ -85,8 +95,8 @@ export const INITIAL_GRID_UI_STATE: GridUiState = {
   marginMethod: RESOLVED_DEFAULTS.marginMethod,
   gridCols: DEFAULT_UI.gridCols,
   gridRows: DEFAULT_UI.gridRows,
-  baselineMultiple: Math.max(1, DEFAULT_UI.baselineMultiple),
-  gutterMultiple: Math.max(1, DEFAULT_UI.gutterMultiple),
+  baselineMultiple: clampBaselineMultiple(DEFAULT_UI.baselineMultiple),
+  gutterMultiple: clampGutterMultiple(DEFAULT_UI.gutterMultiple),
   rhythm: RESOLVED_DEFAULTS.rhythm,
   rhythmRowsEnabled: RESOLVED_DEFAULTS.rhythmRowsEnabled,
   rhythmRowsDirection: RESOLVED_DEFAULTS.rhythmRowsDirection,
@@ -202,12 +212,12 @@ export function gridUiReducer(state: GridUiState, action: UiAction): GridUiState
           return { ...state, rotation: nextRotation }
         }
         case "baselineMultiple": {
-          const nextBaselineMultiple = Math.max(1, action.value)
+          const nextBaselineMultiple = clampBaselineMultiple(action.value)
           if (state.baselineMultiple === nextBaselineMultiple) return state
           return { ...state, baselineMultiple: nextBaselineMultiple }
         }
         case "gutterMultiple": {
-          const nextGutterMultiple = Math.max(1, action.value)
+          const nextGutterMultiple = clampGutterMultiple(action.value)
           if (state.gutterMultiple === nextGutterMultiple) return state
           return { ...state, gutterMultiple: nextGutterMultiple }
         }
@@ -237,8 +247,8 @@ export function gridUiReducer(state: GridUiState, action: UiAction): GridUiState
         marginMethod: action.snapshot.marginMethod,
         gridCols: action.snapshot.gridCols,
         gridRows: action.snapshot.gridRows,
-        baselineMultiple: Math.max(1, action.snapshot.baselineMultiple),
-        gutterMultiple: Math.max(1, action.snapshot.gutterMultiple),
+        baselineMultiple: clampBaselineMultiple(action.snapshot.baselineMultiple),
+        gutterMultiple: clampGutterMultiple(action.snapshot.gutterMultiple),
         rhythm: action.snapshot.rhythm,
         rhythmRowsEnabled: action.snapshot.rhythmRowsEnabled,
         rhythmRowsDirection: action.snapshot.rhythmRowsDirection,

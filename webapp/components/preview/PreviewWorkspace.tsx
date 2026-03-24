@@ -1,6 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
@@ -12,7 +13,6 @@ import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
-import { PREVIEW_INTERACTION_HINT_SINGLE_LINE } from "@/lib/preview-interaction-hints"
 import type { HeaderAction, HeaderItem } from "@/hooks/useHeaderActions"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
@@ -164,6 +164,20 @@ export function PreviewWorkspace({
   onImageColorSchemeChange,
   closeSidebarPanel,
 }: Props) {
+  const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
+  const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
+  const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
+
+  useEffect(() => {
+    if (activeSidebarPanel === "layers" && !showPresetsBrowser) return
+    setLayerPanelHoveredLayerKey(null)
+  }, [activeSidebarPanel, showPresetsBrowser])
+
+  useEffect(() => {
+    if (!showPresetsBrowser) return
+    setPreviewHoveredLayerKey(null)
+  }, [showPresetsBrowser])
+
   return (
     <div className={`min-h-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
       <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
@@ -238,6 +252,8 @@ export function PreviewWorkspace({
               requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
               requestedLayerEditorToken={requestedLayerEditorState?.token ?? 0}
               selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
+              hoveredLayerKey={layerPanelHoveredLayerKey}
+              onHoverLayerChange={setPreviewHoveredLayerKey}
               onSelectLayer={onLayerSelect}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
@@ -288,8 +304,10 @@ export function PreviewWorkspace({
                 baseFont={baseFont}
                 imageColorScheme={imageColorScheme}
                 selectedLayerKey={selectedLayerKey}
+                hoveredLayerKey={hoveredLayerKey}
                 onLayerOrderChange={onLayerOrderChange}
                 onSelectLayer={onSelectedLayerKeyChange}
+                onHoverLayerChange={setLayerPanelHoveredLayerKey}
                 onToggleEditor={onLayerEditorToggle}
                 onDeleteLayer={onLayerDelete}
                 onClose={closeSidebarPanel}
@@ -305,14 +323,6 @@ export function PreviewWorkspace({
           </div>
         )}
       </div>
-
-      {!showPresetsBrowser && showRolloverInfo ? (
-        <div className={`shrink-0 h-11 border-t px-4 text-[11px] md:px-6 ${uiTheme.previewHeader} ${uiTheme.bodyText} flex items-center`}>
-          <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-            {PREVIEW_INTERACTION_HINT_SINGLE_LINE}
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

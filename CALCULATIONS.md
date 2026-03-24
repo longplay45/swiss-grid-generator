@@ -140,10 +140,10 @@ margin = gridUnit × baselineMultiple  // All sides
 
 ### Custom Margins
 
-Bypasses the method selection. Each side is set independently as an integer multiplier of the grid unit:
+Bypasses the method selection. Each side is set independently as an integer multiplier, then scaled by the shared baseline multiple:
 
 ```
-margin_[side] = multiplier_[side] × gridUnit
+margin_[side] = multiplier_[side] × baselineMultiple × gridUnit
 ```
 
 Multiplier range: 1–9 (integer steps).

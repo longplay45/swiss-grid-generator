@@ -15,6 +15,8 @@ export function isDisplayUnit(value: unknown): value is DisplayUnit {
 }
 
 export const BASELINE_OPTIONS = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72] as const
+export const BASELINE_MULTIPLE_RANGE = { min: 1, max: 4, step: 0.5 } as const
+export const GUTTER_MULTIPLE_RANGE = BASELINE_MULTIPLE_RANGE
 
 export const GRID_RHYTHMS = ["fibonacci", "fifth", "fourth", "golden", "repetitive"] as const
 export type GridRhythm = (typeof GRID_RHYTHMS)[number]

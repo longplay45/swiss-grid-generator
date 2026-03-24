@@ -30,7 +30,7 @@ import {
   PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
   PREVIEW_TOUCH_LONG_PRESS_MS,
 } from "@/lib/preview-interaction-constants"
-import { getHoveredPreviewTextGuideRect } from "@/lib/preview-guide-rect"
+import { getHoveredPreviewTextGuideRect, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import {
   type BlockRect,
   type BlockRenderPlan,
@@ -57,7 +57,7 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
-import { memo, useCallback, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -102,6 +102,8 @@ interface GridPreviewProps {
   requestedLayerEditorTarget?: BlockId | null
   requestedLayerEditorToken?: number
   selectedLayerKey?: BlockId | null
+  hoveredLayerKey?: BlockId | null
+  onHoverLayerChange?: (key: BlockId | null) => void
   onSelectLayer?: (key: BlockId | null) => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   onRequestNotice?: (notice: NoticeRequest) => void
@@ -144,6 +146,8 @@ export const GridPreview = memo(function GridPreview({
   requestedLayerEditorTarget = null,
   requestedLayerEditorToken = 0,
   selectedLayerKey = null,
+  hoveredLayerKey = null,
+  onHoverLayerChange,
   onSelectLayer,
   onOpenHelpSection,
   onRequestNotice,
@@ -535,6 +539,10 @@ export const GridPreview = memo(function GridPreview({
     toPagePointFromClient,
   })
 
+  useEffect(() => {
+    onHoverLayerChange?.(hoverState?.key ?? null)
+  }, [hoverState?.key, onHoverLayerChange])
+
   usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
     historyResetToken,
     paragraphColorResetToken,
@@ -667,6 +675,19 @@ export const GridPreview = memo(function GridPreview({
     pixelRatio,
   })
 
+  const hoveredTextPlan = hoverState?.key ? previousPlansRef.current.get(hoverState.key) ?? null : null
+  const hoveredTextRect = hoverState?.key ? blockRectsRef.current[hoverState.key] ?? null : null
+  const linkedHoveredTextPlan = !hoverState?.key && hoveredLayerKey
+    ? previousPlansRef.current.get(hoveredLayerKey) ?? null
+    : null
+  const hoveredTextGuideRect = hoveredTextPlan
+    ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null, result.grid.gridUnit * scale)
+    : linkedHoveredTextPlan
+      ? getPreviewTextGuideRect(linkedHoveredTextPlan, result.grid.gridUnit * scale)
+      : hoveredTextRect
+  const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
+  const hoveredImageRect = hoverImageKey ? imageRectsRef.current[hoverImageKey] ?? null : null
+
   usePreviewOverlayCanvas({
     overlayCanvasRef,
     blockRectsRef,
@@ -679,6 +700,7 @@ export const GridPreview = memo(function GridPreview({
     showTypography,
     blockOrder,
     imageOrder,
+    hoveredTextGuideRect,
     selectedLayerKey,
     overflowLinesByBlock,
     dragState,
@@ -774,13 +796,6 @@ export const GridPreview = memo(function GridPreview({
     onColorSchemeChange: handleImageColorSchemeChange,
     palette: imagePalette,
   })
-  const hoveredTextPlan = hoverState?.key ? previousPlansRef.current.get(hoverState.key) ?? null : null
-  const hoveredTextRect = hoverState?.key ? blockRectsRef.current[hoverState.key] ?? null : null
-  const hoveredTextGuideRect = hoveredTextPlan
-    ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null, result.grid.gridUnit * scale)
-    : hoveredTextRect
-  const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
-  const hoveredImageRect = hoverImageKey ? imageRectsRef.current[hoverImageKey] ?? null : null
 
   return (
     <div
@@ -831,7 +846,6 @@ export const GridPreview = memo(function GridPreview({
       />
 
       <GridPreviewOverlays
-        showInteractionHint={showRolloverInfo && Boolean(hoverState || hoverImageKey)}
         showPerfOverlay={PERF_ENABLED && showPerfOverlay}
         perfOverlay={perfOverlay}
         showEditorHelpIcon={showEditorHelpIcon}

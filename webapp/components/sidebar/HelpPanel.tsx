@@ -461,8 +461,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).</li>
-          <li>`Baseline Multiple` scales method ratios while staying baseline-aligned.</li>
-          <li>`Custom Margins` sets top/left/right/bottom independently as baseline multiples.</li>
+          <li>`Baseline Multiple` scales both method ratios and custom margin ratios while staying baseline-aligned.</li>
+          <li>`Custom Margins` sets top/left/right/bottom independently, then scales them by the shared baseline multiple.</li>
           <li>Bottom margin is expected to align with the last baseline line.</li>
         </ul>
       </section>

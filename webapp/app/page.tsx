@@ -218,10 +218,10 @@ export default function Home() {
   const result = useMemo(() => {
     const customMargins = useCustomMargins
       ? {
-          top: customMarginMultipliers.top * gridUnit,
-          bottom: customMarginMultipliers.bottom * gridUnit,
-          left: customMarginMultipliers.left * gridUnit,
-          right: customMarginMultipliers.right * gridUnit,
+          top: customMarginMultipliers.top * baselineMultiple * gridUnit,
+          bottom: customMarginMultipliers.bottom * baselineMultiple * gridUnit,
+          left: customMarginMultipliers.left * baselineMultiple * gridUnit,
+          right: customMarginMultipliers.right * baselineMultiple * gridUnit,
         }
       : undefined
     return generateSwissGrid({
@@ -265,7 +265,7 @@ export default function Home() {
     const formatDim = FORMATS_PT[previewFormat]
     const pageHeight = orientation === "landscape" ? formatDim.width : formatDim.height
     const customMarginUnits = useCustomMargins
-      ? customMarginMultipliers.top + customMarginMultipliers.bottom
+      ? baselineMultiple * (customMarginMultipliers.top + customMarginMultipliers.bottom)
       : undefined
     return getMaxBaseline(pageHeight, marginMethod, baselineMultiple, customMarginUnits)
   }, [previewFormat, orientation, marginMethod, baselineMultiple, useCustomMargins, customMarginMultipliers])

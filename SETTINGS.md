@@ -71,10 +71,10 @@ Default: `swiss`
 | `2` | Van de Graaf (2:3:4:6) | 2x | 3x | 4x | 6x |
 | `3` | Baseline (1:1:1:1) | 1x | 1x | 1x | 1x |
 
-#### Baseline Multiple (Margins)
+#### Baseline Multiple (Margins and Custom Margins)
 
-- min: `0.5`
-- max: `7.0`
+- min: `1.0`
+- max: `4.0`
 - step: `0.5`
 - default: `1.0`
 
@@ -82,6 +82,7 @@ Default: `swiss`
 
 - toggle: on/off
 - per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
+- actual custom margin = `sideMultiplier × baselineMultiple × gridUnit`
 
 ### IV. Grid & Rhythms
 

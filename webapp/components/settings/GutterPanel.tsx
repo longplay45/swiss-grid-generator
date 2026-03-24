@@ -10,10 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type {
-  GridRhythm,
-  GridRhythmColsDirection,
-  GridRhythmRowsDirection,
+import {
+  GUTTER_MULTIPLE_RANGE,
+  type GridRhythm,
+  type GridRhythmColsDirection,
+  type GridRhythmRowsDirection,
 } from "@/lib/config/defaults"
 
 const RHYTHM_OPTIONS: Array<{ value: GridRhythm; label: string }> = [
@@ -186,9 +187,9 @@ export const GutterPanel = memo(function GutterPanel({
         </div>
         <DebouncedSlider
           value={[gutterMultiple]}
-          min={1}
-          max={4}
-          step={0.5}
+          min={GUTTER_MULTIPLE_RANGE.min}
+          max={GUTTER_MULTIPLE_RANGE.max}
+          step={GUTTER_MULTIPLE_RANGE.step}
           onValueCommit={([v]) => onGutterMultipleChange(v)}
         />
       </div>
