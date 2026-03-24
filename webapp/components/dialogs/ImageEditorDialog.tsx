@@ -10,8 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Columns3, Palette, Rows3, Trash2 } from "lucide-react"
-import { useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 export type ImageEditorState = {
   target: string
@@ -30,7 +31,6 @@ type ImageEditorDialogProps = {
   gridCols: number
   colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
   selectedColorScheme: ImageColorSchemeId
-  onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
   rowTriggerMinWidthCh?: number
   colTriggerMinWidthCh?: number
@@ -46,7 +46,6 @@ export function ImageEditorDialog({
   gridCols,
   colorSchemes,
   selectedColorScheme,
-  onColorSchemeChange,
   palette,
   rowTriggerMinWidthCh = 10,
   colTriggerMinWidthCh = 10,
@@ -54,7 +53,17 @@ export function ImageEditorDialog({
   showRolloverInfo = true,
 }: ImageEditorDialogProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
+  const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
+  const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const editorTarget = editorState?.target ?? null
+
+  useEffect(() => {
+    if (!editorTarget) return
+    setEditorColorScheme(selectedColorScheme)
+    setPreviewColorScheme(null)
+  }, [editorTarget, selectedColorScheme])
 
   if (!editorState) return null
 
@@ -62,26 +71,35 @@ export function ImageEditorDialog({
     ...colorSchemes.map((scheme) => scheme.label.length),
     12,
   ) + 3
-  const previewPalette = previewColorScheme
-    ? (colorSchemes.find((scheme) => scheme.id === previewColorScheme)?.colors ?? palette)
-    : palette
+  const activeColorScheme = previewColorScheme ?? editorColorScheme
+  const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
 
   const tone = {
-    rail: isHelpActive ? "border-blue-500 bg-white" : "border-gray-300 bg-white",
+    rail: "border-gray-300 bg-white",
     railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
     railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-    submenu: isHelpActive ? "border-blue-500 bg-white text-gray-900" : "border-gray-300 bg-white text-gray-900",
+    submenu: "border-gray-300 bg-white text-gray-900",
     input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
     iconMuted: "text-gray-500",
     ringOffset: "ring-offset-white",
-    divider: isHelpActive ? "bg-blue-300" : "bg-gray-200",
+    divider: "bg-gray-200",
   }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = "left-full top-1/2 ml-2 w-max -translate-y-1/2 whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const submenuTooltipClassName = "left-1/2 top-full mt-2 w-max max-w-[24rem] -translate-x-1/2 whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const toggleSubmenu = (next: Exclude<MainSubmenu, null>) => {
-    setActiveSubmenu((prev) => (prev === next ? null : next))
+  const railTooltipClassName = "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const submenuTooltipClassName = "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const positionSubmenu = (anchor: HTMLElement) => {
+    const panelRect = panelRef.current?.getBoundingClientRect()
+    if (!panelRect) return
+    const anchorRect = anchor.getBoundingClientRect()
+    setActiveSubmenuTop(anchorRect.top - panelRect.top)
+  }
+  const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
+    setActiveSubmenu((prev) => {
+      if (prev === next) return null
+      if (anchor) positionSubmenu(anchor)
+      return next
+    })
   }
   const withRailTooltip = (label: string, child: React.ReactNode) => (
     <HoverTooltip className="block" label={label} disabled={!showRolloverInfo} tooltipClassName={railTooltipClassName}>
@@ -95,14 +113,15 @@ export function ImageEditorDialog({
   )
 
   return (
-    <div className="flex items-start gap-2">
-      <div className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
+    <div ref={panelRef} className="relative">
+      <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
+        {isHelpActive ? <HelpIndicatorLine /> : null}
         {withRailTooltip("Rows and columns for the image placeholder", <Button
           type="button"
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "geometry")}
-          onClick={() => toggleSubmenu("geometry")}
+          onClick={(event) => toggleSubmenu("geometry", event.currentTarget)}
           aria-label="Rows and columns"
         >
           <Rows3 className="h-4 w-4" />
@@ -112,7 +131,7 @@ export function ImageEditorDialog({
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "color")}
-          onClick={() => toggleSubmenu("color")}
+          onClick={(event) => toggleSubmenu("color", event.currentTarget)}
           aria-label="Color controls"
         >
           <Palette className="h-4 w-4" />
@@ -133,7 +152,11 @@ export function ImageEditorDialog({
       </div>
 
       {activeSubmenu ? (
-        <div className={`max-w-[min(62vw,32rem)] overflow-x-auto rounded-md border ${tone.submenu} flex h-10 items-center gap-2 px-2`}>
+        <div
+          className={`absolute left-full ml-2 max-w-[min(62vw,32rem)] overflow-x-auto rounded-md border ${tone.submenu} flex h-10 items-center gap-2 px-2`}
+          style={{ top: activeSubmenuTop }}
+        >
+          {isHelpActive ? <HelpIndicatorLine /> : null}
           {activeSubmenu === "geometry" ? (
             <>
               <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
@@ -181,11 +204,14 @@ export function ImageEditorDialog({
           {activeSubmenu === "color" ? (
             <>
               {withSubmenuTooltip("Choose the active color scheme", <Select
-                value={selectedColorScheme}
+                value={editorColorScheme}
                 onOpenChange={(open) => {
                   if (!open) setPreviewColorScheme(null)
                 }}
-                onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
+                onValueChange={(value) => {
+                  setEditorColorScheme(value as ImageColorSchemeId)
+                  setPreviewColorScheme(null)
+                }}
               >
                 <SelectTrigger
                   className={`h-8 text-xs ${tone.input}`}
@@ -211,10 +237,10 @@ export function ImageEditorDialog({
                   const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
                   return (
                     withSubmenuTooltip(`Set the placeholder color to ${color}`, <button
-                      key={`${previewColorScheme ?? selectedColorScheme}-${index}-${color}`}
+                      key={`${activeColorScheme}-${index}-${color}`}
                       type="button"
                       onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
-                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}
+                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
                       style={{ backgroundColor: color }}
                       aria-label={`Select ${color}`}
                       title={color}

@@ -22,7 +22,6 @@ type Args<StyleKey extends string> = {
   getDummyTextForStyle: (styleKey: StyleKey) => string
   colorSchemes: readonly PreviewColorSchemeOption[]
   selectedColorScheme: ImageColorSchemeId
-  onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
 }
 
@@ -43,7 +42,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   getDummyTextForStyle,
   colorSchemes,
   selectedColorScheme,
-  onColorSchemeChange,
   palette,
 }: Args<StyleKey>) {
   return useMemo<TextEditorControls<StyleKey> | null>(() => {
@@ -65,7 +63,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
       getDummyTextForStyle,
       colorSchemes,
       selectedColorScheme,
-      onColorSchemeChange,
       palette,
     }
   }, [
@@ -81,7 +78,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
     gridRows,
     hierarchyTriggerMinWidthCh,
     isFxStyle,
-    onColorSchemeChange,
     palette,
     rowTriggerMinWidthCh,
     selectedColorScheme,

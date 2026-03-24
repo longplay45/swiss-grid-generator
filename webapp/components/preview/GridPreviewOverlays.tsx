@@ -40,7 +40,6 @@ type Props<StyleKey extends string> = {
   gridRows: number
   gridCols: number
   imageColorScheme: ImageColorSchemeId
-  handleImageColorSchemeChange: (value: ImageColorSchemeId) => void
   imagePalette: readonly string[]
   rowTriggerMinWidthCh: number
   colTriggerMinWidthCh: number
@@ -72,7 +71,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
   gridRows,
   gridCols,
   imageColorScheme,
-  handleImageColorSchemeChange,
   imagePalette,
   rowTriggerMinWidthCh,
   colTriggerMinWidthCh,
@@ -172,7 +170,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
       {editorState && textEditorControls ? (
         <div
           data-text-editor-panel="true"
-          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
+          className="absolute left-3 top-3 z-40"
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
           <TextEditorPanel
@@ -186,7 +184,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
       {imageEditorState ? (
         <div
           data-image-editor-panel="true"
-          className={`absolute left-3 top-3 z-40 ${showEditorHelpIcon ? "rounded-md ring-1 ring-blue-500" : ""}`}
+          className="absolute left-3 top-3 z-40"
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
         >
           <ImageEditorDialog
@@ -197,7 +195,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
             gridCols={gridCols}
             colorSchemes={imageColorSchemes}
             selectedColorScheme={imageColorScheme}
-            onColorSchemeChange={handleImageColorSchemeChange}
             palette={imagePalette}
             rowTriggerMinWidthCh={rowTriggerMinWidthCh}
             colTriggerMinWidthCh={colTriggerMinWidthCh}

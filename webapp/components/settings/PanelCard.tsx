@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import type { SectionKey } from "@/hooks/useSettingsHistory"
 import { useSettingsHelpNavigation } from "@/components/settings/help-navigation-context"
 import { ChevronUp } from "lucide-react"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type Props = {
   title: string
@@ -41,7 +42,7 @@ export function PanelCard({
         label={tooltip}
         disabled={!showRolloverInfo}
         className="block"
-        tooltipClassName="left-4 top-full mt-1 border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
+        tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
         <header
           className="cursor-pointer select-none pt-3"
@@ -51,9 +52,10 @@ export function PanelCard({
         >
           <div
             className={`rounded-md px-2 py-2 ${
-              showHelpIcons ? "ring-1 ring-blue-500" : ""
+              showHelpIcons ? "relative" : ""
             }`}
           >
+            {showHelpIcons ? <HelpIndicatorLine /> : null}
             <h3 className="text-sm font-bold leading-tight">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex items-center gap-2">

@@ -17,6 +17,7 @@ import type { HeaderAction, HeaderItem } from "@/hooks/useHeaderActions"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { LayoutPreset } from "@/lib/presets"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -91,7 +92,6 @@ function renderHeaderAction(
     ? PREVIEW_HEADER_SHORTCUTS.find((item) => item.id === action.shortcutId)?.combo
     : null
   const tooltip = shortcut ? `${action.tooltip}\n${shortcut}` : action.tooltip
-  const isHelpButton = action.key === "help"
   return (
     <div
       key={action.key}
@@ -107,8 +107,9 @@ function renderHeaderAction(
         disabled={action.disabled}
         onClick={action.onClick}
         showTooltip={showRolloverInfo}
-        buttonClassName={showSectionHelpIcons ? isHelpButton ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-500" : "ring-1 ring-blue-500" : undefined}
+        buttonClassName={showSectionHelpIcons ? "relative" : undefined}
       >
+        {showSectionHelpIcons ? <HelpIndicatorLine inset="icon" /> : null}
         {action.icon}
       </HeaderIconButton>
     </div>

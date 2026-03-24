@@ -26,6 +26,5 @@ export type TextEditorControls<StyleKey extends string> = {
   getDummyTextForStyle: (styleKey: StyleKey) => string
   colorSchemes: readonly PreviewColorSchemeOption[]
   selectedColorScheme: ImageColorSchemeId
-  onColorSchemeChange: (value: ImageColorSchemeId) => void
   palette: readonly string[]
 }

@@ -1,5 +1,6 @@
 import { LAYOUT_PRESETS, type LayoutPreset } from "@/lib/presets"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type Props = {
   onLoadPreset: (preset: LayoutPreset) => void
@@ -30,9 +31,10 @@ export function PresetLayoutsPanel({
   return (
     <div
       data-tooltip-boundary="preset-browser"
-      className={showHelpHints ? "rounded-md ring-1 ring-blue-500 p-2 -m-2" : undefined}
+      className={showHelpHints ? "relative rounded-md p-2 -m-2" : undefined}
       onMouseEnter={showHelpHints ? onHelpNavigate : undefined}
     >
+      {showHelpHints ? <HelpIndicatorLine /> : null}
       {!compact ? (
         <>
           <h3 className={`text-sm font-semibold mb-2 flex items-center gap-1.5 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>
@@ -76,10 +78,9 @@ export function PresetLayoutsPanel({
             key={preset.id}
             className="block"
             disabled={!showRolloverInfo}
-            constrainToViewport
             constrainToClosestSelector='[data-tooltip-boundary="preset-browser"]'
             viewportPaddingPx={36}
-            tooltipClassName={`left-1/2 top-full mt-2 w-72 max-w-[80vw] -translate-x-1/2 whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
+            tooltipClassName={`w-72 max-w-[80vw] whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
               isDarkMode
                 ? "border-gray-600 bg-gray-900/95 text-gray-200"
                 : "border-gray-300 bg-white/95 text-gray-700"

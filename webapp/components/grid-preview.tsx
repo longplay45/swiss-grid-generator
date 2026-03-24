@@ -278,7 +278,6 @@ export const GridPreview = memo(function GridPreview({
     closeImageEditorState,
     insertImagePlaceholder,
     deleteImagePlaceholderState,
-    handleImageColorSchemeChange,
     resetImageTransientState,
     getBlockSpan,
     getBlockRows,
@@ -799,7 +798,6 @@ export const GridPreview = memo(function GridPreview({
     getDummyTextForStyle,
     colorSchemes: IMAGE_COLOR_SCHEMES,
     selectedColorScheme: imageColorScheme,
-    onColorSchemeChange: handleImageColorSchemeChange,
     palette: imagePalette,
   })
 
@@ -875,7 +873,6 @@ export const GridPreview = memo(function GridPreview({
         gridRows={result.settings.gridRows}
         gridCols={result.settings.gridCols}
         imageColorScheme={imageColorScheme}
-        handleImageColorSchemeChange={handleImageColorSchemeChange}
         imagePalette={imagePalette}
         rowTriggerMinWidthCh={rowTriggerMinWidthCh}
         colTriggerMinWidthCh={colTriggerMinWidthCh}

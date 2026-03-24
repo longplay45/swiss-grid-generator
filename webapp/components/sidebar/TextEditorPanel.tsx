@@ -12,11 +12,8 @@ import {
 } from "@/components/ui/select"
 import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
 import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
-import type {
-  BlockEditorState,
-  BlockEditorStyleOption,
-} from "@/components/editor/block-editor-types"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import type { TextEditorControls as SharedTextEditorControls } from "@/lib/preview-overlay-controls"
 import {
   AlignLeft,
   AlignCenter,
@@ -34,37 +31,16 @@ import {
   Type,
   TypeOutline,
 } from "lucide-react"
-import { useEffect, useState } from "react"
-import type { Dispatch, SetStateAction } from "react"
+import { useEffect, useRef, useState } from "react"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type TextEditorPanelProps<StyleKey extends string> = {
-  controls: TextEditorPanelControls<StyleKey>
+  controls: SharedTextEditorControls<StyleKey>
   isHelpActive?: boolean
   showRolloverInfo?: boolean
 }
 
 type MainSubmenu = "geometry" | "type" | "align" | "color" | "info" | null
-
-type TextEditorPanelControls<StyleKey extends string> = {
-  editorState: BlockEditorState<StyleKey>
-  setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
-  deleteEditorBlock: () => void
-  gridRows: number
-  gridCols: number
-  hierarchyTriggerMinWidthCh: number
-  rowTriggerMinWidthCh: number
-  colTriggerMinWidthCh: number
-  styleOptions: Array<BlockEditorStyleOption<StyleKey>>
-  getStyleSizeLabel: (styleKey: StyleKey) => string
-  getStyleSizeValue: (styleKey: StyleKey) => number
-  getStyleLeadingValue: (styleKey: StyleKey) => number
-  isFxStyle: (styleKey: StyleKey) => boolean
-  getDummyTextForStyle: (styleKey: StyleKey) => string
-  colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
-  selectedColorScheme: ImageColorSchemeId
-  onColorSchemeChange: (value: ImageColorSchemeId) => void
-  palette: readonly string[]
-}
 
 export function TextEditorPanel<StyleKey extends string>({
   controls,
@@ -72,9 +48,12 @@ export function TextEditorPanel<StyleKey extends string>({
   showRolloverInfo = true,
 }: TextEditorPanelProps<StyleKey>) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
+  const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
   const [fxSizeInput, setFxSizeInput] = useState("")
   const [fxLeadingInput, setFxLeadingInput] = useState("")
+  const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(controls.selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 
   const editorText = controls.editorState.draftText ?? ""
@@ -83,37 +62,52 @@ export function TextEditorPanel<StyleKey extends string>({
   const canUseNewspaperReflow = controls.editorState.draftColumns > 1
   const selectedStyleLabel = controls.styleOptions.find((option) => option.value === controls.editorState.draftStyle)?.label
     ?? controls.editorState.draftStyle
-  const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === controls.selectedColorScheme)?.label
-    ?? controls.selectedColorScheme
+  const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label
+    ?? editorColorScheme
   const colorSchemeTriggerWidthCh = Math.max(
     ...controls.colorSchemes.map((scheme) => scheme.label.length),
     12,
   ) + 3
-  const previewPalette = previewColorScheme
-    ? (controls.colorSchemes.find((scheme) => scheme.id === previewColorScheme)?.colors ?? controls.palette)
-    : controls.palette
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
     setFxLeadingInput(String(controls.editorState.draftFxLeading))
   }, [controls.editorState.draftFxLeading, controls.editorState.draftFxSize, controls.editorState.target])
 
+  useEffect(() => {
+    setEditorColorScheme(controls.selectedColorScheme)
+    setPreviewColorScheme(null)
+  }, [controls.editorState.target, controls.selectedColorScheme])
+
+  const activeColorScheme = previewColorScheme ?? editorColorScheme
+  const previewPalette = controls.colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? controls.palette
+
   const tone = {
-    rail: isHelpActive ? "border-blue-500 bg-white" : "border-gray-300 bg-white",
+    rail: "border-gray-300 bg-white",
     railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
     railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-    submenu: isHelpActive ? "border-blue-500 bg-white text-gray-900" : "border-gray-300 bg-white text-gray-900",
+    submenu: "border-gray-300 bg-white text-gray-900",
     input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
     iconMuted: "text-gray-500",
     ringOffset: "ring-offset-white",
-    divider: isHelpActive ? "bg-blue-300" : "bg-gray-200",
+    divider: "bg-gray-200",
   }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = "left-full top-1/2 ml-2 w-max -translate-y-1/2 whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const submenuTooltipClassName = "left-1/2 top-full mt-2 w-max max-w-[24rem] -translate-x-1/2 whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const toggleSubmenu = (next: Exclude<MainSubmenu, null>) => {
-    setActiveSubmenu((prev) => (prev === next ? null : next))
+  const railTooltipClassName = "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const submenuTooltipClassName = "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const positionSubmenu = (anchor: HTMLElement) => {
+    const panelRect = panelRef.current?.getBoundingClientRect()
+    if (!panelRect) return
+    const anchorRect = anchor.getBoundingClientRect()
+    setActiveSubmenuTop(anchorRect.top - panelRect.top)
+  }
+  const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
+    setActiveSubmenu((prev) => {
+      if (prev === next) return null
+      if (anchor) positionSubmenu(anchor)
+      return next
+    })
   }
   const withRailTooltip = (label: string, child: React.ReactNode) => (
     <HoverTooltip
@@ -140,14 +134,15 @@ export function TextEditorPanel<StyleKey extends string>({
   )
 
   return (
-    <div className="flex items-start gap-2">
-      <div className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
+    <div ref={panelRef} className="relative">
+      <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
+        {isHelpActive ? <HelpIndicatorLine /> : null}
         {withRailTooltip("Rows, columns, and rotation", <Button
           type="button"
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "geometry")}
-          onClick={() => toggleSubmenu("geometry")}
+          onClick={(event) => toggleSubmenu("geometry", event.currentTarget)}
           aria-label="Rows, columns, rotation"
         >
           <Rows3 className="h-4 w-4" />
@@ -157,7 +152,7 @@ export function TextEditorPanel<StyleKey extends string>({
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "type")}
-          onClick={() => toggleSubmenu("type")}
+          onClick={(event) => toggleSubmenu("type", event.currentTarget)}
           aria-label="Font and hierarchy"
         >
           <Type className="h-4 w-4" />
@@ -167,7 +162,7 @@ export function TextEditorPanel<StyleKey extends string>({
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "color")}
-          onClick={() => toggleSubmenu("color")}
+          onClick={(event) => toggleSubmenu("color", event.currentTarget)}
           aria-label="Color controls"
         >
           <Palette className="h-4 w-4" />
@@ -180,7 +175,7 @@ export function TextEditorPanel<StyleKey extends string>({
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "align")}
-          onClick={() => toggleSubmenu("align")}
+          onClick={(event) => toggleSubmenu("align", event.currentTarget)}
           aria-label="Text alignment"
         >
           <AlignCenter className="h-4 w-4" />
@@ -236,7 +231,7 @@ export function TextEditorPanel<StyleKey extends string>({
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "info")}
-          onClick={() => toggleSubmenu("info")}
+          onClick={(event) => toggleSubmenu("info", event.currentTarget)}
           aria-label="Word and character count"
         >
           <Info className="h-4 w-4" />
@@ -257,14 +252,16 @@ export function TextEditorPanel<StyleKey extends string>({
 
       {activeSubmenu ? (
         <div
-          className={`max-w-[min(62vw,44rem)] overflow-x-auto rounded-md border ${tone.submenu} ${
+          className={`absolute left-full ml-2 max-w-[min(62vw,44rem)] overflow-x-auto rounded-md border ${tone.submenu} ${
             activeSubmenu === "info"
               ? "min-h-10 px-2 py-2"
               : activeSubmenu === "type"
                 ? "px-2 py-2"
-              : "flex h-10 items-center gap-2 px-2"
+                : "flex h-10 items-center gap-2 px-2"
           }`}
+          style={{ top: activeSubmenuTop }}
         >
+          {isHelpActive ? <HelpIndicatorLine /> : null}
           {activeSubmenu === "geometry" ? (
             <>
               <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
@@ -483,18 +480,13 @@ export function TextEditorPanel<StyleKey extends string>({
           {activeSubmenu === "color" ? (
             <>
               {withSubmenuTooltip("Choose the active color scheme", <Select
-                value={controls.selectedColorScheme}
+                value={editorColorScheme}
                 onOpenChange={(open) => {
                   if (!open) setPreviewColorScheme(null)
                 }}
                 onValueChange={(value) => {
-                  const nextScheme = value as typeof controls.selectedColorScheme
-                  controls.onColorSchemeChange(nextScheme)
-                  const nextPalette = controls.colorSchemes.find((scheme) => scheme.id === nextScheme)?.colors ?? controls.palette
-                  const hasCurrentColor = nextPalette.some((color) => color.toLowerCase() === controls.editorState.draftColor.toLowerCase())
-                  if (!hasCurrentColor && nextPalette.length) {
-                    controls.setEditorState((prev) => (prev ? { ...prev, draftColor: nextPalette[0] } : prev))
-                  }
+                  setEditorColorScheme(value as ImageColorSchemeId)
+                  setPreviewColorScheme(null)
                 }}
               >
                 <SelectTrigger
@@ -519,7 +511,7 @@ export function TextEditorPanel<StyleKey extends string>({
               <div className="flex items-center gap-1">
                 {previewPalette.map((color, index) => {
                   const selected = controls.editorState.draftColor.toLowerCase() === color.toLowerCase()
-                  const swatchKey = `${previewColorScheme ?? controls.selectedColorScheme}-${index}-${color}`
+                  const swatchKey = `${activeColorScheme}-${index}-${color}`
                   return (
                     <HoverTooltip
                       key={swatchKey}
@@ -533,7 +525,7 @@ export function TextEditorPanel<StyleKey extends string>({
                         onClick={() => {
                           controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))
                         }}
-                        className={`h-6 w-6 rounded border ${selected ? `ring-2 ${isHelpActive ? "ring-blue-500" : "ring-gray-500"} ring-offset-1 ${tone.ringOffset}` : ""}`}
+                        className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
                         style={{ backgroundColor: color }}
                         aria-label={`Select ${color}`}
                         title={color}
