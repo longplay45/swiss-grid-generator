@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react"
 
 import { InlineBlockTextarea, type InlineEditorLayout } from "@/components/editor/InlineBlockTextarea"
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
+import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type Props<StyleKey extends string> = {
   staticCanvasRef: RefObject<HTMLCanvasElement | null>
@@ -36,6 +37,8 @@ type Props<StyleKey extends string> = {
   getStyleSizeValue: (styleKey: StyleKey) => number
   getStyleLeadingValue: (styleKey: StyleKey) => number
   isFxStyle: (styleKey: StyleKey) => boolean
+  showDocumentHelpIndicator?: boolean
+  onDocumentHelpHover?: () => void
 }
 
 export function GridPreviewCanvasStage<StyleKey extends string>({
@@ -68,9 +71,15 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
   getStyleSizeValue,
   getStyleLeadingValue,
   isFxStyle,
+  showDocumentHelpIndicator = false,
+  onDocumentHelpHover,
 }: Props<StyleKey>) {
   return (
-    <div className="relative" style={{ width: pageWidthCss, height: pageHeightCss }}>
+    <div
+      className="relative"
+      style={{ width: pageWidthCss, height: pageHeightCss }}
+      onMouseEnter={showDocumentHelpIndicator ? onDocumentHelpHover : undefined}
+    >
       <canvas
         ref={staticCanvasRef}
         width={pageWidthPx}
@@ -107,6 +116,7 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
         style={{ width: pageWidthCss, height: pageHeightCss }}
         className="pointer-events-none absolute inset-0 block"
       />
+      {showDocumentHelpIndicator ? <HelpIndicatorLine /> : null}
       <InlineBlockTextarea
         editorState={editorState}
         setEditorState={setEditorState}

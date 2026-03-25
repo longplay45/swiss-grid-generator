@@ -243,6 +243,7 @@ export function PreviewWorkspace({
               onRedoRequest={onRedoRequest}
               onOpenHelpSection={onOpenHelpSection}
               showEditorHelpIcon={showSectionHelpIcons}
+              showPreviewHelpIndicator={showSectionHelpIcons}
               onHistoryAvailabilityChange={onHistoryAvailabilityChange}
               onRequestGridRestore={onRequestGridRestore}
               onRequestNotice={onRequestNotice}

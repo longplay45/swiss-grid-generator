@@ -5,6 +5,7 @@ export const QUICK_START_INDEX_ITEMS = [
 ] as const
 
 export const GENERAL_INDEX_ITEMS = [
+  { id: "help-preview-workspace", label: "Preview Workspace" },
   { id: "help-editor", label: "Text Editor Popup" },
   { id: "help-image-editor", label: "Image Editor" },
   { id: "help-drag-placement", label: "Drag and Placement" },

@@ -42,6 +42,10 @@ type TextEditorPanelProps<StyleKey extends string> = {
 
 type MainSubmenu = "geometry" | "type" | "align" | "color" | "info" | null
 
+const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
+const TYPE_ROW_TRIGGER_WIDTH_PX = 136
+const FX_INPUT_WIDTH_PX = 54
+
 export function TextEditorPanel<StyleKey extends string>({
   controls,
   isHelpActive = false,
@@ -100,7 +104,7 @@ export function TextEditorPanel<StyleKey extends string>({
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
     const anchorRect = anchor.getBoundingClientRect()
-    setActiveSubmenuTop(anchorRect.top - panelRect.top)
+    setActiveSubmenuTop(anchorRect.top - panelRect.top - SUBMENU_VERTICAL_ALIGN_OFFSET_PX)
   }
   const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
     setActiveSubmenu((prev) => {
@@ -254,10 +258,10 @@ export function TextEditorPanel<StyleKey extends string>({
         <div
           className={`absolute left-full ml-2 max-w-[min(62vw,44rem)] overflow-x-auto rounded-md border ${tone.submenu} ${
             activeSubmenu === "info"
-              ? "min-h-10 px-2 py-2"
+              ? "min-h-10 px-2 py-1"
               : activeSubmenu === "type"
-                ? "px-2 py-2"
-                : "flex h-10 items-center gap-2 px-2"
+                ? "px-2 py-1"
+                : "flex min-h-10 items-center gap-2 px-2 py-1"
           }`}
           style={{ top: activeSubmenuTop }}
         >
@@ -366,53 +370,58 @@ export function TextEditorPanel<StyleKey extends string>({
           ) : null}
 
           {activeSubmenu === "type" ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
+            <div
+              className="grid w-max items-center gap-x-2 gap-y-2"
+              style={{ gridTemplateColumns: `auto ${TYPE_ROW_TRIGGER_WIDTH_PX}px auto ${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
+            >
+              <div className="flex min-h-8 items-center">
                 <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-                {withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
-                  value={controls.editorState.draftFont}
-                  onValueChange={(value) => {
-                    controls.setEditorState((prev) => prev ? { ...prev, draftFont: value as FontFamily } : prev)
-                  }}
-                  options={FONT_OPTIONS}
-                  fitToLongestOption
-                  triggerClassName={`h-8 text-xs ${tone.input}`}
-                />)}
-
-                <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-                {withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
-                  value={controls.editorState.draftStyle}
-                  onValueChange={(value) => {
-                    const nextStyle = value as StyleKey
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftStyle: nextStyle,
-                      draftFxSize: controls.isFxStyle(nextStyle)
-                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
-                        : prev.draftFxSize,
-                      draftFxLeading: controls.isFxStyle(nextStyle)
-                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
-                        : prev.draftFxLeading,
-                      draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${controls.hierarchyTriggerMinWidthCh}ch` }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {controls.styleOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {getStyleOptionLabel(option.value, option.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>)}
               </div>
+              {withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
+                value={controls.editorState.draftFont}
+                onValueChange={(value) => {
+                  controls.setEditorState((prev) => prev ? { ...prev, draftFont: value as FontFamily } : prev)
+                }}
+                options={FONT_OPTIONS}
+                triggerClassName={`h-8 text-xs ${tone.input}`}
+                triggerStyle={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
+              />)}
+
+              <div className="flex min-h-8 items-center">
+                <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
+              </div>
+              {withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
+                value={controls.editorState.draftStyle}
+                onValueChange={(value) => {
+                  const nextStyle = value as StyleKey
+                  controls.setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftStyle: nextStyle,
+                    draftFxSize: controls.isFxStyle(nextStyle)
+                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
+                      : prev.draftFxSize,
+                    draftFxLeading: controls.isFxStyle(nextStyle)
+                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+                      : prev.draftFxLeading,
+                    draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
+                  } : prev)
+                }}
+              >
+                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {controls.styleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {getStyleOptionLabel(option.value, option.label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>)}
 
               {fxSelected ? (
-                <div className="flex items-center gap-2">
-                  {withSubmenuTooltip("Set the FX font size in points", <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                <div className="col-start-3 col-span-2 flex min-h-8 w-full items-center gap-1.5">
+                  {withSubmenuTooltip("Set the FX font size in points", <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
                     <TypeOutline className="h-4 w-4 shrink-0 text-gray-500" />
                     <input
                       type="text"
@@ -438,11 +447,12 @@ export function TextEditorPanel<StyleKey extends string>({
                         event.preventDefault()
                         ;(event.currentTarget as HTMLInputElement).blur()
                       }}
-                      className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      className={`h-8 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      style={{ width: `${FX_INPUT_WIDTH_PX}px` }}
                       aria-label="FX font size"
                     />
                   </label>)}
-                  {withSubmenuTooltip("Set the FX leading in points", <label className="flex items-center gap-1 text-[11px] text-gray-600">
+                  {withSubmenuTooltip("Set the FX leading in points", <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
                     <Baseline className="h-4 w-4 shrink-0 text-gray-500" />
                     <input
                       type="text"
@@ -468,7 +478,8 @@ export function TextEditorPanel<StyleKey extends string>({
                         event.preventDefault()
                         ;(event.currentTarget as HTMLInputElement).blur()
                       }}
-                      className={`h-8 w-16 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      className={`h-8 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                      style={{ width: `${FX_INPUT_WIDTH_PX}px` }}
                       aria-label="FX line leading"
                     />
                   </label>)}

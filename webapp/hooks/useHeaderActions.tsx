@@ -255,7 +255,7 @@ export function useHeaderActions(args: Args) {
       ariaLabel: "Toggle help",
       tooltip: "Help & reference",
       shortcutId: "toggle_help_panel",
-      variant: "outline",
+      variant: args.activeSidebarPanel === "help" ? "default" : "outline",
       pressed: args.activeSidebarPanel === "help",
       disabled: args.showPresetsBrowser,
       onClick: args.onToggleHelpPanel,

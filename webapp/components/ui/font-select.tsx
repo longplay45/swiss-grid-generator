@@ -21,6 +21,7 @@ type Props = {
   onValueChange: (value: string) => void
   options: FontOption[]
   triggerClassName?: string
+  triggerStyle?: CSSProperties
   fitToLongestOption?: boolean
 }
 
@@ -35,15 +36,19 @@ export function FontSelect({
   onValueChange,
   options,
   triggerClassName,
+  triggerStyle,
   fitToLongestOption = false,
 }: Props) {
-  const triggerStyle: CSSProperties | undefined = fitToLongestOption
-    ? { minWidth: `${Math.max(10, options.reduce((max, option) => Math.max(max, option.label.length), 0) + 4)}ch` }
-    : undefined
+  const resolvedTriggerStyle: CSSProperties | undefined = fitToLongestOption
+    ? {
+      minWidth: `${Math.max(10, options.reduce((max, option) => Math.max(max, option.label.length), 0) + 4)}ch`,
+      ...triggerStyle,
+    }
+    : triggerStyle
 
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={triggerClassName} style={triggerStyle}>
+      <SelectTrigger className={triggerClassName} style={resolvedTriggerStyle}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

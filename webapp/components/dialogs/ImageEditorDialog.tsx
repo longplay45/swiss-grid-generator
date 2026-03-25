@@ -23,6 +23,8 @@ export type ImageEditorState = {
 
 type MainSubmenu = "geometry" | "color" | null
 
+const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
+
 type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
   setEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
@@ -92,7 +94,7 @@ export function ImageEditorDialog({
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
     const anchorRect = anchor.getBoundingClientRect()
-    setActiveSubmenuTop(anchorRect.top - panelRect.top)
+    setActiveSubmenuTop(anchorRect.top - panelRect.top - SUBMENU_VERTICAL_ALIGN_OFFSET_PX)
   }
   const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
     setActiveSubmenu((prev) => {
@@ -153,7 +155,7 @@ export function ImageEditorDialog({
 
       {activeSubmenu ? (
         <div
-          className={`absolute left-full ml-2 max-w-[min(62vw,32rem)] overflow-x-auto rounded-md border ${tone.submenu} flex h-10 items-center gap-2 px-2`}
+          className={`absolute left-full ml-2 max-w-[min(62vw,32rem)] overflow-x-auto rounded-md border ${tone.submenu} flex min-h-10 items-center gap-2 px-2 py-1`}
           style={{ top: activeSubmenuTop }}
         >
           {isHelpActive ? <HelpIndicatorLine /> : null}

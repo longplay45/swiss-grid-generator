@@ -145,6 +145,25 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
+      <section id="help-preview-workspace" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          Preview Workspace
+        </SectionHeading>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>The preview document is the live layout surface for placing, editing, duplicating, and removing content blocks.</li>
+          <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
+          <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
+          <li>Click the hover edit affordance to open the matching text or image editor overlay without leaving the document.</li>
+          <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
+          <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
+          <li>Delete blocks from the editor rail or from the Layers panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
+          <li>Preview hover and Layers-panel hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
+          <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
+        </ul>
+      </section>
+
+      <hr className={tone.divider} />
+
       <section id="help-editor" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
           Text Editor Popup
@@ -259,7 +278,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Use the header Help icon to open or close the help sidebar.</li>
-          <li>When help is open, blue-highlighted targets become hover-jump sensitive in header, presets, and settings sections.</li>
+          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview document, presets, editor overlays, and settings sections.</li>
           <li>Hover a highlighted target to jump to the matching help topic without closing help.</li>
           <li>Use the small up-arrow beside each help title to jump back to the index at the top.</li>
         </ul>

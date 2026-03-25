@@ -108,6 +108,7 @@ interface GridPreviewProps {
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   onRequestNotice?: (notice: NoticeRequest) => void
   showEditorHelpIcon?: boolean
+  showPreviewHelpIndicator?: boolean
   baseFont?: FontFamily
   imageColorScheme?: ImageColorSchemeId
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
@@ -152,6 +153,7 @@ export const GridPreview = memo(function GridPreview({
   onOpenHelpSection,
   onRequestNotice,
   showEditorHelpIcon = false,
+  showPreviewHelpIndicator = false,
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
   onImageColorSchemeChange,
@@ -838,6 +840,8 @@ export const GridPreview = memo(function GridPreview({
         getStyleSizeValue={getStyleSize}
         getStyleLeadingValue={getStyleLeading}
         isFxStyle={(styleKey) => styleKey === "fx"}
+        showDocumentHelpIndicator={showPreviewHelpIndicator}
+        onDocumentHelpHover={showPreviewHelpIndicator ? () => onOpenHelpSection?.("help-preview-workspace") : undefined}
       />
 
       <GridPreviewFeedback
