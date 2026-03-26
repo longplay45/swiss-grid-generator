@@ -237,16 +237,24 @@ export function ImageEditorDialog({
               <div className="flex items-center gap-1">
                 {previewPalette.map((color, index) => {
                   const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
+                  const swatchKey = `${activeColorScheme}-${index}-${color}`
                   return (
-                    withSubmenuTooltip(`Set the placeholder color to ${color}`, <button
-                      key={`${activeColorScheme}-${index}-${color}`}
-                      type="button"
-                      onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
-                      className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`Select ${color}`}
-                      title={color}
-                    />)
+                    <HoverTooltip
+                      key={swatchKey}
+                      className="block"
+                      label={`Set the placeholder color to ${color}`}
+                      disabled={!showRolloverInfo}
+                      tooltipClassName={submenuTooltipClassName}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
+                        className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Select ${color}`}
+                        title={color}
+                      />
+                    </HoverTooltip>
                   )
                 })}
               </div>
