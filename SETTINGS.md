@@ -252,18 +252,19 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 Editor controls:
 - left icon rail with contextual submenus: `Geometry`, `Type`, `Color`, `Info`
 - Geometry submenu: rows, cols, rotation (`-180..180`, integer degrees)
-- Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected
+- Type submenu: font family, font-cut selector, style hierarchy, and FX size/leading when `FX` is selected
 - Color submenu: scheme selector and color swatches
 - Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
-- rail quick actions: bold/italic, align left/right, newspaper reflow, syllable division (`Hy`)
+- rail quick actions: align left/right, newspaper reflow, syllable division (`Hy`)
 - save is in the inline textarea toolbar; delete is in the rail
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns
 - font family
-- style
+- font style (`Roman`, `Italic`)
+- hierarchy
 - cols (1..gridCols)
 - rows (1..gridRows)
-- textarea preview mirrors font family, bold/italic, and left/right alignment
+- textarea preview mirrors font family, selected cut, and left/right alignment
 - live `Characters` + `Words` counts in `Info` submenu
 
 Font behavior:

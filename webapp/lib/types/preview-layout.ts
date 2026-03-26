@@ -13,11 +13,13 @@ export type PreviewLayoutState<
   blockTextEdited: Record<Key, boolean>
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies?: Partial<Record<Key, FontFamily>>
+  blockFontWeights?: Partial<Record<Key, number>>
   blockColumnSpans: Record<Key, number>
   blockRowSpans?: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>
   blockTextReflow?: Record<Key, boolean>
   blockSyllableDivision?: Record<Key, boolean>
+  // Legacy compatibility for older saved layouts.
   blockBold?: Record<Key, boolean>
   blockItalic?: Record<Key, boolean>
   blockRotations?: Record<Key, number>

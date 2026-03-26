@@ -1,4 +1,12 @@
+import FONT_VARIANT_DATA from "@/lib/config/font-variants.json"
+
 export type FontCategory = "Sans-Serif" | "Serif" | "Display"
+export type FontWeight = number
+
+type FontVariantConfig = {
+  weights: readonly number[]
+  italic: boolean
+}
 
 type FontDefinition = {
   value: string
@@ -83,6 +91,12 @@ export const FONT_DEFINITIONS = [
 
 export type FontFamily = (typeof FONT_DEFINITIONS)[number]["value"]
 export type FontOption = Pick<(typeof FONT_DEFINITIONS)[number], "value" | "label" | "category">
+export type FontVariant = {
+  id: string
+  label: string
+  weight: FontWeight
+  italic: boolean
+}
 
 export const DEFAULT_BASE_FONT: FontFamily = "Inter"
 
@@ -104,10 +118,109 @@ const FONT_STACK_MAP = new Map<FontFamily, string>(
   FONT_DEFINITIONS.map(({ value, stack }) => [value, stack]),
 )
 
+const FONT_SLUG_MAP = new Map<FontFamily, string>(
+  FONT_DEFINITIONS.map(({ value }) => [value, value.toLowerCase().replace(/[^a-z0-9]/g, "")]),
+)
+
 export const FONT_OPTION_SET = new Set<FontFamily>(FONT_OPTIONS.map((option) => option.value))
+const FONT_VARIANT_CONFIG = FONT_VARIANT_DATA as Record<FontFamily, FontVariantConfig>
+
+const WEIGHT_LABELS: Record<number, string> = {
+  100: "Thin",
+  200: "ExtraLight",
+  300: "Light",
+  400: "Regular",
+  500: "Medium",
+  600: "SemiBold",
+  700: "Bold",
+  800: "ExtraBold",
+  900: "Black",
+  1000: "ExtraBlack",
+}
+
+function getWeightLabel(weight: number): string {
+  return WEIGHT_LABELS[weight] ?? String(weight)
+}
+
+function buildVariantId(weight: number, italic: boolean): string {
+  return `${weight}${italic ? "-italic" : ""}`
+}
+
+function buildVariantLabel(weight: number, italic: boolean): string {
+  const baseLabel = getWeightLabel(weight)
+  if (!italic) return baseLabel
+  return weight === 400 ? "Italic" : `${baseLabel} Italic`
+}
+
+const FONT_VARIANTS_MAP = new Map<FontFamily, readonly FontVariant[]>(
+  FONT_DEFINITIONS.map(({ value }) => {
+    const config = FONT_VARIANT_CONFIG[value]
+    const variants = config.weights.flatMap((weight) => {
+      const upright: FontVariant = {
+        id: buildVariantId(weight, false),
+        label: buildVariantLabel(weight, false),
+        weight,
+        italic: false,
+      }
+      if (!config.italic) return [upright]
+      return [
+        upright,
+        {
+          id: buildVariantId(weight, true),
+          label: buildVariantLabel(weight, true),
+          weight,
+          italic: true,
+        } satisfies FontVariant,
+      ]
+    })
+    return [value, variants] as const
+  }),
+)
 
 export function isFontFamily(value: unknown): value is FontFamily {
   return typeof value === "string" && FONT_OPTION_SET.has(value as FontFamily)
+}
+
+export function getFontAssetSlug(fontFamily: FontFamily): string {
+  return FONT_SLUG_MAP.get(fontFamily) ?? FONT_SLUG_MAP.get(DEFAULT_BASE_FONT) ?? "inter"
+}
+
+export function getFontAssetPath(fontFamily: FontFamily, weight: number, italic: boolean): string {
+  return `/fonts/google/${getFontAssetSlug(fontFamily)}/${weight}${italic ? "italic" : ""}.ttf`
+}
+
+export function getFontVariants(fontFamily: FontFamily): readonly FontVariant[] {
+  return FONT_VARIANTS_MAP.get(fontFamily) ?? FONT_VARIANTS_MAP.get(DEFAULT_BASE_FONT) ?? []
+}
+
+export function getFontVariantById(fontFamily: FontFamily, variantId: string): FontVariant | null {
+  return getFontVariants(fontFamily).find((variant) => variant.id === variantId) ?? null
+}
+
+export function resolveFontVariant(fontFamily: FontFamily, weight: number, italic: boolean): FontVariant {
+  const variants = getFontVariants(fontFamily)
+  if (!variants.length) {
+    return {
+      id: buildVariantId(400, italic),
+      label: buildVariantLabel(400, italic),
+      weight: 400,
+      italic,
+    }
+  }
+
+  const sameStyle = variants.filter((variant) => variant.italic === italic)
+  const pool = sameStyle.length ? sameStyle : variants
+  return pool.reduce((best, variant) => {
+    const bestDistance = Math.abs(best.weight - weight)
+    const nextDistance = Math.abs(variant.weight - weight)
+    if (nextDistance < bestDistance) return variant
+    if (nextDistance === bestDistance && variant.weight < best.weight) return variant
+    return best
+  })
+}
+
+export function getStyleDefaultFontWeight(weight: string | undefined): FontWeight {
+  return weight === "Bold" ? 700 : 400
 }
 
 export function getFontFamilyCss(fontFamily: FontFamily): string {
@@ -131,3 +244,17 @@ export const FONT_CSS_VARS: Record<string, string> = FONT_DEFINITIONS.reduce(
   },
   {} as Record<string, string>,
 )
+
+export const FONT_FACE_CSS = FONT_DEFINITIONS.flatMap(({ value }) => {
+  return getFontVariants(value).map((variant) => {
+    return [
+      "@font-face {",
+      `  font-family: "${value}";`,
+      `  src: url("${getFontAssetPath(value, variant.weight, variant.italic)}") format("truetype");`,
+      `  font-style: ${variant.italic ? "italic" : "normal"};`,
+      `  font-weight: ${variant.weight};`,
+      "  font-display: swap;",
+      "}",
+    ].join("\n")
+  })
+}).join("\n\n")

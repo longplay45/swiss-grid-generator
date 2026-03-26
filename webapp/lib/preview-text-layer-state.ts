@@ -1,6 +1,7 @@
 import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
+import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
@@ -96,20 +97,21 @@ export function applyBlockEditorDraftToCollections<
     nextFonts[draft.target as Key] = draft.draftFont
   }
 
-  const nextBold = { ...current.blockBold }
-  const defaultBold = typographyStyles[draft.draftStyle]?.weight === "Bold"
-  if (draft.draftBold === defaultBold) {
-    delete nextBold[draft.target as Key]
+  const resolvedVariant = resolveFontVariant(draft.draftFont, draft.draftFontWeight, draft.draftItalic)
+  const nextFontWeights = { ...current.blockFontWeights }
+  const defaultWeight = getStyleDefaultFontWeight(typographyStyles[draft.draftStyle]?.weight)
+  if (resolvedVariant.weight === defaultWeight) {
+    delete nextFontWeights[draft.target as Key]
   } else {
-    nextBold[draft.target as Key] = draft.draftBold
+    nextFontWeights[draft.target as Key] = resolvedVariant.weight
   }
 
   const nextItalic = { ...current.blockItalic }
   const defaultItalic = typographyStyles[draft.draftStyle]?.blockItalic === true
-  if (draft.draftItalic === defaultItalic) {
+  if (resolvedVariant.italic === defaultItalic) {
     delete nextItalic[draft.target as Key]
   } else {
-    nextItalic[draft.target as Key] = draft.draftItalic
+    nextItalic[draft.target as Key] = resolvedVariant.italic
   }
 
   const nextRotations = { ...current.blockRotations }
@@ -155,6 +157,7 @@ export function applyBlockEditorDraftToCollections<
       [draft.target as Key]: draft.draftStyle,
     },
     blockFontFamilies: nextFonts,
+    blockFontWeights: nextFontWeights,
     blockColumnSpans: {
       ...current.blockColumnSpans,
       [draft.target as Key]: draft.draftColumns,
@@ -175,7 +178,6 @@ export function applyBlockEditorDraftToCollections<
       ...current.blockSyllableDivision,
       [draft.target as Key]: draft.draftSyllableDivision,
     },
-    blockBold: nextBold,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockModulePositions: nextPositions,
@@ -279,11 +281,11 @@ export function duplicateTextLayerInCollections<
   if (sourceFont === baseFont) delete nextFonts[newKey]
   else nextFonts[newKey] = sourceFont
 
-  const nextBold = { ...current.blockBold }
-  if (current.blockBold[sourceKey] === true || current.blockBold[sourceKey] === false) {
-    nextBold[newKey] = current.blockBold[sourceKey]
+  const nextFontWeights = { ...current.blockFontWeights }
+  if (typeof current.blockFontWeights[sourceKey] === "number" && Number.isFinite(current.blockFontWeights[sourceKey])) {
+    nextFontWeights[newKey] = current.blockFontWeights[sourceKey]
   } else {
-    delete nextBold[newKey]
+    delete nextFontWeights[newKey]
   }
 
   const nextItalic = { ...current.blockItalic }
@@ -317,7 +319,7 @@ export function duplicateTextLayerInCollections<
       [newKey]: styleKey,
     },
     blockFontFamilies: nextFonts,
-    blockBold: nextBold,
+    blockFontWeights: nextFontWeights,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: {

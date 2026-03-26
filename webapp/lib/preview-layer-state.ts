@@ -14,12 +14,12 @@ export type TextLayerCollections<
   blockTextEdited: Record<Key, boolean>
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies: Partial<Record<Key, Family>>
+  blockFontWeights: Partial<Record<Key, number>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, Align>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
-  blockBold: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
   blockModulePositions: Partial<Record<Key, Position>>
@@ -42,12 +42,12 @@ export function removeTextLayerFromCollections<
     blockTextEdited: omitRequiredRecordKey(state.blockTextEdited, key),
     styleAssignments: omitRequiredRecordKey(state.styleAssignments, key),
     blockFontFamilies: omitOptionalRecordKey(state.blockFontFamilies, key),
+    blockFontWeights: omitOptionalRecordKey(state.blockFontWeights, key),
     blockColumnSpans: omitOptionalRecordKey(state.blockColumnSpans, key),
     blockRowSpans: omitOptionalRecordKey(state.blockRowSpans, key),
     blockTextAlignments: omitOptionalRecordKey(state.blockTextAlignments, key),
     blockTextReflow: omitOptionalRecordKey(state.blockTextReflow, key),
     blockSyllableDivision: omitOptionalRecordKey(state.blockSyllableDivision, key),
-    blockBold: omitOptionalRecordKey(state.blockBold, key),
     blockItalic: omitOptionalRecordKey(state.blockItalic, key),
     blockRotations: omitOptionalRecordKey(state.blockRotations, key),
     blockModulePositions: omitOptionalRecordKey(state.blockModulePositions, key),
@@ -82,6 +82,9 @@ export function removeLayerFromPreviewLayout<
     blockTextEdited: omitRequiredRecordKey(layout.blockTextEdited, key),
     styleAssignments: omitRequiredRecordKey(layout.styleAssignments, key),
     blockFontFamilies: omitOptionalRecordKey(layout.blockFontFamilies, key),
+    blockFontWeights: layout.blockFontWeights
+      ? omitOptionalRecordKey(layout.blockFontWeights, key)
+      : undefined,
     blockColumnSpans: omitRequiredRecordKey(layout.blockColumnSpans, key),
     blockRowSpans: layout.blockRowSpans
       ? omitRequiredRecordKey(layout.blockRowSpans, key)

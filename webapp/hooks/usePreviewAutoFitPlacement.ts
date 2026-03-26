@@ -24,7 +24,7 @@ type Args<Key extends string, StyleKey extends string> = {
   ) => string[]
   getBlockFontSize: (key: Key, styleKey: StyleKey) => number
   getBlockFont: (key: Key) => FontFamily
-  isBlockBold: (key: Key) => boolean
+  getBlockFontWeight: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
 }
 
@@ -36,7 +36,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
   getWrappedText,
   getBlockFontSize,
   getBlockFont,
-  isBlockBold,
+  getBlockFontWeight,
   isBlockItalic,
 }: Args<Key, StyleKey>) {
   return useCallback(({
@@ -99,7 +99,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
 
     const fontSize = getBlockFontSize(key, styleKey) * scale
     const fontFamily = getBlockFont(key)
-    const fontWeight = isBlockBold(key) ? "700" : "400"
+    const fontWeight = String(getBlockFontWeight(key))
     const fontStyle = isBlockItalic(key) ? "italic " : ""
     ctx.font = `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
     const startCol = position
@@ -124,10 +124,10 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
   }, [
     canvasRef,
     getBlockFont,
+    getBlockFontWeight,
     getBlockFontSize,
     getGridMetrics,
     getWrappedText,
-    isBlockBold,
     isBlockItalic,
     result.grid,
     result.pageSizePt.height,

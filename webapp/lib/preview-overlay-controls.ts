@@ -22,6 +22,8 @@ export type TextEditorControls<StyleKey extends string> = {
   getStyleSizeLabel: (styleKey: StyleKey) => string
   getStyleSizeValue: (styleKey: StyleKey) => number
   getStyleLeadingValue: (styleKey: StyleKey) => number
+  getStyleDefaultFontWeight: (styleKey: StyleKey) => number
+  getStyleDefaultItalic: (styleKey: StyleKey) => boolean
   isFxStyle: (styleKey: StyleKey) => boolean
   getDummyTextForStyle: (styleKey: StyleKey) => string
   colorSchemes: readonly PreviewColorSchemeOption[]

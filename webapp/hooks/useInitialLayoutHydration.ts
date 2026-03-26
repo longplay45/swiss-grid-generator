@@ -27,12 +27,12 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockTextEdited: Record<BlockKey, boolean>
     styleAssignments: Record<BlockKey, StyleKey>
     blockFontFamilies: Partial<Record<BlockKey, FontFamily>>
+    blockFontWeights: Partial<Record<BlockKey, number>>
     blockColumnSpans: Partial<Record<BlockKey, number>>
     blockRowSpans: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
     blockTextReflow: Partial<Record<BlockKey, boolean>>
     blockSyllableDivision: Partial<Record<BlockKey, boolean>>
-    blockBold: Partial<Record<BlockKey, boolean>>
     blockItalic: Partial<Record<BlockKey, boolean>>
     blockRotations: Partial<Record<BlockKey, number>>
     blockModulePositions: Partial<Record<BlockKey, ModulePosition>>
@@ -102,6 +102,18 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       return acc
     }, {} as Partial<Record<BlockKey, FontFamily>>)
 
+    const nextFontWeights = normalizedKeys.reduce((acc, key) => {
+      const numeric = initialLayout.blockFontWeights?.[key]
+      if (typeof numeric === "number" && Number.isFinite(numeric) && numeric > 0) {
+        acc[key] = numeric
+        return acc
+      }
+      const legacy = initialLayout.blockBold?.[key]
+      if (legacy === true) acc[key] = 700
+      if (legacy === false) acc[key] = 400
+      return acc
+    }, {} as Partial<Record<BlockKey, number>>)
+
     const nextSpans = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockColumnSpans?.[key]
       const fallback = getDefaultColumnSpan(key, gridCols)
@@ -134,12 +146,6 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       if (raw === true || raw === false) {
         acc[key] = raw
       }
-      return acc
-    }, {} as Record<BlockKey, boolean>)
-
-    const nextBold = normalizedKeys.reduce((acc, key) => {
-      const raw = initialLayout.blockBold?.[key]
-      if (raw === true || raw === false) acc[key] = raw
       return acc
     }, {} as Record<BlockKey, boolean>)
 
@@ -178,12 +184,12 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockTextEdited: nextTextEdited,
       styleAssignments: nextStyleAssignments,
       blockFontFamilies: nextFontFamilies,
+      blockFontWeights: nextFontWeights,
       blockColumnSpans: nextSpans,
       blockRowSpans: nextRows,
       blockTextAlignments: nextAlignments,
       blockTextReflow: nextReflow,
       blockSyllableDivision: nextSyllableDivision,
-      blockBold: nextBold,
       blockItalic: nextItalic,
       blockRotations: nextRotations,
       blockModulePositions: nextPositions,

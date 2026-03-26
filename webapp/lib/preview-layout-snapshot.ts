@@ -13,7 +13,7 @@ type ResolvedSnapshotState<
   blockTextAlignments: Record<Key, TextAlignMode>
   blockTextReflow: Record<Key, boolean>
   blockSyllableDivision: Record<Key, boolean>
-  blockBold: Record<Key, boolean>
+  blockFontWeights: Record<Key, number>
   blockItalic: Record<Key, boolean>
   blockRotations: Record<Key, number>
 }
@@ -32,7 +32,7 @@ export function buildResolvedSnapshotState<
     getBlockRows,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
-    isBlockBold,
+    getBlockFontWeight,
     isBlockItalic,
     getBlockRotation,
     defaultTextAlign,
@@ -42,7 +42,7 @@ export function buildResolvedSnapshotState<
     getBlockRows: (key: Key) => number
     isTextReflowEnabled: (key: Key) => boolean
     isSyllableDivisionEnabled: (key: Key) => boolean
-    isBlockBold: (key: Key) => boolean
+    getBlockFontWeight: (key: Key) => number
     isBlockItalic: (key: Key) => boolean
     getBlockRotation: (key: Key) => number
     defaultTextAlign: TextAlignMode
@@ -69,10 +69,10 @@ export function buildResolvedSnapshotState<
     acc[key] = isSyllableDivisionEnabled(key)
     return acc
   }, {} as Record<Key, boolean>)
-  const resolvedBold = state.blockOrder.reduce((acc, key) => {
-    acc[key] = isBlockBold(key)
+  const resolvedFontWeights = state.blockOrder.reduce((acc, key) => {
+    acc[key] = getBlockFontWeight(key)
     return acc
-  }, {} as Record<Key, boolean>)
+  }, {} as Record<Key, number>)
   const resolvedItalic = state.blockOrder.reduce((acc, key) => {
     acc[key] = isBlockItalic(key)
     return acc
@@ -89,12 +89,12 @@ export function buildResolvedSnapshotState<
     blockTextEdited: { ...state.blockTextEdited },
     styleAssignments: { ...state.styleAssignments },
     blockFontFamilies: { ...state.blockFontFamilies },
+    blockFontWeights: resolvedFontWeights,
     blockColumnSpans: resolvedSpans,
     blockRowSpans: resolvedRows,
     blockTextAlignments: resolvedAlignments,
     blockTextReflow: resolvedReflow,
     blockSyllableDivision: resolvedSyllableDivision,
-    blockBold: resolvedBold,
     blockItalic: resolvedItalic,
     blockRotations: resolvedRotations,
     blockModulePositions: { ...state.blockModulePositions },
@@ -122,11 +122,11 @@ export function normalizeSnapshotStateForApply<
     if (isFontFamily(raw) && raw !== baseFont) acc[key] = raw
     return acc
   }, {} as Partial<Record<Key, FontFamily>>)
-  const nextBold = state.blockOrder.reduce((acc, key) => {
-    const raw = state.blockBold?.[key]
-    if (raw === true || raw === false) acc[key] = raw
+  const nextFontWeights = state.blockOrder.reduce((acc, key) => {
+    const raw = state.blockFontWeights?.[key]
+    if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) acc[key] = raw
     return acc
-  }, {} as Partial<Record<Key, boolean>>)
+  }, {} as Partial<Record<Key, number>>)
   const nextItalic = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockItalic?.[key]
     if (raw === true || raw === false) acc[key] = raw
@@ -147,7 +147,7 @@ export function normalizeSnapshotStateForApply<
     blockTextEdited: { ...state.blockTextEdited },
     styleAssignments: { ...state.styleAssignments },
     blockFontFamilies: nextFonts,
-    blockBold: nextBold,
+    blockFontWeights: nextFontWeights,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: { ...state.blockColumnSpans },

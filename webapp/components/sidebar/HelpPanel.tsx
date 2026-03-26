@@ -172,10 +172,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
-          <li>Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.</li>
+          <li>Type submenu: font family, font-cut selector, style hierarchy, and FX size/leading when `FX` is selected.</li>
           <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
-          <li>Quick actions on the rail: alignment submenu, bold/italic, newspaper reflow, syllable division, and delete.</li>
+          <li>Quick actions on the rail: alignment submenu, newspaper reflow, syllable division, and delete.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
@@ -514,7 +514,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
-          <li>Manual bold/italic in the editor can override defaults per paragraph.</li>
+          <li>The text editor can override the paragraph cut with any available family variant, while untouched weight/slant defaults still follow the selected hierarchy.</li>
         </ul>
       </section>
 

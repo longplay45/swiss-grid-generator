@@ -18,6 +18,8 @@ type Args<StyleKey extends string> = {
   getStyleSizeLabel: (styleKey: StyleKey) => string
   getStyleSizeValue: (styleKey: StyleKey) => number
   getStyleLeadingValue: (styleKey: StyleKey) => number
+  getStyleDefaultFontWeight: (styleKey: StyleKey) => number
+  getStyleDefaultItalic: (styleKey: StyleKey) => boolean
   isFxStyle: (styleKey: StyleKey) => boolean
   getDummyTextForStyle: (styleKey: StyleKey) => string
   colorSchemes: readonly PreviewColorSchemeOption[]
@@ -38,6 +40,8 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   getStyleSizeLabel,
   getStyleSizeValue,
   getStyleLeadingValue,
+  getStyleDefaultFontWeight,
+  getStyleDefaultItalic,
   isFxStyle,
   getDummyTextForStyle,
   colorSchemes,
@@ -59,6 +63,8 @@ export function usePreviewOverlayControls<StyleKey extends string>({
       getStyleSizeLabel,
       getStyleSizeValue,
       getStyleLeadingValue,
+      getStyleDefaultFontWeight,
+      getStyleDefaultItalic,
       isFxStyle,
       getDummyTextForStyle,
       colorSchemes,
@@ -71,6 +77,8 @@ export function usePreviewOverlayControls<StyleKey extends string>({
     deleteEditorBlock,
     editorState,
     getDummyTextForStyle,
+    getStyleDefaultFontWeight,
+    getStyleDefaultItalic,
     getStyleLeadingValue,
     getStyleSizeLabel,
     getStyleSizeValue,

@@ -39,11 +39,11 @@ type Args = {
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
+  getBlockFontWeight: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
-  isBlockBold: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   getBlockRotation: (key: string) => number
   onRequestNotice?: (notice: NoticeRequest) => void
@@ -77,11 +77,11 @@ export function useBlockEditorCanvasDoubleClick({
   findTopmostBlockAtPoint,
   snapToModule,
   getBlockFont,
+  getBlockFontWeight,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
-  isBlockBold,
   isBlockItalic,
   getBlockRotation,
   onRequestNotice,
@@ -112,9 +112,9 @@ export function useBlockEditorCanvasDoubleClick({
         getBlockRows,
         getBlockSpan,
         getBlockTextColor,
+        getBlockFontWeight,
         getStyleLeading,
         getStyleSize,
-        isBlockBold,
         isBlockItalic,
         isSyllableDivisionEnabled,
         isTextReflowEnabled,
@@ -155,6 +155,7 @@ export function useBlockEditorCanvasDoubleClick({
       rows: 1,
       baseFont,
       defaultTextColor,
+      fontWeight: 400,
       getStyleLeading,
       getStyleSize,
       fxStyle: "fx",
@@ -171,6 +172,7 @@ export function useBlockEditorCanvasDoubleClick({
     dragEndedAtRef,
     findTopmostBlockAtPoint,
     getBlockFont,
+    getBlockFontWeight,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
@@ -180,7 +182,6 @@ export function useBlockEditorCanvasDoubleClick({
     getNextCustomBlockId,
     getStyleLeading,
     getStyleSize,
-    isBlockBold,
     isBlockItalic,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,

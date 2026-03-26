@@ -14,7 +14,7 @@ type Args<Key extends string, StyleKey extends string> = {
   typographyStyles: Record<StyleKey, unknown>
   getStyleKeyForBlock: (key: Key) => StyleKey
   getBlockFont: (key: Key) => FontFamily
-  isBlockBold: (key: Key) => boolean
+  getBlockFontWeight: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
   getBlockFontSize: (key: Key, styleKey: StyleKey) => number
   scale: number
@@ -28,7 +28,7 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
   typographyStyles,
   getStyleKeyForBlock,
   getBlockFont,
-  isBlockBold,
+  getBlockFontWeight,
   isBlockItalic,
   getBlockFontSize,
   scale,
@@ -68,7 +68,7 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
       const style = typographyStyles[styleKey]
       if (!style) continue
       const fontFamily = getBlockFont(key)
-      const fontWeight = isBlockBold(key) ? "700" : "400"
+      const fontWeight = String(getBlockFontWeight(key))
       const fontStyle = isBlockItalic(key) ? "italic" : "normal"
       const fontSize = getBlockFontSize(key, styleKey) * scale
       specs.add(`${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}"`)
@@ -91,9 +91,9 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     blockOrder,
     clearCaches,
     getBlockFont,
+    getBlockFontWeight,
     getBlockFontSize,
     getStyleKeyForBlock,
-    isBlockBold,
     isBlockItalic,
     scale,
     showTypography,

@@ -16,9 +16,9 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getBlockRows: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockTextColor: (key: string) => string
+  getBlockFontWeight: (key: string) => number
   getStyleLeading: (style: StyleKey) => number
   getStyleSize: (style: StyleKey) => number
-  isBlockBold: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isTextReflowEnabled: (key: string) => boolean
@@ -40,7 +40,7 @@ type NewBlockArgs<StyleKey extends string> = {
   align?: BlockEditorTextAlign
   reflow?: boolean
   syllableDivision?: boolean
-  bold?: boolean
+  fontWeight?: number
   italic?: boolean
   rotation?: number
   textEdited?: boolean
@@ -59,9 +59,9 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getBlockRows,
   getBlockSpan,
   getBlockTextColor,
+  getBlockFontWeight,
   getStyleLeading,
   getStyleSize,
-  isBlockBold,
   isBlockItalic,
   isSyllableDivisionEnabled,
   isTextReflowEnabled,
@@ -81,13 +81,13 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
       ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading(fxStyle))
       : getStyleLeading(fxStyle),
     draftFont: getBlockFont(key),
+    draftFontWeight: getBlockFontWeight(key),
     draftColumns: getBlockSpan(key),
     draftRows: getBlockRows(key),
     draftAlign: blockTextAlignments[key] ?? "left",
     draftColor: getBlockTextColor(key),
     draftReflow: isTextReflowEnabled(key),
     draftSyllableDivision: isSyllableDivisionEnabled(key),
-    draftBold: isBlockBold(key),
     draftItalic: isBlockItalic(key),
     draftRotation: getBlockRotation(key),
     draftTextEdited: blockTextEdited[key] ?? true,
@@ -108,7 +108,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   align = "left",
   reflow = false,
   syllableDivision = true,
-  bold = false,
+  fontWeight = 400,
   italic = false,
   rotation = 0,
   textEdited = false,
@@ -120,13 +120,13 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftFxSize: getStyleSize(fxStyle),
     draftFxLeading: getStyleLeading(fxStyle),
     draftFont: baseFont,
+    draftFontWeight: fontWeight,
     draftColumns: columns,
     draftRows: rows,
     draftAlign: align,
     draftColor: defaultTextColor,
     draftReflow: reflow,
     draftSyllableDivision: syllableDivision,
-    draftBold: bold,
     draftItalic: italic,
     draftRotation: rotation,
     draftTextEdited: textEdited,

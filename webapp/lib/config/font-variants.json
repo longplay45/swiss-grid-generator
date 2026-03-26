@@ -1,0 +1,42 @@
+{
+  "Inter": {
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "Work Sans": {
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "Nunito Sans": {
+    "weights": [200, 300, 400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "IBM Plex Sans": {
+    "weights": [100, 200, 300, 400, 500, 600, 700],
+    "italic": true
+  },
+  "Libre Franklin": {
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "EB Garamond": {
+    "weights": [400, 500, 600, 700, 800],
+    "italic": true
+  },
+  "Libre Baskerville": {
+    "weights": [400, 500, 600, 700],
+    "italic": true
+  },
+  "Bodoni Moda": {
+    "weights": [400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "Besley": {
+    "weights": [400, 500, 600, 700, 800, 900],
+    "italic": true
+  },
+  "Playfair Display": {
+    "weights": [400, 500, 600, 700, 800, 900],
+    "italic": true
+  }
+}

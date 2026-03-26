@@ -60,9 +60,9 @@ test("pdf export manually right-aligns text anchors before draw to avoid rotated
 
 test("pdf export draws image placeholders only when placeholder layer is visible", () => {
   const source = readText("lib/pdf-vector-export.ts")
-  assert.match(source, /if\s*\(showTypography\s*&&\s*showImagePlaceholders\)\s*\{/)
-  assert.match(source, /setFillColorCmyk\(pdf,\s*fillColor\)/)
-  assert.match(source, /drawFilledRect\(x,\s*y,\s*blockWidth,\s*blockHeight\)/)
+  assert.match(source, /if\s*\(showImagePlaceholders\)\s*\{/)
+  assert.match(source, /setFillColorCmyk\(pdf,\s*imagePlan\.fillColor\)/)
+  assert.match(source, /drawFilledRect\(imagePlan\.x,\s*imagePlan\.y,\s*imagePlan\.width,\s*imagePlan\.height\)/)
 })
 
 test("pdf export rotates placeholder fill geometry through transformed corner path", () => {
@@ -93,16 +93,18 @@ test("pdf font registry derives embedded families from configured font list", ()
   assert.match(source, /return\s+fontFamily\.toLowerCase\(\)\.replace\(\/\[\^a-z0-9\]\/g,\s*""\)/)
 })
 
-test("pdf font registry uses local Google variable assets for non-Inter families", () => {
+test("pdf font registry builds local and fallback URLs for weight-specific font assets", () => {
   const source = readText("lib/pdf-font-registry.ts")
-  assert.match(source, /const\s+localRegularUrl\s*=\s*`\/fonts\/google\/\$\{slug\}\/regular\.ttf`/)
-  assert.match(source, /const\s+localBoldUrl\s*=\s*`\/fonts\/google\/\$\{slug\}\/bold\.ttf`/)
-  assert.match(source, /const\s+localItalicUrl\s*=\s*`\/fonts\/google\/\$\{slug\}\/italic\.ttf`/)
-  assert.match(source, /const\s+localBoldItalicUrl\s*=\s*`\/fonts\/google\/\$\{slug\}\/bolditalic\.ttf`/)
+  assert.match(source, /getFontAssetPath\(fontFamily,\s*weight,\s*italic\)/)
+  assert.match(source, /function\s+getLegacyFontAssetPath\(fontFamily:\s*FontFamily,\s*weight:\s*number,\s*italic:\s*boolean\)/)
+  assert.match(source, /if\s*\(weight\s*===\s*400\s*&&\s*!italic\)\s*return\s*`\/fonts\/google\/\$\{slug\}\/regular\.ttf`/)
+  assert.match(source, /if\s*\(weight\s*===\s*700\s*&&\s*italic\)\s*return\s*`\/fonts\/google\/\$\{slug\}\/bolditalic\.ttf`/)
   assert.match(source, /discoverGoogleRepoVariableSources\(fontFamily\)/)
-  assert.match(source, /const\s+regularUrls\s*=\s*remote\s*\?\s*\[localRegularUrl,\s*remote\.regular\]\s*:\s*\[localRegularUrl\]/)
-  assert.match(source, /const\s+boldUrls\s*=\s*remote\s*\?\s*\[localBoldUrl,\s*remote\.regular\]\s*:\s*\[localBoldUrl\]/)
-  assert.match(source, /const\s+boldItalicUrls\s*=\s*remote\s*\?\s*\[localBoldItalicUrl,\s*remote\.italic\]\s*:\s*\[localBoldItalicUrl\]/)
+  assert.match(source, /const\s+urls\s*=\s*\[getFontAssetPath\(fontFamily,\s*weight,\s*italic\)\]/)
+  assert.match(source, /if\s*\(remote\)\s*urls\.push\(italic\s*\?\s*remote\.italic\s*:\s*remote\.regular\)/)
+  assert.match(source, /getFontVariants\(fontFamily\)\.reduce/)
+  assert.match(source, /getPdfEmbeddedWeightFamilyName\(fontFamily,\s*weight\)/)
   assert.match(source, /fetchFirstAvailableBase64\(assets\.normal\.urls\)/)
+  assert.match(source, /fetchFirstAvailableBase64\(\(assets\.italic\s*\?\?\s*assets\.normal\)\.urls\)/)
   assert.match(source, /await\s+registerGoogleVariableFamily\(pdf\s+as\s+PdfWithRegistry,\s*fontFamily\)/)
 })

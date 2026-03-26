@@ -73,11 +73,11 @@ type Args = {
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
+  getBlockFontWeight: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
-  isBlockBold: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   getBlockRotation: (key: string) => number
   onRequestNotice?: (notice: NoticeRequest) => void
@@ -121,11 +121,11 @@ export function useBlockEditorActions({
   findTopmostBlockAtPoint,
   snapToModule,
   getBlockFont,
+  getBlockFontWeight,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
-  isBlockBold,
   isBlockItalic,
   getBlockRotation,
   onRequestNotice,
@@ -236,6 +236,7 @@ export function useBlockEditorActions({
     blockCustomSizes,
     blockTextAlignments,
     getBlockFont,
+    getBlockFontWeight,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
@@ -253,7 +254,6 @@ export function useBlockEditorActions({
     snapToModule,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
-    isBlockBold,
     isBlockItalic,
     onRequestNotice,
   })

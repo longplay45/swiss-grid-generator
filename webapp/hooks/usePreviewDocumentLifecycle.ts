@@ -13,12 +13,12 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockTextEdited: Record<Key, boolean>
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
+  blockFontWeights: Partial<Record<Key, number>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
-  blockBold: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
   blockModulePositions: Partial<Record<Key, ModulePosition>>

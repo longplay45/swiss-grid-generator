@@ -10,13 +10,13 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftFxSize: number
   draftFxLeading: number
   draftFont: FontFamily
+  draftFontWeight: number
   draftColumns: number
   draftRows: number
   draftAlign: BlockEditorTextAlign
   draftColor: string
   draftReflow: boolean
   draftSyllableDivision: boolean
-  draftBold: boolean
   draftItalic: boolean
   draftRotation: number
   draftTextEdited: boolean

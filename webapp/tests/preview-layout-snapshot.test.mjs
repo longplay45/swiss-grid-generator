@@ -19,7 +19,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     blockTextReflow: {},
     blockSyllableDivision: {},
     blockFontFamilies: {},
-    blockBold: {},
+    blockFontWeights: {},
     blockItalic: {},
     blockRotations: {},
   }
@@ -30,7 +30,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     getBlockRows: (key) => (key === "caption" ? 1 : 2),
     isTextReflowEnabled: (key) => key === "body",
     isSyllableDivisionEnabled: (key) => key === "body",
-    isBlockBold: (key) => key === "body",
+    getBlockFontWeight: (key) => (key === "caption" ? 500 : 400),
     isBlockItalic: () => false,
     getBlockRotation: (key) => (key === "body" ? 5 : 0),
     defaultTextAlign: "left",
@@ -42,7 +42,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
   assert.equal(resolved.blockRowSpans.body, 2)
   assert.equal(resolved.blockTextReflow.body, true)
   assert.equal(resolved.blockSyllableDivision.body, true)
-  assert.equal(resolved.blockBold.body, true)
+  assert.equal(resolved.blockFontWeights.caption, 500)
   assert.equal(resolved.blockRotations.body, 5)
 })
 
@@ -59,7 +59,7 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
     blockTextReflow: { body: true, caption: false },
     blockSyllableDivision: { body: true, caption: false },
     blockFontFamilies: { body: "Inter", caption: "Besley" },
-    blockBold: { body: false, caption: true },
+    blockFontWeights: { body: 400, caption: 600 },
     blockItalic: { body: false, caption: false },
     blockRotations: { body: 0.00001, caption: 12 },
   }
@@ -71,6 +71,8 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
 
   assert.equal(normalized.blockFontFamilies.body, undefined)
   assert.equal(normalized.blockFontFamilies.caption, "Besley")
+  assert.equal(normalized.blockFontWeights.body, 400)
+  assert.equal(normalized.blockFontWeights.caption, 600)
   assert.equal(normalized.blockRotations.body, undefined)
   assert.equal(normalized.blockRotations.caption, 12)
 })

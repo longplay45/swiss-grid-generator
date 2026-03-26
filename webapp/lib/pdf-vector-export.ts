@@ -5,7 +5,9 @@ import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types
 import {
   DEFAULT_BASE_FONT,
   getFontFamilyCss,
+  getStyleDefaultFontWeight,
   isPdfSerifStyleFont,
+  resolveFontVariant,
   type FontFamily,
 } from "@/lib/config/fonts"
 import { resolvePdfFontFamily } from "@/lib/pdf-font-registry"
@@ -64,13 +66,8 @@ type ExportVectorPdfOptions = {
   showTypography: boolean
 }
 
-function getFontStyle(bold = false, italic = false): "normal" | "bold" | "italic" | "bolditalic" {
-  if (bold) return italic ? "bolditalic" : "bold"
-  return italic ? "italic" : "normal"
-}
-
-function getPdfFontFamily(fontFamily: FontFamily): string {
-  const embedded = resolvePdfFontFamily(fontFamily)
+function getPdfFontFamily(fontFamily: FontFamily, fontWeight: number): string {
+  const embedded = resolvePdfFontFamily(fontFamily, fontWeight)
   if (embedded) return embedded
   return isPdfSerifStyleFont(fontFamily) ? "times" : "helvetica"
 }
@@ -81,9 +78,8 @@ function createTextMeasureContext(): CanvasRenderingContext2D | null {
   return canvas.getContext("2d")
 }
 
-function buildCanvasFont(fontFamily: FontFamily, bold: boolean, italic: boolean, fontSize: number): string {
+function buildCanvasFont(fontFamily: FontFamily, fontWeight: number, italic: boolean, fontSize: number): string {
   const fontStyle = italic ? "italic " : ""
-  const fontWeight = bold ? "700" : "400"
   return `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
 }
 
@@ -461,6 +457,7 @@ export function renderSwissGridVectorPdf({
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
+  const blockFontWeights = layout?.blockFontWeights ?? {}
   const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
@@ -514,17 +511,31 @@ export function renderSwissGridVectorPdf({
   const getBlockFont = (key: BlockId): FontFamily => {
     return blockFontFamilies[key] ?? baseFont
   }
-  const getStyleDefaultBold = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.weight === "Bold"
+  const getStyleDefaultWeight = (styleKey: TypographyStyleKey) => (
+    getStyleDefaultFontWeight(styleDefinitions[styleKey]?.weight)
+  )
   const getStyleDefaultItalic = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.blockItalic === true
-  const isBlockBold = (key: BlockId, styleKey: TypographyStyleKey) => {
-    const override = blockBold[key]
-    if (override === true || override === false) return override
-    return getStyleDefaultBold(styleKey)
+  const getResolvedFontVariantForBlock = (key: BlockId, styleKey: TypographyStyleKey) => {
+    const weightOverride = blockFontWeights[key]
+    const legacyBoldOverride = blockBold[key]
+    const requestedWeight = typeof weightOverride === "number" && Number.isFinite(weightOverride) && weightOverride > 0
+      ? weightOverride
+      : legacyBoldOverride === true
+        ? 700
+        : legacyBoldOverride === false
+          ? 400
+          : getStyleDefaultWeight(styleKey)
+    const italicOverride = blockItalic[key]
+    const requestedItalic = italicOverride === true || italicOverride === false
+      ? italicOverride
+      : getStyleDefaultItalic(styleKey)
+    return resolveFontVariant(getBlockFont(key), requestedWeight, requestedItalic)
+  }
+  const getBlockFontWeight = (key: BlockId, styleKey: TypographyStyleKey) => {
+    return getResolvedFontVariantForBlock(key, styleKey).weight
   }
   const isBlockItalic = (key: BlockId, styleKey: TypographyStyleKey) => {
-    const override = blockItalic[key]
-    if (override === true || override === false) return override
-    return getStyleDefaultItalic(styleKey)
+    return getResolvedFontVariantForBlock(key, styleKey).italic
   }
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
@@ -630,10 +641,10 @@ export function renderSwissGridVectorPdf({
     },
     getOriginForBlock,
     createTextContext: ({ key, styleKey, fontSize }) => {
-      const blockIsBold = isBlockBold(key, styleKey)
+      const blockFontWeight = getBlockFontWeight(key, styleKey)
       const blockIsItalic = isBlockItalic(key, styleKey)
       const blockFont = getBlockFont(key)
-      const canvasFont = buildCanvasFont(blockFont, blockIsBold, blockIsItalic, fontSize)
+      const canvasFont = buildCanvasFont(blockFont, blockFontWeight, blockIsItalic, fontSize)
       const measureWidth = (text: string) => {
         if (textMeasureContext) {
           textMeasureContext.font = canvasFont
@@ -676,10 +687,10 @@ export function renderSwissGridVectorPdf({
     const plan = textPlans.get(key)
     if (!plan) continue
     const blockFont = getBlockFont(plan.key)
-    const blockIsBold = isBlockBold(plan.key, plan.styleKey)
+    const blockFontWeight = getBlockFontWeight(plan.key, plan.styleKey)
     const blockIsItalic = isBlockItalic(plan.key, plan.styleKey)
     const blockTextColor = parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 }
-    const canvasFont = buildCanvasFont(blockFont, blockIsBold, blockIsItalic, plan.fontSize)
+    const canvasFont = buildCanvasFont(blockFont, blockFontWeight, blockIsItalic, plan.fontSize)
     const measureWidthSource = (text: string) => {
       if (textMeasureContext) {
         textMeasureContext.font = canvasFont
@@ -687,7 +698,7 @@ export function renderSwissGridVectorPdf({
       }
       return pdf.getTextWidth(text) / scale
     }
-    pdf.setFont(getPdfFontFamily(blockFont), getFontStyle(blockIsBold, blockIsItalic))
+    pdf.setFont(getPdfFontFamily(blockFont, blockFontWeight), blockIsItalic ? "italic" : "normal")
     setTextColorCmyk(pdf, blockTextColor)
     pdf.setFontSize(plan.fontSize * scale)
     const rotationOrigin = { x: plan.rotationOriginX, y: plan.rotationOriginY }

@@ -1,8 +1,14 @@
 import type jsPDF from "jspdf"
-import { FONT_DEFINITIONS, type FontFamily } from "@/lib/config/fonts"
+import {
+  FONT_DEFINITIONS,
+  getFontAssetPath,
+  getFontVariants,
+  resolveFontVariant,
+  type FontFamily,
+} from "@/lib/config/fonts"
 
-type PdfFontStyle = "normal" | "bold" | "italic" | "bolditalic"
 type FontAsset = { vfsName: string; urls: string[] }
+type FontAssetPair = { normal: FontAsset; italic?: FontAsset }
 
 const fontBinaryCache = new Map<string, Promise<string>>()
 const googleRepoSourceCache = new Map<string, Promise<{ regular: string; italic: string } | null>>()
@@ -68,6 +74,14 @@ function getPdfEmbeddedFamilyName(fontFamily: FontFamily): string {
   return `Embedded_${getFontSlug(fontFamily)}`
 }
 
+function getPdfEmbeddedWeightFamilyName(fontFamily: FontFamily, weight: number): string {
+  return `${getPdfEmbeddedFamilyName(fontFamily)}_${weight}`
+}
+
+function getPdfRegistrationKey(fontFamily: FontFamily): string {
+  return `${getPdfEmbeddedFamilyName(fontFamily)}__all`
+}
+
 async function discoverGoogleRepoVariableSources(fontFamily: FontFamily): Promise<{ regular: string; italic: string } | null> {
   const slug = getFontSlug(fontFamily)
   const cached = googleRepoSourceCache.get(slug)
@@ -98,41 +112,55 @@ async function discoverGoogleRepoVariableSources(fontFamily: FontFamily): Promis
   return task
 }
 
-async function getGoogleVariableAssets(fontFamily: FontFamily): Promise<Record<PdfFontStyle, FontAsset>> {
+function getLegacyFontAssetPath(fontFamily: FontFamily, weight: number, italic: boolean): string | null {
   const slug = getFontSlug(fontFamily)
-  const localRegularUrl = `/fonts/google/${slug}/regular.ttf`
-  const localBoldUrl = `/fonts/google/${slug}/bold.ttf`
-  const localItalicUrl = `/fonts/google/${slug}/italic.ttf`
-  const localBoldItalicUrl = `/fonts/google/${slug}/bolditalic.ttf`
+  if (weight === 400 && !italic) return `/fonts/google/${slug}/regular.ttf`
+  if (weight === 700 && !italic) return `/fonts/google/${slug}/bold.ttf`
+  if (weight === 400 && italic) return `/fonts/google/${slug}/italic.ttf`
+  if (weight === 700 && italic) return `/fonts/google/${slug}/bolditalic.ttf`
+  return null
+}
+
+function buildFontAssetUrls(
+  fontFamily: FontFamily,
+  weight: number,
+  italic: boolean,
+  remote: { regular: string; italic: string } | null,
+): string[] {
+  const urls = [getFontAssetPath(fontFamily, weight, italic)]
+  const legacy = getLegacyFontAssetPath(fontFamily, weight, italic)
+  if (legacy && legacy !== urls[0]) urls.push(legacy)
+  if (remote) urls.push(italic ? remote.italic : remote.regular)
+  return urls
+}
+
+async function getGoogleVariableAssets(fontFamily: FontFamily): Promise<Map<number, FontAssetPair>> {
+  const slug = getFontSlug(fontFamily)
   const remote = await discoverGoogleRepoVariableSources(fontFamily)
-  const regularUrls = remote ? [localRegularUrl, remote.regular] : [localRegularUrl]
-  const boldUrls = remote ? [localBoldUrl, remote.regular] : [localBoldUrl]
-  const italicUrls = remote ? [localItalicUrl, remote.italic] : [localItalicUrl]
-  const boldItalicUrls = remote ? [localBoldItalicUrl, remote.italic] : [localBoldItalicUrl]
-  return {
-    normal: {
-      vfsName: `${slug}-regular.ttf`,
-      urls: regularUrls,
-    },
-    bold: {
-      vfsName: `${slug}-bold.ttf`,
-      urls: boldUrls,
-    },
-    italic: {
-      vfsName: `${slug}-italic.ttf`,
-      urls: italicUrls,
-    },
-    bolditalic: {
-      vfsName: `${slug}-bolditalic.ttf`,
-      urls: boldItalicUrls,
-    },
-  }
+  return getFontVariants(fontFamily).reduce((acc, variant) => {
+    const asset: FontAsset = {
+      vfsName: `${slug}-${variant.weight}${variant.italic ? "italic" : ""}.ttf`,
+      urls: buildFontAssetUrls(fontFamily, variant.weight, variant.italic, remote),
+    }
+    const existing = acc.get(variant.weight) ?? {
+      normal: {
+        vfsName: `${slug}-${variant.weight}.ttf`,
+        urls: buildFontAssetUrls(fontFamily, variant.weight, false, remote),
+      },
+    }
+    if (variant.italic) {
+      acc.set(variant.weight, { ...existing, italic: asset })
+    } else {
+      acc.set(variant.weight, { ...existing, normal: asset })
+    }
+    return acc
+  }, new Map<number, FontAssetPair>())
 }
 
 async function registerWithAssets(
   pdf: PdfWithRegistry,
   pdfFamily: string,
-  assets: Record<PdfFontStyle, FontAsset>,
+  assets: FontAssetPair,
 ): Promise<void> {
   if (isFontRegistered(pdf, pdfFamily)) return
 
@@ -142,28 +170,32 @@ async function registerWithAssets(
     throw new Error("jsPDF font APIs are not available in this environment")
   }
 
-  const [normal, bold, italic, bolditalic] = await Promise.all([
+  const [normal, italic] = await Promise.all([
     fetchFirstAvailableBase64(assets.normal.urls),
-    fetchFirstAvailableBase64(assets.bold.urls),
-    fetchFirstAvailableBase64(assets.italic.urls),
-    fetchFirstAvailableBase64(assets.bolditalic.urls),
+    fetchFirstAvailableBase64((assets.italic ?? assets.normal).urls),
   ])
 
   addFileToVFS(assets.normal.vfsName, normal)
-  addFileToVFS(assets.bold.vfsName, bold)
-  addFileToVFS(assets.italic.vfsName, italic)
-  addFileToVFS(assets.bolditalic.vfsName, bolditalic)
-
   addFont(assets.normal.vfsName, pdfFamily, "normal")
-  addFont(assets.bold.vfsName, pdfFamily, "bold")
-  addFont(assets.italic.vfsName, pdfFamily, "italic")
-  addFont(assets.bolditalic.vfsName, pdfFamily, "bolditalic")
+  if (assets.italic) {
+    addFileToVFS(assets.italic.vfsName, italic)
+    addFont(assets.italic.vfsName, pdfFamily, "italic")
+  } else {
+    addFont(assets.normal.vfsName, pdfFamily, "italic")
+  }
   markFontRegistered(pdf, pdfFamily)
 }
 
 async function registerGoogleVariableFamily(pdf: PdfWithRegistry, fontFamily: FontFamily): Promise<void> {
-  const assets = await getGoogleVariableAssets(fontFamily)
-  await registerWithAssets(pdf, getPdfEmbeddedFamilyName(fontFamily), assets)
+  const registrationKey = getPdfRegistrationKey(fontFamily)
+  if (isFontRegistered(pdf, registrationKey)) return
+  const assetsByWeight = await getGoogleVariableAssets(fontFamily)
+  await Promise.all(
+    [...assetsByWeight.entries()].map(([weight, assets]) =>
+      registerWithAssets(pdf, getPdfEmbeddedWeightFamilyName(fontFamily, weight), assets),
+    ),
+  )
+  markFontRegistered(pdf, registrationKey)
 }
 
 export async function ensurePdfFontsRegistered(
@@ -182,8 +214,9 @@ export async function ensurePdfFontsRegistered(
   }
 }
 
-export function resolvePdfFontFamily(fontFamily: FontFamily): string | null {
+export function resolvePdfFontFamily(fontFamily: FontFamily, weight: number): string | null {
   if (unavailableEmbeddedFamilies.has(fontFamily)) return null
   if (!KNOWN_FONT_FAMILIES.has(fontFamily)) return null
-  return getPdfEmbeddedFamilyName(fontFamily)
+  const resolvedVariant = resolveFontVariant(fontFamily, weight, false)
+  return getPdfEmbeddedWeightFamilyName(fontFamily, resolvedVariant.weight)
 }

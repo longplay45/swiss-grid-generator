@@ -4,7 +4,12 @@ import type { BlockEditorTextAlign } from "@/components/editor/block-editor-type
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useStateCommands, type Updater } from "@/hooks/useStateCommands"
 import { clampRotation } from "@/lib/block-constraints"
-import { isFontFamily, type FontFamily } from "@/lib/config/fonts"
+import {
+  getStyleDefaultFontWeight,
+  isFontFamily,
+  resolveFontVariant,
+  type FontFamily,
+} from "@/lib/config/fonts"
 import {
   BASE_BLOCK_IDS,
   DEFAULT_STYLE_ASSIGNMENTS,
@@ -45,7 +50,7 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockTextReflow: {},
     blockSyllableDivision: {},
     blockFontFamilies: {},
-    blockBold: {},
+    blockFontWeights: {},
     blockItalic: {},
     blockRotations: {},
   }
@@ -72,7 +77,7 @@ export function usePreviewTextBlockState({
     blockTextReflow,
     blockSyllableDivision,
     blockFontFamilies,
-    blockBold,
+    blockFontWeights,
     blockItalic,
     blockRotations,
   } = blockCollectionsState
@@ -144,6 +149,13 @@ export function usePreviewTextBlockState({
     return blockFontFamilies[key] ?? baseFont
   }, [baseFont, blockFontFamilies])
 
+  const getResolvedFontVariantForBlock = useCallback((key: BlockId) => {
+    const styleKey = getStyleKeyForBlock(key)
+    const requestedWeight = blockFontWeights[key] ?? getStyleDefaultFontWeight(result.typography.styles[styleKey]?.weight)
+    const requestedItalic = (blockItalic[key] ?? result.typography.styles[styleKey]?.blockItalic) === true
+    return resolveFontVariant(getBlockFont(key), requestedWeight, requestedItalic)
+  }, [blockFontWeights, blockItalic, getBlockFont, getStyleKeyForBlock, result.typography.styles])
+
   const getStyleSize = useCallback((styleKey: TypographyStyleKey): number => {
     const fallback = result.typography.styles.body?.size ?? result.grid.gridUnit
     return result.typography.styles[styleKey]?.size ?? fallback
@@ -155,16 +167,16 @@ export function usePreviewTextBlockState({
   }, [result.grid.gridUnit, result.typography.styles])
 
   const isBlockBold = useCallback((key: BlockId): boolean => {
-    const override = blockBold[key]
-    if (override === true || override === false) return override
-    return result.typography.styles[getStyleKeyForBlock(key)]?.weight === "Bold"
-  }, [blockBold, getStyleKeyForBlock, result.typography.styles])
+    return getResolvedFontVariantForBlock(key).weight >= 700
+  }, [getResolvedFontVariantForBlock])
 
   const isBlockItalic = useCallback((key: BlockId): boolean => {
-    const override = blockItalic[key]
-    if (override === true || override === false) return override
-    return result.typography.styles[getStyleKeyForBlock(key)]?.blockItalic === true
-  }, [blockItalic, getStyleKeyForBlock, result.typography.styles])
+    return getResolvedFontVariantForBlock(key).italic
+  }, [getResolvedFontVariantForBlock])
+
+  const getBlockFontWeight = useCallback((key: BlockId): number => {
+    return getResolvedFontVariantForBlock(key).weight
+  }, [getResolvedFontVariantForBlock])
 
   const getBlockRotation = useCallback((key: BlockId): number => {
     const raw = blockRotations[key]
@@ -187,7 +199,7 @@ export function usePreviewTextBlockState({
     getBlockRows,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
-    isBlockBold,
+    getBlockFontWeight,
     isBlockItalic,
     getBlockRotation,
     isFontFamily,
@@ -198,7 +210,7 @@ export function usePreviewTextBlockState({
       blockTextEdited: { ...snapshot.blockTextEdited },
       styleAssignments: { ...snapshot.styleAssignments },
       blockFontFamilies: { ...(snapshot.blockFontFamilies ?? {}) },
-      blockBold: { ...(snapshot.blockBold ?? {}) },
+      blockFontWeights: { ...(snapshot.blockFontWeights ?? {}) },
       blockItalic: { ...(snapshot.blockItalic ?? {}) },
       blockRotations: { ...(snapshot.blockRotations ?? {}) },
       blockColumnSpans: { ...snapshot.blockColumnSpans },
@@ -225,7 +237,7 @@ export function usePreviewTextBlockState({
     blockTextReflow,
     blockSyllableDivision,
     blockFontFamilies,
-    blockBold,
+    blockFontWeights,
     blockItalic,
     blockRotations,
     setBlockOrder,
@@ -243,6 +255,7 @@ export function usePreviewTextBlockState({
     getBlockFont,
     getStyleSize,
     getStyleLeading,
+    getBlockFontWeight,
     isBlockBold,
     isBlockItalic,
     getBlockRotation,

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { FONT_CSS_VARS } from "@/lib/config/fonts"
+import { FONT_CSS_VARS, FONT_FACE_CSS } from "@/lib/config/fonts"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -58,6 +58,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }} />
+      </head>
       <body className={inter.className} style={FONT_CSS_VARS as React.CSSProperties}>{children}</body>
     </html>
   )

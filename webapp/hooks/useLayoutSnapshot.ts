@@ -22,7 +22,7 @@ export type SnapshotState<
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
-  blockBold: Partial<Record<Key, boolean>>
+  blockFontWeights: Partial<Record<Key, number>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
 }
@@ -42,7 +42,7 @@ type Args<
   getBlockRows: (key: Key) => number
   isTextReflowEnabled: (key: Key) => boolean
   isSyllableDivisionEnabled: (key: Key) => boolean
-  isBlockBold: (key: Key) => boolean
+  getBlockFontWeight: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
   getBlockRotation: (key: Key) => number
   isFontFamily: (value: unknown) => value is FontFamily
@@ -68,7 +68,7 @@ export function useLayoutSnapshot<
   getBlockRows,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
-  isBlockBold,
+  getBlockFontWeight,
   isBlockItalic,
   getBlockRotation,
   isFontFamily,
@@ -83,17 +83,17 @@ export function useLayoutSnapshot<
       getBlockRows,
       isTextReflowEnabled,
       isSyllableDivisionEnabled,
-      isBlockBold,
+      getBlockFontWeight,
       isBlockItalic,
       getBlockRotation,
       defaultTextAlign: "left" as TextAlignMode,
     }))
   }, [
     getBlockRotation,
+    getBlockFontWeight,
     getBlockRows,
     getDefaultColumnSpan,
     gridCols,
-    isBlockBold,
     isBlockItalic,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,

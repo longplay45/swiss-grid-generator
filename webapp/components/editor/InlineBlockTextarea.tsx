@@ -118,9 +118,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const styleFontSize = isFxStyle(editorState.draftStyle) ? editorState.draftFxSize : fallbackStyleSize
   const fallbackStyleLeading = getStyleLeadingValue(editorState.draftStyle)
   const styleLeading = isFxStyle(editorState.draftStyle) ? editorState.draftFxLeading : fallbackStyleLeading
+  const fontWeight = editorState.draftFontWeight
   const scaledFontSize = Math.max(1, styleFontSize * scale)
   const scaledLeading = Math.max(scaledFontSize, styleLeading * scale)
-  const canvasFont = `${editorState.draftItalic ? "italic " : ""}${editorState.draftBold ? "700" : "400"} ${scaledFontSize}px ${getFontFamilyCss(editorState.draftFont)}`
+  const canvasFont = `${editorState.draftItalic ? "italic " : ""}${fontWeight} ${scaledFontSize}px ${getFontFamilyCss(editorState.draftFont)}`
   measureContextRef.current ??= typeof document !== "undefined"
     ? document.createElement("canvas").getContext("2d")
     : null
@@ -381,7 +382,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
               height: hiddenCaret?.height ?? scaledLeading,
               fontFamily: getFontFamilyCss(editorState.draftFont),
               fontStyle: editorState.draftItalic ? "italic" : "normal",
-              fontWeight: editorState.draftBold ? 700 : 400,
+              fontWeight,
               textAlign: editorState.draftAlign,
               color: "transparent",
               fontSize: `${scaledFontSize}px`,

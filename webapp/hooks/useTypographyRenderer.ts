@@ -37,8 +37,8 @@ type Args<BlockId extends string> = {
   imageModulePositions: Partial<Record<BlockId, ModulePosition>>
   dragState: DragState<BlockId> | null
   getBlockFont: (key: BlockId) => FontFamily
+  getBlockFontWeight: (key: BlockId) => number
   isBlockItalic: (key: BlockId) => boolean
-  isBlockBold: (key: BlockId) => boolean
   getBlockRotation: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
@@ -93,8 +93,8 @@ export function useTypographyRenderer<BlockId extends string>({
   imageModulePositions,
   dragState,
   getBlockFont,
+  getBlockFontWeight,
   isBlockItalic,
-  isBlockBold,
   getBlockRotation,
   getBlockSpan,
   getBlockRows,
@@ -276,7 +276,7 @@ export function useTypographyRenderer<BlockId extends string>({
           createTextContext: ({ key, fontSize }) => {
             const blockFont = getBlockFont(key)
             const blockFontStyle = isBlockItalic(key) ? "italic " : ""
-            const blockFontWeight = isBlockBold(key) ? "700" : "400"
+            const blockFontWeight = String(getBlockFontWeight(key))
             ctx.font = `${blockFontStyle}${blockFontWeight} ${fontSize}px ${getFontFamilyCss(blockFont)}`
             return ctx
           },
@@ -290,7 +290,7 @@ export function useTypographyRenderer<BlockId extends string>({
         for (const plan of layoutOutput.plans) {
           const blockFont = getBlockFont(plan.key)
           const blockFontStyle = isBlockItalic(plan.key) ? "italic " : ""
-          const blockFontWeight = isBlockBold(plan.key) ? "700" : "400"
+          const blockFontWeight = String(getBlockFontWeight(plan.key))
           ctx.font = `${blockFontStyle}${blockFontWeight} ${plan.fontSize}px ${getFontFamilyCss(blockFont)}`
           const planFont = ctx.font
           draftPlans.set(plan.key, {
@@ -447,6 +447,7 @@ export function useTypographyRenderer<BlockId extends string>({
     clampImageBaselinePosition,
     dragState,
     getBlockFont,
+    getBlockFontWeight,
     getBlockRotation,
     getBlockRows,
     getBlockFontSize,
@@ -461,7 +462,6 @@ export function useTypographyRenderer<BlockId extends string>({
     imageModulePositions,
     imageOrder,
     imageRectsRef,
-    isBlockBold,
     isBlockItalic,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,

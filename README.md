@@ -40,7 +40,7 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - double-click popup editor
   - rollover info/tooltips (`i` toggle)
   - per-paragraph font selection
-  - per-paragraph italic toggle
+  - per-paragraph font-cut selector in the type submenu, listing the available cuts of the chosen family
   - live character + word count in the editor `Info` submenu
   - per-block `cols` and `rows`
   - per-block rotation input (`-180..180`)
@@ -269,7 +269,7 @@ webapp/
 ## Changelog (Recent Behavior Updates)
 
 - Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
-- Added per-paragraph italic toggle and rotation input (`-180..180`).
+- Added per-paragraph font-cut selection in the type submenu and rotation input (`-180..180`).
 - Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
 - Added Alt/Option-drag duplication for preview paragraphs.
 - Added Shift-drag baseline snapping with overset placement support (left/right/top/bottom, Ctrl fallback).
