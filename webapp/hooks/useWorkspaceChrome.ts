@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { getUiThemeColor } from "@/lib/theme-color"
 
 export type WorkspaceTheme = {
   root: string
@@ -81,6 +82,21 @@ export function useWorkspaceChrome() {
     window.addEventListener("resize", checkSmartphone)
     return () => window.removeEventListener("resize", checkSmartphone)
   }, [])
+
+  useEffect(() => {
+    if (typeof document === "undefined") return
+
+    const content = getUiThemeColor(isDarkUi)
+    let meta = document.getElementById("app-theme-color")
+    if (!(meta instanceof HTMLMetaElement)) {
+      meta = document.createElement("meta")
+      meta.setAttribute("id", "app-theme-color")
+      meta.setAttribute("data-app-theme-color", "true")
+      meta.setAttribute("name", "theme-color")
+      document.head.appendChild(meta)
+    }
+    meta.setAttribute("content", content)
+  }, [isDarkUi])
 
   const toggleDarkUi = useCallback(() => {
     setIsDarkUi((prev) => !prev)

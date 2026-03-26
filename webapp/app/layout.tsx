@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { FONT_CSS_VARS, FONT_FACE_CSS } from "@/lib/config/fonts"
+import { DARK_UI_THEME_COLOR, LIGHT_UI_THEME_COLOR } from "@/lib/theme-color"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#ffffff",
 }
 
 export const metadata: Metadata = {
@@ -56,9 +56,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const themeColorBootstrapScript = `(function(){var meta=document.getElementById("app-theme-color");if(!meta||typeof window==="undefined"||typeof window.matchMedia!=="function")return;meta.setAttribute("content",window.matchMedia("(prefers-color-scheme: dark)").matches?"${DARK_UI_THEME_COLOR}":"${LIGHT_UI_THEME_COLOR}");})();`
+
   return (
     <html lang="en">
       <head>
+        <meta
+          id="app-theme-color"
+          data-app-theme-color="true"
+          name="theme-color"
+          content={LIGHT_UI_THEME_COLOR}
+        />
+        <script dangerouslySetInnerHTML={{ __html: themeColorBootstrapScript }} />
         <style dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }} />
       </head>
       <body className={inter.className} style={FONT_CSS_VARS as React.CSSProperties}>{children}</body>
