@@ -172,7 +172,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
-          <li>Type submenu: font family, font-cut selector, style hierarchy, and FX size/leading when `FX` is selected.</li>
+          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
           <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
           <li>Quick actions on the rail: alignment submenu, newspaper reflow, syllable division, and delete.</li>

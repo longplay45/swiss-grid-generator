@@ -15,6 +15,8 @@ export type TextLayerCollections<
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies: Partial<Record<Key, Family>>
   blockFontWeights: Partial<Record<Key, number>>
+  blockOpticalKerning: Partial<Record<Key, boolean>>
+  blockTrackingScales: Partial<Record<Key, number>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, Align>>
@@ -43,6 +45,8 @@ export function removeTextLayerFromCollections<
     styleAssignments: omitRequiredRecordKey(state.styleAssignments, key),
     blockFontFamilies: omitOptionalRecordKey(state.blockFontFamilies, key),
     blockFontWeights: omitOptionalRecordKey(state.blockFontWeights, key),
+    blockOpticalKerning: omitOptionalRecordKey(state.blockOpticalKerning, key),
+    blockTrackingScales: omitOptionalRecordKey(state.blockTrackingScales, key),
     blockColumnSpans: omitOptionalRecordKey(state.blockColumnSpans, key),
     blockRowSpans: omitOptionalRecordKey(state.blockRowSpans, key),
     blockTextAlignments: omitOptionalRecordKey(state.blockTextAlignments, key),
@@ -84,6 +88,12 @@ export function removeLayerFromPreviewLayout<
     blockFontFamilies: omitOptionalRecordKey(layout.blockFontFamilies, key),
     blockFontWeights: layout.blockFontWeights
       ? omitOptionalRecordKey(layout.blockFontWeights, key)
+      : undefined,
+    blockOpticalKerning: layout.blockOpticalKerning
+      ? omitOptionalRecordKey(layout.blockOpticalKerning, key)
+      : undefined,
+    blockTrackingScales: layout.blockTrackingScales
+      ? omitOptionalRecordKey(layout.blockTrackingScales, key)
       : undefined,
     blockColumnSpans: omitRequiredRecordKey(layout.blockColumnSpans, key),
     blockRowSpans: layout.blockRowSpans

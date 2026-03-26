@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { AutoFitPlannerInput } from "@/lib/autofit-planner"
+import type { AutoFitPlannerInput, AutoFitStyle } from "@/lib/autofit-planner"
 import { findNearestAxisIndex } from "@/lib/grid-rhythm"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 
@@ -42,8 +42,13 @@ type Args<BlockId extends string, ReflowInput, Snapshot> = {
   getBlockRows: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getStyleKeyForBlock: (key: BlockId) => string
+  getBlockFont: (key: BlockId) => AutoFitStyle["fontFamily"]
+  getBlockFontWeight: (key: BlockId) => number
+  getBlockTrackingScale: (key: BlockId) => number
   getBlockFontSize: (key: BlockId, styleKey: string) => number
   getBlockBaselineMultiplier: (key: BlockId, styleKey: string) => number
+  isBlockItalic: (key: BlockId) => boolean
+  isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   buildSnapshot: () => Snapshot
@@ -100,8 +105,13 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   getBlockRows,
   getBlockSpan,
   getStyleKeyForBlock,
+  getBlockFont,
+  getBlockFontWeight,
+  getBlockTrackingScale,
   getBlockFontSize,
   getBlockBaselineMultiplier,
+  isBlockItalic,
+  isBlockOpticalKerningEnabled,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   buildSnapshot,
@@ -355,9 +365,13 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
         key,
         text: textContent[key] ?? "",
         style: {
+          fontFamily: getBlockFont(key),
+          fontWeight: getBlockFontWeight(key),
+          italic: isBlockItalic(key),
+          opticalKerning: isBlockOpticalKerningEnabled(key),
+          trackingScale: getBlockTrackingScale(key),
           size: getBlockFontSize(key, styleKey),
           baselineMultiplier: getBlockBaselineMultiplier(key, styleKey),
-          weight: style.weight,
         },
         rowSpan: getBlockRows(key),
         syllableDivision: isSyllableDivisionEnabled(key),
@@ -428,6 +442,9 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     cancelAutoFitWorkerRequest,
     computeAutoFitFallback,
     getBlockRows,
+    getBlockFont,
+    getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockFontSize,
     getBlockBaselineMultiplier,
     getBlockSpan,
@@ -436,6 +453,8 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     gridMarginVertical,
     gridRows,
     gridUnit,
+    isBlockItalic,
+    isBlockOpticalKerningEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     marginBottom,

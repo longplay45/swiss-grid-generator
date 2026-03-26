@@ -20,6 +20,8 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     blockSyllableDivision: {},
     blockFontFamilies: {},
     blockFontWeights: {},
+    blockOpticalKerning: {},
+    blockTrackingScales: {},
     blockItalic: {},
     blockRotations: {},
   }
@@ -31,6 +33,8 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     isTextReflowEnabled: (key) => key === "body",
     isSyllableDivisionEnabled: (key) => key === "body",
     getBlockFontWeight: (key) => (key === "caption" ? 500 : 400),
+    isBlockOpticalKerningEnabled: (key) => key !== "caption",
+    getBlockTrackingScale: (key) => (key === "caption" ? 120 : 0),
     isBlockItalic: () => false,
     getBlockRotation: (key) => (key === "body" ? 5 : 0),
     defaultTextAlign: "left",
@@ -43,6 +47,9 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
   assert.equal(resolved.blockTextReflow.body, true)
   assert.equal(resolved.blockSyllableDivision.body, true)
   assert.equal(resolved.blockFontWeights.caption, 500)
+  assert.equal(resolved.blockOpticalKerning.caption, false)
+  assert.equal(resolved.blockTrackingScales.body, 0)
+  assert.equal(resolved.blockTrackingScales.caption, 120)
   assert.equal(resolved.blockRotations.body, 5)
 })
 
@@ -60,6 +67,8 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
     blockSyllableDivision: { body: true, caption: false },
     blockFontFamilies: { body: "Inter", caption: "Besley" },
     blockFontWeights: { body: 400, caption: 600 },
+    blockOpticalKerning: { body: true, caption: false },
+    blockTrackingScales: { body: 0, caption: 125 },
     blockItalic: { body: false, caption: false },
     blockRotations: { body: 0.00001, caption: 12 },
   }
@@ -73,6 +82,10 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
   assert.equal(normalized.blockFontFamilies.caption, "Besley")
   assert.equal(normalized.blockFontWeights.body, 400)
   assert.equal(normalized.blockFontWeights.caption, 600)
+  assert.equal(normalized.blockOpticalKerning.body, true)
+  assert.equal(normalized.blockOpticalKerning.caption, false)
+  assert.equal(normalized.blockTrackingScales.body, undefined)
+  assert.equal(normalized.blockTrackingScales.caption, 120)
   assert.equal(normalized.blockRotations.body, undefined)
   assert.equal(normalized.blockRotations.caption, 12)
 })

@@ -7,6 +7,10 @@ import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants
 import { insertTextLayerIntoCollections, type PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
+import {
+  DEFAULT_OPTICAL_KERNING,
+  DEFAULT_TRACKING_SCALE,
+} from "@/lib/text-rendering"
 import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 
 type Args = {
@@ -40,11 +44,13 @@ type Args = {
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
   getBlockFontWeight: (key: string) => number
+  getBlockTrackingScale: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
+  isBlockOpticalKerningEnabled: (key: string) => boolean
   getBlockRotation: (key: string) => number
   onRequestNotice?: (notice: NoticeRequest) => void
 }
@@ -78,11 +84,13 @@ export function useBlockEditorCanvasDoubleClick({
   snapToModule,
   getBlockFont,
   getBlockFontWeight,
+  getBlockTrackingScale,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isBlockItalic,
+  isBlockOpticalKerningEnabled,
   getBlockRotation,
   onRequestNotice,
 }: Args) {
@@ -113,9 +121,11 @@ export function useBlockEditorCanvasDoubleClick({
         getBlockSpan,
         getBlockTextColor,
         getBlockFontWeight,
+        getBlockTrackingScale,
         getStyleLeading,
         getStyleSize,
         isBlockItalic,
+        isBlockOpticalKerningEnabled,
         isSyllableDivisionEnabled,
         isTextReflowEnabled,
         fallbackStyle: "body",
@@ -156,6 +166,8 @@ export function useBlockEditorCanvasDoubleClick({
       baseFont,
       defaultTextColor,
       fontWeight: 400,
+      opticalKerning: DEFAULT_OPTICAL_KERNING,
+      trackingScale: DEFAULT_TRACKING_SCALE,
       getStyleLeading,
       getStyleSize,
       fxStyle: "fx",
@@ -173,6 +185,7 @@ export function useBlockEditorCanvasDoubleClick({
     findTopmostBlockAtPoint,
     getBlockFont,
     getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
@@ -183,6 +196,7 @@ export function useBlockEditorCanvasDoubleClick({
     getStyleLeading,
     getStyleSize,
     isBlockItalic,
+    isBlockOpticalKerningEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onRequestNotice,

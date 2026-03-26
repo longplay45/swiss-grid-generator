@@ -252,7 +252,10 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 Editor controls:
 - left icon rail with contextual submenus: `Geometry`, `Type`, `Color`, `Info`
 - Geometry submenu: rows, cols, rotation (`-180..180`, integer degrees)
-- Type submenu: font family, font-cut selector, style hierarchy, and FX size/leading when `FX` is selected
+- Type submenu:
+  - row 1: font family, font cut
+  - row 2: hierarchy, plus FX size/leading when `FX` is selected
+  - row 3: kerning (`Optical on/off`, default `Optical on`) and tracking presets (default `Normal`)
 - Color submenu: scheme selector and color swatches
 - Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
 - rail quick actions: align left/right, newspaper reflow, syllable division (`Hy`)
@@ -260,7 +263,20 @@ Editor controls:
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns
 - font family
-- font style (`Roman`, `Italic`)
+- font cut uses the available family-specific weight/style list
+- kerning default: `Optical on`
+- tracking presets:
+  - applies uniform letter-spacing, not horizontal scaling
+  - stored in `1/1000 em`
+  - `Ultra-condensed` = `-120`
+  - `Extra-condensed` = `-90`
+  - `Condensed` = `-60`
+  - `Semi-condensed` = `-30`
+  - `Normal` = `0`
+  - `Semi-expanded` = `+30`
+  - `Expanded` = `+60`
+  - `Extra-expanded` = `+120`
+  - `Ultra-expanded` = `+200`
 - hierarchy
 - cols (1..gridCols)
 - rows (1..gridRows)

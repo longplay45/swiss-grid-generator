@@ -2,9 +2,9 @@ import { useCallback } from "react"
 import type { RefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
-import { getFontFamilyCss } from "@/lib/config/fonts"
 import type { GridResult } from "@/lib/grid-calculator"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
+import { applyCanvasTextConfig, buildCanvasFont } from "@/lib/text-rendering"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 type Args<Key extends string, StyleKey extends string> = {
@@ -21,11 +21,15 @@ type Args<Key extends string, StyleKey extends string> = {
     text: string,
     maxWidth: number,
     hyphenate: boolean,
+    trackingScale: number,
+    opticalKerning: boolean,
   ) => string[]
   getBlockFontSize: (key: Key, styleKey: StyleKey) => number
   getBlockFont: (key: Key) => FontFamily
   getBlockFontWeight: (key: Key) => number
+  getBlockTrackingScale: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
+  isBlockOpticalKerningEnabled: (key: Key) => boolean
 }
 
 export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends string>({
@@ -37,7 +41,9 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
   getBlockFontSize,
   getBlockFont,
   getBlockFontWeight,
+  getBlockTrackingScale,
   isBlockItalic,
+  isBlockOpticalKerningEnabled,
 }: Args<Key, StyleKey>) {
   return useCallback(({
     key,
@@ -46,6 +52,11 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     rowSpan,
     reflow,
     syllableDivision,
+    fontFamily,
+    fontWeight,
+    italic,
+    opticalKerning,
+    trackingScale,
     baselineMultiplierOverride,
     position,
   }: {
@@ -55,6 +66,11 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
       rowSpan: number
       reflow: boolean
       syllableDivision: boolean
+      fontFamily?: FontFamily
+      fontWeight?: number
+      italic?: boolean
+      opticalKerning?: boolean
+      trackingScale?: number
       baselineMultiplierOverride?: number
       position?: ModulePosition | null
   }): { span: number; position: ModulePosition | null } | null => {
@@ -98,15 +114,27 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     if (maxLinesPerColumn <= 0) return null
 
     const fontSize = getBlockFontSize(key, styleKey) * scale
-    const fontFamily = getBlockFont(key)
-    const fontWeight = String(getBlockFontWeight(key))
-    const fontStyle = isBlockItalic(key) ? "italic " : ""
-    ctx.font = `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
+    const resolvedFontFamily = fontFamily ?? getBlockFont(key)
+    const resolvedFontWeight = fontWeight ?? getBlockFontWeight(key)
+    const resolvedItalic = italic ?? isBlockItalic(key)
+    const resolvedOpticalKerning = opticalKerning ?? isBlockOpticalKerningEnabled(key)
+    const resolvedTrackingScale = trackingScale ?? getBlockTrackingScale(key)
+    applyCanvasTextConfig(ctx, {
+      font: buildCanvasFont(resolvedFontFamily, resolvedFontWeight, resolvedItalic, fontSize),
+      opticalKerning: resolvedOpticalKerning,
+    })
     const startCol = position
       ? Math.max(0, Math.min(result.settings.gridCols - 1, position.col))
       : 0
     const columnWidth = sumAxisSpan(metrics.moduleWidths, startCol, 1, gridMarginHorizontal) * scale
-    const lines = getWrappedText(ctx, trimmed, columnWidth, syllableDivision)
+    const lines = getWrappedText(
+      ctx,
+      trimmed,
+      columnWidth,
+      syllableDivision,
+      resolvedTrackingScale,
+      resolvedOpticalKerning,
+    )
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
     const maxColsFromPlacement = position
@@ -125,10 +153,12 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     canvasRef,
     getBlockFont,
     getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockFontSize,
     getGridMetrics,
     getWrappedText,
     isBlockItalic,
+    isBlockOpticalKerningEnabled,
     result.grid,
     result.pageSizePt.height,
     result.settings.gridCols,

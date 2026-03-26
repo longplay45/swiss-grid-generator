@@ -18,6 +18,12 @@ import {
 } from "@/lib/document-defaults"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
+import {
+  DEFAULT_OPTICAL_KERNING,
+  DEFAULT_TRACKING_SCALE,
+  normalizeOpticalKerning,
+  normalizeTrackingScale,
+} from "@/lib/text-rendering"
 import type { ModulePosition, PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
@@ -51,6 +57,8 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockSyllableDivision: {},
     blockFontFamilies: {},
     blockFontWeights: {},
+    blockOpticalKerning: {},
+    blockTrackingScales: {},
     blockItalic: {},
     blockRotations: {},
   }
@@ -78,6 +86,8 @@ export function usePreviewTextBlockState({
     blockSyllableDivision,
     blockFontFamilies,
     blockFontWeights,
+    blockOpticalKerning,
+    blockTrackingScales,
     blockItalic,
     blockRotations,
   } = blockCollectionsState
@@ -156,6 +166,14 @@ export function usePreviewTextBlockState({
     return resolveFontVariant(getBlockFont(key), requestedWeight, requestedItalic)
   }, [blockFontWeights, blockItalic, getBlockFont, getStyleKeyForBlock, result.typography.styles])
 
+  const isBlockOpticalKerningEnabled = useCallback((key: BlockId): boolean => {
+    return normalizeOpticalKerning(blockOpticalKerning[key] ?? DEFAULT_OPTICAL_KERNING)
+  }, [blockOpticalKerning])
+
+  const getBlockTrackingScale = useCallback((key: BlockId): number => {
+    return normalizeTrackingScale(blockTrackingScales[key] ?? DEFAULT_TRACKING_SCALE)
+  }, [blockTrackingScales])
+
   const getStyleSize = useCallback((styleKey: TypographyStyleKey): number => {
     const fallback = result.typography.styles.body?.size ?? result.grid.gridUnit
     return result.typography.styles[styleKey]?.size ?? fallback
@@ -200,6 +218,8 @@ export function usePreviewTextBlockState({
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     getBlockFontWeight,
+    isBlockOpticalKerningEnabled,
+    getBlockTrackingScale,
     isBlockItalic,
     getBlockRotation,
     isFontFamily,
@@ -211,6 +231,8 @@ export function usePreviewTextBlockState({
       styleAssignments: { ...snapshot.styleAssignments },
       blockFontFamilies: { ...(snapshot.blockFontFamilies ?? {}) },
       blockFontWeights: { ...(snapshot.blockFontWeights ?? {}) },
+      blockOpticalKerning: { ...(snapshot.blockOpticalKerning ?? {}) },
+      blockTrackingScales: { ...(snapshot.blockTrackingScales ?? {}) },
       blockItalic: { ...(snapshot.blockItalic ?? {}) },
       blockRotations: { ...(snapshot.blockRotations ?? {}) },
       blockColumnSpans: { ...snapshot.blockColumnSpans },
@@ -238,6 +260,8 @@ export function usePreviewTextBlockState({
     blockSyllableDivision,
     blockFontFamilies,
     blockFontWeights,
+    blockOpticalKerning,
+    blockTrackingScales,
     blockItalic,
     blockRotations,
     setBlockOrder,
@@ -256,6 +280,8 @@ export function usePreviewTextBlockState({
     getStyleSize,
     getStyleLeading,
     getBlockFontWeight,
+    isBlockOpticalKerningEnabled,
+    getBlockTrackingScale,
     isBlockBold,
     isBlockItalic,
     getBlockRotation,

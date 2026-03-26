@@ -1,3 +1,4 @@
+import type { FontFamily } from "@/lib/config/fonts"
 import { wrapText } from "./text-layout.ts"
 import {
   findNearestAxisIndex,
@@ -8,7 +9,11 @@ import {
 export type AutoFitStyle = {
   size: number
   baselineMultiplier: number
-  weight: string
+  fontFamily: FontFamily
+  fontWeight: number
+  italic: boolean
+  opticalKerning: boolean
+  trackingScale: number
 }
 
 export type AutoFitPosition = {
@@ -49,7 +54,7 @@ export type AutoFitPlannerOutput = {
 
 export function computeAutoFitBatch(
   input: AutoFitPlannerInput,
-  measureWidthForFont: (font: string, text: string) => number,
+  measureWidthForStyle: (style: AutoFitStyle, text: string) => number,
 ): AutoFitPlannerOutput {
   const output: AutoFitPlannerOutput = {
     spanUpdates: {},
@@ -99,10 +104,13 @@ export function computeAutoFitBatch(
     if (maxLinesPerColumn <= 0) continue
 
     const fontSize = item.style.size * input.scale
-    const fontSpec = `${item.style.weight === "Bold" ? "700" : "400"} ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
     const startCol = Math.max(0, Math.min(input.gridCols - 1, item.position.col))
     const columnWidth = sumAxisSpan(resolvedModuleWidths, startCol, 1, 0) * input.scale
-    const cachedMeasure = (text: string) => measureWidthForFont(fontSpec, text)
+    const scaledStyle: AutoFitStyle = {
+      ...item.style,
+      size: fontSize,
+    }
+    const cachedMeasure = (text: string) => measureWidthForStyle(scaledStyle, text)
     const lines = wrapText(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 

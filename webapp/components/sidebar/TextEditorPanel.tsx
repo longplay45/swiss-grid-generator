@@ -21,6 +21,11 @@ import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constrai
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { TextEditorControls as SharedTextEditorControls } from "@/lib/preview-overlay-controls"
 import {
+  formatTrackingScale,
+  getTrackingOption,
+  TRACKING_OPTIONS,
+} from "@/lib/text-rendering"
+import {
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -47,7 +52,7 @@ type TextEditorPanelProps<StyleKey extends string> = {
 type MainSubmenu = "geometry" | "type" | "align" | "color" | "info" | null
 
 const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
-const TYPE_ROW_TRIGGER_WIDTH_PX = 136
+const TYPE_ROW_TRIGGER_WIDTH_PX = 152
 const FX_INPUT_WIDTH_PX = 54
 
 export function TextEditorPanel<StyleKey extends string>({
@@ -76,6 +81,7 @@ export function TextEditorPanel<StyleKey extends string>({
     controls.editorState.draftItalic,
   )
   const fontVariantOptions = getFontVariants(controls.editorState.draftFont)
+  const selectedTrackingOption = getTrackingOption(controls.editorState.draftTrackingScale)
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label
     ?? editorColorScheme
   const colorSchemeTriggerWidthCh = Math.max(
@@ -110,6 +116,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
   const railTooltipClassName = "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
   const submenuTooltipClassName = "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const submenuTokenClassName = "text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500"
   const positionSubmenu = (anchor: HTMLElement) => {
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
@@ -161,7 +168,7 @@ export function TextEditorPanel<StyleKey extends string>({
         >
           <Rows3 className="h-4 w-4" />
         </Button>)}
-        {withRailTooltip("Font family, font cut, hierarchy, and FX size/leading", <Button
+        {withRailTooltip("Font family, font cut, hierarchy, kerning, tracking, and FX size/leading", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -364,106 +371,112 @@ export function TextEditorPanel<StyleKey extends string>({
               className="grid w-max items-center gap-x-2 gap-y-2"
               style={{ gridTemplateColumns: `auto ${TYPE_ROW_TRIGGER_WIDTH_PX}px auto ${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
             >
-              <div className="flex min-h-8 items-center">
+              <div className="col-start-1 row-start-1 flex min-h-8 items-center">
                 <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
               </div>
-              {withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
-                value={controls.editorState.draftFont}
-                onValueChange={(value) => {
-                  const nextFont = value as FontFamily
-                  controls.setEditorState((prev) => {
-                    if (!prev) return prev
-                    const resolvedVariant = resolveFontVariant(nextFont, prev.draftFontWeight, prev.draftItalic)
-                    return {
-                      ...prev,
-                      draftFont: nextFont,
-                      draftFontWeight: resolvedVariant.weight,
-                      draftItalic: resolvedVariant.italic,
-                    }
-                  })
-                }}
-                options={FONT_OPTIONS}
-                triggerClassName={`h-8 text-xs ${tone.input}`}
-                triggerStyle={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
-              />)}
+              <div className="col-start-2 row-start-1">
+                {withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
+                  value={controls.editorState.draftFont}
+                  onValueChange={(value) => {
+                    const nextFont = value as FontFamily
+                    controls.setEditorState((prev) => {
+                      if (!prev) return prev
+                      const resolvedVariant = resolveFontVariant(nextFont, prev.draftFontWeight, prev.draftItalic)
+                      return {
+                        ...prev,
+                        draftFont: nextFont,
+                        draftFontWeight: resolvedVariant.weight,
+                        draftItalic: resolvedVariant.italic,
+                      }
+                    })
+                  }}
+                  options={FONT_OPTIONS}
+                  triggerClassName={`h-8 text-xs ${tone.input}`}
+                  triggerStyle={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
+                />)}
+              </div>
 
-              <div className="flex min-h-8 items-center">
+              <div className="col-start-3 row-start-1 flex min-h-8 items-center">
                 <TypeOutline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
               </div>
-              {withSubmenuTooltip("Choose the available cut for this paragraph", <Select
-                value={selectedFontVariant.id}
-                onValueChange={(value) => {
-                  const nextVariant = getFontVariantById(controls.editorState.draftFont, value)
-                  if (!nextVariant) return
-                  controls.setEditorState((prev) => prev ? {
-                    ...prev,
-                    draftFontWeight: nextVariant.weight,
-                    draftItalic: nextVariant.italic,
-                  } : prev)
-                }}
-              >
-                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {fontVariantOptions.map((variant) => (
-                    <SelectItem key={variant.id} value={variant.id}>
-                      {variant.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>)}
+              <div className="col-start-4 row-start-1">
+                {withSubmenuTooltip("Choose the available cut for this paragraph", <Select
+                  value={selectedFontVariant.id}
+                  onValueChange={(value) => {
+                    const nextVariant = getFontVariantById(controls.editorState.draftFont, value)
+                    if (!nextVariant) return
+                    controls.setEditorState((prev) => prev ? {
+                      ...prev,
+                      draftFontWeight: nextVariant.weight,
+                      draftItalic: nextVariant.italic,
+                    } : prev)
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontVariantOptions.map((variant) => (
+                      <SelectItem key={variant.id} value={variant.id}>
+                        {variant.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>)}
+              </div>
 
-              <div className="flex min-h-8 items-center">
+              <div className="col-start-1 row-start-2 flex min-h-8 items-center">
                 <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
               </div>
-              {withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
-                value={controls.editorState.draftStyle}
-                onValueChange={(value) => {
-                  const nextStyle = value as StyleKey
-                  controls.setEditorState((prev) => {
-                    if (!prev) return prev
-                    const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
-                    const currentDefaultItalic = controls.getStyleDefaultItalic(prev.draftStyle)
-                    const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
-                    const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
-                    const requestedWeight = prev.draftFontWeight === currentDefaultWeight
-                      ? nextDefaultWeight
-                      : prev.draftFontWeight
-                    const requestedItalic = prev.draftItalic === currentDefaultItalic
-                      ? nextDefaultItalic
-                      : prev.draftItalic
-                    const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
-                    return {
-                      ...prev,
-                      draftStyle: nextStyle,
-                      draftFontWeight: resolvedVariant.weight,
-                      draftItalic: resolvedVariant.italic,
-                      draftFxSize: controls.isFxStyle(nextStyle)
-                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
-                        : prev.draftFxSize,
-                      draftFxLeading: controls.isFxStyle(nextStyle)
-                        ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
-                        : prev.draftFxLeading,
-                      draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
-                    }
-                  })
-                }}
-              >
-                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {controls.styleOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {getStyleOptionLabel(option.value, option.label)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>)}
+              <div className="col-start-2 row-start-2">
+                {withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
+                  value={controls.editorState.draftStyle}
+                  onValueChange={(value) => {
+                    const nextStyle = value as StyleKey
+                    controls.setEditorState((prev) => {
+                      if (!prev) return prev
+                      const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
+                      const currentDefaultItalic = controls.getStyleDefaultItalic(prev.draftStyle)
+                      const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
+                      const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
+                      const requestedWeight = prev.draftFontWeight === currentDefaultWeight
+                        ? nextDefaultWeight
+                        : prev.draftFontWeight
+                      const requestedItalic = prev.draftItalic === currentDefaultItalic
+                        ? nextDefaultItalic
+                        : prev.draftItalic
+                      const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
+                      return {
+                        ...prev,
+                        draftStyle: nextStyle,
+                        draftFontWeight: resolvedVariant.weight,
+                        draftItalic: resolvedVariant.italic,
+                        draftFxSize: controls.isFxStyle(nextStyle)
+                          ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
+                          : prev.draftFxSize,
+                        draftFxLeading: controls.isFxStyle(nextStyle)
+                          ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+                          : prev.draftFxLeading,
+                        draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
+                      }
+                    })
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {controls.styleOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {getStyleOptionLabel(option.value, option.label)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>)}
+              </div>
 
               {fxSelected ? (
-                <div className="col-start-3 col-span-2 flex min-h-8 w-full items-center gap-1.5">
+                <div className="col-start-3 row-start-2 col-span-2 flex min-h-8 w-full items-center gap-1.5">
                   {withSubmenuTooltip("Set the FX font size in points", <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
                     <TypeOutline className="h-4 w-4 shrink-0 text-gray-500" />
                     <input
@@ -528,6 +541,56 @@ export function TextEditorPanel<StyleKey extends string>({
                   </label>)}
                 </div>
               ) : null}
+
+              <div className="col-start-1 row-start-3 flex min-h-8 items-center">
+                <span className={submenuTokenClassName}>Ke</span>
+              </div>
+              <div className="col-start-2 row-start-3">
+                {withSubmenuTooltip("Toggle paragraph kerning between optical on and off", <Select
+                  value={controls.editorState.draftOpticalKerning ? "on" : "off"}
+                  onValueChange={(value) => {
+                    controls.setEditorState((prev) => prev ? {
+                      ...prev,
+                      draftOpticalKerning: value !== "off",
+                    } : prev)
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on">Optical on</SelectItem>
+                    <SelectItem value="off">Optical off</SelectItem>
+                  </SelectContent>
+                </Select>)}
+              </div>
+
+              <div className="col-start-3 row-start-3 flex min-h-8 items-center">
+                <span className={submenuTokenClassName}>Tr</span>
+              </div>
+              <div className="col-start-4 row-start-3">
+                {withSubmenuTooltip("Set paragraph tracking through uniform letter-spacing presets (1/1000 em)", <Select
+                  value={String(selectedTrackingOption.value)}
+                  onValueChange={(value) => {
+                    const nextScale = Number(value)
+                    controls.setEditorState((prev) => prev ? {
+                      ...prev,
+                      draftTrackingScale: Number.isFinite(nextScale) ? nextScale : prev.draftTrackingScale,
+                    } : prev)
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRACKING_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={String(option.value)}>
+                        {option.label} ({formatTrackingScale(option.value)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>)}
+              </div>
             </div>
           ) : null}
 

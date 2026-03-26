@@ -14,6 +14,8 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
   blockFontWeights: Partial<Record<Key, number>>
+  blockOpticalKerning: Partial<Record<Key, boolean>>
+  blockTrackingScales: Partial<Record<Key, number>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>

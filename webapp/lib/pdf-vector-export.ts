@@ -4,7 +4,6 @@ import type { TextAlignMode } from "@/lib/types/layout-primitives"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import {
   DEFAULT_BASE_FONT,
-  getFontFamilyCss,
   getStyleDefaultFontWeight,
   isPdfSerifStyleFont,
   resolveFontVariant,
@@ -24,6 +23,17 @@ import {
   isBaseBlockId,
 } from "@/lib/document-defaults"
 import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
+import {
+  applyCanvasTextConfig,
+  buildCanvasFont,
+  DEFAULT_OPTICAL_KERNING,
+  DEFAULT_TRACKING_SCALE,
+  getTrackingLetterSpacing,
+  measureCanvasTextWidth,
+  normalizeOpticalKerning,
+  normalizeTrackingScale,
+  splitTextForTracking,
+} from "@/lib/text-rendering"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 import {
   buildAxisStarts,
@@ -76,11 +86,6 @@ function createTextMeasureContext(): CanvasRenderingContext2D | null {
   if (typeof document === "undefined") return null
   const canvas = document.createElement("canvas")
   return canvas.getContext("2d")
-}
-
-function buildCanvasFont(fontFamily: FontFamily, fontWeight: number, italic: boolean, fontSize: number): string {
-  const fontStyle = italic ? "italic " : ""
-  return `${fontStyle}${fontWeight} ${fontSize}px ${getFontFamilyCss(fontFamily)}`
 }
 
 function estimateTextAscent(
@@ -288,6 +293,8 @@ export function renderSwissGridVectorPdf({
     x: number,
     y: number,
     align: TextAlignMode,
+    trackingScale = DEFAULT_TRACKING_SCALE,
+    fontSize = 0,
     blockRotation = 0,
     rotationOrigin?: { x: number; y: number },
   ) => {
@@ -301,6 +308,7 @@ export function renderSwissGridVectorPdf({
     const point = transformPoint(drawX, drawY)
     pdf.text(line, point.x, point.y, {
       align,
+      charSpace: getTrackingLetterSpacing(fontSize * scale, trackingScale),
       angle: rotation + blockRotation,
       // Keep PDF text rotation semantics aligned with canvas:
       // positive angles rotate clockwise in preview.
@@ -458,6 +466,8 @@ export function renderSwissGridVectorPdf({
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
   const blockFontWeights = layout?.blockFontWeights ?? {}
+  const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
+  const blockTrackingScales = layout?.blockTrackingScales ?? {}
   const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
@@ -537,6 +547,12 @@ export function renderSwissGridVectorPdf({
   const isBlockItalic = (key: BlockId, styleKey: TypographyStyleKey) => {
     return getResolvedFontVariantForBlock(key, styleKey).italic
   }
+  const isBlockOpticalKerningEnabled = (key: BlockId) => {
+    return normalizeOpticalKerning(blockOpticalKerning[key] ?? DEFAULT_OPTICAL_KERNING)
+  }
+  const getBlockTrackingScale = (key: BlockId) => {
+    return normalizeTrackingScale(blockTrackingScales[key] ?? DEFAULT_TRACKING_SCALE)
+  }
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
@@ -578,6 +594,8 @@ export function renderSwissGridVectorPdf({
 
   type PdfTextContext = {
     canvasFont: string
+    opticalKerning: boolean
+    trackingScale: number
     measureWidth: (text: string) => number
   }
 
@@ -644,15 +662,24 @@ export function renderSwissGridVectorPdf({
       const blockFontWeight = getBlockFontWeight(key, styleKey)
       const blockIsItalic = isBlockItalic(key, styleKey)
       const blockFont = getBlockFont(key)
+      const pdfFontFamily = getPdfFontFamily(blockFont, blockFontWeight)
+      const opticalKerning = isBlockOpticalKerningEnabled(key)
+      const trackingScale = getBlockTrackingScale(key)
       const canvasFont = buildCanvasFont(blockFont, blockFontWeight, blockIsItalic, fontSize)
       const measureWidth = (text: string) => {
         if (textMeasureContext) {
-          textMeasureContext.font = canvasFont
-          return textMeasureContext.measureText(text).width
+          applyCanvasTextConfig(textMeasureContext, {
+            font: canvasFont,
+            opticalKerning,
+          })
+          return measureCanvasTextWidth(textMeasureContext, text, trackingScale, fontSize)
         }
-        return pdf.getTextWidth(text)
+        pdf.setFont(pdfFontFamily, blockIsItalic ? "italic" : "normal")
+        pdf.setFontSize(fontSize * scale)
+        const gapCount = Math.max(0, splitTextForTracking(text).length - 1)
+        return pdf.getTextWidth(text) / scale + gapCount * getTrackingLetterSpacing(fontSize, trackingScale)
       }
-      return { canvasFont, measureWidth }
+      return { canvasFont, opticalKerning, trackingScale, measureWidth }
     },
     wrapText: ({ context, text, maxWidth, hyphenate }) =>
       wrapText(text, maxWidth, hyphenate, context.measureWidth),
@@ -689,14 +716,20 @@ export function renderSwissGridVectorPdf({
     const blockFont = getBlockFont(plan.key)
     const blockFontWeight = getBlockFontWeight(plan.key, plan.styleKey)
     const blockIsItalic = isBlockItalic(plan.key, plan.styleKey)
+    const blockOpticalKerningEnabled = isBlockOpticalKerningEnabled(plan.key)
+    const blockTrackingScale = getBlockTrackingScale(plan.key)
+    const blockTrackingGap = (text: string) => Math.max(0, splitTextForTracking(text).length - 1)
     const blockTextColor = parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 }
     const canvasFont = buildCanvasFont(blockFont, blockFontWeight, blockIsItalic, plan.fontSize)
     const measureWidthSource = (text: string) => {
       if (textMeasureContext) {
-        textMeasureContext.font = canvasFont
-        return textMeasureContext.measureText(text).width
+        applyCanvasTextConfig(textMeasureContext, {
+          font: canvasFont,
+          opticalKerning: blockOpticalKerningEnabled,
+        })
+        return measureCanvasTextWidth(textMeasureContext, text, blockTrackingScale, plan.fontSize)
       }
-      return pdf.getTextWidth(text) / scale
+      return pdf.getTextWidth(text) / scale + blockTrackingGap(text) * getTrackingLetterSpacing(plan.fontSize, blockTrackingScale)
     }
     pdf.setFont(getPdfFontFamily(blockFont, blockFontWeight), blockIsItalic ? "italic" : "normal")
     setTextColorCmyk(pdf, blockTextColor)
@@ -712,6 +745,8 @@ export function renderSwissGridVectorPdf({
         drawX,
         command.y,
         drawAlign,
+        blockTrackingScale,
+        plan.fontSize,
         plan.blockRotation,
         rotationOrigin,
       )

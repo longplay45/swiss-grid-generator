@@ -1,7 +1,16 @@
 import { useCallback, useMemo, useRef } from "react"
 import type { Dispatch, MutableRefObject, RefObject, SetStateAction } from "react"
 
-import { computeAutoFitBatch, type AutoFitPlannerInput } from "@/lib/autofit-planner"
+import {
+  computeAutoFitBatch,
+  type AutoFitPlannerInput,
+  type AutoFitStyle,
+} from "@/lib/autofit-planner"
+import {
+  applyCanvasTextConfig,
+  buildCanvasFont,
+  measureCanvasTextWidth,
+} from "@/lib/text-rendering"
 import type { GridResult } from "@/lib/grid-calculator"
 import { buildAxisStarts, resolveAxisSizes } from "@/lib/grid-rhythm"
 import {
@@ -28,8 +37,13 @@ type Args<Key extends string, Snapshot> = {
   getBlockRows: (key: Key) => number
   getBlockSpan: (key: Key) => number
   getStyleKeyForBlock: (key: Key) => string
+  getBlockFont: (key: Key) => AutoFitStyle["fontFamily"]
+  getBlockFontWeight: (key: Key) => number
+  getBlockTrackingScale: (key: Key) => number
   getBlockFontSize: (key: Key, styleKey: string) => number
   getBlockBaselineMultiplier: (key: Key, styleKey: string) => number
+  isBlockItalic: (key: Key) => boolean
+  isBlockOpticalKerningEnabled: (key: Key) => boolean
   isTextReflowEnabled: (key: Key) => boolean
   isSyllableDivisionEnabled: (key: Key) => boolean
   buildSnapshot: () => Snapshot
@@ -53,8 +67,13 @@ export function usePreviewLayoutReflowController<Key extends string, Snapshot>({
   getBlockRows,
   getBlockSpan,
   getStyleKeyForBlock,
+  getBlockFont,
+  getBlockFontWeight,
+  getBlockTrackingScale,
   getBlockFontSize,
   getBlockBaselineMultiplier,
+  isBlockItalic,
+  isBlockOpticalKerningEnabled,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   buildSnapshot,
@@ -181,13 +200,16 @@ export function usePreviewLayoutReflowController<Key extends string, Snapshot>({
   })
 
   const computeAutoFitFallback = useCallback((input: AutoFitPlannerInput) => (
-    computeAutoFitBatch(input, (font, text) => {
+    computeAutoFitBatch(input, (style, text) => {
       const canvas = canvasRef.current
       if (!canvas) return 0
       const ctx = canvas.getContext("2d")
       if (!ctx) return 0
-      ctx.font = font
-      return ctx.measureText(text).width
+      applyCanvasTextConfig(ctx, {
+        font: buildCanvasFont(style.fontFamily, style.fontWeight, style.italic, style.size),
+        opticalKerning: style.opticalKerning,
+      })
+      return measureCanvasTextWidth(ctx, text, style.trackingScale, style.size)
     })
   ), [canvasRef])
 
@@ -226,8 +248,13 @@ export function usePreviewLayoutReflowController<Key extends string, Snapshot>({
     getBlockRows,
     getBlockSpan,
     getStyleKeyForBlock,
+    getBlockFont,
+    getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockFontSize,
     getBlockBaselineMultiplier,
+    isBlockItalic,
+    isBlockOpticalKerningEnabled,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     buildSnapshot,

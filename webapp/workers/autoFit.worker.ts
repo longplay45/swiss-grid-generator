@@ -3,6 +3,11 @@ import {
   type AutoFitPlannerInput,
   type AutoFitPlannerOutput,
 } from "@/lib/autofit-planner"
+import {
+  applyCanvasTextConfig,
+  buildCanvasFont,
+  measureCanvasTextWidth,
+} from "@/lib/text-rendering"
 
 type AutoFitRequest = {
   id: number
@@ -34,12 +39,16 @@ self.onmessage = (event: MessageEvent<AutoFitRequest>) => {
     self.postMessage(fallback)
     return
   }
-  const output = computeAutoFitBatch(input, (font, text) => {
-    const key = `${font}::${text}`
+  const output = computeAutoFitBatch(input, (style, text) => {
+    const font = buildCanvasFont(style.fontFamily, style.fontWeight, style.italic, style.size)
+    const key = `${font}::${style.opticalKerning ? 1 : 0}::${style.trackingScale}::${text}`
     const cached = measureCache.get(key)
     if (cached !== undefined) return cached
-    context.font = font
-    const width = context.measureText(text).width
+    applyCanvasTextConfig(context, {
+      font,
+      opticalKerning: style.opticalKerning,
+    })
+    const width = measureCanvasTextWidth(context, text, style.trackingScale, style.size)
     measureCache.set(key, width)
     if (measureCache.size > 8000) measureCache.clear()
     return width

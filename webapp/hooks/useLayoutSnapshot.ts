@@ -23,6 +23,8 @@ export type SnapshotState<
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
   blockFontWeights: Partial<Record<Key, number>>
+  blockOpticalKerning: Partial<Record<Key, boolean>>
+  blockTrackingScales: Partial<Record<Key, number>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
 }
@@ -43,6 +45,8 @@ type Args<
   isTextReflowEnabled: (key: Key) => boolean
   isSyllableDivisionEnabled: (key: Key) => boolean
   getBlockFontWeight: (key: Key) => number
+  isBlockOpticalKerningEnabled: (key: Key) => boolean
+  getBlockTrackingScale: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
   getBlockRotation: (key: Key) => number
   isFontFamily: (value: unknown) => value is FontFamily
@@ -69,6 +73,8 @@ export function useLayoutSnapshot<
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   getBlockFontWeight,
+  isBlockOpticalKerningEnabled,
+  getBlockTrackingScale,
   isBlockItalic,
   getBlockRotation,
   isFontFamily,
@@ -84,6 +90,8 @@ export function useLayoutSnapshot<
       isTextReflowEnabled,
       isSyllableDivisionEnabled,
       getBlockFontWeight,
+      isBlockOpticalKerningEnabled,
+      getBlockTrackingScale,
       isBlockItalic,
       getBlockRotation,
       defaultTextAlign: "left" as TextAlignMode,
@@ -91,9 +99,11 @@ export function useLayoutSnapshot<
   }, [
     getBlockRotation,
     getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockRows,
     getDefaultColumnSpan,
     gridCols,
+    isBlockOpticalKerningEnabled,
     isBlockItalic,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,

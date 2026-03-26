@@ -56,6 +56,11 @@ type Args = {
     rowSpan: number
     reflow: boolean
     syllableDivision: boolean
+    fontFamily?: FontFamily
+    fontWeight?: number
+    italic?: boolean
+    opticalKerning?: boolean
+    trackingScale?: number
     baselineMultiplierOverride?: number
     position?: ModulePosition
   }) => AutoFitResult
@@ -74,11 +79,13 @@ type Args = {
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
   getBlockFontWeight: (key: string) => number
+  getBlockTrackingScale: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
+  isBlockOpticalKerningEnabled: (key: string) => boolean
   getBlockRotation: (key: string) => number
   onRequestNotice?: (notice: NoticeRequest) => void
 }
@@ -122,11 +129,13 @@ export function useBlockEditorActions({
   snapToModule,
   getBlockFont,
   getBlockFontWeight,
+  getBlockTrackingScale,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isBlockItalic,
+  isBlockOpticalKerningEnabled,
   getBlockRotation,
   onRequestNotice,
 }: Args) {
@@ -140,6 +149,11 @@ export function useBlockEditorActions({
       rowSpan: draft.draftRows,
       reflow: effectiveReflow,
       syllableDivision: draft.draftSyllableDivision,
+      fontFamily: draft.draftFont,
+      fontWeight: draft.draftFontWeight,
+      italic: draft.draftItalic,
+      opticalKerning: draft.draftOpticalKerning,
+      trackingScale: draft.draftTrackingScale,
       baselineMultiplierOverride: draft.draftStyle === "fx"
         ? clampFxLeading(draft.draftFxLeading) / resultGridUnit
         : undefined,
@@ -237,6 +251,7 @@ export function useBlockEditorActions({
     blockTextAlignments,
     getBlockFont,
     getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,
@@ -255,6 +270,7 @@ export function useBlockEditorActions({
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     isBlockItalic,
+    isBlockOpticalKerningEnabled,
     onRequestNotice,
   })
 

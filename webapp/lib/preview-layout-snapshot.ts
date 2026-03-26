@@ -1,5 +1,9 @@
 import type { SnapshotState } from "@/hooks/useLayoutSnapshot"
 import { clampRotation, hasSignificantRotation } from "./block-constraints.ts"
+import {
+  normalizeOpticalKerning,
+  normalizeTrackingScale,
+} from "./text-rendering.ts"
 
 type ResolvedSnapshotState<
   Key extends string,
@@ -14,6 +18,8 @@ type ResolvedSnapshotState<
   blockTextReflow: Record<Key, boolean>
   blockSyllableDivision: Record<Key, boolean>
   blockFontWeights: Record<Key, number>
+  blockOpticalKerning: Record<Key, boolean>
+  blockTrackingScales: Record<Key, number>
   blockItalic: Record<Key, boolean>
   blockRotations: Record<Key, number>
 }
@@ -33,6 +39,8 @@ export function buildResolvedSnapshotState<
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     getBlockFontWeight,
+    isBlockOpticalKerningEnabled,
+    getBlockTrackingScale,
     isBlockItalic,
     getBlockRotation,
     defaultTextAlign,
@@ -43,6 +51,8 @@ export function buildResolvedSnapshotState<
     isTextReflowEnabled: (key: Key) => boolean
     isSyllableDivisionEnabled: (key: Key) => boolean
     getBlockFontWeight: (key: Key) => number
+    isBlockOpticalKerningEnabled: (key: Key) => boolean
+    getBlockTrackingScale: (key: Key) => number
     isBlockItalic: (key: Key) => boolean
     getBlockRotation: (key: Key) => number
     defaultTextAlign: TextAlignMode
@@ -73,6 +83,14 @@ export function buildResolvedSnapshotState<
     acc[key] = getBlockFontWeight(key)
     return acc
   }, {} as Record<Key, number>)
+  const resolvedOpticalKerning = state.blockOrder.reduce((acc, key) => {
+    acc[key] = isBlockOpticalKerningEnabled(key)
+    return acc
+  }, {} as Record<Key, boolean>)
+  const resolvedTrackingScales = state.blockOrder.reduce((acc, key) => {
+    acc[key] = getBlockTrackingScale(key)
+    return acc
+  }, {} as Record<Key, number>)
   const resolvedItalic = state.blockOrder.reduce((acc, key) => {
     acc[key] = isBlockItalic(key)
     return acc
@@ -90,6 +108,8 @@ export function buildResolvedSnapshotState<
     styleAssignments: { ...state.styleAssignments },
     blockFontFamilies: { ...state.blockFontFamilies },
     blockFontWeights: resolvedFontWeights,
+    blockOpticalKerning: resolvedOpticalKerning,
+    blockTrackingScales: resolvedTrackingScales,
     blockColumnSpans: resolvedSpans,
     blockRowSpans: resolvedRows,
     blockTextAlignments: resolvedAlignments,
@@ -127,6 +147,18 @@ export function normalizeSnapshotStateForApply<
     if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) acc[key] = raw
     return acc
   }, {} as Partial<Record<Key, number>>)
+  const nextOpticalKerning = state.blockOrder.reduce((acc, key) => {
+    const raw = state.blockOpticalKerning?.[key]
+    if (raw === true || raw === false) acc[key] = normalizeOpticalKerning(raw)
+    return acc
+  }, {} as Partial<Record<Key, boolean>>)
+  const nextTrackingScales = state.blockOrder.reduce((acc, key) => {
+    const raw = state.blockTrackingScales?.[key]
+    if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+      acc[key] = normalizeTrackingScale(raw)
+    }
+    return acc
+  }, {} as Partial<Record<Key, number>>)
   const nextItalic = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockItalic?.[key]
     if (raw === true || raw === false) acc[key] = raw
@@ -148,6 +180,8 @@ export function normalizeSnapshotStateForApply<
     styleAssignments: { ...state.styleAssignments },
     blockFontFamilies: nextFonts,
     blockFontWeights: nextFontWeights,
+    blockOpticalKerning: nextOpticalKerning,
+    blockTrackingScales: nextTrackingScales,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: { ...state.blockColumnSpans },

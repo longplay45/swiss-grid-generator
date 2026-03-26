@@ -14,6 +14,8 @@ export type PreviewLayoutState<
   styleAssignments: Record<Key, StyleKey>
   blockFontFamilies?: Partial<Record<Key, FontFamily>>
   blockFontWeights?: Partial<Record<Key, number>>
+  blockOpticalKerning?: Partial<Record<Key, boolean>>
+  blockTrackingScales?: Partial<Record<Key, number>>
   blockColumnSpans: Record<Key, number>
   blockRowSpans?: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>

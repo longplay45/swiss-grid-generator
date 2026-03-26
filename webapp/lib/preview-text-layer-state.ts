@@ -3,6 +3,11 @@ import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import {
+  DEFAULT_OPTICAL_KERNING,
+  DEFAULT_TRACKING_SCALE,
+  normalizeTrackingScale,
+} from "@/lib/text-rendering"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 export type PreviewTextLayerCollectionsState<
@@ -114,6 +119,21 @@ export function applyBlockEditorDraftToCollections<
     nextItalic[draft.target as Key] = resolvedVariant.italic
   }
 
+  const nextOpticalKerning = { ...current.blockOpticalKerning }
+  if (draft.draftOpticalKerning === DEFAULT_OPTICAL_KERNING) {
+    delete nextOpticalKerning[draft.target as Key]
+  } else {
+    nextOpticalKerning[draft.target as Key] = draft.draftOpticalKerning
+  }
+
+  const nextTrackingScales = { ...current.blockTrackingScales }
+  const normalizedTrackingScale = normalizeTrackingScale(draft.draftTrackingScale)
+  if (normalizedTrackingScale === DEFAULT_TRACKING_SCALE) {
+    delete nextTrackingScales[draft.target as Key]
+  } else {
+    nextTrackingScales[draft.target as Key] = normalizedTrackingScale
+  }
+
   const nextRotations = { ...current.blockRotations }
   const clampedRotation = clampRotation(draft.draftRotation)
   if (hasSignificantRotation(clampedRotation)) {
@@ -158,6 +178,8 @@ export function applyBlockEditorDraftToCollections<
     },
     blockFontFamilies: nextFonts,
     blockFontWeights: nextFontWeights,
+    blockOpticalKerning: nextOpticalKerning,
+    blockTrackingScales: nextTrackingScales,
     blockColumnSpans: {
       ...current.blockColumnSpans,
       [draft.target as Key]: draft.draftColumns,
@@ -295,6 +317,20 @@ export function duplicateTextLayerInCollections<
     delete nextItalic[newKey]
   }
 
+  const nextOpticalKerning = { ...current.blockOpticalKerning }
+  if (current.blockOpticalKerning[sourceKey] === true || current.blockOpticalKerning[sourceKey] === false) {
+    nextOpticalKerning[newKey] = current.blockOpticalKerning[sourceKey]
+  } else {
+    delete nextOpticalKerning[newKey]
+  }
+
+  const nextTrackingScales = { ...current.blockTrackingScales }
+  if (typeof current.blockTrackingScales[sourceKey] === "number" && Number.isFinite(current.blockTrackingScales[sourceKey])) {
+    nextTrackingScales[newKey] = normalizeTrackingScale(current.blockTrackingScales[sourceKey])
+  } else {
+    delete nextTrackingScales[newKey]
+  }
+
   const nextRotations = { ...current.blockRotations }
   const sourceRotation = current.blockRotations[sourceKey]
   if (typeof sourceRotation === "number" && Number.isFinite(sourceRotation) && hasSignificantRotation(sourceRotation)) {
@@ -320,6 +356,8 @@ export function duplicateTextLayerInCollections<
     },
     blockFontFamilies: nextFonts,
     blockFontWeights: nextFontWeights,
+    blockOpticalKerning: nextOpticalKerning,
+    blockTrackingScales: nextTrackingScales,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: {

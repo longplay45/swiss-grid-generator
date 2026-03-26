@@ -5,6 +5,12 @@ import {
   getOpticalMarginAnchorOffset,
 } from "@/lib/optical-margin"
 import { wrapText } from "@/lib/text-layout"
+import {
+  measureCanvasTextWidth,
+  DEFAULT_TRACKING_SCALE,
+  normalizeTrackingScale,
+  setCanvasFontKerning,
+} from "@/lib/text-rendering"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
@@ -100,9 +106,18 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     typographyStyles,
   ])
 
-  const getMeasuredTextWidth = useCallback((ctx: CanvasRenderingContext2D, text: string): number => {
-    const key = `${ctx.font}::${text}`
-    return makeCachedValue(measureWidthCacheRef.current, key, () => ctx.measureText(text).width)
+  const getMeasuredTextWidth = useCallback((
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    trackingScale: number,
+    opticalKerning: boolean,
+  ): number => {
+    const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${text}`
+    return makeCachedValue(measureWidthCacheRef.current, key, () => {
+      setCanvasFontKerning(ctx, opticalKerning)
+      return measureCanvasTextWidth(ctx, text, normalizedTrackingScale)
+    })
   }, [makeCachedValue])
 
   const getWrappedText = useCallback((
@@ -110,10 +125,18 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     text: string,
     maxWidth: number,
     hyphenate: boolean,
+    trackingScale: number,
+    opticalKerning: boolean,
   ): string[] => {
-    const key = `${ctx.font}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
+    const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
     const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
-      wrapText(text, maxWidth, hyphenate, (sample) => getMeasuredTextWidth(ctx, sample)),
+      wrapText(text, maxWidth, hyphenate, (sample) => getMeasuredTextWidth(
+        ctx,
+        sample,
+        normalizedTrackingScale,
+        opticalKerning,
+      )),
     )
     return [...cached]
   }, [getMeasuredTextWidth, makeCachedValue])
@@ -124,8 +147,9 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     line: string,
     align: TextAlignMode,
     fontSize: number,
+    opticalKerning: boolean,
   ): number => {
-    const key = `${ctx.font}::${styleKey}::${line}::${align}::${fontSize.toFixed(4)}`
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${styleKey}::${line}::${align}::${fontSize.toFixed(4)}`
     return makeCachedValue(opticalOffsetCacheRef.current, key, () =>
       getOpticalMarginAnchorOffset({
         line,
@@ -133,7 +157,12 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
         fontSize,
         styleKey,
         font: ctx.font,
-        measureWidth: (sample) => getMeasuredTextWidth(ctx, sample),
+        measureWidth: (sample) => getMeasuredTextWidth(
+          ctx,
+          sample,
+          DEFAULT_TRACKING_SCALE,
+          opticalKerning,
+        ),
       }),
     )
   }, [getMeasuredTextWidth, makeCachedValue])

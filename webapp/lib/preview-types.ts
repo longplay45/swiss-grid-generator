@@ -26,5 +26,7 @@ export type BlockRenderPlan<Key extends string> = {
   blockRotation: number
   rotationOriginX: number
   rotationOriginY: number
+  opticalKerning: boolean
+  trackingScale: number
   commands: TextDrawCommand[]
 }

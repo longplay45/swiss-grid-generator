@@ -2,9 +2,14 @@ import { useEffect } from "react"
 import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
-import { getFontFamilyCss, type FontFamily } from "@/lib/config/fonts"
+import type { FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
+import {
+  applyCanvasTextConfig,
+  buildCanvasFont,
+  drawCanvasText,
+} from "@/lib/text-rendering"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 
@@ -38,7 +43,9 @@ type Args<BlockId extends string> = {
   dragState: DragState<BlockId> | null
   getBlockFont: (key: BlockId) => FontFamily
   getBlockFontWeight: (key: BlockId) => number
+  getBlockTrackingScale: (key: BlockId) => number
   isBlockItalic: (key: BlockId) => boolean
+  isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   getBlockRotation: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
@@ -51,13 +58,21 @@ type Args<BlockId extends string> = {
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
-  getWrappedText: (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, hyphenate: boolean) => string[]
+  getWrappedText: (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxWidth: number,
+    hyphenate: boolean,
+    trackingScale: number,
+    opticalKerning: boolean,
+  ) => string[]
   getOpticalOffset: (
     ctx: CanvasRenderingContext2D,
     styleKey: keyof GridResult["typography"]["styles"],
     line: string,
     align: TextAlignMode,
     fontSize: number,
+    opticalKerning: boolean,
   ) => number
   onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
@@ -94,7 +109,9 @@ export function useTypographyRenderer<BlockId extends string>({
   dragState,
   getBlockFont,
   getBlockFontWeight,
+  getBlockTrackingScale,
   isBlockItalic,
+  isBlockOpticalKerningEnabled,
   getBlockRotation,
   getBlockSpan,
   getBlockRows,
@@ -275,23 +292,43 @@ export function useTypographyRenderer<BlockId extends string>({
           getOriginForBlock,
           createTextContext: ({ key, fontSize }) => {
             const blockFont = getBlockFont(key)
-            const blockFontStyle = isBlockItalic(key) ? "italic " : ""
-            const blockFontWeight = String(getBlockFontWeight(key))
-            ctx.font = `${blockFontStyle}${blockFontWeight} ${fontSize}px ${getFontFamilyCss(blockFont)}`
+            applyCanvasTextConfig(ctx, {
+              font: buildCanvasFont(blockFont, getBlockFontWeight(key), isBlockItalic(key), fontSize),
+              opticalKerning: isBlockOpticalKerningEnabled(key),
+            })
             return ctx
           },
-          wrapText: ({ context, text, maxWidth, hyphenate }) =>
-            getWrappedText(context, text, maxWidth, hyphenate),
+          wrapText: ({ context, key, text, maxWidth, hyphenate }) =>
+            getWrappedText(
+              context,
+              text,
+              maxWidth,
+              hyphenate,
+              getBlockTrackingScale(key),
+              isBlockOpticalKerningEnabled(key),
+            ),
           textAscent: ({ context, fontSize }) => getTextAscentPx(context, fontSize),
-          opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
-            getOpticalOffset(context, styleKey, line, align, fontSize),
+          opticalOffset: ({ context, key, styleKey, line, align, fontSize }) =>
+            getOpticalOffset(
+              context,
+              styleKey,
+              line,
+              align,
+              fontSize,
+              isBlockOpticalKerningEnabled(key),
+            ),
         })
 
         for (const plan of layoutOutput.plans) {
           const blockFont = getBlockFont(plan.key)
-          const blockFontStyle = isBlockItalic(plan.key) ? "italic " : ""
-          const blockFontWeight = String(getBlockFontWeight(plan.key))
-          ctx.font = `${blockFontStyle}${blockFontWeight} ${plan.fontSize}px ${getFontFamilyCss(blockFont)}`
+          const blockFontWeight = getBlockFontWeight(plan.key)
+          const blockItalic = isBlockItalic(plan.key)
+          const opticalKerning = isBlockOpticalKerningEnabled(plan.key)
+          const trackingScale = getBlockTrackingScale(plan.key)
+          applyCanvasTextConfig(ctx, {
+            font: buildCanvasFont(blockFont, blockFontWeight, blockItalic, plan.fontSize),
+            opticalKerning,
+          })
           const planFont = ctx.font
           draftPlans.set(plan.key, {
             key: plan.key,
@@ -301,8 +338,10 @@ export function useTypographyRenderer<BlockId extends string>({
               plan.styleKey,
               blockFont,
               getBlockTextColor(plan.key),
-              blockFontWeight === "700" ? "bold" : "regular",
-              blockFontStyle ? "italic" : "normal",
+              blockFontWeight,
+              blockItalic ? "italic" : "normal",
+              opticalKerning ? "kerning-on" : "kerning-off",
+              trackingScale,
               plan.textAlign,
               plan.blockRotation.toFixed(2),
               plan.span,
@@ -325,6 +364,8 @@ export function useTypographyRenderer<BlockId extends string>({
             blockRotation: plan.blockRotation,
             rotationOriginX: plan.rotationOriginX,
             rotationOriginY: plan.rotationOriginY,
+            opticalKerning,
+            trackingScale,
             commands: plan.commands,
           })
         }
@@ -373,25 +414,23 @@ export function useTypographyRenderer<BlockId extends string>({
         bufferCtx.textBaseline = "alphabetic"
         for (const plan of plans) {
           bufferCtx.fillStyle = plan.textColor
-          bufferCtx.font = plan.font
+          applyCanvasTextConfig(bufferCtx, {
+            font: plan.font,
+            opticalKerning: plan.opticalKerning,
+          })
           bufferCtx.textAlign = plan.textAlign
-          const angle = (plan.blockRotation * Math.PI) / 180
-          if (Math.abs(angle) > 0.0001) {
-            bufferCtx.save()
-            bufferCtx.translate(plan.rotationOriginX, plan.rotationOriginY)
-            bufferCtx.rotate(angle)
-            for (const command of plan.commands) {
-              bufferCtx.fillText(
-                command.text,
-                command.x - plan.rotationOriginX,
-                command.y - plan.rotationOriginY,
-              )
-            }
-            bufferCtx.restore()
-          } else {
-            for (const command of plan.commands) {
-              bufferCtx.fillText(command.text, command.x, command.y)
-            }
+          for (const command of plan.commands) {
+            drawCanvasText(bufferCtx, {
+              text: command.text,
+              x: command.x,
+              y: command.y,
+              trackingScale: plan.trackingScale,
+              blockRotation: plan.blockRotation,
+              rotationOrigin: {
+                x: plan.rotationOriginX,
+                y: plan.rotationOriginY,
+              },
+            })
           }
         }
       }
@@ -448,6 +487,7 @@ export function useTypographyRenderer<BlockId extends string>({
     dragState,
     getBlockFont,
     getBlockFontWeight,
+    getBlockTrackingScale,
     getBlockRotation,
     getBlockRows,
     getBlockFontSize,
@@ -463,6 +503,7 @@ export function useTypographyRenderer<BlockId extends string>({
     imageOrder,
     imageRectsRef,
     isBlockItalic,
+    isBlockOpticalKerningEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     layerOrder,

@@ -9,7 +9,15 @@ function makeInput() {
       {
         key: "body",
         text: "This is a long body text block intended to trigger column expansion.",
-        style: { size: 12, baselineMultiplier: 1.2, weight: "Regular" },
+        style: {
+          size: 12,
+          baselineMultiplier: 1.2,
+          fontFamily: "Inter",
+          fontWeight: 400,
+          italic: false,
+          opticalKerning: true,
+          trackingScale: 0,
+        },
         rowSpan: 2,
         syllableDivision: true,
         position: { col: 1, row: 6 },
@@ -18,7 +26,15 @@ function makeInput() {
       {
         key: "caption",
         text: "Caption",
-        style: { size: 10, baselineMultiplier: 1.0, weight: "Regular" },
+        style: {
+          size: 10,
+          baselineMultiplier: 1.0,
+          fontFamily: "Inter",
+          fontWeight: 400,
+          italic: false,
+          opticalKerning: true,
+          trackingScale: 0,
+        },
         rowSpan: 1,
         syllableDivision: false,
         position: { col: 5, row: 12 },
@@ -69,4 +85,31 @@ test("computeAutoFitBatch produces no updates for empty text blocks", () => {
 
   const output = computeAutoFitBatch(input, (_font, text) => text.length * 6)
   assert.deepEqual(output, { spanUpdates: {}, positionUpdates: {} })
+})
+
+test("computeAutoFitBatch respects tracking in width measurement", () => {
+  const input = makeInput()
+  input.items = [
+    {
+      ...input.items[0],
+      key: "tracked",
+      text: "Tracked width sample text",
+      currentSpan: 1,
+      style: {
+        ...input.items[0].style,
+        trackingScale: 200,
+      },
+    },
+  ]
+
+  const trackedOutput = computeAutoFitBatch(
+    input,
+    (style, text) => text.length * 4 + Math.max(0, text.length - 1) * (style.size * style.trackingScale) / 1000,
+  )
+  const normalOutput = computeAutoFitBatch({
+    ...input,
+    items: [{ ...input.items[0], style: { ...input.items[0].style, trackingScale: 0 } }],
+  }, (style, text) => text.length * 4 + Math.max(0, text.length - 1) * (style.size * style.trackingScale) / 1000)
+
+  assert.ok((trackedOutput.spanUpdates.tracked ?? 1) >= (normalOutput.spanUpdates.tracked ?? 1))
 })

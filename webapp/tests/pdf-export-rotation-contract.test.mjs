@@ -46,10 +46,15 @@ test("pdf export builds wrapped lines through shared planner with measured width
   const source = readText("lib/pdf-vector-export.ts")
   assert.match(source, /buildTypographyLayoutPlan<BlockId,\s*TypographyStyleKey,\s*PdfTextContext>\(/)
   assert.match(source, /fontScale:\s*1/)
-  assert.match(source, /const\s+measureWidth\s*=\s*\(text:\s*string\)\s*=>\s*\{[\s\S]*?textMeasureContext\.measureText\(text\)\.width[\s\S]*?return\s+pdf\.getTextWidth\(text\)[\s\S]*?\}/)
+  assert.match(source, /const\s+measureWidth\s*=\s*\(text:\s*string\)\s*=>\s*\{[\s\S]*?measureCanvasTextWidth\(textMeasureContext,\s*text,\s*trackingScale,\s*fontSize\)[\s\S]*?pdf\.getTextWidth\(text\)\s*\/\s*scale[\s\S]*?getTrackingLetterSpacing\(fontSize,\s*trackingScale\)[\s\S]*?\}/)
   assert.match(source, /wrapText:\s*\(\{\s*context,\s*text,\s*maxWidth,\s*hyphenate\s*\}\)\s*=>\s*wrapText\(text,\s*maxWidth,\s*hyphenate,\s*context\.measureWidth\)/)
   assert.match(source, /textAscent:\s*\(\{\s*context,\s*fontSize\s*\}\)\s*=>[\s\S]*?estimateTextAscent\(textMeasureContext,\s*context\.canvasFont,\s*fontSize\)/)
   assert.match(source, /pdf\.setFontSize\(plan\.fontSize\s*\*\s*scale\)/)
+})
+
+test("pdf export applies tracking through charSpace instead of horizontal scaling", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /pdf\.text\(line,\s*point\.x,\s*point\.y,\s*\{[\s\S]*?charSpace:\s*getTrackingLetterSpacing\(fontSize\s*\*\s*scale,\s*trackingScale\)[\s\S]*?\}\)/)
 })
 
 test("pdf export manually right-aligns text anchors before draw to avoid rotated alignment drift", () => {

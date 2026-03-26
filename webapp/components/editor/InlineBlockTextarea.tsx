@@ -11,6 +11,12 @@ import {
 } from "@/lib/inline-editor"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import {
+  applyCanvasTextConfig,
+  buildCanvasFont,
+  measureCanvasTextWidth,
+  normalizeTrackingScale,
+} from "@/lib/text-rendering"
+import {
   useCallback,
   useEffect,
   useRef,
@@ -103,16 +109,6 @@ export function InlineBlockTextarea<StyleKey extends string>({
     return () => window.cancelAnimationFrame(frame)
   }, [editorState, textareaRef])
 
-  const measureText = useCallback((text: string) => {
-    if (typeof document === "undefined") return 0
-    if (!measureContextRef.current) {
-      measureContextRef.current = document.createElement("canvas").getContext("2d")
-    }
-    const ctx = measureContextRef.current
-    if (!ctx) return 0
-    return ctx.measureText(text).width
-  }, [])
-
   if (!editorState || !layout) return null
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
   const styleFontSize = isFxStyle(editorState.draftStyle) ? editorState.draftFxSize : fallbackStyleSize
@@ -121,12 +117,29 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const fontWeight = editorState.draftFontWeight
   const scaledFontSize = Math.max(1, styleFontSize * scale)
   const scaledLeading = Math.max(scaledFontSize, styleLeading * scale)
-  const canvasFont = `${editorState.draftItalic ? "italic " : ""}${fontWeight} ${scaledFontSize}px ${getFontFamilyCss(editorState.draftFont)}`
+  const trackingScale = normalizeTrackingScale(editorState.draftTrackingScale)
+  const canvasFont = buildCanvasFont(editorState.draftFont, fontWeight, editorState.draftItalic, scaledFontSize)
   measureContextRef.current ??= typeof document !== "undefined"
     ? document.createElement("canvas").getContext("2d")
     : null
   if (measureContextRef.current) {
-    measureContextRef.current.font = canvasFont
+    applyCanvasTextConfig(measureContextRef.current, {
+      font: canvasFont,
+      opticalKerning: editorState.draftOpticalKerning,
+    })
+  }
+  const measureText = (text: string) => {
+    if (typeof document === "undefined") return 0
+    if (!measureContextRef.current) {
+      measureContextRef.current = document.createElement("canvas").getContext("2d")
+    }
+    const ctx = measureContextRef.current
+    if (!ctx) return 0
+    applyCanvasTextConfig(ctx, {
+      font: canvasFont,
+      opticalKerning: editorState.draftOpticalKerning,
+    })
+    return measureCanvasTextWidth(ctx, text, trackingScale, scaledFontSize)
   }
   const firstLineTop = layout.rotationOriginY + baselineStep
   const fxCaretOffsetY = isFxStyle(editorState.draftStyle)
@@ -383,6 +396,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
               fontFamily: getFontFamilyCss(editorState.draftFont),
               fontStyle: editorState.draftItalic ? "italic" : "normal",
               fontWeight,
+              fontKerning: editorState.draftOpticalKerning ? "normal" : "none",
               textAlign: editorState.draftAlign,
               color: "transparent",
               fontSize: `${scaledFontSize}px`,

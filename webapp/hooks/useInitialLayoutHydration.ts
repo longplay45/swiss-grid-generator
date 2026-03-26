@@ -3,6 +3,7 @@ import type { MutableRefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, BlockKey extends string> = {
@@ -28,6 +29,8 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     styleAssignments: Record<BlockKey, StyleKey>
     blockFontFamilies: Partial<Record<BlockKey, FontFamily>>
     blockFontWeights: Partial<Record<BlockKey, number>>
+    blockOpticalKerning: Partial<Record<BlockKey, boolean>>
+    blockTrackingScales: Partial<Record<BlockKey, number>>
     blockColumnSpans: Partial<Record<BlockKey, number>>
     blockRowSpans: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
@@ -149,6 +152,22 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       return acc
     }, {} as Record<BlockKey, boolean>)
 
+    const nextOpticalKerning = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockOpticalKerning?.[key]
+      if (raw === true || raw === false) {
+        acc[key] = normalizeOpticalKerning(raw)
+      }
+      return acc
+    }, {} as Record<BlockKey, boolean>)
+
+    const nextTrackingScales = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockTrackingScales?.[key]
+      if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+        acc[key] = normalizeTrackingScale(raw)
+      }
+      return acc
+    }, {} as Record<BlockKey, number>)
+
     const nextItalic = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockItalic?.[key]
       if (raw === true || raw === false) acc[key] = raw
@@ -185,6 +204,8 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       styleAssignments: nextStyleAssignments,
       blockFontFamilies: nextFontFamilies,
       blockFontWeights: nextFontWeights,
+      blockOpticalKerning: nextOpticalKerning,
+      blockTrackingScales: nextTrackingScales,
       blockColumnSpans: nextSpans,
       blockRowSpans: nextRows,
       blockTextAlignments: nextAlignments,

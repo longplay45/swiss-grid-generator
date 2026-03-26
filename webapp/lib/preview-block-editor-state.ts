@@ -2,6 +2,10 @@ import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor
 import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import {
+  DEFAULT_OPTICAL_KERNING,
+  DEFAULT_TRACKING_SCALE,
+} from "@/lib/text-rendering"
 
 type ExistingBlockArgs<StyleKey extends string> = {
   key: string
@@ -17,9 +21,11 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getBlockSpan: (key: string) => number
   getBlockTextColor: (key: string) => string
   getBlockFontWeight: (key: string) => number
+  getBlockTrackingScale: (key: string) => number
   getStyleLeading: (style: StyleKey) => number
   getStyleSize: (style: StyleKey) => number
   isBlockItalic: (key: string) => boolean
+  isBlockOpticalKerningEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isTextReflowEnabled: (key: string) => boolean
   fallbackStyle: StyleKey
@@ -42,6 +48,8 @@ type NewBlockArgs<StyleKey extends string> = {
   syllableDivision?: boolean
   fontWeight?: number
   italic?: boolean
+  opticalKerning?: boolean
+  trackingScale?: number
   rotation?: number
   textEdited?: boolean
 }
@@ -60,9 +68,11 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getBlockSpan,
   getBlockTextColor,
   getBlockFontWeight,
+  getBlockTrackingScale,
   getStyleLeading,
   getStyleSize,
   isBlockItalic,
+  isBlockOpticalKerningEnabled,
   isSyllableDivisionEnabled,
   isTextReflowEnabled,
   fallbackStyle,
@@ -89,6 +99,8 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftReflow: isTextReflowEnabled(key),
     draftSyllableDivision: isSyllableDivisionEnabled(key),
     draftItalic: isBlockItalic(key),
+    draftOpticalKerning: isBlockOpticalKerningEnabled(key),
+    draftTrackingScale: getBlockTrackingScale(key),
     draftRotation: getBlockRotation(key),
     draftTextEdited: blockTextEdited[key] ?? true,
   }
@@ -110,6 +122,8 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   syllableDivision = true,
   fontWeight = 400,
   italic = false,
+  opticalKerning = DEFAULT_OPTICAL_KERNING,
+  trackingScale = DEFAULT_TRACKING_SCALE,
   rotation = 0,
   textEdited = false,
 }: NewBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
@@ -128,6 +142,8 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftReflow: reflow,
     draftSyllableDivision: syllableDivision,
     draftItalic: italic,
+    draftOpticalKerning: opticalKerning,
+    draftTrackingScale: trackingScale,
     draftRotation: rotation,
     draftTextEdited: textEdited,
   }
