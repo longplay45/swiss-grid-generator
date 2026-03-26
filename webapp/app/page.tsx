@@ -576,6 +576,7 @@ export default function Home() {
         bodyText: uiTheme.bodyText,
         previewHeader: uiTheme.previewHeader,
         previewShell: uiTheme.previewShell,
+        previewContent: uiTheme.previewContent,
         sidebar: uiTheme.sidebar,
         sidebarBody: uiTheme.sidebarBody,
         sidebarHeading: uiTheme.sidebarHeading,

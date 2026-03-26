@@ -867,6 +867,7 @@ export const GridPreview = memo(function GridPreview({
         applyPendingReflow={applyPendingReflow}
         performUndo={onUndoRequest ?? undo}
         dismissReflowToast={dismissReflowToast}
+        isDarkMode={isDarkMode}
       />
 
       <GridPreviewOverlays
@@ -898,6 +899,7 @@ export const GridPreview = memo(function GridPreview({
         colTriggerMinWidthCh={colTriggerMinWidthCh}
         imageColorSchemes={IMAGE_COLOR_SCHEMES}
         onOpenHelpSection={onOpenHelpSection}
+        isDarkMode={isDarkMode}
       />
 
     </div>

@@ -38,6 +38,7 @@ type ImageEditorDialogProps = {
   colTriggerMinWidthCh?: number
   isHelpActive?: boolean
   showRolloverInfo?: boolean
+  isDarkMode?: boolean
 }
 
 export function ImageEditorDialog({
@@ -53,6 +54,7 @@ export function ImageEditorDialog({
   colTriggerMinWidthCh = 12,
   isHelpActive = false,
   showRolloverInfo = true,
+  isDarkMode = false,
 }: ImageEditorDialogProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
@@ -76,20 +78,39 @@ export function ImageEditorDialog({
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
 
-  const tone = {
-    rail: "border-gray-300 bg-white",
-    railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-    railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-    submenu: "border-gray-300 bg-white text-gray-900",
-    input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-    iconMuted: "text-gray-500",
-    ringOffset: "ring-offset-white",
-    divider: "bg-gray-200",
-  }
+  const tone = isDarkMode
+    ? {
+      root: "dark",
+      rail: "border-gray-700 bg-gray-900 text-gray-100",
+      railButton: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
+      railButtonActive: "border-gray-600 bg-gray-800 text-gray-100",
+      submenu: "border-gray-700 bg-gray-900 text-gray-100",
+      input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
+      iconMuted: "text-gray-400",
+      ringOffset: "ring-offset-gray-900",
+      divider: "bg-gray-700",
+      railTooltip: "w-max whitespace-nowrap border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
+      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
+      selectContent: "dark",
+    }
+    : {
+      root: "",
+      rail: "border-gray-300 bg-white",
+      railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
+      submenu: "border-gray-300 bg-white text-gray-900",
+      input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
+      iconMuted: "text-gray-500",
+      ringOffset: "ring-offset-white",
+      divider: "bg-gray-200",
+      railTooltip: "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg",
+      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg",
+      selectContent: "",
+    }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const submenuTooltipClassName = "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
+  const railTooltipClassName = tone.railTooltip
+  const submenuTooltipClassName = tone.submenuTooltip
   const positionSubmenu = (anchor: HTMLElement) => {
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
@@ -115,7 +136,7 @@ export function ImageEditorDialog({
   )
 
   return (
-    <div ref={panelRef} className="relative">
+    <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
       <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
         {isHelpActive ? <HelpIndicatorLine /> : null}
         {withRailTooltip("Rows and columns for the image placeholder", <Button
@@ -172,7 +193,7 @@ export function ImageEditorDialog({
                 <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={tone.selectContent}>
                   {Array.from({ length: gridRows }, (_, index) => index + 1).map((count) => (
                     <SelectItem key={`image-row-${count}`} value={String(count)}>
                       {count} {count === 1 ? "row" : "rows"}
@@ -192,7 +213,7 @@ export function ImageEditorDialog({
                 <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${colTriggerMinWidthCh}ch` }}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={tone.selectContent}>
                   {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
                     <SelectItem key={`image-col-${count}`} value={String(count)}>
                       {count} {count === 1 ? "col" : "cols"}
@@ -221,7 +242,7 @@ export function ImageEditorDialog({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
+                <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
                   {colorSchemes.map((scheme) => (
                     <SelectItem
                       key={scheme.id}

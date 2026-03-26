@@ -47,6 +47,7 @@ type TextEditorPanelProps<StyleKey extends string> = {
   controls: SharedTextEditorControls<StyleKey>
   isHelpActive?: boolean
   showRolloverInfo?: boolean
+  isDarkMode?: boolean
 }
 
 type MainSubmenu = "geometry" | "type" | "align" | "color" | "info" | null
@@ -59,6 +60,7 @@ export function TextEditorPanel<StyleKey extends string>({
   controls,
   isHelpActive = false,
   showRolloverInfo = true,
+  isDarkMode = false,
 }: TextEditorPanelProps<StyleKey>) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
@@ -146,21 +148,46 @@ export function TextEditorPanel<StyleKey extends string>({
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = controls.colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? controls.palette
 
-  const tone = {
-    rail: "border-gray-300 bg-white",
-    railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-    railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-    submenu: "border-gray-300 bg-white text-gray-900",
-    input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-    iconMuted: "text-gray-500",
-    ringOffset: "ring-offset-white",
-    divider: "bg-gray-200",
-  }
+  const tone = isDarkMode
+    ? {
+      root: "dark",
+      rail: "border-gray-700 bg-gray-900 text-gray-100",
+      railButton: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
+      railButtonActive: "border-gray-600 bg-gray-800 text-gray-100",
+      disabledButton: "cursor-not-allowed border-gray-700 bg-gray-800 text-gray-600",
+      submenu: "border-gray-700 bg-gray-900 text-gray-100",
+      input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
+      iconMuted: "text-gray-400",
+      metaText: "text-gray-400",
+      ringOffset: "ring-offset-gray-900",
+      divider: "bg-gray-700",
+      railTooltip: "w-max whitespace-nowrap border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
+      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
+      submenuToken: "text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400",
+      selectContent: "dark",
+    }
+    : {
+      root: "",
+      rail: "border-gray-300 bg-white",
+      railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
+      disabledButton: "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400",
+      submenu: "border-gray-300 bg-white text-gray-900",
+      input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
+      iconMuted: "text-gray-500",
+      metaText: "text-gray-600",
+      ringOffset: "ring-offset-white",
+      divider: "bg-gray-200",
+      railTooltip: "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg",
+      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg",
+      submenuToken: "text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500",
+      selectContent: "",
+    }
 
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const submenuTooltipClassName = "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg"
-  const submenuTokenClassName = "text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500"
+  const railTooltipClassName = tone.railTooltip
+  const submenuTooltipClassName = tone.submenuTooltip
+  const submenuTokenClassName = tone.submenuToken
   const positionSubmenu = (anchor: HTMLElement) => {
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
@@ -199,7 +226,7 @@ export function TextEditorPanel<StyleKey extends string>({
   )
 
   return (
-    <div ref={panelRef} className="relative">
+    <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
       <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
         {isHelpActive ? <HelpIndicatorLine /> : null}
         {withRailTooltip("Rows, columns, and rotation", <Button
@@ -296,7 +323,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${controls.rowTriggerMinWidthCh}ch` }}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={tone.selectContent}>
                   {Array.from({ length: controls.gridRows }, (_, index) => index + 1).map((count) => (
                     <SelectItem key={count} value={String(count)}>
                       {count} {count === 1 ? "row" : "rows"}
@@ -320,7 +347,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${controls.colTriggerMinWidthCh}ch` }}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={tone.selectContent}>
                   {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
                     <SelectItem key={count} value={String(count)}>
                       {count} {count === 1 ? "col" : "cols"}
@@ -388,7 +415,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 disabled={!canUseNewspaperReflow}
                 className={`h-8 rounded-sm border px-2 text-xs ${
                   !canUseNewspaperReflow
-                    ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                    ? tone.disabledButton
                     : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
                 }`}
                 onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
@@ -437,6 +464,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   options={FONT_OPTIONS}
                   triggerClassName={`h-8 text-xs ${tone.input}`}
                   triggerStyle={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
+                  contentClassName={tone.selectContent}
                 />)}
               </div>
 
@@ -459,7 +487,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={tone.selectContent}>
                     {fontVariantOptions.map((variant) => (
                       <SelectItem key={variant.id} value={variant.id}>
                         {variant.label}
@@ -509,7 +537,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={tone.selectContent}>
                     {controls.styleOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {getStyleOptionLabel(option.value, option.label)}
@@ -521,8 +549,8 @@ export function TextEditorPanel<StyleKey extends string>({
 
               {fxSelected ? (
                 <div className="col-start-3 row-start-2 col-span-2 flex min-h-8 w-full items-center gap-1.5">
-                  {withSubmenuTooltip("Set the FX font size in points", <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-                    <TypeOutline className="h-4 w-4 shrink-0 text-gray-500" />
+                  {withSubmenuTooltip("Set the FX font size in points", <label className={`flex items-center gap-1.5 text-[11px] ${tone.metaText}`}>
+                    <TypeOutline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
                     <input
                       type="text"
                       inputMode="decimal"
@@ -552,8 +580,8 @@ export function TextEditorPanel<StyleKey extends string>({
                       aria-label="FX font size"
                     />
                   </label>)}
-                  {withSubmenuTooltip("Set the FX leading in points", <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-                    <Baseline className="h-4 w-4 shrink-0 text-gray-500" />
+                  {withSubmenuTooltip("Set the FX leading in points", <label className={`flex items-center gap-1.5 text-[11px] ${tone.metaText}`}>
+                    <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
                     <input
                       type="text"
                       inputMode="decimal"
@@ -602,7 +630,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={tone.selectContent}>
                     <SelectItem value="on">Optical on</SelectItem>
                     <SelectItem value="off">Optical off</SelectItem>
                   </SelectContent>
@@ -626,7 +654,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={tone.selectContent}>
                     {TRACKING_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={String(option.value)}>
                         {option.label} ({formatTrackingScale(option.value)})
@@ -657,7 +685,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
+                <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
                   {controls.colorSchemes.map((scheme) => (
                     <SelectItem
                       key={scheme.id}

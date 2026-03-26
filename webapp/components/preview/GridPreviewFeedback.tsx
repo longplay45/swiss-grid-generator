@@ -17,6 +17,7 @@ type Props = {
   applyPendingReflow: () => void
   performUndo: () => void
   dismissReflowToast: () => void
+  isDarkMode?: boolean
 }
 
 export function GridPreviewFeedback({
@@ -26,14 +27,15 @@ export function GridPreviewFeedback({
   applyPendingReflow,
   performUndo,
   dismissReflowToast,
+  isDarkMode = false,
 }: Props) {
   return (
     <>
       {pendingReflow ? (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-sm rounded-md border border-gray-300 bg-white p-4 shadow-xl">
-            <div className="text-sm font-semibold text-gray-900">Rearrange Layout?</div>
-            <div className="mt-2 text-xs text-gray-600">
+          <div className={`w-full max-w-sm rounded-md border p-4 shadow-xl ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-100" : "border-gray-300 bg-white text-gray-900"}`}>
+            <div className="text-sm font-semibold">Rearrange Layout?</div>
+            <div className={`mt-2 text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
               This grid change will rearrange {pendingReflow.movedCount} block{pendingReflow.movedCount === 1 ? "" : "s"}.
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
@@ -45,8 +47,8 @@ export function GridPreviewFeedback({
       ) : null}
 
       {reflowToast ? (
-        <div className="absolute bottom-3 right-3 z-30 rounded-md border border-gray-300 bg-white px-3 py-2 shadow-lg">
-          <div className="text-xs text-gray-700">Layout rearranged.</div>
+        <div className={`absolute bottom-3 right-3 z-30 rounded-md border px-3 py-2 shadow-lg ${isDarkMode ? "dark border-gray-700 bg-gray-900 text-gray-200" : "border-gray-300 bg-white text-gray-700"}`}>
+          <div className="text-xs">Layout rearranged.</div>
           <div className="mt-1 flex items-center justify-end">
             <Button
               size="sm"

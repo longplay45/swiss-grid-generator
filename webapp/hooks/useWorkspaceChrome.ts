@@ -9,6 +9,7 @@ export type WorkspaceTheme = {
   link: string
   previewShell: string
   previewHeader: string
+  previewContent: string
   divider: string
   sidebar: string
   sidebarHeading: string
@@ -24,6 +25,7 @@ const DARK_THEME: WorkspaceTheme = {
   link: "text-gray-100 underline",
   previewShell: "bg-gray-950",
   previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
+  previewContent: "bg-gray-950",
   divider: "bg-gray-700",
   sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
   sidebarHeading: "text-gray-100",
@@ -39,6 +41,7 @@ const LIGHT_THEME: WorkspaceTheme = {
   link: "underline",
   previewShell: "bg-white",
   previewHeader: "border-gray-200 bg-white",
+  previewContent: "bg-white",
   divider: "bg-gray-200",
   sidebar: "border-gray-200 bg-white text-gray-700",
   sidebarHeading: "text-gray-900",

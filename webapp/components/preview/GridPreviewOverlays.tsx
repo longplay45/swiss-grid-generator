@@ -45,6 +45,7 @@ type Props<StyleKey extends string> = {
   colTriggerMinWidthCh: number
   imageColorSchemes: readonly PreviewColorSchemeOption[]
   onOpenHelpSection?: (sectionId: "help-editor" | "help-image-editor") => void
+  isDarkMode?: boolean
 }
 
 export function GridPreviewOverlays<StyleKey extends string>({
@@ -76,6 +77,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   colTriggerMinWidthCh,
   imageColorSchemes,
   onOpenHelpSection,
+  isDarkMode = false,
 }: Props<StyleKey>) {
   const hoveredEditTarget = hoveredTextKey && hoveredTextRect
     ? { kind: "text" as const, key: hoveredTextKey, rect: hoveredTextRect }
@@ -113,8 +115,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
       {showPerfOverlay ? (
         <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
           {showPerfOverlay && perfOverlay ? (
-            <div className="rounded-md border border-gray-300 bg-white/95 px-3 py-2 text-[11px] text-gray-700 shadow-md backdrop-blur-sm">
-              <div className="font-semibold text-gray-900">Perf (Ctrl/Cmd+Shift+P)</div>
+            <div className={`rounded-md border px-3 py-2 text-[11px] shadow-md backdrop-blur-sm ${isDarkMode ? "dark border-gray-700 bg-gray-900/95 text-gray-300" : "border-gray-300 bg-white/95 text-gray-700"}`}>
+              <div className={`font-semibold ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Perf (Ctrl/Cmd+Shift+P)</div>
               <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
               <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
               <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
@@ -138,7 +140,11 @@ export function GridPreviewOverlays<StyleKey extends string>({
           <button
             type="button"
             data-preview-edit-affordance="true"
-            className="pointer-events-auto absolute flex h-[26px] w-[26px] items-center justify-center rounded-sm border border-gray-200 bg-white/95 text-gray-700 shadow-md transition-colors hover:border-gray-300 hover:bg-white hover:text-gray-900"
+            className={`pointer-events-auto absolute flex h-[26px] w-[26px] items-center justify-center rounded-sm border shadow-md transition-colors ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-gray-600 hover:bg-gray-800 hover:text-gray-50"
+                : "border-gray-200 bg-white/95 text-gray-700 hover:border-gray-300 hover:bg-white hover:text-gray-900"
+            }`}
             style={{
               left: editButtonLeft,
               top: editButtonTop,
@@ -177,6 +183,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
             isHelpActive={showEditorHelpIcon}
             showRolloverInfo={showRolloverInfo}
             controls={textEditorControls}
+            isDarkMode={isDarkMode}
           />
         </div>
       ) : null}
@@ -200,6 +207,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
             colTriggerMinWidthCh={colTriggerMinWidthCh}
             isHelpActive={showEditorHelpIcon}
             showRolloverInfo={showRolloverInfo}
+            isDarkMode={isDarkMode}
           />
         </div>
       ) : null}

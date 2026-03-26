@@ -22,6 +22,7 @@ type Props = {
   options: FontOption[]
   triggerClassName?: string
   triggerStyle?: CSSProperties
+  contentClassName?: string
   fitToLongestOption?: boolean
 }
 
@@ -37,6 +38,7 @@ export function FontSelect({
   options,
   triggerClassName,
   triggerStyle,
+  contentClassName,
   fitToLongestOption = false,
 }: Props) {
   const resolvedTriggerStyle: CSSProperties | undefined = fitToLongestOption
@@ -51,7 +53,7 @@ export function FontSelect({
       <SelectTrigger className={triggerClassName} style={resolvedTriggerStyle}>
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className={contentClassName}>
         {FONT_GROUPS.map((group, index) => {
           const groupOptions = options.filter((option) => option.category === group.key)
           if (!groupOptions.length) return null

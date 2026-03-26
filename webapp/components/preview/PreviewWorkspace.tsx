@@ -27,6 +27,7 @@ type UiTheme = {
   bodyText: string
   previewHeader: string
   previewShell: string
+  previewContent: string
   sidebar: string
   sidebarBody: string
   sidebarHeading: string
@@ -206,7 +207,7 @@ export function PreviewWorkspace({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className={`flex min-h-0 flex-1 overflow-auto ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel
