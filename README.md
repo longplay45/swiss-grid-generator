@@ -41,12 +41,13 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - rollover info/tooltips (`i` toggle)
   - per-paragraph font selection
   - per-paragraph font-cut selector in the type submenu, listing the available cuts of the chosen family
+  - per-block reflow toggle in the type submenu (`Re`)
+  - per-block syllable-division toggle in the type submenu (`Hy`)
   - live character + word count in the editor `Info` submenu
   - per-block `cols` and `rows`
   - per-block rotation input (`-180..180`)
-  - per-block reflow toggle (newspaper-style column flow)
-  - per-block syllable-division toggle (`Hy`)
   - optical margin alignment (hanging punctuation)
+  - layers-panel hover mirrors the same active preview rollover/guides for the hovered block
 - Typography controls:
   - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
   - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`

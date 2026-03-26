@@ -276,7 +276,7 @@ export function LayersPanel({
         <div>
           <h3 className={`text-sm font-semibold ${tone.heading}`}>Layers</h3>
           <p className={`mt-1 text-xs ${tone.body}`}>
-            Click to select. Double-click a layer card to toggle edit mode. Drag to change z-index. Use delete to remove a layer.
+            Hover mirrors the same active preview rollover for that block. Click selects, double-click toggles edit mode, drag changes z-index, and delete removes the layer.
           </p>
         </div>
         <button

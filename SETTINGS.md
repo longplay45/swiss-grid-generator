@@ -167,6 +167,7 @@ Default: `swiss`
 - Shows a mixed stack of text and image layers using current `layerOrder`.
 - Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
 - Image cards display `Image Placeholder` and a single color swatch.
+- Hovering a layer card mirrors the same active preview rollover/guides for that block.
 - Dragging cards changes z-index using a visible insertion marker between cards.
 - Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the document model and saved JSON.
@@ -256,9 +257,10 @@ Editor controls:
   - row 1: font family, font cut
   - row 2: hierarchy, plus FX size/leading when `FX` is selected
   - row 3: kerning (`Optical on/off`, default `Optical on`) and tracking presets (default `Normal`)
+  - row 4: newspaper reflow (`Re`) and syllable division (`Hy`)
 - Color submenu: scheme selector and color swatches
 - Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
-- rail quick actions: align left/right, newspaper reflow, syllable division (`Hy`)
+- rail quick actions: alignment submenu and delete
 - save is in the inline textarea toolbar; delete is in the rail
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns

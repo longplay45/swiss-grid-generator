@@ -47,7 +47,6 @@ Comprehensive user reference for the in-app Help sidebar.
 - `Base Font` is inherited by blocks that do not store explicit font overrides.
 - Font groups: `Sans-Serif`, `Serif`, `Poster`.
 - Style defaults define base weight and optional default italic per style.
-- Manual bold/italic in editor can override style defaults per paragraph.
 - `VI. Color Scheme` offers `Swiss Modern`, `Stone Cyan`, and `Fresh Contrast`, plus a `Background` dropdown with `None` or any color from the active scheme.
 
 ## Text Editor Popup
@@ -55,13 +54,14 @@ Comprehensive user reference for the in-app Help sidebar.
 - Open editor by double-clicking a block; double-click empty area creates a paragraph block.
 - Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.
 - Geometry submenu: row span, column span, paragraph rotation (`-180..180`).
-- Type submenu: style hierarchy, font family, and FX size/leading when `FX` is selected.
+- Type submenu: font family, font cut, style hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading when `FX` is selected.
 - Color submenu: scheme selector and swatches.
 - Info submenu includes style/font/geometry/color plus character and word counts.
-- Quick actions on the rail: bold/italic, align left/right, newspaper reflow, syllable division, and delete.
+- Quick actions on the rail: alignment submenu and delete.
+- Newspaper reflow (`Re`) and syllable division (`Hy`) sit at the end of the Type submenu.
 - Newspaper reflow is available only when paragraph columns are `2+`.
 - Reflow with `col > 1`: newspaper flow across configured columns (col 1 top-to-bottom, then col 2, etc.).
-- Textarea preview mirrors current paragraph style controls: font family, bold/italic, and left/right alignment.
+- Textarea preview mirrors current paragraph style controls.
 - `Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.
 
 ## Image Editor
@@ -108,6 +108,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Opens a right sidebar with a mixed stack of text paragraphs and image placeholders.
 - Text cards show hierarchy plus font, and a short text preview rendered in the paragraph's color and font.
 - Image cards show `Image Placeholder` and a single color swatch.
+- Hovering a layer card mirrors the same active preview rollover/guides for that block.
 - Drag reorders z-index using an insertion marker between cards.
 - Clicking a layer card selects the matching item in preview; clicking a preview item selects and scrolls to the matching layer card.
 - Trash removes the layer from the document model.

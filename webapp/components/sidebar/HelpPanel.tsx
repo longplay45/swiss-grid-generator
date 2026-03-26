@@ -172,10 +172,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
-          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
+          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading when `FX` is selected.</li>
           <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
-          <li>Quick actions on the rail: alignment submenu, newspaper reflow, syllable division, and delete.</li>
+          <li>Quick actions on the rail: alignment submenu and delete.</li>
+          <li>Newspaper reflow and syllable division sit at the end of the Type submenu.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
@@ -419,6 +420,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Opens the right-side layers panel with a mixed stack of text paragraphs and image placeholders.</li>
           <li>Text cards show hierarchy plus font, and a short text preview in the paragraph color and font.</li>
           <li>Image cards show `Image Placeholder` and a single color swatch.</li>
+          <li>Hovering a layer card mirrors the same active preview rollover/guides for that block, so layer inspection stays linked to the document surface.</li>
           <li>Drag cards to reorder z-index; the drop marker appears between cards and opens real space at the insertion point.</li>
           <li>Clicking a layer card selects the matching item in the preview; clicking a preview item selects and scrolls to the matching layer card.</li>
           <li>Trash deletes the layer from the document and updates saved JSON layer data.</li>

@@ -168,7 +168,7 @@ export function TextEditorPanel<StyleKey extends string>({
         >
           <Rows3 className="h-4 w-4" />
         </Button>)}
-        {withRailTooltip("Font family, font cut, hierarchy, kerning, tracking, and FX size/leading", <Button
+        {withRailTooltip("Font family, font cut, hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -200,32 +200,6 @@ export function TextEditorPanel<StyleKey extends string>({
           aria-label="Text alignment"
         >
           <AlignCenter className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={!canUseNewspaperReflow}
-          className={`h-8 rounded-sm border px-2 text-xs ${
-            !canUseNewspaperReflow
-              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
-              : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
-          }`}
-          onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
-          aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
-          title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
-        >
-          Re
-        </Button>)}
-        {withRailTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className={`h-8 rounded-sm border px-2 text-xs ${controls.editorState.draftSyllableDivision ? tone.railButtonActive : tone.railButton}`}
-          onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)}
-          aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
-        >
-          Hy
         </Button>)}
         {withRailTooltip("Paragraph summary, words, and characters", <Button
           type="button"
@@ -590,6 +564,38 @@ export function TextEditorPanel<StyleKey extends string>({
                     ))}
                   </SelectContent>
                 </Select>)}
+              </div>
+
+              <div className="col-start-1 row-start-4 flex min-h-8 items-center">
+                <span className={submenuTokenClassName}>Fl</span>
+              </div>
+              <div className="col-start-2 row-start-4 col-span-3 flex min-h-8 items-center gap-2">
+                {withSubmenuTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={!canUseNewspaperReflow}
+                  className={`h-8 rounded-sm border px-2 text-xs ${
+                    !canUseNewspaperReflow
+                      ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                      : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
+                  }`}
+                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
+                  aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
+                  title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
+                >
+                  Re
+                </Button>)}
+                {withSubmenuTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className={`h-8 rounded-sm border px-2 text-xs ${controls.editorState.draftSyllableDivision ? tone.railButtonActive : tone.railButton}`}
+                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)}
+                  aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
+                >
+                  Hy
+                </Button>)}
               </div>
             </div>
           ) : null}
