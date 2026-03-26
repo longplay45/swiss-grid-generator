@@ -172,11 +172,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
           <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
-          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading when `FX` is selected.</li>
+          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
           <li>Color submenu: scheme selector and swatches.</li>
           <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
           <li>Quick actions on the rail: alignment submenu and delete.</li>
-          <li>Newspaper reflow and syllable division sit at the end of the Type submenu.</li>
+          <li>The alignment submenu contains left/center/right alignment plus newspaper reflow and syllable division after the right-align control.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>

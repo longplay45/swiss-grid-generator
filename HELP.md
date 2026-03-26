@@ -54,11 +54,11 @@ Comprehensive user reference for the in-app Help sidebar.
 - Open editor by double-clicking a block; double-click empty area creates a paragraph block.
 - Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.
 - Geometry submenu: row span, column span, paragraph rotation (`-180..180`).
-- Type submenu: font family, font cut, style hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading when `FX` is selected.
+- Type submenu: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.
 - Color submenu: scheme selector and swatches.
 - Info submenu includes style/font/geometry/color plus character and word counts.
 - Quick actions on the rail: alignment submenu and delete.
-- Newspaper reflow (`Re`) and syllable division (`Hy`) sit at the end of the Type submenu.
+- The alignment submenu contains left/center/right alignment plus newspaper reflow (`Re`) and syllable division (`Hy`) after the right-align control.
 - Newspaper reflow is available only when paragraph columns are `2+`.
 - Reflow with `col > 1`: newspaper flow across configured columns (col 1 top-to-bottom, then col 2, etc.).
 - Textarea preview mirrors current paragraph style controls.

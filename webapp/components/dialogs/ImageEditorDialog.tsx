@@ -49,8 +49,8 @@ export function ImageEditorDialog({
   colorSchemes,
   selectedColorScheme,
   palette,
-  rowTriggerMinWidthCh = 10,
-  colTriggerMinWidthCh = 10,
+  rowTriggerMinWidthCh = 12,
+  colTriggerMinWidthCh = 12,
   isHelpActive = false,
   showRolloverInfo = true,
 }: ImageEditorDialogProps) {

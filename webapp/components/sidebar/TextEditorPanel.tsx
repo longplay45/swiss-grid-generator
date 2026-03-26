@@ -88,6 +88,50 @@ export function TextEditorPanel<StyleKey extends string>({
     ...controls.colorSchemes.map((scheme) => scheme.label.length),
     12,
   ) + 3
+  const infoRows = [
+    { label: "Rows", value: String(controls.editorState.draftRows) },
+    { label: "Cols", value: String(controls.editorState.draftColumns) },
+    { label: "Rotation", value: `${Math.round(controls.editorState.draftRotation)}deg` },
+    { label: "Font", value: controls.editorState.draftFont },
+    { label: "Font Cut", value: selectedFontVariant.label },
+    { label: "Hierarchy", value: selectedStyleLabel },
+    {
+      label: "Size",
+      value: `${controls.isFxStyle(controls.editorState.draftStyle)
+        ? controls.editorState.draftFxSize
+        : controls.getStyleSizeValue(controls.editorState.draftStyle)}pt`,
+    },
+    {
+      label: "Leading",
+      value: `${controls.isFxStyle(controls.editorState.draftStyle)
+        ? controls.editorState.draftFxLeading
+        : controls.getStyleLeadingValue(controls.editorState.draftStyle)}pt`,
+    },
+    {
+      label: "Kerning",
+      value: controls.editorState.draftOpticalKerning ? "Optical on" : "Optical off",
+    },
+    {
+      label: "Tracking",
+      value: `${selectedTrackingOption.label} (${formatTrackingScale(selectedTrackingOption.value)})`,
+    },
+    { label: "Color Scheme", value: selectedSchemeLabel },
+    { label: "Text Color", value: controls.editorState.draftColor },
+    {
+      label: "Alignment",
+      value: controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1),
+    },
+    {
+      label: "Reflow",
+      value: controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off",
+    },
+    {
+      label: "Hyphenation",
+      value: controls.editorState.draftSyllableDivision ? "On" : "Off",
+    },
+    { label: "Characters", value: String(characterCount) },
+    { label: "Words", value: String(wordCount) },
+  ]
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
@@ -168,7 +212,7 @@ export function TextEditorPanel<StyleKey extends string>({
         >
           <Rows3 className="h-4 w-4" />
         </Button>)}
-        {withRailTooltip("Font family, font cut, hierarchy, kerning, tracking, reflow, hyphenation, and FX size/leading", <Button
+        {withRailTooltip("Font family, font cut, hierarchy, kerning, tracking, and FX size/leading", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -336,6 +380,32 @@ export function TextEditorPanel<StyleKey extends string>({
                 aria-label="Align right"
               >
                 <AlignRight className="h-4 w-4" />
+              </Button>)}
+              {withSubmenuTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={!canUseNewspaperReflow}
+                className={`h-8 rounded-sm border px-2 text-xs ${
+                  !canUseNewspaperReflow
+                    ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                    : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
+                }`}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
+                aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
+                title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
+              >
+                Re
+              </Button>)}
+              {withSubmenuTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className={`h-8 rounded-sm border px-2 text-xs ${controls.editorState.draftSyllableDivision ? tone.railButtonActive : tone.railButton}`}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)}
+                aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
+              >
+                Hy
               </Button>)}
             </>
           ) : null}
@@ -566,37 +636,6 @@ export function TextEditorPanel<StyleKey extends string>({
                 </Select>)}
               </div>
 
-              <div className="col-start-1 row-start-4 flex min-h-8 items-center">
-                <span className={submenuTokenClassName}>Fl</span>
-              </div>
-              <div className="col-start-2 row-start-4 col-span-3 flex min-h-8 items-center gap-2">
-                {withSubmenuTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={!canUseNewspaperReflow}
-                  className={`h-8 rounded-sm border px-2 text-xs ${
-                    !canUseNewspaperReflow
-                      ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
-                      : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
-                  }`}
-                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
-                  aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
-                  title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
-                >
-                  Re
-                </Button>)}
-                {withSubmenuTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className={`h-8 rounded-sm border px-2 text-xs ${controls.editorState.draftSyllableDivision ? tone.railButtonActive : tone.railButton}`}
-                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)}
-                  aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
-                >
-                  Hy
-                </Button>)}
-              </div>
             </div>
           ) : null}
 
@@ -661,22 +700,13 @@ export function TextEditorPanel<StyleKey extends string>({
           ) : null}
 
           {activeSubmenu === "info" ? (
-            <div className="space-y-1 text-xs leading-snug">
-              <div><span className="font-medium">Style:</span> {selectedStyleLabel}</div>
-              <div><span className="font-medium">Font:</span> {controls.editorState.draftFont}</div>
-              <div><span className="font-medium">Font Cut:</span> {selectedFontVariant.label}</div>
-              <div>
-                <span className="font-medium">Size/Leading:</span>{" "}
-                {controls.isFxStyle(controls.editorState.draftStyle)
-                  ? `${controls.editorState.draftFxSize}pt / ${controls.editorState.draftFxLeading}pt`
-                  : `${controls.getStyleSizeValue(controls.editorState.draftStyle)}pt / ${controls.getStyleLeadingValue(controls.editorState.draftStyle)}pt`}
-              </div>
-              <div><span className="font-medium">Rows/Cols:</span> {controls.editorState.draftRows} / {controls.editorState.draftColumns}</div>
-              <div><span className="font-medium">Align/Rotation:</span> {controls.editorState.draftAlign}, {Math.round(controls.editorState.draftRotation)}deg</div>
-              <div><span className="font-medium">Newspaper Reflow/Hyphenation:</span> {controls.editorState.draftReflow && canUseNewspaperReflow ? "on" : "off"}, {controls.editorState.draftSyllableDivision ? "on" : "off"}</div>
-              <div><span className="font-medium">Color Scheme:</span> {selectedSchemeLabel}</div>
-              <div><span className="font-medium">Text Color:</span> {controls.editorState.draftColor}</div>
-              <div><span className="font-medium">Characters/Words:</span> {characterCount} / {wordCount}</div>
+            <div className="grid w-max grid-cols-[max-content_max-content] items-baseline gap-x-4 gap-y-1 text-xs leading-snug">
+              {infoRows.map((row) => (
+                <div key={row.label} className="contents">
+                  <span className="whitespace-nowrap font-medium text-left">{row.label}:</span>
+                  <span className="whitespace-nowrap text-right">{row.value}</span>
+                </div>
+              ))}
             </div>
           ) : null}
         </div>

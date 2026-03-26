@@ -788,8 +788,8 @@ export const GridPreview = memo(function GridPreview({
     () => Math.max(12, hierarchyOptionLabels.reduce((max, label) => Math.max(max, label.length), 0) + 4),
     [hierarchyOptionLabels],
   )
-  const rowTriggerMinWidthCh = 10
-  const colTriggerMinWidthCh = 10
+  const rowTriggerMinWidthCh = 12
+  const colTriggerMinWidthCh = 12
   const inlineEditorLayout = usePreviewInlineEditorLayout({
     editorState,
     blockRectsRef,

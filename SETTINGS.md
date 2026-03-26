@@ -257,10 +257,10 @@ Editor controls:
   - row 1: font family, font cut
   - row 2: hierarchy, plus FX size/leading when `FX` is selected
   - row 3: kerning (`Optical on/off`, default `Optical on`) and tracking presets (default `Normal`)
-  - row 4: newspaper reflow (`Re`) and syllable division (`Hy`)
 - Color submenu: scheme selector and color swatches
 - Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
 - rail quick actions: alignment submenu and delete
+- alignment submenu: left, center, right, then newspaper reflow (`Re`) and syllable division (`Hy`)
 - save is in the inline textarea toolbar; delete is in the rail
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns
