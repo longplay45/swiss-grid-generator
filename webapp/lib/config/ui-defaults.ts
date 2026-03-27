@@ -1,5 +1,5 @@
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import defaultPreset from "../../../backend/feedback/default_v001.json"
+import defaultPreset from "@/public/feedback/default_v001.json"
 import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import {
   defaultGridRhythmAxisSettings,

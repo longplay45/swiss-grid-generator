@@ -1,9 +1,9 @@
 "use client"
 
 import { X } from "lucide-react"
-import { useState, type FormEvent, type ReactNode } from "react"
+import { useRef, useState, type FormEvent, type ReactNode } from "react"
 
-const FEEDBACK_API_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_URL ?? "/backend/feedback/survey-api.php"
+const FEEDBACK_API_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_URL ?? "/feedback/survey-api.php"
 
 const EXPERIENCE_OPTIONS = [
   { value: "beginner", label: "Beginner" },
@@ -122,10 +122,12 @@ function getValidationErrors(values: FeedbackFormState): Partial<Record<FieldKey
 }
 
 export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const [form, setForm] = useState<FeedbackFormState>(INITIAL_FORM_STATE)
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitMessage, setSubmitMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null)
+  const [hasSubmitted, setHasSubmitted] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null)
 
   const tone = isDarkMode
     ? {
@@ -169,8 +171,15 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
       delete next[key]
       return next
     })
-    if (submitMessage?.tone === "error") {
+    if (submitMessage) {
       setSubmitMessage(null)
+    }
+  }
+
+  const scrollPanelToTop = () => {
+    const scrollRoot = rootRef.current?.closest<HTMLElement>('[data-help-scroll-root="true"]')
+    if (scrollRoot) {
+      scrollRoot.scrollTo({ top: 0 })
     }
   }
 
@@ -180,10 +189,8 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
     setErrors(nextErrors)
 
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitMessage({
-        tone: "error",
-        text: "Some required responses are still missing.",
-      })
+      setSubmitMessage("Some required responses are still missing.")
+      scrollPanelToTop()
       return
     }
 
@@ -213,27 +220,21 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
 
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload?.success) {
-        setSubmitMessage({
-          tone: "error",
-          text: payload?.error ?? "Feedback could not be sent. Please try again.",
-        })
+        setSubmitMessage(payload?.error ?? "Feedback could not be sent. Please try again.")
         if (payload?.fields && typeof payload.fields === "object") {
           setErrors((current) => ({ ...current, ...payload.fields }))
         }
+        scrollPanelToTop()
         return
       }
 
-      setForm(INITIAL_FORM_STATE)
+      setHasSubmitted(true)
       setErrors({})
-      setSubmitMessage({
-        tone: "success",
-        text: "Feedback sent. Thank you.",
-      })
+      setSubmitMessage(null)
+      scrollPanelToTop()
     } catch {
-      setSubmitMessage({
-        tone: "error",
-        text: "Feedback could not be sent. Check the connection or backend deployment.",
-      })
+      setSubmitMessage("Feedback could not be sent. Check the connection or backend deployment.")
+      scrollPanelToTop()
     } finally {
       setIsSubmitting(false)
     }
@@ -330,7 +331,7 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
   )
 
   return (
-    <div className="space-y-4">
+    <div ref={rootRef} className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
           <h3 className={`text-sm font-semibold ${tone.heading}`}>Feedback</h3>
@@ -349,264 +350,284 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
       </div>
 
       {submitMessage ? (
-        <div className={`border px-3 py-2 text-[11px] leading-relaxed ${submitMessage.tone === "success" ? tone.success : tone.error}`}>
-          {submitMessage.text}
+        <div className={`border px-3 py-2 text-[11px] leading-relaxed ${tone.error}`}>
+          {submitMessage}
         </div>
       ) : null}
 
-      <form className={`space-y-4 ${tone.body}`} onSubmit={handleSubmit} noValidate>
-        <Section
-          number="01."
-          title="Experience"
-          description="How experienced are you with typographic grid systems?"
-          borderClassName={tone.divider}
-        >
-          <p className={`text-[11px] leading-relaxed ${tone.caption}`}>
-            E.g. working with grid systems according to Müller-Brockmann, baseline grids, or column grids.
-          </p>
-          {renderChoiceGrid({
-            name: "experience",
-            value: form.experience,
-            options: EXPERIENCE_OPTIONS,
-            onChange: (next) => setField("experience", next),
-            columnsClassName: "grid-cols-3",
-          })}
-          <FieldError message={errors.experience} />
-        </Section>
-
-        <Section
-          number="02."
-          title="Usage"
-          description="How often have you used Swiss Grid Generator?"
-          borderClassName={tone.divider}
-        >
-          {renderChoiceGrid({
-            name: "frequency",
-            value: form.frequency,
-            options: FREQUENCY_OPTIONS,
-            onChange: (next) => setField("frequency", next),
-            columnsClassName: "grid-cols-3",
-          })}
-        </Section>
-
-        <Section
-          number="03."
-          title="First Impression"
-          description="Think about your first 10 minutes with the tool."
-          borderClassName={tone.divider}
-        >
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
-                I quickly understood what the tool does.
-              </p>
-              {renderScaleGrid({
-                name: "understand",
-                value: form.understand,
-                values: LIKERT_VALUES,
-                columnsClassName: "grid-cols-5",
-                onChange: (next) => setField("understand", next),
-              })}
-              <FieldError message={errors.understand} />
-            </div>
-
-            <div className="space-y-1.5">
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
-                Getting started was easy.
-              </p>
-              {renderScaleGrid({
-                name: "easystart",
-                value: form.easystart,
-                values: LIKERT_VALUES,
-                columnsClassName: "grid-cols-5",
-                onChange: (next) => setField("easystart", next),
-              })}
-              <FieldError message={errors.easystart} />
-            </div>
-
-            <div className="space-y-1.5">
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
-                The interface feels intuitive.
-              </p>
-              {renderScaleGrid({
-                name: "intuitive",
-                value: form.intuitive,
-                values: LIKERT_VALUES,
-                columnsClassName: "grid-cols-5",
-                onChange: (next) => setField("intuitive", next),
-              })}
-              <FieldError message={errors.intuitive} />
-            </div>
-
-            <div className="space-y-1.5">
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
-                I was able to create a meaningful grid on my first try.
-              </p>
-              {renderScaleGrid({
-                name: "firstresult",
-                value: form.firstresult,
-                values: LIKERT_VALUES,
-                columnsClassName: "grid-cols-5",
-                onChange: (next) => setField("firstresult", next),
-              })}
-              <FieldError message={errors.firstresult} />
-            </div>
+      {hasSubmitted ? (
+        <div className={`space-y-4 border-t pt-4 ${tone.divider}`}>
+          <div className={`border px-3 py-3 text-[11px] leading-relaxed ${tone.success}`}>
+            Thank you. Your feedback has been sent.
           </div>
-        </Section>
-
-        <Section
-          number="04."
-          title="Unclear or Confusing"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "first_confusion",
-            label: "What was unclear or confusing in the first few minutes?",
-            placeholder: "Describe the unclear part of the experience.",
-          })}
-        </Section>
-
-        <Section
-          number="05."
-          title="What Worked"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "what_worked",
-            label: "What worked particularly well?",
-            placeholder: "Call out the parts that felt strong or precise.",
-          })}
-        </Section>
-
-        <Section
-          number="06."
-          title="Problems and Friction"
-          borderClassName={tone.divider}
-        >
-          <div className="space-y-1.5">
-            <label className={`block text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
-              Did you encounter any errors or bugs?
-            </label>
-            {renderChoiceGrid({
-              name: "bugs_found",
-              value: form.bugs_found,
-              options: BUG_OPTIONS,
-              onChange: (next) => setField("bugs_found", next),
-              columnsClassName: "grid-cols-2",
-            })}
-          </div>
-          {form.bugs_found === "yes"
-            ? renderTextarea({
-                field: "bug_description",
-                label: "If yes, what happened?",
-                placeholder: "What broke, where, and under which conditions?",
-                rows: 5,
-              })
-            : null}
-        </Section>
-
-        <Section
-          number="07."
-          title="Job To Be Done"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "job_to_be_done",
-            label: "What task are you trying to solve with the tool?",
-            placeholder: "Describe the editorial or layout task you came for.",
-          })}
-        </Section>
-
-        <Section
-          number="08."
-          title="Alternatives"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "alternatives",
-            label: "What alternatives are you using today?",
-            placeholder: "Tools, workflows, or manual methods.",
-          })}
-        </Section>
-
-        <Section
-          number="09."
-          title="Priority"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "top_improvement",
-            label: "What is the single most important improvement we should make next?",
-            placeholder: "Name the next change that matters most.",
-          })}
-        </Section>
-
-        <Section
-          number="10."
-          title="Missing Feature"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "missing_features",
-            label: "Which feature did you expect but didn't find?",
-            placeholder: "Describe the missing capability.",
-          })}
-        </Section>
-
-        <Section
-          number="11."
-          title="Recommendation"
-          description="How likely are you to recommend the tool?"
-          borderClassName={tone.divider}
-        >
-          {renderScaleGrid({
-            name: "nps_score",
-            value: form.nps_score,
-            values: NPS_VALUES,
-            columnsClassName: "grid-cols-6",
-            onChange: (next) => setField("nps_score", next),
-          })}
-          <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.08em] ${tone.optionMuted}`}>
-            <span>0 Not likely</span>
-            <span>10 Very likely</span>
-          </div>
-          <FieldError message={errors.nps_score} />
-        </Section>
-
-        <Section
-          number="12."
-          title="Anything Else"
-          borderClassName={tone.divider}
-        >
-          {renderTextarea({
-            field: "anything_else",
-            label: "Is there anything else you'd like to tell us?",
-            placeholder: "Anything that did not fit elsewhere.",
-          })}
-        </Section>
-
-        <div className={`space-y-3 border-t pt-4 ${tone.divider}`}>
-          <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
-            Anonymous. Version {appVersion}.
-          </p>
-          <div className="flex items-center gap-2">
+          <div className={`space-y-3 border-t pt-4 ${tone.divider}`}>
+            <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
+              Anonymous. Version {appVersion}.
+            </p>
             <button
               type="button"
               onClick={onClose}
-              className={`min-h-9 border px-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${tone.buttonSecondary}`}
+              className={`min-h-9 w-full border px-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${tone.buttonSecondary}`}
             >
               Close
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`min-h-9 flex-1 border px-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${tone.button}`}
-            >
-              {isSubmitting ? "Sending..." : "Send Feedback"}
-            </button>
           </div>
         </div>
-      </form>
+      ) : (
+        <form className={`space-y-4 ${tone.body}`} onSubmit={handleSubmit} noValidate>
+          <Section
+            number="01."
+            title="Experience"
+            description="How experienced are you with typographic grid systems?"
+            borderClassName={tone.divider}
+          >
+            <p className={`text-[11px] leading-relaxed ${tone.caption}`}>
+              E.g. working with grid systems according to Müller-Brockmann, baseline grids, or column grids.
+            </p>
+            {renderChoiceGrid({
+              name: "experience",
+              value: form.experience,
+              options: EXPERIENCE_OPTIONS,
+              onChange: (next) => setField("experience", next),
+              columnsClassName: "grid-cols-3",
+            })}
+            <FieldError message={errors.experience} />
+          </Section>
+
+          <Section
+            number="02."
+            title="Usage"
+            description="How often have you used Swiss Grid Generator?"
+            borderClassName={tone.divider}
+          >
+            {renderChoiceGrid({
+              name: "frequency",
+              value: form.frequency,
+              options: FREQUENCY_OPTIONS,
+              onChange: (next) => setField("frequency", next),
+              columnsClassName: "grid-cols-3",
+            })}
+          </Section>
+
+          <Section
+            number="03."
+            title="First Impression"
+            description="Think about your first 10 minutes with the tool."
+            borderClassName={tone.divider}
+          >
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+                  I quickly understood what the tool does.
+                </p>
+                {renderScaleGrid({
+                  name: "understand",
+                  value: form.understand,
+                  values: LIKERT_VALUES,
+                  columnsClassName: "grid-cols-5",
+                  onChange: (next) => setField("understand", next),
+                })}
+                <FieldError message={errors.understand} />
+              </div>
+
+              <div className="space-y-1.5">
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+                  Getting started was easy.
+                </p>
+                {renderScaleGrid({
+                  name: "easystart",
+                  value: form.easystart,
+                  values: LIKERT_VALUES,
+                  columnsClassName: "grid-cols-5",
+                  onChange: (next) => setField("easystart", next),
+                })}
+                <FieldError message={errors.easystart} />
+              </div>
+
+              <div className="space-y-1.5">
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+                  The interface feels intuitive.
+                </p>
+                {renderScaleGrid({
+                  name: "intuitive",
+                  value: form.intuitive,
+                  values: LIKERT_VALUES,
+                  columnsClassName: "grid-cols-5",
+                  onChange: (next) => setField("intuitive", next),
+                })}
+                <FieldError message={errors.intuitive} />
+              </div>
+
+              <div className="space-y-1.5">
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+                  I was able to create a meaningful grid on my first try.
+                </p>
+                {renderScaleGrid({
+                  name: "firstresult",
+                  value: form.firstresult,
+                  values: LIKERT_VALUES,
+                  columnsClassName: "grid-cols-5",
+                  onChange: (next) => setField("firstresult", next),
+                })}
+                <FieldError message={errors.firstresult} />
+              </div>
+            </div>
+          </Section>
+
+          <Section
+            number="04."
+            title="Unclear or Confusing"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "first_confusion",
+              label: "What was unclear or confusing in the first few minutes?",
+              placeholder: "Describe the unclear part of the experience.",
+            })}
+          </Section>
+
+          <Section
+            number="05."
+            title="What Worked"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "what_worked",
+              label: "What worked particularly well?",
+              placeholder: "Call out the parts that felt strong or precise.",
+            })}
+          </Section>
+
+          <Section
+            number="06."
+            title="Problems and Friction"
+            borderClassName={tone.divider}
+          >
+            <div className="space-y-1.5">
+              <label className={`block text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+                Did you encounter any errors or bugs?
+              </label>
+              {renderChoiceGrid({
+                name: "bugs_found",
+                value: form.bugs_found,
+                options: BUG_OPTIONS,
+                onChange: (next) => setField("bugs_found", next),
+                columnsClassName: "grid-cols-2",
+              })}
+            </div>
+            {form.bugs_found === "yes"
+              ? renderTextarea({
+                  field: "bug_description",
+                  label: "If yes, what happened?",
+                  placeholder: "What broke, where, and under which conditions?",
+                  rows: 5,
+                })
+              : null}
+          </Section>
+
+          <Section
+            number="07."
+            title="Job To Be Done"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "job_to_be_done",
+              label: "What task are you trying to solve with the tool?",
+              placeholder: "Describe the editorial or layout task you came for.",
+            })}
+          </Section>
+
+          <Section
+            number="08."
+            title="Alternatives"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "alternatives",
+              label: "What alternatives are you using today?",
+              placeholder: "Tools, workflows, or manual methods.",
+            })}
+          </Section>
+
+          <Section
+            number="09."
+            title="Priority"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "top_improvement",
+              label: "What is the single most important improvement we should make next?",
+              placeholder: "Name the next change that matters most.",
+            })}
+          </Section>
+
+          <Section
+            number="10."
+            title="Missing Feature"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "missing_features",
+              label: "Which feature did you expect but didn't find?",
+              placeholder: "Describe the missing capability.",
+            })}
+          </Section>
+
+          <Section
+            number="11."
+            title="Recommendation"
+            description="How likely are you to recommend the tool?"
+            borderClassName={tone.divider}
+          >
+            {renderScaleGrid({
+              name: "nps_score",
+              value: form.nps_score,
+              values: NPS_VALUES,
+              columnsClassName: "grid-cols-6",
+              onChange: (next) => setField("nps_score", next),
+            })}
+            <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.08em] ${tone.optionMuted}`}>
+              <span>0 Not likely</span>
+              <span>10 Very likely</span>
+            </div>
+            <FieldError message={errors.nps_score} />
+          </Section>
+
+          <Section
+            number="12."
+            title="Anything Else"
+            borderClassName={tone.divider}
+          >
+            {renderTextarea({
+              field: "anything_else",
+              label: "Is there anything else you'd like to tell us?",
+              placeholder: "Anything that did not fit elsewhere.",
+            })}
+          </Section>
+
+          <div className={`space-y-3 border-t pt-4 ${tone.divider}`}>
+            <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
+              Anonymous. Version {appVersion}.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className={`min-h-9 border px-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${tone.buttonSecondary}`}
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`min-h-9 flex-1 border px-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${tone.button}`}
+              >
+                {isSubmitting ? "Sending..." : "Send Feedback"}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

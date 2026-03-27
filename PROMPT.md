@@ -27,7 +27,7 @@ hooks/useWorkerBridge.ts        — Generic worker request/response bridge
 hooks/useSettingsHistory.ts     — Settings undo/redo (100-item stack)
 hooks/usePreviewHistory.ts      — Layout undo/redo
 lib/config/ui-defaults.ts       — DEFAULT_UI, format-ratio defaults
-public/default_v001.json        — Default preset (schemaVersion 1)
+public/feedback/default_v001.json — Default preset (schemaVersion 1)
 
 ## CORE TYPES
 

@@ -139,7 +139,7 @@ See full reference in [`SETTINGS.md`](SETTINGS.md).
 
 Highlights:
 - Baseline options: `6,7,8,9,10,11,12,14,16,18,20,24,28,32,36,48,60,72`
-- Startup defaults are loaded from `webapp/public/default_v001.json`
+- Startup defaults are loaded from `webapp/public/feedback/default_v001.json`
 - Rotation: `-180..180`
 - Color Scheme background: `None` or any color from the selected scheme
 - Grid: cols/rows `1..13`

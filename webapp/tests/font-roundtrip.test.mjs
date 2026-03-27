@@ -7,7 +7,7 @@ const ROOT = process.cwd()
 const PAGE_PATH = path.join(ROOT, "app", "page.tsx")
 const FONT_CONFIG_PATH = path.join(ROOT, "lib", "config", "fonts.ts")
 const EXPORT_ACTIONS_PATH = path.join(ROOT, "hooks", "useExportActions.ts")
-const DEFAULT_PRESET_PATH = path.join(ROOT, "public", "default_v001.json")
+const DEFAULT_PRESET_PATH = path.join(ROOT, "public", "feedback", "default_v001.json")
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8")
