@@ -178,6 +178,7 @@ export const GutterPanel = memo(function GutterPanel({
           onValueCommit={([v]) => onGridRowsChange(v)}
         />
       </div>
+      <hr />
       <div className="mt-5 space-y-3">
         <div className="flex items-center justify-between">
           <Label className="text-sm text-gray-600">Baseline Multiple</Label>

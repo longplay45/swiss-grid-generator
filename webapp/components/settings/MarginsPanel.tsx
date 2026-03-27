@@ -65,6 +65,7 @@ export const MarginsPanel = memo(function MarginsPanel({
 
   const baselineMultipleControl = (
     <div className="mt-5 space-y-3">
+      <hr />
       <div className="flex items-center justify-between">
         <Label className="text-sm text-gray-600">Baseline Multiple</Label>
         <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
