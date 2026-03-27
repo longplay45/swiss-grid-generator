@@ -626,7 +626,7 @@ export default function Home() {
         className="hidden"
         onChange={loadLayout}
       />
-      <div className={`flex h-screen flex-col md:flex-row ${uiTheme.root}`}>
+      <div className={`flex h-screen overflow-hidden flex-col md:flex-row ${uiTheme.root}`}>
         <ControlSidebar
           showPresetsBrowser={showPresetsBrowser}
           showBetaBadge={SHOW_BETA_BADGE}
@@ -639,6 +639,7 @@ export default function Home() {
           }}
           settingsPanels={(
             <SettingsSidebarPanels
+              scrollLocked={activeSidebarPanel === "feedback"}
               collapsed={collapsed}
               showSectionHelpIcons={showSectionHelpIcons}
               showRolloverInfo={showRolloverInfo}

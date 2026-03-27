@@ -67,7 +67,11 @@
     @apply border-border;
     border-radius: 0 !important;
   }
+  html,
   body {
     @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 }

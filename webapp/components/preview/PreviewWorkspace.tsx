@@ -172,6 +172,7 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
+  const feedbackPanelActive = activeSidebarPanel === "feedback"
 
   useEffect(() => {
     if (activeSidebarPanel === "layers" && !showPresetsBrowser) return
@@ -210,7 +211,7 @@ export function PreviewWorkspace({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
+        <div className={`flex min-h-0 flex-1 flex-col ${feedbackPanelActive ? "overflow-hidden" : "overflow-auto"} ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel
@@ -269,7 +270,7 @@ export function PreviewWorkspace({
         {!showPresetsBrowser && activeSidebarPanel && (
           <div
             data-help-scroll-root="true"
-            className={`min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto text-sm ${uiTheme.sidebar} ${
+            className={`min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "help"
                 ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
                 : "p-4 md:p-6"
