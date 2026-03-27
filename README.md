@@ -77,6 +77,7 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
     - default channel comes from `webapp/package.json` (`config.releaseChannel`)
     - `beta` shows the badge, `prod` hides it
     - scripts: `npm run build:beta`, `npm run build:prod`, `npm run dev:beta`, `npm run dev:prod`
+  - `Feedback` link opens the right-side feedback panel
   - `Imprint` link opens the right-side imprint panel
 - Grid-change behavior:
   - pure column increase keeps layout in place (adds capacity to the right)
@@ -216,6 +217,7 @@ webapp/
 │   │   ├── TypographyPanel.tsx
 │   │   └── PanelCard.tsx
 │   ├── sidebar/
+│   │   ├── FeedbackPanel.tsx
 │   │   ├── HelpPanel.tsx
 │   │   ├── ImprintPanel.tsx
 │   │   └── PresetLayoutsPanel.tsx

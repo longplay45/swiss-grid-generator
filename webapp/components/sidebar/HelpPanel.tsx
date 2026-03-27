@@ -265,7 +265,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Layers can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+5</span>.</li>
           <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
           <li>While the presets browser is open, side panels and the header layers toggle are temporarily disabled.</li>
-          <li>Footer `Imprint` link toggles the imprint sidebar panel.</li>
+          <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
         </ul>

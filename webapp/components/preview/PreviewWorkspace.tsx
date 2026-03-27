@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
+import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { LayersPanel } from "@/components/sidebar/LayersPanel"
@@ -37,7 +38,7 @@ type Props = {
   fileGroup: HeaderItem[]
   displayGroup: HeaderItem[]
   sidebarGroup: HeaderAction[]
-  activeSidebarPanel: "settings" | "help" | "imprint" | "layers" | null
+  activeSidebarPanel: "settings" | "help" | "imprint" | "layers" | "feedback" | null
   activeHelpSectionId: HelpSectionId | null
   showPresetsBrowser: boolean
   isDarkUi: boolean
@@ -62,6 +63,7 @@ type Props = {
   requestedLayerOrderState: { token: number; order: string[] } | null
   requestedLayerDeleteState: { token: number; target: string } | null
   requestedLayerEditorState: { token: number; target: string } | null
+  appVersion: string
   uiTheme: UiTheme
   result: GridResult
   onLoadPreset: (preset: LayoutPreset) => void
@@ -146,6 +148,7 @@ export function PreviewWorkspace({
   requestedLayerOrderState,
   requestedLayerDeleteState,
   requestedLayerEditorState,
+  appVersion,
   uiTheme,
   result,
   onLoadPreset,
@@ -266,7 +269,7 @@ export function PreviewWorkspace({
         {!showPresetsBrowser && activeSidebarPanel && (
           <div
             data-help-scroll-root="true"
-            className={`w-[280px] shrink-0 border-l overflow-y-auto text-sm ${uiTheme.sidebar} ${
+            className={`min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "help"
                 ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
                 : "p-4 md:p-6"
@@ -320,6 +323,13 @@ export function PreviewWorkspace({
             {activeSidebarPanel === "imprint" && (
               <ImprintPanel
                 isDarkMode={isDarkUi}
+                onClose={closeSidebarPanel}
+              />
+            )}
+            {activeSidebarPanel === "feedback" && (
+              <FeedbackPanel
+                isDarkMode={isDarkUi}
+                appVersion={appVersion}
                 onClose={closeSidebarPanel}
               />
             )}

@@ -175,6 +175,7 @@ Default: `swiss`
 ### Left Footer (always visible)
 
 - `Version` label: shows current app version string.
+- `Feedback` link: opens the right sidebar feedback panel.
 - `Imprint` link: opens the right sidebar imprint panel.
 
 When `i` is active, header icons show rollover tooltips with a second line for keyboard shortcuts (including Undo/Redo).

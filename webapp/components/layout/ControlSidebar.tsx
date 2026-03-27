@@ -15,6 +15,7 @@ type Props = {
   appVersion: string
   uiTheme: UiTheme
   settingsPanels: ReactNode
+  onToggleFeedbackPanel: () => void
   onToggleImprintPanel: () => void
 }
 
@@ -24,6 +25,7 @@ export function ControlSidebar({
   appVersion,
   uiTheme,
   settingsPanels,
+  onToggleFeedbackPanel,
   onToggleImprintPanel,
 }: Props) {
   return (
@@ -56,14 +58,13 @@ export function ControlSidebar({
               <span>V {appVersion}</span>
             </span>
             <div className="flex items-center gap-3">
-              <a
-                href="/survey"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
                 className={uiTheme.link}
+                onClick={onToggleFeedbackPanel}
               >
-                Survey
-              </a>
+                Feedback
+              </button>
               <button
                 type="button"
                 className={uiTheme.link}

@@ -99,7 +99,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - `i` toggles rollover info/tooltips globally across the app. Shortcut: `Cmd/Ctrl+Shift+6`.
 - Layers also have a shortcut: `Cmd/Ctrl+Shift+5`.
 - `?` opens/closes help; settings opens/closes the right settings panel.
-- Footer `Imprint` link toggles imprint sidebar.
+- Footer `Feedback` link toggles the feedback sidebar; `Imprint` toggles imprint.
 - Right-side content panels include close icons in their header rows.
 - Only one right-side panel is open at a time.
 

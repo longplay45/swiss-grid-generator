@@ -571,6 +571,7 @@ export default function Home() {
       requestedLayerOrderState={requestedLayerOrderState}
       requestedLayerDeleteState={requestedLayerDeleteState}
       requestedLayerEditorState={requestedLayerEditorState}
+      appVersion={APP_VERSION}
       uiTheme={{
         divider: uiTheme.divider,
         bodyText: uiTheme.bodyText,
@@ -691,6 +692,7 @@ export default function Home() {
               isDarkMode={isDarkUi}
             />
           )}
+          onToggleFeedbackPanel={() => openSidebarPanel(activeSidebarPanel === "feedback" ? null : "feedback")}
           onToggleImprintPanel={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
         />
 
