@@ -534,7 +534,7 @@ neededCols = ceil(totalWrappedLines / maxLinesPerColumn)
 
 ### Grid/Baseline Structural Changes
 
-When horizontal fields (`gridRows`) or module row starts change (e.g., baseline/gutter/rhythm effects), existing rows remap by module index:
+When rows (`gridRows`) or module row starts change (e.g., baseline/gutter/rhythm effects), existing rows remap by module index:
 
 ```
 moduleIndex = nearestIndex(oldModuleRowStarts, oldRow)

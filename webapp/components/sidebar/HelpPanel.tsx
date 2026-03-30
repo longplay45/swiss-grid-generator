@@ -495,7 +495,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           IV. Grid &amp; Rhythms
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Grid range is `1..13` for both vertical and horizontal fields.</li>
+          <li>Grid range is `1..13` for both columns and rows.</li>
           <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
           <li>`Rhythms` options: `Fibonacci`, `Golden Ratio`, `Perfect Fifth`, `Perfect Fourth`, `Repetitive` (default).</li>
           <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>

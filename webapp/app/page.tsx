@@ -639,7 +639,6 @@ export default function Home() {
           }}
           settingsPanels={(
             <SettingsSidebarPanels
-              scrollLocked={activeSidebarPanel === "feedback"}
               collapsed={collapsed}
               showSectionHelpIcons={showSectionHelpIcons}
               showRolloverInfo={showRolloverInfo}

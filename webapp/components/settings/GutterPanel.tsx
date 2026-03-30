@@ -154,7 +154,7 @@ export const GutterPanel = memo(function GutterPanel({
       ) : null}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm text-gray-600">Vertical Fields</Label>
+          <Label className="text-sm text-gray-600">Columns</Label>
           <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{gridCols}</span>
         </div>
         <DebouncedSlider
@@ -167,7 +167,7 @@ export const GutterPanel = memo(function GutterPanel({
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm text-gray-600">Horizontal Fields</Label>
+          <Label className="text-sm text-gray-600">Rows</Label>
           <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">{gridRows}</span>
         </div>
         <DebouncedSlider

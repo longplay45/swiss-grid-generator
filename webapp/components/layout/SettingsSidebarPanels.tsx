@@ -28,7 +28,6 @@ type CustomMarginMultipliers = {
 }
 
 type Props = {
-  scrollLocked?: boolean
   collapsed: Record<SectionKey, boolean>
   showSectionHelpIcons: boolean
   showRolloverInfo: boolean
@@ -83,7 +82,6 @@ type Props = {
 }
 
 export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
-  scrollLocked = false,
   collapsed,
   showSectionHelpIcons,
   showRolloverInfo,
@@ -137,7 +135,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   isDarkMode,
 }: Props) {
   return (
-    <div className={`flex-1 p-4 md:p-6 ${scrollLocked ? "overflow-hidden" : "overflow-y-auto"}`}>
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
         value={{ showHelpIcons: showSectionHelpIcons, showRolloverInfo, onNavigate: onHelpNavigate }}
       >

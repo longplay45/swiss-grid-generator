@@ -172,7 +172,6 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
-  const feedbackPanelActive = activeSidebarPanel === "feedback"
 
   useEffect(() => {
     if (activeSidebarPanel === "layers" && !showPresetsBrowser) return
@@ -211,7 +210,7 @@ export function PreviewWorkspace({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className={`flex min-h-0 flex-1 flex-col ${feedbackPanelActive ? "overflow-hidden" : "overflow-auto"} ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
+        <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel
