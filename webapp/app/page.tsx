@@ -22,14 +22,14 @@ import {
   HELP_SECTION_BY_SETTINGS_SECTION,
 } from "@/lib/help-registry"
 import { WorkspaceDialogs } from "@/components/dialogs/WorkspaceDialogs"
-import { useDocumentController } from "@/hooks/useDocumentController"
 import { usePreviewDocumentState } from "@/hooks/usePreviewDocumentState"
+import { useProjectController } from "@/hooks/useProjectController"
 import { useShellKeyboardShortcuts } from "@/hooks/useShellKeyboardShortcuts"
 import { useSidebarPanels } from "@/hooks/useSidebarPanels"
 import { useWorkspaceChrome } from "@/hooks/useWorkspaceChrome"
 import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
-import { type LoadedDocument } from "@/lib/document-session"
+import { type LoadedProject, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
 import {
@@ -48,6 +48,8 @@ import {
   gridUiReducer,
   type UiAction,
 } from "@/lib/workspace-ui-state"
+import { useProjectState } from "@/hooks/useProjectState"
+import { toProjectJsonFilename } from "@/lib/project-file-naming"
 
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
@@ -56,6 +58,7 @@ const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null
+
 type NoticeState = {
   title: string
   message: string
@@ -63,6 +66,7 @@ type NoticeState = {
 
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
+  const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
@@ -287,8 +291,6 @@ export default function Home() {
     [baseFilename, exportPaperSize],
   )
 
-  const defaultJsonFilename = useMemo(() => `${baseFilename}_grid.json`, [baseFilename])
-
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
   const buildUiSnapshot = useCallback((): UiSettingsSnapshot => ui, [ui])
@@ -324,28 +326,83 @@ export default function Home() {
     }
   }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNextSettingsHistory])
 
-  const handleApplyLoadedDocument = useCallback((document: LoadedDocument<PreviewLayoutState>) => {
-    const actions = buildUiActionsFromLoadedSettings(document.uiSettings, collapsed)
+  const currentUiSettingsPayload = useMemo(
+    () => ({ ...ui, format: previewFormat }),
+    [previewFormat, ui],
+  )
+
+  const getCurrentPreviewLayout = useCallback(
+    () => livePreviewSnapshotGetterRef.current?.() ?? previewLayout,
+    [previewLayout],
+  )
+
+  const handlePreviewSnapshotGetterChange = useCallback((getSnapshot: (() => PreviewLayoutState) | null) => {
+    livePreviewSnapshotGetterRef.current = getSnapshot
+  }, [])
+
+  const handleApplyProjectPage = useCallback((page: ProjectPage<PreviewLayoutState>) => {
+    const actions = buildUiActionsFromLoadedSettings(page.uiSettings, collapsed)
     applyLoadedUiActions(actions)
-    applyLoadedPreviewLayout(document.previewLayout)
+    applyLoadedPreviewLayout(page.previewLayout)
     setShowPresetsBrowser(false)
-    markClean()
-  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, markClean, setShowPresetsBrowser])
+  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, setShowPresetsBrowser])
 
   const {
-    documentMetadata,
-    setDocumentMetadata,
-    loadDocumentFromInput: loadLayout,
-    loadPresetDocument: handleLoadPresetLayout,
-  } = useDocumentController<PreviewLayoutState>({
-    onApplyDocument: handleApplyLoadedDocument,
+    pages: projectPages,
+    activePageId,
+    applyLoadedProject,
+    selectPage,
+    addPage,
+    renamePage,
+    deletePage,
+    reorderPages,
+  } = useProjectState<PreviewLayoutState>({
+    // NEW: Project/Pages/Layers architecture
+    defaultUiSettings: currentUiSettingsPayload,
+    defaultPreviewLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
+    currentUiSettings: currentUiSettingsPayload,
+    currentPreviewLayout: previewLayout,
+    getCurrentPreviewLayout,
+    onApplyPage: handleApplyProjectPage,
+  })
+
+  const handleApplyLoadedProject = useCallback((project: LoadedProject<PreviewLayoutState>) => {
+    applyLoadedProject(project)
+    setShowPresetsBrowser(false)
+    markClean()
+  }, [applyLoadedProject, markClean, setShowPresetsBrowser])
+
+  const {
+    projectMetadata,
+    setProjectMetadata,
+    loadProjectFromInput,
+    loadPresetProject: handleLoadPresetProject,
+  } = useProjectController<PreviewLayoutState>({
+    onApplyProject: handleApplyLoadedProject,
     onLoadFailed: () => {
       handleRequestNotice({
         title: "Load Failed",
-        message: "Could not load layout JSON.",
+        message: "Could not load project JSON.",
       })
     },
   })
+
+  const defaultJsonFilename = useMemo(() => {
+    return toProjectJsonFilename(projectMetadata.title, baseFilename)
+  }, [baseFilename, projectMetadata.title])
+
+  const handleProjectTitleChange = useCallback((nextTitle: string) => {
+    const trimmedTitle = nextTitle.trim()
+    if (!trimmedTitle) return
+    setProjectMetadata((current) => (
+      current.title === trimmedTitle
+        ? current
+        : {
+            ...current,
+            title: trimmedTitle,
+          }
+    ))
+  }, [setProjectMetadata])
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNextSettingsHistory()
@@ -401,10 +458,20 @@ export default function Home() {
 
   // ─── Export / Save actions ────────────────────────────────────────────────
 
-  const buildUiSettingsPayload = useCallback(
-    () => ({ ...ui, format: previewFormat }),
-    [ui, previewFormat],
-  )
+  const buildProjectPayload = useCallback(() => {
+    const currentPreviewSnapshot = getCurrentPreviewLayout()
+    const exportedPages = projectPages.map((page) => ({
+      id: page.id,
+      name: page.name,
+      uiSettings: page.id === activePageId ? currentUiSettingsPayload : page.uiSettings,
+      previewLayout: page.id === activePageId ? currentPreviewSnapshot : page.previewLayout,
+    }))
+
+    return {
+      activePageId,
+      pages: exportedPages,
+    }
+  }, [activePageId, currentUiSettingsPayload, getCurrentPreviewLayout, projectPages])
 
   const resolvedCanvasBackground = useMemo(
     () => (canvasBackground ? resolveImageSchemeColor(canvasBackground, imageColorScheme) : null),
@@ -441,9 +508,9 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultJsonFilename,
-      documentMetadata,
-      onDocumentMetadataChange: setDocumentMetadata,
-      buildUiSettingsPayload,
+      projectMetadata,
+      onProjectMetadataChange: setProjectMetadata,
+      buildProjectPayload,
     }),
     [
       result,
@@ -474,9 +541,9 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultJsonFilename,
-      documentMetadata,
-      setDocumentMetadata,
-      buildUiSettingsPayload,
+      projectMetadata,
+      setProjectMetadata,
+      buildProjectPayload,
     ],
   )
 
@@ -566,6 +633,9 @@ export default function Home() {
       documentHistoryResetNonce={documentHistoryResetNonce}
       paragraphColorResetNonce={paragraphColorResetNonce}
       selectedLayerKey={selectedLayerKey}
+      projectTitle={projectMetadata.title}
+      projectPages={projectPages}
+      activePageId={activePageId}
       previewLayout={previewLayout}
       loadedPreviewLayout={loadedPreviewLayout}
       requestedLayerOrderState={requestedLayerOrderState}
@@ -583,7 +653,7 @@ export default function Home() {
         sidebarHeading: uiTheme.sidebarHeading,
       }}
       result={result}
-      onLoadPreset={handleLoadPresetLayout}
+      onLoadPreset={handleLoadPresetProject}
       onHeaderHelpNavigate={handleHeaderHelpNavigate}
       onOpenHelpSection={openHelpSection}
       onHistoryRecord={handlePreviewHistoryRecord}
@@ -593,6 +663,13 @@ export default function Home() {
       onRequestGridRestore={handlePreviewGridRestore}
       onRequestNotice={handleRequestNotice}
       onLayoutChange={handlePreviewLayoutChange}
+      onSnapshotGetterChange={handlePreviewSnapshotGetterChange}
+      onProjectTitleChange={handleProjectTitleChange}
+      onPageSelect={selectPage}
+      onPageAdd={addPage}
+      onPageRename={renamePage}
+      onPageDelete={deletePage}
+      onPageOrderChange={reorderPages}
       onLayerOrderChange={handleLayerOrderChange}
       onLayerSelect={handlePreviewLayerSelect}
       onLayerEditorToggle={handleToggleLayerEditor}
@@ -624,7 +701,7 @@ export default function Home() {
         type="file"
         accept="application/json,.json"
         className="hidden"
-        onChange={loadLayout}
+        onChange={loadProjectFromInput}
       />
       <div className={`flex h-screen overflow-hidden flex-col md:flex-row ${uiTheme.root}`}>
         <ControlSidebar
@@ -682,6 +759,7 @@ export default function Home() {
               onRhythmColsDirectionChange={setRhythmColsDirection}
               typographyScale={typographyScale}
               onTypographyScaleChange={setTypographyScale}
+              typographyStyles={result.typography.styles}
               baseFont={baseFont}
               onBaseFontChange={setBaseFont}
               colorScheme={imageColorScheme}

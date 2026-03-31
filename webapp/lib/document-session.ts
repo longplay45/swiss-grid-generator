@@ -1,22 +1,41 @@
 import type { LayoutPreset } from "@/lib/presets"
 
-export type DocumentMetadata = {
+export type ProjectMetadata = {
   title: string
   description: string
   author: string
   createdAt?: string
 }
 
-export type LoadedDocument<Layout> = {
+// NEW: Project/Pages/Layers architecture
+export type ProjectPage<Layout> = {
+  id: string
+  name: string
   uiSettings: Record<string, unknown>
   previewLayout: Layout | null
-  metadata: DocumentMetadata
 }
 
-export const EMPTY_DOCUMENT_METADATA: DocumentMetadata = {
+export type LoadedProject<Layout> = {
+  activePageId: string
+  pages: ProjectPage<Layout>[]
+  metadata: ProjectMetadata
+}
+
+export const EMPTY_PROJECT_METADATA: ProjectMetadata = {
   title: "",
   description: "",
   author: "",
+}
+
+const DEFAULT_PAGE_NAME = "Page 1"
+let projectPageSequence = 0
+
+function createProjectPageId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `page-${crypto.randomUUID()}`
+  }
+  projectPageSequence += 1
+  return `page-${Date.now()}-${projectPageSequence}`
 }
 
 function toNormalizedIsoDate(value: unknown): string | undefined {
@@ -30,9 +49,9 @@ function toDocumentText(value: unknown): string {
   return typeof value === "string" ? value.trim() : ""
 }
 
-export function extractDocumentMetadata(source: unknown): DocumentMetadata {
+export function extractProjectMetadata(source: unknown): ProjectMetadata {
   if (typeof source !== "object" || source === null) {
-    return EMPTY_DOCUMENT_METADATA
+    return EMPTY_PROJECT_METADATA
   }
   const payload = source as Record<string, unknown>
   return {
@@ -47,24 +66,120 @@ function toLoadedPreviewLayout<Layout>(value: unknown): Layout | null {
   return value && typeof value === "object" ? value as Layout : null
 }
 
-export function parseLoadedDocument<Layout>(source: unknown): LoadedDocument<Layout> {
-  if (typeof source !== "object" || source === null) {
-    throw new Error("Invalid layout JSON: expected an object payload.")
-  }
-  const payload = source as Record<string, unknown>
-  if (!payload.uiSettings || typeof payload.uiSettings !== "object") {
-    throw new Error("Invalid layout JSON: missing uiSettings.")
-  }
+function toPageName(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : fallback
+}
+
+export function createProjectPage<Layout>({
+  id,
+  name = DEFAULT_PAGE_NAME,
+  uiSettings,
+  previewLayout,
+}: {
+  id?: string
+  name?: string
+  uiSettings: Record<string, unknown>
+  previewLayout: Layout | null
+}): ProjectPage<Layout> {
+  const trimmedId = typeof id === "string" ? id.trim() : ""
 
   return {
-    uiSettings: payload.uiSettings as Record<string, unknown>,
-    previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
-    metadata: extractDocumentMetadata(payload),
+    id: trimmedId.length > 0 ? trimmedId : createProjectPageId(),
+    name: toPageName(name, DEFAULT_PAGE_NAME),
+    uiSettings,
+    previewLayout,
   }
 }
 
-export function presetToLoadedDocument<Layout>(preset: LayoutPreset): LoadedDocument<Layout> {
+export function createDefaultProject<Layout>({
+  uiSettings,
+  previewLayout,
+  metadata = EMPTY_PROJECT_METADATA,
+  defaultPageName = DEFAULT_PAGE_NAME,
+}: {
+  uiSettings: Record<string, unknown>
+  previewLayout: Layout | null
+  metadata?: ProjectMetadata
+  defaultPageName?: string
+}): LoadedProject<Layout> {
+  const page = createProjectPage({
+    name: defaultPageName,
+    uiSettings,
+    previewLayout,
+  })
+
   return {
+    activePageId: page.id,
+    pages: [page],
+    metadata,
+  }
+}
+
+function parseProjectPages<Layout>(value: unknown): ProjectPage<Layout>[] {
+  if (!Array.isArray(value)) return []
+
+  const seenIds = new Set<string>()
+  const pages: ProjectPage<Layout>[] = []
+
+  value.forEach((entry, index) => {
+    if (typeof entry !== "object" || entry === null) return
+    const payload = entry as Record<string, unknown>
+    if (!payload.uiSettings || typeof payload.uiSettings !== "object") return
+
+    const rawId = typeof payload.id === "string" ? payload.id.trim() : ""
+    const id = rawId.length > 0 && !seenIds.has(rawId) ? rawId : undefined
+    const page = createProjectPage<Layout>({
+      id,
+      name: toPageName(payload.name, `Page ${index + 1}`),
+      uiSettings: payload.uiSettings as Record<string, unknown>,
+      previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
+    })
+
+    seenIds.add(page.id)
+    pages.push(page)
+  })
+
+  return pages
+}
+
+export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layout> {
+  if (typeof source !== "object" || source === null) {
+    throw new Error("Invalid project JSON: expected an object payload.")
+  }
+
+  const payload = source as Record<string, unknown>
+  const metadata = extractProjectMetadata(payload)
+  const parsedPages = parseProjectPages<Layout>(payload.pages)
+
+  if (parsedPages.length > 0) {
+    const activePageId = typeof payload.activePageId === "string"
+      && parsedPages.some((page) => page.id === payload.activePageId)
+      ? payload.activePageId
+      : parsedPages[0].id
+
+    return {
+      activePageId,
+      pages: parsedPages,
+      metadata,
+    }
+  }
+
+  if (!payload.uiSettings || typeof payload.uiSettings !== "object") {
+    throw new Error("Invalid project JSON: missing pages or legacy uiSettings payload.")
+  }
+
+  // NEW: Preserve legacy single-page JSON by wrapping it in a default one-page project.
+  return createDefaultProject({
+    uiSettings: payload.uiSettings as Record<string, unknown>,
+    previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
+    metadata,
+  })
+}
+
+export function presetToLoadedProject<Layout>(preset: LayoutPreset): LoadedProject<Layout> {
+  return createDefaultProject({
     uiSettings: preset.uiSettings,
     previewLayout: preset.previewLayout ? preset.previewLayout as Layout : null,
     metadata: {
@@ -73,7 +188,7 @@ export function presetToLoadedDocument<Layout>(preset: LayoutPreset): LoadedDocu
       author: preset.author ?? "",
       createdAt: toNormalizedIsoDate(preset.createdAt),
     },
-  }
+  })
 }
 
 export function getPreviewLayoutSeed<Layout>(layout: Layout | null, defaultLayout: Layout | null): Layout {

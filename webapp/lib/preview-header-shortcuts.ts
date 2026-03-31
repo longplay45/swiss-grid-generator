@@ -33,13 +33,13 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
     id: "load_json",
     combo: "Cmd/Ctrl+O",
-    description: "Load JSON",
+    description: "Load project JSON",
     bindings: [{ key: "o" }],
   },
   {
     id: "save_json",
     combo: "Cmd/Ctrl+S",
-    description: "Save JSON",
+    description: "Save project JSON",
     bindings: [{ key: "s" }],
   },
   {
@@ -93,7 +93,7 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
     id: "toggle_layers_panel",
     combo: "Cmd/Ctrl+Shift+5",
-    description: "Toggle layers sidebar",
+    description: "Toggle project sidebar",
     bindings: [{ key: "5", shift: true }],
   },
   {

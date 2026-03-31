@@ -41,7 +41,7 @@ export function SaveJsonDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-lg border bg-white p-4 shadow-xl space-y-4">
-        <h3 className="text-base font-semibold">Save JSON</h3>
+        <h3 className="text-base font-semibold">Save Project JSON</h3>
         <p className="text-xs text-gray-600">
           Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
         </p>
@@ -56,13 +56,13 @@ export function SaveJsonDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label>Title (optional)</Label>
+          <Label>Project Title (optional)</Label>
           <input
             type="text"
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-            placeholder="Layout title"
+            placeholder="Project title"
           />
         </div>
         <div className="space-y-2">
@@ -89,7 +89,7 @@ export function SaveJsonDialog({
             Cancel
           </Button>
           <Button size="sm" onClick={onConfirm}>
-            Save JSON
+            Save Project JSON
           </Button>
         </div>
       </div>

@@ -88,7 +88,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "load",
         ariaLabel: "Load",
-        tooltip: "Load layout JSON",
+        tooltip: "Load project JSON",
         shortcutId: "load_json",
         onClick: args.onLoadJson,
         icon: <FolderOpen className="h-4 w-4" />,
@@ -99,7 +99,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "save",
         ariaLabel: "Save",
-        tooltip: "Save layout JSON",
+        tooltip: "Save project JSON",
         shortcutId: "save_json",
         onClick: args.onSaveJson,
         icon: <Save className="h-4 w-4" />,
@@ -227,8 +227,8 @@ export function useHeaderActions(args: Args) {
       type: "action",
       action: {
         key: "layers",
-        ariaLabel: args.showLayers ? "Hide layers" : "Show layers",
-        tooltip: "Layers",
+        ariaLabel: args.showLayers ? "Hide project panel" : "Show project panel",
+        tooltip: "Project panel",
         shortcutId: "toggle_layers_panel",
         variant: args.showLayers ? "default" : "outline",
         pressed: args.showLayers,

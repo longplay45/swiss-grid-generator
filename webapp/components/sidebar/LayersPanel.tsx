@@ -1,9 +1,10 @@
 "use client"
 
-import { Trash2, X } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
+import { ProjectSidebarSection } from "@/components/sidebar/ProjectSidebarSection"
 import {
   getDefaultTextSchemeColor,
   isImagePlaceholderColor,
@@ -26,7 +27,9 @@ type Props = {
   onHoverLayerChange: (key: string | null) => void
   onToggleEditor: (key: string) => void
   onDeleteLayer: (key: string, kind: "text" | "image") => void
-  onClose: () => void
+  layersCollapsed: boolean
+  onLayersHeaderClick: (event: React.MouseEvent) => void
+  onLayersHeaderDoubleClick: (event: React.MouseEvent) => void
   isDarkMode?: boolean
 }
 
@@ -101,7 +104,9 @@ export function LayersPanel({
   onHoverLayerChange,
   onToggleEditor,
   onDeleteLayer,
-  onClose,
+  layersCollapsed,
+  onLayersHeaderClick,
+  onLayersHeaderDoubleClick,
   isDarkMode = false,
 }: Props) {
   const [draggingKey, setDraggingKey] = useState<string | null>(null)
@@ -190,20 +195,14 @@ export function LayersPanel({
 
   const tone = isDarkMode
     ? {
-        heading: "text-gray-100",
-        body: "text-gray-400",
         card: "border-gray-700 bg-gray-800 text-gray-100",
         cardMuted: "text-gray-400",
         stripeBg: "bg-gray-900",
-        close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
       }
     : {
-        heading: "text-gray-900",
-        body: "text-gray-600",
         card: "border-gray-200 bg-gray-50 text-gray-900",
         cardMuted: "text-gray-500",
         stripeBg: "bg-white",
-        close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
       }
 
   const moveLayer = (targetIndex: number) => {
@@ -272,121 +271,113 @@ export function LayersPanel({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h3 className={`text-sm font-semibold ${tone.heading}`}>Layers</h3>
-          <p className={`mt-1 text-xs ${tone.body}`}>
-            Hover mirrors the same active preview rollover for that block. Click selects, double-click toggles edit mode, drag changes z-index, and delete removes the layer.
-          </p>
-        </div>
-        <button
-          type="button"
-          aria-label="Close layers panel"
-          onClick={onClose}
-          className={`rounded-sm p-1 transition-colors ${tone.close}`}
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div
-        className="flex flex-col"
-        onDragOver={handleListDragOver}
-        onDrop={handleListDrop}
+      <ProjectSidebarSection
+        title="Layers"
+        collapsed={layersCollapsed}
+        collapsedSummary={`${visibleThumbs.length} ${visibleThumbs.length === 1 ? "layer" : "layers"}`}
+        onHeaderClick={onLayersHeaderClick}
+        onHeaderDoubleClick={onLayersHeaderDoubleClick}
+        isDarkMode={isDarkMode}
       >
         <div
-          className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
+          className="flex flex-col"
           onDragOver={handleListDragOver}
           onDrop={handleListDrop}
         >
-          {renderDropMarker(0)}
-        </div>
-        {visibleThumbs.map((thumb, index) => {
-          const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
-          const isHovered = hoveredLayerKey === thumb.key
-          const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
-          return (
-            <Fragment key={thumb.key}>
-              {thumb.key !== draggingKey && stationaryIndex !== null && stationaryIndex > 0
-                ? renderDropMarker(stationaryIndex)
-                : null}
-              <div
-                ref={(node) => {
-                  cardRefs.current[thumb.key] = node
-                }}
-                draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.effectAllowed = "move"
-                  event.dataTransfer.setData("text/plain", thumb.key)
-                  onSelectLayer(thumb.key)
-                  setDraggingKey(thumb.key)
-                  updateDropIndicator(stationaryVisibleOrder.indexOf(thumb.key))
-                }}
-                onDragEnd={clearDragState}
-                onDragOver={handleListDragOver}
-                onDrop={handleListDrop}
-                onMouseEnter={() => onHoverLayerChange(thumb.key)}
-                onMouseLeave={() => onHoverLayerChange(null)}
-                onClick={() => onSelectLayer(thumb.key)}
-                onDoubleClick={() => onToggleEditor(thumb.key)}
-                className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
-                  draggingKey === thumb.key
-                    ? `${tone.card} cursor-grabbing opacity-45`
-                    : tone.card
-                } ${isActive || isHovered ? "border-l-orange-500 border-t-orange-500" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className={`truncate text-[11px] ${tone.cardMuted}`}>
-                      {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
-                    </div>
-                    {thumb.kind === "text" ? (
-                      <div className="mt-0.5 flex min-w-0 items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/10"
-                          style={{ backgroundColor: thumb.color }}
-                          aria-hidden="true"
-                        />
-                        <div
-                          className="truncate text-[12px] text-gray-900 dark:text-gray-100"
-                          style={{
-                            fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
-                          }}
-                        >
-                          {thumb.textPreview}
-                        </div>
+          <div
+            className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
+            onDragOver={handleListDragOver}
+            onDrop={handleListDrop}
+          >
+            {renderDropMarker(0)}
+          </div>
+          {visibleThumbs.map((thumb, index) => {
+            const isActive = draggingKey === thumb.key || selectedLayerKey === thumb.key
+            const isHovered = hoveredLayerKey === thumb.key
+            const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
+            return (
+              <Fragment key={thumb.key}>
+                {thumb.key !== draggingKey && stationaryIndex !== null && stationaryIndex > 0
+                  ? renderDropMarker(stationaryIndex)
+                  : null}
+                <div
+                  ref={(node) => {
+                    cardRefs.current[thumb.key] = node
+                  }}
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = "move"
+                    event.dataTransfer.setData("text/plain", thumb.key)
+                    onSelectLayer(thumb.key)
+                    setDraggingKey(thumb.key)
+                    updateDropIndicator(stationaryVisibleOrder.indexOf(thumb.key))
+                  }}
+                  onDragEnd={clearDragState}
+                  onDragOver={handleListDragOver}
+                  onDrop={handleListDrop}
+                  onMouseEnter={() => onHoverLayerChange(thumb.key)}
+                  onMouseLeave={() => onHoverLayerChange(null)}
+                  onClick={() => onSelectLayer(thumb.key)}
+                  onDoubleClick={() => onToggleEditor(thumb.key)}
+                  className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
+                    draggingKey === thumb.key
+                      ? `${tone.card} cursor-grabbing opacity-45`
+                      : tone.card
+                  } ${isActive || isHovered ? "border-l-orange-500 border-t-orange-500" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className={`truncate text-[11px] ${tone.cardMuted}`}>
+                        {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
                       </div>
-                    ) : (
-                      <div
-                        className={`mt-1 h-4 rounded-sm border border-black/10 ${tone.stripeBg}`}
-                        style={{ backgroundColor: thumb.color }}
-                      />
-                    )}
+                      {thumb.kind === "text" ? (
+                        <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                          <div
+                            className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/10"
+                            style={{ backgroundColor: thumb.color }}
+                            aria-hidden="true"
+                          />
+                          <div
+                            className="truncate text-[12px] text-gray-900 dark:text-gray-100"
+                            style={{
+                              fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
+                            }}
+                          >
+                            {thumb.textPreview}
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className={`mt-1 h-4 rounded-sm border border-black/10 ${tone.stripeBg}`}
+                          style={{ backgroundColor: thumb.color }}
+                        />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
+                      className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onDeleteLayer(thumb.key, thumb.kind)
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
-                    className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      onDeleteLayer(thumb.key, thumb.kind)
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
                 </div>
-              </div>
-            </Fragment>
-          )
-        })}
-        <div
-          className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
-          onDragOver={handleListDragOver}
-          onDrop={handleListDrop}
-        >
-          {renderDropMarker(stationaryVisibleOrder.length)}
+              </Fragment>
+            )
+          })}
+          <div
+            className={draggingKey ? "relative h-5 shrink-0" : "hidden"}
+            onDragOver={handleListDragOver}
+            onDrop={handleListDrop}
+          >
+            {renderDropMarker(stationaryVisibleOrder.length)}
+          </div>
         </div>
-      </div>
+      </ProjectSidebarSection>
     </div>
   )
 }

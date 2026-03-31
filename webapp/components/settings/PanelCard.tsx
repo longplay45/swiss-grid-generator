@@ -4,6 +4,7 @@ import type { SectionKey } from "@/hooks/useSettingsHistory"
 import { useSettingsHelpNavigation } from "@/components/settings/help-navigation-context"
 import { ChevronUp } from "lucide-react"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
+import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 
 type Props = {
   title: string
@@ -51,15 +52,20 @@ export function PanelCard({
           onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
           <div
-            className={`rounded-md px-2 py-2 ${
+            className={`rounded-md py-2 ${
               showHelpIcons ? "relative" : ""
             }`}
           >
             {showHelpIcons ? <HelpIndicatorLine /> : null}
-            <h3 className="text-sm font-bold leading-tight">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex items-center gap-2">
-                  <span>{title}</span>
+            <h3 className="leading-tight">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className={SECTION_HEADLINE_CLASSNAME}>{title}</div>
+                  {collapsed && collapsedSummary ? (
+                    <div className={`text-[10px] font-normal leading-snug ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                      {collapsedSummary}
+                    </div>
+                  ) : null}
                 </div>
                 <span
                   className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
@@ -74,11 +80,6 @@ export function PanelCard({
                   />
                 </span>
               </div>
-              {collapsed && collapsedSummary ? (
-                <div className={`mt-1 text-[10px] font-normal leading-snug ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                  {collapsedSummary}
-                </div>
-              ) : null}
             </h3>
           </div>
         </header>

@@ -150,14 +150,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Preview Workspace
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>The preview document is the live layout surface for placing, editing, duplicating, and removing content blocks.</li>
+          <li>The preview page is the live layout surface for the active project page, including placement, editing, duplication, and deletion.</li>
           <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
           <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
-          <li>Click the hover edit affordance to open the matching text or image editor overlay without leaving the document.</li>
+          <li>Click the hover edit affordance to open the matching text or image editor overlay without leaving the page.</li>
           <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
-          <li>Delete blocks from the editor rail or from the Layers panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
-          <li>Preview hover and Layers-panel hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
+          <li>Delete blocks from the editor rail or from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
+          <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
           <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
         </ul>
       </section>
@@ -258,13 +258,13 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
-          <li>Display toggles include baselines, margins, modules, image placeholders, typography, and layers.</li>
-          <li>The layers toggle sits directly after the typography toggle, separated by a divider.</li>
+          <li>Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.</li>
+          <li>The Project toggle sits directly after the typography toggle, separated by a divider.</li>
           <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
           <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+6</span>.</li>
-          <li>Layers can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+5</span>.</li>
+          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+5</span>.</li>
           <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
-          <li>While the presets browser is open, side panels and the header layers toggle are temporarily disabled.</li>
+          <li>While the presets browser is open, side panels and the header Project toggle are temporarily disabled.</li>
           <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
@@ -279,7 +279,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Use the header Help icon to open or close the help sidebar.</li>
-          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview document, presets, editor overlays, and settings sections.</li>
+          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview page, presets, editor overlays, and settings sections.</li>
           <li>Hover a highlighted target to jump to the matching help topic without closing help.</li>
           <li>Use the small up-arrow beside each help title to jump back to the index at the top.</li>
         </ul>
@@ -307,7 +307,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Load
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Loads a saved JSON layout from disk. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+O</span>.
+          Loads a saved project JSON from disk; legacy single-page JSON is still accepted and wrapped into a one-page project. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+O</span>.
         </p>
       </section>
 
@@ -318,7 +318,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Save
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Saves current UI settings and preview state as JSON. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
+          Saves project metadata plus every page&apos;s settings and layout state as project JSON. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
         </p>
       </section>
 
@@ -414,16 +414,16 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-header-layers" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Layers Panel
+          Project Panel
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Opens the right-side layers panel with a mixed stack of text paragraphs and image placeholders.</li>
-          <li>Text cards show hierarchy plus font, and a short text preview in the paragraph color and font.</li>
-          <li>Image cards show `Image Placeholder` and a single color swatch.</li>
-          <li>Hovering a layer card mirrors the same active preview rollover/guides for that block, so layer inspection stays linked to the document surface.</li>
-          <li>Drag cards to reorder z-index; the drop marker appears between cards and opens real space at the insertion point.</li>
-          <li>Clicking a layer card selects the matching item in the preview; clicking a preview item selects and scrolls to the matching layer card.</li>
-          <li>Trash deletes the layer from the document and updates saved JSON layer data.</li>
+          <li>Opens the right-side Project panel with an editable project name plus `Pages` and `Layers` sections.</li>
+          <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
+          <li>`Pages`: click a page card to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the current active page.</li>
+          <li>`Layers`: shows the mixed stack of text paragraphs and image placeholders for the active page only.</li>
+          <li>Layer cards mirror the same active preview rollover/guides, so layer inspection stays linked to the page surface.</li>
+          <li>Drag layer cards to reorder z-index; click selects, double-click opens the editor, and trash removes the layer from the active page.</li>
+          <li>Section headers single-click to collapse and double-click to toggle both `Pages` and `Layers` together.</li>
         </ul>
       </section>
 
@@ -513,6 +513,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
+          <li>The Typo panel shows the current hierarchy table with style, size, and leading for the active baseline.</li>
+          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and FX is `96pt / 96pt`.</li>
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
@@ -539,11 +541,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-save-load" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Save and Load JSON
+          Save and Load Project JSON
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Save JSON stores UI settings and full preview layout state.</li>
-          <li>Load JSON restores both settings and layout where valid.</li>
+          <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
+          <li>Load Project JSON restores the full project structure and the active page where valid.</li>
+          <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
           <li>Unknown font overrides are dropped during load normalization.</li>
           <li>Overrides equal to inherited defaults are normalized away.</li>
           <li>Invalid/out-of-range spans/rows/positions are clamped safely.</li>
@@ -558,6 +561,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Export is vector-based (not raster screenshot export).</li>
+          <li>PDF export always uses the current active page.</li>
           <li>DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.</li>
           <li>Print Pro options include bleed, registration-style crop marks, and final-safe guides.</li>
           <li>Export applies current rotation, guides visibility toggles, and text styling.</li>

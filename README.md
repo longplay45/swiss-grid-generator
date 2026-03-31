@@ -47,9 +47,15 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - per-block `cols` and `rows`
   - per-block rotation input (`-180..180`)
   - optical margin alignment (hanging punctuation)
-  - layers-panel hover mirrors the same active preview rollover/guides for the hovered block
+  - project-panel layer hover mirrors the same active preview rollover/guides for the hovered block
+- Project architecture:
+  - `Project -> Pages -> Layers` with editable project title and page names
+  - each page stores its own UI settings and preview layout state
+  - `Add Page` duplicates the active page, including current typography and color overrides
+  - canvas rendering, text reflow, and PDF export always target the active page
+  - project JSON save/load persists metadata, `activePageId`, and the full `pages[]` array
 - Typography controls:
-  - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth)
+  - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth) with current style size/leading table
   - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`
   - `VI. Color Scheme` sets the default image placeholder palette and optional page background
   - color schemes: `Swiss Modern`, `Stone Cyan`, `Fresh Contrast`
@@ -60,13 +66,13 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - base font applies to paragraphs without explicit per-paragraph font override
 - Header icon actions:
   - Dark mode toggle
-  - Presets (left of Load), Load JSON, Save JSON, Export PDF
+  - Presets (left of Load), Load project JSON, Save project JSON, Export PDF
   - Undo/Redo
-  - Display toggles (baselines, margins, gutter/modules, image placeholders, typo)
+  - Display controls (baselines, margins, gutter/modules, image placeholders, typo, project panel)
   - Right-side trio: `i` (rollover info), `?` (help), `Settings`
   - `i` toggles rollover info/tooltips globally
-  - Shortcuts: `Cmd/Ctrl+Shift+5` toggles Layers, `Cmd/Ctrl+Shift+6` toggles rollover info
-  - While the presets browser is open, the left settings panel and header layers toggle are disabled
+  - Shortcuts: `Cmd/Ctrl+Shift+5` toggles the Project sidebar, `Cmd/Ctrl+Shift+6` toggles rollover info
+  - While the presets browser is open, the left settings panel and header project toggle are disabled
   - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
   - Divider separators are shown between Presets and Load, Export and Undo, and dark mode and baselines
   - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo) when `i` is active
@@ -87,9 +93,9 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
   - batch auto-fit planning runs in a dedicated Web Worker with safe in-thread fallback
   - warning/apply/cancel flow is used for disruptive non-row structural moves
   - post-apply undo toast
-  - warning flow suppressed during JSON layout load
+  - warning flow suppressed during project JSON load
 - Export popups:
-  - Save JSON filename prompt (custom modal)
+  - Save Project JSON dialog with filename, project metadata, and project-title-driven default filename
   - Export PDF with filename + Print Pro controls
   - DIN/ANSI ratios: Units + Paper Size controls
   - Other ratios: Width (mm) control
@@ -164,8 +170,8 @@ Highlights:
 ## Keyboard Shortcuts
 
 All preview-header actions are keyboard accessible:
-- `Cmd/Ctrl+O` Load JSON
-- `Cmd/Ctrl+S` Save JSON
+- `Cmd/Ctrl+O` Load project JSON
+- `Cmd/Ctrl+S` Save project JSON
 - `Cmd/Ctrl+Shift+E` Export PDF
 - `Cmd/Ctrl+Z` Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` Redo
@@ -174,7 +180,7 @@ All preview-header actions are keyboard accessible:
 - `Cmd/Ctrl+Shift+M` Toggle margins
 - `Cmd/Ctrl+Shift+G` Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T` Toggle typography
-- `Cmd/Ctrl+Shift+5` Toggle layers sidebar
+- `Cmd/Ctrl+Shift+5` Toggle project sidebar
 - `Cmd/Ctrl+Shift+6` Toggle rollover info
 - `Cmd/Ctrl+Shift+1` Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2` Toggle help sidebar
@@ -209,6 +215,8 @@ webapp/
 │   ├── dialogs/
 │   │   ├── ExportPdfDialog.tsx
 │   │   └── SaveJsonDialog.tsx
+│   ├── preview/
+│   │   └── PreviewWorkspace.tsx
 │   ├── settings/
 │   │   ├── CanvasRatioPanel.tsx
 │   │   ├── BaselineGridPanel.tsx
@@ -220,12 +228,17 @@ webapp/
 │   │   ├── FeedbackPanel.tsx
 │   │   ├── HelpPanel.tsx
 │   │   ├── ImprintPanel.tsx
+│   │   ├── LayersPanel.tsx
+│   │   ├── PagesPanel.tsx
+│   │   ├── ProjectSidebarSection.tsx
 │   │   └── PresetLayoutsPanel.tsx
 │   └── ui/
 │       ├── font-select.tsx
 │       ├── header-icon-button.tsx
 │       └── hover-tooltip.tsx
 ├── hooks/
+│   ├── useProjectController.ts
+│   ├── useProjectState.ts
 │   ├── useSettingsHistory.ts
 │   └── useExportActions.ts
 ├── lib/
@@ -235,8 +248,10 @@ webapp/
 │   │   └── ui-defaults.ts
 │   ├── autofit-planner.ts
 │   ├── grid-calculator.ts
-│   ├── reflow-planner.ts
+│   ├── document-session.ts
 │   ├── preview-header-shortcuts.ts
+│   ├── project-file-naming.ts
+│   ├── reflow-planner.ts
 │   ├── pdf-vector-export.ts
 │   ├── pdf-font-registry.ts
 │   ├── typography-layout-plan.ts

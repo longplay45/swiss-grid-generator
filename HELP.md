@@ -12,8 +12,8 @@ Comprehensive user reference for the in-app Help sidebar.
 - [Drag and Placement](#drag-and-placement)
 - [History and Reflow](#history-and-reflow)
 - [Header and Sidebars](#header-and-sidebars)
-- [Layers Panel](#layers-panel)
-- [Save and Load JSON](#save-and-load-json)
+- [Project Panel](#project-panel)
+- [Save and Load Project JSON](#save-and-load-project-json)
 - [Export PDF](#export-pdf)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Troubleshooting](#troubleshooting)
@@ -28,6 +28,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - Set type hierarchy and base font in `V. Typo`.
 - Set default image placeholder palette and optional page background in `VI. Color Scheme`.
 - Use display toggles in the header to inspect baselines, margins, modules, and type.
+- Use the Project panel to rename the project, duplicate the active page, or switch between pages.
 
 ## Canvas and Grid
 
@@ -44,6 +45,8 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Typography and Fonts
 
 - Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.
+- The Typo panel shows the current hierarchy table with style, size, and leading for the active baseline.
+- Swiss on the 12pt A4 reference baseline: Display `64pt / 72pt`, FX `96pt / 96pt`, Caption `7pt / 8pt`.
 - `Base Font` is inherited by blocks that do not store explicit font overrides.
 - Font groups: `Sans-Serif`, `Serif`, `Poster`.
 - Style defaults define base weight and optional default italic per style.
@@ -88,36 +91,40 @@ Comprehensive user reference for the in-app Help sidebar.
 - Some structural grid changes trigger auto-reflow suggestions.
 - Disruptive reflow opens an apply/cancel confirmation layer.
 - Applied reflow shows a toast with one-click Undo.
-- JSON layout loading suppresses disruptive reflow prompts.
+- Project JSON loading suppresses disruptive reflow prompts.
 
 ## Header and Sidebars
 
 - Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.
-- Display toggles include baselines, margins, modules, image placeholders, typography, and layers.
-- The layers toggle sits directly after typography, separated by a divider.
+- Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.
+- The Project toggle sits directly after typography, separated by a divider.
 - The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.
 - `i` toggles rollover info/tooltips globally across the app. Shortcut: `Cmd/Ctrl+Shift+6`.
-- Layers also have a shortcut: `Cmd/Ctrl+Shift+5`.
+- The Project panel also has a shortcut: `Cmd/Ctrl+Shift+5`.
 - `?` opens/closes help; settings opens/closes the right settings panel.
 - Footer `Feedback` link toggles the feedback sidebar; `Imprint` toggles imprint.
 - Right-side content panels include close icons in their header rows.
 - Only one right-side panel is open at a time.
 
-## Layers Panel
+## Project Panel
 
-- Opens a right sidebar with a mixed stack of text paragraphs and image placeholders.
-- Text cards show hierarchy plus font, and a short text preview rendered in the paragraph's color and font.
-- Image cards show `Image Placeholder` and a single color swatch.
+- Opens the right sidebar Project panel with an editable project name plus `Pages` and `Layers` sections.
+- The project title drives the default project JSON filename stem.
+- `Pages`: click to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- Each page stores its own grid, typography, color, and preview layout state.
+- `Layers`: shows the text/image layer stack for the active page only.
 - Hovering a layer card mirrors the same active preview rollover/guides for that block.
 - Drag reorders z-index using an insertion marker between cards.
 - Clicking a layer card selects the matching item in preview; clicking a preview item selects and scrolls to the matching layer card.
-- Trash removes the layer from the document model.
+- Trash removes the layer from the active page.
+- Section headers single-click to collapse and double-click to toggle both `Pages` and `Layers` together.
 
-## Save and Load JSON
+## Save and Load Project JSON
 
-- Save JSON stores UI settings and full preview layout state.
-- Layer order is stored in preview layout JSON and restored on load.
-- Load JSON restores both settings and layout where valid.
+- Save Project JSON stores project metadata, `activePageId`, and the full `pages[]` array.
+- Each page saves its own UI settings, layer order, and preview layout state.
+- Load Project JSON restores the full project where valid.
+- Legacy single-page JSON is still accepted and is wrapped into a one-page project on import.
 - Unknown font overrides are dropped during load normalization.
 - Overrides equal to inherited defaults are normalized away.
 - Invalid/out-of-range spans/rows/positions are clamped safely.
@@ -125,6 +132,7 @@ Comprehensive user reference for the in-app Help sidebar.
 ## Export PDF
 
 - Export is vector-based (not raster screenshot export).
+- PDF export always uses the active page.
 - PDF typography uses embedded selected fonts (where available) to keep line-wrap parity with preview.
 - DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.
 - Print Pro options include bleed, registration-style crop marks, and final-safe guides.
@@ -132,8 +140,8 @@ Comprehensive user reference for the in-app Help sidebar.
 
 ## Keyboard Shortcuts
 
-- `Cmd/Ctrl+O`: Load JSON
-- `Cmd/Ctrl+S`: Save JSON
+- `Cmd/Ctrl+O`: Load project JSON
+- `Cmd/Ctrl+S`: Save project JSON
 - `Cmd/Ctrl+Shift+E`: Export PDF
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
@@ -142,7 +150,7 @@ Comprehensive user reference for the in-app Help sidebar.
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules and gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
-- `Cmd/Ctrl+Shift+5`: Toggle layers sidebar
+- `Cmd/Ctrl+Shift+5`: Toggle project sidebar
 - `Cmd/Ctrl+Shift+6`: Toggle rollover info
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar

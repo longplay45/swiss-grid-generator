@@ -71,6 +71,7 @@ type Props = {
   onRhythmColsDirectionChange: (value: GridRhythmColsDirection) => void
   typographyScale: TypographyScale
   onTypographyScaleChange: (value: TypographyScale) => void
+  typographyStyles: GridResult["typography"]["styles"]
   baseFont: FontFamily
   onBaseFontChange: (value: FontFamily) => void
   colorScheme: ImageColorSchemeId
@@ -125,6 +126,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   onRhythmColsDirectionChange,
   typographyScale,
   onTypographyScaleChange,
+  typographyStyles,
   baseFont,
   onBaseFontChange,
   colorScheme,
@@ -208,6 +210,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           onHeaderDoubleClick={onSectionHeaderDoubleClick}
           typographyScale={typographyScale}
           onTypographyScaleChange={onTypographyScaleChange}
+          typographyStyles={typographyStyles}
           baseFont={baseFont}
           onBaseFontChange={onBaseFontChange}
           isDarkMode={isDarkMode}

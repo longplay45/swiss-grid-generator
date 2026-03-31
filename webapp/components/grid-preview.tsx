@@ -91,6 +91,7 @@ interface GridPreviewProps {
   paragraphColorResetToken?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
+  onSnapshotGetterChange?: (getSnapshot: (() => PreviewLayoutState) | null) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
   onHistoryRecord?: () => void
@@ -136,6 +137,7 @@ export const GridPreview = memo(function GridPreview({
   paragraphColorResetToken = 0,
   onCanvasReady,
   onLayoutChange,
+  onSnapshotGetterChange,
   onRequestGridRestore,
   onHistoryAvailabilityChange,
   onHistoryRecord,
@@ -776,6 +778,13 @@ export const GridPreview = memo(function GridPreview({
     debounceMs: PREVIEW_LAYOUT_CHANGE_DEBOUNCE_MS,
     onLayoutChange,
   })
+
+  useEffect(() => {
+    onSnapshotGetterChange?.(buildSnapshot)
+    return () => {
+      onSnapshotGetterChange?.(null)
+    }
+  }, [buildSnapshot, onSnapshotGetterChange])
 
   const hierarchyOptionLabels = useMemo(
     () =>

@@ -100,6 +100,14 @@ Default: `swiss`
 ### V. Typo
 
 - `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
+- Hierarchy table: shows current style, size, and leading for the active baseline/scale.
+- Swiss on the A4 12pt reference baseline:
+  - `FX`: `96pt / 96pt`
+  - `Display`: `64pt / 72pt`
+  - `Headline`: `30pt / 36pt`
+  - `Subhead`: `20pt / 24pt`
+  - `Body`: `10pt / 12pt`
+  - `Caption`: `7pt / 8pt`
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
@@ -110,7 +118,7 @@ Default: `swiss`
 ### VI. Color Scheme
 
 - Selects the global base scheme for image placeholders.
-- `Background`: applies a page background color using `None` or any color from the selected scheme.
+- `Background`: applies a page background color using `None` or any color from the selected scheme; this setting is stored per page.
 - Available schemes:
   - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
@@ -122,8 +130,8 @@ Default: `swiss`
 ### File Actions (icon buttons)
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Load)
-- `Load` (folder icon): load layout JSON
-- `Save` (save icon): opens Save JSON popup
+- `Load` (folder icon): load project JSON
+- `Save` (save icon): opens Save Project JSON popup
 - `Export PDF` (download icon): opens Export PDF popup
 - Divider placement: between `Presets` and `Load`, and between `Export PDF` and `Undo`
 - `Esc` closes the presets browser without loading a preset
@@ -146,31 +154,35 @@ Default: `swiss`
 - Margins
 - Gutter/modules
 - Typo
-- Layers
+- Project panel toggle (layers icon)
 - Divider placement: dark mode and baselines are separated by a divider
-- Divider placement: typography and layers are separated by a divider
+- Divider placement: typography and the Project toggle are separated by a divider
 
 ### Sidebar Panels (icon selectors)
 
-- `Layers` (layers icon): opens the right sidebar layers panel
+- `Layers` (layers icon): opens the right sidebar Project panel
 - `Rollover Info` (`i` icon): toggles rollover info/tooltips globally
-- Shortcuts: `Cmd/Ctrl+Shift+5` toggles Layers, `Cmd/Ctrl+Shift+6` toggles Rollover Info
+- Shortcuts: `Cmd/Ctrl+Shift+5` toggles the Project sidebar, `Cmd/Ctrl+Shift+6` toggles Rollover Info
 - `Help` (`?` icon): opens help/reference panel
 - `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
-- Behavior: only one right sidebar panel can be open at a time; clicking the active layers/help/settings icon closes that panel.
-- Behavior: while presets are open, the left settings panel and header layers toggle are disabled.
+- Behavior: only one right sidebar panel can be open at a time; clicking the active project/help/settings icon closes that panel.
+- Behavior: while presets are open, the left settings panel and header Project toggle are disabled.
 - Order of the right-side trio: `i`, `?`, `Settings`.
 
-### Layers Panel
+### Project Panel
 
-- Shows a mixed stack of text and image layers using current `layerOrder`.
+- `Name`: editable project title; also drives the default project JSON filename stem.
+- `Pages`: click to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- Every page stores its own settings payload plus preview layout state.
+- `Layers`: shows the mixed text/image stack for the active page using current `layerOrder`.
 - Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
 - Image cards display `Image Placeholder` and a single color swatch.
 - Hovering a layer card mirrors the same active preview rollover/guides for that block.
 - Dragging cards changes z-index using a visible insertion marker between cards.
 - Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
-- Deleting from the panel removes the layer from the document model and saved JSON.
+- Deleting from the panel removes the layer from the active page and saved project JSON.
+- `Pages` and `Layers` section headers single-click to collapse; double-click on either header toggles both together.
 
 ### Left Footer (always visible)
 
@@ -182,8 +194,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ### Header Keyboard Shortcuts
 
-- `Cmd/Ctrl+O`: Load JSON
-- `Cmd/Ctrl+S`: Save JSON
+- `Cmd/Ctrl+O`: Load project JSON
+- `Cmd/Ctrl+S`: Save project JSON
 - `Cmd/Ctrl+Shift+E`: Export PDF
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
@@ -192,7 +204,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
-- `Cmd/Ctrl+Shift+5`: Toggle layers sidebar
+- `Cmd/Ctrl+Shift+5`: Toggle project sidebar
 - `Cmd/Ctrl+Shift+6`: Toggle rollover info
 - `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
 - `Cmd/Ctrl+Shift+2`: Toggle help sidebar
@@ -202,9 +214,12 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ## Popups
 
-### Save JSON popup
+### Save Project JSON popup
 
-- Filename input
+- Filename input seeded from the current project title
+- Project Title input
+- Description input
+- Author input
 - Confirm/Cancel
 
 ### Export PDF popup

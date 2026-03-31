@@ -8,6 +8,8 @@ This document describes the current text rendering behavior of the Swiss Grid Ge
 - Overflow detection and badge rendering
 - Drag/drop behavior and user setting preservation
 
+Within the Project -> Pages -> Layers architecture, all rendering and overflow logic applies to the active page only.
+
 ## Rendering Pipeline
 Rendering is split across three canvas layers in `webapp/components/grid-preview.tsx`:
 

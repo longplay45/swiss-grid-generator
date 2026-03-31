@@ -1,17 +1,19 @@
 "use client"
 
 import { X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { LayersPanel } from "@/components/sidebar/LayersPanel"
+import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import type { ProjectPage } from "@/lib/document-session"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import type { HeaderAction, HeaderItem } from "@/hooks/useHeaderActions"
@@ -22,6 +24,7 @@ import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
+type PreviewProjectPage = ProjectPage<PreviewLayoutState>
 
 type UiTheme = {
   divider: string
@@ -58,6 +61,9 @@ type Props = {
   documentHistoryResetNonce: number
   paragraphColorResetNonce: number
   selectedLayerKey: string | null
+  projectTitle: string
+  projectPages: PreviewProjectPage[]
+  activePageId: string
   previewLayout: PreviewLayoutState | null
   loadedPreviewLayout: { token: number; layout: PreviewLayoutState } | null
   requestedLayerOrderState: { token: number; order: string[] } | null
@@ -76,6 +82,13 @@ type Props = {
   onRequestGridRestore: (cols: number, rows: number) => void
   onRequestNotice: (notice: { title: string; message: string }) => void
   onLayoutChange: (layout: PreviewLayoutState) => void
+  onSnapshotGetterChange: (getSnapshot: (() => PreviewLayoutState) | null) => void
+  onProjectTitleChange: (nextTitle: string) => void
+  onPageSelect: (pageId: string) => void
+  onPageAdd: () => void
+  onPageRename: (pageId: string, nextName: string) => void
+  onPageDelete: (pageId: string) => void
+  onPageOrderChange: (orderedIds: string[]) => void
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onLayerSelect: (key: string | null) => void
   onLayerEditorToggle: (target: string) => void
@@ -143,6 +156,9 @@ export function PreviewWorkspace({
   documentHistoryResetNonce,
   paragraphColorResetNonce,
   selectedLayerKey,
+  projectTitle,
+  projectPages,
+  activePageId,
   previewLayout,
   loadedPreviewLayout,
   requestedLayerOrderState,
@@ -161,6 +177,13 @@ export function PreviewWorkspace({
   onRequestGridRestore,
   onRequestNotice,
   onLayoutChange,
+  onSnapshotGetterChange,
+  onProjectTitleChange,
+  onPageSelect,
+  onPageAdd,
+  onPageRename,
+  onPageDelete,
+  onPageOrderChange,
   onLayerOrderChange,
   onLayerSelect,
   onLayerEditorToggle,
@@ -171,6 +194,9 @@ export function PreviewWorkspace({
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
+  const [pagesCollapsed, setPagesCollapsed] = useState(false)
+  const [layersCollapsed, setLayersCollapsed] = useState(false)
+  const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
 
   useEffect(() => {
@@ -182,6 +208,37 @@ export function PreviewWorkspace({
     if (!showPresetsBrowser) return
     setPreviewHoveredLayerKey(null)
   }, [showPresetsBrowser])
+
+  useEffect(() => {
+    return () => {
+      if (sectionHeaderClickTimeoutRef.current !== null) {
+        window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleSectionHeaderClick = (section: "pages" | "layers") => (event: React.MouseEvent) => {
+    if (event.detail > 1) return
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+    }
+    sectionHeaderClickTimeoutRef.current = window.setTimeout(() => {
+      if (section === "pages") setPagesCollapsed((current) => !current)
+      else setLayersCollapsed((current) => !current)
+      sectionHeaderClickTimeoutRef.current = null
+    }, 180)
+  }
+
+  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      sectionHeaderClickTimeoutRef.current = null
+    }
+    const allClosed = pagesCollapsed && layersCollapsed
+    setPagesCollapsed(!allClosed)
+    setLayersCollapsed(!allClosed)
+  }
 
   return (
     <div className={`min-h-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
@@ -263,6 +320,7 @@ export function PreviewWorkspace({
               onSelectLayer={onLayerSelect}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
+              onSnapshotGetterChange={onSnapshotGetterChange}
             />
           )}
         </div>
@@ -305,20 +363,57 @@ export function PreviewWorkspace({
               />
             )}
             {activeSidebarPanel === "layers" && (
-              <LayersPanel
-                layout={previewLayout}
-                baseFont={baseFont}
-                imageColorScheme={imageColorScheme}
-                selectedLayerKey={selectedLayerKey}
-                hoveredLayerKey={hoveredLayerKey}
-                onLayerOrderChange={onLayerOrderChange}
-                onSelectLayer={onSelectedLayerKeyChange}
-                onHoverLayerChange={setLayerPanelHoveredLayerKey}
-                onToggleEditor={onLayerEditorToggle}
-                onDeleteLayer={onLayerDelete}
-                onClose={closeSidebarPanel}
-                isDarkMode={isDarkUi}
-              />
+              <div>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Project</h3>
+                    <button
+                      type="button"
+                      aria-label="Close project panel"
+                      onClick={closeSidebarPanel}
+                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {showRolloverInfo ? (
+                    <p className={`mt-1 text-xs ${uiTheme.sidebarBody}`}>
+                      Edit the project name, manage pages and layers for the active page, and use single-click section headers to collapse. Double-click either section header toggles both; Add Page duplicates the active page, and layer hover or selection stays linked to the preview.
+                    </p>
+                  ) : null}
+                </div>
+                <PagesPanel
+                  projectTitle={projectTitle}
+                  pages={projectPages}
+                  activePageId={activePageId}
+                  onProjectTitleChange={onProjectTitleChange}
+                  onSelectPage={onPageSelect}
+                  onAddPage={onPageAdd}
+                  onRenamePage={onPageRename}
+                  onDeletePage={onPageDelete}
+                  onPageOrderChange={onPageOrderChange}
+                  pagesCollapsed={pagesCollapsed}
+                  onPagesHeaderClick={handleSectionHeaderClick("pages")}
+                  onPagesHeaderDoubleClick={handleSectionHeaderDoubleClick}
+                  isDarkMode={isDarkUi}
+                />
+                <LayersPanel
+                  layout={previewLayout}
+                  baseFont={baseFont}
+                  imageColorScheme={imageColorScheme}
+                  selectedLayerKey={selectedLayerKey}
+                  hoveredLayerKey={hoveredLayerKey}
+                  onLayerOrderChange={onLayerOrderChange}
+                  onSelectLayer={onSelectedLayerKeyChange}
+                  onHoverLayerChange={setLayerPanelHoveredLayerKey}
+                  onToggleEditor={onLayerEditorToggle}
+                  onDeleteLayer={onLayerDelete}
+                  layersCollapsed={layersCollapsed}
+                  onLayersHeaderClick={handleSectionHeaderClick("layers")}
+                  onLayersHeaderDoubleClick={handleSectionHeaderDoubleClick}
+                  isDarkMode={isDarkUi}
+                />
+              </div>
             )}
             {activeSidebarPanel === "imprint" && (
               <ImprintPanel

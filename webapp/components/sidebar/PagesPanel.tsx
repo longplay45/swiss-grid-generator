@@ -1,0 +1,400 @@
+"use client"
+
+import { Pencil, Plus, Trash2 } from "lucide-react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import type { DragEvent } from "react"
+
+import { ProjectSidebarSection } from "@/components/sidebar/ProjectSidebarSection"
+import type { ProjectPage } from "@/lib/document-session"
+import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
+import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+
+type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
+
+type Props = {
+  projectTitle: string
+  pages: ProjectPage<PreviewLayoutState>[]
+  activePageId: string
+  onProjectTitleChange: (nextTitle: string) => void
+  onSelectPage: (pageId: string) => void
+  onAddPage: () => void
+  onRenamePage: (pageId: string, nextName: string) => void
+  onDeletePage: (pageId: string) => void
+  onPageOrderChange: (orderedIds: string[]) => void
+  pagesCollapsed: boolean
+  onPagesHeaderClick: (event: React.MouseEvent) => void
+  onPagesHeaderDoubleClick: (event: React.MouseEvent) => void
+  isDarkMode?: boolean
+}
+
+function getLayerCount(page: ProjectPage<PreviewLayoutState>): number {
+  const textLayerCount = page.previewLayout?.blockOrder.length ?? 0
+  const imageLayerCount = page.previewLayout?.imageOrder?.length ?? 0
+  return textLayerCount + imageLayerCount
+}
+
+export function PagesPanel({
+  projectTitle,
+  pages,
+  activePageId,
+  onProjectTitleChange,
+  onSelectPage,
+  onAddPage,
+  onRenamePage,
+  onDeletePage,
+  onPageOrderChange,
+  pagesCollapsed,
+  onPagesHeaderClick,
+  onPagesHeaderDoubleClick,
+  isDarkMode = false,
+}: Props) {
+  const [editingPageId, setEditingPageId] = useState<string | null>(null)
+  const [pageNameDraft, setPageNameDraft] = useState("")
+  const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false)
+  const [projectTitleDraft, setProjectTitleDraft] = useState(projectTitle)
+  const [draggingPageId, setDraggingPageId] = useState<string | null>(null)
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const titleInputRef = useRef<HTMLInputElement | null>(null)
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const dropIndicatorIndexRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!editingPageId) return
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+  }, [editingPageId])
+
+  useEffect(() => {
+    if (!isEditingProjectTitle) return
+    window.requestAnimationFrame(() => {
+      titleInputRef.current?.focus()
+      titleInputRef.current?.select()
+    })
+  }, [isEditingProjectTitle])
+
+  useEffect(() => {
+    if (isEditingProjectTitle) return
+    setProjectTitleDraft(projectTitle)
+  }, [isEditingProjectTitle, projectTitle])
+
+  const tone = isDarkMode
+    ? {
+        body: "text-gray-400",
+        card: "border-gray-700 bg-gray-800 text-gray-100",
+        cardMuted: "text-gray-400",
+        close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
+        button: "border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100",
+        input: "border-gray-600 bg-gray-900 text-gray-100 placeholder:text-gray-500",
+      }
+    : {
+        body: "text-gray-600",
+        card: "border-gray-200 bg-gray-50 text-gray-900",
+        cardMuted: "text-gray-500",
+        close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
+        button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+        input: "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400",
+      }
+
+  const visibleProjectTitle = projectTitle.trim() || "Untitled Project"
+  const stationaryPages = useMemo(
+    () => pages.filter((page) => page.id !== draggingPageId),
+    [draggingPageId, pages],
+  )
+  const stationaryIndexByPageId = useMemo(
+    () => new Map(stationaryPages.map((page, index) => [page.id, index])),
+    [stationaryPages],
+  )
+
+  const beginRename = (page: ProjectPage<PreviewLayoutState>) => {
+    setEditingPageId(page.id)
+    setPageNameDraft(page.name)
+  }
+
+  const cancelRename = () => {
+    setEditingPageId(null)
+    setPageNameDraft("")
+  }
+
+  const commitRename = () => {
+    if (!editingPageId) return
+    const trimmedName = pageNameDraft.trim()
+    if (trimmedName.length > 0) {
+      onRenamePage(editingPageId, trimmedName)
+    }
+    cancelRename()
+  }
+
+  const beginProjectTitleEdit = () => {
+    setProjectTitleDraft(projectTitle)
+    setIsEditingProjectTitle(true)
+  }
+
+  const cancelProjectTitleEdit = () => {
+    setIsEditingProjectTitle(false)
+    setProjectTitleDraft(projectTitle)
+  }
+
+  const commitProjectTitle = () => {
+    const trimmedTitle = projectTitleDraft.trim()
+    if (trimmedTitle.length > 0 && trimmedTitle !== projectTitle.trim()) {
+      onProjectTitleChange(trimmedTitle)
+    }
+    setIsEditingProjectTitle(false)
+  }
+
+  const renderDropMarker = (index: number | null) => {
+    if (dropIndicatorIndex !== index) return null
+    return (
+      <div className="relative h-4 shrink-0">
+        <div
+          className={`absolute inset-x-2 top-1/2 h-0.5 -translate-y-1/2 rounded-full ${isDarkMode ? "bg-blue-400" : "bg-blue-500"}`}
+        />
+      </div>
+    )
+  }
+
+  const movePage = (targetIndex: number) => {
+    if (!draggingPageId) return
+    const nextVisibleOrder = [...stationaryPages]
+    const normalizedIndex = Math.max(0, Math.min(targetIndex, nextVisibleOrder.length))
+    const draggedPage = pages.find((page) => page.id === draggingPageId)
+    if (!draggedPage) return
+    nextVisibleOrder.splice(normalizedIndex, 0, draggedPage)
+    const nextOrder = nextVisibleOrder.map((page) => page.id)
+    if (nextOrder.length === pages.length && nextOrder.every((pageId, index) => pageId === pages[index]?.id)) {
+      return
+    }
+    onPageOrderChange(nextOrder)
+  }
+
+  const updateDropIndicator = (nextIndex: number | null) => {
+    dropIndicatorIndexRef.current = nextIndex
+    setDropIndicatorIndex((current) => (current === nextIndex ? current : nextIndex))
+  }
+
+  const clearDragState = () => {
+    setDraggingPageId(null)
+    updateDropIndicator(null)
+  }
+
+  const getDropIndexForPointer = (clientY: number) => {
+    for (let index = 0; index < stationaryPages.length; index += 1) {
+      const page = stationaryPages[index]
+      const card = cardRefs.current[page.id]
+      if (!card) continue
+      const bounds = card.getBoundingClientRect()
+      if (clientY < bounds.top + bounds.height / 2) {
+        return index
+      }
+    }
+    return stationaryPages.length
+  }
+
+  const handleListDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!draggingPageId) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "move"
+    updateDropIndicator(getDropIndexForPointer(event.clientY))
+  }
+
+  const handleListDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (!draggingPageId) return
+    event.preventDefault()
+    event.stopPropagation()
+    const targetIndex = dropIndicatorIndexRef.current
+    if (targetIndex !== null) {
+      movePage(targetIndex)
+    }
+    clearDragState()
+  }
+
+  return (
+    <div>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className={SECTION_HEADLINE_CLASSNAME}>Name</div>
+          {isEditingProjectTitle ? (
+            <input
+              ref={titleInputRef}
+              value={projectTitleDraft}
+              onChange={(event) => setProjectTitleDraft(event.target.value)}
+              onBlur={commitProjectTitle}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  commitProjectTitle()
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault()
+                  cancelProjectTitleEdit()
+                }
+              }}
+              className={`w-full rounded-sm border px-2 py-1 text-[12px] outline-none ${tone.input}`}
+            />
+          ) : (
+            <div className={`truncate text-xs ${tone.body}`}>
+              {visibleProjectTitle} | {pages.length} {pages.length === 1 ? "page" : "pages"}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Rename project"
+          className={`rounded-sm p-1 transition-colors ${tone.close}`}
+          onClick={beginProjectTitleEdit}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <ProjectSidebarSection
+        title="Pages"
+        collapsed={pagesCollapsed}
+        collapsedSummary={`${pages.length} ${pages.length === 1 ? "page" : "pages"}`}
+        onHeaderClick={onPagesHeaderClick}
+        onHeaderDoubleClick={onPagesHeaderDoubleClick}
+        isDarkMode={isDarkMode}
+      >
+        <div
+          className="flex flex-col"
+          onDragOver={handleListDragOver}
+          onDrop={handleListDrop}
+        >
+          <div
+            className={draggingPageId ? "relative h-5 shrink-0" : "hidden"}
+            onDragOver={handleListDragOver}
+            onDrop={handleListDrop}
+          >
+            {renderDropMarker(0)}
+          </div>
+          {pages.map((page, index) => {
+            const layerCount = getLayerCount(page)
+            const isActive = page.id === activePageId
+            const isEditing = page.id === editingPageId
+            const deleteDisabled = pages.length <= 1
+            const stationaryIndex = stationaryIndexByPageId.get(page.id) ?? null
+
+            return (
+              <Fragment key={page.id}>
+                {page.id !== draggingPageId && stationaryIndex !== null && stationaryIndex > 0
+                  ? renderDropMarker(stationaryIndex)
+                  : null}
+                <div
+                  ref={(node) => {
+                    cardRefs.current[page.id] = node
+                  }}
+                  draggable={!isEditing && !isEditingProjectTitle}
+                  onDragStart={(event) => {
+                    if (isEditing || isEditingProjectTitle) return
+                    event.dataTransfer.effectAllowed = "move"
+                    event.dataTransfer.setData("text/plain", page.id)
+                    onSelectPage(page.id)
+                    setDraggingPageId(page.id)
+                    updateDropIndicator(pages.findIndex((item) => item.id === page.id))
+                  }}
+                  onDragEnd={clearDragState}
+                  onDragOver={handleListDragOver}
+                  onDrop={handleListDrop}
+                  className={`${index > 0 ? "mt-2" : ""} rounded-md border px-3 py-2 transition-colors ${
+                    draggingPageId === page.id
+                      ? `${tone.card} opacity-45`
+                      : tone.card
+                  } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""} ${
+                    isEditing || isEditingProjectTitle ? "" : "cursor-grab"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onSelectPage(page.id)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      {isEditing ? (
+                        <input
+                          ref={inputRef}
+                          value={pageNameDraft}
+                          onChange={(event) => setPageNameDraft(event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          onBlur={commitRename}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault()
+                              commitRename()
+                            }
+                            if (event.key === "Escape") {
+                              event.preventDefault()
+                              cancelRename()
+                            }
+                          }}
+                          className={`w-full rounded-sm border px-2 py-1 text-[12px] outline-none ${tone.input}`}
+                        />
+                      ) : (
+                        <div className="truncate text-[12px] font-medium">{page.name}</div>
+                      )}
+                      <div className={`mt-1 flex items-center gap-2 text-[11px] ${tone.cardMuted}`}>
+                        <span>{layerCount} {layerCount === 1 ? "layer" : "layers"}</span>
+                        {isActive ? <span className="text-orange-500">Active page</span> : null}
+                      </div>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Rename ${page.name}`}
+                        className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          beginRename(page)
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Delete ${page.name}`}
+                        disabled={deleteDisabled}
+                        className={`rounded-sm p-1 transition-colors ${
+                          deleteDisabled
+                            ? "cursor-not-allowed text-gray-400/60"
+                            : `${tone.close} hover:text-red-500`
+                        }`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (deleteDisabled) return
+                          if (!window.confirm(`Delete ${page.name}?`)) return
+                          cancelRename()
+                          onDeletePage(page.id)
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Fragment>
+            )
+          })}
+          <div
+            className={draggingPageId ? "relative h-5 shrink-0" : "hidden"}
+            onDragOver={handleListDragOver}
+            onDrop={handleListDrop}
+          >
+            {renderDropMarker(stationaryPages.length)}
+          </div>
+          <button
+            type="button"
+            aria-label="Add page"
+            onClick={onAddPage}
+            className={`mt-2 flex items-center justify-between rounded-md border px-3 py-2 text-left text-[12px] transition-colors ${tone.button}`}
+          >
+            <span className="font-medium">Add Page</span>
+            <Plus className="h-4 w-4 shrink-0" />
+          </button>
+        </div>
+      </ProjectSidebarSection>
+    </div>
+  )
+}

@@ -5,6 +5,7 @@ import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types
 import type { FontFamily } from "@/lib/config/fonts"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
+import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -65,20 +66,19 @@ export type ExportActionsContext = {
   previewFormat: string
   defaultPdfFilename: string
   defaultJsonFilename: string
-  documentMetadata: {
+  projectMetadata: {
     title: string
     description: string
     author: string
     createdAt?: string
   }
-  onDocumentMetadataChange: (metadata: {
+  onProjectMetadataChange: (metadata: {
     title: string
     description: string
     author: string
     createdAt?: string
   }) => void
-  /** Returns the full uiSettings payload for JSON save. */
-  buildUiSettingsPayload: () => object
+  buildProjectPayload: () => object
 }
 
 export function useExportActions(ctx: ExportActionsContext) {
@@ -109,9 +109,9 @@ export function useExportActions(ctx: ExportActionsContext) {
     previewFormat,
     defaultPdfFilename,
     defaultJsonFilename,
-    documentMetadata,
-    onDocumentMetadataChange,
-    buildUiSettingsPayload,
+    projectMetadata,
+    onProjectMetadataChange,
+    buildProjectPayload,
   } = ctx
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
@@ -126,6 +126,7 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [saveTitleDraft, setSaveTitleDraft] = useState("")
   const [saveDescriptionDraft, setSaveDescriptionDraft] = useState("")
   const [saveAuthorDraft, setSaveAuthorDraft] = useState("")
+  const [saveFilenameTouched, setSaveFilenameTouched] = useState(false)
 
   const getOrientedDimensions = useCallback(
     (paperSize: string) => {
@@ -139,19 +140,18 @@ export function useExportActions(ctx: ExportActionsContext) {
   )
 
   const saveJSON = useCallback(
-    (filename: string, metadata: { title: string; description: string; author: string }) => {
+    (filename: string, metadata: { title: string; description: string; author: string; createdAt: string }) => {
       const trimmed = filename.trim()
       if (!trimmed) return
       const normalizedFilename = trimmed.toLowerCase().endsWith(".json") ? trimmed : `${trimmed}.json`
       const payload = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         exportedAt: new Date().toISOString(),
         title: metadata.title,
         description: metadata.description,
         author: metadata.author,
-        gridResult: result,
-        uiSettings: buildUiSettingsPayload(),
-        previewLayout,
+        createdAt: metadata.createdAt,
+        ...buildProjectPayload(),
       }
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -161,22 +161,34 @@ export function useExportActions(ctx: ExportActionsContext) {
       a.click()
       URL.revokeObjectURL(url)
     },
-    [buildUiSettingsPayload, previewLayout, result],
+    [buildProjectPayload],
   )
 
   const openSaveDialog = useCallback(() => {
     setSaveFilenameDraft(defaultJsonFilename)
-    setSaveTitleDraft(documentMetadata.title ?? "")
-    setSaveDescriptionDraft(documentMetadata.description ?? "")
-    setSaveAuthorDraft(documentMetadata.author ?? "")
+    setSaveTitleDraft(projectMetadata.title ?? "")
+    setSaveDescriptionDraft(projectMetadata.description ?? "")
+    setSaveAuthorDraft(projectMetadata.author ?? "")
+    setSaveFilenameTouched(false)
     setIsSaveDialogOpen(true)
-  }, [defaultJsonFilename, documentMetadata.author, documentMetadata.description, documentMetadata.title])
+  }, [defaultJsonFilename, projectMetadata.author, projectMetadata.description, projectMetadata.title])
+
+  const handleSaveFilenameChange = useCallback((value: string) => {
+    setSaveFilenameTouched(true)
+    setSaveFilenameDraft(value)
+  }, [])
+
+  const handleSaveTitleChange = useCallback((value: string) => {
+    setSaveTitleDraft(value)
+    if (saveFilenameTouched) return
+    setSaveFilenameDraft(toProjectJsonFilename(value, defaultJsonFilename.replace(/\.json$/i, "")))
+  }, [defaultJsonFilename, saveFilenameTouched])
 
   const confirmSaveJSON = useCallback(() => {
     const trimmedName = saveFilenameDraft.trim()
     if (!trimmedName) return
-    const nextCreatedAt = documentMetadata.createdAt && !Number.isNaN(Date.parse(documentMetadata.createdAt))
-      ? new Date(documentMetadata.createdAt).toISOString()
+    const nextCreatedAt = projectMetadata.createdAt && !Number.isNaN(Date.parse(projectMetadata.createdAt))
+      ? new Date(projectMetadata.createdAt).toISOString()
       : new Date().toISOString()
     const normalizedMetadata = {
       title: saveTitleDraft.trim(),
@@ -188,12 +200,13 @@ export function useExportActions(ctx: ExportActionsContext) {
       title: normalizedMetadata.title,
       description: normalizedMetadata.description,
       author: normalizedMetadata.author,
+      createdAt: normalizedMetadata.createdAt,
     })
-    onDocumentMetadataChange(normalizedMetadata)
+    onProjectMetadataChange(normalizedMetadata)
     setIsSaveDialogOpen(false)
   }, [
-    documentMetadata.createdAt,
-    onDocumentMetadataChange,
+    onProjectMetadataChange,
+    projectMetadata.createdAt,
     saveAuthorDraft,
     saveDescriptionDraft,
     saveFilenameDraft,
@@ -229,10 +242,10 @@ export function useExportActions(ctx: ExportActionsContext) {
         floatPrecision: "smart",
         userUnit: 1,
       })
-      const trimmedTitle = documentMetadata.title.trim()
-      const trimmedDescription = documentMetadata.description.trim()
-      const trimmedAuthor = documentMetadata.author.trim()
-      const parsedCreatedAt = documentMetadata.createdAt ? Date.parse(documentMetadata.createdAt) : Number.NaN
+      const trimmedTitle = projectMetadata.title.trim()
+      const trimmedDescription = projectMetadata.description.trim()
+      const trimmedAuthor = projectMetadata.author.trim()
+      const parsedCreatedAt = projectMetadata.createdAt ? Date.parse(projectMetadata.createdAt) : Number.NaN
       pdf.setDocumentProperties({
         title: trimmedTitle || filename,
         author: trimmedAuthor || "Generated by Swiss Grid Generator",
@@ -291,10 +304,10 @@ export function useExportActions(ctx: ExportActionsContext) {
     },
     [
       baseFont,
-      documentMetadata.author,
-      documentMetadata.createdAt,
-      documentMetadata.description,
-      documentMetadata.title,
+      projectMetadata.author,
+      projectMetadata.createdAt,
+      projectMetadata.description,
+      projectMetadata.title,
       previewLayout,
       result,
       rotation,
@@ -403,9 +416,9 @@ export function useExportActions(ctx: ExportActionsContext) {
     isSaveDialogOpen,
     setIsSaveDialogOpen,
     saveFilenameDraft,
-    setSaveFilenameDraft,
+    setSaveFilenameDraft: handleSaveFilenameChange,
     saveTitleDraft,
-    setSaveTitleDraft,
+    setSaveTitleDraft: handleSaveTitleChange,
     saveDescriptionDraft,
     setSaveDescriptionDraft,
     saveAuthorDraft,

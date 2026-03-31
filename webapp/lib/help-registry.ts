@@ -10,7 +10,7 @@ export const GENERAL_INDEX_ITEMS = [
   { id: "help-image-editor", label: "Image Editor" },
   { id: "help-drag-placement", label: "Drag and Placement" },
   { id: "help-history-reflow", label: "History and Reflow" },
-  { id: "help-save-load", label: "Save and Load JSON" },
+  { id: "help-save-load", label: "Save and Load Project JSON" },
   { id: "help-export", label: "Export PDF" },
   { id: "help-troubleshooting", label: "Troubleshooting" },
   { id: "help-grid-theory", label: "Grid Theory Notes" },
@@ -39,7 +39,7 @@ export const HEADER_CONTROLS_INDEX_ITEMS = [
   { id: "help-header-margins", label: "Margins Toggle" },
   { id: "help-header-modules", label: "Modules Toggle" },
   { id: "help-header-typography", label: "Typography Toggle" },
-  { id: "help-header-layers", label: "Layers Panel" },
+  { id: "help-header-layers", label: "Project Panel" },
   { id: "help-header-settings", label: "Settings Panel" },
   { id: "help-shortcuts", label: "Keyboard Shortcuts" },
 ] as const

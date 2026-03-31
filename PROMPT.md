@@ -11,8 +11,12 @@ Canvas API, Web Workers (ESM). Tests: Node native test runner (ESM).
 
 ## KEY FILES
 lib/grid-calculator.ts          — Core engine; generateSwissGrid(GridSettings) → GridResult
-app/page.tsx                    — Root UI; all settings state, undo/redo, export dialogs
-components/grid-preview.tsx     — Canvas preview; owns layout state (blocks, drag, editor)
+app/page.tsx                    — Root UI; settings state, project/page state, undo/redo, export dialogs
+components/grid-preview.tsx     — Canvas preview; owns active-page layout state (blocks, drag, editor)
+components/sidebar/PagesPanel.tsx — Project title + pages browser in the right sidebar
+hooks/useProjectState.ts        — Project -> Pages -> Layers state controller
+hooks/useProjectController.ts   — Project JSON/preset load controller + metadata state
+lib/document-session.ts         — Project JSON parsing, page factories, legacy single-page import compatibility
 lib/reflow-planner.ts           — Pure deterministic reflow scoring
 lib/autofit-planner.ts          — Pure batch autofit planner
 lib/pdf-vector-export.ts        — jsPDF vector export (CMYK, bleed, crop/reg marks, shared planner draw)
@@ -42,7 +46,11 @@ PreviewLayoutState              — blockOrder[], textContent, styleAssignments,
                                   blockTextAlignments, blockTextReflow, blockFontFamilies,
                                   blockBold, blockItalic, blockRotations, blockSyllableDivision
 
-JSON save format: { schemaVersion, gridResult, uiSettings, previewLayout }
+Project JSON save format:
+{ schemaVersion, title, description, author, createdAt, activePageId,
+  pages: [{ id, name, uiSettings, previewLayout }] }
+
+Legacy single-page JSON { uiSettings, previewLayout } still imports as a one-page project.
 
 ## DESIGN INVARIANTS (never violate these)
 1. All typography leading = integer × gridUnit
