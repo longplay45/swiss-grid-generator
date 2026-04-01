@@ -1,24 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 
 import type { AutoFitPlannerInput, AutoFitStyle } from "@/lib/autofit-planner"
+import {
+  findTextLayerGridReductionConflicts,
+  getGridReductionWarningMessage,
+} from "@/lib/grid-reduction-validation"
 import { findNearestAxisIndex } from "@/lib/grid-rhythm"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 
-type PendingReflow<BlockId extends string> = {
-  previousGrid: { cols: number; rows: number }
-  nextGrid: { cols: number; rows: number }
-  movedCount: number
-  resolvedSpans: Record<BlockId, number>
-  nextPositions: Partial<Record<BlockId, ModulePosition>>
-}
-
-type ReflowPlan<BlockId extends string> = {
-  movedCount: number
-  resolvedSpans: Record<BlockId, number>
-  nextPositions: Partial<Record<BlockId, ModulePosition>>
-}
-
-type Args<BlockId extends string, ReflowInput, Snapshot> = {
+type Args<BlockId extends string> = {
   suppressReflowCheckRef: { current: boolean }
   blockOrder: BlockId[]
   blockColumnSpans: Partial<Record<BlockId, number>>
@@ -51,21 +41,12 @@ type Args<BlockId extends string, ReflowInput, Snapshot> = {
   isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
-  buildSnapshot: () => Snapshot
-  pushHistory: (snapshot: Snapshot) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
+  onRequestGridReductionWarning?: (message: string) => void
   setBlockColumnSpans: (next: (prev: Partial<Record<BlockId, number>>) => Partial<Record<BlockId, number>>) => void
   setBlockModulePositions: (
     next: (prev: Partial<Record<BlockId, ModulePosition>>) => Partial<Record<BlockId, ModulePosition>>
   ) => void
-  buildReflowPlannerInput: (
-    gridCols: number,
-    gridRows: number,
-    sourcePositions?: Partial<Record<BlockId, ModulePosition>>,
-  ) => ReflowInput
-  postReflowPlanRequest: (input: ReflowInput) => { requestId: number; promise: Promise<ReflowPlan<BlockId>> }
-  cancelReflowWorkerRequest: (requestId: number) => void
-  computeReflowPlan: (input: ReflowInput) => ReflowPlan<BlockId>
   postAutoFitRequest: (input: AutoFitPlannerInput) => {
     requestId: number
     promise: Promise<{
@@ -78,10 +59,10 @@ type Args<BlockId extends string, ReflowInput, Snapshot> = {
     spanUpdates: Partial<Record<string, number>>
     positionUpdates: Partial<Record<string, ModulePosition>>
   }
-  recordPerfMetric: (metric: "reflowMs" | "autofitMs", valueMs: number) => void
+  recordPerfMetric: (metric: "autofitMs", valueMs: number) => void
 }
 
-export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
+export function useLayoutReflow<BlockId extends string>({
   suppressReflowCheckRef,
   blockOrder,
   blockColumnSpans,
@@ -114,26 +95,19 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
   isBlockOpticalKerningEnabled,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
-  buildSnapshot,
-  pushHistory,
   onRequestGridRestore,
+  onRequestGridReductionWarning,
   setBlockColumnSpans,
   setBlockModulePositions,
-  buildReflowPlannerInput,
-  postReflowPlanRequest,
-  cancelReflowWorkerRequest,
-  computeReflowPlan,
   postAutoFitRequest,
   cancelAutoFitWorkerRequest,
   computeAutoFitFallback,
   recordPerfMetric,
-}: Args<BlockId, ReflowInput, Snapshot>) {
+}: Args<BlockId>) {
   const AUTOFIT_REQUEST_DEBOUNCE_MS = 80
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
   const previousModuleRowsRef = useRef<number[] | null>(null)
   const lastAutoFitSettingsRef = useRef<string>("")
-  const [pendingReflow, setPendingReflow] = useState<PendingReflow<BlockId> | null>(null)
-  const [reflowToast, setReflowToast] = useState<{ movedCount: number } | null>(null)
 
   const markStart = useCallback((name: string) => {
     if (typeof performance.mark !== "function") return
@@ -151,34 +125,6 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       // Ignore missing/invalid marks.
     }
   }, [])
-
-  const clearTransientState = useCallback(() => {
-    setPendingReflow(null)
-    setReflowToast(null)
-  }, [])
-
-  const dismissReflowToast = useCallback(() => {
-    setReflowToast(null)
-  }, [])
-
-  const applyPendingReflow = useCallback(() => {
-    if (!pendingReflow) return
-    pushHistory(buildSnapshot())
-    setBlockColumnSpans((prev) => ({ ...prev, ...pendingReflow.resolvedSpans }))
-    setBlockModulePositions((prev) => ({ ...prev, ...pendingReflow.nextPositions }))
-    previousGridRef.current = pendingReflow.nextGrid
-    previousModuleRowsRef.current = null
-    setReflowToast({ movedCount: pendingReflow.movedCount })
-    setPendingReflow(null)
-  }, [buildSnapshot, pendingReflow, pushHistory, setBlockColumnSpans, setBlockModulePositions])
-
-  const cancelPendingReflow = useCallback(() => {
-    if (!pendingReflow) return
-    previousGridRef.current = pendingReflow.previousGrid
-    previousModuleRowsRef.current = null
-    setPendingReflow(null)
-    onRequestGridRestore?.(pendingReflow.previousGrid.cols, pendingReflow.previousGrid.rows)
-  }, [onRequestGridRestore, pendingReflow])
 
   useEffect(() => {
     const currentGrid = { cols: gridCols, rows: gridRows }
@@ -223,7 +169,6 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       suppressReflowCheckRef.current = false
       return
     }
-    if (pendingReflow) return
 
     const previousGrid = previousGridRef.current
     const previousModuleRows = previousModuleRowsRef.current ?? currentModuleRows
@@ -250,74 +195,41 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       return
     }
 
-    const applyComputedPlan = (plan: ReflowPlan<BlockId>) => {
-      const spanChanged = blockOrder.some((key) => {
-        const currentSpan = blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols)
-        return plan.resolvedSpans[key] !== currentSpan
-      })
-      const positionChanged = blockOrder.some((key) => {
-        const a = blockModulePositions[key]
-        const b = plan.nextPositions[key]
-        if (!a && !b) return false
-        if (!a || !b) return true
-        return a.col !== b.col || Math.abs(a.row - b.row) > 0.0001
-      })
+    const reductionConflicts = findTextLayerGridReductionConflicts({
+      blockOrder,
+      blockModulePositions,
+      resolveBlockSpan: (key) => blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols),
+      resolveBlockRows: getBlockRows,
+      nextGridCols: currentGrid.cols,
+      nextGridRows: currentGrid.rows,
+      nextRowStartsInBaselines: currentModuleRows,
+    })
+    const reducedColumns = currentGrid.cols < previousGrid.cols
+    const reducedRows = currentGrid.rows < previousGrid.rows
+    const hasColumnConflict = reducedColumns && reductionConflicts.columnConflicts.length > 0
+    const hasRowConflict = reducedRows && reductionConflicts.rowConflicts.length > 0
 
-      if (!spanChanged && !positionChanged) {
-        previousGridRef.current = currentGrid
-        previousModuleRowsRef.current = currentModuleRows
-        return
-      }
-
-      if (plan.movedCount > 0) {
-        setPendingReflow({
-          previousGrid,
-          nextGrid: currentGrid,
-          movedCount: plan.movedCount,
-          resolvedSpans: plan.resolvedSpans,
-          nextPositions: plan.nextPositions,
-        })
-        return
-      }
-
-      pushHistory(buildSnapshot())
-      setBlockColumnSpans((prev) => ({ ...prev, ...plan.resolvedSpans }))
-      setBlockModulePositions((prev) => ({ ...prev, ...plan.nextPositions }))
-      previousGridRef.current = currentGrid
-      previousModuleRowsRef.current = currentModuleRows
+    if (hasColumnConflict || hasRowConflict) {
+      previousGridRef.current = previousGrid
+      previousModuleRowsRef.current = previousModuleRows
+      onRequestGridReductionWarning?.(
+        hasColumnConflict && hasRowConflict
+          ? getGridReductionWarningMessage("grid")
+          : hasColumnConflict
+            ? getGridReductionWarningMessage("columns")
+            : getGridReductionWarningMessage("rows"),
+      )
+      onRequestGridRestore?.(previousGrid.cols, previousGrid.rows)
+      return
     }
 
-    const plannerInput = buildReflowPlannerInput(currentGrid.cols, currentGrid.rows, blockModulePositions)
-    const reflowStartedAt = performance.now()
-    const { requestId, promise } = postReflowPlanRequest(plannerInput)
-    const reflowMarkName = `sgg:reflow:${requestId}`
-    markStart(reflowMarkName)
-    let cancelled = false
-    promise
-      .then((plan) => {
-        if (cancelled) return
-        markEnd(reflowMarkName)
-        recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
-        applyComputedPlan(plan)
-      })
-      .catch(() => {
-        if (cancelled) return
-        markEnd(reflowMarkName)
-        recordPerfMetric("reflowMs", performance.now() - reflowStartedAt)
-        applyComputedPlan(computeReflowPlan(plannerInput))
-      })
-    return () => {
-      cancelled = true
-      cancelReflowWorkerRequest(requestId)
-    }
+    previousGridRef.current = currentGrid
+    previousModuleRowsRef.current = currentModuleRows
   }, [
     blockColumnSpans,
     blockModulePositions,
     blockOrder,
-    buildReflowPlannerInput,
-    buildSnapshot,
-    cancelReflowWorkerRequest,
-    computeReflowPlan,
+    getBlockRows,
     getDefaultColumnSpan,
     gridCols,
     gridMarginVertical,
@@ -326,18 +238,15 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     marginBottom,
     marginTop,
     moduleHeight,
-    pageHeight,
     moduleRowStarts,
-    pendingReflow,
-    postReflowPlanRequest,
-    pushHistory,
-    recordPerfMetric,
-    setBlockColumnSpans,
+    onRequestGridReductionWarning,
+    onRequestGridRestore,
+    pageHeight,
     setBlockModulePositions,
+    suppressReflowCheckRef,
   ])
 
   useEffect(() => {
-    if (pendingReflow) return
     const signature = [
       gridCols,
       gridRows,
@@ -437,17 +346,18 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
       cancelAutoFitWorkerRequest(requestId)
     }
   }, [
+    AUTOFIT_REQUEST_DEBOUNCE_MS,
     blockModulePositions,
     blockOrder,
     cancelAutoFitWorkerRequest,
     computeAutoFitFallback,
-    getBlockRows,
-    getBlockFont,
-    getBlockFontWeight,
-    getBlockTrackingScale,
-    getBlockFontSize,
     getBlockBaselineMultiplier,
+    getBlockFont,
+    getBlockFontSize,
+    getBlockFontWeight,
+    getBlockRows,
     getBlockSpan,
+    getBlockTrackingScale,
     getStyleKeyForBlock,
     gridCols,
     gridMarginVertical,
@@ -459,13 +369,14 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     isTextReflowEnabled,
     marginBottom,
     marginTop,
+    markEnd,
+    markStart,
     moduleHeight,
-    moduleWidth,
     moduleHeights,
     moduleRowStarts,
+    moduleWidth,
     moduleWidths,
     pageHeight,
-    pendingReflow,
     postAutoFitRequest,
     recordPerfMetric,
     scale,
@@ -473,17 +384,7 @@ export function useLayoutReflow<BlockId extends string, ReflowInput, Snapshot>({
     setBlockModulePositions,
     textContent,
     typographyStyles,
-    AUTOFIT_REQUEST_DEBOUNCE_MS,
-    markEnd,
-    markStart,
   ])
 
-  return {
-    pendingReflow,
-    reflowToast,
-    applyPendingReflow,
-    cancelPendingReflow,
-    dismissReflowToast,
-    clearTransientState,
-  }
+  return {}
 }

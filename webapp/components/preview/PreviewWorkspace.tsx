@@ -80,6 +80,9 @@ type Props = {
   onRedoRequest: () => void
   onHistoryAvailabilityChange: (undoAvailable: boolean, redoAvailable: boolean) => void
   onRequestGridRestore: (cols: number, rows: number) => void
+  gridReductionWarningToast: { id: number; message: string } | null
+  onDismissGridReductionWarningToast: () => void
+  onRequestGridReductionWarning: (message: string) => void
   onRequestNotice: (notice: { title: string; message: string }) => void
   onLayoutChange: (layout: PreviewLayoutState) => void
   onSnapshotGetterChange: (getSnapshot: (() => PreviewLayoutState) | null) => void
@@ -175,6 +178,9 @@ export function PreviewWorkspace({
   onRedoRequest,
   onHistoryAvailabilityChange,
   onRequestGridRestore,
+  gridReductionWarningToast,
+  onDismissGridReductionWarningToast,
+  onRequestGridReductionWarning,
   onRequestNotice,
   onLayoutChange,
   onSnapshotGetterChange,
@@ -307,6 +313,9 @@ export function PreviewWorkspace({
               showPreviewHelpIndicator={showSectionHelpIcons}
               onHistoryAvailabilityChange={onHistoryAvailabilityChange}
               onRequestGridRestore={onRequestGridRestore}
+              gridReductionWarningToast={gridReductionWarningToast}
+              onDismissGridReductionWarningToast={onDismissGridReductionWarningToast}
+              onRequestGridReductionWarning={onRequestGridReductionWarning}
               onRequestNotice={onRequestNotice}
               requestedLayerOrder={requestedLayerOrderState?.order ?? null}
               requestedLayerOrderToken={requestedLayerOrderState?.token ?? 0}

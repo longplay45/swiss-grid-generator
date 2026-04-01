@@ -224,10 +224,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Undo/redo includes settings changes and block edits/placement changes.</li>
-          <li>Auto-reflow suggestions are shown when columns or rows are reduced.</li>
-          <li>Disruptive reflow opens an apply/cancel confirmation layer.</li>
-          <li>Applied reflow shows a toast with one-click Undo.</li>
-          <li>JSON layout loading suppresses disruptive reflow prompts.</li>
+          <li>Reducing columns or rows does not auto-reposition paragraphs.</li>
+          <li>If a reduction would push positioned paragraphs beyond the proposed grid, the grid stays unchanged.</li>
+          <li>An invalid reduction shows a temporary warning in the preview instead of opening a modal.</li>
+          <li>Reposition or delete the conflicting paragraphs, then try the reduction again.</li>
         </ul>
       </section>
 

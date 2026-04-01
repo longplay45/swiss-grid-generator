@@ -93,6 +93,9 @@ interface GridPreviewProps {
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onSnapshotGetterChange?: (getSnapshot: (() => PreviewLayoutState) | null) => void
   onRequestGridRestore?: (cols: number, rows: number) => void
+  gridReductionWarningToast?: { id: number; message: string } | null
+  onDismissGridReductionWarningToast?: () => void
+  onRequestGridReductionWarning?: (message: string) => void
   onHistoryAvailabilityChange?: (canUndo: boolean, canRedo: boolean) => void
   onHistoryRecord?: () => void
   onUndoRequest?: () => void
@@ -139,6 +142,9 @@ export const GridPreview = memo(function GridPreview({
   onLayoutChange,
   onSnapshotGetterChange,
   onRequestGridRestore,
+  gridReductionWarningToast = null,
+  onDismissGridReductionWarningToast,
+  onRequestGridReductionWarning,
   onHistoryAvailabilityChange,
   onHistoryRecord,
   onUndoRequest,
@@ -731,13 +737,7 @@ export const GridPreview = memo(function GridPreview({
     getGridMetrics,
   })
 
-  const {
-    pendingReflow,
-    reflowToast,
-    applyPendingReflow,
-    cancelPendingReflow,
-    dismissReflowToast,
-  } = usePreviewLayoutReflowController<BlockId, PreviewLayoutState>({
+  usePreviewLayoutReflowController<BlockId>({
     suppressReflowCheckRef,
     blockOrder,
     blockColumnSpans,
@@ -758,9 +758,8 @@ export const GridPreview = memo(function GridPreview({
     isBlockOpticalKerningEnabled,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
-    buildSnapshot,
-    pushHistory,
     onRequestGridRestore,
+    onRequestGridReductionWarning,
     setBlockColumnSpans,
     setBlockModulePositions,
     canvasRef,
@@ -870,12 +869,8 @@ export const GridPreview = memo(function GridPreview({
       />
 
       <GridPreviewFeedback
-        pendingReflow={pendingReflow}
-        reflowToast={reflowToast}
-        cancelPendingReflow={cancelPendingReflow}
-        applyPendingReflow={applyPendingReflow}
-        performUndo={onUndoRequest ?? undo}
-        dismissReflowToast={dismissReflowToast}
+        warningToast={gridReductionWarningToast}
+        dismissWarningToast={onDismissGridReductionWarningToast ?? (() => {})}
         isDarkMode={isDarkMode}
       />
 

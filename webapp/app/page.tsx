@@ -49,7 +49,13 @@ import {
   type UiAction,
 } from "@/lib/workspace-ui-state"
 import { useProjectState } from "@/hooks/useProjectState"
+import {
+  findTextLayerGridReductionConflicts,
+  getGridReductionWarningMessage,
+  getGridRowStartsInBaselines,
+} from "@/lib/grid-reduction-validation"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
+import { getDefaultColumnSpan } from "@/lib/text-layout"
 
 const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
@@ -64,11 +70,17 @@ type NoticeState = {
   message: string
 } | null
 
+type GridReductionWarningToastState = {
+  id: number
+  message: string
+} | null
+
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
+  const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -83,6 +95,15 @@ export default function Home() {
   const ui = useMemo(() => ({ ...gridUi, ...exportUi }), [gridUi, exportUi])
   const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
     setNoticeState(notice)
+  }, [])
+  const handleRequestGridReductionWarning = useCallback((message: string) => {
+    setGridReductionWarningToast({
+      id: Date.now(),
+      message,
+    })
+  }, [])
+  const dismissGridReductionWarningToast = useCallback(() => {
+    setGridReductionWarningToast(null)
   }, [])
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
@@ -219,8 +240,8 @@ export default function Home() {
     }
   }, [dispatch, exportPaperSize, selectedCanvasRatio])
 
-  const result = useMemo(() => {
-    const customMargins = useCustomMargins
+  const resolvedCustomMargins = useMemo(() => (
+    useCustomMargins
       ? {
           top: customMarginMultipliers.top * baselineMultiple * gridUnit,
           bottom: customMarginMultipliers.bottom * baselineMultiple * gridUnit,
@@ -228,12 +249,15 @@ export default function Home() {
           right: customMarginMultipliers.right * baselineMultiple * gridUnit,
         }
       : undefined
-    return generateSwissGrid({
+  ), [baselineMultiple, customMarginMultipliers, gridUnit, useCustomMargins])
+
+  const buildGridResult = useCallback((nextGridCols: number, nextGridRows: number) => (
+    generateSwissGrid({
       format: previewFormat,
       orientation,
       marginMethod,
-      gridCols,
-      gridRows,
+      gridCols: nextGridCols,
+      gridRows: nextGridRows,
       baseline: customBaseline ?? DEFAULT_A4_BASELINE,
       baselineMultiple,
       gutterMultiple,
@@ -242,28 +266,29 @@ export default function Home() {
       rhythmRowsDirection,
       rhythmColsEnabled,
       rhythmColsDirection,
-      customMargins,
+      customMargins: resolvedCustomMargins,
       typographyScale,
     })
-  }, [
-    previewFormat,
-    orientation,
-    marginMethod,
-    gridCols,
-    gridRows,
-    customBaseline,
+  ), [
     baselineMultiple,
+    customBaseline,
     gutterMultiple,
+    marginMethod,
+    orientation,
+    previewFormat,
+    resolvedCustomMargins,
     rhythm,
-    rhythmRowsEnabled,
-    rhythmRowsDirection,
-    rhythmColsEnabled,
     rhythmColsDirection,
-    useCustomMargins,
-    customMarginMultipliers,
-    gridUnit,
+    rhythmColsEnabled,
+    rhythmRowsDirection,
+    rhythmRowsEnabled,
     typographyScale,
   ])
+
+  const result = useMemo(
+    () => buildGridResult(gridCols, gridRows),
+    [buildGridResult, gridCols, gridRows],
+  )
 
   const maxBaseline = useMemo(() => {
     const formatDim = FORMATS_PT[previewFormat]
@@ -390,6 +415,74 @@ export default function Home() {
   const defaultJsonFilename = useMemo(() => {
     return toProjectJsonFilename(projectMetadata.title, baseFilename)
   }, [baseFilename, projectMetadata.title])
+
+  const getGridReductionConflicts = useCallback((nextGridCols: number, nextGridRows: number) => {
+    const layout = getCurrentPreviewLayout()
+    if (!layout) {
+      return {
+        columnConflicts: [],
+        rowConflicts: [],
+      }
+    }
+    const nextGridResult = buildGridResult(nextGridCols, nextGridRows)
+    return findTextLayerGridReductionConflicts({
+      blockOrder: layout.blockOrder,
+      blockModulePositions: layout.blockModulePositions,
+      resolveBlockSpan: (key) => {
+        const raw = layout.blockColumnSpans[key]
+        return typeof raw === "number" && Number.isFinite(raw)
+          ? raw
+          : getDefaultColumnSpan(key, gridCols)
+      },
+      resolveBlockRows: (key) => {
+        const raw = layout.blockRowSpans?.[key]
+        return typeof raw === "number" && Number.isFinite(raw) ? raw : 1
+      },
+      nextGridCols,
+      nextGridRows,
+      nextRowStartsInBaselines: getGridRowStartsInBaselines(nextGridResult),
+    })
+  }, [buildGridResult, getCurrentPreviewLayout, gridCols])
+
+  const handleGridColsChange = useCallback((nextGridCols: number) => {
+    if (nextGridCols === gridCols) return
+    if (nextGridCols < gridCols) {
+      const { columnConflicts } = getGridReductionConflicts(nextGridCols, gridRows)
+      if (columnConflicts.length > 0) {
+        handleRequestGridReductionWarning(getGridReductionWarningMessage("columns"))
+        return
+      }
+    }
+    dismissGridReductionWarningToast()
+    setGridCols(nextGridCols)
+  }, [
+    dismissGridReductionWarningToast,
+    getGridReductionConflicts,
+    gridCols,
+    gridRows,
+    handleRequestGridReductionWarning,
+    setGridCols,
+  ])
+
+  const handleGridRowsChange = useCallback((nextGridRows: number) => {
+    if (nextGridRows === gridRows) return
+    if (nextGridRows < gridRows) {
+      const { rowConflicts } = getGridReductionConflicts(gridCols, nextGridRows)
+      if (rowConflicts.length > 0) {
+        handleRequestGridReductionWarning(getGridReductionWarningMessage("rows"))
+        return
+      }
+    }
+    dismissGridReductionWarningToast()
+    setGridRows(nextGridRows)
+  }, [
+    dismissGridReductionWarningToast,
+    getGridReductionConflicts,
+    gridCols,
+    gridRows,
+    handleRequestGridReductionWarning,
+    setGridRows,
+  ])
 
   const handleProjectTitleChange = useCallback((nextTitle: string) => {
     const trimmedTitle = nextTitle.trim()
@@ -661,6 +754,9 @@ export default function Home() {
       onRedoRequest={redoAny}
       onHistoryAvailabilityChange={handlePreviewHistoryAvailabilityChange}
       onRequestGridRestore={handlePreviewGridRestore}
+      gridReductionWarningToast={gridReductionWarningToast}
+      onDismissGridReductionWarningToast={dismissGridReductionWarningToast}
+      onRequestGridReductionWarning={handleRequestGridReductionWarning}
       onRequestNotice={handleRequestNotice}
       onLayoutChange={handlePreviewLayoutChange}
       onSnapshotGetterChange={handlePreviewSnapshotGetterChange}
@@ -742,9 +838,9 @@ export default function Home() {
               currentMargins={result.grid.margins}
               gridUnit={gridUnit}
               gridCols={gridCols}
-              onGridColsChange={setGridCols}
+              onGridColsChange={handleGridColsChange}
               gridRows={gridRows}
-              onGridRowsChange={setGridRows}
+              onGridRowsChange={handleGridRowsChange}
               gutterMultiple={gutterMultiple}
               onGutterMultipleChange={setGutterMultiple}
               rhythm={rhythm}
