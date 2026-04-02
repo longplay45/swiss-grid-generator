@@ -4,14 +4,14 @@ import type { MutableRefObject, RefObject } from "react"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
-import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
 import {
-  applyCanvasTextConfig,
-  buildCanvasFont,
-  drawCanvasText,
-} from "@/lib/text-rendering"
+  buildCanvasImagePlans,
+  buildCanvasTypographyRenderPlans,
+  buildOrderedCanvasLayerKeys,
+  drawCanvasLayerStack,
+} from "@/lib/canvas-page-renderer"
+import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
-import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 
 type DragState<BlockId extends string> = {
   key: BlockId
@@ -77,11 +77,6 @@ type Args<BlockId extends string> = {
   onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   recordPerfMetric: (metric: "drawMs", valueMs: number) => void
-}
-
-function getTextAscentPx(ctx: CanvasRenderingContext2D, fallbackFontSizePx: number): number {
-  const metrics = ctx.measureText("Hg")
-  return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
 }
 
 export function useTypographyRenderer<BlockId extends string>({
@@ -197,8 +192,8 @@ export function useTypographyRenderer<BlockId extends string>({
       )
       const minBaselineRow = -maxBaselineRow
       const gutterX = gridMarginHorizontal * scale
-      const draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
-      const imagePlans = new Map<BlockId, { rect: BlockRect; color: string }>()
+      let draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
+      let imagePlans = new Map<BlockId, { rect: BlockRect; color: string }>()
 
       const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
         const dragged = dragState?.key === key ? dragState.preview : undefined
@@ -217,29 +212,32 @@ export function useTypographyRenderer<BlockId extends string>({
       }
 
       if (showImagePlaceholders) {
-        for (const key of imageOrder) {
-          const basePosition = imageModulePositions[key]
-          const position = dragState?.key === key ? dragState.preview : basePosition
-          if (!position) continue
-          const columns = getImageSpan(key)
-          const rows = getImageRows(key)
-          const clamped = clampImageBaselinePosition(position, columns)
-          const x = toColumnX(clamped.col)
-          const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
-          const rowStartIndex = Math.max(
-            0,
-            Math.min(gridRows - 1, findNearestAxisIndex(rowStartsInBaselines, clamped.row)),
-          )
-          const widthPx = sumAxisSpan(moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale
-          const heightPx = sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale
-          const rect = { x, y, width: widthPx, height: heightPx }
-          imageRectsRef.current[key] = rect
-          imagePlans.set(key, { rect, color: getImageColor(key) })
-        }
+        const imageRenderState = buildCanvasImagePlans({
+          imageOrder,
+          imageModulePositions,
+          dragState,
+          getImageSpan,
+          getImageRows,
+          getImageColor,
+          clampImageBaselinePosition,
+          toColumnX,
+          baselineOriginTop,
+          baselineStep,
+          rowStartsInBaselines,
+          gridRows,
+          moduleWidths,
+          moduleHeights,
+          gridMarginHorizontal,
+          gridMarginVertical,
+          scale,
+        })
+        imagePlans = imageRenderState.imagePlans
+        imageRectsRef.current = imageRenderState.imageRects
       }
 
       if (showTypography) {
-        const layoutOutput = buildTypographyLayoutPlan<BlockId, keyof GridResult["typography"]["styles"], CanvasRenderingContext2D>({
+        const typographyRenderState = buildCanvasTypographyRenderPlans<BlockId, keyof GridResult["typography"]["styles"]>({
+          ctx,
           blockOrder,
           textContent,
           styleAssignments,
@@ -266,14 +264,8 @@ export function useTypographyRenderer<BlockId extends string>({
           defaultCaptionStyleKey: "caption",
           getBlockSpan,
           getBlockRows,
-          getBlockFontSize: ({ key, styleKey, defaultSize }) => {
-            const scaledSize = getBlockFontSize(key, styleKey) * scale
-            return Number.isFinite(scaledSize) && scaledSize > 0 ? scaledSize : defaultSize
-          },
-          getBlockBaselineMultiplier: ({ key, styleKey, defaultMultiplier }) => {
-            const next = getBlockBaselineMultiplier(key, styleKey)
-            return Number.isFinite(next) && next > 0 ? next : defaultMultiplier
-          },
+          getBlockFontSize,
+          getBlockBaselineMultiplier,
           getBlockRotation,
           isTextReflowEnabled,
           isSyllableDivisionEnabled,
@@ -290,88 +282,20 @@ export function useTypographyRenderer<BlockId extends string>({
             return toClosestRowIndex(manual.row)
           },
           getOriginForBlock,
-          createTextContext: ({ key, fontSize }) => {
-            const blockFont = getBlockFont(key)
-            applyCanvasTextConfig(ctx, {
-              font: buildCanvasFont(blockFont, getBlockFontWeight(key), isBlockItalic(key), fontSize),
-              opticalKerning: isBlockOpticalKerningEnabled(key),
-            })
-            return ctx
-          },
-          wrapText: ({ context, key, text, maxWidth, hyphenate }) =>
-            getWrappedText(
-              context,
-              text,
-              maxWidth,
-              hyphenate,
-              getBlockTrackingScale(key),
-              isBlockOpticalKerningEnabled(key),
-            ),
-          textAscent: ({ context, fontSize }) => getTextAscentPx(context, fontSize),
-          opticalOffset: ({ context, key, styleKey, line, align, fontSize }) =>
-            getOpticalOffset(
-              context,
-              styleKey,
-              line,
-              align,
-              fontSize,
-              isBlockOpticalKerningEnabled(key),
-            ),
+          getBlockFont: (key) => getBlockFont(key),
+          getBlockFontWeight: (key) => getBlockFontWeight(key),
+          isBlockItalic: (key) => isBlockItalic(key),
+          isBlockOpticalKerningEnabled,
+          getBlockTrackingScale,
+          getBlockTextColor,
+          getWrappedText,
+          getOpticalOffset: (context, key, styleKey, line, align, fontSize, opticalKerning) => (
+            getOpticalOffset(context, styleKey, line, align, fontSize, opticalKerning)
+          ),
         })
-
-        for (const plan of layoutOutput.plans) {
-          const blockFont = getBlockFont(plan.key)
-          const blockFontWeight = getBlockFontWeight(plan.key)
-          const blockItalic = isBlockItalic(plan.key)
-          const opticalKerning = isBlockOpticalKerningEnabled(plan.key)
-          const trackingScale = getBlockTrackingScale(plan.key)
-          applyCanvasTextConfig(ctx, {
-            font: buildCanvasFont(blockFont, blockFontWeight, blockItalic, plan.fontSize),
-            opticalKerning,
-          })
-          const planFont = ctx.font
-          draftPlans.set(plan.key, {
-            key: plan.key,
-            rect: plan.rect,
-            guideRects: plan.guideRects,
-            signature: [
-              plan.styleKey,
-              blockFont,
-              getBlockTextColor(plan.key),
-              blockFontWeight,
-              blockItalic ? "italic" : "normal",
-              opticalKerning ? "kerning-on" : "kerning-off",
-              trackingScale,
-              plan.textAlign,
-              plan.blockRotation.toFixed(2),
-              plan.span,
-              plan.rowSpan,
-              plan.columnReflow ? 1 : 0,
-              plan.rotationOriginX.toFixed(3),
-              plan.rotationOriginY.toFixed(3),
-              plan.rect.width.toFixed(3),
-              plan.rect.height.toFixed(3),
-              plan.guideRects
-                .map((guideRect) => `${guideRect.x.toFixed(3)},${guideRect.y.toFixed(3)},${guideRect.width.toFixed(3)},${guideRect.height.toFixed(3)}`)
-                .join("||"),
-              plan.commands
-                .map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`)
-                .join("||"),
-            ].join("|"),
-            font: planFont,
-            textColor: getBlockTextColor(plan.key),
-            textAlign: plan.textAlign,
-            blockRotation: plan.blockRotation,
-            rotationOriginX: plan.rotationOriginX,
-            rotationOriginY: plan.rotationOriginY,
-            opticalKerning,
-            trackingScale,
-            commands: plan.commands,
-          })
-        }
-
-        blockRectsRef.current = layoutOutput.rects
-        Object.assign(overflowByBlock, layoutOutput.overflowByBlock)
+        draftPlans = typographyRenderState.textPlans
+        blockRectsRef.current = typographyRenderState.blockRects
+        Object.assign(overflowByBlock, typographyRenderState.overflowByBlock)
       } else {
         previousPlansRef.current.clear()
       }
@@ -410,45 +334,13 @@ export function useTypographyRenderer<BlockId extends string>({
       const bufferCssWidth = typographyBuffer.width / pixelRatio
       const bufferCssHeight = typographyBuffer.height / pixelRatio
 
-      const drawPlans = (plans: BlockRenderPlan<BlockId>[]) => {
-        bufferCtx.textBaseline = "alphabetic"
-        for (const plan of plans) {
-          bufferCtx.fillStyle = plan.textColor
-          applyCanvasTextConfig(bufferCtx, {
-            font: plan.font,
-            opticalKerning: plan.opticalKerning,
-          })
-          bufferCtx.textAlign = plan.textAlign
-          for (const command of plan.commands) {
-            drawCanvasText(bufferCtx, {
-              text: command.text,
-              x: command.x,
-              y: command.y,
-              trackingScale: plan.trackingScale,
-              blockRotation: plan.blockRotation,
-              rotationOrigin: {
-                x: plan.rotationOriginX,
-                y: plan.rotationOriginY,
-              },
-            })
-          }
-        }
-      }
-
-      const drawImagePlan = (imagePlan: { rect: BlockRect; color: string }) => {
-        bufferCtx.fillStyle = imagePlan.color
-        bufferCtx.globalAlpha = 0.92
-        bufferCtx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
-        bufferCtx.globalAlpha = 1
-      }
-
-      const orderedKeys = layerOrder.filter((key) => imagePlans.has(key) || draftPlans.has(key))
-      for (const key of imageOrder) {
-        if ((imagePlans.has(key) || draftPlans.has(key)) && !orderedKeys.includes(key)) orderedKeys.push(key)
-      }
-      for (const key of blockOrder) {
-        if ((imagePlans.has(key) || draftPlans.has(key)) && !orderedKeys.includes(key)) orderedKeys.push(key)
-      }
+      const orderedKeys = buildOrderedCanvasLayerKeys(
+        layerOrder,
+        imageOrder,
+        blockOrder,
+        imagePlans,
+        draftPlans,
+      )
 
       bufferCtx.setTransform(1, 0, 0, 1, 0, 0)
       bufferCtx.clearRect(0, 0, typographyBuffer.width, typographyBuffer.height)
@@ -457,15 +349,7 @@ export function useTypographyRenderer<BlockId extends string>({
       bufferCtx.translate(bufferCssWidth / 2, bufferCssHeight / 2)
       bufferCtx.rotate((rotation * Math.PI) / 180)
       bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
-      for (const key of orderedKeys) {
-        const imagePlan = imagePlans.get(key)
-        if (imagePlan) {
-          drawImagePlan(imagePlan)
-          continue
-        }
-        const textPlan = draftPlans.get(key)
-        if (textPlan) drawPlans([textPlan])
-      }
+      drawCanvasLayerStack(bufferCtx, orderedKeys, imagePlans, draftPlans)
       bufferCtx.restore()
 
       ctx.setTransform(1, 0, 0, 1, 0, 0)
