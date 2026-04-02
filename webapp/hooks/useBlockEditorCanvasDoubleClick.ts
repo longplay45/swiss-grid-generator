@@ -39,6 +39,7 @@ type Args = {
   getBlockTextColor: (key: string) => string
   defaultTextColor: string
   getDefaultColumnSpan: (key: string, gridCols: number) => number
+  getGridMetrics: () => { rowStartBaselines: number[] }
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
@@ -79,6 +80,7 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockTextColor,
   defaultTextColor,
   getDefaultColumnSpan,
+  getGridMetrics,
   toPagePoint,
   findTopmostBlockAtPoint,
   snapToModule,
@@ -147,15 +149,19 @@ export function useBlockEditorCanvasDoubleClick({
     const newKey = getNextCustomBlockId()
     recordHistoryBeforeChange()
     const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
+    const rowStartBaselines = getGridMetrics().rowStartBaselines
     const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
     const defaultText = getDummyTextForStyle("body")
     setBlockCollections((prev) => insertTextLayerIntoCollections(prev, {
       newKey,
       text: defaultText,
       styleKey: "body",
+      gridCols: resultGridCols,
+      gridRows: resultGridRows,
       columns: defaultSpan,
       rows: 1,
       position: snapped,
+      rowStartBaselines,
     }))
     setEditorState(buildNewBlockEditorState({
       key: newKey,
@@ -192,6 +198,7 @@ export function useBlockEditorCanvasDoubleClick({
     getBlockTextColor,
     getDefaultColumnSpan,
     getDummyTextForStyle,
+    getGridMetrics,
     getNextCustomBlockId,
     getStyleLeading,
     getStyleSize,

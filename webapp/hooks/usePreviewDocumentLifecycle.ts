@@ -4,7 +4,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react"
 import { getClosestImageSchemeColorToken, type ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
-import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
+import type { PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 
 type BlockCollectionsState<StyleKey extends string, Key extends string> = {
@@ -23,7 +23,7 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
-  blockModulePositions: Partial<Record<Key, ModulePosition>>
+  blockModulePositions: Partial<Record<Key, TextBlockPosition>>
 }
 
 type Args<StyleKey extends string, Key extends string, DragState, TextEditorState extends { draftColor: string }, ImageEditorState> = {
@@ -68,7 +68,7 @@ type Args<StyleKey extends string, Key extends string, DragState, TextEditorStat
   defaultStyleAssignments: Record<string, StyleKey>
   isFontFamily: (value: unknown) => value is FontFamily
   getDefaultColumnSpan: (key: Key, gridCols: number) => number
-  getGridMetrics: () => { maxBaselineRow: number }
+  getGridMetrics: () => { rowStartBaselines: number[] }
   setBlockCollections: (updater: () => BlockCollectionsState<StyleKey, Key>) => void
   applyImageSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   applyLayerOrderSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void

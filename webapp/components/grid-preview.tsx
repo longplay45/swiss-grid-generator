@@ -251,6 +251,7 @@ export const GridPreview = memo(function GridPreview({
     textContent,
     blockTextEdited,
     styleAssignments,
+    blockGridPositions,
     blockModulePositions,
     blockColumnSpans,
     blockTextAlignments,
@@ -741,6 +742,7 @@ export const GridPreview = memo(function GridPreview({
     suppressReflowCheckRef,
     blockOrder,
     blockColumnSpans,
+    blockGridPositions,
     blockModulePositions,
     textContent,
     scale,
@@ -761,7 +763,6 @@ export const GridPreview = memo(function GridPreview({
     onRequestGridRestore,
     onRequestGridReductionWarning,
     setBlockColumnSpans,
-    setBlockModulePositions,
     canvasRef,
     recordPerfMetric,
   })

@@ -3,8 +3,9 @@ import type { MutableRefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import { toTextBlockPosition } from "@/lib/text-block-position"
 import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
-import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
+import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, BlockKey extends string> = {
   initialLayout: PreviewLayoutState<StyleKey, FontFamily, BlockKey> | null
@@ -21,7 +22,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
   defaultStyleAssignments: Record<string, StyleKey>
   isFontFamily: (value: unknown) => value is FontFamily
   getDefaultColumnSpan: (key: BlockKey, gridCols: number) => number
-  getGridMetrics: () => { maxBaselineRow: number }
+  getGridMetrics: () => { rowStartBaselines: number[] }
   setBlockCollections: (updater: () => {
     blockOrder: BlockKey[]
     textContent: Record<BlockKey, string>
@@ -38,7 +39,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockSyllableDivision: Partial<Record<BlockKey, boolean>>
     blockItalic: Partial<Record<BlockKey, boolean>>
     blockRotations: Partial<Record<BlockKey, number>>
-    blockModulePositions: Partial<Record<BlockKey, ModulePosition>>
+    blockModulePositions: Partial<Record<BlockKey, TextBlockPosition>>
   }) => void
   onBeforeApply: () => void
   onAfterApply: () => void
@@ -184,18 +185,19 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
 
     const metrics = getGridMetrics()
     const nextPositions = normalizedKeys.reduce((acc, key) => {
-      const raw = initialLayout.blockModulePositions?.[key]
-      if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
+      const raw = initialLayout.blockModulePositions?.[key] as TextBlockPosition | ModulePosition | undefined
+      if (!raw) return acc
+      const logical = toTextBlockPosition(raw, metrics.rowStartBaselines)
       const span = nextSpans[key]
       const minCol = -Math.max(0, span - 1)
       const maxCol = Math.max(0, gridCols - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
       acc[key] = {
-        col: Math.max(minCol, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, raw.row)),
+        column: Math.max(minCol, Math.min(maxCol, Math.round(logical.column))),
+        row: Math.max(0, Math.min(Math.max(0, gridRows - 1), Math.round(logical.row))),
+        baselineOffset: Math.round(logical.baselineOffset),
       }
       return acc
-    }, {} as Partial<Record<BlockKey, ModulePosition>>)
+    }, {} as Partial<Record<BlockKey, TextBlockPosition>>)
 
     setBlockCollections(() => ({
       blockOrder: normalizedKeys,

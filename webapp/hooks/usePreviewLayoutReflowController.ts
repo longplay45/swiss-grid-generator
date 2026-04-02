@@ -13,7 +13,7 @@ import {
   buildCanvasFont,
   measureCanvasTextWidth,
 } from "@/lib/text-rendering"
-import type { ModulePosition } from "@/lib/types/preview-layout"
+import type { ModulePosition, TextBlockPosition } from "@/lib/types/preview-layout"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
 
@@ -21,6 +21,7 @@ type Args<Key extends string> = {
   suppressReflowCheckRef: MutableRefObject<boolean>
   blockOrder: Key[]
   blockColumnSpans: Partial<Record<Key, number>>
+  blockGridPositions: Partial<Record<Key, TextBlockPosition>>
   blockModulePositions: Partial<Record<Key, ModulePosition>>
   textContent: Record<Key, string>
   scale: number
@@ -41,7 +42,6 @@ type Args<Key extends string> = {
   onRequestGridRestore?: (cols: number, rows: number) => void
   onRequestGridReductionWarning?: (message: string) => void
   setBlockColumnSpans: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
-  setBlockModulePositions: Dispatch<SetStateAction<Partial<Record<Key, ModulePosition>>>>
   canvasRef: RefObject<HTMLCanvasElement | null>
   recordPerfMetric: (metric: "autofitMs", valueMs: number) => void
 }
@@ -50,6 +50,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
   suppressReflowCheckRef,
   blockOrder,
   blockColumnSpans,
+  blockGridPositions,
   blockModulePositions,
   textContent,
   scale,
@@ -70,7 +71,6 @@ export function usePreviewLayoutReflowController<Key extends string>({
   onRequestGridRestore,
   onRequestGridReductionWarning,
   setBlockColumnSpans,
-  setBlockModulePositions,
   canvasRef,
   recordPerfMetric,
 }: Args<Key>) {
@@ -143,6 +143,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
     suppressReflowCheckRef,
     blockOrder,
     blockColumnSpans,
+    blockGridPositions,
     blockModulePositions,
     textContent,
     scale,
@@ -175,7 +176,6 @@ export function usePreviewLayoutReflowController<Key extends string>({
     onRequestGridRestore,
     onRequestGridReductionWarning,
     setBlockColumnSpans,
-    setBlockModulePositions,
     postAutoFitRequest,
     cancelAutoFitWorkerRequest,
     computeAutoFitFallback,

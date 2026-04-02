@@ -5,13 +5,13 @@ import {
   findTextLayerGridReductionConflicts,
   getGridReductionWarningMessage,
 } from "@/lib/grid-reduction-validation"
-import { findNearestAxisIndex } from "@/lib/grid-rhythm"
-import type { ModulePosition } from "@/lib/types/layout-primitives"
+import type { ModulePosition, TextBlockPosition } from "@/lib/types/layout-primitives"
 
 type Args<BlockId extends string> = {
   suppressReflowCheckRef: { current: boolean }
   blockOrder: BlockId[]
   blockColumnSpans: Partial<Record<BlockId, number>>
+  blockGridPositions: Partial<Record<BlockId, TextBlockPosition>>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
   textContent: Record<BlockId, string>
   scale: number
@@ -44,9 +44,6 @@ type Args<BlockId extends string> = {
   onRequestGridRestore?: (cols: number, rows: number) => void
   onRequestGridReductionWarning?: (message: string) => void
   setBlockColumnSpans: (next: (prev: Partial<Record<BlockId, number>>) => Partial<Record<BlockId, number>>) => void
-  setBlockModulePositions: (
-    next: (prev: Partial<Record<BlockId, ModulePosition>>) => Partial<Record<BlockId, ModulePosition>>
-  ) => void
   postAutoFitRequest: (input: AutoFitPlannerInput) => {
     requestId: number
     promise: Promise<{
@@ -66,6 +63,7 @@ export function useLayoutReflow<BlockId extends string>({
   suppressReflowCheckRef,
   blockOrder,
   blockColumnSpans,
+  blockGridPositions,
   blockModulePositions,
   textContent,
   scale,
@@ -98,7 +96,6 @@ export function useLayoutReflow<BlockId extends string>({
   onRequestGridRestore,
   onRequestGridReductionWarning,
   setBlockColumnSpans,
-  setBlockModulePositions,
   postAutoFitRequest,
   cancelAutoFitWorkerRequest,
   computeAutoFitFallback,
@@ -106,7 +103,6 @@ export function useLayoutReflow<BlockId extends string>({
 }: Args<BlockId>) {
   const AUTOFIT_REQUEST_DEBOUNCE_MS = 80
   const previousGridRef = useRef<{ cols: number; rows: number } | null>(null)
-  const previousModuleRowsRef = useRef<number[] | null>(null)
   const lastAutoFitSettingsRef = useRef<string>("")
 
   const markStart = useCallback((name: string) => {
@@ -128,90 +124,37 @@ export function useLayoutReflow<BlockId extends string>({
 
   useEffect(() => {
     const currentGrid = { cols: gridCols, rows: gridRows }
-    const currentModuleRowStep = Math.max(0.0001, (moduleHeight + gridMarginVertical) / gridUnit)
-    const currentModuleRows = (
-      moduleRowStarts.length > 0
-        ? moduleRowStarts
-        : Array.from({ length: Math.max(1, gridRows) }, (_, index) => index * currentModuleRowStep)
-    ).map((value) => Math.max(0, value))
-    const maxBaselineRow = Math.max(0, Math.floor((pageHeight - marginTop - marginBottom) / gridUnit))
-
-    const remapRowsToCurrentModules = (fromModuleRows: number[]) => {
-      setBlockModulePositions((prev) => {
-        let changed = false
-        const next: Partial<Record<BlockId, ModulePosition>> = { ...prev }
-        for (const key of blockOrder) {
-          const position = prev[key]
-          if (!position) continue
-          const moduleIndex = findNearestAxisIndex(fromModuleRows, position.row)
-          const fromStart = fromModuleRows[moduleIndex] ?? 0
-          const targetStart = currentModuleRows[Math.min(moduleIndex, Math.max(0, currentModuleRows.length - 1))] ?? 0
-          const baselineOffset = position.row - fromStart
-          const remappedRow = targetStart + baselineOffset
-          const clampedRow = Math.max(-maxBaselineRow, Math.min(maxBaselineRow, remappedRow))
-          if (Math.abs(clampedRow - position.row) > 0.0001) {
-            next[key] = { ...position, row: clampedRow }
-            changed = true
-          }
-        }
-        return changed ? next : prev
-      })
-    }
-
     if (!previousGridRef.current) {
       previousGridRef.current = currentGrid
-      previousModuleRowsRef.current = currentModuleRows
       return
     }
     if (suppressReflowCheckRef.current) {
       previousGridRef.current = currentGrid
-      previousModuleRowsRef.current = currentModuleRows
       suppressReflowCheckRef.current = false
       return
     }
 
     const previousGrid = previousGridRef.current
-    const previousModuleRows = previousModuleRowsRef.current ?? currentModuleRows
-    const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    const moduleRowStepChanged = (
-      previousModuleRows.length !== currentModuleRows.length
-      || previousModuleRows.some((value, index) => Math.abs(value - (currentModuleRows[index] ?? value)) > 0.0001)
-    )
-    if (!gridChanged && !moduleRowStepChanged) return
-
-    // For ratio/orientation/baseline/gutter changes (or row/col increases), preserve
-    // each block's module index plus baseline offset inside that module.
-    if (!gridChanged || (currentGrid.cols >= previousGrid.cols && currentGrid.rows >= previousGrid.rows)) {
-      if (moduleRowStepChanged) remapRowsToCurrentModules(previousModuleRows)
+    const reducedColumns = currentGrid.cols < previousGrid.cols
+    const reducedRows = currentGrid.rows < previousGrid.rows
+    if (!reducedColumns && !reducedRows) {
       previousGridRef.current = currentGrid
-      previousModuleRowsRef.current = currentModuleRows
-      return
-    }
-
-    const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
-    if (!hasGridReduction) {
-      previousGridRef.current = currentGrid
-      previousModuleRowsRef.current = currentModuleRows
       return
     }
 
     const reductionConflicts = findTextLayerGridReductionConflicts({
       blockOrder,
-      blockModulePositions,
+      blockModulePositions: blockGridPositions,
       resolveBlockSpan: (key) => blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols),
       resolveBlockRows: getBlockRows,
       nextGridCols: currentGrid.cols,
       nextGridRows: currentGrid.rows,
-      nextRowStartsInBaselines: currentModuleRows,
     })
-    const reducedColumns = currentGrid.cols < previousGrid.cols
-    const reducedRows = currentGrid.rows < previousGrid.rows
     const hasColumnConflict = reducedColumns && reductionConflicts.columnConflicts.length > 0
     const hasRowConflict = reducedRows && reductionConflicts.rowConflicts.length > 0
 
     if (hasColumnConflict || hasRowConflict) {
       previousGridRef.current = previousGrid
-      previousModuleRowsRef.current = previousModuleRows
       onRequestGridReductionWarning?.(
         hasColumnConflict && hasRowConflict
           ? getGridReductionWarningMessage("grid")
@@ -224,25 +167,16 @@ export function useLayoutReflow<BlockId extends string>({
     }
 
     previousGridRef.current = currentGrid
-    previousModuleRowsRef.current = currentModuleRows
   }, [
     blockColumnSpans,
-    blockModulePositions,
+    blockGridPositions,
     blockOrder,
     getBlockRows,
     getDefaultColumnSpan,
     gridCols,
-    gridMarginVertical,
     gridRows,
-    gridUnit,
-    marginBottom,
-    marginTop,
-    moduleHeight,
-    moduleRowStarts,
     onRequestGridReductionWarning,
     onRequestGridRestore,
-    pageHeight,
-    setBlockModulePositions,
     suppressReflowCheckRef,
   ])
 
@@ -319,13 +253,8 @@ export function useLayoutReflow<BlockId extends string>({
         if (cancelled) return
         markEnd(autoFitMarkName)
         recordPerfMetric("autofitMs", performance.now() - autoFitStartedAt)
-        const hasSpanChanges = Object.keys(output.spanUpdates).length > 0
-        const hasPositionChanges = Object.keys(output.positionUpdates).length > 0
-        if (hasSpanChanges) {
+        if (Object.keys(output.spanUpdates).length > 0) {
           setBlockColumnSpans((prev) => ({ ...prev, ...output.spanUpdates }))
-        }
-        if (hasPositionChanges) {
-          setBlockModulePositions((prev) => ({ ...prev, ...output.positionUpdates }))
         }
       }).catch(() => {
         if (cancelled) return
@@ -334,9 +263,6 @@ export function useLayoutReflow<BlockId extends string>({
         const fallback = computeAutoFitFallback(input)
         if (Object.keys(fallback.spanUpdates).length > 0) {
           setBlockColumnSpans((prev) => ({ ...prev, ...fallback.spanUpdates }))
-        }
-        if (Object.keys(fallback.positionUpdates).length > 0) {
-          setBlockModulePositions((prev) => ({ ...prev, ...fallback.positionUpdates }))
         }
       })
     }, AUTOFIT_REQUEST_DEBOUNCE_MS)
@@ -381,7 +307,6 @@ export function useLayoutReflow<BlockId extends string>({
     recordPerfMetric,
     scale,
     setBlockColumnSpans,
-    setBlockModulePositions,
     textContent,
     typographyStyles,
   ])

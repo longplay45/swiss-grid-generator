@@ -64,7 +64,7 @@ type Args = {
     baselineMultiplierOverride?: number
     position?: ModulePosition
   }) => AutoFitResult
-  getGridMetrics: () => { maxBaselineRow: number }
+  getGridMetrics: () => { maxBaselineRow: number; rowStartBaselines: number[] }
   isBaseBlockId: (key: string) => boolean
   getNextCustomBlockId: () => string
   getDummyTextForStyle: (style: string) => string
@@ -168,7 +168,8 @@ export function useBlockEditorActions({
         },
         baseFont,
         gridCols: resultGridCols,
-        maxBaselineRow: metrics.maxBaselineRow,
+        gridRows: resultGridRows,
+        rowStartBaselines: metrics.rowStartBaselines,
         desiredPosition: autoFit?.position ?? null,
         typographyStyles: resultTypographyStyles,
       })
@@ -188,6 +189,7 @@ export function useBlockEditorActions({
     getAutoFitForPlacement,
     getGridMetrics,
     resultGridCols,
+    resultGridRows,
     resultGridUnit,
     resultTypographyStyles,
     setBlockCollections,
@@ -264,6 +266,7 @@ export function useBlockEditorActions({
     getStyleSize,
     defaultTextColor,
     getDefaultColumnSpan,
+    getGridMetrics,
     toPagePoint,
     findTopmostBlockAtPoint,
     snapToModule,

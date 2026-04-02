@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useImagePlaceholderState } from "@/hooks/useImagePlaceholderState"
 import { usePreviewTextBlockState } from "@/hooks/usePreviewTextBlockState"
 import { usePreviewTextBlockOverrides } from "@/hooks/usePreviewTextBlockOverrides"
+import { type Updater } from "@/hooks/useStateCommands"
 import {
   getDefaultImagePlaceholderColor,
   getDefaultTextSchemeColor,
@@ -12,6 +13,10 @@ import {
 import { type FontFamily } from "@/lib/config/fonts"
 import type { GridResult } from "@/lib/grid-calculator"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
+import {
+  mapAbsolutePositionsToTextBlockPositions,
+  mapTextBlockPositionsToAbsolute,
+} from "@/lib/text-block-position"
 import type { ModulePosition, PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { BASE_BLOCK_IDS } from "@/lib/document-defaults"
 
@@ -51,7 +56,7 @@ export function useGridPreviewDocumentState({
     textContent,
     blockTextEdited,
     styleAssignments,
-    blockModulePositions,
+    blockModulePositions: blockGridPositions,
     blockColumnSpans,
     blockRowSpans,
     blockTextAlignments,
@@ -69,7 +74,7 @@ export function useGridPreviewDocumentState({
     setStyleAssignments,
     setBlockColumnSpans,
     setBlockTextAlignments,
-    setBlockModulePositions,
+    setBlockModulePositions: setBlockGridPositions,
     getBlockSpan,
     getBlockRows,
     getStyleKeyForBlock,
@@ -94,6 +99,22 @@ export function useGridPreviewDocumentState({
     () => getImageColorScheme(imageColorScheme).colors,
     [imageColorScheme],
   )
+  const rowStartBaselines = useMemo(
+    () => getGridMetrics().rowStartBaselines,
+    [getGridMetrics],
+  )
+  const blockModulePositions = useMemo(
+    () => mapTextBlockPositionsToAbsolute(blockGridPositions, rowStartBaselines),
+    [blockGridPositions, rowStartBaselines],
+  )
+  const setBlockModulePositions = useCallback((next: Updater<Partial<Record<BlockId, ModulePosition>>>) => {
+    const activeRowStartBaselines = getGridMetrics().rowStartBaselines
+    setBlockGridPositions((prev) => {
+      const previousAbsolute = mapTextBlockPositionsToAbsolute(prev, activeRowStartBaselines)
+      const resolvedNext = typeof next === "function" ? next(previousAbsolute) : next
+      return mapAbsolutePositionsToTextBlockPositions(resolvedNext, activeRowStartBaselines)
+    })
+  }, [getGridMetrics, setBlockGridPositions])
   const defaultImageColor = useMemo(
     () => getDefaultImagePlaceholderColor(imageColorScheme),
     [imageColorScheme],
@@ -219,6 +240,7 @@ export function useGridPreviewDocumentState({
     textContent,
     blockTextEdited,
     styleAssignments,
+    blockGridPositions,
     blockModulePositions,
     blockColumnSpans,
     blockRowSpans,

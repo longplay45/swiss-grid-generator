@@ -141,12 +141,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
       ? Math.max(1, result.settings.gridCols - Math.max(0, Math.min(result.settings.gridCols - 1, position.col)))
       : result.settings.gridCols
     const nextSpan = Math.max(1, Math.min(neededCols, maxColsFromPlacement))
-    const nextPosition = position
-      ? {
-          col: Math.max(0, Math.min(Math.max(0, result.settings.gridCols - nextSpan), position.col)),
-          row: position.row,
-        }
-      : null
+    const nextPosition = position ? { ...position } : null
 
     return { span: nextSpan, position: nextPosition }
   }, [

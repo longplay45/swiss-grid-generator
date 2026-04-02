@@ -3,17 +3,18 @@ import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import { toTextBlockPosition } from "@/lib/text-block-position"
 import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
-import type { ModulePosition } from "@/lib/types/preview-layout"
+import type { ModulePosition, TextBlockPosition } from "@/lib/types/layout-primitives"
 
 export type PreviewTextLayerCollectionsState<
   Key extends string = string,
   StyleKey extends string = string,
-> = TextLayerCollections<Key, StyleKey, FontFamily, BlockEditorTextAlign, ModulePosition>
+> = TextLayerCollections<Key, StyleKey, FontFamily, BlockEditorTextAlign, TextBlockPosition>
 
 type TypographyStyleDefaults = {
   weight?: string
@@ -32,8 +33,9 @@ type ApplyDraftArgs<StyleKey extends string> = {
   draft: BlockEditorState<StyleKey>
   baseFont: FontFamily
   gridCols: number
-  maxBaselineRow: number
-  desiredPosition?: ModulePosition | null
+  gridRows: number
+  rowStartBaselines: readonly number[]
+  desiredPosition?: ModulePosition | TextBlockPosition | null
   typographyStyles: Record<string, TypographyStyleDefaults>
 }
 
@@ -41,9 +43,12 @@ type InsertTextLayerArgs<Key extends string, StyleKey extends string> = {
   newKey: Key
   text: string
   styleKey: StyleKey
+  gridCols: number
+  gridRows: number
   columns: number
   rows: number
-  position: ModulePosition
+  position: ModulePosition | TextBlockPosition
+  rowStartBaselines: readonly number[]
   afterKey?: Key | null
   textEdited?: boolean
   textAlign?: BlockEditorTextAlign
@@ -55,11 +60,14 @@ type DuplicateTextLayerArgs<Key extends string, StyleKey extends string> = {
   sourceKey: Key
   newKey: Key
   styleKey: StyleKey
+  gridCols: number
+  gridRows: number
   columns: number
   rows: number
   reflow: boolean
   syllableDivision: boolean
-  position: ModulePosition
+  position: ModulePosition | TextBlockPosition
+  rowStartBaselines: readonly number[]
   baseFont: FontFamily
 }
 
@@ -81,6 +89,38 @@ export function clampTextBlockPosition({
   }
 }
 
+type ClampTextBlockAnchorPositionArgs = {
+  position: TextBlockPosition
+  span: number
+  rows: number
+  gridCols: number
+  gridRows: number
+  fitWithinGrid?: boolean
+}
+
+function clampTextBlockAnchorPosition({
+  position,
+  span,
+  rows,
+  gridCols,
+  gridRows,
+  fitWithinGrid = false,
+}: ClampTextBlockAnchorPositionArgs): TextBlockPosition {
+  const minCol = -Math.max(0, span - 1)
+  const maxCol = fitWithinGrid
+    ? Math.max(minCol, gridCols - span)
+    : Math.max(0, gridCols - 1)
+  const maxRow = fitWithinGrid
+    ? Math.max(0, gridRows - rows)
+    : Math.max(0, gridRows - 1)
+
+  return {
+    column: Math.max(minCol, Math.min(maxCol, Math.round(position.column))),
+    row: Math.max(0, Math.min(maxRow, Math.round(position.row))),
+    baselineOffset: Math.round(position.baselineOffset),
+  }
+}
+
 export function applyBlockEditorDraftToCollections<
   Key extends string,
   StyleKey extends string,
@@ -90,7 +130,8 @@ export function applyBlockEditorDraftToCollections<
     draft,
     baseFont,
     gridCols,
-    maxBaselineRow,
+    gridRows,
+    rowStartBaselines,
     desiredPosition,
     typographyStyles,
   }: ApplyDraftArgs<StyleKey>,
@@ -144,19 +185,23 @@ export function applyBlockEditorDraftToCollections<
 
   const nextPositions = { ...current.blockModulePositions }
   const existingPosition = nextPositions[draft.target as Key]
-  const candidatePosition = desiredPosition ?? existingPosition
+  const candidatePosition = desiredPosition
+    ? toTextBlockPosition(desiredPosition, rowStartBaselines)
+    : existingPosition
   if (candidatePosition) {
-    const clampedPosition = clampTextBlockPosition({
+    const clampedPosition = clampTextBlockAnchorPosition({
       position: candidatePosition,
       span: draft.draftColumns,
+      rows: draft.draftRows,
       gridCols,
-      maxBaselineRow,
+      gridRows,
       fitWithinGrid: true,
     })
     const originalPosition = existingPosition ?? candidatePosition
     if (
-      clampedPosition.col !== originalPosition.col
+      clampedPosition.column !== originalPosition.column
       || clampedPosition.row !== originalPosition.row
+      || clampedPosition.baselineOffset !== originalPosition.baselineOffset
     ) {
       nextPositions[draft.target as Key] = clampedPosition
     }
@@ -215,9 +260,12 @@ export function insertTextLayerIntoCollections<
     newKey,
     text,
     styleKey,
+    gridCols,
+    gridRows,
     columns,
     rows,
     position,
+    rowStartBaselines,
     afterKey = null,
     textEdited = false,
     textAlign = "left",
@@ -271,7 +319,13 @@ export function insertTextLayerIntoCollections<
     },
     blockModulePositions: {
       ...current.blockModulePositions,
-      [newKey]: position,
+      [newKey]: clampTextBlockAnchorPosition({
+        position: toTextBlockPosition(position, rowStartBaselines),
+        span: columns,
+        rows,
+        gridCols,
+        gridRows,
+      }),
     },
   }
 }
@@ -285,11 +339,14 @@ export function duplicateTextLayerInCollections<
     sourceKey,
     newKey,
     styleKey,
+    gridCols,
+    gridRows,
     columns,
     rows,
     reflow,
     syllableDivision,
     position,
+    rowStartBaselines,
     baseFont,
   }: DuplicateTextLayerArgs<Key, StyleKey>,
 ): PreviewTextLayerCollectionsState<Key, StyleKey> {
@@ -382,7 +439,13 @@ export function duplicateTextLayerInCollections<
     },
     blockModulePositions: {
       ...current.blockModulePositions,
-      [newKey]: position,
+      [newKey]: clampTextBlockAnchorPosition({
+        position: toTextBlockPosition(position, rowStartBaselines),
+        span: columns,
+        rows,
+        gridCols,
+        gridRows,
+      }),
     },
   }
 }

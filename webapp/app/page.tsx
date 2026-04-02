@@ -52,7 +52,6 @@ import { useProjectState } from "@/hooks/useProjectState"
 import {
   findTextLayerGridReductionConflicts,
   getGridReductionWarningMessage,
-  getGridRowStartsInBaselines,
 } from "@/lib/grid-reduction-validation"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
@@ -63,7 +62,7 @@ const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLo
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
-const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as PreviewLayoutState | null
+const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as unknown as PreviewLayoutState | null
 
 type NoticeState = {
   title: string
@@ -424,7 +423,6 @@ export default function Home() {
         rowConflicts: [],
       }
     }
-    const nextGridResult = buildGridResult(nextGridCols, nextGridRows)
     return findTextLayerGridReductionConflicts({
       blockOrder: layout.blockOrder,
       blockModulePositions: layout.blockModulePositions,
@@ -440,9 +438,8 @@ export default function Home() {
       },
       nextGridCols,
       nextGridRows,
-      nextRowStartsInBaselines: getGridRowStartsInBaselines(nextGridResult),
     })
-  }, [buildGridResult, getCurrentPreviewLayout, gridCols])
+  }, [getCurrentPreviewLayout, gridCols])
 
   const handleGridColsChange = useCallback((nextGridCols: number) => {
     if (nextGridCols === gridCols) return

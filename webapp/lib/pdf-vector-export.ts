@@ -15,6 +15,7 @@ import {
   getOpticalMarginAnchorOffset,
 } from "@/lib/optical-margin"
 import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
+import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import {
   BASE_BLOCK_IDS,
@@ -474,7 +475,8 @@ export function renderSwissGridVectorPdf({
   const blockCustomSizes = layout?.blockCustomSizes ?? {}
   const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
   const blockTextColors = layout?.blockTextColors ?? {}
-  const blockModulePositions = layout?.blockModulePositions ?? {}
+  const storedBlockModulePositions = layout?.blockModulePositions ?? {}
+  const blockModulePositions = mapTextBlockPositionsToAbsolute(storedBlockModulePositions, rowStartsInBaselines)
   const resolvedLayerOrder = reconcileLayerOrder(
     layout?.layerOrder?.filter((key): key is BlockId => typeof key === "string" && key.length > 0) ?? [],
     blockOrder,

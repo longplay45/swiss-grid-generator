@@ -4,3 +4,9 @@ export type ModulePosition = {
   col: number
   row: number
 }
+
+export type TextBlockPosition = {
+  column: number
+  row: number
+  baselineOffset: number
+}

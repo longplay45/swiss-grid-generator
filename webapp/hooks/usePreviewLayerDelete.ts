@@ -9,7 +9,8 @@ type Args<
   StyleKey extends string,
   Family extends string,
   Align extends string,
-  Position,
+  TextPosition,
+  ImagePosition,
   TextEditorState,
   ImageEditorState,
 > = {
@@ -19,7 +20,7 @@ type Args<
   lastAppliedLayerDeleteRequestKeyRef: MutableRefObject<number>
   recordHistoryBeforeChange: () => void
   setImageOrder: Dispatch<SetStateAction<Key[]>>
-  setImageModulePositions: Dispatch<SetStateAction<Partial<Record<Key, Position>>>>
+  setImageModulePositions: Dispatch<SetStateAction<Partial<Record<Key, ImagePosition>>>>
   setImageColumnSpans: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setImageRowSpans: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setImageColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
@@ -27,8 +28,8 @@ type Args<
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
   setBlockCollections: (
     updater: (
-      prev: TextLayerCollections<Key, StyleKey, Family, Align, Position>,
-    ) => TextLayerCollections<Key, StyleKey, Family, Align, Position>,
+      prev: TextLayerCollections<Key, StyleKey, Family, Align, TextPosition>,
+    ) => TextLayerCollections<Key, StyleKey, Family, Align, TextPosition>,
   ) => void
   setBlockCustomSizes: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setBlockCustomLeadings: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
@@ -41,7 +42,8 @@ export function usePreviewLayerDelete<
   StyleKey extends string,
   Family extends string,
   Align extends string,
-  Position,
+  TextPosition,
+  ImagePosition,
   TextEditorState extends { target: Key },
   ImageEditorState extends { target: Key },
 >({
@@ -62,7 +64,7 @@ export function usePreviewLayerDelete<
   setBlockCustomLeadings,
   setBlockTextColors,
   setEditorState,
-}: Args<Key, StyleKey, Family, Align, Position, TextEditorState, ImageEditorState>) {
+}: Args<Key, StyleKey, Family, Align, TextPosition, ImagePosition, TextEditorState, ImageEditorState>) {
   const deleteLayerByKey = useCallback((key: Key) => {
     if (imageOrder.includes(key)) {
       setImageOrder((prev) => prev.filter((item) => item !== key))

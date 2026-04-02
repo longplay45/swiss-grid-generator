@@ -102,11 +102,14 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         sourceKey: drag.key,
         newKey,
         styleKey,
+        gridCols,
+        gridRows,
         columns: sourceSpan,
         rows: sourceRows,
         reflow: sourceReflow,
         syllableDivision: sourceSyllableDivision,
         position: resolvedPosition,
+        rowStartBaselines: metrics.rowStartBaselines,
         baseFont,
       }))
       setBlockCustomSizes((current) => {

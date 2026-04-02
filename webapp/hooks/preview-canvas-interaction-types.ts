@@ -12,6 +12,7 @@ export type OpenImageEditorOptions = {
 
 export type PreviewGridMetrics = {
   maxBaselineRow: number
+  rowStartBaselines: number[]
 }
 
 export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends string> = {

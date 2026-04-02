@@ -24,7 +24,7 @@ import {
   normalizeOpticalKerning,
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
-import type { ModulePosition, PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+import type { PreviewLayoutState as SharedPreviewLayoutState, TextBlockPosition } from "@/lib/types/preview-layout"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 
@@ -116,7 +116,7 @@ export function usePreviewTextBlockState({
     setBlockCollectionField("blockTextAlignments", next)
   }, [setBlockCollectionField])
 
-  const setBlockModulePositions = useCallback((next: Updater<Partial<Record<BlockId, ModulePosition>>>) => {
+  const setBlockModulePositions = useCallback((next: Updater<Partial<Record<BlockId, TextBlockPosition>>>) => {
     setBlockCollectionField("blockModulePositions", next)
   }, [setBlockCollectionField])
 
@@ -207,7 +207,7 @@ export function usePreviewTextBlockState({
     TypographyStyleKey,
     FontFamily,
     TextAlignMode,
-    ModulePosition,
+    TextBlockPosition,
     PreviewLayoutState
   >({
     state: blockCollectionsState,

@@ -119,15 +119,7 @@ export function computeAutoFitBatch(
       input.gridCols - Math.max(0, Math.min(input.gridCols - 1, item.position.col)),
     )
     const nextSpan = Math.max(1, Math.min(neededCols, maxColsFromPlacement))
-    const nextPosition = {
-      col: Math.max(0, Math.min(Math.max(0, input.gridCols - nextSpan), item.position.col)),
-      row: item.position.row,
-    }
-
     if (nextSpan !== item.currentSpan) output.spanUpdates[item.key] = nextSpan
-    if (nextPosition.col !== item.position.col || nextPosition.row !== item.position.row) {
-      output.positionUpdates[item.key] = nextPosition
-    }
   }
 
   return output
