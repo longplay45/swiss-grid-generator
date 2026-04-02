@@ -17,6 +17,8 @@ export type LayoutPresetUiSettings = Record<string, unknown> & {
   rhythmRotate90?: boolean
 }
 
+export type LayoutPresetProjectSource = Record<string, unknown>
+
 export type LayoutPreset = {
   id: string
   label: string
@@ -26,4 +28,5 @@ export type LayoutPreset = {
   createdAt?: string
   uiSettings: LayoutPresetUiSettings
   previewLayout: Record<string, unknown> | null
+  projectSource: LayoutPresetProjectSource
 }

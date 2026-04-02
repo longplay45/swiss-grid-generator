@@ -48,6 +48,7 @@ export function PagesPanel({
   onPagesHeaderDoubleClick,
   isDarkMode = false,
 }: Props) {
+  const PROJECT_CARD_MIN_HEIGHT_CLASS = "min-h-[50px]"
   const [editingPageId, setEditingPageId] = useState<string | null>(null)
   const [pageNameDraft, setPageNameDraft] = useState("")
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false)
@@ -298,7 +299,7 @@ export function PagesPanel({
                   onDragEnd={clearDragState}
                   onDragOver={handleListDragOver}
                   onDrop={handleListDrop}
-                  className={`${index > 0 ? "mt-2" : ""} rounded-md border px-3 py-2 transition-colors ${
+                  className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                     draggingPageId === page.id
                       ? `${tone.card} opacity-45`
                       : tone.card
@@ -334,7 +335,7 @@ export function PagesPanel({
                       ) : (
                         <div className="truncate text-[12px] font-medium">{page.name}</div>
                       )}
-                      <div className={`mt-1 flex items-center gap-2 text-[11px] ${tone.cardMuted}`}>
+                      <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${tone.cardMuted}`}>
                         <span>{layerCount} {layerCount === 1 ? "layer" : "layers"}</span>
                         {isActive ? <span className="text-orange-500">Active page</span> : null}
                       </div>

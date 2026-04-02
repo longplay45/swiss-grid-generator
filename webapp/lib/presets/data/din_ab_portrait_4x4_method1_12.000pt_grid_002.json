@@ -124,207 +124,214 @@
       }
     }
   },
-  "uiSettings": {
-    "canvasRatio": "din_ab",
-    "orientation": "portrait",
-    "rotation": 0,
-    "marginMethod": 3,
-    "gridCols": 3,
-    "gridRows": 4,
-    "baselineMultiple": 2,
-    "gutterMultiple": 1,
-    "rhythm": "repetitive",
-    "rhythmRowsEnabled": true,
-    "rhythmRowsDirection": "ltr",
-    "rhythmColsEnabled": true,
-    "rhythmColsDirection": "ttb",
-    "typographyScale": "swiss",
-    "baseFont": "Inter",
-    "imageColorScheme": "mono",
-    "canvasBackground": "#404040",
-    "customBaseline": 12,
-    "useCustomMargins": true,
-    "customMarginMultipliers": {
-      "top": 3,
-      "left": 4,
-      "right": 4,
-      "bottom": 2
-    },
-    "showBaselines": false,
-    "showModules": true,
-    "showMargins": true,
-    "showImagePlaceholders": true,
-    "showTypography": true,
-    "showLayers": true,
-    "collapsed": {
-      "format": true,
-      "baseline": true,
-      "margins": false,
-      "gutter": false,
-      "typo": true,
-      "color": false,
-      "summary": true
-    },
-    "exportPaperSize": "A4",
-    "exportPrintPro": true,
-    "exportBleedMm": 3,
-    "exportRegistrationMarks": true,
-    "exportFinalSafeGuides": true,
-    "displayUnit": "pt",
-    "format": "A4"
-  },
-  "previewLayout": {
-    "blockOrder": [
-      "display",
-      "paragraph-1773671347303-6ze5tl",
-      "paragraph-1773671562475-vr75kg",
-      "paragraph-1773671585233-cpbkzw",
-      "paragraph-1773671586677-x9575v",
-      "paragraph-1773671949302-15nbra"
-    ],
-    "textContent": {
-      "display": "m",
-      "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
-      "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
-      "paragraph-1773671585233-cpbkzw": "Oper von Luigi Cherubini\nErstaufführung in italienischer SprachSamstag, 19. Februar 1972 20 Uhr",
-      "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
-      "paragraph-1773671949302-15nbra": "Swiss Grid Designer"
-    },
-    "blockTextEdited": {
-      "display": true,
-      "paragraph-1773671347303-6ze5tl": true,
-      "paragraph-1773671562475-vr75kg": true,
-      "paragraph-1773671585233-cpbkzw": true,
-      "paragraph-1773671586677-x9575v": true,
-      "paragraph-1773671949302-15nbra": true
-    },
-    "styleAssignments": {
-      "display": "fx",
-      "paragraph-1773671347303-6ze5tl": "fx",
-      "paragraph-1773671562475-vr75kg": "body",
-      "paragraph-1773671585233-cpbkzw": "body",
-      "paragraph-1773671586677-x9575v": "body",
-      "paragraph-1773671949302-15nbra": "caption"
-    },
-    "blockFontFamilies": {},
-    "blockColumnSpans": {
-      "display": 1,
-      "paragraph-1773671347303-6ze5tl": 3,
-      "paragraph-1773671562475-vr75kg": 1,
-      "paragraph-1773671585233-cpbkzw": 1,
-      "paragraph-1773671586677-x9575v": 1,
-      "paragraph-1773671949302-15nbra": 1
-    },
-    "blockRowSpans": {
-      "display": 1,
-      "paragraph-1773671347303-6ze5tl": 1,
-      "paragraph-1773671562475-vr75kg": 1,
-      "paragraph-1773671585233-cpbkzw": 1,
-      "paragraph-1773671586677-x9575v": 1,
-      "paragraph-1773671949302-15nbra": 1
-    },
-    "blockTextAlignments": {
-      "display": "left",
-      "paragraph-1773671347303-6ze5tl": "left",
-      "paragraph-1773671562475-vr75kg": "left",
-      "paragraph-1773671585233-cpbkzw": "left",
-      "paragraph-1773671586677-x9575v": "left",
-      "paragraph-1773671949302-15nbra": "left"
-    },
-    "blockTextReflow": {
-      "display": false,
-      "paragraph-1773671347303-6ze5tl": false,
-      "paragraph-1773671562475-vr75kg": false,
-      "paragraph-1773671585233-cpbkzw": false,
-      "paragraph-1773671586677-x9575v": false,
-      "paragraph-1773671949302-15nbra": false
-    },
-    "blockSyllableDivision": {
-      "display": false,
-      "paragraph-1773671347303-6ze5tl": true,
-      "paragraph-1773671562475-vr75kg": true,
-      "paragraph-1773671585233-cpbkzw": true,
-      "paragraph-1773671586677-x9575v": true,
-      "paragraph-1773671949302-15nbra": true
-    },
-    "blockBold": {
-      "display": true,
-      "paragraph-1773671347303-6ze5tl": false,
-      "paragraph-1773671562475-vr75kg": false,
-      "paragraph-1773671585233-cpbkzw": false,
-      "paragraph-1773671586677-x9575v": false,
-      "paragraph-1773671949302-15nbra": false
-    },
-    "blockItalic": {
-      "display": false,
-      "paragraph-1773671347303-6ze5tl": false,
-      "paragraph-1773671562475-vr75kg": false,
-      "paragraph-1773671585233-cpbkzw": false,
-      "paragraph-1773671586677-x9575v": false,
-      "paragraph-1773671949302-15nbra": false
-    },
-    "blockRotations": {
-      "display": 0,
-      "paragraph-1773671347303-6ze5tl": 0,
-      "paragraph-1773671562475-vr75kg": 0,
-      "paragraph-1773671585233-cpbkzw": 0,
-      "paragraph-1773671586677-x9575v": 0,
-      "paragraph-1773671949302-15nbra": 0
-    },
-    "blockCustomSizes": {
-      "display": 400,
-      "paragraph-1773671347303-6ze5tl": 56
-    },
-    "blockCustomLeadings": {
-      "display": 106,
-      "paragraph-1773671347303-6ze5tl": 96
-    },
-    "blockTextColors": {
-      "display": "#ffffff",
-      "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-      "paragraph-1773671562475-vr75kg": "#ffffff",
-      "paragraph-1773671585233-cpbkzw": "#ffffff",
-      "paragraph-1773671586677-x9575v": "#ffffff",
-      "paragraph-1773671949302-15nbra": "#ffffff"
-    },
-    "blockModulePositions": {
-      "display": {
-        "col": 0,
-        "row": 34
+  "activePageId": "page-din-ab-portrait-4x4-method1-12-000pt-grid-002",
+  "pages": [
+    {
+      "id": "page-din-ab-portrait-4x4-method1-12-000pt-grid-002",
+      "name": "Page 1",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 3,
+        "gridCols": 3,
+        "gridRows": 4,
+        "baselineMultiple": 2,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": true,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": true,
+        "rhythmColsDirection": "ttb",
+        "typographyScale": "swiss",
+        "baseFont": "Inter",
+        "imageColorScheme": "mono",
+        "canvasBackground": "#404040",
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 4,
+          "right": 4,
+          "bottom": 2
+        },
+        "showBaselines": false,
+        "showModules": true,
+        "showMargins": true,
+        "showImagePlaceholders": true,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": false,
+          "gutter": false,
+          "typo": true,
+          "color": false,
+          "summary": true
+        },
+        "exportPaperSize": "A4",
+        "exportPrintPro": true,
+        "exportBleedMm": 3,
+        "exportRegistrationMarks": true,
+        "exportFinalSafeGuides": true,
+        "displayUnit": "pt",
+        "format": "A4"
       },
-      "paragraph-1773671347303-6ze5tl": {
-        "col": 0,
-        "row": 0
-      },
-      "paragraph-1773671562475-vr75kg": {
-        "col": 0,
-        "row": 16
-      },
-      "paragraph-1773671585233-cpbkzw": {
-        "col": 1,
-        "row": 16
-      },
-      "paragraph-1773671586677-x9575v": {
-        "col": 2,
-        "row": 16
-      },
-      "paragraph-1773671949302-15nbra": {
-        "col": 0,
-        "row": 62
+      "previewLayout": {
+        "blockOrder": [
+          "display",
+          "paragraph-1773671347303-6ze5tl",
+          "paragraph-1773671562475-vr75kg",
+          "paragraph-1773671585233-cpbkzw",
+          "paragraph-1773671586677-x9575v",
+          "paragraph-1773671949302-15nbra"
+        ],
+        "textContent": {
+          "display": "m",
+          "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
+          "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
+          "paragraph-1773671585233-cpbkzw": "Oper von Luigi Cherubini\nErstaufführung in italienischer SprachSamstag, 19. Februar 1972 20 Uhr",
+          "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
+          "paragraph-1773671949302-15nbra": "Swiss Grid Designer"
+        },
+        "blockTextEdited": {
+          "display": true,
+          "paragraph-1773671347303-6ze5tl": true,
+          "paragraph-1773671562475-vr75kg": true,
+          "paragraph-1773671585233-cpbkzw": true,
+          "paragraph-1773671586677-x9575v": true,
+          "paragraph-1773671949302-15nbra": true
+        },
+        "styleAssignments": {
+          "display": "fx",
+          "paragraph-1773671347303-6ze5tl": "fx",
+          "paragraph-1773671562475-vr75kg": "body",
+          "paragraph-1773671585233-cpbkzw": "body",
+          "paragraph-1773671586677-x9575v": "body",
+          "paragraph-1773671949302-15nbra": "caption"
+        },
+        "blockFontFamilies": {},
+        "blockColumnSpans": {
+          "display": 1,
+          "paragraph-1773671347303-6ze5tl": 3,
+          "paragraph-1773671562475-vr75kg": 1,
+          "paragraph-1773671585233-cpbkzw": 1,
+          "paragraph-1773671586677-x9575v": 1,
+          "paragraph-1773671949302-15nbra": 1
+        },
+        "blockRowSpans": {
+          "display": 1,
+          "paragraph-1773671347303-6ze5tl": 1,
+          "paragraph-1773671562475-vr75kg": 1,
+          "paragraph-1773671585233-cpbkzw": 1,
+          "paragraph-1773671586677-x9575v": 1,
+          "paragraph-1773671949302-15nbra": 1
+        },
+        "blockTextAlignments": {
+          "display": "left",
+          "paragraph-1773671347303-6ze5tl": "left",
+          "paragraph-1773671562475-vr75kg": "left",
+          "paragraph-1773671585233-cpbkzw": "left",
+          "paragraph-1773671586677-x9575v": "left",
+          "paragraph-1773671949302-15nbra": "left"
+        },
+        "blockTextReflow": {
+          "display": false,
+          "paragraph-1773671347303-6ze5tl": false,
+          "paragraph-1773671562475-vr75kg": false,
+          "paragraph-1773671585233-cpbkzw": false,
+          "paragraph-1773671586677-x9575v": false,
+          "paragraph-1773671949302-15nbra": false
+        },
+        "blockSyllableDivision": {
+          "display": false,
+          "paragraph-1773671347303-6ze5tl": true,
+          "paragraph-1773671562475-vr75kg": true,
+          "paragraph-1773671585233-cpbkzw": true,
+          "paragraph-1773671586677-x9575v": true,
+          "paragraph-1773671949302-15nbra": true
+        },
+        "blockBold": {
+          "display": true,
+          "paragraph-1773671347303-6ze5tl": false,
+          "paragraph-1773671562475-vr75kg": false,
+          "paragraph-1773671585233-cpbkzw": false,
+          "paragraph-1773671586677-x9575v": false,
+          "paragraph-1773671949302-15nbra": false
+        },
+        "blockItalic": {
+          "display": false,
+          "paragraph-1773671347303-6ze5tl": false,
+          "paragraph-1773671562475-vr75kg": false,
+          "paragraph-1773671585233-cpbkzw": false,
+          "paragraph-1773671586677-x9575v": false,
+          "paragraph-1773671949302-15nbra": false
+        },
+        "blockRotations": {
+          "display": 0,
+          "paragraph-1773671347303-6ze5tl": 0,
+          "paragraph-1773671562475-vr75kg": 0,
+          "paragraph-1773671585233-cpbkzw": 0,
+          "paragraph-1773671586677-x9575v": 0,
+          "paragraph-1773671949302-15nbra": 0
+        },
+        "blockCustomSizes": {
+          "display": 400,
+          "paragraph-1773671347303-6ze5tl": 56
+        },
+        "blockCustomLeadings": {
+          "display": 106,
+          "paragraph-1773671347303-6ze5tl": 96
+        },
+        "blockTextColors": {
+          "display": "#ffffff",
+          "paragraph-1773671347303-6ze5tl": "#c0c0c0",
+          "paragraph-1773671562475-vr75kg": "#ffffff",
+          "paragraph-1773671585233-cpbkzw": "#ffffff",
+          "paragraph-1773671586677-x9575v": "#ffffff",
+          "paragraph-1773671949302-15nbra": "#ffffff"
+        },
+        "blockModulePositions": {
+          "display": {
+            "col": 0,
+            "row": 34
+          },
+          "paragraph-1773671347303-6ze5tl": {
+            "col": 0,
+            "row": 0
+          },
+          "paragraph-1773671562475-vr75kg": {
+            "col": 0,
+            "row": 16
+          },
+          "paragraph-1773671585233-cpbkzw": {
+            "col": 1,
+            "row": 16
+          },
+          "paragraph-1773671586677-x9575v": {
+            "col": 2,
+            "row": 16
+          },
+          "paragraph-1773671949302-15nbra": {
+            "col": 0,
+            "row": 62
+          }
+        },
+        "layerOrder": [
+          "display",
+          "paragraph-1773671347303-6ze5tl",
+          "paragraph-1773671562475-vr75kg",
+          "paragraph-1773671585233-cpbkzw",
+          "paragraph-1773671586677-x9575v",
+          "paragraph-1773671949302-15nbra"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageColors": {}
       }
-    },
-    "layerOrder": [
-      "display",
-      "paragraph-1773671347303-6ze5tl",
-      "paragraph-1773671562475-vr75kg",
-      "paragraph-1773671585233-cpbkzw",
-      "paragraph-1773671586677-x9575v",
-      "paragraph-1773671949302-15nbra"
-    ],
-    "imageOrder": [],
-    "imageModulePositions": {},
-    "imageColumnSpans": {},
-    "imageRowSpans": {},
-    "imageColors": {}
-  }
+    }
+  ]
 }

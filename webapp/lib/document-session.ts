@@ -1,5 +1,3 @@
-import type { LayoutPreset } from "@/lib/presets"
-
 export type ProjectMetadata = {
   title: string
   description: string
@@ -175,19 +173,6 @@ export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layou
     uiSettings: payload.uiSettings as Record<string, unknown>,
     previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
     metadata,
-  })
-}
-
-export function presetToLoadedProject<Layout>(preset: LayoutPreset): LoadedProject<Layout> {
-  return createDefaultProject({
-    uiSettings: preset.uiSettings,
-    previewLayout: preset.previewLayout ? preset.previewLayout as Layout : null,
-    metadata: {
-      title: preset.title ?? "",
-      description: preset.description ?? "",
-      author: preset.author ?? "",
-      createdAt: toNormalizedIsoDate(preset.createdAt),
-    },
   })
 }
 

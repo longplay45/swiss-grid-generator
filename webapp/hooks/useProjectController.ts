@@ -5,7 +5,6 @@ import type { LayoutPreset } from "@/lib/presets"
 import {
   EMPTY_PROJECT_METADATA,
   parseLoadedProject,
-  presetToLoadedProject,
   type ProjectMetadata,
   type LoadedProject,
 } from "@/lib/document-session"
@@ -59,8 +58,13 @@ export function useProjectController<Layout>({
   }, [applyLoadedProject, onLoadFailed])
 
   const loadPresetProject = useCallback((preset: LayoutPreset) => {
-    applyLoadedProject(presetToLoadedProject<Layout>(preset))
-  }, [applyLoadedProject])
+    try {
+      applyLoadedProject(parseLoadedProject<Layout>(preset.projectSource))
+    } catch (error) {
+      console.error(error)
+      onLoadFailed(error)
+    }
+  }, [applyLoadedProject, onLoadFailed])
 
   return {
     projectMetadata,

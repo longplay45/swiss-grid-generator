@@ -15,6 +15,7 @@
     "build:prod": "NEXT_PUBLIC_RELEASE_CHANNEL=prod next build",
     "start": "next start",
     "lint": "next lint",
+    "test:presets": "node --test tests/preset-project-format.test.mjs",
     "test:roundtrip": "node --test tests/font-roundtrip.test.mjs",
     "test:grid": "node --test tests/grid-calculator.test.mjs",
     "test:reflow": "node --test tests/reflow-worker-contract.test.mjs",
@@ -24,7 +25,7 @@
     "test:optical": "node --test tests/optical-margin.test.mjs",
     "test:pdf": "node --test tests/pdf-export-rotation-contract.test.mjs",
     "test:perf": "node --test tests/perf-smoke.test.mjs",
-    "test": "npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:autofit && npm run test:snapshot && npm run test:text && npm run test:optical && npm run test:pdf && npm run test:perf",
+    "test": "npm run test:presets && npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:autofit && npm run test:snapshot && npm run test:text && npm run test:optical && npm run test:pdf && npm run test:perf",
     "fonts:sync": "../.venv-fonttools/bin/python scripts/sync_google_font_assets.py"
   },
   "dependencies": {

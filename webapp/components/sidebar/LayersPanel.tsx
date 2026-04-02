@@ -109,6 +109,7 @@ export function LayersPanel({
   onLayersHeaderDoubleClick,
   isDarkMode = false,
 }: Props) {
+  const PROJECT_CARD_MIN_HEIGHT_CLASS = "min-h-[50px]"
   const [draggingKey, setDraggingKey] = useState<string | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -319,7 +320,7 @@ export function LayersPanel({
                   onMouseLeave={() => onHoverLayerChange(null)}
                   onClick={() => onSelectLayer(thumb.key)}
                   onDoubleClick={() => onToggleEditor(thumb.key)}
-                  className={`${index > 0 ? "mt-2" : ""} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
+                  className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                     draggingKey === thumb.key
                       ? `${tone.card} cursor-grabbing opacity-45`
                       : tone.card
