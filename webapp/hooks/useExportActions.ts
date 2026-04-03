@@ -4,6 +4,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
@@ -11,32 +12,89 @@ import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
-export type PrintPresetKey = "press_proof" | "offset_final" | "digital_print"
+type PrintPresetConfig = {
+  enabled: boolean
+  bleedMm: number
+  registrationMarks: boolean
+  finalSafeGuides: boolean
+}
+
+export type PrintPresetKey = "digital_print" | "press_proof" | "offset_final"
+
+const DIGITAL_PRINT_CONFIG: PrintPresetConfig = {
+  enabled: false,
+  bleedMm: 0,
+  registrationMarks: false,
+  finalSafeGuides: true,
+}
+
+const PRESS_PROOF_CONFIG: PrintPresetConfig = {
+  enabled: true,
+  bleedMm: 3,
+  registrationMarks: true,
+  finalSafeGuides: false,
+}
+
+const OFFSET_FINAL_CONFIG: PrintPresetConfig = {
+  enabled: true,
+  bleedMm: 3,
+  registrationMarks: true,
+  finalSafeGuides: true,
+}
 
 export const PRINT_PRESETS: Array<{
   key: PrintPresetKey
   label: string
-  config: { enabled: boolean; bleedMm: number; registrationMarks: boolean; finalSafeGuides: boolean }
+  config: PrintPresetConfig
 }> = [
+  {
+    key: "digital_print",
+    label: "Digital Print",
+    config: DIGITAL_PRINT_CONFIG,
+  },
   {
     key: "press_proof",
     label: "Press Proof",
-    config: { enabled: true, bleedMm: 3, registrationMarks: true, finalSafeGuides: false },
+    config: PRESS_PROOF_CONFIG,
   },
   {
     key: "offset_final",
     label: "Offset Final",
-    config: { enabled: true, bleedMm: 3, registrationMarks: true, finalSafeGuides: true },
-  },
-  {
-    key: "digital_print",
-    label: "Digital Print",
-    config: { enabled: false, bleedMm: 0, registrationMarks: false, finalSafeGuides: true },
+    config: OFFSET_FINAL_CONFIG,
   },
 ]
 
-const PRINT_PRO_CROP_OFFSET_MM = 2
-const PRINT_PRO_CROP_LENGTH_MM = 5
+const PRINT_CROP_OFFSET_MM = 2
+const PRINT_CROP_LENGTH_MM = 5
+
+function isSamePrintPresetConfig(left: PrintPresetConfig, right: PrintPresetConfig): boolean {
+  return left.enabled === right.enabled
+    && left.bleedMm === right.bleedMm
+    && left.registrationMarks === right.registrationMarks
+    && left.finalSafeGuides === right.finalSafeGuides
+}
+
+function resolveActivePrintPresetKey(config: PrintPresetConfig): PrintPresetKey | null {
+  const match = PRINT_PRESETS.find((preset) => isSamePrintPresetConfig(preset.config, config))
+  return match?.key ?? null
+}
+
+function resolvePdfExportColorManagement(config: Pick<PrintPresetConfig, "enabled">): {
+  colorMode: PdfExportColorMode
+  outputIntentProfileId: PdfOutputIntentProfileId
+} {
+  if (!config.enabled) {
+    return {
+      colorMode: "rgb",
+      outputIntentProfileId: "srgb",
+    }
+  }
+
+  return {
+    colorMode: "cmyk",
+    outputIntentProfileId: "coated-fogra39",
+  }
+}
 
 export type ExportActionsContext = {
   result: GridResult
@@ -101,8 +159,8 @@ export function useExportActions(ctx: ExportActionsContext) {
     displayUnit,
     exportPaperSize,
     setExportPaperSize,
-    exportPrintPro,
-    setExportPrintPro,
+    exportPrintPro: persistedPrintPresetEnabled,
+    setExportPrintPro: setPersistedPrintPresetEnabled,
     exportBleedMm,
     setExportBleedMm,
     exportRegistrationMarks,
@@ -120,7 +178,7 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
   const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(exportPaperSize)
-  const [exportPrintProDraft, setExportPrintProDraft] = useState(exportPrintPro)
+  const [printPresetEnabledDraft, setPrintPresetEnabledDraft] = useState(persistedPrintPresetEnabled)
   const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(exportBleedMm))
   const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(exportRegistrationMarks)
   const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(exportFinalSafeGuides)
@@ -222,13 +280,14 @@ export function useExportActions(ctx: ExportActionsContext) {
       width: number,
       height: number,
       filename: string,
-      printProConfig: { enabled: boolean; bleedMm: number; registrationMarks: boolean; finalSafeGuides: boolean },
+      printPresetConfig: PrintPresetConfig,
     ) => {
       const { default: jsPDF } = await import("jspdf")
-      const { enabled, bleedMm, registrationMarks, finalSafeGuides } = printProConfig
+      const { enabled, bleedMm, registrationMarks, finalSafeGuides } = printPresetConfig
+      const { colorMode, outputIntentProfileId } = resolvePdfExportColorManagement({ enabled })
       const bleedPt = mmToPt(bleedMm)
-      const cropOffsetPt = mmToPt(PRINT_PRO_CROP_OFFSET_MM)
-      const cropLengthPt = mmToPt(PRINT_PRO_CROP_LENGTH_MM)
+      const cropOffsetPt = mmToPt(PRINT_CROP_OFFSET_MM)
+      const cropLengthPt = mmToPt(PRINT_CROP_LENGTH_MM)
       const cropMarginPt = bleedPt + cropOffsetPt + cropLengthPt
       const originX = enabled ? cropMarginPt : 0
       const originY = enabled ? cropMarginPt : 0
@@ -276,6 +335,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         }
       }
       await ensurePdfFontsRegistered(pdf, fontsToRegister)
+      await attachPdfOutputIntent(pdf, outputIntentProfileId)
 
       renderSwissGridVectorPdf({
         pdf,
@@ -286,6 +346,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         baseFont,
         originX,
         originY,
+        colorMode,
         imageColorScheme,
         canvasBackground,
         printPro: {
@@ -328,7 +389,7 @@ export function useExportActions(ctx: ExportActionsContext) {
   const openExportDialog = useCallback(() => {
     const dims = getOrientedDimensions(exportPaperSize)
     setExportPaperSizeDraft(exportPaperSize)
-    setExportPrintProDraft(exportPrintPro)
+    setPrintPresetEnabledDraft(persistedPrintPresetEnabled)
     setExportBleedMmDraft(String(exportBleedMm))
     setExportRegistrationMarksDraft(exportRegistrationMarks)
     setExportFinalSafeGuidesDraft(exportFinalSafeGuides)
@@ -341,20 +402,24 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportBleedMm,
     exportFinalSafeGuides,
     exportPaperSize,
-    exportPrintPro,
+    persistedPrintPresetEnabled,
     exportRegistrationMarks,
     getOrientedDimensions,
     isDinOrAnsiRatio,
   ])
 
+  const applyPrintPresetConfig = useCallback((config: PrintPresetConfig) => {
+    setPrintPresetEnabledDraft(config.enabled)
+    setExportBleedMmDraft(String(config.bleedMm))
+    setExportRegistrationMarksDraft(config.registrationMarks)
+    setExportFinalSafeGuidesDraft(config.finalSafeGuides)
+  }, [])
+
   const applyPrintPreset = useCallback((presetKey: PrintPresetKey) => {
     const preset = PRINT_PRESETS.find((entry) => entry.key === presetKey)
     if (!preset) return
-    setExportPrintProDraft(preset.config.enabled)
-    setExportBleedMmDraft(String(preset.config.bleedMm))
-    setExportRegistrationMarksDraft(preset.config.registrationMarks)
-    setExportFinalSafeGuidesDraft(preset.config.finalSafeGuides)
-  }, [])
+    applyPrintPresetConfig(preset.config)
+  }, [applyPrintPresetConfig])
 
   const confirmExportPDF = useCallback(async () => {
     const trimmedName = exportFilenameDraft.trim()
@@ -373,12 +438,12 @@ export function useExportActions(ctx: ExportActionsContext) {
         : baseDims.width
     const height = width * aspectRatio
     setExportPaperSize(exportPaperSizeDraft)
-    setExportPrintPro(exportPrintProDraft)
+    setPersistedPrintPresetEnabled(printPresetEnabledDraft)
     setExportBleedMm(bleedMm)
     setExportRegistrationMarks(exportRegistrationMarksDraft)
     setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
     await exportPDF(width, height, filename, {
-      enabled: exportPrintProDraft,
+      enabled: printPresetEnabledDraft,
       bleedMm,
       registrationMarks: exportRegistrationMarksDraft,
       finalSafeGuides: exportFinalSafeGuidesDraft,
@@ -390,7 +455,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportFinalSafeGuidesDraft,
     exportFilenameDraft,
     exportPaperSizeDraft,
-    exportPrintProDraft,
+    printPresetEnabledDraft,
     exportRegistrationMarksDraft,
     exportWidthDraft,
     exportPDF,
@@ -399,9 +464,18 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMm,
     setExportFinalSafeGuides,
     setExportPaperSize,
-    setExportPrintPro,
+    setPersistedPrintPresetEnabled,
     setExportRegistrationMarks,
   ])
+
+  const parsedDraftBleed = Number(exportBleedMmDraft)
+  const resolvedDraftBleedMm = Number.isFinite(parsedDraftBleed) && parsedDraftBleed >= 0 ? parsedDraftBleed : exportBleedMm
+  const activePrintPresetDraft = resolveActivePrintPresetKey({
+    enabled: printPresetEnabledDraft,
+    bleedMm: resolvedDraftBleedMm,
+    registrationMarks: exportRegistrationMarksDraft,
+    finalSafeGuides: exportFinalSafeGuidesDraft,
+  })
 
   // Close export dialog on Escape
   useEffect(() => {
@@ -437,8 +511,8 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportFilenameDraft,
     exportPaperSizeDraft,
     setExportPaperSizeDraft,
-    exportPrintProDraft,
-    setExportPrintProDraft,
+    activePrintPresetDraft,
+    showPrintAdjustmentsDraft: printPresetEnabledDraft,
     exportBleedMmDraft,
     setExportBleedMmDraft,
     exportRegistrationMarksDraft,

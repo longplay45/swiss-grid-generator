@@ -563,7 +563,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Export is vector-based (not raster screenshot export).</li>
           <li>PDF export always uses the current active page.</li>
           <li>DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.</li>
-          <li>Print Pro options include bleed, registration-style crop marks, and final-safe guides.</li>
+          <li>Print presets cover Digital Print, Press Proof, and Offset Final configurations.</li>
+          <li>Press presets include bleed, registration-style crop marks, final-safe guides, and embedded output intents.</li>
           <li>Export applies current rotation, guides visibility toggles, and text styling.</li>
         </ul>
       </section>

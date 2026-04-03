@@ -33,6 +33,9 @@ test("bundled preset json files use canonical project schema", () => {
     for (const [index, page] of payload.pages.entries()) {
       assert.equal(typeof page?.uiSettings, "object", `${fileName} page ${index + 1} should include uiSettings`)
       assert.ok(page.uiSettings, `${fileName} page ${index + 1} should include uiSettings`)
+      assert.equal(page.uiSettings.exportPrintPro, false, `${fileName} page ${index + 1} should default to Digital Print`)
+      assert.equal(page.uiSettings.exportBleedMm, 0, `${fileName} page ${index + 1} should default to zero bleed`)
+      assert.equal(page.uiSettings.exportRegistrationMarks, false, `${fileName} page ${index + 1} should default to no registration marks`)
     }
   }
 })

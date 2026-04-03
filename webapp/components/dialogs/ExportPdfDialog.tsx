@@ -5,10 +5,12 @@ import { Switch } from "@/components/ui/switch"
 import { PRINT_PRESETS } from "@/hooks/useExportActions"
 import type { PrintPresetKey } from "@/hooks/useExportActions"
 import { formatValue } from "@/lib/units"
+import { cn } from "@/lib/utils"
 
 type Props = {
   isOpen: boolean
   onClose: () => void
+  isDarkUi: boolean
   // Info
   ratioLabel: string
   orientation: string
@@ -27,9 +29,8 @@ type Props = {
   exportFilenameDraft: string
   onExportFilenameChange: (value: string) => void
   defaultPdfFilename: string
-  // Print Pro
-  exportPrintProDraft: boolean
-  onExportPrintProChange: (value: boolean) => void
+  activePrintPresetDraft: PrintPresetKey | null
+  showPrintAdjustmentsDraft: boolean
   onApplyPrintPreset: (key: PrintPresetKey) => void
   exportBleedMmDraft: string
   onExportBleedMmChange: (value: string) => void
@@ -45,6 +46,7 @@ type Props = {
 export function ExportPdfDialog({
   isOpen,
   onClose,
+  isDarkUi,
   ratioLabel,
   orientation,
   rotation,
@@ -59,8 +61,8 @@ export function ExportPdfDialog({
   exportFilenameDraft,
   onExportFilenameChange,
   defaultPdfFilename,
-  exportPrintProDraft,
-  onExportPrintProChange,
+  activePrintPresetDraft,
+  showPrintAdjustmentsDraft,
   onApplyPrintPreset,
   exportBleedMmDraft,
   onExportBleedMmChange,
@@ -73,17 +75,27 @@ export function ExportPdfDialog({
 }: Props) {
   if (!isOpen) return null
 
+  const inputClassName = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+  const helpTextClassName = "text-xs text-muted-foreground"
+  const toggleRowClassName = "flex items-center justify-between rounded-md border border-input bg-background px-3 py-2"
+  const dialogThemeClassName = isDarkUi ? "dark" : undefined
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-y-auto bg-black/40 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border bg-white p-4 shadow-xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 md:items-center">
+      <div
+        className={cn(
+          dialogThemeClassName,
+          "w-full max-w-md max-h-[90vh] space-y-4 overflow-y-auto rounded-lg border border-border bg-background p-4 text-foreground shadow-xl",
+        )}
+      >
         <h3 className="text-base font-semibold">Export PDF</h3>
-        <p className="text-xs text-gray-600">
+        <p className={helpTextClassName}>
           Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
         </p>
         {isDinOrAnsiRatio && (
-          <>
-            <div className="space-y-2">
-              <Label>Units</Label>
+          <div className="space-y-2">
+            <Label>Units / Paper Size</Label>
+            <div className="grid grid-cols-[116px_minmax(0,1fr)] gap-2">
               <Select
                 value={displayUnit}
                 onValueChange={(nextUnit: "pt" | "mm" | "px") => {
@@ -92,18 +104,15 @@ export function ExportPdfDialog({
                   onExportWidthChange(formatValue(dims.width, nextUnit))
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Export units">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={dialogThemeClassName}>
                   <SelectItem value="mm">mm</SelectItem>
                   <SelectItem value="pt">pt</SelectItem>
                   <SelectItem value="px">px</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Paper Size</Label>
               <Select
                 value={exportPaperSizeDraft}
                 onValueChange={(value) => {
@@ -112,10 +121,10 @@ export function ExportPdfDialog({
                   onExportWidthChange(formatValue(dims.width, displayUnit))
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Export paper size">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={dialogThemeClassName}>
                   {paperSizeOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -124,7 +133,7 @@ export function ExportPdfDialog({
                 </SelectContent>
               </Select>
             </div>
-          </>
+          </div>
         )}
         {!isDinOrAnsiRatio && (
           <div className="space-y-2">
@@ -135,11 +144,11 @@ export function ExportPdfDialog({
               step="0.001"
               value={exportWidthDraft}
               onChange={(event) => onExportWidthChange(event.target.value)}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+              className={inputClassName}
             />
           </div>
         )}
-        <p className="text-xs text-gray-600">
+        <p className={helpTextClassName}>
           Height will follow the selected aspect ratio automatically.
         </p>
         <div className="space-y-2">
@@ -148,16 +157,9 @@ export function ExportPdfDialog({
             type="text"
             value={exportFilenameDraft}
             onChange={(event) => onExportFilenameChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            className={inputClassName}
             placeholder={defaultPdfFilename}
           />
-        </div>
-        <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
-          <div className="space-y-0.5">
-            <Label className="text-sm">Print Pro</Label>
-            <p className="text-[11px] text-gray-600">Adds bleed and crop marks as vectors.</p>
-          </div>
-          <Switch checked={exportPrintProDraft} onCheckedChange={onExportPrintProChange} />
         </div>
         <div className="space-y-2">
           <Label>Print Presets</Label>
@@ -166,7 +168,7 @@ export function ExportPdfDialog({
               <Button
                 key={preset.key}
                 type="button"
-                variant="outline"
+                variant={activePrintPresetDraft === preset.key ? "default" : "outline"}
                 size="sm"
                 className="text-[11px]"
                 onClick={() => onApplyPrintPreset(preset.key)}
@@ -176,7 +178,7 @@ export function ExportPdfDialog({
             ))}
           </div>
         </div>
-        {exportPrintProDraft && (
+        {showPrintAdjustmentsDraft && (
           <>
             <div className="space-y-2">
               <Label>Bleed (mm)</Label>
@@ -186,23 +188,23 @@ export function ExportPdfDialog({
                 step="0.1"
                 value={exportBleedMmDraft}
                 onChange={(event) => onExportBleedMmChange(event.target.value)}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                className={inputClassName}
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
+            <div className={toggleRowClassName}>
               <div className="space-y-0.5">
                 <Label className="text-sm">Registration-Style Marks</Label>
-                <p className="text-[11px] text-gray-600">Uses rich CMYK marks instead of black.</p>
+                <p className="text-[11px] text-muted-foreground">Uses rich CMYK marks instead of black.</p>
               </div>
               <Switch
                 checked={exportRegistrationMarksDraft}
                 onCheckedChange={onExportRegistrationMarksChange}
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border border-input px-3 py-2">
+            <div className={toggleRowClassName}>
               <div className="space-y-0.5">
                 <Label className="text-sm">Final-Safe Guide Colors</Label>
-                <p className="text-[11px] text-gray-600">
+                <p className="text-[11px] text-muted-foreground">
                   Neutral grayscale guides, no cyan/magenta accents.
                 </p>
               </div>

@@ -875,6 +875,7 @@ export default function Home() {
           ratioLabel={selectedCanvasRatio.label}
           orientation={orientation}
           rotation={rotation}
+          isDarkUi={isDarkUi}
           isDinOrAnsiRatio={isDinOrAnsiRatio}
           displayUnit={displayUnit}
           onDisplayUnitChange={setDisplayUnit}
@@ -889,8 +890,8 @@ export default function Home() {
             filename: exportActions.exportFilenameDraft,
             onFilenameChange: exportActions.setExportFilenameDraft,
             defaultFilename: defaultPdfFilename,
-            printPro: exportActions.exportPrintProDraft,
-            onPrintProChange: exportActions.setExportPrintProDraft,
+            activePrintPreset: exportActions.activePrintPresetDraft,
+            showPrintAdjustments: exportActions.showPrintAdjustmentsDraft,
             onApplyPrintPreset: exportActions.applyPrintPreset,
             bleedMm: exportActions.exportBleedMmDraft,
             onBleedMmChange: exportActions.setExportBleedMmDraft,

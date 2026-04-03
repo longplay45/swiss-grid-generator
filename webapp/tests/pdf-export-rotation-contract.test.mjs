@@ -66,7 +66,7 @@ test("pdf export manually right-aligns text anchors before draw to avoid rotated
 test("pdf export draws image placeholders only when placeholder layer is visible", () => {
   const source = readText("lib/pdf-vector-export.ts")
   assert.match(source, /if\s*\(showImagePlaceholders\)\s*\{/)
-  assert.match(source, /setFillColorRgb\(pdf,\s*imagePlan\.fillColor\)/)
+  assert.match(source, /setFillColor\(pdf,\s*imagePlan\.fillColor,\s*colorMode\)/)
   assert.match(source, /drawFilledRect\(imagePlan\.x,\s*imagePlan\.y,\s*imagePlan\.width,\s*imagePlan\.height\)/)
 })
 
@@ -105,15 +105,64 @@ test("pdf export action forwards the active image color scheme", () => {
   assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme,[\s\S]*?canvasBackground,/)
 })
 
-test("pdf export uses RGB setters by default to stay aligned with canvas preview", () => {
+test("pdf export switches between rgb and cmyk setters based on export color mode", () => {
   const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /colorMode:\s*PdfExportColorMode/)
+  assert.match(source, /if\s*\(colorMode\s*===\s*"cmyk"\)\s*\{[\s\S]*setDrawColorCmyk/)
   assert.match(source, /function\s+setDrawColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /function\s+setDrawColorCmyk\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
   assert.match(source, /function\s+setTextColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /function\s+setTextColorCmyk\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
   assert.match(source, /function\s+setFillColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /function\s+setFillColorCmyk\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
   assert.match(source, /pdf\.setDrawColor\(color\.r,\s*color\.g,\s*color\.b\)/)
   assert.match(source, /pdf\.setTextColor\(color\.r,\s*color\.g,\s*color\.b\)/)
   assert.match(source, /pdf\.setFillColor\(color\.r,\s*color\.g,\s*color\.b\)/)
-  assert.doesNotMatch(source, /function\s+rgbToCmyk\(/)
+  assert.match(source, /function\s+rgbToCmyk\(/)
+})
+
+test("pdf export attaches an embedded output intent profile for print-aware exports", () => {
+  const source = readText("lib/pdf-output-intent.ts")
+  assert.match(source, /postPutResources/)
+  assert.match(source, /putCatalog/)
+  assert.match(source, /\/OutputIntents\s*\[<</)
+  assert.match(source, /\/DestOutputProfile\s+\$\{current\.profileObjectId\}\s+0\s+R/)
+  assert.match(source, /\/S\s+\/GTS_PDFX/)
+  assert.match(source, /coated-fogra39\.icc/)
+  assert.match(source, /srgb-iec61966-2-1\.icc/)
+})
+
+test("pdf export presets stay ordered from digital to offset and drive color-management mode", () => {
+  const source = readText("hooks/useExportActions.ts")
+  assert.match(source, /PRINT_PRESETS[\s\S]*key:\s*"digital_print"[\s\S]*key:\s*"press_proof"[\s\S]*key:\s*"offset_final"/)
+  assert.match(source, /if\s*\(!config\.enabled\)\s*\{[\s\S]*colorMode:\s*"rgb"[\s\S]*outputIntentProfileId:\s*"srgb"/)
+  assert.match(source, /return\s*\{[\s\S]*colorMode:\s*"cmyk"[\s\S]*outputIntentProfileId:\s*"coated-fogra39"/)
+})
+
+test("export pdf dialog relies on print presets instead of a separate print-pro switch", () => {
+  const source = readText("components/dialogs/ExportPdfDialog.tsx")
+  assert.match(source, /Label>Print Presets<\/Label>/)
+  assert.doesNotMatch(source, /Print Pro/)
+  assert.doesNotMatch(source, /onExportPrintProChange/)
+})
+
+test("export pdf dialog groups units and paper size in one dark-mode-safe section", () => {
+  const source = readText("components/dialogs/ExportPdfDialog.tsx")
+  assert.match(source, /isDarkUi:\s*boolean/)
+  assert.match(source, /Label>Units \/ Paper Size<\/Label>/)
+  assert.match(source, /const\s+dialogThemeClassName\s*=\s*isDarkUi\s*\?\s*"dark"\s*:\s*undefined/)
+  assert.match(source, /grid-cols-\[116px_minmax\(0,1fr\)\]/)
+  assert.match(source, /SelectContent className=\{dialogThemeClassName\}/)
+  assert.match(source, /bg-background/)
+  assert.match(source, /text-muted-foreground/)
+})
+
+test("default export preset stays on digital print in the bundled default document", () => {
+  const source = JSON.parse(readText("public/feedback/default_v001.json"))
+  assert.equal(source.uiSettings.exportPrintPro, false)
+  assert.equal(source.uiSettings.exportBleedMm, 0)
+  assert.equal(source.uiSettings.exportRegistrationMarks, false)
+  assert.equal(source.uiSettings.exportFinalSafeGuides, true)
 })
 
 test("pdf font registry derives embedded families from configured font list", () => {

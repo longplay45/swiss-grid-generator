@@ -20,6 +20,7 @@ type Props = {
   ratioLabel: string
   orientation: "portrait" | "landscape"
   rotation: number
+  isDarkUi: boolean
   isDinOrAnsiRatio: boolean
   displayUnit: DisplayUnit
   onDisplayUnitChange: (unit: DisplayUnit) => void
@@ -34,8 +35,8 @@ type Props = {
     filename: string
     onFilenameChange: (value: string) => void
     defaultFilename: string
-    printPro: boolean
-    onPrintProChange: (value: boolean) => void
+    activePrintPreset: PrintPresetKey | null
+    showPrintAdjustments: boolean
     onApplyPrintPreset: (key: PrintPresetKey) => void
     bleedMm: string
     onBleedMmChange: (value: string) => void
@@ -68,6 +69,7 @@ export function WorkspaceDialogs({
   ratioLabel,
   orientation,
   rotation,
+  isDarkUi,
   isDinOrAnsiRatio,
   displayUnit,
   onDisplayUnitChange,
@@ -81,6 +83,7 @@ export function WorkspaceDialogs({
       <ExportPdfDialog
         isOpen={exportDialog.isOpen}
         onClose={exportDialog.onClose}
+        isDarkUi={isDarkUi}
         ratioLabel={ratioLabel}
         orientation={orientation}
         rotation={rotation}
@@ -95,8 +98,8 @@ export function WorkspaceDialogs({
         exportFilenameDraft={exportDialog.filename}
         onExportFilenameChange={exportDialog.onFilenameChange}
         defaultPdfFilename={exportDialog.defaultFilename}
-        exportPrintProDraft={exportDialog.printPro}
-        onExportPrintProChange={exportDialog.onPrintProChange}
+        activePrintPresetDraft={exportDialog.activePrintPreset}
+        showPrintAdjustmentsDraft={exportDialog.showPrintAdjustments}
         onApplyPrintPreset={exportDialog.onApplyPrintPreset}
         exportBleedMmDraft={exportDialog.bleedMm}
         onExportBleedMmChange={exportDialog.onBleedMmChange}

@@ -52,9 +52,9 @@
           "summary": true
         },
         "exportPaperSize": "A4",
-        "exportPrintPro": true,
-        "exportBleedMm": 3,
-        "exportRegistrationMarks": true,
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
         "exportFinalSafeGuides": true,
         "displayUnit": "pt",
         "format": "A4"
@@ -283,9 +283,9 @@
           "summary": true
         },
         "exportPaperSize": "A4",
-        "exportPrintPro": true,
-        "exportBleedMm": 3,
-        "exportRegistrationMarks": true,
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
         "exportFinalSafeGuides": true,
         "displayUnit": "pt",
         "format": "A4"
