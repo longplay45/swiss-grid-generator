@@ -66,7 +66,7 @@ test("pdf export manually right-aligns text anchors before draw to avoid rotated
 test("pdf export draws image placeholders only when placeholder layer is visible", () => {
   const source = readText("lib/pdf-vector-export.ts")
   assert.match(source, /if\s*\(showImagePlaceholders\)\s*\{/)
-  assert.match(source, /setFillColorCmyk\(pdf,\s*imagePlan\.fillColor\)/)
+  assert.match(source, /setFillColorRgb\(pdf,\s*imagePlan\.fillColor\)/)
   assert.match(source, /drawFilledRect\(imagePlan\.x,\s*imagePlan\.y,\s*imagePlan\.width,\s*imagePlan\.height\)/)
 })
 
@@ -88,6 +88,32 @@ test("pdf export action forwards placeholder visibility toggle", () => {
   const source = readText("hooks/useExportActions.ts")
   assert.match(source, /showImagePlaceholders:\s*boolean/)
   assert.match(source, /showImagePlaceholders,\s*showTypography,\s*\n\s*}\)/)
+})
+
+test("pdf export resolves scheme-based canvas background and placeholder colors before drawing", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /const\s+resolvedCanvasBackground\s*=\s*canvasBackground[\s\S]*?resolveImageSchemeColor\(canvasBackground,\s*imageColorScheme\)/)
+  assert.match(source, /const\s+backgroundRgb\s*=\s*parseHexColor\(resolvedCanvasBackground\s*\?\?\s*undefined\)/)
+  assert.match(source, /const\s+fallbackImageColor\s*=\s*parseHexColor\(resolveImageSchemeColor\(undefined,\s*imageColorScheme\)\)/)
+  assert.match(source, /const\s+fillColor\s*=\s*parseHexColor\(resolveImageSchemeColor\(imageColors\[key\],\s*imageColorScheme\)\)\s*\?\?\s*fallbackImageColor/)
+})
+
+test("pdf export action forwards the active image color scheme", () => {
+  const source = readText("hooks/useExportActions.ts")
+  assert.match(source, /imageColorScheme:\s*ImageColorSchemeId/)
+  assert.match(source, /imageColorScheme,\s*\n\s*canvasBackground,/)
+  assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme,[\s\S]*?canvasBackground,/)
+})
+
+test("pdf export uses RGB setters by default to stay aligned with canvas preview", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /function\s+setDrawColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /function\s+setTextColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /function\s+setFillColorRgb\(pdf:\s*jsPDF,\s*color:\s*RgbColor\)/)
+  assert.match(source, /pdf\.setDrawColor\(color\.r,\s*color\.g,\s*color\.b\)/)
+  assert.match(source, /pdf\.setTextColor\(color\.r,\s*color\.g,\s*color\.b\)/)
+  assert.match(source, /pdf\.setFillColor\(color\.r,\s*color\.g,\s*color\.b\)/)
+  assert.doesNotMatch(source, /function\s+rgbToCmyk\(/)
 })
 
 test("pdf font registry derives embedded families from configured font list", () => {

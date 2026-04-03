@@ -3,6 +3,7 @@ import { FORMATS_PT } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
@@ -43,6 +44,7 @@ export type ExportActionsContext = {
   baseFont: FontFamily
   orientation: "portrait" | "landscape"
   rotation: number
+  imageColorScheme: ImageColorSchemeId
   canvasBackground: string | null
   showBaselines: boolean
   showModules: boolean
@@ -88,6 +90,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     baseFont,
     orientation,
     rotation,
+    imageColorScheme,
     canvasBackground,
     showBaselines,
     showModules,
@@ -283,6 +286,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         baseFont,
         originX,
         originY,
+        imageColorScheme,
         canvasBackground,
         printPro: {
           enabled,
@@ -311,6 +315,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       previewLayout,
       result,
       rotation,
+      imageColorScheme,
       canvasBackground,
       showBaselines,
       showMargins,
