@@ -12,6 +12,11 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { DEFAULT_BASE_FONT, getFontFamilyCss, isFontFamily } from "@/lib/config/fonts"
+import {
+  clearWindowSelection,
+  isCardDragIgnoreTarget,
+  lockDocumentUserSelect,
+} from "@/lib/sidebar-card-drag"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
@@ -114,6 +119,7 @@ export function LayersPanel({
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
+  const selectionLockCleanupRef = useRef<(() => void) | null>(null)
 
   const blockOrder = useMemo(() => layout?.blockOrder ?? [], [layout?.blockOrder])
   const imageOrder = useMemo(() => layout?.imageOrder ?? [], [layout?.imageOrder])
@@ -194,6 +200,28 @@ export function LayersPanel({
     })
   }, [selectedLayerKey])
 
+  useEffect(() => {
+    const releaseOnMouseUp = () => {
+      if (draggingKey) return
+      selectionLockCleanupRef.current?.()
+      selectionLockCleanupRef.current = null
+    }
+
+    window.addEventListener("mouseup", releaseOnMouseUp)
+    window.addEventListener("blur", releaseOnMouseUp)
+    return () => {
+      window.removeEventListener("mouseup", releaseOnMouseUp)
+      window.removeEventListener("blur", releaseOnMouseUp)
+    }
+  }, [draggingKey])
+
+  useEffect(() => (
+    () => {
+      selectionLockCleanupRef.current?.()
+      selectionLockCleanupRef.current = null
+    }
+  ), [])
+
   const tone = isDarkMode
     ? {
         card: "border-gray-700 bg-gray-800 text-gray-100",
@@ -226,6 +254,14 @@ export function LayersPanel({
   const clearDragState = () => {
     setDraggingKey(null)
     updateDropIndicator(null)
+    selectionLockCleanupRef.current?.()
+    selectionLockCleanupRef.current = null
+  }
+
+  const engageSelectionLock = () => {
+    clearWindowSelection()
+    if (selectionLockCleanupRef.current) return
+    selectionLockCleanupRef.current = lockDocumentUserSelect()
   }
 
   const handleListDragOver = (event: DragEvent<HTMLDivElement>) => {
@@ -306,9 +342,15 @@ export function LayersPanel({
                     cardRefs.current[thumb.key] = node
                   }}
                   draggable
+                  onPointerDownCapture={(event) => {
+                    if (event.button !== 0) return
+                    if (isCardDragIgnoreTarget(event.target)) return
+                    engageSelectionLock()
+                  }}
                   onDragStart={(event) => {
                     event.dataTransfer.effectAllowed = "move"
                     event.dataTransfer.setData("text/plain", thumb.key)
+                    clearWindowSelection()
                     onSelectLayer(thumb.key)
                     setDraggingKey(thumb.key)
                     updateDropIndicator(stationaryVisibleOrder.indexOf(thumb.key))
@@ -320,14 +362,14 @@ export function LayersPanel({
                   onMouseLeave={() => onHoverLayerChange(null)}
                   onClick={() => onSelectLayer(thumb.key)}
                   onDoubleClick={() => onToggleEditor(thumb.key)}
-                  className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} relative cursor-grab rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
+                  className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} relative cursor-grab select-none rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                     draggingKey === thumb.key
                       ? `${tone.card} cursor-grabbing opacity-45`
                       : tone.card
                   } ${isActive || isHovered ? "border-l-orange-500 border-t-orange-500" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
+                    <div className="pointer-events-none min-w-0 flex-1 select-none">
                       <div className={`truncate text-[11px] ${tone.cardMuted}`}>
                         {thumb.kind === "image" ? thumb.hierarchy : `${thumb.hierarchy} Font: ${thumb.font}`}
                       </div>
@@ -356,6 +398,7 @@ export function LayersPanel({
                     </div>
                     <button
                       type="button"
+                      data-card-drag-ignore="true"
                       aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
                       className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
                       onClick={(event) => {

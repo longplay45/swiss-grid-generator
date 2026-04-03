@@ -6,6 +6,11 @@ import type { DragEvent } from "react"
 
 import { ProjectSidebarSection } from "@/components/sidebar/ProjectSidebarSection"
 import type { ProjectPage } from "@/lib/document-session"
+import {
+  clearWindowSelection,
+  isCardDragIgnoreTarget,
+  lockDocumentUserSelect,
+} from "@/lib/sidebar-card-drag"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
@@ -59,6 +64,7 @@ export function PagesPanel({
   const titleInputRef = useRef<HTMLInputElement | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
+  const selectionLockCleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!editingPageId) return
@@ -80,6 +86,28 @@ export function PagesPanel({
     if (isEditingProjectTitle) return
     setProjectTitleDraft(projectTitle)
   }, [isEditingProjectTitle, projectTitle])
+
+  useEffect(() => {
+    const releaseOnMouseUp = () => {
+      if (draggingPageId) return
+      selectionLockCleanupRef.current?.()
+      selectionLockCleanupRef.current = null
+    }
+
+    window.addEventListener("mouseup", releaseOnMouseUp)
+    window.addEventListener("blur", releaseOnMouseUp)
+    return () => {
+      window.removeEventListener("mouseup", releaseOnMouseUp)
+      window.removeEventListener("blur", releaseOnMouseUp)
+    }
+  }, [draggingPageId])
+
+  useEffect(() => (
+    () => {
+      selectionLockCleanupRef.current?.()
+      selectionLockCleanupRef.current = null
+    }
+  ), [])
 
   const tone = isDarkMode
     ? {
@@ -179,6 +207,14 @@ export function PagesPanel({
   const clearDragState = () => {
     setDraggingPageId(null)
     updateDropIndicator(null)
+    selectionLockCleanupRef.current?.()
+    selectionLockCleanupRef.current = null
+  }
+
+  const engageSelectionLock = () => {
+    clearWindowSelection()
+    if (selectionLockCleanupRef.current) return
+    selectionLockCleanupRef.current = lockDocumentUserSelect()
   }
 
   const getDropIndexForPointer = (clientY: number) => {
@@ -288,10 +324,17 @@ export function PagesPanel({
                     cardRefs.current[page.id] = node
                   }}
                   draggable={!isEditing && !isEditingProjectTitle}
+                  onPointerDownCapture={(event) => {
+                    if (isEditing || isEditingProjectTitle) return
+                    if (event.button !== 0) return
+                    if (isCardDragIgnoreTarget(event.target)) return
+                    engageSelectionLock()
+                  }}
                   onDragStart={(event) => {
                     if (isEditing || isEditingProjectTitle) return
                     event.dataTransfer.effectAllowed = "move"
                     event.dataTransfer.setData("text/plain", page.id)
+                    clearWindowSelection()
                     onSelectPage(page.id)
                     setDraggingPageId(page.id)
                     updateDropIndicator(pages.findIndex((item) => item.id === page.id))
@@ -299,23 +342,24 @@ export function PagesPanel({
                   onDragEnd={clearDragState}
                   onDragOver={handleListDragOver}
                   onDrop={handleListDrop}
+                  onClick={() => {
+                    if (isEditing || isEditingProjectTitle) return
+                    onSelectPage(page.id)
+                  }}
                   className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                     draggingPageId === page.id
                       ? `${tone.card} opacity-45`
                       : tone.card
                   } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""} ${
-                    isEditing || isEditingProjectTitle ? "" : "cursor-grab"
+                    isEditing || isEditingProjectTitle ? "" : "cursor-grab select-none"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => onSelectPage(page.id)}
-                      className="min-w-0 flex-1 text-left"
-                    >
+                    <div className={`min-w-0 flex-1 ${isEditing ? "" : "pointer-events-none select-none"}`}>
                       {isEditing ? (
                         <input
                           ref={inputRef}
+                          data-card-drag-ignore="true"
                           value={pageNameDraft}
                           onChange={(event) => setPageNameDraft(event.target.value)}
                           onClick={(event) => event.stopPropagation()}
@@ -339,11 +383,12 @@ export function PagesPanel({
                         <span>{layerCount} {layerCount === 1 ? "layer" : "layers"}</span>
                         {isActive ? <span className="text-orange-500">Active page</span> : null}
                       </div>
-                    </button>
+                    </div>
 
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
+                        data-card-drag-ignore="true"
                         aria-label={`Rename ${page.name}`}
                         className={`rounded-sm p-1 transition-colors ${tone.close}`}
                         onClick={(event) => {
@@ -355,6 +400,7 @@ export function PagesPanel({
                       </button>
                       <button
                         type="button"
+                        data-card-drag-ignore="true"
                         aria-label={`Delete ${page.name}`}
                         disabled={deleteDisabled}
                         className={`rounded-sm p-1 transition-colors ${
