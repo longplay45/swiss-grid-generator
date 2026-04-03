@@ -1,0 +1,162 @@
+import type { GridResult } from "@/lib/grid-calculator"
+import { DEFAULT_BASE_FONT, type FontFamily } from "@/lib/config/fonts"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import { formatSvgColor } from "@/lib/export-colors"
+import { buildPageExportPlan } from "@/lib/page-export-plan"
+import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+
+type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
+
+type ExportVectorSvgOptions = {
+  width: number
+  height: number
+  result: GridResult
+  layout: PreviewLayoutState | null
+  baseFont?: FontFamily
+  imageColorScheme: ImageColorSchemeId
+  canvasBackground?: string | null
+  rotation: number
+  showBaselines: boolean
+  showModules: boolean
+  showMargins: boolean
+  showImagePlaceholders: boolean
+  showTypography: boolean
+  title?: string
+  description?: string
+}
+
+function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) return "0"
+  const rounded = Math.round(value * 1000) / 1000
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(3).replace(/\.?0+$/, "")
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+}
+
+function quoteAttr(value: string): string {
+  return escapeXml(value)
+}
+
+function getTextAnchor(align: "left" | "center" | "right"): "start" | "middle" | "end" {
+  if (align === "center") return "middle"
+  if (align === "right") return "end"
+  return "start"
+}
+
+function renderRotationTransform(rotation: number, originX: number, originY: number): string {
+  if (Math.abs(rotation) <= 0.0001) return ""
+  return ` transform="rotate(${formatNumber(rotation)} ${formatNumber(originX)} ${formatNumber(originY)})"`
+}
+
+export function renderSwissGridVectorSvg({
+  width,
+  height,
+  result,
+  layout,
+  baseFont = DEFAULT_BASE_FONT,
+  imageColorScheme,
+  canvasBackground = null,
+  rotation,
+  showBaselines,
+  showModules,
+  showMargins,
+  showImagePlaceholders,
+  showTypography,
+  title = "Swiss Grid Vector Export",
+  description = "Swiss Grid Generator SVG export",
+}: ExportVectorSvgOptions): string {
+  const exportPlan = buildPageExportPlan({
+    result,
+    layout,
+    baseFont,
+    imageColorScheme,
+    canvasBackground,
+    rotation,
+    showBaselines,
+    showModules,
+    showMargins,
+    showImagePlaceholders,
+    showTypography,
+  })
+
+  const imagePlans = new Map(exportPlan.imagePlans.map((plan) => [plan.key, plan] as const))
+  const textPlans = new Map(exportPlan.textPlans.map((plan) => [plan.key, plan] as const))
+  const pageClipId = "swiss-page-clip"
+  const pageRotationTransform = renderRotationTransform(
+    exportPlan.rotation,
+    exportPlan.pageWidth / 2,
+    exportPlan.pageHeight / 2,
+  )
+
+  const guideMarkup = exportPlan.guideGroups.map((guideGroup) => {
+    const stroke = formatSvgColor(guideGroup.strokeColor)
+    const dashAttr = guideGroup.dashPattern.length
+      ? ` stroke-dasharray="${guideGroup.dashPattern.map(formatNumber).join(" ")}"`
+      : ""
+    const body = [
+      ...guideGroup.rects.map((rect) => (
+        `<rect x="${formatNumber(rect.x)}" y="${formatNumber(rect.y)}" width="${formatNumber(rect.width)}" height="${formatNumber(rect.height)}" fill="none" />`
+      )),
+      ...guideGroup.lines.map((line) => (
+        `<line x1="${formatNumber(line.x1)}" y1="${formatNumber(line.y1)}" x2="${formatNumber(line.x2)}" y2="${formatNumber(line.y2)}" />`
+      )),
+    ].join("")
+    const clipAttr = guideGroup.clipToPage ? ` clip-path="url(#${pageClipId})"` : ""
+    return `<g id="guides-${guideGroup.id}"${clipAttr} fill="none" stroke="${stroke}" stroke-width="${formatNumber(guideGroup.strokeWidth)}"${dashAttr}>${body}</g>`
+  }).join("")
+
+  const layerMarkup = exportPlan.orderedLayerKeys.map((key) => {
+    const imagePlan = imagePlans.get(key)
+    if (imagePlan) {
+      return `<rect id="image-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" x="${formatNumber(imagePlan.x)}" y="${formatNumber(imagePlan.y)}" width="${formatNumber(imagePlan.width)}" height="${formatNumber(imagePlan.height)}" fill="${formatSvgColor(imagePlan.fillColor)}" />`
+    }
+
+    const textPlan = textPlans.get(key)
+    if (!textPlan) return ""
+    const tracking = textPlan.trackingScale === 0
+      ? ""
+      : ` letter-spacing="${formatNumber((textPlan.fontSize * textPlan.trackingScale) / 1000)}"`
+    const kerning = textPlan.opticalKerning ? ` font-kerning="normal"` : ` font-kerning="none"`
+    const rotationTransform = renderRotationTransform(
+      textPlan.blockRotation,
+      textPlan.rotationOriginX,
+      textPlan.rotationOriginY,
+    )
+    const lines = textPlan.commands.map((command) => (
+      `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" xml:space="preserve">${escapeXml(command.text)}</text>`
+    )).join("")
+    return (
+      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" text-anchor="${getTextAnchor(textPlan.textAlign)}"${tracking}${kerning}${rotationTransform}>${lines}</g>`
+    )
+  }).join("")
+
+  const backgroundMarkup = exportPlan.backgroundColor
+    ? `<rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" fill="${formatSvgColor(exportPlan.backgroundColor)}" />`
+    : ""
+
+  const pageOutlineMarkup = exportPlan.pageOutline
+    ? `<rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" fill="none" stroke="${formatSvgColor(exportPlan.pageOutline.strokeColor)}" stroke-width="${formatNumber(exportPlan.pageOutline.strokeWidth)}" />`
+    : ""
+
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${formatNumber(width)}pt" height="${formatNumber(height)}pt" viewBox="0 0 ${formatNumber(exportPlan.pageWidth)} ${formatNumber(exportPlan.pageHeight)}" role="img" aria-labelledby="title desc">`,
+    `<title id="title">${escapeXml(title)}</title>`,
+    `<desc id="desc">${escapeXml(description)}</desc>`,
+    `<defs><clipPath id="${pageClipId}"><rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" /></clipPath></defs>`,
+    `<g id="page"${pageRotationTransform} stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">`,
+    backgroundMarkup,
+    pageOutlineMarkup,
+    guideMarkup,
+    layerMarkup,
+    `</g>`,
+    `</svg>`,
+  ].join("")
+}

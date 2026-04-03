@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { EXPORT_DIALOG_PRINT_PRESETS } from "@/hooks/useExportActions"
-import type { PrintPresetKey } from "@/hooks/useExportActions"
+import type { ExportFormat, PrintPresetKey } from "@/hooks/useExportActions"
 import { formatValue } from "@/lib/units"
 import { cn } from "@/lib/utils"
 
@@ -25,10 +25,12 @@ type Props = {
   // Custom width (non-DIN/ANSI)
   exportWidthDraft: string
   onExportWidthChange: (value: string) => void
+  exportFormatDraft: ExportFormat
+  onExportFormatChange: (value: ExportFormat) => void
   // Filename
   exportFilenameDraft: string
   onExportFilenameChange: (value: string) => void
-  defaultPdfFilename: string
+  defaultFilename: string
   activePrintPresetDraft: PrintPresetKey | null
   showPrintAdjustmentsDraft: boolean
   onApplyPrintPreset: (key: PrintPresetKey) => void
@@ -58,9 +60,11 @@ export function ExportPdfDialog({
   paperSizeOptions,
   exportWidthDraft,
   onExportWidthChange,
+  exportFormatDraft,
+  onExportFormatChange,
   exportFilenameDraft,
   onExportFilenameChange,
-  defaultPdfFilename,
+  defaultFilename,
   activePrintPresetDraft,
   showPrintAdjustmentsDraft,
   onApplyPrintPreset,
@@ -79,6 +83,7 @@ export function ExportPdfDialog({
   const helpTextClassName = "text-xs text-muted-foreground"
   const toggleRowClassName = "flex items-center justify-between rounded-md border border-input bg-background px-3 py-2"
   const dialogThemeClassName = isDarkUi ? "dark" : undefined
+  const isPdfExport = exportFormatDraft === "pdf"
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 md:items-center">
@@ -88,10 +93,33 @@ export function ExportPdfDialog({
           "w-full max-w-md max-h-[90vh] space-y-4 overflow-y-auto rounded-lg border border-border bg-background p-4 text-foreground shadow-xl",
         )}
       >
-        <h3 className="text-base font-semibold">Export PDF</h3>
+        <h3 className="text-base font-semibold">Export</h3>
         <p className={helpTextClassName}>
           Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
         </p>
+        <div className="space-y-2">
+          <Label>Format</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={exportFormatDraft === "pdf" ? "default" : "outline"}
+              size="sm"
+              className="text-[11px]"
+              onClick={() => onExportFormatChange("pdf")}
+            >
+              PDF
+            </Button>
+            <Button
+              type="button"
+              variant={exportFormatDraft === "svg" ? "default" : "outline"}
+              size="sm"
+              className="text-[11px]"
+              onClick={() => onExportFormatChange("svg")}
+            >
+              SVG
+            </Button>
+          </div>
+        </div>
         {isDinOrAnsiRatio && (
           <div className="space-y-2">
             <Label>Units / Paper Size</Label>
@@ -158,69 +186,77 @@ export function ExportPdfDialog({
             value={exportFilenameDraft}
             onChange={(event) => onExportFilenameChange(event.target.value)}
             className={inputClassName}
-            placeholder={defaultPdfFilename}
+            placeholder={defaultFilename}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Print Presets</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {EXPORT_DIALOG_PRINT_PRESETS.map((preset) => (
-              <Button
-                key={preset.key}
-                type="button"
-                variant={activePrintPresetDraft === preset.key ? "default" : "outline"}
-                size="sm"
-                className="text-[11px]"
-                onClick={() => onApplyPrintPreset(preset.key)}
-              >
-                {preset.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-        {showPrintAdjustmentsDraft && (
+        {isPdfExport ? (
           <>
             <div className="space-y-2">
-              <Label>Bleed (mm)</Label>
-              <input
-                type="number"
-                min={0}
-                step="0.1"
-                value={exportBleedMmDraft}
-                onChange={(event) => onExportBleedMmChange(event.target.value)}
-                className={inputClassName}
-              />
-            </div>
-            <div className={toggleRowClassName}>
-              <div className="space-y-0.5">
-                <Label className="text-sm">Registration-Style Marks</Label>
-                <p className="text-[11px] text-muted-foreground">Uses rich CMYK marks instead of black.</p>
+              <Label>Print Presets</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {EXPORT_DIALOG_PRINT_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    type="button"
+                    variant={activePrintPresetDraft === preset.key ? "default" : "outline"}
+                    size="sm"
+                    className="text-[11px]"
+                    onClick={() => onApplyPrintPreset(preset.key)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
               </div>
-              <Switch
-                checked={exportRegistrationMarksDraft}
-                onCheckedChange={onExportRegistrationMarksChange}
-              />
             </div>
-            <div className={toggleRowClassName}>
-              <div className="space-y-0.5">
-                <Label className="text-sm">Final-Safe Guide Colors</Label>
-                <p className="text-[11px] text-muted-foreground">
-                  Neutral grayscale guides, no cyan/magenta accents.
-                </p>
-              </div>
-              <Switch
-                checked={exportFinalSafeGuidesDraft}
-                onCheckedChange={onExportFinalSafeGuidesChange}
-              />
-            </div>
+            {showPrintAdjustmentsDraft && (
+              <>
+                <div className="space-y-2">
+                  <Label>Bleed (mm)</Label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={exportBleedMmDraft}
+                    onChange={(event) => onExportBleedMmChange(event.target.value)}
+                    className={inputClassName}
+                  />
+                </div>
+                <div className={toggleRowClassName}>
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Registration-Style Marks</Label>
+                    <p className="text-[11px] text-muted-foreground">Uses rich CMYK marks instead of black.</p>
+                  </div>
+                  <Switch
+                    checked={exportRegistrationMarksDraft}
+                    onCheckedChange={onExportRegistrationMarksChange}
+                  />
+                </div>
+                <div className={toggleRowClassName}>
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Final-Safe Guide Colors</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Neutral grayscale guides, no cyan/magenta accents.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={exportFinalSafeGuidesDraft}
+                    onCheckedChange={onExportFinalSafeGuidesChange}
+                  />
+                </div>
+              </>
+            )}
           </>
+        ) : (
+          <p className={helpTextClassName}>
+            SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied.
+          </p>
         )}
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={onConfirm}>
-            Export PDF
+            {isPdfExport ? "Export PDF" : "Export SVG"}
           </Button>
         </div>
       </div>

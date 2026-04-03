@@ -314,6 +314,10 @@ export default function Home() {
     () => `${baseFilename}_${exportPaperSize}_grid.pdf`,
     [baseFilename, exportPaperSize],
   )
+  const defaultSvgFilename = useMemo(
+    () => `${baseFilename}_${exportPaperSize}_grid.svg`,
+    [baseFilename, exportPaperSize],
+  )
 
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
@@ -598,6 +602,7 @@ export default function Home() {
       paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
+      defaultSvgFilename,
       defaultJsonFilename,
       projectMetadata,
       onProjectMetadataChange: setProjectMetadata,
@@ -632,6 +637,7 @@ export default function Home() {
       paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
+      defaultSvgFilename,
       defaultJsonFilename,
       projectMetadata,
       setProjectMetadata,
@@ -887,9 +893,11 @@ export default function Home() {
             paperSizeOptions,
             width: exportActions.exportWidthDraft,
             onWidthChange: exportActions.setExportWidthDraft,
+            format: exportActions.exportFormatDraft,
+            onFormatChange: exportActions.setExportFormatDraft,
             filename: exportActions.exportFilenameDraft,
             onFilenameChange: exportActions.setExportFilenameDraft,
-            defaultFilename: defaultPdfFilename,
+            defaultFilename: exportActions.defaultExportFilename,
             activePrintPreset: exportActions.activePrintPresetDraft,
             showPrintAdjustments: exportActions.showPrintAdjustmentsDraft,
             onApplyPrintPreset: exportActions.applyPrintPreset,
@@ -899,7 +907,7 @@ export default function Home() {
             onRegistrationMarksChange: exportActions.setExportRegistrationMarksDraft,
             finalSafeGuides: exportActions.exportFinalSafeGuidesDraft,
             onFinalSafeGuidesChange: exportActions.setExportFinalSafeGuidesDraft,
-            onConfirm: exportActions.confirmExportPDF,
+            onConfirm: exportActions.confirmExport,
             getOrientedDimensions: exportActions.getOrientedDimensions,
           }}
           saveDialog={{

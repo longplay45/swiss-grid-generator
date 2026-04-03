@@ -3,7 +3,7 @@
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
-import type { PrintPresetKey } from "@/hooks/useExportActions"
+import type { ExportFormat, PrintPresetKey } from "@/hooks/useExportActions"
 import type { DisplayUnit } from "@/lib/config/defaults"
 
 type NoticeState = {
@@ -32,6 +32,8 @@ type Props = {
     paperSizeOptions: PaperSizeOption[]
     width: string
     onWidthChange: (value: string) => void
+    format: ExportFormat
+    onFormatChange: (value: ExportFormat) => void
     filename: string
     onFilenameChange: (value: string) => void
     defaultFilename: string
@@ -95,9 +97,11 @@ export function WorkspaceDialogs({
         paperSizeOptions={exportDialog.paperSizeOptions}
         exportWidthDraft={exportDialog.width}
         onExportWidthChange={exportDialog.onWidthChange}
+        exportFormatDraft={exportDialog.format}
+        onExportFormatChange={exportDialog.onFormatChange}
         exportFilenameDraft={exportDialog.filename}
         onExportFilenameChange={exportDialog.onFilenameChange}
-        defaultPdfFilename={exportDialog.defaultFilename}
+        defaultFilename={exportDialog.defaultFilename}
         activePrintPresetDraft={exportDialog.activePrintPreset}
         showPrintAdjustmentsDraft={exportDialog.showPrintAdjustments}
         onApplyPrintPreset={exportDialog.onApplyPrintPreset}

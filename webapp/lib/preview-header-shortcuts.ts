@@ -45,7 +45,7 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
     id: "export_pdf",
     combo: "Cmd/Ctrl+Shift+E",
-    description: "Export PDF",
+    description: "Export dialog",
     bindings: [{ key: "e", shift: true }],
   },
   {

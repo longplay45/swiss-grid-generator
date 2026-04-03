@@ -6,11 +6,14 @@ import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
+import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
+
+export type ExportFormat = "pdf" | "svg"
 
 type PrintPresetConfig = {
   enabled: boolean
@@ -127,6 +130,7 @@ export type ExportActionsContext = {
   paperSizeOptions: Array<{ value: string; label: string }>
   previewFormat: string
   defaultPdfFilename: string
+  defaultSvgFilename: string
   defaultJsonFilename: string
   projectMetadata: {
     title: string
@@ -178,6 +182,7 @@ export function useExportActions(ctx: ExportActionsContext) {
   } = ctx
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [exportFormatDraft, setExportFormatDraft] = useState<ExportFormat>("pdf")
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
   const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(exportPaperSize)
   const [printPresetEnabledDraft, setPrintPresetEnabledDraft] = useState(persistedPrintPresetEnabled)
@@ -201,6 +206,20 @@ export function useExportActions(ctx: ExportActionsContext) {
     },
     [orientation, previewFormat],
   )
+
+  const getDefaultExportFilename = useCallback((format: ExportFormat) => (
+    format === "svg" ? ctx.defaultSvgFilename : defaultPdfFilename
+  ), [ctx.defaultSvgFilename, defaultPdfFilename])
+
+  const updateFilenameForFormat = useCallback((current: string, format: ExportFormat) => {
+    const trimmed = current.trim()
+    const extension = format === "svg" ? ".svg" : ".pdf"
+    if (!trimmed) return getDefaultExportFilename(format)
+    if (/\.(pdf|svg)$/i.test(trimmed)) {
+      return trimmed.replace(/\.(pdf|svg)$/i, extension)
+    }
+    return `${trimmed}${extension}`
+  }, [getDefaultExportFilename])
 
   const saveJSON = useCallback(
     (filename: string, metadata: { title: string; description: string; author: string; createdAt: string }) => {
@@ -388,6 +407,53 @@ export function useExportActions(ctx: ExportActionsContext) {
     ],
   )
 
+  const exportSVG = useCallback((
+    width: number,
+    height: number,
+    filename: string,
+  ) => {
+    const trimmedTitle = projectMetadata.title.trim()
+    const trimmedDescription = projectMetadata.description.trim()
+    const svg = renderSwissGridVectorSvg({
+      width,
+      height,
+      result,
+      layout: previewLayout,
+      baseFont,
+      imageColorScheme,
+      canvasBackground,
+      rotation,
+      showBaselines,
+      showModules,
+      showMargins,
+      showImagePlaceholders,
+      showTypography,
+      title: trimmedTitle || filename,
+      description: trimmedDescription || "Swiss Grid Vector Export",
+    })
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [
+    baseFont,
+    canvasBackground,
+    imageColorScheme,
+    previewLayout,
+    projectMetadata.description,
+    projectMetadata.title,
+    result,
+    rotation,
+    showBaselines,
+    showImagePlaceholders,
+    showMargins,
+    showModules,
+    showTypography,
+  ])
+
   const openExportDialog = useCallback(() => {
     const dims = getOrientedDimensions(exportPaperSize)
     setExportPaperSizeDraft(exportPaperSize)
@@ -395,20 +461,26 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMmDraft(String(exportBleedMm))
     setExportRegistrationMarksDraft(exportRegistrationMarks)
     setExportFinalSafeGuidesDraft(exportFinalSafeGuides)
-    setExportFilenameDraft(defaultPdfFilename)
+    setExportFilenameDraft(getDefaultExportFilename(exportFormatDraft))
     setExportWidthDraft(formatValue(dims.width, isDinOrAnsiRatio ? displayUnit : "mm"))
     setIsExportDialogOpen(true)
   }, [
-    defaultPdfFilename,
     displayUnit,
     exportBleedMm,
+    exportFormatDraft,
     exportFinalSafeGuides,
     exportPaperSize,
     persistedPrintPresetEnabled,
     exportRegistrationMarks,
+    getDefaultExportFilename,
     getOrientedDimensions,
     isDinOrAnsiRatio,
   ])
+
+  const handleExportFormatChange = useCallback((format: ExportFormat) => {
+    setExportFormatDraft(format)
+    setExportFilenameDraft((current) => updateFilenameForFormat(current, format))
+  }, [updateFilenameForFormat])
 
   const applyPrintPresetConfig = useCallback((config: PrintPresetConfig) => {
     setPrintPresetEnabledDraft(config.enabled)
@@ -423,10 +495,11 @@ export function useExportActions(ctx: ExportActionsContext) {
     applyPrintPresetConfig(preset.config)
   }, [applyPrintPresetConfig])
 
-  const confirmExportPDF = useCallback(async () => {
+  const confirmExport = useCallback(async () => {
     const trimmedName = exportFilenameDraft.trim()
     if (!trimmedName) return
-    const filename = trimmedName.toLowerCase().endsWith(".pdf") ? trimmedName : `${trimmedName}.pdf`
+    const extension = exportFormatDraft === "svg" ? ".svg" : ".pdf"
+    const filename = trimmedName.toLowerCase().endsWith(extension) ? trimmedName : `${trimmedName}${extension}`
     const baseDims = getOrientedDimensions(exportPaperSizeDraft)
     const aspectRatio = baseDims.height / baseDims.width
     const parsedWidth = Number(exportWidthDraft)
@@ -440,27 +513,33 @@ export function useExportActions(ctx: ExportActionsContext) {
         : baseDims.width
     const height = width * aspectRatio
     setExportPaperSize(exportPaperSizeDraft)
-    setPersistedPrintPresetEnabled(printPresetEnabledDraft)
-    setExportBleedMm(bleedMm)
-    setExportRegistrationMarks(exportRegistrationMarksDraft)
-    setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
-    await exportPDF(width, height, filename, {
-      enabled: printPresetEnabledDraft,
-      bleedMm,
-      registrationMarks: exportRegistrationMarksDraft,
-      finalSafeGuides: exportFinalSafeGuidesDraft,
-    })
+    if (exportFormatDraft === "pdf") {
+      setPersistedPrintPresetEnabled(printPresetEnabledDraft)
+      setExportBleedMm(bleedMm)
+      setExportRegistrationMarks(exportRegistrationMarksDraft)
+      setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
+      await exportPDF(width, height, filename, {
+        enabled: printPresetEnabledDraft,
+        bleedMm,
+        registrationMarks: exportRegistrationMarksDraft,
+        finalSafeGuides: exportFinalSafeGuidesDraft,
+      })
+    } else {
+      exportSVG(width, height, filename)
+    }
     setIsExportDialogOpen(false)
   }, [
     exportBleedMm,
     exportBleedMmDraft,
     exportFinalSafeGuidesDraft,
+    exportFormatDraft,
     exportFilenameDraft,
     exportPaperSizeDraft,
     printPresetEnabledDraft,
     exportRegistrationMarksDraft,
     exportWidthDraft,
     exportPDF,
+    exportSVG,
     getOrientedDimensions,
     isDinOrAnsiRatio,
     setExportBleedMm,
@@ -509,6 +588,8 @@ export function useExportActions(ctx: ExportActionsContext) {
     // Export dialog
     isExportDialogOpen,
     setIsExportDialogOpen,
+    exportFormatDraft,
+    setExportFormatDraft: handleExportFormatChange,
     exportFilenameDraft,
     setExportFilenameDraft,
     exportPaperSizeDraft,
@@ -525,7 +606,8 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportWidthDraft,
     openExportDialog,
     applyPrintPreset,
-    confirmExportPDF,
+    confirmExport,
+    defaultExportFilename: getDefaultExportFilename(exportFormatDraft),
     getOrientedDimensions,
   }
 }

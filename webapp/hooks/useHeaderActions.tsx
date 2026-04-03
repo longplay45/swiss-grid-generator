@@ -109,8 +109,8 @@ export function useHeaderActions(args: Args) {
       type: "action",
       action: {
         key: "export",
-        ariaLabel: "Export PDF",
-        tooltip: "Export PDF",
+        ariaLabel: "Export",
+        tooltip: "Export",
         shortcutId: "export_pdf",
         onClick: args.onExportPdf,
         icon: <Download className="h-4 w-4" />,

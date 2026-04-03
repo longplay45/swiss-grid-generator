@@ -326,10 +326,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-header-export" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Export PDF
+          Export
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens export dialog for vector PDF output and print settings. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
+          Opens the export dialog for vector PDF and SVG output. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
         </p>
       </section>
 
@@ -501,7 +501,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>
           <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `Top to Bottom` or `Bottom to top` (default: on, `Top to Bottom`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
-          <li>Reducing rows/cols may trigger reflow suggestions.</li>
+          <li>Reducing rows or columns is blocked when paragraphs would fall outside the new grid.</li>
         </ul>
       </section>
 
@@ -557,15 +557,15 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-export" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Export PDF
+          Export
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Export is vector-based (not raster screenshot export).</li>
-          <li>PDF export always uses the current active page.</li>
+          <li>Export always uses the current active page.</li>
           <li>DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.</li>
-          <li>Print presets cover Digital Print and Press Proof configurations.</li>
-          <li>Press presets include bleed, registration-style crop marks, final-safe guides, and embedded output intents.</li>
-          <li>Export applies current rotation, guides visibility toggles, and text styling.</li>
+          <li>PDF export offers Digital Print and Press Proof presets, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
+          <li>SVG v1 exports live vector text, guides, and placeholders at trim size.</li>
+          <li>Both formats apply current rotation, guide visibility toggles, and text styling.</li>
         </ul>
       </section>
 
@@ -607,7 +607,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>If blocks disappear, check display toggles and whether text content is empty.</li>
           <li>If paragraph flow looks clipped, increase row span or disable reflow for that block.</li>
-          <li>If layout jumps after reducing rows/cols, this is expected from structural reflow remapping.</li>
+          <li>If reducing rows or columns is refused, reposition or remove paragraphs that sit beyond the proposed grid size.</li>
           <li>If custom margins seem odd, verify baseline value and side multipliers first.</li>
           <li>If hover tooltips or rollover hints are missing, enable the header `i` toggle.</li>
           <li>If keyboard shortcuts do not trigger, focus outside active text inputs.</li>

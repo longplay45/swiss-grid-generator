@@ -11,7 +11,7 @@ export const GENERAL_INDEX_ITEMS = [
   { id: "help-drag-placement", label: "Drag and Placement" },
   { id: "help-history-reflow", label: "History and Reflow" },
   { id: "help-save-load", label: "Save and Load Project JSON" },
-  { id: "help-export", label: "Export PDF" },
+  { id: "help-export", label: "Export" },
   { id: "help-troubleshooting", label: "Troubleshooting" },
   { id: "help-grid-theory", label: "Grid Theory Notes" },
 ] as const
@@ -31,7 +31,7 @@ export const HEADER_CONTROLS_INDEX_ITEMS = [
   { id: "help-header-examples", label: "Presets" },
   { id: "help-header-load", label: "Load" },
   { id: "help-header-save", label: "Save" },
-  { id: "help-header-export", label: "Export PDF" },
+  { id: "help-header-export", label: "Export" },
   { id: "help-header-undo", label: "Undo" },
   { id: "help-header-redo", label: "Redo" },
   { id: "help-header-dark-mode", label: "Dark Mode" },
