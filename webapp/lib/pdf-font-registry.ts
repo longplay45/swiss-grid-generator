@@ -55,6 +55,13 @@ async function fetchFirstAvailableBase64(urls: string[]): Promise<string> {
 
 type PdfWithRegistry = jsPDF & {
   __sggRegisteredFonts?: Set<string>
+  getFont?: (fontName?: string, fontStyle?: string) => {
+    fontName?: string
+    metadata?: {
+      postscriptName?: string
+      name?: { postscriptName?: string }
+    }
+  } | undefined
 }
 
 function markFontRegistered(pdf: PdfWithRegistry, family: string): void {
@@ -80,6 +87,18 @@ function getPdfEmbeddedWeightFamilyName(fontFamily: FontFamily, weight: number):
 
 function getPdfRegistrationKey(fontFamily: FontFamily): string {
   return `${getPdfEmbeddedFamilyName(fontFamily)}__all`
+}
+
+function applyPdfPostScriptFontName(
+  pdf: PdfWithRegistry,
+  pdfFamily: string,
+  fontStyle: "normal" | "italic",
+): void {
+  const fontEntry = pdf.getFont?.(pdfFamily, fontStyle)
+  if (!fontEntry) return
+  const postScriptName = fontEntry?.metadata?.name?.postscriptName ?? fontEntry?.metadata?.postscriptName
+  if (typeof postScriptName !== "string" || postScriptName.trim().length === 0) return
+  fontEntry.fontName = postScriptName.trim()
 }
 
 async function discoverGoogleRepoVariableSources(fontFamily: FontFamily): Promise<{ regular: string; italic: string } | null> {
@@ -177,11 +196,14 @@ async function registerWithAssets(
 
   addFileToVFS(assets.normal.vfsName, normal)
   addFont(assets.normal.vfsName, pdfFamily, "normal")
+  applyPdfPostScriptFontName(pdf, pdfFamily, "normal")
   if (assets.italic) {
     addFileToVFS(assets.italic.vfsName, italic)
     addFont(assets.italic.vfsName, pdfFamily, "italic")
+    applyPdfPostScriptFontName(pdf, pdfFamily, "italic")
   } else {
     addFont(assets.normal.vfsName, pdfFamily, "italic")
+    applyPdfPostScriptFontName(pdf, pdfFamily, "italic")
   }
   markFontRegistered(pdf, pdfFamily)
 }

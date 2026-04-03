@@ -123,8 +123,13 @@ test("pdf export switches between rgb and cmyk setters based on export color mod
 
 test("pdf export attaches an embedded output intent profile for print-aware exports", () => {
   const source = readText("lib/pdf-output-intent.ts")
+  assert.match(source, /putResources/)
+  assert.match(source, /putXobjectDict/)
   assert.match(source, /postPutResources/)
   assert.match(source, /putCatalog/)
+  assert.match(source, /\/DefaultRGB/)
+  assert.match(source, /\/DefaultCMYK/)
+  assert.match(source, /\/ICCBased/)
   assert.match(source, /\/OutputIntents\s*\[<</)
   assert.match(source, /\/DestOutputProfile\s+\$\{current\.profileObjectId\}\s+0\s+R/)
   assert.match(source, /\/S\s+\/GTS_PDFX/)
@@ -189,5 +194,8 @@ test("pdf font registry builds local and fallback URLs for weight-specific font 
   assert.match(source, /getPdfEmbeddedWeightFamilyName\(fontFamily,\s*weight\)/)
   assert.match(source, /fetchFirstAvailableBase64\(assets\.normal\.urls\)/)
   assert.match(source, /fetchFirstAvailableBase64\(\(assets\.italic\s*\?\?\s*assets\.normal\)\.urls\)/)
+  assert.match(source, /function\s+applyPdfPostScriptFontName\(/)
+  assert.match(source, /fontEntry\?\.metadata\?\.name\?\.postscriptName\s*\?\?\s*fontEntry\?\.metadata\?\.postscriptName/)
+  assert.match(source, /fontEntry\.fontName\s*=\s*postScriptName\.trim\(\)/)
   assert.match(source, /await\s+registerGoogleVariableFamily\(pdf\s+as\s+PdfWithRegistry,\s*fontFamily\)/)
 })
