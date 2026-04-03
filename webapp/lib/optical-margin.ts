@@ -534,6 +534,21 @@ function resolveStyledHangingOffset(
   return clampHangingOffset(Math.max(desiredFromEm, desiredFromGlyph), glyphWidth)
 }
 
+function resolveMeasuredLeftHangingOffset(
+  char: string,
+  measuredOffset: number,
+  edgeOffset: { em: number; kind: OpticalMarginCharKind },
+  glyphWidth: number,
+  fontSize: number,
+  profile: OpticalMarginProfile,
+): number {
+  if (!(measuredOffset > 0)) return 0
+  if (char !== "T" || edgeOffset.kind !== "straight-letter") return measuredOffset
+  const fallbackOffset = resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
+  if (!(fallbackOffset > 0)) return measuredOffset
+  return Math.min(measuredOffset, fallbackOffset)
+}
+
 export function getOpticalMarginAnchorOffset({
   line,
   align,
@@ -550,12 +565,23 @@ export function getOpticalMarginAnchorOffset({
 
   // Left-aligned lines hang opening punctuation into the left margin.
   if (align === "left") {
+    const edgeOffset = getLeadingOpticalOffsetEm(first)
     if (!LEADING_PUNCTUATION_OFFSETS_EM[first]) {
       const measured = measureGlyphBounds?.(first) ?? measureOpticalGlyphBoundsFromCanvas(first, font, fontSize, profile)
-      if (measured) return -measured.leftBoundary
+      if (measured) {
+        const glyphWidth = measureWidth(first)
+        return -resolveMeasuredLeftHangingOffset(
+          first,
+          measured.leftBoundary,
+          edgeOffset,
+          glyphWidth,
+          fontSize,
+          profile,
+        )
+      }
     }
     const glyphWidth = measureWidth(first)
-    return -resolveStyledHangingOffset(getLeadingOpticalOffsetEm(first), glyphWidth, fontSize, profile)
+    return -resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
   }
 
   // Right-aligned lines hang trailing punctuation into the right margin.

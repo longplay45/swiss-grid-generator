@@ -111,6 +111,22 @@ test("measured glyph bounds override fallback style heuristics for straight-side
   assert.equal(fxOffset, bodyOffset)
 })
 
+test("leading T caps measured overhang to the subtle fallback offset", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Type",
+    align: "left",
+    fontSize: 200,
+    styleKey: "display",
+    measureWidth: () => 110,
+    measureGlyphBounds: (char) => (
+      char === "T"
+        ? { advanceWidth: 110, leftBoundary: 14, rightBoundary: 96 }
+        : null
+    ),
+  })
+  assert.equal(offset, -(0.018 * 200))
+})
+
 test("dominant left stem collapses optical boundary back to the bbox edge", () => {
   const boundary = resolveDominantStemBoundaryPx([0, 0, 0, 0.2, 0.2, 0.4, 0.1], 40, "left", 1.2)
   assert.equal(boundary, 40)
