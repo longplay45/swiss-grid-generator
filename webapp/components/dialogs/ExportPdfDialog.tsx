@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { PRINT_PRESETS } from "@/hooks/useExportActions"
+import { EXPORT_DIALOG_PRINT_PRESETS } from "@/hooks/useExportActions"
 import type { PrintPresetKey } from "@/hooks/useExportActions"
 import { formatValue } from "@/lib/units"
 import { cn } from "@/lib/utils"
@@ -163,8 +163,8 @@ export function ExportPdfDialog({
         </div>
         <div className="space-y-2">
           <Label>Print Presets</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {PRINT_PRESETS.map((preset) => (
+          <div className="grid grid-cols-2 gap-2">
+            {EXPORT_DIALOG_PRINT_PRESETS.map((preset) => (
               <Button
                 key={preset.key}
                 type="button"

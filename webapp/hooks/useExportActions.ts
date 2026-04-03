@@ -64,6 +64,8 @@ export const PRINT_PRESETS: Array<{
   },
 ]
 
+export const EXPORT_DIALOG_PRINT_PRESETS = PRINT_PRESETS.filter((preset) => preset.key !== "offset_final")
+
 const PRINT_CROP_OFFSET_MM = 2
 const PRINT_CROP_LENGTH_MM = 5
 

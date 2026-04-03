@@ -135,6 +135,7 @@ test("pdf export attaches an embedded output intent profile for print-aware expo
 test("pdf export presets stay ordered from digital to offset and drive color-management mode", () => {
   const source = readText("hooks/useExportActions.ts")
   assert.match(source, /PRINT_PRESETS[\s\S]*key:\s*"digital_print"[\s\S]*key:\s*"press_proof"[\s\S]*key:\s*"offset_final"/)
+  assert.match(source, /EXPORT_DIALOG_PRINT_PRESETS\s*=\s*PRINT_PRESETS\.filter\(\(preset\)\s*=>\s*preset\.key\s*!==\s*"offset_final"\)/)
   assert.match(source, /if\s*\(!config\.enabled\)\s*\{[\s\S]*colorMode:\s*"rgb"[\s\S]*outputIntentProfileId:\s*"srgb"/)
   assert.match(source, /return\s*\{[\s\S]*colorMode:\s*"cmyk"[\s\S]*outputIntentProfileId:\s*"coated-fogra39"/)
 })
@@ -142,6 +143,8 @@ test("pdf export presets stay ordered from digital to offset and drive color-man
 test("export pdf dialog relies on print presets instead of a separate print-pro switch", () => {
   const source = readText("components/dialogs/ExportPdfDialog.tsx")
   assert.match(source, /Label>Print Presets<\/Label>/)
+  assert.match(source, /EXPORT_DIALOG_PRINT_PRESETS/)
+  assert.match(source, /grid-cols-2/)
   assert.doesNotMatch(source, /Print Pro/)
   assert.doesNotMatch(source, /onExportPrintProChange/)
 })
