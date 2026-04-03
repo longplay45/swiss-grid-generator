@@ -50,6 +50,22 @@ type BlockId = string
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 type RgbColor = { r: number; g: number; b: number }
 type CmykColor = { c: number; m: number; y: number; k: number }
+type PdfMatrix = { toString: () => string }
+type PdfMatrixConstructor = new (
+  sx: number,
+  shy: number,
+  shx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+) => PdfMatrix
+type PdfWithFormObjects = jsPDF & {
+  advancedAPI?: (body?: (pdf: jsPDF) => void) => jsPDF
+  beginFormObject?: (x: number, y: number, width: number, height: number, matrix: PdfMatrix) => jsPDF
+  endFormObject?: (key: string) => jsPDF
+  doFormObject?: (key: string, matrix: PdfMatrix) => jsPDF
+  Matrix?: PdfMatrixConstructor
+}
 type PrintProOptions = {
   enabled: boolean
   bleedPt: number
@@ -251,6 +267,8 @@ export function renderSwissGridVectorPdf({
   const sx = width / sourceWidth
   const sy = height / sourceHeight
   const scale = (sx + sy) / 2
+  const pageWidth = width + originX * 2
+  const pageHeight = height + originY * 2
   const cx = originX + width / 2
   const cy = originY + height / 2
   const theta = (rotation * Math.PI) / 180
@@ -279,6 +297,28 @@ export function renderSwissGridVectorPdf({
     drawLine(x + w, y, x + w, y + h)
     drawLine(x + w, y + h, x, y + h)
     drawLine(x, y + h, x, y)
+  }
+
+  const drawGuideGroup = (key: string, draw: () => void) => {
+    const formPdf = pdf as PdfWithFormObjects
+    if (
+      typeof formPdf.advancedAPI !== "function"
+      || typeof formPdf.beginFormObject !== "function"
+      || typeof formPdf.endFormObject !== "function"
+      || typeof formPdf.doFormObject !== "function"
+      || typeof formPdf.Matrix !== "function"
+    ) {
+      draw()
+      return
+    }
+
+    const identityMatrix = new formPdf.Matrix(1, 0, 0, 1, 0, 0)
+    formPdf.advancedAPI(() => {
+      formPdf.beginFormObject(0, 0, pageWidth, pageHeight, identityMatrix)
+      draw()
+      formPdf.endFormObject(key)
+      formPdf.doFormObject(key, identityMatrix)
+    })
   }
 
   const drawFilledRect = (x: number, y: number, w: number, h: number) => {
@@ -420,7 +460,7 @@ export function renderSwissGridVectorPdf({
     drawCropMarks(markOffset, markLength)
   }
 
-  if (showMargins) {
+  const drawMarginGuides = () => {
     setDrawColor(pdf, useMonochromeGuides ? { r: 88, g: 88, b: 88 } : { r: 59, g: 130, b: 246 }, colorMode)
     pdf.setLineWidth(Math.max(0.5 * scale, minHairlinePt))
     pdf.setLineDashPattern([4 * scale, 4 * scale], 0)
@@ -433,7 +473,7 @@ export function renderSwissGridVectorPdf({
     pdf.setLineDashPattern([], 0)
   }
 
-  if (showModules) {
+  const drawModuleGuides = () => {
     setDrawColor(pdf, useMonochromeGuides ? { r: 116, g: 116, b: 116 } : { r: 6, g: 182, b: 212 }, colorMode)
     pdf.setLineWidth(Math.max(0.4 * scale, minHairlinePt))
     for (let row = 0; row < gridRows; row += 1) {
@@ -445,7 +485,7 @@ export function renderSwissGridVectorPdf({
     }
   }
 
-  if (showBaselines) {
+  const drawBaselineGuides = () => {
     setDrawColor(pdf, useMonochromeGuides ? { r: 148, g: 148, b: 148 } : { r: 236, g: 72, b: 153 }, colorMode)
     pdf.setLineWidth(Math.max(0.3 * scale, minHairlinePt))
     const halfDiag = Math.sqrt(sourceWidth * sourceWidth + sourceHeight * sourceHeight) / 2
@@ -459,6 +499,18 @@ export function renderSwissGridVectorPdf({
       if (y > extEndY) break
       drawLine(-halfDiag, y, sourceWidth + halfDiag, y)
     }
+  }
+
+  if (showMargins) {
+    drawGuideGroup("swiss_guides_margins", drawMarginGuides)
+  }
+
+  if (showModules) {
+    drawGuideGroup("swiss_guides_modules", drawModuleGuides)
+  }
+
+  if (showBaselines) {
+    drawGuideGroup("swiss_guides_baselines", drawBaselineGuides)
   }
 
   const imageOrder = layout?.imageOrder?.filter(

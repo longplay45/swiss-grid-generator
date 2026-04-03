@@ -42,6 +42,18 @@ test("pdf export bleed guide follows guide visibility when print-pro is enabled"
   assert.match(source, /if\s*\(printPro\.showBleedGuide\s*&&\s*showPageOutline\)/)
 })
 
+test("pdf export wraps margins, modules, and baselines into separate guide form objects", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /type\s+PdfWithFormObjects\s*=\s*jsPDF\s*&/)
+  assert.match(source, /const\s+drawGuideGroup\s*=\s*\(key:\s*string,\s*draw:\s*\(\)\s*=>\s*void\)/)
+  assert.match(source, /beginFormObject\(0,\s*0,\s*pageWidth,\s*pageHeight,\s*identityMatrix\)/)
+  assert.match(source, /endFormObject\(key\)/)
+  assert.match(source, /doFormObject\(key,\s*identityMatrix\)/)
+  assert.match(source, /drawGuideGroup\("swiss_guides_margins",\s*drawMarginGuides\)/)
+  assert.match(source, /drawGuideGroup\("swiss_guides_modules",\s*drawModuleGuides\)/)
+  assert.match(source, /drawGuideGroup\("swiss_guides_baselines",\s*drawBaselineGuides\)/)
+})
+
 test("pdf export builds wrapped lines through shared planner with measured width fallback", () => {
   const source = readText("lib/pdf-vector-export.ts")
   assert.match(source, /buildTypographyLayoutPlan<BlockId,\s*TypographyStyleKey,\s*PdfTextContext>\(/)
