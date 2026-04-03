@@ -78,7 +78,7 @@ def load_env_file(path: str = ".env") -> None:
 load_env_file()
 
 HOST = os.getenv("FTP_DOMAIN", "lp45.net")
-REMOTE_ROOT = os.getenv("FTP_REMOTE_ROOT", "/preview.swissgridgenerator.com/httpdocs")
+REMOTE_ROOT = os.getenv("FTP_REMOTE_ROOT", "/preview.swiss-grid-generator.com/httpdocs")
 LOCAL_ROOT = os.getenv("FTP_LOCAL_ROOT", "/Users/i/Docs/Dev/swiss-grid-generator/webapp/out")
 WEBAPP_DIR = os.getenv("FTP_WEBAPP_DIR", "/Users/i/Docs/Dev/swiss-grid-generator/webapp")
 DEFAULT_USER = os.getenv("FTP_USER")

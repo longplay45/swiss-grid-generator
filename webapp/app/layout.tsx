@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   keywords: "swiss grid generator, muller-brockmann grid, typographic grid calculator, modular grid tool, baseline grid generator, swiss design tool, international typographic style, grid systems in graphic design, a4 grid calculator, print design grid",
   robots: "index, follow",
   alternates: {
-    canonical: "https://preview.swissgridgenerator.com/",
+    canonical: "https://preview.swiss-grid-generator.com/",
   },
   // Icons
   icons: {
@@ -30,11 +30,11 @@ export const metadata: Metadata = {
     title: "Swiss Grid Generator – Based on Müller-Brockmann's Classic",
     description: "Generate authentic Swiss-style grids with baseline harmony, custom margins, and typography. Free web app + CLI. Inspired by 'Grid Systems in Graphic Design'.",
     type: "website",
-    url: "https://preview.swissgridgenerator.com/",
+    url: "https://preview.swiss-grid-generator.com/",
     siteName: "Swiss Grid Generator",
     images: [
       {
-        url: "https://preview.swissgridgenerator.com/og-image.jpg",
+        url: "https://preview.swiss-grid-generator.com/og-image.jpg",
         alt: "Swiss Grid Generator preview with 9x9 modular grid on A4",
         width: 1200,
         height: 630,
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Swiss Grid Generator – Müller-Brockmann Inspired Tool",
     description: "Free modular grid generator for Swiss design: A-series, baseline typography, margin methods, exports. Web + CLI.",
-    images: ["https://preview.swissgridgenerator.com/twitter-image.jpg"],
+    images: ["https://preview.swiss-grid-generator.com/twitter-image.jpg"],
   },
 }
 

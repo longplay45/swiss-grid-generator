@@ -2,7 +2,7 @@
 
 A toolkit for building typographic grid systems inspired by Josef Muller-Brockmann's *Grid Systems in Graphic Design*.
 
-**Live preview:** [https://preview.swissgridgenerator.com/](https://preview.swissgridgenerator.com/)
+**Live preview:** [https://preview.swiss-grid-generator.com/](https://preview.swiss-grid-generator.com/)
 
 ## Overview
 
