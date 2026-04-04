@@ -84,6 +84,8 @@ export function ExportPdfDialog({
   const toggleRowClassName = "flex items-center justify-between rounded-md border border-input bg-background px-3 py-2"
   const dialogThemeClassName = isDarkUi ? "dark" : undefined
   const isPdfExport = exportFormatDraft === "pdf"
+  const isSvgExport = exportFormatDraft === "svg"
+  const isIdmlExport = exportFormatDraft === "idml"
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 md:items-center">
@@ -99,7 +101,7 @@ export function ExportPdfDialog({
         </p>
         <div className="space-y-2">
           <Label>Format</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant={exportFormatDraft === "pdf" ? "default" : "outline"}
@@ -118,9 +120,24 @@ export function ExportPdfDialog({
             >
               SVG
             </Button>
+            <Button
+              type="button"
+              variant={exportFormatDraft === "idml" ? "default" : "outline"}
+              size="sm"
+              className="text-[11px]"
+              onClick={() => onExportFormatChange("idml")}
+            >
+              IDML
+            </Button>
           </div>
         </div>
-        {isDinOrAnsiRatio && (
+        {isIdmlExport && (
+          <p className={helpTextClassName}>
+            IDML v1 exports the full project. Each page keeps its stored size, margins, bleed, guides, placeholders,
+            and frozen text geometry for InDesign continuation.
+          </p>
+        )}
+        {!isIdmlExport && isDinOrAnsiRatio && (
           <div className="space-y-2">
             <Label>Units / Paper Size</Label>
             <div className="grid grid-cols-[116px_minmax(0,1fr)] gap-2">
@@ -163,7 +180,7 @@ export function ExportPdfDialog({
             </div>
           </div>
         )}
-        {!isDinOrAnsiRatio && (
+        {!isIdmlExport && !isDinOrAnsiRatio && (
           <div className="space-y-2">
             <Label>Width (mm)</Label>
             <input
@@ -176,9 +193,11 @@ export function ExportPdfDialog({
             />
           </div>
         )}
-        <p className={helpTextClassName}>
-          Height will follow the selected aspect ratio automatically.
-        </p>
+        {!isIdmlExport && (
+          <p className={helpTextClassName}>
+            Height will follow the selected aspect ratio automatically.
+          </p>
+        )}
         <div className="space-y-2">
           <Label>Filename</Label>
           <input
@@ -246,9 +265,14 @@ export function ExportPdfDialog({
               </>
             )}
           </>
-        ) : (
+        ) : isSvgExport ? (
           <p className={helpTextClassName}>
             SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied.
+          </p>
+        ) : (
+          <p className={helpTextClassName}>
+            IDML v1 exports the entire project as an InDesign package with separate guides, typography, and placeholder
+            layers.
           </p>
         )}
         <div className="flex items-center justify-end gap-2">
@@ -256,7 +280,7 @@ export function ExportPdfDialog({
             Cancel
           </Button>
           <Button size="sm" onClick={onConfirm}>
-            {isPdfExport ? "Export PDF" : "Export SVG"}
+            {isPdfExport ? "Export PDF" : isSvgExport ? "Export SVG" : "Export IDML"}
           </Button>
         </div>
       </div>

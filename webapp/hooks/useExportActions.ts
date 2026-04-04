@@ -7,13 +7,15 @@ import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
+import { renderSwissGridIdmlProject } from "@/lib/idml-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
+import { parseLoadedProject } from "@/lib/document-session"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
-export type ExportFormat = "pdf" | "svg"
+export type ExportFormat = "pdf" | "svg" | "idml"
 
 type PrintPresetConfig = {
   enabled: boolean
@@ -131,6 +133,7 @@ export type ExportActionsContext = {
   previewFormat: string
   defaultPdfFilename: string
   defaultSvgFilename: string
+  defaultIdmlFilename: string
   defaultJsonFilename: string
   projectMetadata: {
     title: string
@@ -175,6 +178,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportFinalSafeGuides,
     previewFormat,
     defaultPdfFilename,
+    defaultIdmlFilename,
     defaultJsonFilename,
     projectMetadata,
     onProjectMetadataChange,
@@ -207,16 +211,18 @@ export function useExportActions(ctx: ExportActionsContext) {
     [orientation, previewFormat],
   )
 
-  const getDefaultExportFilename = useCallback((format: ExportFormat) => (
-    format === "svg" ? ctx.defaultSvgFilename : defaultPdfFilename
-  ), [ctx.defaultSvgFilename, defaultPdfFilename])
+  const getDefaultExportFilename = useCallback((format: ExportFormat) => {
+    if (format === "svg") return ctx.defaultSvgFilename
+    if (format === "idml") return defaultIdmlFilename
+    return defaultPdfFilename
+  }, [ctx.defaultSvgFilename, defaultIdmlFilename, defaultPdfFilename])
 
   const updateFilenameForFormat = useCallback((current: string, format: ExportFormat) => {
     const trimmed = current.trim()
-    const extension = format === "svg" ? ".svg" : ".pdf"
+    const extension = format === "svg" ? ".svg" : format === "idml" ? ".idml" : ".pdf"
     if (!trimmed) return getDefaultExportFilename(format)
-    if (/\.(pdf|svg)$/i.test(trimmed)) {
-      return trimmed.replace(/\.(pdf|svg)$/i, extension)
+    if (/\.(pdf|svg|idml)$/i.test(trimmed)) {
+      return trimmed.replace(/\.(pdf|svg|idml)$/i, extension)
     }
     return `${trimmed}${extension}`
   }, [getDefaultExportFilename])
@@ -454,6 +460,34 @@ export function useExportActions(ctx: ExportActionsContext) {
     showTypography,
   ])
 
+  const exportIDML = useCallback(async (filename: string) => {
+    const project = parseLoadedProject<Record<string, unknown>>({
+      title: projectMetadata.title,
+      description: projectMetadata.description,
+      author: projectMetadata.author,
+      createdAt: projectMetadata.createdAt,
+      ...buildProjectPayload(),
+    })
+    const bytes = await renderSwissGridIdmlProject(project)
+    const buffer = new ArrayBuffer(bytes.byteLength)
+    new Uint8Array(buffer).set(bytes)
+    const blob = new Blob([buffer], {
+      type: "application/vnd.adobe.indesign-idml-package",
+    })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = filename
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }, [
+    buildProjectPayload,
+    projectMetadata.author,
+    projectMetadata.createdAt,
+    projectMetadata.description,
+    projectMetadata.title,
+  ])
+
   const openExportDialog = useCallback(() => {
     const dims = getOrientedDimensions(exportPaperSize)
     setExportPaperSizeDraft(exportPaperSize)
@@ -498,8 +532,17 @@ export function useExportActions(ctx: ExportActionsContext) {
   const confirmExport = useCallback(async () => {
     const trimmedName = exportFilenameDraft.trim()
     if (!trimmedName) return
-    const extension = exportFormatDraft === "svg" ? ".svg" : ".pdf"
+    const extension = exportFormatDraft === "svg"
+      ? ".svg"
+      : exportFormatDraft === "idml"
+        ? ".idml"
+        : ".pdf"
     const filename = trimmedName.toLowerCase().endsWith(extension) ? trimmedName : `${trimmedName}${extension}`
+    if (exportFormatDraft === "idml") {
+      await exportIDML(filename)
+      setIsExportDialogOpen(false)
+      return
+    }
     const baseDims = getOrientedDimensions(exportPaperSizeDraft)
     const aspectRatio = baseDims.height / baseDims.width
     const parsedWidth = Number(exportWidthDraft)
@@ -539,6 +582,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportRegistrationMarksDraft,
     exportWidthDraft,
     exportPDF,
+    exportIDML,
     exportSVG,
     getOrientedDimensions,
     isDinOrAnsiRatio,

@@ -81,6 +81,7 @@ export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKe
   fontFamily: FontFamily
   fontWeight: number
   italic: boolean
+  leading: number
   trackingScale: number
   opticalKerning: boolean
   textColor: RgbColor
@@ -561,6 +562,11 @@ export function buildPageExportPlan({
     fontFamily: getBlockFont(plan.key),
     fontWeight: getBlockFontWeight(plan.key, plan.styleKey),
     italic: isBlockItalic(plan.key, plan.styleKey),
+    leading: getBlockBaselineMultiplier(
+      plan.key,
+      plan.styleKey,
+      styleDefinitions[plan.styleKey]?.baselineMultiplier ?? 1,
+    ) * baselineStep,
     trackingScale: getBlockTrackingScale(plan.key),
     opticalKerning: isBlockOpticalKerningEnabled(plan.key),
     textColor: parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 },

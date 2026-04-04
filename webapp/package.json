@@ -26,8 +26,9 @@
     "test:optical": "node --test tests/optical-margin.test.mjs",
     "test:pdf": "node --test tests/pdf-export-rotation-contract.test.mjs",
     "test:svg": "node --test tests/svg-export-contract.test.mjs",
+    "test:idml": "node --test tests/idml-export-contract.test.mjs",
     "test:perf": "node --test tests/perf-smoke.test.mjs",
-    "test": "npm run test:presets && npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:autofit && npm run test:canvas-renderer && npm run test:snapshot && npm run test:text && npm run test:optical && npm run test:pdf && npm run test:svg && npm run test:perf",
+    "test": "npm run test:presets && npm run test:roundtrip && npm run test:grid && npm run test:reflow && npm run test:autofit && npm run test:canvas-renderer && npm run test:snapshot && npm run test:text && npm run test:optical && npm run test:pdf && npm run test:svg && npm run test:idml && npm run test:perf",
     "fonts:sync": "../.venv-fonttools/bin/python scripts/sync_google_font_assets.py"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
     "@radix-ui/react-tabs": "^1.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fflate": "^0.8.2",
     "jspdf": "^4.1.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",

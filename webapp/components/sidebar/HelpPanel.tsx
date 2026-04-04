@@ -545,6 +545,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
+          <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
           <li>Load Project JSON restores the full project structure and the active page where valid.</li>
           <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
           <li>Unknown font overrides are dropped during load normalization.</li>
@@ -561,11 +562,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Export is vector-based (not raster screenshot export).</li>
-          <li>Export always uses the current active page.</li>
-          <li>DIN/ANSI ratios expose paper-size selection; other ratios use width-based sizing.</li>
-          <li>PDF export offers Digital Print and Press Proof presets, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
-          <li>SVG v1 exports live vector text, guides, and placeholders at trim size.</li>
-          <li>Both formats apply current rotation, guide visibility toggles, and text styling.</li>
+          <li>`PDF` and `SVG` export the current active page. `IDML` exports the full project with one InDesign page per app page.</li>
+          <li>DIN/ANSI ratios expose paper-size selection for `PDF` and `SVG`; other ratios use width-based sizing. `IDML` keeps each page at its stored document size.</li>
+          <li>`PDF` offers `Digital Print` and `Press Proof`, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
+          <li>`SVG v1` exports trim-size live vector text, guides, and placeholders.</li>
+          <li>`IDML v1` exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry and resolved font family/style names.</li>
+          <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>
         </ul>
       </section>
 

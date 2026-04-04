@@ -318,6 +318,10 @@ export default function Home() {
     () => `${baseFilename}_${exportPaperSize}_grid.svg`,
     [baseFilename, exportPaperSize],
   )
+  const defaultIdmlFilename = useMemo(
+    () => `${baseFilename}.idml`,
+    [baseFilename],
+  )
 
   // ─── Settings snapshot (for undo/redo) ───────────────────────────────────
 
@@ -603,6 +607,7 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
+      defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
       onProjectMetadataChange: setProjectMetadata,
@@ -638,6 +643,7 @@ export default function Home() {
       previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
+      defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
       setProjectMetadata,

@@ -1,12 +1,21 @@
 # Swiss Grid Generator
 
-A toolkit for building typographic grid systems inspired by Josef Muller-Brockmann's *Grid Systems in Graphic Design*.
+A precise, production-oriented layout tool inspired by **Josef Müller-Brockmann** and the Swiss International Typographic Style.
 
-**Live preview:** [https://preview.swiss-grid-generator.com/](https://preview.swiss-grid-generator.com/)
+Build beautiful, rhythmical compositions with authentic baseline grids, progressive margins, modular fields, and flexible typographic systems — all in the browser.
 
-## Overview
+[Try it live →](https://preview.swiss-grid-generator.com)
 
-Swiss Grid Generator is a Next.js app for ratio-first grid construction, baseline-aligned typography, interactive preview editing, and layout export.
+---
+
+## ✨ Why Swiss Grid Generator?
+
+This is not just another grid calculator.
+
+It’s a thoughtful digital interpretation of Müller-Brockmann’s *Grid Systems in Graphic Design* — designed for designers, students, and typographers who want to work with real Swiss principles: clarity, rhythm, proportion, and precision.
+
+Whether you're creating posters, editorial spreads, books, or experimental layouts, Swiss Grid Generator gives you powerful, authentic tools without getting in your way.
+
 
 ## Screenshots
 
@@ -20,301 +29,133 @@ Swiss Grid Generator is a Next.js app for ratio-first grid construction, baselin
 ### PDF Export
 ![PDF Screenshot 001](swiss-grid-generator-pdfexport-screenshot_001.png?001)
 
-## Features
+---
 
-- Ratio-first canvas workflow (`DIN`, `ANSI`, `Balanced`, `Photo`, `Screen`, `Square`, `Editorial`, `Wide Impact`)
-- Orientation + preview rotation controls
-- Grid controls: columns/rows (`1..13`) and gutter multiple (`1.0..4.0`)
-- Margin methods:
-  - Progressive (`1:2:2:3`)
-  - Van de Graaf (`2:3:4:6`)
-  - Baseline (`1:1:1:1`)
-- Custom margins with per-side multipliers
-- 5-level baseline-aligned typography with scale presets:
-  - Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth
-- Interactive preview:
-  - drag-and-snap text blocks
-  - `Shift` + double-click on empty module creates an image placeholder editor (`Ctrl` fallback)
-  - `Alt/Option` + drag duplicates a text block
-  - `Shift` + drag snaps to baseline rows/columns and allows overset placement (left/right/top/bottom, `Ctrl` fallback)
-  - double-click popup editor
-  - rollover info/tooltips (`i` toggle)
-  - per-paragraph font selection
-  - per-paragraph font-cut selector in the type submenu, listing the available cuts of the chosen family
-  - per-block reflow toggle in the alignment submenu (`Re`)
-  - per-block syllable-division toggle in the alignment submenu (`Hy`)
-  - live character + word count in the editor `Info` submenu
-  - per-block `cols` and `rows`
-  - per-block rotation input (`-180..180`)
-  - optical margin alignment (hanging punctuation)
-  - project-panel layer hover mirrors the same active preview rollover/guides for the hovered block
-- Project architecture:
-  - `Project -> Pages -> Layers` with editable project title and page names
-  - each page stores its own UI settings and preview layout state
-  - `Add Page` duplicates the active page, including current typography and color overrides
-  - canvas rendering, text reflow, and PDF export always target the active page
-  - project JSON save/load persists metadata, `activePageId`, and the full `pages[]` array
-- Typography controls:
-  - `Font Hierarchy` preset selector (Swiss/Golden/Fibonacci/Fourth/Fifth) with current style size/leading table
-  - `Base Font` selector in `V. Typo` grouped as `Sans-Serif`, `Serif`, `Poster`
-  - `VI. Color Scheme` sets the default image placeholder palette and optional page background
-  - color schemes: `Swiss Modern`, `Stone Cyan`, `Fresh Contrast`
-  - available base fonts:
-    - Sans-Serif: `Inter`, `Work Sans`, `Nunito Sans`, `IBM Plex Sans`, `Libre Franklin`
-    - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
-    - Poster: `Playfair Display`
-  - base font applies to paragraphs without explicit per-paragraph font override
-- Header icon actions:
-  - Dark mode toggle
-  - Presets (left of Load), Load project JSON, Save project JSON, Export PDF
-  - Undo/Redo
-  - Display controls (baselines, margins, gutter/modules, image placeholders, typo, project panel)
-  - Right-side trio: `i` (rollover info), `?` (help), `Settings`
-  - `i` toggles rollover info/tooltips globally
-  - Shortcuts: `Cmd/Ctrl+Shift+5` toggles the Project sidebar, `Cmd/Ctrl+Shift+6` toggles rollover info
-  - While the presets browser is open, the left settings panel and header project toggle are disabled
-  - Sidebar selectors are mutually exclusive and clicking the active icon closes the panel
-  - Divider separators are shown between Presets and Load, Export and Undo, and dark mode and baselines
-  - Tooltips show action + keyboard shortcut on two lines (including Undo/Redo) when `i` is active
-- Left panel footer:
-  - always-visible `Version` label
-  - `Version` value comes from `webapp/package.json` (`version`) via build env
-  - `Beta` badge is controlled by release channel:
-    - default channel comes from `webapp/package.json` (`config.releaseChannel`)
-    - `beta` shows the badge, `prod` hides it
-    - scripts: `npm run build:beta`, `npm run build:prod`, `npm run dev:beta`, `npm run dev:prod`
-  - `Feedback` link opens the right-side feedback panel
-  - `Imprint` link opens the right-side imprint panel
-- Grid-change behavior:
-  - pure column increase keeps layout in place (adds capacity to the right)
-  - row and baseline-structure changes remap blocks to nearest module-top anchors
-  - scored auto-reposition model resolves collisions deterministically
-  - reflow planning runs in a dedicated Web Worker with safe in-thread fallback
-  - batch auto-fit planning runs in a dedicated Web Worker with safe in-thread fallback
-  - warning/apply/cancel flow is used for disruptive non-row structural moves
-  - post-apply undo toast
-  - warning flow suppressed during project JSON load
-- Export popups:
-  - Save Project JSON dialog with filename, project metadata, and project-title-driven default filename
-  - Export PDF with filename + Print Pro controls
-  - DIN/ANSI ratios: Units + Paper Size controls
-  - Other ratios: Width (mm) control
-  - Print Pro presets: Press Proof, Offset Final, Digital Print
-  - Esc key closes export popup
+## 🚀 Current Features
 
-## PDF Export
+### Canvas & Format
+- Multiple ratio families: **DIN, ANSI, Balanced, Photo, Screen, Square, Editorial, Wide Impact**
+- Portrait / Landscape orientation
+- Full canvas rotation (-180° to 180°)
+- Multi-page project support with independent page settings
 
-PDF export is vector-based via jsPDF primitives (lines/text), not canvas raster embedding.
+### Baseline Grid
+- 18 baseline options (6 pt to 72 pt)
+- All vertical rhythm derived from the baseline
+- Typography leading and margins stay aligned to baseline multiples
+- Stable positioning — changing baseline doesn’t break your layout
 
-Typography parity details:
-- preview and PDF share one layout planner (`webapp/lib/typography-layout-plan.ts`)
-- PDF embeds selected Google fonts to keep wrap metrics aligned with preview
-- rotated right-aligned paragraph anchors are resolved explicitly in PDF draw logic to avoid drift
+### Margins
+- Three classic systems:
+  - Progressive (1:2:2:3)
+  - Van de Graaf (2:3:4:6)
+  - Equal (1:1:1:1)
+- Shared baseline multiple scaling
+- Full custom margin control
 
-Includes print-focused options:
-- CMYK color pipeline for guides/text/marks
-- Print Pro bleed + crop marks
-- Registration-style crop marks (optional)
-- Final-safe monochrome guides (optional)
-- PDF metadata + viewer print preferences
+### Grid & Rhythms (The Star Feature)
+- 1–13 columns and rows
+- Smart gutters (1.0× to 4.0× in 0.5 steps)
+- Five authentic rhythm modes:
+  - Repetitive (Block)
+  - Fibonacci
+  - Golden Ratio (Φ)
+  - Perfect Fourth
+  - Perfect Fifth
+- Independent rhythm control for rows and columns
+- 90° rhythm rotation
+- Stable logical positioning — paragraphs stay where you placed them
 
-## Installation
+### Typography System
+- Five harmonious type scales (Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth)
+- Six hierarchy levels: **FX · Display · Headline · Subhead · Body · Caption**
+- Grouped Google Fonts:
+  - **Sans-Serif**: Inter, Work Sans, IBM Plex Sans, Libre Franklin…
+  - **Serif**: EB Garamond, Libre Baskerville, Bodoni Moda…
+  - **Poster/Display**: Playfair Display + custom FX control
+- Per-paragraph font, weight, style, tracking, optical kerning, and alignment
+- Live character & word count
 
-```bash
-cd webapp
-npm install
-```
+### Project & Layers
+- Full **Project → Pages → Layers** architecture
+- Multiple pages with independent settings
+- Text and image layers with stable grid-based positioning
+- Drag to move, Alt/Option+drag to duplicate
+- Logical anchoring (Column × Row + Baseline Offset)
+- Bundled presets now use the same project JSON schema as saved documents
 
-## Development
+### Preview & Interaction
+- Live WYSIWYG canvas
+- Toggle visibility of baselines, margins, modules, and typography
+- Double-click empty module → create text
+- Shift + double-click → create image placeholder
+- Hover interactions and edit affordances
 
-```bash
-npm run dev
-```
+### Export
+- High-quality vector **PDF export**
+- Trim-size **SVG v1 export** with live vector text
+- Full-project **IDML v1 export** for InDesign continuation
+- `PDF` and `SVG` export the active page; `IDML` exports every project page
+- PDF print options: bleed, marks, output intents, and guide-color handling
+- PDF presets: **Digital Print** and **Press Proof**
+- IDML separates **Guides**, **Typography**, and **Placeholders** into distinct layers
 
-Open [http://localhost:3000](http://localhost:3000).
+### Extras
+- Undo / Redo
+- Dark mode
+- Presets browser with thumbnails
+- Comprehensive keyboard shortcuts
+- Helpful warning system (no more auto-moving your content)
 
-## Build
+---
 
-```bash
-npm run build
-```
+## 🎯 Who is it for?
 
-## Configuration Summary
+- Graphic design students learning Swiss typography
+- Professional designers working in editorial, poster, or branding
+- Typographers who value rhythm and precision
+- Anyone who wants to work with authentic Müller-Brockmann principles in a modern tool
 
-See full reference in [`SETTINGS.md`](SETTINGS.md).
+---
 
-Highlights:
-- Baseline options: `6,7,8,9,10,11,12,14,16,18,20,24,28,32,36,48,60,72`
-- Startup defaults are loaded from `webapp/public/feedback/default_v001.json`
-- Rotation: `-180..180`
-- Color Scheme background: `None` or any color from the selected scheme
-- Grid: cols/rows `1..13`
-
-## Ratio Families and Paper Sizes
-
-### DIN
-- A6, A5, A4, A3, A2, A1, A0
-- B6, B5, B4, B3, B2, B1, B0
-
-### ANSI
-- LETTER, LEGAL, ANSI_B, ANSI_C, ANSI_D, ANSI_E
-
-### Single-size custom ratios
-- BALANCED_3_4 (3:4)
-- PHOTO_2_3 (2:3)
-- SCREEN_16_9 (16:9)
-- SQUARE_1_1 (1:1)
-- EDITORIAL_4_5 (4:5)
-- WIDE_2_1 (2:1)
-
-## Keyboard Shortcuts
-
-All preview-header actions are keyboard accessible:
-- `Cmd/Ctrl+O` Load project JSON
-- `Cmd/Ctrl+S` Save project JSON
-- `Cmd/Ctrl+Shift+E` Export PDF
-- `Cmd/Ctrl+Z` Undo
-- `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y` Redo
-- `Cmd/Ctrl+Shift+D` Toggle dark mode
-- `Cmd/Ctrl+Shift+B` Toggle baselines
-- `Cmd/Ctrl+Shift+M` Toggle margins
-- `Cmd/Ctrl+Shift+G` Toggle modules/gutter
-- `Cmd/Ctrl+Shift+T` Toggle typography
-- `Cmd/Ctrl+Shift+5` Toggle project sidebar
-- `Cmd/Ctrl+Shift+6` Toggle rollover info
-- `Cmd/Ctrl+Shift+1` Toggle settings sidebar
-- `Cmd/Ctrl+Shift+2` Toggle help sidebar
-- `Cmd/Ctrl+Shift+3` Toggle imprint sidebar
-- `Cmd/Ctrl+Shift+4` Toggle presets browser
-- `Esc` Close presets browser without loading a preset
-
-Includes:
-- settings changes (ratio, grid, margins, toggles, etc.)
-- preview block edits/moves
-- structural reflow apply/cancel flows
-
-## Tech Stack
+## 🛠 Tech Stack
 
 - Next.js 15 (App Router)
 - TypeScript
-- Tailwind CSS
-- Radix UI primitives
-- jsPDF
-- Lucide React
+- Tailwind CSS + Radix UI
+- Canvas rendering with custom rhythm engine
+- Zustand for state management
+- jsPDF for print output
 
-## Project Structure
+---
 
-```text
-webapp/
-├── app/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
-├── components/
-│   ├── grid-preview.tsx
-│   ├── dialogs/
-│   │   ├── ExportPdfDialog.tsx
-│   │   └── SaveJsonDialog.tsx
-│   ├── preview/
-│   │   └── PreviewWorkspace.tsx
-│   ├── settings/
-│   │   ├── CanvasRatioPanel.tsx
-│   │   ├── BaselineGridPanel.tsx
-│   │   ├── MarginsPanel.tsx
-│   │   ├── GutterPanel.tsx
-│   │   ├── TypographyPanel.tsx
-│   │   └── PanelCard.tsx
-│   ├── sidebar/
-│   │   ├── FeedbackPanel.tsx
-│   │   ├── HelpPanel.tsx
-│   │   ├── ImprintPanel.tsx
-│   │   ├── LayersPanel.tsx
-│   │   ├── PagesPanel.tsx
-│   │   ├── ProjectSidebarSection.tsx
-│   │   └── PresetLayoutsPanel.tsx
-│   └── ui/
-│       ├── font-select.tsx
-│       ├── header-icon-button.tsx
-│       └── hover-tooltip.tsx
-├── hooks/
-│   ├── useProjectController.ts
-│   ├── useProjectState.ts
-│   ├── useSettingsHistory.ts
-│   └── useExportActions.ts
-├── lib/
-│   ├── config/
-│   │   ├── defaults.ts
-│   │   ├── fonts.ts
-│   │   └── ui-defaults.ts
-│   ├── autofit-planner.ts
-│   ├── grid-calculator.ts
-│   ├── document-session.ts
-│   ├── preview-header-shortcuts.ts
-│   ├── project-file-naming.ts
-│   ├── reflow-planner.ts
-│   ├── pdf-vector-export.ts
-│   ├── pdf-font-registry.ts
-│   ├── typography-layout-plan.ts
-│   ├── units.ts
-│   └── utils.ts
-├── scripts/
-│   └── sync_google_font_assets.py
-└── workers/
-    ├── autoFit.worker.ts
-    └── reflowPlanner.worker.ts
-```
+## 📥 Getting Started
 
-## Scripts
+1. Visit **[preview.swiss-grid-generator.com](https://preview.swiss-grid-generator.com)**
+2. Start with one of the bundled presets or build from scratch
+3. Explore the rhythm modes — they’re the soul of the tool
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm start` | Start production server |
-| `npm run lint` | Next lint command |
-| `npm run test:roundtrip` | Verify font-related JSON save/load roundtrip rules |
-| `npm run test:grid` | Validate grid calculator invariants, edge cases, and input guard rails |
-| `npm run test:reflow` | Validate reflow planner determinism + worker request/response contract rules |
-| `npm run test:autofit` | Validate autofit planner determinism and bounds |
-| `npm run test:snapshot` | Validate preview layout snapshot normalization and restore rules |
-| `npm run test:text` | Validate canonical wrap + syllable-division behavior |
-| `npm run test:optical` | Validate optical margin offset calculations |
-| `npm run test:pdf` | Validate PDF export rendering contract/parity guards |
-| `npm run test:perf` | Performance smoke tests for `generateSwissGrid` and `computeReflowPlan` |
-| `npm run fonts:sync` | Rebuild strict Google font assets (`regular`,`bold`,`italic`,`bolditalic`) |
-| `npm test` | Run all test suites (`roundtrip`, `grid`, `reflow`, `autofit`, `snapshot`, `text`, `optical`, `pdf`, `perf`) |
+---
 
-## Changelog (Recent Behavior Updates)
+## Roadmap (Coming Soon)
 
-- Added per-paragraph editor controls for `cols`, `rows`, and `reflow`.
-- Added per-paragraph font-cut selection in the type submenu and rotation input (`-180..180`).
-- Added dark mode for control panels/headers/sidebars, preview shell background, and editor popup.
-- Added Alt/Option-drag duplication for preview paragraphs.
-- Added Shift-drag baseline snapping with overset placement support (left/right/top/bottom, Ctrl fallback).
-- Added centralized image color schemes with global selector (`VI. Color Scheme`) and image-editor scheme sync.
-- Added grouped font selectors (`Sans-Serif`, `Serif`, `Poster`) via shared component.
-- Added live character and word counts in the text editor `Info` submenu.
-- Added complete keyboard coverage for preview-header actions and surfaced shortcut hints in icon tooltips.
-- Refactored UI primitives: shared `HeaderIconButton`, `HoverTooltip`, `PanelCard`, and centralized `preview-header-shortcuts`.
-- Added optical margin alignment (hanging punctuation) in preview and PDF export.
-- Reflow mode now supports newspaper-style multi-column flow constrained by selected row span.
-- Added base-font control in `V. Typo` with per-paragraph font override inheritance.
-- Added paragraph editor rollover tooltips and the rail/submenu editor layout.
-- Added per-paragraph syllable-division toggle with defaults enabled for `body` and `caption`.
-- Drag-and-drop and structural repositioning now use module-top row anchors.
-- Grid structural changes now use deterministic scored auto-repositioning.
-- Pure column increases keep existing layout positions (capacity is added to the right).
-- Row-structure changes remap rows by module index before repositioning.
-- Added runtime guard rails in `generateSwissGrid()` for invalid settings (invalid grid dimensions, non-positive baseline/multiples, invalid custom margins).
-- Added deterministic planner/worker contract tests and performance smoke tests to prevent UX regressions.
-- Added shared typography layout planner used by canvas preview and PDF export.
-- Added embedded Google font workflow for PDF export with strict style assets per family.
-- Added preview font-load synchronization and cache invalidation to prevent fallback-metric wrapping drift.
+- Full bilingual interface (English + German with original Müller-Brockmann terms)
+- More presets inspired by classic Swiss posters
+- IDML polish and broader downstream validation in InDesign
+- HTML/CSS export for web handoff
+- Cloud save / shareable links
+- Improved layer system & master pages
 
-## Reference
-
-Josef Muller-Brockmann, *Grid Systems in Graphic Design*.
+---
 
 ## License
 
-MIT
+MIT © [lp45.net](https://lp45.net)
+
+---
+
+**Made with precision and love for Swiss typography.**
+
+If you enjoy the tool, feel free to share it with fellow designers and students. Feedback and contributions are always welcome!
+
+---

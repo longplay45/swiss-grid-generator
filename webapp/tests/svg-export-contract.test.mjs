@@ -33,20 +33,25 @@ test("svg export keeps block and page rotation explicit in svg transforms", () =
   assert.match(source, /const\s+rotationTransform\s*=\s*renderRotationTransform\(/)
 })
 
-test("export actions support pdf and svg formats with format-specific filenames", () => {
+test("export actions support pdf, svg, and idml formats with format-specific filenames", () => {
   const source = readText("hooks/useExportActions.ts")
-  assert.match(source, /export\s+type\s+ExportFormat\s*=\s*"pdf"\s*\|\s*"svg"/)
+  assert.match(source, /export\s+type\s+ExportFormat\s*=\s*"pdf"\s*\|\s*"svg"\s*\|\s*"idml"/)
   assert.match(source, /renderSwissGridVectorSvg/)
-  assert.match(source, /const\s+getDefaultExportFilename\s*=\s*useCallback\(\(format:\s*ExportFormat\)\s*=>\s*\(/)
-  assert.match(source, /format\s*===\s*"svg"\s*\?\s*ctx\.defaultSvgFilename\s*:\s*defaultPdfFilename/)
+  assert.match(source, /const\s+getDefaultExportFilename\s*=\s*useCallback\(\(format:\s*ExportFormat\)\s*=>\s*\{/)
+  assert.match(source, /if\s*\(format\s*===\s*"svg"\)\s*return\s*ctx\.defaultSvgFilename/)
+  assert.match(source, /if\s*\(format\s*===\s*"idml"\)\s*return\s*defaultIdmlFilename/)
+  assert.match(source, /renderSwissGridIdmlProject/)
+  assert.match(source, /if\s*\(exportFormatDraft\s*===\s*"idml"\)\s*\{[\s\S]*?await\s+exportIDML\(filename\)/)
   assert.match(source, /if\s*\(exportFormatDraft\s*===\s*"pdf"\)\s*\{[\s\S]*?\}\s*else\s*\{[\s\S]*?exportSVG\(width,\s*height,\s*filename\)/)
 })
 
-test("export dialog exposes an explicit pdf-svg format switch", () => {
+test("export dialog exposes an explicit pdf-svg-idml format switch", () => {
   const source = readText("components/dialogs/ExportPdfDialog.tsx")
   assert.match(source, /Label>Format<\/Label>/)
   assert.match(source, /onExportFormatChange\("pdf"\)/)
   assert.match(source, /onExportFormatChange\("svg"\)/)
+  assert.match(source, /onExportFormatChange\("idml"\)/)
   assert.match(source, /SVG v1 exports live vector text, guides, and placeholders at trim size\./)
-  assert.match(source, /\{isPdfExport\s*\?\s*"Export PDF"\s*:\s*"Export SVG"\}/)
+  assert.match(source, /IDML v1 exports the full project\./)
+  assert.match(source, /Export IDML/)
 })
