@@ -647,6 +647,11 @@ export const GridPreview = memo(function GridPreview({
     isMobile,
   })
 
+  const [inlineEditorPlanVersion, setInlineEditorPlanVersion] = useState(0)
+  const handleInlineEditorPlanCommit = useCallback(() => {
+    setInlineEditorPlanVersion((version) => version + 1)
+  }, [])
+
   useTypographyRenderer<BlockId>({
     canvasRef,
     blockRectsRef,
@@ -690,6 +695,8 @@ export const GridPreview = memo(function GridPreview({
     getOpticalOffset,
     onOverflowLinesChange: handleOverflowLinesChange,
     onCanvasReady,
+    editorTarget: editorState?.target ?? null,
+    onEditorPlanCommit: handleInlineEditorPlanCommit,
     recordPerfMetric,
     pixelRatio,
   })
@@ -805,6 +812,7 @@ export const GridPreview = memo(function GridPreview({
     previousPlansRef,
     gridUnit: result.grid.gridUnit,
     scale,
+    planVersion: inlineEditorPlanVersion,
   })
   const textEditorControls = usePreviewOverlayControls({
     editorState,

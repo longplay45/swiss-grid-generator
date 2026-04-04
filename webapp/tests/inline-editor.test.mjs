@@ -8,6 +8,7 @@ import {
   computeInlineEditorTextBox,
   computeSidebarWithEditorSession,
   hitTestInlineEditorIndex,
+  resolveInlineEditorLineNavigation,
   resolveInlineEditorLineMatches,
 } from "../lib/inline-editor.ts"
 
@@ -157,5 +158,86 @@ test("computeInlineEditorCaret returns the visual caret at the centered line mid
     x: 195,
     top: 16,
     height: 24,
+  })
+})
+
+test("resolveInlineEditorLineNavigation moves Home and End within the visual wrapped line", () => {
+  const home = resolveInlineEditorLineNavigation({
+    text: "Hello world\nSecond line",
+    textAlign: "left",
+    commands: [
+      { text: "Hello world", x: 40, y: 120 },
+      { text: "Second line", x: 40, y: 144 },
+    ],
+    selectionIndex: 18,
+    direction: "home",
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  const end = resolveInlineEditorLineNavigation({
+    text: "Hello world\nSecond line",
+    textAlign: "left",
+    commands: [
+      { text: "Hello world", x: 40, y: 120 },
+      { text: "Second line", x: 40, y: 144 },
+    ],
+    selectionIndex: 3,
+    direction: "end",
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(home, {
+    index: 12,
+    desiredX: 40,
+  })
+  assert.deepEqual(end, {
+    index: 11,
+    desiredX: 150,
+  })
+})
+
+test("resolveInlineEditorLineNavigation keeps the visual x-column when moving down", () => {
+  const result = resolveInlineEditorLineNavigation({
+    text: "Hello\nSecond",
+    textAlign: "left",
+    commands: [
+      { text: "Hello", x: 40, y: 120 },
+      { text: "Second", x: 40, y: 144 },
+    ],
+    selectionIndex: 4,
+    direction: "down",
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(result, {
+    index: 10,
+    desiredX: 80,
+  })
+})
+
+test("resolveInlineEditorLineNavigation clamps upward movement to the nearest caret on the previous visual line", () => {
+  const result = resolveInlineEditorLineNavigation({
+    text: "Hello\nSecond",
+    textAlign: "left",
+    commands: [
+      { text: "Hello", x: 40, y: 120 },
+      { text: "Second", x: 40, y: 144 },
+    ],
+    selectionIndex: 12,
+    direction: "up",
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.deepEqual(result, {
+    index: 5,
+    desiredX: 100,
   })
 })

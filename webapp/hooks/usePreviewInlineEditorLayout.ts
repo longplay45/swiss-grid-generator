@@ -20,6 +20,7 @@ type Args<StyleKey extends string, Key extends string> = {
   previousPlansRef: MutableRefObject<Map<Key, InlineEditorPlan<Key>>>
   gridUnit: number
   scale: number
+  planVersion: number
 }
 
 export function usePreviewInlineEditorLayout<StyleKey extends string, Key extends string>({
@@ -28,6 +29,7 @@ export function usePreviewInlineEditorLayout<StyleKey extends string, Key extend
   previousPlansRef,
   gridUnit,
   scale,
+  planVersion,
 }: Args<StyleKey, Key>) {
   return useMemo(() => {
     if (!editorState) return null
@@ -47,5 +49,5 @@ export function usePreviewInlineEditorLayout<StyleKey extends string, Key extend
       textAlign: plan?.textAlign ?? editorState.draftAlign,
       commands: plan?.commands ?? [],
     }
-  }, [blockRectsRef, editorState, gridUnit, previousPlansRef, scale])
+  }, [blockRectsRef, editorState, gridUnit, previousPlansRef, scale, planVersion])
 }

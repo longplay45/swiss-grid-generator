@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
@@ -76,7 +76,36 @@ type Args<BlockId extends string> = {
   ) => number
   onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
+  editorTarget?: BlockId | null
+  onEditorPlanCommit?: () => void
   recordPerfMetric: (metric: "drawMs", valueMs: number) => void
+}
+
+function getEditorPlanSignature<BlockId extends string>(
+  target: BlockId,
+  rects: Record<BlockId, BlockRect>,
+  plans: Map<BlockId, BlockRenderPlan<BlockId>>,
+): string {
+  const rect = rects[target]
+  const plan = plans.get(target)
+  const rectSignature = rect
+    ? `${rect.x.toFixed(3)}:${rect.y.toFixed(3)}:${rect.width.toFixed(3)}:${rect.height.toFixed(3)}`
+    : "missing-rect"
+  if (!plan) {
+    return `${target}|${rectSignature}|missing-plan`
+  }
+  const commandsSignature = plan.commands
+    .map(({ text, x, y }) => `${x.toFixed(3)}:${y.toFixed(3)}:${text}`)
+    .join("|")
+  return [
+    target,
+    rectSignature,
+    plan.blockRotation.toFixed(3),
+    plan.rotationOriginX.toFixed(3),
+    plan.rotationOriginY.toFixed(3),
+    plan.textAlign,
+    commandsSignature,
+  ].join("|")
 }
 
 export function useTypographyRenderer<BlockId extends string>({
@@ -123,8 +152,12 @@ export function useTypographyRenderer<BlockId extends string>({
   getOpticalOffset,
   onOverflowLinesChange,
   onCanvasReady,
+  editorTarget = null,
+  onEditorPlanCommit,
   recordPerfMetric,
 }: Args<BlockId>) {
+  const lastEditorPlanSignatureRef = useRef<string | null>(null)
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -356,6 +389,15 @@ export function useTypographyRenderer<BlockId extends string>({
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(typographyBuffer, 0, 0)
       previousPlansRef.current = draftPlans
+      if (!editorTarget || !onEditorPlanCommit) {
+        lastEditorPlanSignatureRef.current = null
+      } else {
+        const nextEditorPlanSignature = getEditorPlanSignature(editorTarget, blockRectsRef.current, draftPlans)
+        if (nextEditorPlanSignature !== lastEditorPlanSignatureRef.current) {
+          lastEditorPlanSignatureRef.current = nextEditorPlanSignature
+          onEditorPlanCommit()
+        }
+      }
       endDrawMark()
       recordPerfMetric("drawMs", performance.now() - drawStartedAt)
     })
@@ -392,10 +434,12 @@ export function useTypographyRenderer<BlockId extends string>({
     isTextReflowEnabled,
     layerOrder,
     onCanvasReady,
+    onEditorPlanCommit,
     onOverflowLinesChange,
     previousPlansRef,
     recordPerfMetric,
     result,
+    editorTarget,
     fontRenderEpoch,
     rotation,
     scale,
