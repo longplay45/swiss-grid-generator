@@ -5,6 +5,7 @@ import {
   findTextLayerGridReductionConflicts,
   getGridReductionWarningMessage,
 } from "@/lib/grid-reduction-validation"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextBlockPosition } from "@/lib/types/layout-primitives"
 
 type Args<BlockId extends string> = {
@@ -35,6 +36,7 @@ type Args<BlockId extends string> = {
   getBlockFont: (key: BlockId) => AutoFitStyle["fontFamily"]
   getBlockFontWeight: (key: BlockId) => number
   getBlockTrackingScale: (key: BlockId) => number
+  getBlockTrackingRuns: (key: BlockId) => TextTrackingRun[]
   getBlockFontSize: (key: BlockId, styleKey: string) => number
   getBlockBaselineMultiplier: (key: BlockId, styleKey: string) => number
   isBlockItalic: (key: BlockId) => boolean
@@ -87,6 +89,7 @@ export function useLayoutReflow<BlockId extends string>({
   getBlockFont,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   getBlockFontSize,
   getBlockBaselineMultiplier,
   isBlockItalic,
@@ -213,6 +216,7 @@ export function useLayoutReflow<BlockId extends string>({
           italic: isBlockItalic(key),
           opticalKerning: isBlockOpticalKerningEnabled(key),
           trackingScale: getBlockTrackingScale(key),
+          trackingRuns: getBlockTrackingRuns(key),
           size: getBlockFontSize(key, styleKey),
           baselineMultiplier: getBlockBaselineMultiplier(key, styleKey),
         },

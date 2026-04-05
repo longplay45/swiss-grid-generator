@@ -17,6 +17,7 @@ function makeInput() {
           italic: false,
           opticalKerning: true,
           trackingScale: 0,
+          trackingRuns: [],
         },
         rowSpan: 2,
         syllableDivision: true,
@@ -34,6 +35,7 @@ function makeInput() {
           italic: false,
           opticalKerning: true,
           trackingScale: 0,
+          trackingRuns: [],
         },
         rowSpan: 1,
         syllableDivision: false,
@@ -98,6 +100,7 @@ test("computeAutoFitBatch respects tracking in width measurement", () => {
       style: {
         ...input.items[0].style,
         trackingScale: 200,
+        trackingRuns: [],
       },
     },
   ]
@@ -112,4 +115,33 @@ test("computeAutoFitBatch respects tracking in width measurement", () => {
   }, (style, text) => text.length * 4 + Math.max(0, text.length - 1) * (style.size * style.trackingScale) / 1000)
 
   assert.ok((trackedOutput.spanUpdates.tracked ?? 1) >= (normalOutput.spanUpdates.tracked ?? 1))
+})
+
+test("computeAutoFitBatch passes range-aware measurements for mixed tracking runs", () => {
+  const input = makeInput()
+  input.items = [
+    {
+      ...input.items[0],
+      key: "mixed-tracking",
+      text: "ABCD EFGH IJKL",
+      currentSpan: 1,
+      style: {
+        ...input.items[0].style,
+        trackingScale: 0,
+        trackingRuns: [{ start: 0, end: 4, trackingScale: 250 }],
+      },
+    },
+  ]
+
+  const measuredRanges = []
+  computeAutoFitBatch(input, (_style, text, range) => {
+    measuredRanges.push(range ? `${range.start}:${range.end}:${text}` : `-:${text}`)
+    return text.length * 4
+      + (range && range.start === 0 && range.end === 4 ? 40 : 0)
+  })
+
+  assert.ok(
+    measuredRanges.some((entry) => entry.startsWith("0:4:")),
+    "expected auto-fit wrapping to request range-aware measurements",
+  )
 })

@@ -1,5 +1,6 @@
 import type { FontFamily } from "@/lib/config/fonts"
-import { wrapText } from "./text-layout.ts"
+import type { TextRange, TextTrackingRun } from "./text-tracking-runs.ts"
+import { wrapTextDetailed } from "./text-layout.ts"
 import {
   findNearestAxisIndex,
   resolveAxisSizes,
@@ -14,6 +15,7 @@ export type AutoFitStyle = {
   italic: boolean
   opticalKerning: boolean
   trackingScale: number
+  trackingRuns: TextTrackingRun[]
 }
 
 export type AutoFitPosition = {
@@ -54,7 +56,12 @@ export type AutoFitPlannerOutput = {
 
 export function computeAutoFitBatch(
   input: AutoFitPlannerInput,
-  measureWidthForStyle: (style: AutoFitStyle, text: string) => number,
+  measureWidthForStyle: (
+    style: AutoFitStyle,
+    text: string,
+    range?: TextRange,
+    sourceText?: string,
+  ) => number,
 ): AutoFitPlannerOutput {
   const output: AutoFitPlannerOutput = {
     spanUpdates: {},
@@ -110,8 +117,10 @@ export function computeAutoFitBatch(
       ...item.style,
       size: fontSize,
     }
-    const cachedMeasure = (text: string) => measureWidthForStyle(scaledStyle, text)
-    const lines = wrapText(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
+    const cachedMeasure = (text: string, range?: TextRange) => (
+      measureWidthForStyle(scaledStyle, text, range, item.text)
+    )
+    const lines = wrapTextDetailed(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
     const maxColsFromPlacement = Math.max(

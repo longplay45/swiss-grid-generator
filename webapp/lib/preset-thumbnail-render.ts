@@ -21,6 +21,11 @@ import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { LayoutPresetBrowserPage } from "@/lib/presets/types"
 import {
+  measureTrackedTextRangeWidth,
+  normalizeTextTrackingRuns,
+  type TextTrackingRun,
+} from "@/lib/text-tracking-runs"
+import {
   applyCanvasTextConfig,
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
@@ -29,7 +34,7 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
-import { getDefaultColumnSpan, wrapText } from "@/lib/text-layout"
+import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
 
@@ -182,6 +187,7 @@ export function drawPresetThumbnailToCanvas(
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
+  const blockTrackingRuns = layout?.blockTrackingRuns ?? {}
   const blockRotations = layout?.blockRotations ?? {}
   const blockCustomSizes = layout?.blockCustomSizes ?? {}
   const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
@@ -248,6 +254,14 @@ export function drawPresetThumbnailToCanvas(
 
   const getBlockTrackingScale = (key: BlockId): number => {
     return normalizeTrackingScale(blockTrackingScales[key] ?? DEFAULT_TRACKING_SCALE)
+  }
+
+  const getBlockTrackingRuns = (key: BlockId): TextTrackingRun[] => {
+    return normalizeTextTrackingRuns(
+      textContent[key] ?? "",
+      blockTrackingRuns[key],
+      getBlockTrackingScale(key),
+    )
   }
 
   const getBlockRotation = (key: BlockId): number => {
@@ -345,14 +359,26 @@ export function drawPresetThumbnailToCanvas(
       hyphenate: boolean,
       trackingScale: number,
       opticalKerning: boolean,
+      trackingRuns: readonly TextTrackingRun[] = [],
     ) => {
       applyCanvasTextConfig(canvasContext, {
         font: canvasContext.font,
         opticalKerning,
       })
-      return wrapText(text, maxWidth, hyphenate, (sample) => (
-        measureCanvasTextWidth(canvasContext, sample, trackingScale)
-      ))
+      const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, trackingScale)
+      return wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => {
+        if (range && normalizedRuns.length > 0) {
+          return measureTrackedTextRangeWidth(canvasContext, {
+            sourceText: text,
+            renderedText: sample,
+            range,
+            baseTrackingScale: trackingScale,
+            runs: normalizedRuns,
+            fontSize: Number.parseFloat(canvasContext.font.match(/(\d+(?:\.\d+)?)px/)?.[1] ?? "0"),
+          })
+        }
+        return measureCanvasTextWidth(canvasContext, sample, trackingScale)
+      })
     }
 
     const getOpticalOffsetForCanvas = (
@@ -460,6 +486,7 @@ export function drawPresetThumbnailToCanvas(
       isBlockItalic,
       isBlockOpticalKerningEnabled,
       getBlockTrackingScale,
+      getBlockTrackingRuns,
       getBlockTextColor,
       getWrappedText: getWrappedTextForCanvas,
       getOpticalOffset: getOpticalOffsetForCanvas,

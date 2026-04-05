@@ -8,6 +8,10 @@ import {
   buildCanvasFont,
   measureCanvasTextWidth,
 } from "@/lib/text-rendering"
+import {
+  measureTrackedTextRangeWidth,
+  normalizeTextTrackingRuns,
+} from "@/lib/text-tracking-runs"
 
 type AutoFitRequest = {
   id: number
@@ -39,16 +43,27 @@ self.onmessage = (event: MessageEvent<AutoFitRequest>) => {
     self.postMessage(fallback)
     return
   }
-  const output = computeAutoFitBatch(input, (style, text) => {
+  const output = computeAutoFitBatch(input, (style, text, range, sourceText) => {
     const font = buildCanvasFont(style.fontFamily, style.fontWeight, style.italic, style.size)
-    const key = `${font}::${style.opticalKerning ? 1 : 0}::${style.trackingScale}::${text}`
+    const rangeKey = range ? `${range.start}:${range.end}` : "full"
+    const sourceKey = sourceText ?? text
+    const key = `${font}::${style.opticalKerning ? 1 : 0}::${style.trackingScale}::${JSON.stringify(style.trackingRuns)}::${rangeKey}::${sourceKey}::${text}`
     const cached = measureCache.get(key)
     if (cached !== undefined) return cached
     applyCanvasTextConfig(context, {
       font,
       opticalKerning: style.opticalKerning,
     })
-    const width = measureCanvasTextWidth(context, text, style.trackingScale, style.size)
+    const width = range && sourceText && style.trackingRuns.length > 0
+      ? measureTrackedTextRangeWidth(context, {
+        sourceText,
+        renderedText: text,
+        range,
+        baseTrackingScale: style.trackingScale,
+        runs: normalizeTextTrackingRuns(sourceText, style.trackingRuns, style.trackingScale),
+        fontSize: style.size,
+      })
+      : measureCanvasTextWidth(context, text, style.trackingScale, style.size)
     measureCache.set(key, width)
     if (measureCache.size > 8000) measureCache.clear()
     return width

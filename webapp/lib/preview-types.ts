@@ -1,4 +1,5 @@
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import type { PositionedTrackingSegment, TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { BlockRect, TextDrawCommand } from "@/lib/typography-layout-plan"
 
 export type { BlockRect, TextAlignMode, TextDrawCommand }
@@ -28,5 +29,8 @@ export type BlockRenderPlan<Key extends string> = {
   rotationOriginY: number
   opticalKerning: boolean
   trackingScale: number
+  trackingRuns: TextTrackingRun[]
+  sourceText: string
+  segmentLines: PositionedTrackingSegment[][]
   commands: TextDrawCommand[]
 }

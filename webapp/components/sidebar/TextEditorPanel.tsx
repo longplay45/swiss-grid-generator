@@ -22,9 +22,14 @@ import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { TextEditorControls as SharedTextEditorControls } from "@/lib/preview-overlay-controls"
 import {
   formatTrackingScale,
-  getTrackingOption,
-  TRACKING_OPTIONS,
+  MAX_TRACKING_SCALE,
+  MIN_TRACKING_SCALE,
 } from "@/lib/text-rendering"
+import {
+  applyTrackingScaleToRange,
+  getUniformTrackingScaleForRange,
+  rebaseTextTrackingRuns,
+} from "@/lib/text-tracking-runs"
 import {
   AlignLeft,
   AlignCenter,
@@ -66,6 +71,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
   const [fxSizeInput, setFxSizeInput] = useState("")
   const [fxLeadingInput, setFxLeadingInput] = useState("")
+  const [trackingInput, setTrackingInput] = useState("")
   const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(controls.selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -83,7 +89,17 @@ export function TextEditorPanel<StyleKey extends string>({
     controls.editorState.draftItalic,
   )
   const fontVariantOptions = getFontVariants(controls.editorState.draftFont)
-  const selectedTrackingOption = getTrackingOption(controls.editorState.draftTrackingScale)
+  const selectionTrackingScale = controls.editorState.draftSelectionStart !== controls.editorState.draftSelectionEnd
+    ? getUniformTrackingScaleForRange(
+      controls.editorState.draftText,
+      {
+        start: controls.editorState.draftSelectionStart,
+        end: controls.editorState.draftSelectionEnd,
+      },
+      controls.editorState.draftTrackingScale,
+      controls.editorState.draftTrackingRuns,
+    )
+    : controls.editorState.draftTrackingScale
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label
     ?? editorColorScheme
   const colorSchemeTriggerWidthCh = Math.max(
@@ -115,7 +131,9 @@ export function TextEditorPanel<StyleKey extends string>({
     },
     {
       label: "Tracking",
-      value: `${selectedTrackingOption.label} (${formatTrackingScale(selectedTrackingOption.value)})`,
+      value: selectionTrackingScale !== null
+        ? formatTrackingScale(selectionTrackingScale)
+        : "Mixed",
     },
     { label: "Color Scheme", value: selectedSchemeLabel },
     { label: "Text Color", value: controls.editorState.draftColor },
@@ -139,6 +157,10 @@ export function TextEditorPanel<StyleKey extends string>({
     setFxSizeInput(String(controls.editorState.draftFxSize))
     setFxLeadingInput(String(controls.editorState.draftFxLeading))
   }, [controls.editorState.draftFxLeading, controls.editorState.draftFxSize, controls.editorState.target])
+
+  useEffect(() => {
+    setTrackingInput(selectionTrackingScale === null ? "" : String(selectionTrackingScale))
+  }, [controls.editorState.target, selectionTrackingScale])
 
   useEffect(() => {
     setEditorColorScheme(controls.selectedColorScheme)
@@ -224,6 +246,44 @@ export function TextEditorPanel<StyleKey extends string>({
   const getStyleOptionLabel = (styleKey: StyleKey, label: string) => (
     controls.isFxStyle(styleKey) ? label : `${label} (${controls.getStyleSizeLabel(styleKey)})`
   )
+  const commitTrackingInput = () => {
+    const parsed = Number(trackingInput)
+    if (!Number.isFinite(parsed)) {
+      setTrackingInput(selectionTrackingScale === null ? "" : String(selectionTrackingScale))
+      return
+    }
+    const nextScale = Math.max(MIN_TRACKING_SCALE, Math.min(MAX_TRACKING_SCALE, Math.round(parsed)))
+    controls.setEditorState((prev) => prev ? {
+      ...prev,
+      draftTrackingScale: (
+        prev.draftSelectionStart !== prev.draftSelectionEnd
+          && !(prev.draftSelectionStart === 0 && prev.draftSelectionEnd === prev.draftText.length)
+      )
+        ? prev.draftTrackingScale
+        : nextScale,
+      draftTrackingRuns: (
+        prev.draftSelectionStart !== prev.draftSelectionEnd
+          && !(prev.draftSelectionStart === 0 && prev.draftSelectionEnd === prev.draftText.length)
+      )
+        ? applyTrackingScaleToRange(
+          prev.draftText,
+          {
+            start: prev.draftSelectionStart,
+            end: prev.draftSelectionEnd,
+          },
+          nextScale,
+          prev.draftTrackingScale,
+          prev.draftTrackingRuns,
+        )
+        : rebaseTextTrackingRuns(
+          prev.draftText,
+          [],
+          prev.draftTrackingScale,
+          nextScale,
+        ),
+    } : prev)
+    setTrackingInput(String(nextScale))
+  }
 
   return (
     <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
@@ -641,27 +701,30 @@ export function TextEditorPanel<StyleKey extends string>({
                 <span className={submenuTokenClassName}>Tr</span>
               </div>
               <div className="col-start-4 row-start-3">
-                {withSubmenuTooltip("Set paragraph tracking through uniform letter-spacing presets (1/1000 em)", <Select
-                  value={String(selectedTrackingOption.value)}
-                  onValueChange={(value) => {
-                    const nextScale = Number(value)
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftTrackingScale: Number.isFinite(nextScale) ? nextScale : prev.draftTrackingScale,
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {TRACKING_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={String(option.value)}>
-                        {option.label} ({formatTrackingScale(option.value)})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>)}
+                {withSubmenuTooltip("Set paragraph tracking, or apply tracking to the current text selection (1/1000 em)", <label className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={MIN_TRACKING_SCALE}
+                    max={MAX_TRACKING_SCALE}
+                    step={1}
+                    inputMode="numeric"
+                    value={trackingInput}
+                    placeholder={selectionTrackingScale === null ? "Mixed" : undefined}
+                    onChange={(event) => {
+                      setTrackingInput(event.target.value)
+                    }}
+                    onBlur={commitTrackingInput}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return
+                      event.preventDefault()
+                      commitTrackingInput()
+                      ;(event.currentTarget as HTMLInputElement).blur()
+                    }}
+                    className={`h-8 rounded-md border px-2 text-xs outline-none ${tone.input}`}
+                    style={{ width: `${TYPE_ROW_TRIGGER_WIDTH_PX}px` }}
+                    aria-label={`Tracking from ${MIN_TRACKING_SCALE} to ${MAX_TRACKING_SCALE}`}
+                  />
+                </label>)}
               </div>
 
             </div>

@@ -10,12 +10,8 @@ import {
 import { buildPageExportPlan } from "@/lib/page-export-plan"
 import { resolvePdfFontFamily } from "@/lib/pdf-font-registry"
 import {
-  applyCanvasTextConfig,
-  buildCanvasFont,
   DEFAULT_TRACKING_SCALE,
   getTrackingLetterSpacing,
-  measureCanvasTextWidth,
-  splitTextForTracking,
 } from "@/lib/text-rendering"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { RgbColor } from "@/lib/export-colors"
@@ -395,10 +391,6 @@ export function renderSwissGridVectorPdf({
     return
   }
 
-  const textMeasureContext = typeof document !== "undefined"
-    ? document.createElement("canvas").getContext("2d")
-    : null
-
   setDrawColor(pdf, { r: 31, g: 41, b: 55 }, colorMode)
   setTextColor(pdf, { r: 31, g: 41, b: 55 }, colorMode)
 
@@ -413,40 +405,25 @@ export function renderSwissGridVectorPdf({
     const blockFont = plan.fontFamily
     const blockFontWeight = plan.fontWeight
     const blockIsItalic = plan.italic
-    const blockOpticalKerningEnabled = plan.opticalKerning
-    const blockTrackingScale = plan.trackingScale
-    const blockTrackingGap = (text: string) => Math.max(0, splitTextForTracking(text).length - 1)
     const blockTextColor = plan.textColor
-    const canvasFont = buildCanvasFont(blockFont, blockFontWeight, blockIsItalic, plan.fontSize)
-    const measureWidthSource = (text: string) => {
-      if (textMeasureContext) {
-        applyCanvasTextConfig(textMeasureContext, {
-          font: canvasFont,
-          opticalKerning: blockOpticalKerningEnabled,
-        })
-        return measureCanvasTextWidth(textMeasureContext, text, blockTrackingScale, plan.fontSize)
-      }
-      return pdf.getTextWidth(text) / scale + blockTrackingGap(text) * getTrackingLetterSpacing(plan.fontSize, blockTrackingScale)
-    }
     pdf.setFont(getPdfFontFamily(blockFont, blockFontWeight), blockIsItalic ? "italic" : "normal")
     setTextColor(pdf, blockTextColor, colorMode)
     pdf.setFontSize(plan.fontSize * scale)
     const rotationOrigin = { x: plan.rotationOriginX, y: plan.rotationOriginY }
-    for (const command of plan.commands) {
-      const drawAlign: TextAlignMode = plan.textAlign === "right" ? "left" : plan.textAlign
-      const drawX = plan.textAlign === "right"
-        ? command.x - measureWidthSource(command.text)
-        : command.x
-      drawText(
-        command.text,
-        drawX,
-        command.y,
-        drawAlign,
-        blockTrackingScale,
-        plan.fontSize,
-        plan.blockRotation,
-        rotationOrigin,
-      )
+    for (const segments of plan.segmentLines) {
+      if (segments.length === 0) continue
+      for (const segment of segments) {
+        drawText(
+          segment.text,
+          segment.x,
+          segment.y,
+          "left",
+          segment.trackingScale,
+          plan.fontSize,
+          plan.blockRotation,
+          rotationOrigin,
+        )
+      }
     }
   }
 }

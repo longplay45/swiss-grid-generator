@@ -40,6 +40,8 @@ const FONT_STACKS: Record<string, string> = {
 
 export const DEFAULT_TRACKING_SCALE = 0
 export const DEFAULT_OPTICAL_KERNING = true
+export const MIN_TRACKING_SCALE = -120
+export const MAX_TRACKING_SCALE = 300
 
 export const TRACKING_OPTIONS = [
   { label: "Ultra-condensed", value: -120 },
@@ -74,11 +76,7 @@ export function normalizeTrackingScale(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return DEFAULT_TRACKING_SCALE
   }
-  return TRACKING_OPTIONS.reduce((best, option) => {
-    const bestDistance = Math.abs(best.value - value)
-    const nextDistance = Math.abs(option.value - value)
-    return nextDistance < bestDistance ? option : best
-  }).value
+  return Math.max(MIN_TRACKING_SCALE, Math.min(MAX_TRACKING_SCALE, Math.round(value)))
 }
 
 export function getTrackingOption(scale: number): TrackingOption {

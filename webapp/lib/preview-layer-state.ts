@@ -1,4 +1,5 @@
 import type { PreviewLayoutState } from "@/lib/types/preview-layout"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 
 import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
 
@@ -17,6 +18,7 @@ export type TextLayerCollections<
   blockFontWeights: Partial<Record<Key, number>>
   blockOpticalKerning: Partial<Record<Key, boolean>>
   blockTrackingScales: Partial<Record<Key, number>>
+  blockTrackingRuns: Partial<Record<Key, TextTrackingRun[]>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, Align>>
@@ -47,6 +49,7 @@ export function removeTextLayerFromCollections<
     blockFontWeights: omitOptionalRecordKey(state.blockFontWeights, key),
     blockOpticalKerning: omitOptionalRecordKey(state.blockOpticalKerning, key),
     blockTrackingScales: omitOptionalRecordKey(state.blockTrackingScales, key),
+    blockTrackingRuns: omitOptionalRecordKey(state.blockTrackingRuns, key),
     blockColumnSpans: omitOptionalRecordKey(state.blockColumnSpans, key),
     blockRowSpans: omitOptionalRecordKey(state.blockRowSpans, key),
     blockTextAlignments: omitOptionalRecordKey(state.blockTextAlignments, key),
@@ -94,6 +97,9 @@ export function removeLayerFromPreviewLayout<
       : undefined,
     blockTrackingScales: layout.blockTrackingScales
       ? omitOptionalRecordKey(layout.blockTrackingScales, key)
+      : undefined,
+    blockTrackingRuns: layout.blockTrackingRuns
+      ? omitOptionalRecordKey(layout.blockTrackingRuns, key)
       : undefined,
     blockColumnSpans: omitRequiredRecordKey(layout.blockColumnSpans, key),
     blockRowSpans: layout.blockRowSpans

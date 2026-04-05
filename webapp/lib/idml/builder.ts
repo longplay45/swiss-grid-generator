@@ -282,9 +282,9 @@ async function buildCharacterStyles(
   fontCatalog: Map<string, IdmlFontMetadata>,
 ): Promise<{
   styles: CharacterStyleRecord[]
-  styleIdByBlockKey: Map<string, string>
+  styleIdBySignature: Map<string, string>
 }> {
-  const styleIdByBlockKey = new Map<string, string>()
+  const styleIdBySignature = new Map<string, string>()
   const stylesBySignature = new Map<string, CharacterStyleRecord>()
   const styles: CharacterStyleRecord[] = []
   let sequence = 0
@@ -297,35 +297,44 @@ async function buildCharacterStyles(
       if (!font) continue
       const colorSignature = `${textPlan.textColor.r},${textPlan.textColor.g},${textPlan.textColor.b}`
       const fillColorId = colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID
-      const styleSignature = [
-        font.postScriptName,
-        formatIdmlNumber(textPlan.fontSize),
-        formatIdmlNumber(textPlan.leading),
-        formatIdmlNumber(textPlan.trackingScale),
-        fillColorId,
-      ].join("|")
-
-      let style = stylesBySignature.get(styleSignature)
-      if (!style) {
-        sequence += 1
-        style = {
-          id: `CharacterStyle/sgg/char_${String(sequence).padStart(3, "0")}`,
-          name: `SGG Character ${String(sequence).padStart(3, "0")}`,
-          font,
-          pointSize: textPlan.fontSize,
-          leading: textPlan.leading,
-          tracking: textPlan.trackingScale,
-          fillColorId,
-        }
-        stylesBySignature.set(styleSignature, style)
-        styles.push(style)
+      const segmentTrackingScales = new Set<number>(
+        textPlan.segmentLines.flatMap((segments) => segments.map((segment) => segment.trackingScale)),
+      )
+      if (segmentTrackingScales.size === 0) {
+        segmentTrackingScales.add(textPlan.trackingScale)
       }
 
-      styleIdByBlockKey.set(`${page.id}:${textPlan.key}`, style.id)
+      for (const trackingScale of segmentTrackingScales) {
+        const styleSignature = [
+          font.postScriptName,
+          formatIdmlNumber(textPlan.fontSize),
+          formatIdmlNumber(textPlan.leading),
+          formatIdmlNumber(trackingScale),
+          fillColorId,
+        ].join("|")
+
+        let style = stylesBySignature.get(styleSignature)
+        if (!style) {
+          sequence += 1
+          style = {
+            id: `CharacterStyle/sgg/char_${String(sequence).padStart(3, "0")}`,
+            name: `SGG Character ${String(sequence).padStart(3, "0")}`,
+            font,
+            pointSize: textPlan.fontSize,
+            leading: textPlan.leading,
+            tracking: trackingScale,
+            fillColorId,
+          }
+          stylesBySignature.set(styleSignature, style)
+          styles.push(style)
+        }
+
+        styleIdBySignature.set(styleSignature, style.id)
+      }
     }
   }
 
-  return { styles, styleIdByBlockKey }
+  return { styles, styleIdBySignature }
 }
 
 function buildParagraphStyleKeys(document: SwissGridIdmlDocument): string[] {
@@ -355,6 +364,54 @@ function formatStoryContent(lines: string[]): string {
     const content = renderIdmlElement("Content", {}, escapeIdmlXml(line))
     if (index === lines.length - 1) return content
     return `${content}${renderIdmlElement("Br")}`
+  }).join("")
+}
+
+function buildCharacterStyleSignature(
+  font: IdmlFontMetadata,
+  pointSize: number,
+  leading: number,
+  tracking: number,
+  fillColorId: string,
+): string {
+  return [
+    font.postScriptName,
+    formatIdmlNumber(pointSize),
+    formatIdmlNumber(leading),
+    formatIdmlNumber(tracking),
+    fillColorId,
+  ].join("|")
+}
+
+function formatStoryContentSegments(
+  textPlan: SwissGridIdmlDocument["pages"][number]["exportPlan"]["textPlans"][number],
+  characterStyleIdForTracking: (tracking: number) => string,
+): string {
+  if (!textPlan.segmentLines.length) {
+    return formatStoryContent(textPlan.commands.map((command) => command.text))
+  }
+
+  return textPlan.segmentLines.map((segments, lineIndex) => {
+    const lineContent = segments.length > 0
+      ? segments.map((segment) => renderIdmlElement(
+        "CharacterStyleRange",
+        {
+          AppliedCharacterStyle: characterStyleIdForTracking(segment.trackingScale),
+          OTFContextualAlternate: false,
+        },
+        renderIdmlElement("Content", {}, escapeIdmlXml(segment.text)),
+      )).join("")
+      : renderIdmlElement(
+        "CharacterStyleRange",
+        {
+          AppliedCharacterStyle: characterStyleIdForTracking(textPlan.trackingScale),
+          OTFContextualAlternate: false,
+        },
+        renderIdmlElement("Content", {}, ""),
+      )
+    return lineIndex === textPlan.segmentLines.length - 1
+      ? lineContent
+      : `${lineContent}${renderIdmlElement("Br")}`
   }).join("")
 }
 
@@ -394,6 +451,7 @@ function buildSpreadAndStories(
   paragraphStyleIds: Map<string, string>,
   characterStyleIds: Map<string, string>,
   colorIdBySignature: Map<string, string>,
+  fontCatalog: Map<string, IdmlFontMetadata>,
 ): {
   spreads: SpreadExportRecord[]
   stories: StoryExportRecord[]
@@ -500,9 +558,22 @@ function buildSpreadAndStories(
 
     for (const textPlan of page.exportPlan.textPlans) {
       if (textPlan.commands.length === 0) continue
-      const characterStyleId = characterStyleIds.get(`${page.id}:${textPlan.key}`)
       const paragraphStyleId = paragraphStyleIds.get(String(textPlan.styleKey)) ?? buildParagraphStyleId(String(textPlan.styleKey))
-      if (!characterStyleId) continue
+      const fontSignature = `${textPlan.fontFamily}:${textPlan.fontWeight}:${textPlan.italic ? "italic" : "normal"}`
+      const font = fontCatalog.get(fontSignature)
+      if (!font) continue
+      const colorSignature = `${textPlan.textColor.r},${textPlan.textColor.g},${textPlan.textColor.b}`
+      const fillColorId = colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID
+      const characterStyleIdForTracking = (tracking: number) => {
+        const styleSignature = buildCharacterStyleSignature(
+          font,
+          textPlan.fontSize,
+          textPlan.leading,
+          tracking,
+          fillColorId,
+        )
+        return characterStyleIds.get(styleSignature) ?? "CharacterStyle/$ID/[No character style]"
+      }
 
       localStorySequence += 1
       const storyId = `sggStory_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`
@@ -572,14 +643,7 @@ function buildSpreadAndStories(
                   AppliedParagraphStyle: paragraphStyleId,
                   Justification: toJustification(textPlan.textAlign),
                 },
-                renderIdmlElement(
-                  "CharacterStyleRange",
-                  {
-                    AppliedCharacterStyle: characterStyleId,
-                    OTFContextualAlternate: false,
-                  },
-                  formatStoryContent(textPlan.commands.map((command) => command.text)),
-                ),
+                formatStoryContentSegments(textPlan, characterStyleIdForTracking),
               ),
             ],
           ),
@@ -1362,7 +1426,7 @@ export async function buildSwissGridIdmlPackage(document: SwissGridIdmlDocument)
   ])
   const fontCatalog = await buildFontCatalog(document)
   const fonts = [...new Map(fontCatalog.values().map((font) => [`${font.family}|${font.styleName}`, font] as const)).values()]
-  const { styles: characterStyles, styleIdByBlockKey } = await buildCharacterStyles(
+  const { styles: characterStyles, styleIdBySignature } = await buildCharacterStyles(
     document,
     colorIdBySignature,
     fontCatalog,
@@ -1372,8 +1436,9 @@ export async function buildSwissGridIdmlPackage(document: SwissGridIdmlDocument)
   const { spreads, stories } = buildSpreadAndStories(
     document,
     paragraphStyleIds,
-    styleIdByBlockKey,
+    styleIdBySignature,
     colorIdBySignature,
+    fontCatalog,
   )
   const designMapXml = buildDesignMapXml(document, customSwatches, spreads, stories)
 

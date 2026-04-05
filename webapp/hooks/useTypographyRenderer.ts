@@ -11,7 +11,9 @@ import {
   drawCanvasLayerStack,
 } from "@/lib/canvas-page-renderer"
 import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
+import type { WrappedTextLine } from "@/lib/text-layout"
 
 type DragState<BlockId extends string> = {
   key: BlockId
@@ -44,6 +46,7 @@ type Args<BlockId extends string> = {
   getBlockFont: (key: BlockId) => FontFamily
   getBlockFontWeight: (key: BlockId) => number
   getBlockTrackingScale: (key: BlockId) => number
+  getBlockTrackingRuns: (key: BlockId) => TextTrackingRun[]
   isBlockItalic: (key: BlockId) => boolean
   isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   getBlockRotation: (key: BlockId) => number
@@ -65,7 +68,8 @@ type Args<BlockId extends string> = {
     hyphenate: boolean,
     trackingScale: number,
     opticalKerning: boolean,
-  ) => string[]
+    trackingRuns?: readonly TextTrackingRun[],
+  ) => WrappedTextLine[]
   getOpticalOffset: (
     ctx: CanvasRenderingContext2D,
     styleKey: keyof GridResult["typography"]["styles"],
@@ -134,6 +138,7 @@ export function useTypographyRenderer<BlockId extends string>({
   getBlockFont,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockRotation,
@@ -320,6 +325,7 @@ export function useTypographyRenderer<BlockId extends string>({
           isBlockItalic: (key) => isBlockItalic(key),
           isBlockOpticalKerningEnabled,
           getBlockTrackingScale,
+          getBlockTrackingRuns,
           getBlockTextColor,
           getWrappedText,
           getOpticalOffset: (context, key, styleKey, line, align, fontSize, opticalKerning) => (
@@ -414,6 +420,7 @@ export function useTypographyRenderer<BlockId extends string>({
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,
+    getBlockTrackingRuns,
     getBlockRotation,
     getBlockRows,
     getBlockFontSize,

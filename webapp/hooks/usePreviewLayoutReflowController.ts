@@ -13,6 +13,12 @@ import {
   buildCanvasFont,
   measureCanvasTextWidth,
 } from "@/lib/text-rendering"
+import {
+  measureTrackedTextRangeWidth,
+  normalizeTextTrackingRuns,
+  type TextRange,
+  type TextTrackingRun,
+} from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextBlockPosition } from "@/lib/types/preview-layout"
 import { useLayoutReflow } from "@/hooks/useLayoutReflow"
 import { useWorkerBridge } from "@/hooks/useWorkerBridge"
@@ -33,6 +39,7 @@ type Args<Key extends string> = {
   getBlockFont: (key: Key) => AutoFitStyle["fontFamily"]
   getBlockFontWeight: (key: Key) => number
   getBlockTrackingScale: (key: Key) => number
+  getBlockTrackingRuns: (key: Key) => TextTrackingRun[]
   getBlockFontSize: (key: Key, styleKey: string) => number
   getBlockBaselineMultiplier: (key: Key, styleKey: string) => number
   isBlockItalic: (key: Key) => boolean
@@ -62,6 +69,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
   getBlockFont,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   getBlockFontSize,
   getBlockBaselineMultiplier,
   isBlockItalic,
@@ -115,7 +123,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
   })
 
   const computeAutoFitFallback = useCallback((input: AutoFitPlannerInput) => (
-    computeAutoFitBatch(input, (style, text) => {
+    computeAutoFitBatch(input, (style, text, range, sourceText) => {
       const canvas = canvasRef.current
       if (!canvas) return 0
       const ctx = canvas.getContext("2d")
@@ -124,6 +132,16 @@ export function usePreviewLayoutReflowController<Key extends string>({
         font: buildCanvasFont(style.fontFamily, style.fontWeight, style.italic, style.size),
         opticalKerning: style.opticalKerning,
       })
+      if (range && sourceText && style.trackingRuns.length > 0) {
+        return measureTrackedTextRangeWidth(ctx, {
+          sourceText,
+          renderedText: text,
+          range: range as TextRange,
+          baseTrackingScale: style.trackingScale,
+          runs: normalizeTextTrackingRuns(sourceText, style.trackingRuns, style.trackingScale),
+          fontSize: style.size,
+        })
+      }
       return measureCanvasTextWidth(ctx, text, style.trackingScale, style.size)
     })
   ), [canvasRef])
@@ -167,6 +185,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,
+    getBlockTrackingRuns,
     getBlockFontSize,
     getBlockBaselineMultiplier,
     isBlockItalic,

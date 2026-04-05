@@ -24,7 +24,7 @@ import {
   clearOpticalMarginMeasurementCache,
   getOpticalMarginAnchorOffset,
 } from "@/lib/optical-margin"
-import { wrapText, getDefaultColumnSpan } from "@/lib/text-layout"
+import { wrapTextDetailed, getDefaultColumnSpan } from "@/lib/text-layout"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import {
   buildTypographyLayoutPlan,
@@ -35,12 +35,16 @@ import {
   buildCanvasFont,
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
-  getTrackingLetterSpacing,
-  measureCanvasTextWidth,
   normalizeOpticalKerning,
   normalizeTrackingScale,
-  splitTextForTracking,
 } from "@/lib/text-rendering"
+import {
+  buildPositionedTrackingSegments,
+  measureTrackedTextRangeWidth,
+  normalizeTextTrackingRuns,
+  type PositionedTrackingSegment,
+  type TextTrackingRun,
+} from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 
@@ -83,8 +87,11 @@ export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKe
   italic: boolean
   leading: number
   trackingScale: number
+  trackingRuns: TextTrackingRun[]
   opticalKerning: boolean
   textColor: RgbColor
+  sourceText: string
+  segmentLines: PositionedTrackingSegment[][]
 }
 
 export type PageExportPlan = {
@@ -121,7 +128,9 @@ type ExportTextContext = {
   canvasFont: string
   opticalKerning: boolean
   trackingScale: number
-  measureWidth: (text: string) => number
+  trackingRuns: TextTrackingRun[]
+  sourceText: string
+  measureWidth: (text: string, range?: { start: number; end: number }) => number
 }
 
 function createTextMeasureContext(): CanvasRenderingContext2D | null {
@@ -139,12 +148,6 @@ function estimateTextAscent(
   measureContext.font = canvasFont
   const metrics = measureContext.measureText("Hg")
   return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSize * 0.8
-}
-
-function estimateTextWidthFallback(text: string, fontSize: number, trackingScale: number): number {
-  const glyphCount = splitTextForTracking(text).length
-  const trackingWidth = Math.max(0, glyphCount - 1) * getTrackingLetterSpacing(fontSize, trackingScale)
-  return text.length * fontSize * 0.56 + trackingWidth
 }
 
 function reconcileLayerOrder(
@@ -357,6 +360,7 @@ export function buildPageExportPlan({
   const blockFontWeights = layout?.blockFontWeights ?? {}
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
+  const blockTrackingRuns = layout?.blockTrackingRuns ?? {}
   const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
@@ -428,6 +432,13 @@ export function buildPageExportPlan({
   )
   const getBlockTrackingScale = (key: BlockId) => (
     normalizeTrackingScale(blockTrackingScales[key] ?? DEFAULT_TRACKING_SCALE)
+  )
+  const getBlockTrackingRuns = (key: BlockId) => (
+    normalizeTextTrackingRuns(
+      textContent[key] ?? "",
+      blockTrackingRuns[key],
+      getBlockTrackingScale(key),
+    )
   )
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
@@ -523,26 +534,45 @@ export function buildPageExportPlan({
       createTextContext: ({ key, styleKey, fontSize }) => {
         const opticalKerning = isBlockOpticalKerningEnabled(key)
         const trackingScale = getBlockTrackingScale(key)
+        const trackingRuns = getBlockTrackingRuns(key)
+        const sourceText = textContent[key] ?? ""
         const canvasFont = buildCanvasFont(
           getBlockFont(key),
           getBlockFontWeight(key, styleKey),
           isBlockItalic(key, styleKey),
           fontSize,
         )
-        const measureWidth = (text: string) => {
+        const measureWidth = (text: string, range?: { start: number; end: number }) => {
           if (textMeasureContext) {
             applyCanvasTextConfig(textMeasureContext, {
               font: canvasFont,
               opticalKerning,
             })
-            return measureCanvasTextWidth(textMeasureContext, text, trackingScale, fontSize)
+            if (range && trackingRuns.length > 0) {
+              return measureTrackedTextRangeWidth(textMeasureContext, {
+                sourceText,
+                renderedText: text,
+                range,
+                baseTrackingScale: trackingScale,
+                runs: trackingRuns,
+                fontSize,
+              })
+            }
+            return measureTrackedTextRangeWidth(textMeasureContext, {
+              sourceText,
+              renderedText: text,
+              range: range ?? { start: 0, end: sourceText.length },
+              baseTrackingScale: trackingScale,
+              runs: trackingRuns,
+              fontSize,
+            })
           }
-          return estimateTextWidthFallback(text, fontSize, trackingScale)
+          return text.length * fontSize * 0.56
         }
-        return { canvasFont, opticalKerning, trackingScale, measureWidth }
+        return { canvasFont, opticalKerning, trackingScale, trackingRuns, sourceText, measureWidth }
       },
       wrapText: ({ context, text, maxWidth, hyphenate }) =>
-        wrapText(text, maxWidth, hyphenate, context.measureWidth),
+        wrapTextDetailed(text, maxWidth, hyphenate, context.measureWidth),
       textAscent: ({ context, fontSize }) =>
         estimateTextAscent(textMeasureContext, context.canvasFont, fontSize),
       opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
@@ -557,7 +587,7 @@ export function buildPageExportPlan({
     })
     : { plans: [] as TypographyLayoutPlan<BlockId, TypographyStyleKey>[], rects: {} as Record<BlockId, PageExportRect>, overflowByBlock: {} }
 
-  const textPlans = layoutOutput.plans.map((plan) => ({
+  const textPlans: PageExportTextPlan[] = layoutOutput.plans.map((plan) => ({
     ...plan,
     fontFamily: getBlockFont(plan.key),
     fontWeight: getBlockFontWeight(plan.key, plan.styleKey),
@@ -568,9 +598,28 @@ export function buildPageExportPlan({
       styleDefinitions[plan.styleKey]?.baselineMultiplier ?? 1,
     ) * baselineStep,
     trackingScale: getBlockTrackingScale(plan.key),
+    trackingRuns: getBlockTrackingRuns(plan.key),
     opticalKerning: isBlockOpticalKerningEnabled(plan.key),
     textColor: parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 },
+    sourceText: textContent[plan.key] ?? "",
+    segmentLines: [],
   }))
+
+  for (const textPlan of textPlans) {
+    if (!textMeasureContext) continue
+    applyCanvasTextConfig(textMeasureContext, {
+      font: buildCanvasFont(textPlan.fontFamily, textPlan.fontWeight, textPlan.italic, textPlan.fontSize),
+      opticalKerning: textPlan.opticalKerning,
+    })
+    textPlan.segmentLines = textPlan.commands.map((command) => buildPositionedTrackingSegments(textMeasureContext, {
+      sourceText: textPlan.sourceText,
+      command,
+      textAlign: textPlan.textAlign,
+      baseTrackingScale: textPlan.trackingScale,
+      runs: textPlan.trackingRuns,
+      fontSize: textPlan.fontSize,
+    }))
+  }
 
   const resolvedOrderedLayerKeys = orderedLayerKeys.filter((key) =>
     imagePlans.some((plan) => plan.key === key) || textPlans.some((plan) => plan.key === key),

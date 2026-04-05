@@ -6,6 +6,7 @@ import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
 } from "@/lib/text-rendering"
+import { normalizeTextTrackingRuns, type TextTrackingRun } from "@/lib/text-tracking-runs"
 
 type ExistingBlockArgs<StyleKey extends string> = {
   key: string
@@ -22,6 +23,7 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getBlockTextColor: (key: string) => string
   getBlockFontWeight: (key: string) => number
   getBlockTrackingScale: (key: string) => number
+  getBlockTrackingRuns: (key: string) => TextTrackingRun[]
   getStyleLeading: (style: StyleKey) => number
   getStyleSize: (style: StyleKey) => number
   isBlockItalic: (key: string) => boolean
@@ -50,6 +52,7 @@ type NewBlockArgs<StyleKey extends string> = {
   italic?: boolean
   opticalKerning?: boolean
   trackingScale?: number
+  trackingRuns?: TextTrackingRun[]
   rotation?: number
   textEdited?: boolean
 }
@@ -69,6 +72,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getBlockTextColor,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   getStyleLeading,
   getStyleSize,
   isBlockItalic,
@@ -101,8 +105,15 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftItalic: isBlockItalic(key),
     draftOpticalKerning: isBlockOpticalKerningEnabled(key),
     draftTrackingScale: getBlockTrackingScale(key),
+    draftTrackingRuns: normalizeTextTrackingRuns(
+      textContent[key] ?? "",
+      getBlockTrackingRuns(key),
+      getBlockTrackingScale(key),
+    ),
     draftRotation: getBlockRotation(key),
     draftTextEdited: blockTextEdited[key] ?? true,
+    draftSelectionStart: 0,
+    draftSelectionEnd: 0,
   }
 }
 
@@ -124,12 +135,14 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   italic = false,
   opticalKerning = DEFAULT_OPTICAL_KERNING,
   trackingScale = DEFAULT_TRACKING_SCALE,
+  trackingRuns = [],
   rotation = 0,
   textEdited = false,
 }: NewBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
+  const normalizedText = normalizeInlineEditorText(text)
   return {
     target: key,
-    draftText: normalizeInlineEditorText(text),
+    draftText: normalizedText,
     draftStyle: style,
     draftFxSize: getStyleSize(fxStyle),
     draftFxLeading: getStyleLeading(fxStyle),
@@ -144,7 +157,10 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftItalic: italic,
     draftOpticalKerning: opticalKerning,
     draftTrackingScale: trackingScale,
+    draftTrackingRuns: normalizeTextTrackingRuns(normalizedText, trackingRuns, trackingScale),
     draftRotation: rotation,
     draftTextEdited: textEdited,
+    draftSelectionStart: 0,
+    draftSelectionEnd: 0,
   }
 }

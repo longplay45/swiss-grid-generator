@@ -19,6 +19,7 @@ import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 import { useBlockEditorCanvasDoubleClick } from "@/hooks/useBlockEditorCanvasDoubleClick"
 import type { Updater } from "@/hooks/useStateCommands"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 
 type EditorState = BlockEditorState<string>
 
@@ -61,6 +62,7 @@ type Args = {
     italic?: boolean
     opticalKerning?: boolean
     trackingScale?: number
+    trackingRuns?: readonly TextTrackingRun[]
     baselineMultiplierOverride?: number
     position?: ModulePosition
   }) => AutoFitResult
@@ -80,6 +82,7 @@ type Args = {
   getBlockFont: (key: string) => FontFamily
   getBlockFontWeight: (key: string) => number
   getBlockTrackingScale: (key: string) => number
+  getBlockTrackingRuns: (key: string) => TextTrackingRun[]
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
@@ -130,6 +133,7 @@ export function useBlockEditorActions({
   getBlockFont,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
@@ -154,6 +158,7 @@ export function useBlockEditorActions({
       italic: draft.draftItalic,
       opticalKerning: draft.draftOpticalKerning,
       trackingScale: draft.draftTrackingScale,
+      trackingRuns: draft.draftTrackingRuns,
       baselineMultiplierOverride: draft.draftStyle === "fx"
         ? clampFxLeading(draft.draftFxLeading) / resultGridUnit
         : undefined,
@@ -254,6 +259,7 @@ export function useBlockEditorActions({
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,
+    getBlockTrackingRuns,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,

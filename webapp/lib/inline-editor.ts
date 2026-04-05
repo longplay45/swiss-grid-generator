@@ -13,13 +13,15 @@ export type InlineEditorCommand = {
   text: string
   x: number
   y: number
+  sourceStart?: number
+  sourceEnd?: number
 }
 
 export type InlineEditorTextBoxInput = {
   rect: InlineEditorRect
   textAlign: InlineEditorTextAlign
   commands: InlineEditorCommand[]
-  measureText: (text: string) => number
+  measureText: (text: string, range?: { start: number; end: number }) => number
 }
 
 export type InlineEditorTextBox = {
@@ -42,7 +44,7 @@ export type InlineEditorCaretInput = {
   textBoxTop: number
   lineHeight: number
   caretHeight?: number
-  measureText: (text: string) => number
+  measureText: (text: string, range?: { start: number; end: number }) => number
 }
 
 export type InlineEditorCaret = {
@@ -71,7 +73,7 @@ export type InlineEditorLineLayoutInput = {
   commands: InlineEditorCommand[]
   textAscent: number
   lineHeight: number
-  measureText: (text: string) => number
+  measureText: (text: string, range?: { start: number; end: number }) => number
 }
 
 export type InlineEditorSelectionRectInput = InlineEditorLineLayoutInput & {
@@ -145,15 +147,18 @@ function clampSelectionIndex(text: string, index: number): number {
 }
 
 function getLineStartX(
-  line: Pick<InlineEditorLineMatch, "x" | "renderedText">,
+  line: Pick<InlineEditorLineMatch, "x" | "renderedText" | "sourceStart" | "sourceEnd">,
   textAlign: InlineEditorTextAlign,
-  measureText: (text: string) => number,
+  measureText: (text: string, range?: { start: number; end: number }) => number,
 ): number {
+  const range = typeof line.sourceStart === "number" && typeof line.sourceEnd === "number"
+    ? { start: line.sourceStart, end: line.sourceEnd }
+    : undefined
   if (textAlign === "center") {
-    return line.x - measureText(line.renderedText) / 2
+    return line.x - measureText(line.renderedText, range) / 2
   }
   if (textAlign === "right") {
-    return line.x - measureText(line.renderedText)
+    return line.x - measureText(line.renderedText, range)
   }
   return line.x
 }
@@ -162,7 +167,7 @@ function measurePrefixWidthForIndex(
   text: string,
   line: InlineEditorLineMatch,
   sourceIndex: number,
-  measureText: (text: string) => number,
+  measureText: (text: string, range?: { start: number; end: number }) => number,
 ): number {
   const clampedIndex = Math.max(line.sourceStart, Math.min(line.sourceEnd, sourceIndex))
   const sourcePrefix = text.slice(line.sourceStart, clampedIndex)
@@ -170,7 +175,7 @@ function measurePrefixWidthForIndex(
   const renderedPrefix = clampedIndex >= line.sourceEnd && line.renderedText.endsWith("-")
     ? line.renderedText
     : normalizedPrefix
-  return measureText(renderedPrefix)
+  return measureText(renderedPrefix, { start: line.sourceStart, end: clampedIndex })
 }
 
 function getActiveLineIndexForSelection(
@@ -199,7 +204,11 @@ export function computeInlineEditorTextBox({
 
   for (const command of commands) {
     const renderedText = normalizeVisibleText(command.text)
-    const renderedWidth = measureText(renderedText)
+    const renderedWidth = measureText(renderedText, (
+      typeof command.sourceStart === "number" && typeof command.sourceEnd === "number"
+        ? { start: command.sourceStart, end: command.sourceEnd }
+        : undefined
+    ))
     const lineLeft = textAlign === "right"
       ? command.x - renderedWidth
       : textAlign === "center"
@@ -274,7 +283,7 @@ export function buildInlineEditorLineLayouts({
       ...line,
       left,
       top: line.y - textAscent,
-      width: measureText(line.renderedText),
+      width: measureText(line.renderedText, { start: line.sourceStart, end: line.sourceEnd }),
       height: lineHeight,
     }
   })

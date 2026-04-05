@@ -5,9 +5,11 @@ import {
   buildCanvasFont,
   drawCanvasText,
 } from "@/lib/text-rendering"
+import { buildPositionedTrackingSegments, type TextTrackingRun } from "@/lib/text-tracking-runs"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { resolveScaledCanvasFontSize } from "./canvas-render-math.ts"
+import type { WrappedTextLine } from "./text-layout.ts"
 
 export type CanvasImageRenderPlan = {
   rect: BlockRect
@@ -86,6 +88,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   isBlockItalic: (key: BlockId, styleKey: StyleKey) => boolean
   isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   getBlockTrackingScale: (key: BlockId) => number
+  getBlockTrackingRuns: (key: BlockId) => TextTrackingRun[]
   getBlockTextColor: (key: BlockId) => string
   getWrappedText: (
     ctx: CanvasRenderingContext2D,
@@ -94,7 +97,8 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
     hyphenate: boolean,
     trackingScale: number,
     opticalKerning: boolean,
-  ) => string[]
+    trackingRuns?: readonly TextTrackingRun[],
+  ) => WrappedTextLine[]
   getOpticalOffset: (
     ctx: CanvasRenderingContext2D,
     key: BlockId,
@@ -208,6 +212,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   getBlockTextColor,
   getWrappedText,
   getOpticalOffset,
@@ -277,6 +282,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         hyphenate,
         getBlockTrackingScale(key),
         isBlockOpticalKerningEnabled(key),
+        getBlockTrackingRuns(key),
       )
     ),
     textAscent: ({ context, fontSize }) => getCanvasTextAscentPx(context, fontSize),
@@ -301,11 +307,20 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const blockItalic = isBlockItalic(plan.key, plan.styleKey)
     const opticalKerning = isBlockOpticalKerningEnabled(plan.key)
     const trackingScale = getBlockTrackingScale(plan.key)
+    const trackingRuns = getBlockTrackingRuns(plan.key)
     applyCanvasTextConfig(ctx, {
       font: buildCanvasFont(blockFont, blockFontWeight, blockItalic, plan.fontSize),
       opticalKerning,
     })
     const planFont = ctx.font
+    const segmentLines = plan.commands.map((command) => buildPositionedTrackingSegments(ctx, {
+      sourceText: textContent[plan.key] ?? "",
+      command,
+      textAlign: plan.textAlign,
+      baseTrackingScale: trackingScale,
+      runs: trackingRuns,
+      fontSize: plan.fontSize,
+    }))
     textPlans.set(plan.key, {
       key: plan.key,
       rect: plan.rect,
@@ -344,6 +359,9 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       rotationOriginY: plan.rotationOriginY,
       opticalKerning,
       trackingScale,
+      trackingRuns,
+      sourceText: textContent[plan.key] ?? "",
+      segmentLines,
       commands: plan.commands,
     })
   }
@@ -396,19 +414,22 @@ export function drawCanvasLayerStack<Key extends string>(
       font: textPlan.font,
       opticalKerning: textPlan.opticalKerning,
     })
-    ctx.textAlign = textPlan.textAlign
-    for (const command of textPlan.commands) {
-      drawCanvasText(ctx, {
-        text: command.text,
-        x: command.x,
-        y: command.y,
-        trackingScale: textPlan.trackingScale,
-        blockRotation: textPlan.blockRotation,
-        rotationOrigin: {
-          x: textPlan.rotationOriginX,
-          y: textPlan.rotationOriginY,
-        },
-      })
+    ctx.textAlign = "left"
+    for (const lineSegments of textPlan.segmentLines) {
+      for (const segment of lineSegments) {
+        drawCanvasText(ctx, {
+          text: segment.text,
+          x: segment.x,
+          y: segment.y,
+          textAlign: "left",
+          trackingScale: segment.trackingScale,
+          blockRotation: textPlan.blockRotation,
+          rotationOrigin: {
+            x: textPlan.rotationOriginX,
+            y: textPlan.rotationOriginY,
+          },
+        })
+      }
     }
   }
 }

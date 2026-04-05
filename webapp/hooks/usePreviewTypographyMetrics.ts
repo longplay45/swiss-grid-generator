@@ -4,7 +4,7 @@ import {
   clearOpticalMarginMeasurementCache,
   getOpticalMarginAnchorOffset,
 } from "@/lib/optical-margin"
-import { wrapText } from "@/lib/text-layout"
+import { wrapTextDetailed, type WrappedTextLine } from "@/lib/text-layout"
 import {
   measureCanvasTextWidth,
   DEFAULT_TRACKING_SCALE,
@@ -12,6 +12,11 @@ import {
   setCanvasFontKerning,
 } from "@/lib/text-rendering"
 import type { FontFamily } from "@/lib/config/fonts"
+import {
+  measureTrackedTextRangeWidth,
+  normalizeTextTrackingRuns,
+  type TextTrackingRun,
+} from "@/lib/text-tracking-runs"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
 type Args<Key extends string, StyleKey extends string> = {
@@ -40,7 +45,7 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
   scale,
 }: Args<Key, StyleKey>) {
   const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
-  const wrapTextCacheRef = useRef<Map<string, string[]>>(new Map())
+  const wrapTextCacheRef = useRef<Map<string, WrappedTextLine[]>>(new Map())
   const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
 
@@ -111,11 +116,29 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     text: string,
     trackingScale: number,
     opticalKerning: boolean,
+    sourceText = text,
+    trackingRuns: readonly TextTrackingRun[] = [],
+    range?: { start: number; end: number },
   ): number => {
     const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${text}`
+    const normalizedRuns = normalizeTextTrackingRuns(sourceText, trackingRuns, normalizedTrackingScale)
+    const rangeKey = range ? `${range.start}:${range.end}` : "-"
+    const runsKey = normalizedRuns.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${rangeKey}::${runsKey}::${text}`
     return makeCachedValue(measureWidthCacheRef.current, key, () => {
       setCanvasFontKerning(ctx, opticalKerning)
+      if (range && normalizedRuns.length > 0) {
+        const sizeMatch = ctx.font.match(/(\d+(?:\.\d+)?)px/)
+        const fontSize = sizeMatch ? Number(sizeMatch[1]) : 0
+        return measureTrackedTextRangeWidth(ctx, {
+          sourceText,
+          renderedText: text,
+          range,
+          baseTrackingScale: normalizedTrackingScale,
+          runs: normalizedRuns,
+          fontSize,
+        })
+      }
       return measureCanvasTextWidth(ctx, text, normalizedTrackingScale)
     })
   }, [makeCachedValue])
@@ -127,18 +150,24 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     hyphenate: boolean,
     trackingScale: number,
     opticalKerning: boolean,
-  ): string[] => {
+    trackingRuns: readonly TextTrackingRun[] = [],
+  ): WrappedTextLine[] => {
     const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
+    const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, normalizedTrackingScale)
+    const runsKey = normalizedRuns.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
     const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
-      wrapText(text, maxWidth, hyphenate, (sample) => getMeasuredTextWidth(
+      wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => getMeasuredTextWidth(
         ctx,
         sample,
         normalizedTrackingScale,
         opticalKerning,
+        text,
+        normalizedRuns,
+        range,
       )),
     )
-    return [...cached]
+    return cached.map((line) => ({ ...line }))
   }, [getMeasuredTextWidth, makeCachedValue])
 
   const getOpticalOffset = useCallback((

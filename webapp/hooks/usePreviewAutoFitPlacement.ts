@@ -5,7 +5,9 @@ import type { FontFamily } from "@/lib/config/fonts"
 import type { GridResult } from "@/lib/grid-calculator"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import { applyCanvasTextConfig, buildCanvasFont } from "@/lib/text-rendering"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition } from "@/lib/types/preview-layout"
+import type { WrappedTextLine } from "@/lib/text-layout"
 
 type Args<Key extends string, StyleKey extends string> = {
   canvasRef: RefObject<HTMLCanvasElement | null>
@@ -23,11 +25,13 @@ type Args<Key extends string, StyleKey extends string> = {
     hyphenate: boolean,
     trackingScale: number,
     opticalKerning: boolean,
-  ) => string[]
+    trackingRuns?: readonly TextTrackingRun[],
+  ) => WrappedTextLine[]
   getBlockFontSize: (key: Key, styleKey: StyleKey) => number
   getBlockFont: (key: Key) => FontFamily
   getBlockFontWeight: (key: Key) => number
   getBlockTrackingScale: (key: Key) => number
+  getBlockTrackingRuns: (key: Key) => TextTrackingRun[]
   isBlockItalic: (key: Key) => boolean
   isBlockOpticalKerningEnabled: (key: Key) => boolean
 }
@@ -42,6 +46,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
   getBlockFont,
   getBlockFontWeight,
   getBlockTrackingScale,
+  getBlockTrackingRuns,
   isBlockItalic,
   isBlockOpticalKerningEnabled,
 }: Args<Key, StyleKey>) {
@@ -57,6 +62,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     italic,
     opticalKerning,
     trackingScale,
+    trackingRuns,
     baselineMultiplierOverride,
     position,
   }: {
@@ -71,6 +77,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
       italic?: boolean
       opticalKerning?: boolean
       trackingScale?: number
+      trackingRuns?: readonly TextTrackingRun[]
       baselineMultiplierOverride?: number
       position?: ModulePosition | null
   }): { span: number; position: ModulePosition | null } | null => {
@@ -119,6 +126,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     const resolvedItalic = italic ?? isBlockItalic(key)
     const resolvedOpticalKerning = opticalKerning ?? isBlockOpticalKerningEnabled(key)
     const resolvedTrackingScale = trackingScale ?? getBlockTrackingScale(key)
+    const resolvedTrackingRuns = trackingRuns ?? getBlockTrackingRuns(key)
     applyCanvasTextConfig(ctx, {
       font: buildCanvasFont(resolvedFontFamily, resolvedFontWeight, resolvedItalic, fontSize),
       opticalKerning: resolvedOpticalKerning,
@@ -134,6 +142,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
       syllableDivision,
       resolvedTrackingScale,
       resolvedOpticalKerning,
+      resolvedTrackingRuns,
     )
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
@@ -149,6 +158,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,
+    getBlockTrackingRuns,
     getBlockFontSize,
     getGridMetrics,
     getWrappedText,

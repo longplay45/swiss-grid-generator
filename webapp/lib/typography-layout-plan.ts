@@ -1,4 +1,5 @@
 import { sumAxisSpan } from "@/lib/grid-rhythm"
+import type { WrappedTextLine } from "@/lib/text-layout"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
 export type { TextAlignMode }
@@ -14,6 +15,8 @@ export type TextDrawCommand = {
   text: string
   x: number
   y: number
+  sourceStart?: number
+  sourceEnd?: number
 }
 
 type TypographyStyleDefinition = {
@@ -81,7 +84,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
     text: string
     maxWidth: number
     hyphenate: boolean
-  }) => string[]
+  }) => WrappedTextLine[]
   textAscent: (args: { context: Context; key: BlockId; styleKey: StyleKey; fontSize: number }) => number
   opticalOffset: (args: {
     context: Context
@@ -296,8 +299,14 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const y = lineTopY + ascent
         if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
-        const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
-        commands.push({ text: line, x: anchorX + offsetX, y })
+        const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
+        commands.push({
+          text: line.text,
+          x: anchorX + offsetX,
+          y,
+          sourceStart: line.sourceStart,
+          sourceEnd: line.sourceEnd,
+        })
       }
     } else {
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
@@ -316,8 +325,14 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const y = lineTopY + ascent
         if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
-        const offsetX = opticalOffset({ context, key, styleKey, line, align: textAlign, fontSize })
-        commands.push({ text: line, x: anchorX + offsetX, y })
+        const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
+        commands.push({
+          text: line.text,
+          x: anchorX + offsetX,
+          y,
+          sourceStart: line.sourceStart,
+          sourceEnd: line.sourceEnd,
+        })
       }
     }
 
@@ -442,11 +457,17 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         context: captionContext,
         key: captionKey,
         styleKey: captionStyleKey,
-        line,
+        line: line.text,
         align: captionAlign,
         fontSize: captionFontSize,
       })
-      captionCommands.push({ text: line, x: captionAnchorX + offsetX, y })
+      captionCommands.push({
+        text: line.text,
+        x: captionAnchorX + offsetX,
+        y,
+        sourceStart: line.sourceStart,
+        sourceEnd: line.sourceEnd,
+      })
     }
   } else {
     for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
@@ -465,11 +486,17 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         context: captionContext,
         key: captionKey,
         styleKey: captionStyleKey,
-        line,
+        line: line.text,
         align: captionAlign,
         fontSize: captionFontSize,
       })
-      captionCommands.push({ text: line, x: captionAnchorX + offsetX, y })
+      captionCommands.push({
+        text: line.text,
+        x: captionAnchorX + offsetX,
+        y,
+        sourceStart: line.sourceStart,
+        sourceEnd: line.sourceEnd,
+      })
     }
   }
 

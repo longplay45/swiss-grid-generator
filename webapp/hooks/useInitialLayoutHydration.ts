@@ -5,6 +5,7 @@ import type { FontFamily } from "@/lib/config/fonts"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import { toTextBlockPosition } from "@/lib/text-block-position"
 import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
+import { normalizeTextTrackingRuns, type TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, BlockKey extends string> = {
@@ -32,6 +33,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockFontWeights: Partial<Record<BlockKey, number>>
     blockOpticalKerning: Partial<Record<BlockKey, boolean>>
     blockTrackingScales: Partial<Record<BlockKey, number>>
+    blockTrackingRuns: Partial<Record<BlockKey, TextTrackingRun[]>>
     blockColumnSpans: Partial<Record<BlockKey, number>>
     blockRowSpans: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
@@ -163,11 +165,20 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
 
     const nextTrackingScales = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockTrackingScales?.[key]
-      if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+      if (typeof raw === "number" && Number.isFinite(raw) && raw !== 0) {
         acc[key] = normalizeTrackingScale(raw)
       }
       return acc
     }, {} as Record<BlockKey, number>)
+    const nextTrackingRuns = normalizedKeys.reduce((acc, key) => {
+      const runs = normalizeTextTrackingRuns(
+        nextTextContent[key] ?? "",
+        initialLayout.blockTrackingRuns?.[key],
+        nextTrackingScales[key] ?? 0,
+      )
+      if (runs.length > 0) acc[key] = runs
+      return acc
+    }, {} as Record<BlockKey, TextTrackingRun[]>)
 
     const nextItalic = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockItalic?.[key]
@@ -208,6 +219,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockFontWeights: nextFontWeights,
       blockOpticalKerning: nextOpticalKerning,
       blockTrackingScales: nextTrackingScales,
+      blockTrackingRuns: nextTrackingRuns,
       blockColumnSpans: nextSpans,
       blockRowSpans: nextRows,
       blockTextAlignments: nextAlignments,

@@ -9,6 +9,7 @@ import {
   DEFAULT_TRACKING_SCALE,
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
+import { normalizeTextTrackingRuns } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextBlockPosition } from "@/lib/types/layout-primitives"
 
 export type PreviewTextLayerCollectionsState<
@@ -174,6 +175,17 @@ export function applyBlockEditorDraftToCollections<
   } else {
     nextTrackingScales[draft.target as Key] = normalizedTrackingScale
   }
+  const nextTrackingRuns = { ...current.blockTrackingRuns }
+  const normalizedTrackingRuns = normalizeTextTrackingRuns(
+    draft.draftText,
+    draft.draftTrackingRuns,
+    normalizedTrackingScale,
+  )
+  if (normalizedTrackingRuns.length === 0) {
+    delete nextTrackingRuns[draft.target as Key]
+  } else {
+    nextTrackingRuns[draft.target as Key] = normalizedTrackingRuns
+  }
 
   const nextRotations = { ...current.blockRotations }
   const clampedRotation = clampRotation(draft.draftRotation)
@@ -225,6 +237,7 @@ export function applyBlockEditorDraftToCollections<
     blockFontWeights: nextFontWeights,
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
+    blockTrackingRuns: nextTrackingRuns,
     blockColumnSpans: {
       ...current.blockColumnSpans,
       [draft.target as Key]: draft.draftColumns,
@@ -317,6 +330,9 @@ export function insertTextLayerIntoCollections<
       ...current.blockSyllableDivision,
       [newKey]: syllableDivision,
     },
+    blockTrackingRuns: {
+      ...current.blockTrackingRuns,
+    },
     blockModulePositions: {
       ...current.blockModulePositions,
       [newKey]: clampTextBlockAnchorPosition({
@@ -387,6 +403,17 @@ export function duplicateTextLayerInCollections<
   } else {
     delete nextTrackingScales[newKey]
   }
+  const nextTrackingRuns = { ...current.blockTrackingRuns }
+  const sourceTrackingRuns = current.blockTrackingRuns[sourceKey]
+  if (Array.isArray(sourceTrackingRuns) && sourceTrackingRuns.length > 0) {
+    nextTrackingRuns[newKey] = normalizeTextTrackingRuns(
+      current.textContent[sourceKey] ?? "",
+      sourceTrackingRuns,
+      current.blockTrackingScales[sourceKey] ?? DEFAULT_TRACKING_SCALE,
+    )
+  } else {
+    delete nextTrackingRuns[newKey]
+  }
 
   const nextRotations = { ...current.blockRotations }
   const sourceRotation = current.blockRotations[sourceKey]
@@ -415,6 +442,7 @@ export function duplicateTextLayerInCollections<
     blockFontWeights: nextFontWeights,
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
+    blockTrackingRuns: nextTrackingRuns,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: {

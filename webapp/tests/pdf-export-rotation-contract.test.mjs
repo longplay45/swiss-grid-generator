@@ -69,10 +69,10 @@ test("pdf export applies tracking through charSpace instead of horizontal scalin
   assert.match(source, /pdf\.text\(line,\s*point\.x,\s*point\.y,\s*\{[\s\S]*?charSpace:\s*getTrackingLetterSpacing\(fontSize\s*\*\s*scale,\s*trackingScale\)[\s\S]*?\}\)/)
 })
 
-test("pdf export manually right-aligns text anchors before draw to avoid rotated alignment drift", () => {
+test("pdf export draws pre-positioned tracking segments with explicit left anchors", () => {
   const source = readText("lib/pdf-vector-export.ts")
-  assert.match(source, /const\s+drawAlign:\s*TextAlignMode\s*=\s*plan\.textAlign\s*===\s*"right"\s*\?\s*"left"\s*:\s*plan\.textAlign/)
-  assert.match(source, /const\s+drawX\s*=\s*plan\.textAlign\s*===\s*"right"[\s\S]*?command\.x\s*-\s*measureWidthSource\(command\.text\)/)
+  assert.match(source, /for\s*\(const\s+segments\s+of\s+plan\.segmentLines\)/)
+  assert.match(source, /drawText\(\s*segment\.text,\s*segment\.x,\s*segment\.y,\s*"left",/)
 })
 
 test("pdf export action forwards placeholder visibility and active image color scheme", () => {

@@ -18,6 +18,10 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import {
+  measureTrackedTextRangeWidth,
+  remapTrackingRunsForTextEdit,
+} from "@/lib/text-tracking-runs"
+import {
   useCallback,
   useEffect,
   useRef,
@@ -51,6 +55,8 @@ export type InlineEditorLayout = {
     text: string
     x: number
     y: number
+    sourceStart?: number
+    sourceEnd?: number
   }>
 }
 
@@ -171,6 +177,24 @@ export function InlineBlockTextarea<StyleKey extends string>({
     return () => window.cancelAnimationFrame(frame)
   }, [editorState, readTextareaSelection, textareaRef])
 
+  useEffect(() => {
+    if (!editorState) return
+    setEditorState((prev) => {
+      if (!prev || prev.target !== editorState.target) return prev
+      if (
+        prev.draftSelectionStart === selection.start
+        && prev.draftSelectionEnd === selection.end
+      ) {
+        return prev
+      }
+      return {
+        ...prev,
+        draftSelectionStart: selection.start,
+        draftSelectionEnd: selection.end,
+      }
+    })
+  }, [editorState, selection.end, selection.start, setEditorState])
+
   if (!editorState || !layout) return null
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
   const styleFontSize = isFxStyle(editorState.draftStyle) ? editorState.draftFxSize : fallbackStyleSize
@@ -200,7 +224,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     ? fontMetrics.actualBoundingBoxDescent
     : Math.max(1, scaledLeading - editorTextAscent)
   const caretHeight = Math.max(1, Math.min(scaledLeading, editorTextAscent + editorTextDescent))
-  const measureText = (text: string) => {
+  const measureText = (text: string, range?: { start: number; end: number }) => {
     if (typeof document === "undefined") return 0
     if (!measureContextRef.current) {
       measureContextRef.current = document.createElement("canvas").getContext("2d")
@@ -211,6 +235,16 @@ export function InlineBlockTextarea<StyleKey extends string>({
       font: canvasFont,
       opticalKerning: editorState.draftOpticalKerning,
     })
+    if (range && editorState.draftTrackingRuns.length > 0) {
+      return measureTrackedTextRangeWidth(ctx, {
+        sourceText: editorState.draftText,
+        renderedText: text,
+        range,
+        baseTrackingScale: trackingScale,
+        runs: editorState.draftTrackingRuns,
+        fontSize: scaledFontSize,
+      })
+    }
     return measureCanvasTextWidth(ctx, text, trackingScale, scaledFontSize)
   }
   const fxCaretOffsetY = isFxStyle(editorState.draftStyle)
@@ -449,13 +483,22 @@ export function InlineBlockTextarea<StyleKey extends string>({
             onKeyUp={() => syncSelectionFromTextarea(true)}
             onChange={(event) => {
               const value = normalizeInlineEditorText(event.target.value)
+              const nextSelection = readTextareaSelection(event.target, true)
               setEditorState((prev) => prev ? {
                 ...prev,
                 draftText: value,
+                draftTrackingRuns: remapTrackingRunsForTextEdit(
+                  prev.draftText,
+                  value,
+                  prev.draftTrackingRuns,
+                  prev.draftTrackingScale,
+                ),
                 draftTextEdited: true,
+                draftSelectionStart: nextSelection.start,
+                draftSelectionEnd: nextSelection.end,
               } : prev)
               keyboardDesiredXRef.current = null
-              setSelection(readTextareaSelection(event.target, true))
+              setSelection(nextSelection)
             }}
             onKeyDown={(event) => {
               const isVisualNavigationKey = event.key === "Home"

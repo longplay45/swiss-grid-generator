@@ -3,6 +3,7 @@ import {
   buildResolvedSnapshotState,
   normalizeSnapshotStateForApply,
 } from "@/lib/preview-layout-snapshot"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 
 export type SnapshotState<
   Key extends string,
@@ -25,6 +26,7 @@ export type SnapshotState<
   blockFontWeights: Partial<Record<Key, number>>
   blockOpticalKerning: Partial<Record<Key, boolean>>
   blockTrackingScales: Partial<Record<Key, number>>
+  blockTrackingRuns: Partial<Record<Key, TextTrackingRun[]>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
 }

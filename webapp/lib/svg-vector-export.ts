@@ -44,12 +44,6 @@ function quoteAttr(value: string): string {
   return escapeXml(value)
 }
 
-function getTextAnchor(align: "left" | "center" | "right"): "start" | "middle" | "end" {
-  if (align === "center") return "middle"
-  if (align === "right") return "end"
-  return "start"
-}
-
 function renderRotationTransform(rotation: number, originX: number, originY: number): string {
   if (Math.abs(rotation) <= 0.0001) return ""
   return ` transform="rotate(${formatNumber(rotation)} ${formatNumber(originX)} ${formatNumber(originY)})"`
@@ -120,20 +114,27 @@ export function renderSwissGridVectorSvg({
 
     const textPlan = textPlans.get(key)
     if (!textPlan) return ""
-    const tracking = textPlan.trackingScale === 0
-      ? ""
-      : ` letter-spacing="${formatNumber((textPlan.fontSize * textPlan.trackingScale) / 1000)}"`
     const kerning = textPlan.opticalKerning ? ` font-kerning="normal"` : ` font-kerning="none"`
     const rotationTransform = renderRotationTransform(
       textPlan.blockRotation,
       textPlan.rotationOriginX,
       textPlan.rotationOriginY,
     )
-    const lines = textPlan.commands.map((command) => (
-      `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" xml:space="preserve">${escapeXml(command.text)}</text>`
-    )).join("")
+    const lines = textPlan.segmentLines.map((segments, lineIndex) => {
+      if (segments.length === 0) {
+        const command = textPlan.commands[lineIndex]
+        if (!command) return ""
+        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" xml:space="preserve">${escapeXml(command.text)}</text>`
+      }
+      return segments.map((segment) => {
+        const tracking = segment.trackingScale === 0
+          ? ""
+          : ` letter-spacing="${formatNumber((textPlan.fontSize * segment.trackingScale) / 1000)}"`
+        return `<text x="${formatNumber(segment.x)}" y="${formatNumber(segment.y)}" xml:space="preserve"${tracking}>${escapeXml(segment.text)}</text>`
+      }).join("")
+    }).join("")
     return (
-      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" text-anchor="${getTextAnchor(textPlan.textAlign)}"${tracking}${kerning}${rotationTransform}>${lines}</g>`
+      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" text-anchor="start"${kerning}${rotationTransform}>${lines}</g>`
     )
   }).join("")
 

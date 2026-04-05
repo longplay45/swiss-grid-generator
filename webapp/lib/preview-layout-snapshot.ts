@@ -4,6 +4,7 @@ import {
   normalizeOpticalKerning,
   normalizeTrackingScale,
 } from "./text-rendering.ts"
+import { normalizeTextTrackingRuns } from "./text-tracking-runs.ts"
 
 type ResolvedSnapshotState<
   Key extends string,
@@ -20,6 +21,7 @@ type ResolvedSnapshotState<
   blockFontWeights: Record<Key, number>
   blockOpticalKerning: Record<Key, boolean>
   blockTrackingScales: Record<Key, number>
+  blockTrackingRuns: Partial<Record<Key, ReturnType<typeof normalizeTextTrackingRuns>>>
   blockItalic: Record<Key, boolean>
   blockRotations: Record<Key, number>
 }
@@ -91,6 +93,15 @@ export function buildResolvedSnapshotState<
     acc[key] = getBlockTrackingScale(key)
     return acc
   }, {} as Record<Key, number>)
+  const resolvedTrackingRuns = state.blockOrder.reduce((acc, key) => {
+    const nextRuns = normalizeTextTrackingRuns(
+      state.textContent[key] ?? "",
+      state.blockTrackingRuns?.[key],
+      resolvedTrackingScales[key] ?? 0,
+    )
+    if (nextRuns.length > 0) acc[key] = nextRuns
+    return acc
+  }, {} as Partial<Record<Key, ReturnType<typeof normalizeTextTrackingRuns>>>)
   const resolvedItalic = state.blockOrder.reduce((acc, key) => {
     acc[key] = isBlockItalic(key)
     return acc
@@ -110,6 +121,7 @@ export function buildResolvedSnapshotState<
     blockFontWeights: resolvedFontWeights,
     blockOpticalKerning: resolvedOpticalKerning,
     blockTrackingScales: resolvedTrackingScales,
+    blockTrackingRuns: resolvedTrackingRuns,
     blockColumnSpans: resolvedSpans,
     blockRowSpans: resolvedRows,
     blockTextAlignments: resolvedAlignments,
@@ -154,11 +166,20 @@ export function normalizeSnapshotStateForApply<
   }, {} as Partial<Record<Key, boolean>>)
   const nextTrackingScales = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockTrackingScales?.[key]
-    if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+    if (typeof raw === "number" && Number.isFinite(raw) && raw !== 0) {
       acc[key] = normalizeTrackingScale(raw)
     }
     return acc
   }, {} as Partial<Record<Key, number>>)
+  const nextTrackingRuns = state.blockOrder.reduce((acc, key) => {
+    const runs = normalizeTextTrackingRuns(
+      state.textContent[key] ?? "",
+      state.blockTrackingRuns?.[key],
+      nextTrackingScales[key] ?? 0,
+    )
+    if (runs.length > 0) acc[key] = runs
+    return acc
+  }, {} as Partial<Record<Key, ReturnType<typeof normalizeTextTrackingRuns>>>)
   const nextItalic = state.blockOrder.reduce((acc, key) => {
     const raw = state.blockItalic?.[key]
     if (raw === true || raw === false) acc[key] = raw
@@ -182,6 +203,7 @@ export function normalizeSnapshotStateForApply<
     blockFontWeights: nextFontWeights,
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
+    blockTrackingRuns: nextTrackingRuns,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: { ...state.blockColumnSpans },

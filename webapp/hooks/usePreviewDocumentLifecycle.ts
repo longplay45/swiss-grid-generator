@@ -4,6 +4,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react"
 import { getClosestImageSchemeColorToken, type ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 
@@ -16,6 +17,7 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockFontWeights: Partial<Record<Key, number>>
   blockOpticalKerning: Partial<Record<Key, boolean>>
   blockTrackingScales: Partial<Record<Key, number>>
+  blockTrackingRuns: Partial<Record<Key, TextTrackingRun[]>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>

@@ -1,3 +1,5 @@
+import type { TextRange } from "@/lib/text-tracking-runs"
+
 function isVowel(char: string): boolean {
   return /[aeiouy]/i.test(char)
 }
@@ -51,7 +53,7 @@ function splitIntoEnglishSyllables(word: string): string[] {
 function hyphenateByChars(
   word: string,
   maxWidth: number,
-  measureWidth: (text: string) => number,
+  measureWidth: (text: string, range?: TextRange) => number,
 ): string[] {
   const parts: string[] = []
   let start = 0
@@ -86,7 +88,7 @@ function hyphenateByChars(
 export function hyphenateWordEnglish(
   word: string,
   maxWidth: number,
-  measureWidth: (text: string) => number,
+  measureWidth: (text: string, range?: TextRange) => number,
 ): string[] {
   const syllables = splitIntoEnglishSyllables(word)
   if (syllables.length < 2) {
@@ -126,4 +128,3 @@ export function hyphenateWordEnglish(
 
   return parts
 }
-
