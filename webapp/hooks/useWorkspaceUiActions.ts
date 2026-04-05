@@ -142,10 +142,6 @@ export function useWorkspaceUiActions({
     dispatch({ type: "SET", key: "exportRegistrationMarks", value })
   }, [dispatch])
 
-  const setExportFinalSafeGuides = useCallback((value: boolean) => {
-    dispatch({ type: "SET", key: "exportFinalSafeGuides", value })
-  }, [dispatch])
-
   const setShowLayers = useCallback((value: boolean) => {
     dispatch({ type: "SET", key: "showLayers", value })
   }, [dispatch])
@@ -197,7 +193,6 @@ export function useWorkspaceUiActions({
     setExportPrintPro,
     setExportBleedMm,
     setExportRegistrationMarks,
-    setExportFinalSafeGuides,
     setShowLayers,
     toggleShowBaselines,
     toggleShowMargins,

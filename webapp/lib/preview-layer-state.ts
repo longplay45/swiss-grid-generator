@@ -82,6 +82,7 @@ export function removeLayerFromPreviewLayout<
       imageColumnSpans: omitOptionalRecordKey(layout.imageColumnSpans, key),
       imageRowSpans: omitOptionalRecordKey(layout.imageRowSpans, key),
       imageColors: omitOptionalRecordKey(layout.imageColors, key),
+      imageOpacities: omitOptionalRecordKey(layout.imageOpacities, key),
     }
   }
 

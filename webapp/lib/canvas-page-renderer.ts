@@ -33,6 +33,7 @@ import type { WrappedTextLine } from "./text-layout.ts"
 export type CanvasImageRenderPlan = {
   rect: BlockRect
   color: string
+  opacity: number
 }
 
 type ImageDragState<Key extends string> = {
@@ -52,6 +53,7 @@ type BuildCanvasImagePlansArgs<Key extends string> = {
   getImageSpan: (key: Key) => number
   getImageRows: (key: Key) => number
   getImageColor: (key: Key) => string
+  getImageOpacity: (key: Key) => number
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   toColumnX: (col: number) => number
   baselineOriginTop: number
@@ -330,6 +332,7 @@ export function buildCanvasImagePlans<Key extends string>({
   getImageSpan,
   getImageRows,
   getImageColor,
+  getImageOpacity,
   clampImageBaselinePosition,
   toColumnX,
   baselineOriginTop,
@@ -368,7 +371,7 @@ export function buildCanvasImagePlans<Key extends string>({
       height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale,
     }
     imageRects[key] = rect
-    imagePlans.set(key, { rect, color: getImageColor(key) })
+    imagePlans.set(key, { rect, color: getImageColor(key), opacity: getImageOpacity(key) })
   }
 
   return { imagePlans, imageRects }
@@ -646,7 +649,7 @@ export function drawCanvasLayerStack<Key extends string>(
     const imagePlan = imagePlans.get(key)
     if (imagePlan) {
       ctx.fillStyle = imagePlan.color
-      ctx.globalAlpha = 0.92
+      ctx.globalAlpha = imagePlan.opacity
       ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
       ctx.globalAlpha = 1
       continue

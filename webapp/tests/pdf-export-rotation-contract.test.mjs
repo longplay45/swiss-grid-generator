@@ -33,10 +33,21 @@ test("page export plan only emits a page outline when guide layers are visible",
   assert.match(source, /const\s+pageOutline\s*=\s*showPageOutline/)
 })
 
+test("page export plan resolves paragraph and inline text colors through the text-scheme fallback, not the image placeholder fallback", () => {
+  const source = readText("lib/page-export-plan.ts")
+  assert.match(source, /getDefaultTextSchemeColor/)
+  assert.match(source, /resolveTextSchemeColor/)
+  assert.match(source, /const\s+defaultTextColor\s*=\s*getDefaultTextSchemeColor\(imageColorScheme\)/)
+  assert.match(source, /const\s+resolveExportTextColor\s*=\s*\(value:\s*unknown\)\s*=>\s*resolveTextSchemeColor\(value,\s*imageColorScheme\)/)
+  assert.match(source, /const\s+getResolvedBlockTextColor\s*=\s*\(key:\s*BlockId\)\s*=>\s*\(\s*resolveExportTextColor\(blockTextColors\[key\]\s*\?\?\s*defaultTextColor\)\s*\)/)
+  assert.match(source, /blockTextFormatRuns\[key\]\s*\?\?\s*\[\]\)\.map\(\(run\)\s*=>\s*\(\s*run\.color\s*===\s*undefined\s*\?\s*run\s*:\s*\{\s*\.\.\.run,\s*color:\s*resolveExportTextColor\(run\.color\)\s*\}\s*\)\)/)
+})
+
 test("pdf export consumes the shared page export plan instead of rebuilding layout inline", () => {
   const source = readText("lib/pdf-vector-export.ts")
   assert.match(source, /import\s+\{\s*buildPageExportPlan\s*\}\s+from\s+"@\/lib\/page-export-plan"/)
-  assert.match(source, /const\s+exportPlan\s*=\s*buildPageExportPlan\(\{[\s\S]*?showBaselines,[\s\S]*?showModules,[\s\S]*?showMargins,[\s\S]*?showImagePlaceholders,[\s\S]*?showTypography,[\s\S]*?monochromeGuides:/)
+  assert.match(source, /const\s+exportPlan\s*=\s*buildPageExportPlan\(\{[\s\S]*?showBaselines,[\s\S]*?showModules,[\s\S]*?showMargins,[\s\S]*?showImagePlaceholders,[\s\S]*?showTypography,/)
+  assert.doesNotMatch(source, /monochromeGuides/)
 })
 
 test("pdf export keeps text rotation direction aligned with canvas preview", () => {
@@ -108,6 +119,16 @@ test("pdf export switches between rgb and cmyk setters based on export color mod
   assert.match(source, /function\s+rgbToCmyk\(/)
 })
 
+test("pdf export constructs real jsPDF graphics-state instances before registering opacity states", () => {
+  const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /type\s+PdfGraphicsStateParameters\s*=\s*\{\s*opacity\?:\s*number;\s*"stroke-opacity"\?:\s*number\s*\}/)
+  assert.match(source, /type\s+PdfGraphicsStateConstructor\s*=\s*new\s*\(parameters:\s*PdfGraphicsStateParameters\)\s*=>\s*PdfGraphicsState/)
+  assert.match(source, /typeof\s+opacityPdf\.GState\s*!==\s*"function"/)
+  assert.match(source, /const\s+gState\s*=\s*new\s+opacityPdf\.GState\(\{\s*[\s\S]*?opacity:\s*normalizedOpacity,[\s\S]*?"stroke-opacity":\s*1,[\s\S]*?\}\)/)
+  assert.match(source, /opacityPdf\.addGState\(key,\s*gState\)/)
+  assert.match(source, /opacityPdf\.setGState\(key\)/)
+})
+
 test("pdf export attaches an embedded output intent profile for print-aware exports", () => {
   const source = readText("lib/pdf-output-intent.ts")
   assert.match(source, /putResources/)
@@ -157,5 +178,5 @@ test("default export preset stays on digital print in the bundled default docume
   assert.equal(source.uiSettings.exportPrintPro, false)
   assert.equal(source.uiSettings.exportBleedMm, 0)
   assert.equal(source.uiSettings.exportRegistrationMarks, false)
-  assert.equal(source.uiSettings.exportFinalSafeGuides, true)
+  assert.equal("exportFinalSafeGuides" in source.uiSettings, false)
 })

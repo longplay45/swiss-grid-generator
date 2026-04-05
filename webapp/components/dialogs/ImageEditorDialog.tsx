@@ -9,21 +9,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Columns3, Palette, Rows3, Trash2 } from "lucide-react"
+import { Columns3, Droplets, Info, Palette, Percent, Rows3, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
+import {
+  clampTransparencyPercent,
+  opacityToTransparencyPercent,
+  transparencyPercentToOpacity,
+} from "@/lib/image-placeholder-opacity"
 
 export type ImageEditorState = {
   target: string
   draftColumns: number
   draftRows: number
   draftColor: string
+  draftOpacity: number
 }
 
-type MainSubmenu = "geometry" | "color" | null
+type MainSubmenu = "geometry" | "info" | null
 
 const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
+const SUBMENU_PANEL_WIDTH_PX = 304
+const SUBMENU_LABEL_WIDTH_PX = 76
 
 type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
@@ -60,6 +68,7 @@ export function ImageEditorDialog({
   const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
   const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
+  const [transparencyInput, setTransparencyInput] = useState("")
   const panelRef = useRef<HTMLDivElement | null>(null)
   const editorTarget = editorState?.target ?? null
 
@@ -69,6 +78,11 @@ export function ImageEditorDialog({
     setPreviewColorScheme(null)
   }, [editorTarget, selectedColorScheme])
 
+  useEffect(() => {
+    if (!editorState) return
+    setTransparencyInput(String(opacityToTransparencyPercent(editorState.draftOpacity)))
+  }, [editorState])
+
   if (!editorState) return null
 
   const colorSchemeTriggerWidthCh = Math.max(
@@ -77,6 +91,7 @@ export function ImageEditorDialog({
   ) + 3
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
+  const transparencyPercent = opacityToTransparencyPercent(editorState.draftOpacity)
 
   const tone = isDarkMode
     ? {
@@ -134,30 +149,63 @@ export function ImageEditorDialog({
       {child}
     </HoverTooltip>
   )
+  const settingRowLabelClassName = `text-[11px] leading-none ${isDarkMode ? "text-gray-400" : "text-gray-600"}`
+  const settingValueClassName = `text-xs ${isDarkMode ? "text-gray-100" : "text-gray-900"}`
+  const fullWidthInputClassName = `h-8 w-full rounded-md border px-2 text-xs outline-none ${tone.input}`
+  const renderSettingRow = (icon: React.ReactNode, label: string, control: React.ReactNode) => (
+    <div
+      className="grid min-h-8 items-center gap-x-2"
+      style={{ gridTemplateColumns: `16px ${SUBMENU_LABEL_WIDTH_PX}px minmax(0, 1fr)` }}
+    >
+      <div className="flex items-center justify-center">{icon}</div>
+      <span className={settingRowLabelClassName}>{label}</span>
+      <div className="min-w-0">{control}</div>
+    </div>
+  )
+  const commitTransparencyInput = () => {
+    const parsed = Number(transparencyInput)
+    if (!Number.isFinite(parsed)) {
+      setTransparencyInput(String(transparencyPercent))
+      return
+    }
+    const nextTransparency = clampTransparencyPercent(parsed)
+    setEditorState((prev) => (prev ? {
+      ...prev,
+      draftOpacity: transparencyPercentToOpacity(nextTransparency),
+    } : prev))
+    setTransparencyInput(String(nextTransparency))
+  }
+  const infoRows = [
+    { label: "Rows", value: String(editorState.draftRows), icon: Rows3 },
+    { label: "Cols", value: String(editorState.draftColumns), icon: Columns3 },
+    { label: "Scheme", value: colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme, icon: Palette },
+    { label: "Color", value: editorState.draftColor, icon: Droplets },
+    { label: "Transparency", value: `${transparencyPercent}%`, icon: Percent },
+  ]
 
   return (
     <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
       <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
         {isHelpActive ? <HelpIndicatorLine /> : null}
-        {withRailTooltip("Rows and columns for the image placeholder", <Button
+        {withRailTooltip("Rows, columns, color, and transparency", <Button
           type="button"
           size="icon"
           variant="ghost"
           className={railBtn(activeSubmenu === "geometry")}
           onClick={(event) => toggleSubmenu("geometry", event.currentTarget)}
-          aria-label="Rows and columns"
+          aria-label="Image placeholder geometry"
         >
           <Rows3 className="h-4 w-4" />
         </Button>)}
-        {withRailTooltip("Color scheme and placeholder color", <Button
+        {withRailTooltip("Image placeholder summary", <Button
           type="button"
           size="icon"
           variant="ghost"
-          className={railBtn(activeSubmenu === "color")}
-          onClick={(event) => toggleSubmenu("color", event.currentTarget)}
-          aria-label="Color controls"
+          className={railBtn(activeSubmenu === "info")}
+          onClick={(event) => toggleSubmenu("info", event.currentTarget)}
+          aria-label="Image placeholder info"
         >
-          <Palette className="h-4 w-4" />
+          <Info className="h-4 w-4" />
         </Button>)}
 
         <div className={`my-1 h-px w-full ${tone.divider}`} />
@@ -176,110 +224,152 @@ export function ImageEditorDialog({
 
       {activeSubmenu ? (
         <div
-          className={`absolute left-full ml-2 max-w-[min(62vw,32rem)] overflow-x-auto rounded-md border ${tone.submenu} flex min-h-10 items-center gap-2 px-2 py-1`}
+          className={`absolute left-full ml-2 max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
           style={{ top: activeSubmenuTop }}
         >
           {isHelpActive ? <HelpIndicatorLine /> : null}
           {activeSubmenu === "geometry" ? (
-            <>
-              <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              {withSubmenuTooltip("Set the row span of this image placeholder", <Select
-                value={String(editorState.draftRows)}
-                onValueChange={(value) => {
-                  const rows = Math.max(1, Math.min(gridRows, Number(value)))
-                  setEditorState((prev) => (prev ? { ...prev, draftRows: rows } : prev))
-                }}
-              >
-                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={tone.selectContent}>
-                  {Array.from({ length: gridRows }, (_, index) => index + 1).map((count) => (
-                    <SelectItem key={`image-row-${count}`} value={String(count)}>
-                      {count} {count === 1 ? "row" : "rows"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>)}
-
-              <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />
-              {withSubmenuTooltip("Set the column span of this image placeholder", <Select
-                value={String(editorState.draftColumns)}
-                onValueChange={(value) => {
-                  const columns = Math.max(1, Math.min(gridCols, Number(value)))
-                  setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
-                }}
-              >
-                <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${colTriggerMinWidthCh}ch` }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={tone.selectContent}>
-                  {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
-                    <SelectItem key={`image-col-${count}`} value={String(count)}>
-                      {count} {count === 1 ? "col" : "cols"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>)}
-            </>
+            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
+              {renderSettingRow(
+                <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Rows",
+                withSubmenuTooltip("Set the row span of this image placeholder", <Select
+                  value={String(editorState.draftRows)}
+                  onValueChange={(value) => {
+                    const rows = Math.max(1, Math.min(gridRows, Number(value)))
+                    setEditorState((prev) => (prev ? { ...prev, draftRows: rows } : prev))
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={tone.selectContent}>
+                    {Array.from({ length: gridRows }, (_, index) => index + 1).map((count) => (
+                      <SelectItem key={`image-row-${count}`} value={String(count)}>
+                        {count} {count === 1 ? "row" : "rows"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>),
+              )}
+              {renderSettingRow(
+                <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Cols",
+                withSubmenuTooltip("Set the column span of this image placeholder", <Select
+                  value={String(editorState.draftColumns)}
+                  onValueChange={(value) => {
+                    const columns = Math.max(1, Math.min(gridCols, Number(value)))
+                    setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
+                  }}
+                >
+                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${colTriggerMinWidthCh}ch` }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={tone.selectContent}>
+                    {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
+                      <SelectItem key={`image-col-${count}`} value={String(count)}>
+                        {count} {count === 1 ? "col" : "cols"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>),
+              )}
+              {renderSettingRow(
+                <Palette className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Scheme",
+                withSubmenuTooltip("Choose the active color scheme", <Select
+                  value={editorColorScheme}
+                  onOpenChange={(open) => {
+                    if (!open) setPreviewColorScheme(null)
+                  }}
+                  onValueChange={(value) => {
+                    setEditorColorScheme(value as ImageColorSchemeId)
+                    setPreviewColorScheme(null)
+                  }}
+                >
+                  <SelectTrigger
+                    className={`h-8 w-full text-xs ${tone.input}`}
+                    style={{ minWidth: `${colorSchemeTriggerWidthCh}ch` }}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
+                    {colorSchemes.map((scheme) => (
+                      <SelectItem
+                        key={scheme.id}
+                        value={scheme.id}
+                        onFocus={() => setPreviewColorScheme(scheme.id)}
+                        onPointerMove={() => setPreviewColorScheme(scheme.id)}
+                      >
+                        {scheme.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>),
+              )}
+              {renderSettingRow(
+                <Droplets className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Color",
+                <div className="flex flex-wrap items-center gap-1">
+                  {previewPalette.map((color, index) => {
+                    const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
+                    const swatchKey = `${activeColorScheme}-${index}-${color}`
+                    return (
+                      <HoverTooltip
+                        key={swatchKey}
+                        className="block"
+                        label={`Set the placeholder color to ${color}`}
+                        disabled={!showRolloverInfo}
+                        tooltipClassName={submenuTooltipClassName}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
+                          className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
+                          style={{ backgroundColor: color }}
+                          aria-label={`Select ${color}`}
+                          title={color}
+                        />
+                      </HoverTooltip>
+                    )
+                  })}
+                </div>,
+              )}
+              {renderSettingRow(
+                <Percent className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Transparency",
+                withSubmenuTooltip("Set image placeholder transparency in percent", <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  inputMode="numeric"
+                  value={transparencyInput}
+                  onChange={(event) => setTransparencyInput(event.target.value)}
+                  onBlur={commitTransparencyInput}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return
+                    event.preventDefault()
+                    commitTransparencyInput()
+                    ;(event.currentTarget as HTMLInputElement).blur()
+                  }}
+                  className={fullWidthInputClassName}
+                  aria-label="Transparency from 0 to 100 percent"
+                />),
+              )}
+            </div>
           ) : null}
 
-          {activeSubmenu === "color" ? (
-            <>
-              {withSubmenuTooltip("Choose the active color scheme", <Select
-                value={editorColorScheme}
-                onOpenChange={(open) => {
-                  if (!open) setPreviewColorScheme(null)
-                }}
-                onValueChange={(value) => {
-                  setEditorColorScheme(value as ImageColorSchemeId)
-                  setPreviewColorScheme(null)
-                }}
-              >
-                <SelectTrigger
-                  className={`h-8 text-xs ${tone.input}`}
-                  style={{ width: `${colorSchemeTriggerWidthCh}ch` }}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
-                  {colorSchemes.map((scheme) => (
-                    <SelectItem
-                      key={scheme.id}
-                      value={scheme.id}
-                      onFocus={() => setPreviewColorScheme(scheme.id)}
-                      onPointerMove={() => setPreviewColorScheme(scheme.id)}
-                    >
-                      {scheme.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>)}
-              <div className="flex items-center gap-1">
-                {previewPalette.map((color, index) => {
-                  const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
-                  const swatchKey = `${activeColorScheme}-${index}-${color}`
-                  return (
-                    <HoverTooltip
-                      key={swatchKey}
-                      className="block"
-                      label={`Set the placeholder color to ${color}`}
-                      disabled={!showRolloverInfo}
-                      tooltipClassName={submenuTooltipClassName}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
-                        className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
-                        style={{ backgroundColor: color }}
-                        aria-label={`Select ${color}`}
-                        title={color}
-                      />
-                    </HoverTooltip>
-                  )
-                })}
-              </div>
-            </>
+          {activeSubmenu === "info" ? (
+            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
+              {infoRows.map((row) => (
+                renderSettingRow(
+                  <row.icon key={`${row.label}-icon`} className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                  row.label,
+                  <span key={`${row.label}-value`} className={settingValueClassName}>{row.value}</span>,
+                )
+              ))}
+            </div>
           ) : null}
         </div>
       ) : null}

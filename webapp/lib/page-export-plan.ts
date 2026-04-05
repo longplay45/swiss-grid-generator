@@ -5,7 +5,12 @@ import {
   resolveFontVariant,
   type FontFamily,
 } from "@/lib/config/fonts"
-import { resolveImageSchemeColor, type ImageColorSchemeId } from "@/lib/config/color-schemes"
+import {
+  getDefaultTextSchemeColor,
+  resolveImageSchemeColor,
+  resolveTextSchemeColor,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 import {
   BASE_BLOCK_IDS,
   DEFAULT_STYLE_ASSIGNMENTS,
@@ -26,6 +31,7 @@ import {
 } from "@/lib/optical-margin"
 import { wrapTextDetailed, getDefaultColumnSpan } from "@/lib/text-layout"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
+import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import {
   buildTypographyLayoutPlan,
   type TypographyLayoutPlan,
@@ -84,6 +90,7 @@ export type PageExportGuideGroup = {
 export type PageExportImagePlan = PageExportRect & {
   key: BlockId
   fillColor: RgbColor
+  opacity: number
 }
 
 export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKey> & {
@@ -126,7 +133,6 @@ type BuildPageExportPlanArgs = {
   showMargins: boolean
   showImagePlaceholders: boolean
   showTypography: boolean
-  monochromeGuides?: boolean
 }
 
 type ExportTextContext = {
@@ -206,7 +212,6 @@ export function buildPageExportPlan({
   showMargins,
   showImagePlaceholders,
   showTypography,
-  monochromeGuides = false,
 }: BuildPageExportPlanArgs): PageExportPlan {
   clearOpticalMarginMeasurementCache()
 
@@ -245,7 +250,7 @@ export function buildPageExportPlan({
 
   const pageOutline = showPageOutline
     ? {
-      strokeColor: monochromeGuides ? { r: 172, g: 172, b: 172 } : { r: 229, g: 229, b: 229 },
+      strokeColor: { r: 229, g: 229, b: 229 },
       strokeWidth: 0.4,
     }
     : null
@@ -254,7 +259,7 @@ export function buildPageExportPlan({
   if (showMargins) {
     guideGroups.push({
       id: "margins",
-      strokeColor: monochromeGuides ? { r: 88, g: 88, b: 88 } : { r: 59, g: 130, b: 246 },
+      strokeColor: { r: 59, g: 130, b: 246 },
       strokeWidth: 0.5,
       dashPattern: [4, 4],
       clipToPage: false,
@@ -282,7 +287,7 @@ export function buildPageExportPlan({
     }
     guideGroups.push({
       id: "modules",
-      strokeColor: monochromeGuides ? { r: 116, g: 116, b: 116 } : { r: 6, g: 182, b: 212 },
+      strokeColor: { r: 6, g: 182, b: 212 },
       strokeWidth: 0.4,
       dashPattern: [],
       clipToPage: false,
@@ -311,7 +316,7 @@ export function buildPageExportPlan({
     }
     guideGroups.push({
       id: "baselines",
-      strokeColor: monochromeGuides ? { r: 148, g: 148, b: 148 } : { r: 236, g: 72, b: 153 },
+      strokeColor: { r: 236, g: 72, b: 153 },
       strokeWidth: 0.3,
       dashPattern: [],
       clipToPage: true,
@@ -327,7 +332,9 @@ export function buildPageExportPlan({
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageColors = layout?.imageColors ?? {}
+  const imageOpacities = layout?.imageOpacities ?? {}
   const fallbackImageColor = parseHexColor(resolveImageSchemeColor(undefined, imageColorScheme)) ?? { r: 11, g: 53, b: 54 }
+  const defaultTextColor = getDefaultTextSchemeColor(imageColorScheme)
   const imagePlans: PageExportImagePlan[] = []
 
   if (showImagePlaceholders) {
@@ -354,6 +361,7 @@ export function buildPageExportPlan({
         width: sumAxisSpan(moduleWidths, col, span, gridMarginHorizontal),
         height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical),
         fillColor: parseHexColor(resolveImageSchemeColor(imageColors[key], imageColorScheme)) ?? fallbackImageColor,
+        opacity: normalizeImagePlaceholderOpacity(imageOpacities[key]),
       })
     }
   }
@@ -456,13 +464,18 @@ export function buildPageExportPlan({
       getBlockTrackingScale(key),
     )
   )
+  const resolveExportTextColor = (value: unknown) => resolveTextSchemeColor(value, imageColorScheme)
   const getResolvedBlockTextColor = (key: BlockId) => (
-    resolveImageSchemeColor(blockTextColors[key], imageColorScheme)
+    resolveExportTextColor(blockTextColors[key] ?? defaultTextColor)
   )
   const getBlockTextFormatRuns = (key: BlockId, styleKey: TypographyStyleKey) => (
     normalizeTextFormatRuns(
       textContent[key] ?? "",
-      blockTextFormatRuns[key],
+      (blockTextFormatRuns[key] ?? []).map((run) => (
+        run.color === undefined
+          ? run
+          : { ...run, color: resolveExportTextColor(run.color) }
+      )),
       {
         fontFamily: getBlockFont(key),
         fontWeight: getBlockFontWeight(key, styleKey),

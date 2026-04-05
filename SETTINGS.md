@@ -124,7 +124,8 @@ Default: `swiss`
   - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
   - `Fresh Contrast`: `#fef9f7`, `#1aa9bc`, `#457c39`, `#ffeb00`
-- The same selector appears in the image editor and defaults to the current global selection.
+- The same selector appears in the image editor geometry submenu and defaults to the current global selection.
+- Image placeholders can also override swatch color and transparency directly in that geometry submenu.
 
 ## Preview Header
 
@@ -241,7 +242,6 @@ When `i` is active, header icons show rollover tooltips with a second line for k
   - `Press Proof`
   - Bleed input (mm)
   - Registration-style marks toggle
-  - Final-safe guide colors toggle
 - `SVG` does not expose PDF print settings
 - Confirm/Cancel
 - Esc closes popup
@@ -355,7 +355,7 @@ Behavior:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
+`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
 Notes:
 - `exportPrintPro` is retained as the persisted legacy backing field for the PDF print-preset mode.

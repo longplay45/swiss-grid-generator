@@ -190,9 +190,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
-          <li>Layout uses a left icon rail with contextual submenus for geometry and color.</li>
-          <li>Geometry submenu: row span and column span.</li>
-          <li>Color submenu: scheme selector and swatches.</li>
+          <li>Layout uses a left icon rail with contextual submenus for Geometry and Info, plus Delete on the rail.</li>
+          <li>Geometry submenu: row span, column span, scheme, swatch color, and transparency.</li>
+          <li>Each image setting sits on its own row with icon, label, and value/control, matching the text editor structure.</li>
+          <li>Info submenu summarizes the current rows, columns, scheme, color, and transparency for the active placeholder.</li>
           <li>Delete lives in the rail and removes the placeholder immediately.</li>
           <li>`Esc` or click outside closes the editor.</li>
         </ul>
@@ -563,7 +564,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Export is vector-based (not raster screenshot export).</li>
           <li>`PDF` and `SVG` export the current active page. `IDML` exports the full project with one InDesign page per app page.</li>
           <li>DIN/ANSI ratios expose paper-size selection for `PDF` and `SVG`; other ratios use width-based sizing. `IDML` keeps each page at its stored document size.</li>
-          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
+          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, registration-style marks, and embedded output intents where applicable.</li>
           <li>`SVG v1` exports trim-size live vector text, guides, and placeholders.</li>
           <li>`IDML v1` exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry and resolved font family/style names.</li>
           <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>

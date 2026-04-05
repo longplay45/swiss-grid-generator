@@ -73,7 +73,6 @@ export type ExportUiState = Pick<
   | "exportPrintPro"
   | "exportBleedMm"
   | "exportRegistrationMarks"
-  | "exportFinalSafeGuides"
   | "displayUnit"
 >
 
@@ -132,7 +131,6 @@ export const INITIAL_EXPORT_UI_STATE: ExportUiState = {
   exportPrintPro: DEFAULT_UI.exportPrintPro,
   exportBleedMm: DEFAULT_UI.exportBleedMm,
   exportRegistrationMarks: DEFAULT_UI.exportRegistrationMarks,
-  exportFinalSafeGuides: DEFAULT_UI.exportFinalSafeGuides,
   displayUnit: RESOLVED_DEFAULTS.displayUnit,
 }
 
@@ -142,7 +140,6 @@ export type UiAction =
   | { type: "SET"; key: "exportPrintPro"; value: boolean }
   | { type: "SET"; key: "exportBleedMm"; value: number }
   | { type: "SET"; key: "exportRegistrationMarks"; value: boolean }
-  | { type: "SET"; key: "exportFinalSafeGuides"; value: boolean }
   | { type: "SET"; key: "orientation"; value: "portrait" | "landscape" }
   | { type: "SET"; key: "rotation"; value: number }
   | { type: "SET"; key: "marginMethod"; value: 1 | 2 | 3 }
@@ -284,7 +281,6 @@ export function exportUiReducer(state: ExportUiState, action: UiAction): ExportU
         case "exportPrintPro":
         case "exportBleedMm":
         case "exportRegistrationMarks":
-        case "exportFinalSafeGuides":
         case "displayUnit":
           if (state[action.key] === action.value) return state
           return { ...state, [action.key]: action.value }
@@ -297,7 +293,6 @@ export function exportUiReducer(state: ExportUiState, action: UiAction): ExportU
         exportPrintPro: action.snapshot.exportPrintPro,
         exportBleedMm: action.snapshot.exportBleedMm,
         exportRegistrationMarks: action.snapshot.exportRegistrationMarks,
-        exportFinalSafeGuides: action.snapshot.exportFinalSafeGuides,
         displayUnit: action.snapshot.displayUnit,
       }
     case "BATCH":
@@ -325,7 +320,6 @@ export function buildUiActionsFromLoadedSettings(
     set("exportBleedMm", loaded.exportBleedMm)
   }
   if (typeof loaded.exportRegistrationMarks === "boolean") set("exportRegistrationMarks", loaded.exportRegistrationMarks)
-  if (typeof loaded.exportFinalSafeGuides === "boolean") set("exportFinalSafeGuides", loaded.exportFinalSafeGuides)
   if (typeof loaded.format === "string" && FORMATS_PT[loaded.format]) {
     if (/^[AB]/.test(loaded.format)) {
       set("canvasRatio", "din_ab")

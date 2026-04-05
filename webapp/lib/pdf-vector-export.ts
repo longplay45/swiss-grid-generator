@@ -30,12 +30,20 @@ type PdfMatrixConstructor = new (
   tx: number,
   ty: number,
 ) => PdfMatrix
+type PdfGraphicsStateParameters = { opacity?: number; "stroke-opacity"?: number }
+type PdfGraphicsState = PdfGraphicsStateParameters & {
+  equals: (other: unknown) => boolean
+}
+type PdfGraphicsStateConstructor = new (parameters: PdfGraphicsStateParameters) => PdfGraphicsState
 type PdfWithFormObjects = jsPDF & {
   advancedAPI?: (body?: (pdf: jsPDF) => void) => jsPDF
   beginFormObject?: (x: number, y: number, width: number, height: number, matrix: PdfMatrix) => jsPDF
   endFormObject?: (key: string) => jsPDF
   doFormObject?: (key: string, matrix: PdfMatrix) => jsPDF
   Matrix?: PdfMatrixConstructor
+  GState?: PdfGraphicsStateConstructor
+  addGState?: (key: string, gState: PdfGraphicsState) => jsPDF
+  setGState?: (gState: string | PdfGraphicsState) => jsPDF
 }
 type PrintProOptions = {
   enabled: boolean
@@ -44,7 +52,6 @@ type PrintProOptions = {
   cropMarkOffsetPt: number
   showBleedGuide?: boolean
   registrationMarks?: boolean
-  monochromeGuides?: boolean
 }
 
 type ExportVectorPdfOptions = {
@@ -184,7 +191,6 @@ export function renderSwissGridVectorPdf({
     showMargins,
     showImagePlaceholders,
     showTypography,
-    monochromeGuides: printPro?.monochromeGuides ?? false,
   })
   const sourceWidth = exportPlan.pageWidth
   const sourceHeight = exportPlan.pageHeight
@@ -256,6 +262,28 @@ export function renderSwissGridVectorPdf({
     pdf.lineTo(bottomLeft.x, bottomLeft.y)
     pdf.close()
     pdf.fill()
+  }
+  const registeredOpacityGStates = new Set<string>()
+  const setPdfOpacity = (opacity: number) => {
+    const normalizedOpacity = Math.max(0, Math.min(1, opacity))
+    const opacityPdf = pdf as PdfWithFormObjects
+    if (
+      typeof opacityPdf.GState !== "function"
+      || typeof opacityPdf.addGState !== "function"
+      || typeof opacityPdf.setGState !== "function"
+    ) {
+      return
+    }
+    const key = `sgg_opacity_${Math.round(normalizedOpacity * 1000)}`
+    if (!registeredOpacityGStates.has(key)) {
+      const gState = new opacityPdf.GState({
+        opacity: normalizedOpacity,
+        "stroke-opacity": 1,
+      })
+      opacityPdf.addGState(key, gState)
+      registeredOpacityGStates.add(key)
+    }
+    opacityPdf.setGState(key)
   }
 
   if (exportPlan.backgroundColor) {
@@ -352,9 +380,11 @@ export function renderSwissGridVectorPdf({
     drawCropMarks(markOffset, markLength)
   }
 
-  const drawImagePlan = (imagePlan: { x: number; y: number; width: number; height: number; fillColor: RgbColor }) => {
+  const drawImagePlan = (imagePlan: { x: number; y: number; width: number; height: number; fillColor: RgbColor; opacity: number }) => {
     setFillColor(pdf, imagePlan.fillColor, colorMode)
+    setPdfOpacity(imagePlan.opacity)
     drawFilledRect(imagePlan.x, imagePlan.y, imagePlan.width, imagePlan.height)
+    setPdfOpacity(1)
   }
   for (const guideGroup of exportPlan.guideGroups) {
     drawGuideGroup(`swiss_guides_${guideGroup.id}`, () => {

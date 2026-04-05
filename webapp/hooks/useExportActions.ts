@@ -21,7 +21,6 @@ type PrintPresetConfig = {
   enabled: boolean
   bleedMm: number
   registrationMarks: boolean
-  finalSafeGuides: boolean
 }
 
 export type PrintPresetKey = "digital_print" | "press_proof" | "offset_final"
@@ -30,21 +29,18 @@ const DIGITAL_PRINT_CONFIG: PrintPresetConfig = {
   enabled: false,
   bleedMm: 0,
   registrationMarks: false,
-  finalSafeGuides: true,
 }
 
 const PRESS_PROOF_CONFIG: PrintPresetConfig = {
   enabled: true,
   bleedMm: 3,
   registrationMarks: true,
-  finalSafeGuides: false,
 }
 
 const OFFSET_FINAL_CONFIG: PrintPresetConfig = {
   enabled: true,
   bleedMm: 3,
   registrationMarks: true,
-  finalSafeGuides: true,
 }
 
 export const PRINT_PRESETS: Array<{
@@ -78,7 +74,6 @@ function isSamePrintPresetConfig(left: PrintPresetConfig, right: PrintPresetConf
   return left.enabled === right.enabled
     && left.bleedMm === right.bleedMm
     && left.registrationMarks === right.registrationMarks
-    && left.finalSafeGuides === right.finalSafeGuides
 }
 
 function resolveActivePrintPresetKey(config: PrintPresetConfig): PrintPresetKey | null {
@@ -127,8 +122,6 @@ export type ExportActionsContext = {
   setExportBleedMm: (n: number) => void
   exportRegistrationMarks: boolean
   setExportRegistrationMarks: (b: boolean) => void
-  exportFinalSafeGuides: boolean
-  setExportFinalSafeGuides: (b: boolean) => void
   paperSizeOptions: Array<{ value: string; label: string }>
   previewFormat: string
   defaultPdfFilename: string
@@ -174,8 +167,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMm,
     exportRegistrationMarks,
     setExportRegistrationMarks,
-    exportFinalSafeGuides,
-    setExportFinalSafeGuides,
     previewFormat,
     defaultPdfFilename,
     defaultIdmlFilename,
@@ -192,7 +183,6 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [printPresetEnabledDraft, setPrintPresetEnabledDraft] = useState(persistedPrintPresetEnabled)
   const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(exportBleedMm))
   const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(exportRegistrationMarks)
-  const [exportFinalSafeGuidesDraft, setExportFinalSafeGuidesDraft] = useState(exportFinalSafeGuides)
   const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
   const [saveTitleDraft, setSaveTitleDraft] = useState("")
@@ -310,7 +300,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       printPresetConfig: PrintPresetConfig,
     ) => {
       const { default: jsPDF } = await import("jspdf")
-      const { enabled, bleedMm, registrationMarks, finalSafeGuides } = printPresetConfig
+      const { enabled, bleedMm, registrationMarks } = printPresetConfig
       const { colorMode, outputIntentProfileId } = resolvePdfExportColorManagement({ enabled })
       const bleedPt = mmToPt(bleedMm)
       const cropOffsetPt = mmToPt(PRINT_CROP_OFFSET_MM)
@@ -383,7 +373,6 @@ export function useExportActions(ctx: ExportActionsContext) {
           cropMarkLengthPt: cropLengthPt,
           showBleedGuide: enabled,
           registrationMarks,
-          monochromeGuides: finalSafeGuides,
         },
         rotation,
         showBaselines,
@@ -494,7 +483,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     setPrintPresetEnabledDraft(persistedPrintPresetEnabled)
     setExportBleedMmDraft(String(exportBleedMm))
     setExportRegistrationMarksDraft(exportRegistrationMarks)
-    setExportFinalSafeGuidesDraft(exportFinalSafeGuides)
     setExportFilenameDraft(getDefaultExportFilename(exportFormatDraft))
     setExportWidthDraft(formatValue(dims.width, isDinOrAnsiRatio ? displayUnit : "mm"))
     setIsExportDialogOpen(true)
@@ -502,7 +490,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     displayUnit,
     exportBleedMm,
     exportFormatDraft,
-    exportFinalSafeGuides,
     exportPaperSize,
     persistedPrintPresetEnabled,
     exportRegistrationMarks,
@@ -520,7 +507,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     setPrintPresetEnabledDraft(config.enabled)
     setExportBleedMmDraft(String(config.bleedMm))
     setExportRegistrationMarksDraft(config.registrationMarks)
-    setExportFinalSafeGuidesDraft(config.finalSafeGuides)
   }, [])
 
   const applyPrintPreset = useCallback((presetKey: PrintPresetKey) => {
@@ -560,12 +546,10 @@ export function useExportActions(ctx: ExportActionsContext) {
       setPersistedPrintPresetEnabled(printPresetEnabledDraft)
       setExportBleedMm(bleedMm)
       setExportRegistrationMarks(exportRegistrationMarksDraft)
-      setExportFinalSafeGuides(exportFinalSafeGuidesDraft)
       await exportPDF(width, height, filename, {
         enabled: printPresetEnabledDraft,
         bleedMm,
         registrationMarks: exportRegistrationMarksDraft,
-        finalSafeGuides: exportFinalSafeGuidesDraft,
       })
     } else {
       exportSVG(width, height, filename)
@@ -574,7 +558,6 @@ export function useExportActions(ctx: ExportActionsContext) {
   }, [
     exportBleedMm,
     exportBleedMmDraft,
-    exportFinalSafeGuidesDraft,
     exportFormatDraft,
     exportFilenameDraft,
     exportPaperSizeDraft,
@@ -587,7 +570,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     getOrientedDimensions,
     isDinOrAnsiRatio,
     setExportBleedMm,
-    setExportFinalSafeGuides,
     setExportPaperSize,
     setPersistedPrintPresetEnabled,
     setExportRegistrationMarks,
@@ -599,7 +581,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     enabled: printPresetEnabledDraft,
     bleedMm: resolvedDraftBleedMm,
     registrationMarks: exportRegistrationMarksDraft,
-    finalSafeGuides: exportFinalSafeGuidesDraft,
   })
 
   // Close export dialog on Escape
@@ -644,8 +625,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMmDraft,
     exportRegistrationMarksDraft,
     setExportRegistrationMarksDraft,
-    exportFinalSafeGuidesDraft,
-    setExportFinalSafeGuidesDraft,
     exportWidthDraft,
     setExportWidthDraft,
     openExportDialog,

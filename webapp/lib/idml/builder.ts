@@ -539,6 +539,7 @@ function buildSpreadAndStories(
     for (const imagePlan of page.exportPlan.imagePlans) {
       localItemSequence += 1
       const signature = `${imagePlan.fillColor.r},${imagePlan.fillColor.g},${imagePlan.fillColor.b}`
+      const fillTint = Math.max(0, Math.min(100, Math.round(imagePlan.opacity * 100)))
       placeholderItems.push(
         renderIdmlElement(
           "Rectangle",
@@ -549,6 +550,7 @@ function buildSpreadAndStories(
             ItemTransform: isIdentityMatrix(pageTransformMatrix) ? undefined : formatMatrix(pageTransformMatrix),
             Visible: true,
             FillColor: colorIdBySignature.get(signature) ?? COLOR_BLACK_ID,
+            FillTint: fillTint,
             StrokeColor: SWATCH_NONE_ID,
             StrokeWeight: 0,
           },

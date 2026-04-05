@@ -60,6 +60,7 @@ type Args<BlockId extends string> = {
   getImageSpan: (key: BlockId) => number
   getImageRows: (key: BlockId) => number
   getImageColor: (key: BlockId) => string
+  getImageOpacity: (key: BlockId) => number
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
@@ -193,6 +194,7 @@ export function useTypographyRenderer<BlockId extends string>({
   getImageSpan,
   getImageRows,
   getImageColor,
+  getImageOpacity,
   clampImageBaselinePosition,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
@@ -274,7 +276,7 @@ export function useTypographyRenderer<BlockId extends string>({
       const minBaselineRow = -maxBaselineRow
       const gutterX = gridMarginHorizontal * scale
       let draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
-      let imagePlans = new Map<BlockId, { rect: BlockRect; color: string }>()
+      let imagePlans = new Map<BlockId, { rect: BlockRect; color: string; opacity: number }>()
 
       const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
         const dragged = dragState?.key === key ? dragState.preview : undefined
@@ -300,6 +302,7 @@ export function useTypographyRenderer<BlockId extends string>({
           getImageSpan,
           getImageRows,
           getImageColor,
+          getImageOpacity,
           clampImageBaselinePosition,
           toColumnX,
           baselineOriginTop,

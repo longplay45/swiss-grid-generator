@@ -165,6 +165,22 @@ export function resolveImageSchemeColor(value: unknown, schemeId: ImageColorSche
   return getDefaultImagePlaceholderColor(schemeId)
 }
 
+export function resolveTextSchemeColor(value: unknown, schemeId: ImageColorSchemeId): string {
+  const colorIndex = getImageSchemeColorIndex(value)
+  if (colorIndex !== null) {
+    return getImageSchemeColorByIndex(schemeId, colorIndex)
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    if (trimmed.length === 0) return getDefaultTextSchemeColor(schemeId)
+    if (isImagePlaceholderColor(trimmed)) {
+      return trimmed.toLowerCase()
+    }
+    return trimmed
+  }
+  return getDefaultTextSchemeColor(schemeId)
+}
+
 export function getImageSchemeColorReference(value: unknown, schemeId: ImageColorSchemeId): string {
   const colorIndex = getImageColorScheme(schemeId)
     .colors

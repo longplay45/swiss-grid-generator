@@ -106,7 +106,7 @@ export default function Home() {
   }, [])
   const {
     canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
-    exportRegistrationMarks, exportFinalSafeGuides, orientation, rotation,
+    exportRegistrationMarks, orientation, rotation,
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm,
     rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
     typographyScale, baseFont, imageColorScheme, canvasBackground, customBaseline, displayUnit,
@@ -141,7 +141,6 @@ export default function Home() {
     setExportPrintPro,
     setExportBleedMm,
     setExportRegistrationMarks,
-    setExportFinalSafeGuides,
     setShowLayers,
     toggleShowBaselines,
     toggleShowMargins,
@@ -611,8 +610,6 @@ export default function Home() {
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      exportFinalSafeGuides,
-      setExportFinalSafeGuides,
       paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
@@ -647,8 +644,6 @@ export default function Home() {
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      exportFinalSafeGuides,
-      setExportFinalSafeGuides,
       paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
@@ -921,8 +916,6 @@ export default function Home() {
             onBleedMmChange: exportActions.setExportBleedMmDraft,
             registrationMarks: exportActions.exportRegistrationMarksDraft,
             onRegistrationMarksChange: exportActions.setExportRegistrationMarksDraft,
-            finalSafeGuides: exportActions.exportFinalSafeGuidesDraft,
-            onFinalSafeGuidesChange: exportActions.setExportFinalSafeGuidesDraft,
             onConfirm: exportActions.confirmExport,
             getOrientedDimensions: exportActions.getOrientedDimensions,
           }}

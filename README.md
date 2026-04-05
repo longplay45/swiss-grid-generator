@@ -95,13 +95,15 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Double-click empty module → create text
 - Shift + double-click → create image placeholder
 - Hover interactions and edit affordances
+- Image placeholder editor matches the text editor rail pattern with geometry/info submenus
+- Placeholder editor includes scheme, swatch color, and transparency controls
 
 ### Export
 - High-quality vector **PDF export**
 - Trim-size **SVG v1 export** with live vector text
 - Full-project **IDML v1 export** for InDesign continuation
 - `PDF` and `SVG` export the active page; `IDML` exports every project page
-- PDF print options: bleed, registration-style marks, output intents, and guide-color handling
+- PDF print options: bleed, registration-style marks, and output intents
 - PDF presets: **Digital Print** (RGB / sRGB) and **Press Proof** (CMYK / FOGRA39)
 - IDML separates **Guides**, **Typography**, and **Placeholders** into distinct layers
 

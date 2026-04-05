@@ -77,8 +77,12 @@ Current capability inventory for Swiss Grid Generator.
 
 - Independent row/column spans.
 - Color-scheme aware placeholder fills.
+- Placeholder-specific transparency control.
 - Stable logical positioning across grid changes.
-- Separate editor with geometry and color controls.
+- Separate editor with Geometry and Info rails.
+- Geometry submenu uses one parameter row per setting.
+- Scheme, swatch color, and transparency live in the geometry submenu.
+- Info submenu summarizes rows, columns, scheme, color, and transparency.
 
 ## Presets
 
@@ -97,7 +101,7 @@ Current capability inventory for Swiss Grid Generator.
 - `PDF` print presets:
   - `Digital Print`
   - `Press Proof`
-- PDF bleed, registration-style marks, and final-safe guide colors.
+- PDF bleed and registration-style marks.
 - Embedded PDF output intents:
   - `sRGB IEC61966-2.1` for digital export
   - `Coated FOGRA39` for print export

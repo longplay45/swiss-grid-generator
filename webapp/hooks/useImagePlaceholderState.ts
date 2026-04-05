@@ -13,6 +13,7 @@ import {
   toAbsoluteTextBlockPosition,
   toTextBlockPosition,
 } from "@/lib/text-block-position"
+import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import type { ModulePosition, PreviewLayoutState, TextBlockPosition } from "@/lib/types/preview-layout"
 
 type ImageGridMetrics = {
@@ -24,7 +25,7 @@ type ImageGridMetrics = {
 
 type ImageSnapshotState<Key extends string> = Pick<
   PreviewLayoutState<string, string, Key>,
-  "imageOrder" | "imageModulePositions" | "imageColumnSpans" | "imageRowSpans" | "imageColors"
+  "imageOrder" | "imageModulePositions" | "imageColumnSpans" | "imageRowSpans" | "imageColors" | "imageOpacities"
 >
 
 type Args<Key extends string> = {
@@ -42,6 +43,7 @@ type InsertImagePlaceholderOptions<Key extends string> = {
   columns?: number
   rows?: number
   color?: string
+  opacity?: number
   afterKey?: Key | null
 }
 
@@ -59,6 +61,7 @@ export function useImagePlaceholderState<Key extends string>({
   const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageColors, setImageColors] = useState<Partial<Record<Key, string>>>({})
+  const [imageOpacities, setImageOpacities] = useState<Partial<Record<Key, number>>>({})
   const [imageEditorState, setImageEditorState] = useState<ImageEditorState | null>(null)
 
   const lastLiveImageEditorSignatureRef = useRef("")
@@ -100,6 +103,10 @@ export function useImagePlaceholderState<Key extends string>({
     return resolveImageSchemeColor(getImageColorReference(key), imageColorScheme)
   }, [getImageColorReference, imageColorScheme])
 
+  const getImageOpacity = useCallback((key: Key): number => {
+    return normalizeImagePlaceholderOpacity(imageOpacities[key])
+  }, [imageOpacities])
+
   const normalizeImageColorReferences = useCallback((
     colors: Partial<Record<Key, string>>,
     schemeId: ImageColorSchemeId,
@@ -135,8 +142,13 @@ export function useImagePlaceholderState<Key extends string>({
       acc[key] = getImageColorReference(key)
       return acc
     }, {} as Partial<Record<Key, string>>),
+    imageOpacities: imageOrder.reduce((acc, key) => {
+      acc[key] = getImageOpacity(key)
+      return acc
+    }, {} as Partial<Record<Key, number>>),
   }), [
     getImageColorReference,
+    getImageOpacity,
     getImageRows,
     getImageSpan,
     imageGridPositions,
@@ -178,12 +190,17 @@ export function useImagePlaceholderState<Key extends string>({
       acc[key] = getImageSchemeColorReference(raw ?? defaultImageColor, imageColorScheme)
       return acc
     }, {} as Partial<Record<Key, string>>)
+    const nextOpacities = normalizedOrder.reduce((acc, key) => {
+      acc[key] = normalizeImagePlaceholderOpacity(snapshot.imageOpacities?.[key])
+      return acc
+    }, {} as Partial<Record<Key, number>>)
 
     setImageOrder(normalizedOrder)
     setImageGridPositions(nextPositions)
     setImageColumnSpans(nextSpans)
     setImageRowSpans(nextRows)
     setImageColors(nextColors)
+    setImageOpacities(nextOpacities)
     setImageEditorState(null)
   }, [
     defaultImageColor,
@@ -199,8 +216,9 @@ export function useImagePlaceholderState<Key extends string>({
       draftColumns: getImageSpan(key),
       draftRows: getImageRows(key),
       draftColor: getImageColor(key),
+      draftOpacity: getImageOpacity(key),
     })
-  }, [getImageColor, getImageRows, getImageSpan])
+  }, [getImageColor, getImageOpacity, getImageRows, getImageSpan])
 
   const closeImageEditor = useCallback(() => {
     setImageEditorState(null)
@@ -210,6 +228,7 @@ export function useImagePlaceholderState<Key extends string>({
     const columns = Math.max(1, Math.min(gridCols, options.columns ?? 1))
     const rows = Math.max(1, Math.min(gridRows, options.rows ?? 1))
     const colorReference = getImageSchemeColorReference(options.color ?? defaultImageColor, imageColorScheme)
+    const opacity = normalizeImagePlaceholderOpacity(options.opacity)
     const rowStartBaselines = getGridMetrics().rowStartBaselines
 
     setImageOrder((current) => {
@@ -231,6 +250,7 @@ export function useImagePlaceholderState<Key extends string>({
     setImageColumnSpans((current) => ({ ...current, [key]: columns }))
     setImageRowSpans((current) => ({ ...current, [key]: rows }))
     setImageColors((current) => ({ ...current, [key]: colorReference }))
+    setImageOpacities((current) => ({ ...current, [key]: opacity }))
   }, [defaultImageColor, getGridMetrics, gridCols, gridRows, imageColorScheme])
 
   const removeImagePlaceholder = useCallback((key: Key) => {
@@ -251,6 +271,11 @@ export function useImagePlaceholderState<Key extends string>({
       return next
     })
     setImageColors((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageOpacities((prev) => {
       const next = { ...prev }
       delete next[key]
       return next
@@ -283,6 +308,7 @@ export function useImagePlaceholderState<Key extends string>({
       imageEditorState.draftColumns,
       imageEditorState.draftRows,
       imageEditorState.draftColor,
+      imageEditorState.draftOpacity.toFixed(3),
     ].join("|")
     if (lastLiveImageEditorSignatureRef.current === signature) return
     lastLiveImageEditorSignatureRef.current = signature
@@ -291,6 +317,7 @@ export function useImagePlaceholderState<Key extends string>({
     const columns = Math.max(1, Math.min(gridCols, imageEditorState.draftColumns))
     const rows = Math.max(1, Math.min(gridRows, imageEditorState.draftRows))
     const color = getImageSchemeColorReference(imageEditorState.draftColor, imageColorScheme)
+    const opacity = normalizeImagePlaceholderOpacity(imageEditorState.draftOpacity)
     const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
     const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
 
@@ -308,6 +335,11 @@ export function useImagePlaceholderState<Key extends string>({
       prev[key] === color
         ? prev
         : { ...prev, [key]: color }
+    ))
+    setImageOpacities((prev) => (
+      prev[key] === opacity
+        ? prev
+        : { ...prev, [key]: opacity }
     ))
     setImageModulePositions((prev) => {
       const current = prev[key]
@@ -336,10 +368,16 @@ export function useImagePlaceholderState<Key extends string>({
     setImageEditorState((prev) => {
       if (!prev) return prev
       const nextColor = resolveImageSchemeColor(imageColors[prev.target as Key], imageColorScheme)
-      if (prev.draftColor.toLowerCase() === nextColor.toLowerCase()) return prev
-      return { ...prev, draftColor: nextColor }
+      const nextOpacity = getImageOpacity(prev.target as Key)
+      if (
+        prev.draftColor.toLowerCase() === nextColor.toLowerCase()
+        && Math.abs(prev.draftOpacity - nextOpacity) <= 0.0001
+      ) {
+        return prev
+      }
+      return { ...prev, draftColor: nextColor, draftOpacity: nextOpacity }
     })
-  }, [imageColorScheme, imageColors])
+  }, [getImageOpacity, imageColorScheme, imageColors])
 
   return {
     imageOrder,
@@ -353,12 +391,15 @@ export function useImagePlaceholderState<Key extends string>({
     setImageRowSpans,
     imageColors,
     setImageColors,
+    imageOpacities,
+    setImageOpacities,
     imageEditorState,
     setImageEditorState,
     getImageSpan,
     getImageRows,
     getImageColorReference,
     getImageColor,
+    getImageOpacity,
     isImagePlaceholderKey,
     buildImageSnapshotState,
     applyImageSnapshot,

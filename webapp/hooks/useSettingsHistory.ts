@@ -19,7 +19,6 @@ export type UiSettingsSnapshot = {
   exportPrintPro: boolean
   exportBleedMm: number
   exportRegistrationMarks: boolean
-  exportFinalSafeGuides: boolean
   orientation: "portrait" | "landscape"
   rotation: number
   marginMethod: 1 | 2 | 3
@@ -58,7 +57,6 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.exportPrintPro === b.exportPrintPro
     && a.exportBleedMm === b.exportBleedMm
     && a.exportRegistrationMarks === b.exportRegistrationMarks
-    && a.exportFinalSafeGuides === b.exportFinalSafeGuides
     && a.orientation === b.orientation
     && a.rotation === b.rotation
     && a.marginMethod === b.marginMethod

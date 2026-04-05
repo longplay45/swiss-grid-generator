@@ -174,7 +174,6 @@
         "exportPrintPro": false,
         "exportBleedMm": 0,
         "exportRegistrationMarks": false,
-        "exportFinalSafeGuides": true,
         "displayUnit": "pt",
         "format": "A4"
       },

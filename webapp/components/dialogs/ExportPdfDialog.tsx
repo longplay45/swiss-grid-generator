@@ -38,8 +38,6 @@ type Props = {
   onExportBleedMmChange: (value: string) => void
   exportRegistrationMarksDraft: boolean
   onExportRegistrationMarksChange: (value: boolean) => void
-  exportFinalSafeGuidesDraft: boolean
-  onExportFinalSafeGuidesChange: (value: boolean) => void
   // Actions
   onConfirm: () => void
   getOrientedDimensions: (paperSize: string) => { width: number; height: number }
@@ -72,8 +70,6 @@ export function ExportPdfDialog({
   onExportBleedMmChange,
   exportRegistrationMarksDraft,
   onExportRegistrationMarksChange,
-  exportFinalSafeGuidesDraft,
-  onExportFinalSafeGuidesChange,
   onConfirm,
   getOrientedDimensions,
 }: Props) {
@@ -248,18 +244,6 @@ export function ExportPdfDialog({
                   <Switch
                     checked={exportRegistrationMarksDraft}
                     onCheckedChange={onExportRegistrationMarksChange}
-                  />
-                </div>
-                <div className={toggleRowClassName}>
-                  <div className="space-y-0.5">
-                    <Label className="text-sm">Final-Safe Guide Colors</Label>
-                    <p className="text-[11px] text-muted-foreground">
-                      Neutral grayscale guides, no cyan/magenta accents.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={exportFinalSafeGuidesDraft}
-                    onCheckedChange={onExportFinalSafeGuidesChange}
                   />
                 </div>
               </>

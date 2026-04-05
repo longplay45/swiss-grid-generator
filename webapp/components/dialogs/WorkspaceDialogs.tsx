@@ -44,8 +44,6 @@ type Props = {
     onBleedMmChange: (value: string) => void
     registrationMarks: boolean
     onRegistrationMarksChange: (value: boolean) => void
-    finalSafeGuides: boolean
-    onFinalSafeGuidesChange: (value: boolean) => void
     onConfirm: () => void
     getOrientedDimensions: (paperSize: string) => { width: number; height: number }
   }
@@ -109,8 +107,6 @@ export function WorkspaceDialogs({
         onExportBleedMmChange={exportDialog.onBleedMmChange}
         exportRegistrationMarksDraft={exportDialog.registrationMarks}
         onExportRegistrationMarksChange={exportDialog.onRegistrationMarksChange}
-        exportFinalSafeGuidesDraft={exportDialog.finalSafeGuides}
-        onExportFinalSafeGuidesChange={exportDialog.onFinalSafeGuidesChange}
         onConfirm={exportDialog.onConfirm}
         getOrientedDimensions={exportDialog.getOrientedDimensions}
       />

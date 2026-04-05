@@ -40,6 +40,7 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
+import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
@@ -203,6 +204,7 @@ export function drawPresetThumbnailToCanvas(
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageColors = layout?.imageColors ?? {}
+  const imageOpacities = layout?.imageOpacities ?? {}
 
   const { width, height } = result.pageSizePt
   const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -350,6 +352,7 @@ export function drawPresetThumbnailToCanvas(
     getImageSpan,
     getImageRows,
     getImageColor: (key) => resolveImageSchemeColor(imageColors[key], page.imageColorScheme),
+    getImageOpacity: (key) => normalizeImagePlaceholderOpacity(imageOpacities[key]),
     clampImageBaselinePosition,
     toColumnX,
     baselineOriginTop,
