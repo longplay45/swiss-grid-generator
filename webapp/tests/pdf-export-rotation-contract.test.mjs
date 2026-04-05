@@ -17,13 +17,13 @@ test("page export plan extends baselines beyond the page before downstream clipp
   assert.match(source, /clipToPage:\s*true/)
 })
 
-test("typography layout plan reflows across stacked row modules before advancing to the next column", () => {
+test("typography layout plan reflows across the full stacked row height before advancing to the next column", () => {
   const source = readText("lib/typography-layout-plan.ts")
   assert.match(source, /const\s+buildReflowRowLayouts\s*=\s*\(rowStart:\s*number,\s*rowSpan:\s*number,\s*lineStep:\s*number\)/)
   assert.match(source, /const\s+reflowRowLayouts\s*=\s*buildReflowRowLayouts\(startRow,\s*rowSpan,\s*lineStep\)/)
-  assert.match(source, /const\s+maxLinesPerColumn\s*=\s*reflowRowLayouts\.reduce\(\(sum,\s*row\)\s*=>\s*sum\s*\+\s*row\.lineCapacity,\s*0\)/)
+  assert.match(source, /const\s+maxLinesPerColumn\s*=\s*Math\.max\(1,\s*Math\.floor\(moduleHeightForBlock\s*\/\s*Math\.max\(lineStep,\s*0\.0001\)\)\)/)
   assert.match(source, /const\s+lineIndexWithinColumn\s*=\s*lineIndex\s*%\s*maxLinesPerColumn/)
-  assert.match(source, /const\s+lineTopY\s*=\s*origin\.y\s*\+\s*baselineStep\s*\+\s*rowLayout\.yOffset\s*\+\s*rowIndex\s*\*\s*lineStep/)
+  assert.match(source, /const\s+lineTopY\s*=\s*origin\.y\s*\+\s*baselineStep\s*\+\s*lineIndexWithinColumn\s*\*\s*lineStep/)
   assert.match(source, /reflowRowLayouts\.map\(\(rowLayout\)\s*=>\s*\(\{\s*x:\s*origin\.x\s*\+\s*getColumnOffset\(startCol,\s*columnIndex\),[\s\S]*?y:\s*origin\.y\s*\+\s*baselineStep\s*\+\s*rowLayout\.yOffset,/)
 })
 
