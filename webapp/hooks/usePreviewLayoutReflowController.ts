@@ -140,9 +140,10 @@ export function usePreviewLayoutReflowController<Key extends string>({
           baseTrackingScale: style.trackingScale,
           runs: normalizeTextTrackingRuns(sourceText, style.trackingRuns, style.trackingScale),
           fontSize: style.size,
+          opticalKerning: style.opticalKerning,
         })
       }
-      return measureCanvasTextWidth(ctx, text, style.trackingScale, style.size)
+      return measureCanvasTextWidth(ctx, text, style.trackingScale, style.size, style.opticalKerning)
     })
   ), [canvasRef])
 

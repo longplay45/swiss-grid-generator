@@ -190,6 +190,27 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
     return sumAxisSpan(resolvedModuleHeights, rowStart, rowSpan, gutterY)
   }
+  const getRowHeightAt = (rowIndex: number) => {
+    if (rowIndex < 0 || rowIndex >= gridRows) return moduleHeight
+    return resolvedModuleHeights[rowIndex] ?? moduleHeight
+  }
+  const getRowOffset = (rowStart: number, offset: number) => {
+    let position = 0
+    for (let index = 0; index < offset; index += 1) {
+      position += getRowHeightAt(rowStart + index) + gutterY
+    }
+    return position
+  }
+  const buildReflowRowLayouts = (rowStart: number, rowSpan: number, lineStep: number) => (
+    Array.from({ length: Math.max(1, rowSpan) }, (_, rowOffset) => {
+      const height = getRowHeightAt(rowStart + rowOffset)
+      return {
+        yOffset: getRowOffset(rowStart, rowOffset),
+        height,
+        lineCapacity: Math.max(1, Math.floor(height / Math.max(lineStep, 0.0001))),
+      }
+    })
+  )
 
   const useRowPlacement = gridRows >= 2
   const useParagraphRows = gridRows >= 5
@@ -261,7 +282,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       : pageHeight - marginsBottom
     const bottomLineLimit = pageBottomY + 0.0001
     const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan)
-    const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / lineStep))
+    const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, lineStep)
+    const maxLinesPerColumn = reflowRowLayouts.reduce((sum, row) => sum + row.lineCapacity, 0)
     let maxUsedRows = 0
     const commands: TextDrawCommand[] = []
 
@@ -274,12 +296,14 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         : (Math.max(lines.length, 1) * baselineMult + 1) * baselineStep + hitTopPadding,
     }
     const guideRects: BlockRect[] = columnReflow
-      ? Array.from({ length: Math.max(1, span) }, (_, columnIndex) => ({
-        x: origin.x + getColumnOffset(startCol, columnIndex),
-        y: origin.y + baselineStep,
-        width: getColumnWidthAt(startCol + columnIndex),
-        height: rect.height,
-      }))
+      ? Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
+        reflowRowLayouts.map((rowLayout) => ({
+          x: origin.x + getColumnOffset(startCol, columnIndex),
+          y: origin.y + baselineStep + rowLayout.yOffset,
+          width: getColumnWidthAt(startCol + columnIndex),
+          height: rowLayout.height,
+        }))
+      )).flat()
       : [{
         x: origin.x,
         y: origin.y + baselineStep,
@@ -312,7 +336,16 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const columnIndex = Math.floor(lineIndex / maxLinesPerColumn)
         if (columnIndex >= span) break
-        const rowIndex = lineIndex % maxLinesPerColumn
+        const lineIndexWithinColumn = lineIndex % maxLinesPerColumn
+        let rowLayout = reflowRowLayouts[0] ?? { yOffset: 0, height: moduleHeightForBlock, lineCapacity: maxLinesPerColumn }
+        let rowIndex = lineIndexWithinColumn
+        for (const candidate of reflowRowLayouts) {
+          if (rowIndex < candidate.lineCapacity) {
+            rowLayout = candidate
+            break
+          }
+          rowIndex -= candidate.lineCapacity
+        }
         const columnX = origin.x + getColumnOffset(startCol, columnIndex)
         const columnWidth = getColumnWidthAt(startCol + columnIndex)
         const anchorX = textAlign === "right"
@@ -321,10 +354,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
             ? columnX + columnWidth / 2
             : columnX
         const line = lines[lineIndex]
-        const lineTopY = origin.y + baselineStep + rowIndex * lineStep
+        const lineTopY = origin.y + baselineStep + rowLayout.yOffset + rowIndex * lineStep
         const y = lineTopY + ascent
         if (lineTopY > bottomLineLimit) continue
-        maxUsedRows = Math.max(maxUsedRows, rowIndex + 1)
+        maxUsedRows = Math.max(maxUsedRows, lineIndexWithinColumn + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
         commands.push({
           text: line.text,
@@ -441,7 +474,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     : pageHeight - marginsBottom
   const captionBottomLineLimit = captionPageBottomY + 0.0001
   const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan)
-  const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / captionLineStep))
+  const captionReflowRowLayouts = buildReflowRowLayouts(captionStartRow, captionRowSpan, captionLineStep)
+  const captionMaxLinesPerColumn = captionReflowRowLayouts.reduce((sum, row) => sum + row.lineCapacity, 0)
   let captionMaxUsedRows = 0
   const captionCommands: TextDrawCommand[] = []
 
@@ -473,15 +507,24 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
       const columnIndex = Math.floor(lineIndex / captionMaxLinesPerColumn)
       if (columnIndex >= captionSpan) break
-      const rowIndex = lineIndex % captionMaxLinesPerColumn
+      const lineIndexWithinColumn = lineIndex % captionMaxLinesPerColumn
+      let rowLayout = captionReflowRowLayouts[0] ?? { yOffset: 0, height: captionModuleHeight, lineCapacity: captionMaxLinesPerColumn }
+      let rowIndex = lineIndexWithinColumn
+      for (const candidate of captionReflowRowLayouts) {
+        if (rowIndex < candidate.lineCapacity) {
+          rowLayout = candidate
+          break
+        }
+        rowIndex -= candidate.lineCapacity
+      }
       const columnX = captionOrigin.x + getColumnOffset(captionStartCol, columnIndex)
       const columnWidth = getColumnWidthAt(captionStartCol + columnIndex)
       const captionAnchorX = captionAlign === "right" ? columnX + columnWidth : columnX
       const line = captionLines[lineIndex]
-      const lineTopY = captionOrigin.y + baselineStep + rowIndex * captionLineStep
+      const lineTopY = captionOrigin.y + baselineStep + rowLayout.yOffset + rowIndex * captionLineStep
       const y = lineTopY + captionAscent
       if (lineTopY > captionBottomLineLimit) continue
-      captionMaxUsedRows = Math.max(captionMaxUsedRows, rowIndex + 1)
+      captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndexWithinColumn + 1)
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -520,12 +563,14 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselineStep + captionHitTopPadding,
   }
   const captionGuideRects: BlockRect[] = captionColumnReflow
-    ? Array.from({ length: Math.max(1, captionSpan) }, (_, columnIndex) => ({
-      x: captionOrigin.x + getColumnOffset(captionStartCol, columnIndex),
-      y: captionOrigin.y + baselineStep,
-      width: getColumnWidthAt(captionStartCol + columnIndex),
-      height: captionRect.height,
-    }))
+    ? Array.from({ length: Math.max(1, captionSpan) }, (_, columnIndex) => (
+      captionReflowRowLayouts.map((rowLayout) => ({
+        x: captionOrigin.x + getColumnOffset(captionStartCol, columnIndex),
+        y: captionOrigin.y + baselineStep + rowLayout.yOffset,
+        width: getColumnWidthAt(captionStartCol + columnIndex),
+        height: rowLayout.height,
+      }))
+    )).flat()
     : [{
       x: captionOrigin.x,
       y: captionOrigin.y + baselineStep,

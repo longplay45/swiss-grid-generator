@@ -1,3 +1,5 @@
+import { getOpticalKerningPairAdjustment, type OpticalGlyphBounds } from "./optical-margin.ts"
+
 type CanvasKerningValue = "auto" | "normal" | "none"
 
 type CanvasKerningContext = {
@@ -114,7 +116,7 @@ export function buildCanvasFont(
 
 export function setCanvasFontKerning(context: CanvasKerningContext, opticalKerning: boolean): void {
   if (!("fontKerning" in context)) return
-  context.fontKerning = opticalKerning ? "normal" : "none"
+  context.fontKerning = opticalKerning ? "none" : "normal"
 }
 
 export function setCanvasLetterSpacing(
@@ -141,19 +143,68 @@ export function applyCanvasTextConfig(
   if ("letterSpacing" in context) context.letterSpacing = "0px"
 }
 
+type GlyphBoundsMeasure = (glyph: string) => OpticalGlyphBounds | null
+
+export function measureTextPairAdvance(
+  context: CanvasMeasureContext,
+  previous: string,
+  current: string,
+  fontSize: number,
+  opticalKerning: boolean,
+  measureGlyphBounds?: GlyphBoundsMeasure,
+): number {
+  if (!previous) return 0
+  if (!current) return context.measureText(previous).width
+  if (!opticalKerning) {
+    return context.measureText(`${previous}${current}`).width - context.measureText(previous).width
+  }
+
+  const unkernedAdvance = context.measureText(previous).width
+  const adjustment = getOpticalKerningPairAdjustment({
+    left: previous,
+    right: current,
+    font: context.font,
+    fontSize,
+    pairAdvance: unkernedAdvance,
+    measureGlyphBounds,
+  })
+  return Math.max(0, unkernedAdvance + adjustment)
+}
+
 export function measureCanvasTextWidth(
   context: CanvasMeasureContext,
   text: string,
   trackingScale: number,
   fontSize?: number,
+  opticalKerning = true,
+  measureGlyphBounds?: GlyphBoundsMeasure,
 ): number {
   const trackingValue = normalizeTrackingScale(trackingScale)
-  const glyphCount = splitTextForTracking(text).length
-  if (glyphCount <= 1 || trackingValue === 0) {
+  const glyphs = splitTextForTracking(text)
+  const glyphCount = glyphs.length
+  if (glyphCount <= 1) {
     return context.measureText(text).width
   }
   const resolvedFontSize = fontSize ?? resolveCanvasFontSize(context.font)
-  return context.measureText(text).width + (glyphCount - 1) * getTrackingLetterSpacing(resolvedFontSize, trackingValue)
+  if (!opticalKerning && trackingValue === 0) {
+    return context.measureText(text).width
+  }
+
+  let width = context.measureText(glyphs[0] ?? "").width
+  for (let index = 1; index < glyphCount; index += 1) {
+    const previous = glyphs[index - 1] ?? ""
+    const current = glyphs[index] ?? ""
+    width += measureTextPairAdvance(
+      context,
+      previous,
+      current,
+      resolvedFontSize,
+      opticalKerning,
+      measureGlyphBounds,
+    ) + getTrackingLetterSpacing(resolvedFontSize, trackingValue)
+  }
+
+  return width
 }
 
 export function drawCanvasText(
@@ -165,8 +216,10 @@ export function drawCanvasText(
     textAlign,
     fontSize,
     trackingScale,
+    opticalKerning = true,
     blockRotation = 0,
     rotationOrigin,
+    measureGlyphBounds,
   }: {
     text: string
     x: number
@@ -174,8 +227,10 @@ export function drawCanvasText(
     textAlign?: CanvasTextAlign
     fontSize?: number
     trackingScale: number
+    opticalKerning?: boolean
     blockRotation?: number
     rotationOrigin?: { x: number; y: number }
+    measureGlyphBounds?: GlyphBoundsMeasure
   },
 ): void {
   const trackingValue = normalizeTrackingScale(trackingScale)
@@ -184,14 +239,14 @@ export function drawCanvasText(
   const resolvedTextAlign = textAlign ?? context.textAlign
   const resolvedFontSize = fontSize ?? resolveCanvasFontSize(context.font)
   const letterSpacingPx = getTrackingLetterSpacing(resolvedFontSize, trackingValue)
-  if ((glyphs.length <= 1 || trackingValue === 0) && Math.abs(angle) <= 0.0001) {
+  if (!opticalKerning && glyphs.length <= 1 && trackingValue === 0 && Math.abs(angle) <= 0.0001) {
     context.textAlign = resolvedTextAlign
     setCanvasLetterSpacing(context, trackingValue, resolvedFontSize)
     context.fillText(text, x, y)
     return
   }
 
-  if ("letterSpacing" in context) {
+  if (!opticalKerning && "letterSpacing" in context) {
     context.save()
     context.textAlign = resolvedTextAlign
     setCanvasLetterSpacing(context, trackingValue, resolvedFontSize)
@@ -207,7 +262,14 @@ export function drawCanvasText(
     return
   }
 
-  const lineWidth = measureCanvasTextWidth(context, text, trackingValue, resolvedFontSize)
+  const lineWidth = measureCanvasTextWidth(
+    context,
+    text,
+    trackingValue,
+    resolvedFontSize,
+    opticalKerning,
+    measureGlyphBounds,
+  )
   const startX = resolvedTextAlign === "center"
     ? x - lineWidth / 2
     : resolvedTextAlign === "right"
@@ -221,12 +283,30 @@ export function drawCanvasText(
     const localY = y - rotationOrigin.y
     context.translate(rotationOrigin.x, rotationOrigin.y)
     context.rotate(angle)
-    drawTrackedGlyphs(context, glyphs, localX, localY, letterSpacingPx)
+    drawTrackedGlyphs(
+      context,
+      glyphs,
+      localX,
+      localY,
+      letterSpacingPx,
+      resolvedFontSize,
+      opticalKerning,
+      measureGlyphBounds,
+    )
     context.restore()
     return
   }
 
-  drawTrackedGlyphs(context, glyphs, startX, y, letterSpacingPx)
+  drawTrackedGlyphs(
+    context,
+    glyphs,
+    startX,
+    y,
+    letterSpacingPx,
+    resolvedFontSize,
+    opticalKerning,
+    measureGlyphBounds,
+  )
   context.restore()
 }
 
@@ -236,6 +316,9 @@ function drawTrackedGlyphs(
   startX: number,
   baselineY: number,
   letterSpacingPx: number,
+  fontSize: number,
+  opticalKerning: boolean,
+  measureGlyphBounds?: GlyphBoundsMeasure,
 ): void {
   if (glyphs.length === 0) return
   let cursorX = startX
@@ -243,7 +326,14 @@ function drawTrackedGlyphs(
   for (let index = 1; index < glyphs.length; index += 1) {
     const previous = glyphs[index - 1] ?? ""
     const current = glyphs[index] ?? ""
-    const pairAdvance = context.measureText(`${previous}${current}`).width - context.measureText(previous).width
+    const pairAdvance = measureTextPairAdvance(
+      context,
+      previous,
+      current,
+      fontSize,
+      opticalKerning,
+      measureGlyphBounds,
+    )
     cursorX += pairAdvance + letterSpacingPx
     context.fillText(current, cursorX, baselineY)
   }

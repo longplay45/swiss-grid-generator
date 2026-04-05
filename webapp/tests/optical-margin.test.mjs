@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 
 import {
   getOpticalMarginAnchorOffset,
+  resolveOpticalKerningPairAdjustment,
   resolveConservativeContourBoundaryPx,
   resolveDominantStemBoundaryPx,
 } from "../lib/optical-margin.ts"
@@ -125,6 +126,40 @@ test("leading T caps measured overhang to the subtle fallback offset", () => {
     ),
   })
   assert.equal(offset, -(0.018 * 200))
+})
+
+test("optical kerning tightens expressive pairs more than straight pairs", () => {
+  const expressiveAdjustment = resolveOpticalKerningPairAdjustment({
+    left: "A",
+    right: "V",
+    pairAdvance: 40,
+    fontSize: 80,
+    leftBounds: { advanceWidth: 40, leftBoundary: 2, rightBoundary: 25 },
+    rightBounds: { advanceWidth: 40, leftBoundary: 15, rightBoundary: 38 },
+  })
+  const straightAdjustment = resolveOpticalKerningPairAdjustment({
+    left: "n",
+    right: "n",
+    pairAdvance: 40,
+    fontSize: 80,
+    leftBounds: { advanceWidth: 40, leftBoundary: 4, rightBoundary: 33 },
+    rightBounds: { advanceWidth: 40, leftBoundary: 5, rightBoundary: 34 },
+  })
+
+  assert.ok(expressiveAdjustment < 0)
+  assert.ok(Math.abs(expressiveAdjustment) > Math.abs(straightAdjustment))
+})
+
+test("optical kerning does not tighten across spaces", () => {
+  const adjustment = resolveOpticalKerningPairAdjustment({
+    left: "A",
+    right: " ",
+    pairAdvance: 40,
+    fontSize: 80,
+    leftBounds: { advanceWidth: 40, leftBoundary: 2, rightBoundary: 25 },
+    rightBounds: { advanceWidth: 20, leftBoundary: 0, rightBoundary: 0 },
+  })
+  assert.equal(adjustment, 0)
 })
 
 test("dominant left stem collapses optical boundary back to the bbox edge", () => {

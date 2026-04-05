@@ -375,9 +375,10 @@ export function drawPresetThumbnailToCanvas(
             baseTrackingScale: trackingScale,
             runs: normalizedRuns,
             fontSize: Number.parseFloat(canvasContext.font.match(/(\d+(?:\.\d+)?)px/)?.[1] ?? "0"),
+            opticalKerning,
           })
         }
-        return measureCanvasTextWidth(canvasContext, sample, trackingScale)
+        return measureCanvasTextWidth(canvasContext, sample, trackingScale, undefined, opticalKerning)
       })
     }
 
@@ -401,7 +402,7 @@ export function drawPresetThumbnailToCanvas(
         fontSize,
         styleKey,
         font: canvasContext.font,
-        measureWidth: (sample) => measureCanvasTextWidth(canvasContext, sample, trackingScale, fontSize),
+        measureWidth: (sample) => measureCanvasTextWidth(canvasContext, sample, trackingScale, fontSize, opticalKerning),
       })
     }
 

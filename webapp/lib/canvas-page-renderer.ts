@@ -320,6 +320,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       baseTrackingScale: trackingScale,
       runs: trackingRuns,
       fontSize: plan.fontSize,
+      opticalKerning,
     }))
     textPlans.set(plan.key, {
       key: plan.key,
@@ -423,6 +424,7 @@ export function drawCanvasLayerStack<Key extends string>(
           y: segment.y,
           textAlign: "left",
           trackingScale: segment.trackingScale,
+          opticalKerning: textPlan.opticalKerning,
           blockRotation: textPlan.blockRotation,
           rotationOrigin: {
             x: textPlan.rotationOriginX,

@@ -127,7 +127,7 @@ export function TextEditorPanel<StyleKey extends string>({
     },
     {
       label: "Kerning",
-      value: controls.editorState.draftOpticalKerning ? "Optical on" : "Optical off",
+      value: controls.editorState.draftOpticalKerning ? "Optical" : "Metric",
     },
     {
       label: "Tracking",
@@ -678,7 +678,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 <span className={submenuTokenClassName}>Ke</span>
               </div>
               <div className="col-start-2 row-start-3">
-                {withSubmenuTooltip("Toggle paragraph kerning between optical on and off", <Select
+                {withSubmenuTooltip("Choose optical or metric kerning", <Select
                   value={controls.editorState.draftOpticalKerning ? "on" : "off"}
                   onValueChange={(value) => {
                     controls.setEditorState((prev) => prev ? {
@@ -691,8 +691,8 @@ export function TextEditorPanel<StyleKey extends string>({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className={tone.selectContent}>
-                    <SelectItem value="on">Optical on</SelectItem>
-                    <SelectItem value="off">Optical off</SelectItem>
+                    <SelectItem value="on">Optical</SelectItem>
+                    <SelectItem value="off">Metric</SelectItem>
                   </SelectContent>
                 </Select>)}
               </div>

@@ -137,9 +137,10 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
           baseTrackingScale: normalizedTrackingScale,
           runs: normalizedRuns,
           fontSize,
+          opticalKerning,
         })
       }
-      return measureCanvasTextWidth(ctx, text, normalizedTrackingScale)
+      return measureCanvasTextWidth(ctx, text, normalizedTrackingScale, undefined, opticalKerning)
     })
   }, [makeCachedValue])
 

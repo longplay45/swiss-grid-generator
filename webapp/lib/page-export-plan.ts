@@ -556,6 +556,7 @@ export function buildPageExportPlan({
                 baseTrackingScale: trackingScale,
                 runs: trackingRuns,
                 fontSize,
+                opticalKerning,
               })
             }
             return measureTrackedTextRangeWidth(textMeasureContext, {
@@ -565,6 +566,7 @@ export function buildPageExportPlan({
               baseTrackingScale: trackingScale,
               runs: trackingRuns,
               fontSize,
+              opticalKerning,
             })
           }
           return text.length * fontSize * 0.56
@@ -618,6 +620,7 @@ export function buildPageExportPlan({
       baseTrackingScale: textPlan.trackingScale,
       runs: textPlan.trackingRuns,
       fontSize: textPlan.fontSize,
+      opticalKerning: textPlan.opticalKerning,
     }))
   }
 

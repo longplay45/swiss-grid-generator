@@ -243,9 +243,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
         baseTrackingScale: trackingScale,
         runs: editorState.draftTrackingRuns,
         fontSize: scaledFontSize,
+        opticalKerning: editorState.draftOpticalKerning,
       })
     }
-    return measureCanvasTextWidth(ctx, text, trackingScale, scaledFontSize)
+    return measureCanvasTextWidth(ctx, text, trackingScale, scaledFontSize, editorState.draftOpticalKerning)
   }
   const fxCaretOffsetY = isFxStyle(editorState.draftStyle)
     ? Math.max(0, (scaledLeading - editorTextAscent) / 2)
@@ -553,7 +554,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
               fontFamily: getFontFamilyCss(editorState.draftFont),
               fontStyle: editorState.draftItalic ? "italic" : "normal",
               fontWeight,
-              fontKerning: editorState.draftOpticalKerning ? "normal" : "none",
+              fontKerning: editorState.draftOpticalKerning ? "none" : "normal",
               textAlign: editorState.draftAlign,
               color: "transparent",
               fontSize: `${scaledFontSize}px`,

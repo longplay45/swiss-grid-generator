@@ -114,7 +114,7 @@ export function renderSwissGridVectorSvg({
 
     const textPlan = textPlans.get(key)
     if (!textPlan) return ""
-    const kerning = textPlan.opticalKerning ? ` font-kerning="normal"` : ` font-kerning="none"`
+    const kerning = textPlan.opticalKerning ? ` font-kerning="none"` : ` font-kerning="normal"`
     const rotationTransform = renderRotationTransform(
       textPlan.blockRotation,
       textPlan.rotationOriginX,

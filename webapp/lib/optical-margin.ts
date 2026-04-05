@@ -18,6 +18,15 @@ export type OpticalGlyphBounds = {
   rightBoundary: number
 }
 
+type OpticalKerningSideKind =
+  | "space"
+  | "punctuation"
+  | "expressive-letter"
+  | "straight-upper"
+  | "straight-lower"
+  | "digit"
+  | "other"
+
 const OPTICAL_GLYPH_ALPHA_THRESHOLD = 8
 const OPTICAL_GLYPH_CACHE_LIMIT = 2000
 const OPTICAL_GLYPH_MAX_SCALE = 6
@@ -172,6 +181,48 @@ function resolveOpticalMarginProfile(styleKey: string | undefined): OpticalMargi
   if (styleKey === "fx") return "fx"
   if (styleKey === "display" || styleKey === "headline") return "display"
   return "default"
+}
+
+function resolveOpticalKerningSideKind(char: string): OpticalKerningSideKind {
+  if (!char || /^\s+$/.test(char)) return "space"
+  if (LEADING_PUNCTUATION_OFFSETS_EM[char] || TRAILING_PUNCTUATION_OFFSETS_EM[char]) return "punctuation"
+  if (LEADING_EXPRESSIVE_LETTERS_EM[char] || TRAILING_EXPRESSIVE_LETTERS_EM[char]) return "expressive-letter"
+  if (/^[A-ZÄÖÜ]$/.test(char)) return "straight-upper"
+  if (/^[a-zäöüß]$/.test(char)) return "straight-lower"
+  if (/^\d$/.test(char)) return "digit"
+  return "other"
+}
+
+function getOpticalKerningSideFactor(char: string): number {
+  if (char === "T" || char === "Y" || char === "V" || char === "W" || char === "A") return 0.88
+  switch (resolveOpticalKerningSideKind(char)) {
+    case "space":
+      return 0
+    case "punctuation":
+      return 0.96
+    case "expressive-letter":
+      return 0.82
+    case "straight-upper":
+      return 0.42
+    case "straight-lower":
+      return 0.32
+    case "digit":
+      return 0.28
+    default:
+      return 0.24
+  }
+}
+
+function getOpticalKerningStrength(profile: OpticalMarginProfile, fontSize: number): number {
+  const normalizedLargeText = Math.max(0, Math.min(1, (fontSize - 24) / 180))
+  switch (profile) {
+    case "fx":
+      return 1.12 + normalizedLargeText * 0.2
+    case "display":
+      return 1.06 + normalizedLargeText * 0.16
+    default:
+      return 1 + normalizedLargeText * 0.12
+  }
 }
 
 function getProfileLetterScale(profile: OpticalMarginProfile, fontSize: number): number {
@@ -547,6 +598,85 @@ function resolveMeasuredLeftHangingOffset(
   const fallbackOffset = resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
   if (!(fallbackOffset > 0)) return measuredOffset
   return Math.min(measuredOffset, fallbackOffset)
+}
+
+export function resolveOpticalKerningPairAdjustment({
+  left,
+  right,
+  leftBounds,
+  rightBounds,
+  pairAdvance,
+  fontSize,
+  styleKey,
+}: {
+  left: string
+  right: string
+  leftBounds: OpticalGlyphBounds
+  rightBounds: OpticalGlyphBounds
+  pairAdvance: number
+  fontSize: number
+  styleKey?: string
+}): number {
+  if (!left || !right || fontSize <= 0) return 0
+  if (resolveOpticalKerningSideKind(left) === "space" || resolveOpticalKerningSideKind(right) === "space") {
+    return 0
+  }
+
+  const currentGap = pairAdvance + rightBounds.leftBoundary - leftBounds.rightBoundary
+  if (!(currentGap > 0)) return 0
+
+  const trailingWhitespace = Math.max(0, leftBounds.advanceWidth - leftBounds.rightBoundary)
+  const leadingWhitespace = Math.max(0, rightBounds.leftBoundary)
+  const whitespaceBudget = Math.max(currentGap, trailingWhitespace + leadingWhitespace)
+  if (!(whitespaceBudget > 0)) return 0
+
+  const openness = (getOpticalKerningSideFactor(left) + getOpticalKerningSideFactor(right)) / 2
+  const profile = resolveOpticalMarginProfile(styleKey)
+  const strength = getOpticalKerningStrength(profile, fontSize)
+  const desiredTightening = whitespaceBudget * (0.08 + openness * 0.28) * strength
+  const minGap = fontSize * (0.016 + (1 - openness) * 0.014)
+  const maxTightening = Math.max(0, currentGap - minGap)
+  const tighteningCap = fontSize * (0.032 + openness * 0.06) * strength
+
+  return -Math.min(maxTightening, desiredTightening, tighteningCap)
+}
+
+export function getOpticalKerningPairAdjustment({
+  left,
+  right,
+  font,
+  fontSize,
+  pairAdvance,
+  styleKey,
+  measureGlyphBounds,
+}: {
+  left: string
+  right: string
+  font?: string
+  fontSize: number
+  pairAdvance: number
+  styleKey?: string
+  measureGlyphBounds?: (char: string) => OpticalGlyphBounds | null
+}): number {
+  if (!left || !right || !font || fontSize <= 0) return 0
+  if (resolveOpticalKerningSideKind(left) === "space" || resolveOpticalKerningSideKind(right) === "space") {
+    return 0
+  }
+
+  const profile = resolveOpticalMarginProfile(styleKey)
+  const leftBounds = measureGlyphBounds?.(left) ?? measureOpticalGlyphBoundsFromCanvas(left, font, fontSize, profile)
+  const rightBounds = measureGlyphBounds?.(right) ?? measureOpticalGlyphBoundsFromCanvas(right, font, fontSize, profile)
+  if (!leftBounds || !rightBounds) return 0
+
+  return resolveOpticalKerningPairAdjustment({
+    left,
+    right,
+    leftBounds,
+    rightBounds,
+    pairAdvance,
+    fontSize,
+    styleKey,
+  })
 }
 
 export function getOpticalMarginAnchorOffset({

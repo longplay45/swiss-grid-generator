@@ -62,8 +62,9 @@ self.onmessage = (event: MessageEvent<AutoFitRequest>) => {
         baseTrackingScale: style.trackingScale,
         runs: normalizeTextTrackingRuns(sourceText, style.trackingRuns, style.trackingScale),
         fontSize: style.size,
+        opticalKerning: style.opticalKerning,
       })
-      : measureCanvasTextWidth(context, text, style.trackingScale, style.size)
+      : measureCanvasTextWidth(context, text, style.trackingScale, style.size, style.opticalKerning)
     measureCache.set(key, width)
     if (measureCache.size > 8000) measureCache.clear()
     return width
