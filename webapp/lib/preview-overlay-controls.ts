@@ -13,6 +13,7 @@ export type TextEditorControls<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey>
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
   deleteEditorBlock: () => void
+  maxCharsPerLine: number | null
   gridRows: number
   gridCols: number
   hierarchyTriggerMinWidthCh: number

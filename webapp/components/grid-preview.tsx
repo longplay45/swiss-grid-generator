@@ -819,10 +819,19 @@ export const GridPreview = memo(function GridPreview({
     scale,
     planVersion: inlineEditorPlanVersion,
   })
+  const maxCharsPerLine = useMemo(() => {
+    if (!inlineEditorLayout) return null
+    if (inlineEditorLayout.commands.length === 0) return 0
+    return inlineEditorLayout.commands.reduce((max, command) => {
+      const characterCount = Array.from(command.text.replace(/\u00AD/g, "")).length
+      return Math.max(max, characterCount)
+    }, 0)
+  }, [inlineEditorLayout])
   const textEditorControls = usePreviewOverlayControls({
     editorState,
     setEditorState,
     deleteEditorBlock,
+    maxCharsPerLine,
     gridRows: result.settings.gridRows,
     gridCols: result.settings.gridCols,
     hierarchyTriggerMinWidthCh,
