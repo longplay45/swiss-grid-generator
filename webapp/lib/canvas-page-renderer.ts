@@ -1,10 +1,23 @@
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { FontFamily } from "@/lib/config/fonts"
-import type { BlockRenderPlan, BlockRect, TextAlignMode } from "@/lib/preview-types"
+import { getOpticalTerminalCaretAdvance } from "@/lib/optical-margin"
+import { resolveTextDrawCommandRange } from "@/lib/text-draw-command"
+import type {
+  BlockRenderPlan,
+  BlockRect,
+  RenderedCaretStop,
+  RenderedTextLine,
+  TextAlignMode,
+  TextDrawCommand,
+} from "@/lib/preview-types"
 import {
   applyCanvasTextConfig,
   buildCanvasFont,
   drawCanvasText,
+  getTrackingLetterSpacing,
+  measureCanvasTextWidth,
+  measureTextPairAdvance,
+  splitTextForTracking,
 } from "@/lib/text-rendering"
 import {
   buildPositionedTextFormatTrackingSegments,
@@ -127,6 +140,187 @@ export function getCanvasTextAscentPx(
 ): number {
   const metrics = ctx.measureText("Hg")
   return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
+}
+
+const INVISIBLE_TEXT_ARTIFACTS_RE = /[\u00AD\u200B\u200C\u200D\uFEFF]/g
+
+type NormalizedSourceGrapheme = {
+  renderedText: string
+  sourceStart: number
+  sourceEnd: number
+}
+
+function toNormalizedSourceGraphemes(
+  sourceText: string,
+  start: number,
+  end: number,
+): NormalizedSourceGrapheme[] {
+  const slice = sourceText.slice(start, end)
+  const graphemes = splitTextForTracking(slice)
+  const normalized: NormalizedSourceGrapheme[] = []
+  let cursor = start
+
+  for (const grapheme of graphemes) {
+    const graphemeStart = cursor
+    const graphemeEnd = graphemeStart + grapheme.length
+    cursor = graphemeEnd
+    const cleanText = grapheme.replace(INVISIBLE_TEXT_ARTIFACTS_RE, "")
+    if (!cleanText) continue
+    normalized.push({
+      renderedText: cleanText,
+      sourceStart: graphemeStart,
+      sourceEnd: graphemeEnd,
+    })
+  }
+
+  return normalized
+}
+
+function pushCaretStop(stops: RenderedCaretStop[], index: number, x: number) {
+  const previous = stops[stops.length - 1]
+  if (previous?.index === index) {
+    previous.x = x
+    return
+  }
+  stops.push({ index, x })
+}
+
+function parseCanvasFontSize(font: string, fallback: number): number {
+  const match = font.match(/(\d+(?:\.\d+)?)px/)
+  if (!match) return fallback
+  const value = Number(match[1])
+  return Number.isFinite(value) && value > 0 ? value : fallback
+}
+
+function buildRenderedTextLines(
+  ctx: CanvasRenderingContext2D,
+  sourceText: string,
+  commands: TextDrawCommand[],
+  segmentLines: BlockRenderPlan<string>["segmentLines"],
+  fallbackFont: string,
+  opticalKerning: boolean,
+): RenderedTextLine[] {
+  const fallbackFontSize = parseCanvasFontSize(fallbackFont, 16)
+  const fallbackMetricsContextFont = ctx.font
+
+  const renderedLines: RenderedTextLine[] = commands.map((command, lineIndex) => {
+    const segments = segmentLines[lineIndex] ?? []
+    const commandRange = resolveTextDrawCommandRange(command, sourceText.length)
+    const lineSourceStart = commandRange.sourceStart
+    const lineSourceEnd = commandRange.sourceEnd
+    const lineVisibleStart = commandRange.visibleRange.start
+    if (segments.length === 0) {
+      applyCanvasTextConfig(ctx, {
+        font: fallbackFont,
+        opticalKerning,
+      })
+      const metrics = ctx.measureText("Hgyp")
+      const ascent = metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSize * 0.8
+      const descent = metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : fallbackFontSize * 0.2
+      return {
+        sourceStart: lineSourceStart,
+        sourceEnd: lineSourceEnd,
+        left: command.x,
+        top: command.y - ascent,
+        width: 0,
+        height: ascent + descent,
+        baselineY: command.y,
+        caretStops: Array.from({ length: Math.max(1, lineSourceEnd - lineSourceStart + 1) }, (_, offset) => ({
+          index: lineSourceStart + offset,
+          x: command.x,
+        })),
+      }
+    }
+
+    let lineTop = Number.POSITIVE_INFINITY
+    let lineBottom = Number.NEGATIVE_INFINITY
+    const caretStops: RenderedCaretStop[] = []
+    const lineLeft = segments[0]?.x ?? command.x
+
+    for (let hiddenIndex = lineSourceStart; hiddenIndex <= lineVisibleStart; hiddenIndex += 1) {
+      pushCaretStop(caretStops, hiddenIndex, lineLeft)
+    }
+
+    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+      const segment = segments[segmentIndex]!
+      const nextSegment = segments[segmentIndex + 1]
+      const segmentFont = buildCanvasFont(segment.fontFamily, segment.fontWeight, segment.italic, segment.fontSize)
+      applyCanvasTextConfig(ctx, {
+        font: segmentFont,
+        opticalKerning,
+      })
+      const metrics = ctx.measureText("Hgyp")
+      const ascent = metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : segment.fontSize * 0.8
+      const descent = metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : segment.fontSize * 0.2
+      lineTop = Math.min(lineTop, segment.y - ascent)
+      lineBottom = Math.max(lineBottom, segment.y + descent)
+
+      pushCaretStop(caretStops, Math.max(lineVisibleStart, segment.start), segment.x)
+
+      const normalizedSource = toNormalizedSourceGraphemes(sourceText, segment.start, segment.end)
+      const renderedGraphemes = splitTextForTracking(segment.text)
+      const graphemeCount = Math.min(normalizedSource.length, renderedGraphemes.length)
+      let cursorX = segment.x
+      let lastGraphemeStartX = segment.x
+
+      for (let graphemeIndex = 1; graphemeIndex < graphemeCount; graphemeIndex += 1) {
+        const previousGrapheme = renderedGraphemes[graphemeIndex - 1] ?? ""
+        const currentGrapheme = renderedGraphemes[graphemeIndex] ?? ""
+        cursorX += measureTextPairAdvance(
+          ctx,
+          previousGrapheme,
+          currentGrapheme,
+          segment.fontSize,
+          opticalKerning,
+        ) + getTrackingLetterSpacing(segment.fontSize, segment.trackingScale)
+        lastGraphemeStartX = cursorX
+        pushCaretStop(caretStops, normalizedSource[graphemeIndex]?.sourceStart ?? segment.end, cursorX)
+      }
+
+      let segmentRight = nextSegment?.start === segment.end
+        ? nextSegment.x
+        : segment.x + measureCanvasTextWidth(
+          ctx,
+          segment.text,
+          segment.trackingScale,
+          segment.fontSize,
+          opticalKerning,
+        )
+      if (!nextSegment && graphemeCount > 0 && segment.end === lineSourceEnd) {
+        const terminalAdvance = getOpticalTerminalCaretAdvance({
+          char: renderedGraphemes[graphemeCount - 1] ?? "",
+          font: segmentFont,
+          fontSize: segment.fontSize,
+          styleKey: segment.styleKey,
+        })
+        if (terminalAdvance !== null) {
+          segmentRight = lastGraphemeStartX + terminalAdvance
+        }
+      }
+      pushCaretStop(caretStops, Math.min(lineSourceEnd, segment.end), segmentRight)
+    }
+
+    if (!caretStops.length) {
+      pushCaretStop(caretStops, lineSourceStart, lineLeft)
+    }
+    pushCaretStop(caretStops, lineSourceEnd, caretStops[caretStops.length - 1]?.x ?? lineLeft)
+
+    const left = lineLeft
+    const right = caretStops[caretStops.length - 1]?.x ?? left
+    return {
+      sourceStart: lineSourceStart,
+      sourceEnd: lineSourceEnd,
+      left,
+      top: Number.isFinite(lineTop) ? lineTop : command.y - fallbackFontSize * 0.8,
+      width: Math.max(0, right - left),
+      height: Math.max(1, (Number.isFinite(lineBottom) ? lineBottom : command.y + fallbackFontSize * 0.2) - (Number.isFinite(lineTop) ? lineTop : command.y - fallbackFontSize * 0.8)),
+      baselineY: command.y,
+      caretStops,
+    }
+  })
+
+  ctx.font = fallbackMetricsContextFont
+  return renderedLines
 }
 
 export function buildCanvasImagePlans<Key extends string>({
@@ -358,6 +552,14 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       ),
       opticalKerning,
     }))
+    const renderedLines = buildRenderedTextLines(
+      ctx,
+      textContent[plan.key] ?? "",
+      plan.commands,
+      segmentLines,
+      planFont,
+      opticalKerning,
+    )
     textPlans.set(plan.key, {
       key: plan.key,
       rect: plan.rect,
@@ -404,6 +606,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       trackingRuns,
       sourceText: textContent[plan.key] ?? "",
       segmentLines,
+      renderedLines,
       commands: plan.commands,
     })
   }

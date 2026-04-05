@@ -170,13 +170,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
-          <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, Color, and Info.</li>
-          <li>Geometry submenu: row span, column span, and paragraph rotation (`-180..180`).</li>
-          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
-          <li>Color submenu: scheme selector and swatches.</li>
-          <li>Info submenu includes style/font/geometry/color plus character and word counts.</li>
-          <li>Quick actions on the rail: alignment submenu and delete.</li>
-          <li>The alignment submenu contains left/center/right alignment plus newspaper reflow and syllable division after the right-align control.</li>
+          <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, and Info, plus Delete on the rail.</li>
+          <li>Geometry submenu: row span, column span, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, scheme, color, and FX size/leading when `FX` is selected.</li>
+          <li>When a text range is selected, type controls apply font family, cut, hierarchy, color, and tracking to that selection instead of rebasing the whole paragraph.</li>
+          <li>Info submenu includes geometry, type summary, character count, word count, and `Max/Line`.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
@@ -224,10 +222,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Undo/redo includes settings changes and block edits/placement changes.</li>
-          <li>Reducing columns or rows does not auto-reposition paragraphs.</li>
-          <li>If a reduction would push positioned paragraphs beyond the proposed grid, the grid stays unchanged.</li>
+          <li>Reducing columns or rows does not auto-reposition paragraphs or image placeholders.</li>
+          <li>If a reduction would push positioned paragraphs or image placeholders beyond the proposed grid, the grid stays unchanged.</li>
           <li>An invalid reduction shows a temporary warning in the preview instead of opening a modal.</li>
-          <li>Reposition or delete the conflicting paragraphs, then try the reduction again.</li>
+          <li>Reposition or delete the conflicting paragraphs or image placeholders, then try the reduction again.</li>
         </ul>
       </section>
 
@@ -329,7 +327,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Export
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens the export dialog for vector PDF and SVG output. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
+          Opens the export dialog for vector PDF, SVG, and IDML output. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
         </p>
       </section>
 
@@ -501,7 +499,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>
           <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `Top to Bottom` or `Bottom to top` (default: on, `Top to Bottom`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
-          <li>Reducing rows or columns is blocked when paragraphs would fall outside the new grid.</li>
+          <li>Reducing rows or columns is blocked when paragraphs or image placeholders would fall outside the new grid.</li>
         </ul>
       </section>
 
@@ -546,6 +544,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
           <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
+          <li>Paragraphs and image placeholders are saved with logical grid anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes.</li>
           <li>Load Project JSON restores the full project structure and the active page where valid.</li>
           <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
           <li>Unknown font overrides are dropped during load normalization.</li>
@@ -564,7 +563,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Export is vector-based (not raster screenshot export).</li>
           <li>`PDF` and `SVG` export the current active page. `IDML` exports the full project with one InDesign page per app page.</li>
           <li>DIN/ANSI ratios expose paper-size selection for `PDF` and `SVG`; other ratios use width-based sizing. `IDML` keeps each page at its stored document size.</li>
-          <li>`PDF` offers `Digital Print` and `Press Proof`, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
+          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, marks, guide-color handling, and embedded output intents where applicable.</li>
           <li>`SVG v1` exports trim-size live vector text, guides, and placeholders.</li>
           <li>`IDML v1` exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry and resolved font family/style names.</li>
           <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>

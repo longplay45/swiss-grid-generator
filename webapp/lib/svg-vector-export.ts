@@ -3,6 +3,7 @@ import { DEFAULT_BASE_FONT, type FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { formatSvgColor, parseHexColor } from "@/lib/export-colors"
 import { buildPageExportPlan } from "@/lib/page-export-plan"
+import { getRenderedTextDrawCommandText } from "@/lib/text-draw-command"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -124,7 +125,8 @@ export function renderSwissGridVectorSvg({
       if (segments.length === 0) {
         const command = textPlan.commands[lineIndex]
         if (!command) return ""
-        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(command.text)}</text>`
+        const renderedText = getRenderedTextDrawCommandText(command)
+        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(renderedText)}</text>`
       }
       return segments.map((segment) => {
         const tracking = segment.trackingScale === 0

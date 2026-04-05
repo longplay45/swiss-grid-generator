@@ -5,6 +5,7 @@ import {
   normalizeTrackingScale,
   splitTextForTracking,
 } from "./text-rendering.ts"
+import { resolveTextDrawCommandRange } from "./text-draw-command.ts"
 import type { OpticalGlyphBounds } from "./optical-margin.ts"
 import type { TextAlignMode } from "./types/layout-primitives.ts"
 import type { TextDrawCommand } from "./typography-layout-plan.ts"
@@ -249,19 +250,6 @@ function toNormalizedSourceGraphemes(
   for (const grapheme of graphemes) {
     const cleanText = grapheme.text.replace(INVISIBLE_TEXT_ARTIFACTS_RE, "")
     if (!cleanText) continue
-    if (/^\s+$/.test(cleanText)) {
-      const previous = normalized[normalized.length - 1]
-      if (previous?.renderedText === " ") {
-        previous.sourceEnd = grapheme.end
-      } else {
-        normalized.push({
-          renderedText: " ",
-          sourceStart: grapheme.start,
-          sourceEnd: grapheme.end,
-        })
-      }
-      continue
-    }
     normalized.push({
       renderedText: cleanText,
       sourceStart: grapheme.start,
@@ -416,14 +404,11 @@ export function buildPositionedTrackingSegments(
     measureGlyphBounds?: GlyphBoundsMeasure
   },
 ): PositionedTrackingSegment[] {
-  const sourceRange = {
-    start: typeof command.sourceStart === "number" ? command.sourceStart : 0,
-    end: typeof command.sourceEnd === "number" ? command.sourceEnd : sourceText.length,
-  }
+  const commandRange = resolveTextDrawCommandRange(command, sourceText.length)
   const graphemes = buildTrackingSegmentsForRenderedRange({
     sourceText,
-    renderedText: command.text,
-    range: sourceRange,
+    renderedText: commandRange.renderedText,
+    range: commandRange.visibleRange,
     baseTrackingScale,
     runs,
   }).flatMap((segment) => {
@@ -445,8 +430,8 @@ export function buildPositionedTrackingSegments(
 
   const lineWidth = measureTrackedTextRangeWidth(context, {
     sourceText,
-    renderedText: command.text,
-    range: sourceRange,
+    renderedText: commandRange.renderedText,
+    range: commandRange.visibleRange,
     baseTrackingScale,
     runs,
     fontSize,
@@ -464,8 +449,8 @@ export function buildPositionedTrackingSegments(
   let active = {
     text: graphemes[0]?.text ?? "",
     trackingScale: graphemes[0]?.trackingScale ?? baseTrackingScale,
-    start: graphemes[0]?.start ?? sourceRange.start,
-    end: graphemes[0]?.end ?? sourceRange.start,
+    start: graphemes[0]?.start ?? commandRange.sourceStart,
+    end: graphemes[0]?.end ?? commandRange.sourceStart,
     x: cursorX,
     y: command.y,
   }

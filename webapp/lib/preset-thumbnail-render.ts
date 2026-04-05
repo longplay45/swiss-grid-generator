@@ -199,7 +199,7 @@ export function drawPresetThumbnailToCanvas(
   const blockCustomSizes = layout?.blockCustomSizes ?? {}
   const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
   const blockTextColors = layout?.blockTextColors ?? {}
-  const imageModulePositions = layout?.imageModulePositions ?? {}
+  const storedImageModulePositions = layout?.imageModulePositions ?? {}
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageColors = layout?.imageColors ?? {}
@@ -214,6 +214,7 @@ export function drawPresetThumbnailToCanvas(
   const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
   const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
   const blockModulePositions = mapTextBlockPositionsToAbsolute(layout?.blockModulePositions ?? {}, rowStartsInBaselines)
+  const imageModulePositions = mapTextBlockPositionsToAbsolute(storedImageModulePositions, rowStartsInBaselines)
   const scale = Math.min(safeWidth / width, safeHeight / height)
   const pageWidth = width * scale
   const pageHeight = height * scale

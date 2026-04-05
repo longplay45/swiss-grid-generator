@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 
 import {
   getOpticalMarginAnchorOffset,
+  getOpticalTerminalCaretAdvance,
   resolveOpticalKerningPairAdjustment,
   resolveConservativeContourBoundaryPx,
   resolveDominantStemBoundaryPx,
@@ -126,6 +127,21 @@ test("leading T caps measured overhang to the subtle fallback offset", () => {
     ),
   })
   assert.equal(offset, -(0.018 * 200))
+})
+
+test("terminal punctuation caret advance uses the visible glyph boundary", () => {
+  const advance = getOpticalTerminalCaretAdvance({
+    char: ".",
+    font: "400 160px Inter",
+    fontSize: 160,
+    styleKey: "display",
+    measureGlyphBounds: (char) => (
+      char === "."
+        ? { advanceWidth: 44, leftBoundary: 12, rightBoundary: 21 }
+        : null
+    ),
+  })
+  assert.equal(advance, 21)
 })
 
 test("optical kerning tightens expressive pairs more than straight pairs", () => {

@@ -679,6 +679,27 @@ export function getOpticalKerningPairAdjustment({
   })
 }
 
+export function getOpticalTerminalCaretAdvance({
+  char,
+  font,
+  fontSize,
+  styleKey,
+  measureGlyphBounds,
+}: {
+  char: string
+  font?: string
+  fontSize: number
+  styleKey?: string
+  measureGlyphBounds?: (char: string) => OpticalGlyphBounds | null
+}): number | null {
+  if (!char || !font || fontSize <= 0) return null
+  if (!TRAILING_PUNCTUATION_OFFSETS_EM[char]) return null
+  const profile = resolveOpticalMarginProfile(styleKey)
+  const measured = measureGlyphBounds?.(char) ?? measureOpticalGlyphBoundsFromCanvas(char, font, fontSize, profile)
+  if (!measured) return null
+  return Math.max(0, Math.min(measured.advanceWidth, measured.rightBoundary))
+}
+
 export function getOpticalMarginAnchorOffset({
   line,
   align,

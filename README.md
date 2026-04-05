@@ -4,6 +4,8 @@ A precise, production-oriented layout tool inspired by **Josef Müller-Brockmann
 
 Build beautiful, rhythmical compositions with authentic baseline grids, progressive margins, modular fields, and flexible typographic systems — all in the browser.
 
+Implementation-accurate reference docs live in [SETTINGS.md](SETTINGS.md), [CALCULATIONS.md](CALCULATIONS.md), and [FEATURES.md](FEATURES.md).
+
 [Try it live →](https://preview.swiss-grid-generator.com)
 
 ---
@@ -64,7 +66,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
   - Perfect Fifth
 - Independent rhythm control for rows and columns
 - 90° rhythm rotation
-- Stable logical positioning — paragraphs stay where you placed them
+- Stable logical positioning — paragraphs and image placeholders stay where you placed them
+- Grid reductions are blocked with a calm warning instead of auto-repositioning conflicting content
 
 ### Typography System
 - Five harmonious type scales (Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth)
@@ -73,7 +76,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
   - **Sans-Serif**: Inter, Work Sans, IBM Plex Sans, Libre Franklin…
   - **Serif**: EB Garamond, Libre Baskerville, Bodoni Moda…
   - **Poster/Display**: Playfair Display + custom FX control
-- Per-paragraph font, weight, style, tracking, optical kerning, and alignment
+- Paragraph-level geometry and alignment plus selection-level font family, cut, hierarchy, color, and tracking
+- Optical/metric kerning toggle with shared render/export behavior
+- Inline editor caret and selection follow rendered text geometry
 - Live character & word count
 
 ### Project & Layers
@@ -96,16 +101,16 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Trim-size **SVG v1 export** with live vector text
 - Full-project **IDML v1 export** for InDesign continuation
 - `PDF` and `SVG` export the active page; `IDML` exports every project page
-- PDF print options: bleed, marks, output intents, and guide-color handling
-- PDF presets: **Digital Print** and **Press Proof**
+- PDF print options: bleed, registration-style marks, output intents, and guide-color handling
+- PDF presets: **Digital Print** (RGB / sRGB) and **Press Proof** (CMYK / FOGRA39)
 - IDML separates **Guides**, **Typography**, and **Placeholders** into distinct layers
 
 ### Extras
 - Undo / Redo
 - Dark mode
-- Presets browser with thumbnails
+- Presets browser with rendered page-1 thumbnails
 - Comprehensive keyboard shortcuts
-- Helpful warning system (no more auto-moving your content)
+- Helpful warning system (no auto-repositioning on invalid grid reductions)
 
 ---
 

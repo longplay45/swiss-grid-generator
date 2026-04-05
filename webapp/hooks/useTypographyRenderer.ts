@@ -104,8 +104,41 @@ function getEditorPlanSignature<BlockId extends string>(
     return `${target}|${rectSignature}|missing-plan`
   }
   const commandsSignature = plan.commands
-    .map(({ text, x, y }) => `${x.toFixed(3)}:${y.toFixed(3)}:${text}`)
+    .map(({ text, x, y, sourceStart, sourceEnd, leadingBoundaryWhitespace }) => (
+      `${x.toFixed(3)}:${y.toFixed(3)}:${sourceStart ?? ""}:${sourceEnd ?? ""}:${leadingBoundaryWhitespace ?? ""}:${text}`
+    ))
     .join("|")
+  const renderedLinesSignature = plan.renderedLines
+    .map((line) => [
+      line.sourceStart,
+      line.sourceEnd,
+      line.left.toFixed(3),
+      line.top.toFixed(3),
+      line.width.toFixed(3),
+      line.height.toFixed(3),
+      line.baselineY.toFixed(3),
+      line.caretStops
+        .map((stop) => `${stop.index}:${stop.x.toFixed(3)}`)
+        .join(","),
+    ].join(":"))
+    .join("|")
+  const segmentGeometrySignature = plan.segmentLines
+    .map((segments) => segments
+      .map((segment) => [
+        segment.start,
+        segment.end,
+        segment.x.toFixed(3),
+        segment.y.toFixed(3),
+        segment.fontFamily,
+        segment.fontWeight,
+        segment.italic ? 1 : 0,
+        segment.styleKey,
+        segment.fontSize.toFixed(3),
+        segment.trackingScale,
+        segment.text,
+      ].join(":"))
+      .join("|"))
+    .join("||")
   return [
     target,
     rectSignature,
@@ -113,7 +146,11 @@ function getEditorPlanSignature<BlockId extends string>(
     plan.rotationOriginX.toFixed(3),
     plan.rotationOriginY.toFixed(3),
     plan.textAlign,
+    plan.font,
+    plan.textColor,
     commandsSignature,
+    renderedLinesSignature,
+    segmentGeometrySignature,
   ].join("|")
 }
 

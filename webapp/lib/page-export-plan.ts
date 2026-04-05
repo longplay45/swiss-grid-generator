@@ -323,7 +323,7 @@ export function buildPageExportPlan({
   const imageOrder = layout?.imageOrder?.filter(
     (key): key is BlockId => typeof key === "string" && key.length > 0,
   ) ?? []
-  const imageModulePositions = layout?.imageModulePositions ?? {}
+  const storedImageModulePositions = layout?.imageModulePositions ?? {}
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageColors = layout?.imageColors ?? {}
@@ -331,6 +331,7 @@ export function buildPageExportPlan({
   const imagePlans: PageExportImagePlan[] = []
 
   if (showImagePlaceholders) {
+    const imageModulePositions = mapTextBlockPositionsToAbsolute(storedImageModulePositions, rowStartsInBaselines)
     for (const key of imageOrder) {
       const manual = imageModulePositions[key]
       if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") continue

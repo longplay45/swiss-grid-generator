@@ -309,19 +309,20 @@ If any constraint fails, the calculator throws an explicit error message.
 
 ## Typography
 
-The typography system uses **pure baseline multiples** for all leading values, ensuring perfect alignment to the baseline grid.
+The typography system uses **baseline-derived leading values**. Most styles stay on pure baseline multiples; Swiss caption is the intentional `7pt / 8pt` exception on the A4 `12pt` reference grid.
 
 ### Base System (Swiss, A4, 12pt baseline)
 
 | Style    | Font Size | Leading | Baseline Multiple | Body Lines | Weight  |
 |----------|-----------|---------|-------------------|------------|---------|
+| FX       | 96pt      | 96pt    | 8×                | 8.0        | Bold    |
 | Display  | 64pt      | 72pt    | 6×                | 6.0        | Bold    |
 | Headline | 30pt      | 36pt    | 3×                | 3.0        | Bold    |
 | Subhead  | 20pt      | 24pt    | 2×                | 2.0        | Regular |
 | Body     | 10pt      | 12pt    | 1×                | 1.0        | Regular |
-| Caption  | 7pt       | 12pt    | 1×                | 1.0        | Regular |
+| Caption  | 7pt       | 8pt     | 0.667×            | 1.0        | Regular Italic |
 
-All styles use Left alignment.
+Default text alignment is left.
 
 ### Font Hierarchy Methods
 
@@ -336,13 +337,13 @@ Available methods:
 
 Formulas below are expressed as A4 reference sizes (pt) and converted to ratios by dividing by 12.
 
-| Method | A4 Sizes (pt) (Caption → Display) |
+| Method | A4 Sizes (pt) (Caption → FX) |
 |--------|---------------|
-| Swiss (Hand-tuned) | 7, 10, 20, 30, 64 |
-| Golden Ratio (φ = 1.618) | 10/φ, 10, 10φ, 10φ^2, 10φ^4 |
-| Perfect Fourth (P4 = 4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6 |
-| Perfect Fifth (P5 = 3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4 |
-| Fibonacci | 8, 13, 21, 34, 55 |
+| Swiss (Hand-tuned) | 7, 10, 20, 30, 64, 96 |
+| Golden Ratio (φ = 1.618) | 10/φ, 10, 10φ, 10φ^2, 10φ^4, 10φ^5 |
+| Perfect Fourth (P4 = 4/3) | 10/P4, 10, 10P4^2, 10P4^3, 10P4^6, 10P4^7 |
+| Perfect Fifth (P5 = 3/2) | 10/P5, 10, 10P5, 10P5^2, 10P5^4, 10P5^5 |
+| Fibonacci | 8, 13, 21, 34, 55, 89 |
 
 ### Scaling to Other Formats
 
@@ -373,14 +374,18 @@ Display: size = 16.971 × (64/12) = 90.512pt, leading = 16.971 × 6 = 101.826pt 
 
 ### Leading Across All Formats
 
-Leading at any format is computed directly from the current baseline:
+Leading at any format is computed from the current style multiplier:
 
 ```
+caption_leading = gridUnit * (8 / 12)   // Swiss caption only
 body_leading = gridUnit * 1
 subhead_leading = gridUnit * 2
 headline_leading = gridUnit * 3
 display_leading = gridUnit * 6
+fx_leading = gridUnit * 8
 ```
+
+For non-Swiss scales, caption leading falls back to `1 × baseline`.
 
 ---
 
@@ -490,18 +495,33 @@ All modules, baselines, margins, and typography are drawn in the rotated coordin
 
 Interactive placement is orchestrated in `webapp/components/grid-preview.tsx`, mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`), and uses worker-backed planning (`webapp/workers/reflowPlanner.worker.ts`, `webapp/workers/autoFit.worker.ts`) with synchronous fallback to pure planner modules in `webapp/lib/`.
 
-### Row Anchor Model
+### Logical Grid Anchor Model
 
-Rows are stored in baseline-row units but snapped/repositioned to module-top anchors:
+Text paragraphs and image placeholders are stored with logical grid coordinates:
 
 ```
-moduleRowStart(i) = cumulativeRowOffset(i) / gridUnit
+position = {
+  column,
+  row,
+  baselineOffset
+}
 ```
 
-`cumulativeRowOffset(i)` is built from the current `moduleHeights[]` array plus inter-row gutters.
-Drag-and-drop and structural reflow use nearest `moduleRowStart(i)` anchors.
+Where:
+- `column` is the logical module column index
+- `row` is the logical module row index
+- `baselineOffset` is the baseline-row offset inside that logical row anchor
 
-Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same snap math and anchor model; only the state mutation differs (new paragraph key is created instead of moving the original block).
+Absolute baseline position resolves from the current row starts:
+
+```
+absoluteRow = rowStartBaselines[row] + baselineOffset
+absoluteCol = column
+```
+
+This is the anchor model used for preview placement, export resolution, and save/load normalization.
+
+Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same anchor math; only the state mutation differs (new layer key is created instead of moving the original).
 
 Shift-drag behavior (Ctrl fallback) switches snapping to baseline rows and baseline columns at the drop point and allows overset anchors for clipped ("angeschnitten") placements:
 
@@ -533,27 +553,16 @@ maxLinesPerColumn = floor(moduleHeightForBlock / lineStep)
 neededCols = ceil(totalWrappedLines / maxLinesPerColumn)
 ```
 
-### Grid/Baseline Structural Changes
+### Grid Structural Changes
 
-When rows (`gridRows`) or module row starts change (e.g., baseline/gutter/rhythm effects), existing rows remap by module index:
+Grid changes no longer auto-reposition text paragraphs or image placeholders.
 
-```
-moduleIndex = nearestIndex(oldModuleRowStarts, oldRow)
-newRow = newModuleRowStarts[moduleIndex] + baselineOffsetWithinOldModule
-```
+Current behavior:
+- increasing columns or rows preserves the stored logical anchors
+- decreasing columns or rows validates the proposed grid against every paragraph and image placeholder span
+- if any item would fall outside the new grid, the reduction is refused and the current grid remains unchanged
 
-Then the scored planner resolves collisions/out-of-bounds.
-
-### Scored Reposition Planner
-
-Placement candidates are scored deterministically with penalties for:
-- movement from desired anchor
-- overflow below content area
-- positions outside current grid row structure
-- non-module-row anchors
-- reading-order violations
-
-Lowest score wins; ties prefer top-most, then left-most.
+This keeps placement stable and predictable across baseline, rhythm, and grid changes.
 
 ---
 

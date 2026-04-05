@@ -6,6 +6,7 @@ import {
   normalizeTrackingScale,
   splitTextForTracking,
 } from "@/lib/text-rendering"
+import { resolveTextDrawCommandRange } from "@/lib/text-draw-command"
 import {
   getTrackingScaleForIndex,
   normalizeTextTrackingRuns,
@@ -134,19 +135,6 @@ function toNormalizedSourceGraphemes(
   for (const grapheme of graphemes) {
     const cleanText = grapheme.text.replace(INVISIBLE_TEXT_ARTIFACTS_RE, "")
     if (!cleanText) continue
-    if (/^\s+$/.test(cleanText)) {
-      const previous = normalized[normalized.length - 1]
-      if (previous?.renderedText === " ") {
-        previous.sourceEnd = grapheme.end
-      } else {
-        normalized.push({
-          renderedText: " ",
-          sourceStart: grapheme.start,
-          sourceEnd: grapheme.end,
-        })
-      }
-      continue
-    }
     normalized.push({
       renderedText: cleanText,
       sourceStart: grapheme.start,
@@ -756,10 +744,7 @@ export function buildPositionedTextFormatTrackingSegments<
     opticalKerning?: boolean
   },
 ): PositionedTextFormatTrackingSegment<StyleKey, FontFamily>[] {
-  const sourceRange = {
-    start: typeof command.sourceStart === "number" ? command.sourceStart : 0,
-    end: typeof command.sourceEnd === "number" ? command.sourceEnd : sourceText.length,
-  }
+  const commandRange = resolveTextDrawCommandRange(command, sourceText.length)
   const normalizedTrackingRuns = normalizeTextTrackingRuns(
     sourceText,
     trackingRuns,
@@ -767,8 +752,8 @@ export function buildPositionedTextFormatTrackingSegments<
   )
   const graphemes = resolveFontTrackingGraphemes({
     sourceText,
-    renderedText: command.text,
-    range: sourceRange,
+    renderedText: commandRange.renderedText,
+    range: commandRange.visibleRange,
     baseFormat,
     formatRuns,
     baseTrackingScale,
@@ -780,8 +765,8 @@ export function buildPositionedTextFormatTrackingSegments<
 
   const lineWidth = measureFormattedTextRangeWidth(context, {
     sourceText,
-    renderedText: command.text,
-    range: sourceRange,
+    renderedText: commandRange.renderedText,
+    range: commandRange.visibleRange,
     baseFormat,
     formatRuns,
     baseTrackingScale,

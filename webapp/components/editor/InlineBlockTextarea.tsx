@@ -2,6 +2,7 @@
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { getFontFamilyCss } from "@/lib/config/fonts"
+import type { RenderedTextLine } from "@/lib/preview-types"
 import {
   buildInlineEditorTransform,
   computeInlineEditorCaret,
@@ -23,10 +24,12 @@ import {
 import {
   measureFormattedTextRangeWidth,
   rebaseTextFormatRunsForTextEdit,
+  type PositionedTextFormatTrackingSegment,
 } from "@/lib/text-format-runs"
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react"
@@ -40,6 +43,19 @@ type InlineEditorSelectionState = {
   anchor: number
   focusIndex: number
   focused: boolean
+}
+
+type InlineEditorOverlayRect = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+type InlineEditorOverlayCaret = {
+  left: number
+  top: number
+  height: number
 }
 
 export type InlineEditorLayout = {
@@ -60,7 +76,10 @@ export type InlineEditorLayout = {
     y: number
     sourceStart?: number
     sourceEnd?: number
+    leadingBoundaryWhitespace?: number
   }>
+  segmentLines: PositionedTextFormatTrackingSegment<string, string>[][]
+  renderedLines: RenderedTextLine[]
 }
 
 type InlineBlockTextareaProps<StyleKey extends string> = {
@@ -78,6 +97,77 @@ type InlineBlockTextareaProps<StyleKey extends string> = {
   getStyleSizeValue: (styleKey: StyleKey) => number
   getStyleLeadingValue: (styleKey: StyleKey) => number
   isFxStyle: (styleKey: StyleKey) => boolean
+}
+
+function InlineEditorOverlayCanvas({
+  width,
+  height,
+  selectionRects,
+  caret,
+}: {
+  width: number
+  height: number
+  selectionRects: InlineEditorOverlayRect[]
+  caret: InlineEditorOverlayCaret | null
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const pixelRatio = window.devicePixelRatio || 1
+    const widthCss = Math.max(1, Math.ceil(width))
+    const heightCss = Math.max(1, Math.ceil(height))
+    const widthPx = Math.max(1, Math.round(widthCss * pixelRatio))
+    const heightPx = Math.max(1, Math.round(heightCss * pixelRatio))
+
+    if (canvas.width !== widthPx) canvas.width = widthPx
+    if (canvas.height !== heightPx) canvas.height = heightPx
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, widthPx, heightPx)
+
+    for (const rect of selectionRects) {
+      const left = Math.round(rect.left * pixelRatio)
+      const top = Math.round(rect.top * pixelRatio)
+      const rectWidth = Math.max(1, Math.round(rect.width * pixelRatio))
+      const rectHeight = Math.max(1, Math.round(rect.height * pixelRatio))
+      ctx.fillStyle = "rgba(14, 165, 233, 0.18)"
+      ctx.fillRect(left, top, rectWidth, rectHeight)
+    }
+
+    if (!caret) return
+    const caretX = Math.round(caret.left * pixelRatio)
+    const caretTop = Math.round(caret.top * pixelRatio)
+    const caretHeightPx = Math.max(1, Math.round(caret.height * pixelRatio))
+    const caretCoreWidthPx = Math.max(1, Math.round(pixelRatio))
+    const caretHaloWidthPx = caretCoreWidthPx + 2
+    const caretHaloLeft = Math.max(0, caretX - Math.floor((caretHaloWidthPx - caretCoreWidthPx) / 2))
+    const caretCoreLeft = Math.max(0, Math.min(widthPx - caretCoreWidthPx, caretX))
+    const haloWidth = Math.max(1, Math.min(caretHaloWidthPx, widthPx - caretHaloLeft))
+    const coreWidth = Math.max(1, Math.min(caretCoreWidthPx, widthPx - caretCoreLeft))
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.75)"
+    ctx.fillRect(caretHaloLeft, caretTop, haloWidth, caretHeightPx)
+    ctx.fillStyle = "#f97316"
+    ctx.fillRect(caretCoreLeft, caretTop, coreWidth, caretHeightPx)
+  }, [caret, height, selectionRects, width])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={Math.max(1, Math.round(width))}
+      height={Math.max(1, Math.round(height))}
+      style={{
+        width,
+        height,
+      }}
+      className="pointer-events-none absolute inset-0 block"
+      aria-hidden="true"
+    />
+  )
 }
 
 export function InlineBlockTextarea<StyleKey extends string>({
@@ -278,11 +368,15 @@ export function InlineBlockTextarea<StyleKey extends string>({
       y: layout.rotationOriginY + baselineStep + editorTextAscent,
     }]
   const firstVisualBaselineY = visualCommands[0]?.y ?? (layout.rotationOriginY + baselineStep + editorTextAscent)
-  const textBoxTop = firstVisualBaselineY - editorTextAscent - fxCaretOffsetY
+  const renderedTextBoxTop = layout.renderedLines.length > 0
+    ? Math.min(...layout.renderedLines.map((line) => line.top))
+    : null
+  const textBoxTop = renderedTextBoxTop ?? (firstVisualBaselineY - editorTextAscent - fxCaretOffsetY)
   const textBox = computeInlineEditorTextBox({
     rect: layout.rect,
     textAlign: layout.textAlign,
     commands: visualCommands,
+    renderedLines: layout.renderedLines,
     measureText,
   })
   const consumedTop = Math.max(0, textBoxTop - layout.rect.y)
@@ -302,6 +396,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
       text: editorState.draftText,
       textAlign: layout.textAlign,
       commands: visualCommands,
+      renderedLines: layout.renderedLines,
+      segmentLines: layout.segmentLines,
       selectionStart: selection.start,
       textAscent: editorTextAscent,
       textBoxTop,
@@ -314,6 +410,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
     text: editorState.draftText,
     textAlign: layout.textAlign,
     commands: visualCommands,
+    renderedLines: layout.renderedLines,
+    segmentLines: layout.segmentLines,
     selectionStart: selection.start,
     selectionEnd: selection.end,
     textAscent: editorTextAscent,
@@ -324,6 +422,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
     text: editorState.draftText,
     textAlign: layout.textAlign,
     commands: visualCommands,
+    renderedLines: layout.renderedLines,
+    segmentLines: layout.segmentLines,
     selectionStart: selection.focusIndex,
     textAscent: editorTextAscent,
     textBoxTop,
@@ -331,6 +431,19 @@ export function InlineBlockTextarea<StyleKey extends string>({
     caretHeight,
     measureText,
   })
+  const localSelectionRects = selectionRects.map((rect) => ({
+    left: rect.left - textBox.left,
+    top: rect.top - textBoxTop,
+    width: rect.width,
+    height: rect.height,
+  }))
+  const localCaret = caret
+    ? {
+      left: caret.x - textBox.left,
+      top: caret.top,
+      height: caret.height,
+    }
+    : null
 
   const setTextareaSelection = (
     anchor: number,
@@ -394,6 +507,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
       text: editorState.draftText,
       textAlign: layout.textAlign,
       commands: visualCommands,
+      renderedLines: layout.renderedLines,
+      segmentLines: layout.segmentLines,
       x: localPoint.x + textBox.left,
       y: localPoint.y + textBoxTop,
       textAscent: editorTextAscent,
@@ -434,31 +549,12 @@ export function InlineBlockTextarea<StyleKey extends string>({
             transformOrigin: transform.blockTransformOrigin,
           }}
         >
-          {selectionRects.map((rect, index) => (
-            <div
-              key={`${rect.left}:${rect.top}:${rect.width}:${index}`}
-              className="pointer-events-none absolute bg-sky-500/20"
-              style={{
-                left: rect.left - textBox.left,
-                top: rect.top - textBoxTop,
-                width: rect.width,
-                height: rect.height,
-              }}
-            />
-          ))}
-          {caret ? (
-            <div
-              className="pointer-events-none absolute"
-              style={{
-                left: caret.x - textBox.left,
-                top: caret.top,
-                width: 1,
-                height: caret.height,
-                backgroundColor: editorState.draftColor,
-                opacity: 0.95,
-              }}
-            />
-          ) : null}
+          <InlineEditorOverlayCanvas
+            width={textBox.width}
+            height={minHeight}
+            selectionRects={localSelectionRects}
+            caret={localCaret}
+          />
           <div
             className="pointer-events-auto absolute inset-0 cursor-text"
             onPointerDown={(event) => {
@@ -539,6 +635,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
                   text: editorState.draftText,
                   textAlign: layout.textAlign,
                   commands: visualCommands,
+                  renderedLines: layout.renderedLines,
+                  segmentLines: layout.segmentLines,
                   selectionIndex: selection.focusIndex,
                   direction: event.key === "Home"
                     ? "home"

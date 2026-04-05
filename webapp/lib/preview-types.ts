@@ -17,6 +17,22 @@ export type NoticeRequest = {
 
 export type OverflowLinesByBlock<Key extends string> = Partial<Record<Key, number>>
 
+export type RenderedCaretStop = {
+  index: number
+  x: number
+}
+
+export type RenderedTextLine = {
+  sourceStart: number
+  sourceEnd: number
+  left: number
+  top: number
+  width: number
+  height: number
+  baselineY: number
+  caretStops: RenderedCaretStop[]
+}
+
 export type BlockRenderPlan<Key extends string> = {
   key: Key
   rect: BlockRect
@@ -33,5 +49,6 @@ export type BlockRenderPlan<Key extends string> = {
   trackingRuns: TextTrackingRun[]
   sourceText: string
   segmentLines: PositionedTextFormatTrackingSegment[][]
+  renderedLines: RenderedTextLine[]
   commands: TextDrawCommand[]
 }

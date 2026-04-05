@@ -4,15 +4,16 @@ Current, implementation-accurate reference for all user-facing options and defau
 
 ## Typography System
 
-5-level hierarchy, baseline-aligned.
+6-level hierarchy, baseline-aligned system. Swiss caption keeps its intentional `7pt / 8pt` exception.
 
 | Level | A4 Size | A4 Leading | Baseline Multiple | Weight |
 |---|---:|---:|---:|---|
+| `fx` | 96pt | 96pt | 8x | Bold |
 | `display` | 64pt | 72pt | 6x | Bold |
 | `headline` | 30pt | 36pt | 3x | Bold |
 | `subhead` | 20pt | 24pt | 2x | Regular |
 | `body` | 10pt | 12pt | 1x | Regular |
-| `caption` | 7pt | 8pt | 0.667x | Regular |
+| `caption` | 7pt | 8pt | 0.667x | Regular Italic |
 
 ### Typography Scale Presets
 
@@ -132,8 +133,8 @@ Default: `swiss`
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Load)
 - `Load` (folder icon): load project JSON
 - `Save` (save icon): opens Save Project JSON popup
-- `Export PDF` (download icon): opens Export PDF popup
-- Divider placement: between `Presets` and `Load`, and between `Export PDF` and `Undo`
+- `Export` (download icon): opens the export popup
+- Divider placement: between `Presets` and `Load`, and between `Export` and `Undo`
 - `Esc` closes the presets browser without loading a preset
 
 ### Undo / Redo (icon buttons)
@@ -196,7 +197,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 - `Cmd/Ctrl+O`: Load project JSON
 - `Cmd/Ctrl+S`: Save project JSON
-- `Cmd/Ctrl+Shift+E`: Export PDF
+- `Cmd/Ctrl+Shift+E`: Open export popup
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo
 - `Cmd/Ctrl+Shift+D`: Toggle dark mode
@@ -222,21 +223,26 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - Author input
 - Confirm/Cancel
 
-### Export PDF popup
+### Export popup
 
-- DIN/ANSI ratios:
-  - Units dropdown: `pt`, `mm`, `px`
-  - Paper Size dropdown (filtered by ratio family)
-- Non-DIN/ANSI ratios:
+- Format buttons: `PDF`, `SVG`, `IDML`
+- DIN/ANSI ratios for `PDF` and `SVG`:
+  - `Units / Paper Size` row with unit dropdown (`pt`, `mm`, `px`) and filtered paper-size dropdown
+- Non-DIN/ANSI ratios for `PDF` and `SVG`:
   - Width input in `mm`
-- Height is derived automatically from aspect ratio
+  - Height is derived automatically from aspect ratio
+- `IDML`:
+  - exports the full project
+  - keeps each page at its stored document size
+  - does not expose paper-size overrides in the popup
 - Filename input
-- Print Pro:
-  - toggle on/off
-  - presets: Press Proof, Offset Final, Digital Print
+- `PDF` print presets:
+  - `Digital Print` (default)
+  - `Press Proof`
   - Bleed input (mm)
-  - Registration-style crop marks toggle
+  - Registration-style marks toggle
   - Final-safe guide colors toggle
+- `SVG` does not expose PDF print settings
 - Confirm/Cancel
 - Esc closes popup
 
@@ -263,43 +269,46 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Drag to move (snaps to module columns + nearest module-top row anchors)
+- Drag to move with grid snapping
 - Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
-- left icon rail with contextual submenus: `Geometry`, `Type`, `Color`, `Info`
-- Geometry submenu: rows, cols, rotation (`-180..180`, integer degrees)
+- left icon rail with contextual submenus: `Geometry`, `Type`, `Info`, plus `Delete`
+- Geometry submenu:
+  - rows
+  - cols
+  - alignment (`left`, `center`, `right`)
+  - reflow (`On` / `Off`, available only when cols > 1)
+  - hyphenation (`On` / `Off`)
+  - rotation (`-180..180`, integer degrees)
 - Type submenu:
-  - row 1: font family, font cut
-  - row 2: hierarchy, plus FX size/leading when `FX` is selected
-  - row 3: kerning (`Optical on/off`, default `Optical on`) and tracking presets (default `Normal`)
-- Color submenu: scheme selector and color swatches
-- Info submenu: style/font/size/geometry/color plus `Characters` + `Words`
-- rail quick actions: alignment submenu and delete
-- alignment submenu: left, center, right, then newspaper reflow (`Re`) and syllable division (`Hy`)
-- save is in the inline textarea toolbar; delete is in the rail
+  - font family
+  - font cut
+  - hierarchy (`Typo`)
+  - FX size / FX leading when `FX` is selected
+  - kerning (`Optical` / `Metric`, default `Optical`)
+  - tracking numeric input (`-120..+300`, `1/1000 em`)
+  - color scheme selector
+  - color swatches
+- Info submenu: geometry, type, counts, and `Max/Line`
+- delete lives on the rail
 - newspaper reflow is available only with cols > 1
-- reflow with cols > 1: newspaper flow across configured columns
-- font family
+- reflow with cols > 1: newspaper flow across configured columns, exhausting the selected row-span height before moving to the next column
 - font cut uses the available family-specific weight/style list
-- kerning default: `Optical on`
-- tracking presets:
-  - applies uniform letter-spacing, not horizontal scaling
-  - stored in `1/1000 em`
-  - `Ultra-condensed` = `-120`
-  - `Extra-condensed` = `-90`
-  - `Condensed` = `-60`
-  - `Semi-condensed` = `-30`
-  - `Normal` = `0`
-  - `Semi-expanded` = `+30`
-  - `Expanded` = `+60`
-  - `Extra-expanded` = `+120`
-  - `Ultra-expanded` = `+200`
-- hierarchy
-- cols (1..gridCols)
-- rows (1..gridRows)
+- tracking applies letter-spacing, not horizontal scaling
+- tracking is stored in `1/1000 em`
+- selection-aware styling is supported for:
+  - font family
+  - font cut
+  - hierarchy
+  - color
+  - tracking
+- paragraph-wide defaults are rebased when the current selection covers the full text or no range is selected
 - textarea preview mirrors font family, selected cut, and left/right alignment
-- live `Characters` + `Words` counts in `Info` submenu
+- live `Characters`, `Words`, and `Max/Line` counts in `Info` submenu
+- inline caret and selection are rendered from the current text geometry, not DOM line boxes
+- repeated spaces and blank lines are preserved in the source model
+- soft-wrap boundary spaces stay in the source text but do not render as visible indent at the start of the next visual line
 
 Font behavior:
 - If a paragraph font is set to the current `Base Font`, it is stored as inherited (no explicit override entry).
@@ -322,43 +331,39 @@ Syllable division behavior:
 Drag behavior:
 - Default drag moves a paragraph.
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
+- Paragraphs and image placeholders are stored as logical grid anchors: `{ column, row, baselineOffset }`.
 - `Shift` (or `Ctrl`) + drag snaps to nearest baseline row/column at drop point and allows overset placement.
 
 ## Grid Change Reflow Logic
 
-Structural changes use a deterministic scored reposition planner.
+Structural changes do not auto-reposition existing paragraphs or image placeholders anymore.
 
 Behavior:
-1. Pure column increase (`gridCols` up, same row structure): keep current block positions.
-2. Row-structure changes (`gridRows` or effective module-row step changes): remap rows by module index and auto-apply reposition.
-3. Candidate rows are module-top anchors; collisions are resolved with scored placement.
-4. Priority order remains: display, headline, subhead, body, caption, then custom paragraphs.
-
-Scoring uses weighted penalties for:
-- movement distance
-- overflow below content area
-- outside-grid row anchors
-- non-module-row anchors
-- reading-order violations
-
-UX:
-- Warning/apply/cancel flow is used for disruptive non-row structural reflows.
-- Cancel restores previous grid values.
-- After apply: toast with one-click Undo.
-- Reflow warning is suppressed during JSON layout loading.
+1. Text paragraphs and image placeholders store logical anchors as `{ column, row, baselineOffset }`.
+2. Increasing columns or rows preserves those anchors exactly.
+3. Decreasing columns or rows is blocked when any paragraph or image placeholder would fall outside the proposed grid or span.
+4. Invalid reductions keep the current grid unchanged.
+5. Invalid reductions show a temporary preview warning instead of a blocking dialog.
+6. Users must reposition or delete conflicting items manually before reducing the grid.
 
 ## Export Format Notes
 
 - JSON: full UI + preview layout state.
-- PDF: vector output via jsPDF primitives with print-focused options (bleed/crop marks, CMYK guides/marks).
+- PDF: vector active-page output with `Digital Print` and `Press Proof` presets, embedded output intents, and grouped guide vectors.
+- SVG: trim-size active-page vector output with live text, guides, and placeholders.
+- IDML: full-project export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers.
 
 ## JSON UI Fields (current)
 
 `canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `exportFinalSafeGuides`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
+Notes:
+- `exportPrintPro` is retained as the persisted legacy backing field for the PDF print-preset mode.
+
 ## JSON Preview Layout Fields (current)
 
-`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockModulePositions`
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageColors`
 
 Notes:
 - `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.
+- `blockModulePositions` and `imageModulePositions` are stored as logical anchors `{ column, row, baselineOffset }`; legacy absolute `{ col, row }` values are normalized on load.

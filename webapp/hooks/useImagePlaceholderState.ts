@@ -1,13 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
+import { type Updater } from "@/hooks/useStateCommands"
 import {
   getImageSchemeColorReference,
   resolveImageSchemeColor,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
-import { findNearestAxisIndex } from "@/lib/grid-rhythm"
-import type { ModulePosition, PreviewLayoutState } from "@/lib/types/preview-layout"
+import {
+  mapAbsolutePositionsToTextBlockPositions,
+  mapTextBlockPositionsToAbsolute,
+  toAbsoluteTextBlockPosition,
+  toTextBlockPosition,
+} from "@/lib/text-block-position"
+import type { ModulePosition, PreviewLayoutState, TextBlockPosition } from "@/lib/types/preview-layout"
 
 type ImageGridMetrics = {
   gridCols: number
@@ -49,17 +55,28 @@ export function useImagePlaceholderState<Key extends string>({
   onImageColorSchemeChange,
 }: Args<Key>) {
   const [imageOrder, setImageOrder] = useState<Key[]>([])
-  const [imageModulePositions, setImageModulePositions] = useState<Partial<Record<Key, ModulePosition>>>({})
+  const [imageGridPositions, setImageGridPositions] = useState<Partial<Record<Key, TextBlockPosition>>>({})
   const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageColors, setImageColors] = useState<Partial<Record<Key, string>>>({})
   const [imageEditorState, setImageEditorState] = useState<ImageEditorState | null>(null)
 
   const lastLiveImageEditorSignatureRef = useRef("")
-  const suppressImageModuleRemapRef = useRef(false)
   const previousImageColorSchemeRef = useRef(imageColorScheme)
-  const previousImageGridRef = useRef<{ cols: number; rows: number } | null>(null)
-  const previousImageRowStartsRef = useRef<number[] | null>(null)
+
+  const imageModulePositions = useMemo(
+    () => mapTextBlockPositionsToAbsolute(imageGridPositions, getGridMetrics().rowStartBaselines),
+    [getGridMetrics, imageGridPositions],
+  )
+
+  const setImageModulePositions = useCallback((next: Updater<Partial<Record<Key, ModulePosition>>>) => {
+    const activeRowStartBaselines = getGridMetrics().rowStartBaselines
+    setImageGridPositions((prev) => {
+      const previousAbsolute = mapTextBlockPositionsToAbsolute(prev, activeRowStartBaselines)
+      const resolvedNext = typeof next === "function" ? next(previousAbsolute) : next
+      return mapAbsolutePositionsToTextBlockPositions(resolvedNext, activeRowStartBaselines)
+    })
+  }, [getGridMetrics])
 
   const getImageSpan = useCallback((key: Key) => {
     const raw = imageColumnSpans[key] ?? 1
@@ -105,7 +122,7 @@ export function useImagePlaceholderState<Key extends string>({
 
   const buildImageSnapshotState = useCallback((): ImageSnapshotState<Key> => ({
     imageOrder: [...imageOrder],
-    imageModulePositions: { ...imageModulePositions },
+    imageModulePositions: { ...imageGridPositions },
     imageColumnSpans: imageOrder.reduce((acc, key) => {
       acc[key] = getImageSpan(key)
       return acc
@@ -122,7 +139,7 @@ export function useImagePlaceholderState<Key extends string>({
     getImageColorReference,
     getImageRows,
     getImageSpan,
-    imageModulePositions,
+    imageGridPositions,
     imageOrder,
   ])
 
@@ -132,19 +149,21 @@ export function useImagePlaceholderState<Key extends string>({
       .filter((key, index, source) => source.indexOf(key) === index)
 
     const metrics = getGridMetrics()
+    const rowStartBaselines = metrics.rowStartBaselines
     const nextPositions = normalizedOrder.reduce((acc, key) => {
       const raw = snapshot.imageModulePositions?.[key]
-      if (!raw || typeof raw.col !== "number" || typeof raw.row !== "number") return acc
+      if (!raw) return acc
       const span = Math.max(1, Math.min(gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
+      const resolvedPosition = toAbsoluteTextBlockPosition(toTextBlockPosition(raw, rowStartBaselines), rowStartBaselines)
       const minCol = -Math.max(0, span - 1)
       const maxCol = Math.max(0, gridCols - 1)
       const minRow = -Math.max(0, metrics.maxBaselineRow)
-      acc[key] = {
-        col: Math.max(minCol, Math.min(maxCol, Math.round(raw.col))),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, raw.row)),
-      }
+      acc[key] = toTextBlockPosition({
+        col: Math.max(minCol, Math.min(maxCol, Math.round(resolvedPosition.col))),
+        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, resolvedPosition.row)),
+      }, rowStartBaselines)
       return acc
-    }, {} as Partial<Record<Key, ModulePosition>>)
+    }, {} as Partial<Record<Key, TextBlockPosition>>)
 
     const nextSpans = normalizedOrder.reduce((acc, key) => {
       acc[key] = Math.max(1, Math.min(gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
@@ -160,9 +179,8 @@ export function useImagePlaceholderState<Key extends string>({
       return acc
     }, {} as Partial<Record<Key, string>>)
 
-    suppressImageModuleRemapRef.current = true
     setImageOrder(normalizedOrder)
-    setImageModulePositions(nextPositions)
+    setImageGridPositions(nextPositions)
     setImageColumnSpans(nextSpans)
     setImageRowSpans(nextRows)
     setImageColors(nextColors)
@@ -192,6 +210,7 @@ export function useImagePlaceholderState<Key extends string>({
     const columns = Math.max(1, Math.min(gridCols, options.columns ?? 1))
     const rows = Math.max(1, Math.min(gridRows, options.rows ?? 1))
     const colorReference = getImageSchemeColorReference(options.color ?? defaultImageColor, imageColorScheme)
+    const rowStartBaselines = getGridMetrics().rowStartBaselines
 
     setImageOrder((current) => {
       const next = current.filter((item) => item !== key)
@@ -205,15 +224,18 @@ export function useImagePlaceholderState<Key extends string>({
       next.push(key)
       return next
     })
-    setImageModulePositions((current) => ({ ...current, [key]: options.position }))
+    setImageGridPositions((current) => ({
+      ...current,
+      [key]: toTextBlockPosition(options.position, rowStartBaselines),
+    }))
     setImageColumnSpans((current) => ({ ...current, [key]: columns }))
     setImageRowSpans((current) => ({ ...current, [key]: rows }))
     setImageColors((current) => ({ ...current, [key]: colorReference }))
-  }, [defaultImageColor, gridCols, gridRows, imageColorScheme])
+  }, [defaultImageColor, getGridMetrics, gridCols, gridRows, imageColorScheme])
 
   const removeImagePlaceholder = useCallback((key: Key) => {
     setImageOrder((prev) => prev.filter((item) => item !== key))
-    setImageModulePositions((prev) => {
+    setImageGridPositions((prev) => {
       const next = { ...prev }
       delete next[key]
       return next
@@ -248,9 +270,6 @@ export function useImagePlaceholderState<Key extends string>({
 
   const resetImageTransientState = useCallback(() => {
     lastLiveImageEditorSignatureRef.current = ""
-    suppressImageModuleRemapRef.current = true
-    previousImageGridRef.current = null
-    previousImageRowStartsRef.current = null
     setImageEditorState(null)
   }, [])
 
@@ -322,73 +341,10 @@ export function useImagePlaceholderState<Key extends string>({
     })
   }, [imageColorScheme, imageColors])
 
-  useEffect(() => {
-    const metrics = getGridMetrics()
-    const currentGrid = { cols: gridCols, rows: gridRows }
-    const currentRowStarts = metrics.rowStartBaselines
-
-    if (!previousImageGridRef.current) {
-      previousImageGridRef.current = currentGrid
-      previousImageRowStartsRef.current = currentRowStarts
-      return
-    }
-
-    if (suppressImageModuleRemapRef.current) {
-      suppressImageModuleRemapRef.current = false
-      previousImageGridRef.current = currentGrid
-      previousImageRowStartsRef.current = currentRowStarts
-      return
-    }
-
-    const previousGrid = previousImageGridRef.current
-    const previousRowStarts = previousImageRowStartsRef.current ?? currentRowStarts
-    const gridChanged = previousGrid.cols !== currentGrid.cols || previousGrid.rows !== currentGrid.rows
-    const rowStartsChanged = (
-      previousRowStarts.length !== currentRowStarts.length
-      || previousRowStarts.some((value, index) => Math.abs(value - (currentRowStarts[index] ?? value)) > 0.0001)
-    )
-    if (!gridChanged && !rowStartsChanged) return
-
-    const hasGridReduction = currentGrid.cols < previousGrid.cols || currentGrid.rows < previousGrid.rows
-    if (!hasGridReduction && rowStartsChanged) {
-      setImageModulePositions((prev) => {
-        let changed = false
-        const next: Partial<Record<Key, ModulePosition>> = { ...prev }
-        for (const key of imageOrder) {
-          const position = prev[key]
-          if (!position) continue
-          const span = Math.max(1, Math.min(currentGrid.cols, imageColumnSpans[key] ?? 1))
-          const minCol = -Math.max(0, span - 1)
-          const maxCol = Math.max(0, currentGrid.cols - 1)
-          const moduleIndex = findNearestAxisIndex(previousRowStarts, position.row)
-          const previousStart = previousRowStarts[moduleIndex] ?? 0
-          const targetStart = currentRowStarts[Math.min(moduleIndex, Math.max(0, currentRowStarts.length - 1))] ?? 0
-          const baselineOffset = position.row - previousStart
-          const remappedRow = targetStart + baselineOffset
-          const clampedRow = Math.max(-metrics.maxBaselineRow, Math.min(metrics.maxBaselineRow, remappedRow))
-          const clampedCol = Math.max(minCol, Math.min(maxCol, position.col))
-          if (Math.abs(clampedRow - position.row) > 0.0001 || clampedCol !== position.col) {
-            next[key] = { col: clampedCol, row: clampedRow }
-            changed = true
-          }
-        }
-        return changed ? next : prev
-      })
-    }
-
-    previousImageGridRef.current = currentGrid
-    previousImageRowStartsRef.current = currentRowStarts
-  }, [
-    getGridMetrics,
-    gridCols,
-    gridRows,
-    imageColumnSpans,
-    imageOrder,
-  ])
-
   return {
     imageOrder,
     setImageOrder,
+    imageGridPositions,
     imageModulePositions,
     setImageModulePositions,
     imageColumnSpans,

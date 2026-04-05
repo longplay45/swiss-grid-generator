@@ -3,6 +3,7 @@ import type { TextAlignMode } from "@/lib/types/layout-primitives"
 import { parseHexColor, type RgbColor } from "@/lib/export-colors"
 import { mmToPt } from "@/lib/units"
 import { resolveIdmlFontMetadata } from "@/lib/idml/font-metadata"
+import { getRenderedTextDrawCommandText } from "@/lib/text-draw-command"
 import type { IdmlFontMetadata, SwissGridIdmlDocument } from "@/lib/idml/types"
 import { escapeIdmlXml, formatIdmlNumber, renderIdmlElement } from "@/lib/idml/xml"
 
@@ -423,7 +424,7 @@ function formatStoryContentSegments(
   }) => string,
 ): string {
   if (!textPlan.segmentLines.length) {
-    return formatStoryContent(textPlan.commands.map((command) => command.text))
+    return formatStoryContent(textPlan.commands.map((command) => getRenderedTextDrawCommandText(command)))
   }
 
   return textPlan.segmentLines.map((segments, lineIndex) => {

@@ -35,7 +35,7 @@ export type PreviewLayoutState<
   blockModulePositions: Partial<Record<Key, TextBlockPosition>>
   layerOrder?: Key[]
   imageOrder?: Key[]
-  imageModulePositions?: Partial<Record<Key, ModulePosition>>
+  imageModulePositions?: Partial<Record<Key, TextBlockPosition | ModulePosition>>
   imageColumnSpans?: Partial<Record<Key, number>>
   imageRowSpans?: Partial<Record<Key, number>>
   imageColors?: Partial<Record<Key, string>>

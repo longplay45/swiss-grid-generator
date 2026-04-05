@@ -444,6 +444,16 @@ export default function Home() {
         const raw = layout.blockRowSpans?.[key]
         return typeof raw === "number" && Number.isFinite(raw) ? raw : 1
       },
+      imageOrder: layout.imageOrder,
+      imageModulePositions: layout.imageModulePositions,
+      resolveImageSpan: (key) => {
+        const raw = layout.imageColumnSpans?.[key]
+        return typeof raw === "number" && Number.isFinite(raw) ? raw : 1
+      },
+      resolveImageRows: (key) => {
+        const raw = layout.imageRowSpans?.[key]
+        return typeof raw === "number" && Number.isFinite(raw) ? raw : 1
+      },
       nextGridCols,
       nextGridRows,
     })

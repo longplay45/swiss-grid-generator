@@ -14,6 +14,8 @@ type Args<BlockId extends string> = {
   blockColumnSpans: Partial<Record<BlockId, number>>
   blockGridPositions: Partial<Record<BlockId, TextBlockPosition>>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
+  imageOrder: BlockId[]
+  imageGridPositions: Partial<Record<BlockId, TextBlockPosition>>
   textContent: Record<BlockId, string>
   scale: number
   gridCols: number
@@ -32,6 +34,8 @@ type Args<BlockId extends string> = {
   getDefaultColumnSpan: (key: BlockId, gridCols: number) => number
   getBlockRows: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
+  getImageRows: (key: BlockId) => number
+  getImageSpan: (key: BlockId) => number
   getStyleKeyForBlock: (key: BlockId) => string
   getBlockFont: (key: BlockId) => AutoFitStyle["fontFamily"]
   getBlockFontWeight: (key: BlockId) => number
@@ -67,6 +71,8 @@ export function useLayoutReflow<BlockId extends string>({
   blockColumnSpans,
   blockGridPositions,
   blockModulePositions,
+  imageOrder,
+  imageGridPositions,
   textContent,
   scale,
   gridCols,
@@ -85,6 +91,8 @@ export function useLayoutReflow<BlockId extends string>({
   getDefaultColumnSpan,
   getBlockRows,
   getBlockSpan,
+  getImageRows,
+  getImageSpan,
   getStyleKeyForBlock,
   getBlockFont,
   getBlockFontWeight,
@@ -150,6 +158,10 @@ export function useLayoutReflow<BlockId extends string>({
       blockModulePositions: blockGridPositions,
       resolveBlockSpan: (key) => blockColumnSpans[key] ?? getDefaultColumnSpan(key, previousGrid.cols),
       resolveBlockRows: getBlockRows,
+      imageOrder,
+      imageModulePositions: imageGridPositions,
+      resolveImageSpan: getImageSpan,
+      resolveImageRows: getImageRows,
       nextGridCols: currentGrid.cols,
       nextGridRows: currentGrid.rows,
     })
@@ -174,10 +186,14 @@ export function useLayoutReflow<BlockId extends string>({
     blockColumnSpans,
     blockGridPositions,
     blockOrder,
+    getImageRows,
+    getImageSpan,
     getBlockRows,
     getDefaultColumnSpan,
     gridCols,
     gridRows,
+    imageGridPositions,
+    imageOrder,
     onRequestGridReductionWarning,
     onRequestGridRestore,
     suppressReflowCheckRef,

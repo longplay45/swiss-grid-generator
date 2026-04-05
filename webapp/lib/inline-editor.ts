@@ -1,6 +1,27 @@
+import type { PositionedTextFormatTrackingSegment } from "./text-format-runs.ts"
+import { getRenderedTextDrawCommandText } from "./text-draw-command.ts"
+import { splitTextForTracking } from "./text-rendering.ts"
+
 export type SidebarPanel = "settings" | "help" | "imprint" | "example" | "text-editor" | null
 export type NonEditorSidebarPanel = Exclude<SidebarPanel, "text-editor">
 export type InlineEditorTextAlign = "left" | "center" | "right"
+
+type InlineEditorSegment = PositionedTextFormatTrackingSegment<string, string>
+export type InlineEditorCaretStop = {
+  index: number
+  x: number
+}
+
+export type InlineEditorRenderedLine = {
+  sourceStart: number
+  sourceEnd: number
+  left: number
+  top: number
+  width: number
+  height: number
+  baselineY: number
+  caretStops: InlineEditorCaretStop[]
+}
 
 export type InlineEditorRect = {
   x: number
@@ -15,12 +36,14 @@ export type InlineEditorCommand = {
   y: number
   sourceStart?: number
   sourceEnd?: number
+  leadingBoundaryWhitespace?: number
 }
 
 export type InlineEditorTextBoxInput = {
   rect: InlineEditorRect
   textAlign: InlineEditorTextAlign
   commands: InlineEditorCommand[]
+  renderedLines?: InlineEditorRenderedLine[]
   measureText: (text: string, range?: { start: number; end: number }) => number
 }
 
@@ -39,6 +62,8 @@ export type InlineEditorCaretInput = {
   text: string
   textAlign: InlineEditorTextAlign
   commands: InlineEditorCommand[]
+  renderedLines?: InlineEditorRenderedLine[]
+  segmentLines?: InlineEditorSegment[][]
   selectionStart: number
   textAscent: number
   textBoxTop: number
@@ -58,6 +83,9 @@ export type InlineEditorLineLayout = InlineEditorLineMatch & {
   top: number
   width: number
   height: number
+  baselineY?: number
+  caretStops?: InlineEditorCaretStop[]
+  segments?: InlineEditorSegment[]
 }
 
 export type InlineEditorSelectionRect = {
@@ -71,6 +99,8 @@ export type InlineEditorLineLayoutInput = {
   text: string
   textAlign: InlineEditorTextAlign
   commands: InlineEditorCommand[]
+  renderedLines?: InlineEditorRenderedLine[]
+  segmentLines?: InlineEditorSegment[][]
   textAscent: number
   lineHeight: number
   measureText: (text: string, range?: { start: number; end: number }) => number
@@ -134,12 +164,16 @@ function stripInvisibleTextArtifacts(text: string): string {
   return text.replace(/[\u00AD\u200B\u200C\u200D\uFEFF]/g, "")
 }
 
+function getRenderedCommandText(command: InlineEditorCommand): string {
+  return normalizeVisibleText(getRenderedTextDrawCommandText(command))
+}
+
 function normalizeVisibleText(text: string): string {
   return stripInvisibleTextArtifacts(text).replace(/\r\n?/g, "\n")
 }
 
 function normalizePrefixText(text: string): string {
-  return normalizeVisibleText(text).replace(/[^\S\n]+/g, " ")
+  return normalizeVisibleText(text)
 }
 
 function clampSelectionIndex(text: string, index: number): number {
@@ -161,6 +195,136 @@ function getLineStartX(
     return line.x - measureText(line.renderedText, range)
   }
   return line.x
+}
+
+const INVISIBLE_TEXT_ARTIFACTS_RE = /[\u00AD\u200B\u200C\u200D\uFEFF]/g
+
+type NormalizedSourceGrapheme = {
+  renderedText: string
+  sourceStart: number
+  sourceEnd: number
+}
+
+function toNormalizedSourceGraphemes(
+  text: string,
+  start: number,
+  end: number,
+): NormalizedSourceGrapheme[] {
+  const slice = text.slice(start, end)
+  const graphemes = splitTextForTracking(slice)
+  const normalized: NormalizedSourceGrapheme[] = []
+  let cursor = start
+
+  for (const grapheme of graphemes) {
+    const graphemeStart = cursor
+    const graphemeEnd = graphemeStart + grapheme.length
+    cursor = graphemeEnd
+    const cleanText = grapheme.replace(INVISIBLE_TEXT_ARTIFACTS_RE, "")
+    if (!cleanText) continue
+    normalized.push({
+      renderedText: cleanText,
+      sourceStart: graphemeStart,
+      sourceEnd: graphemeEnd,
+    })
+  }
+
+  return normalized
+}
+
+function getRenderedPrefixForIndex(
+  text: string,
+  segment: InlineEditorSegment,
+  sourceIndex: number,
+): string {
+  const normalized = toNormalizedSourceGraphemes(text, segment.start, segment.end)
+  const renderedGraphemes = splitTextForTracking(segment.text)
+  const effectiveIndex = Math.max(segment.start, Math.min(segment.end, sourceIndex))
+  let prefix = ""
+  const count = Math.min(normalized.length, renderedGraphemes.length)
+
+  for (let index = 0; index < count; index += 1) {
+    if ((normalized[index]?.sourceEnd ?? segment.start) > effectiveIndex) break
+    prefix += renderedGraphemes[index] ?? ""
+  }
+
+  return prefix
+}
+
+function getLineSourceStart(
+  line: Pick<InlineEditorLineMatch, "sourceStart"> & { segments?: InlineEditorSegment[]; caretStops?: InlineEditorCaretStop[] },
+): number {
+  if (line.caretStops?.length) {
+    return line.caretStops[0]?.index ?? line.sourceStart
+  }
+  if (line.segments?.length) {
+    return line.segments[0]?.start ?? line.sourceStart
+  }
+  return line.sourceStart
+}
+
+function getLineSourceEnd(
+  line: Pick<InlineEditorLineMatch, "sourceEnd"> & { segments?: InlineEditorSegment[]; caretStops?: InlineEditorCaretStop[] },
+): number {
+  if (line.caretStops?.length) {
+    return line.caretStops[line.caretStops.length - 1]?.index ?? line.sourceEnd
+  }
+  if (line.segments?.length) {
+    return line.segments[line.segments.length - 1]?.end ?? line.sourceEnd
+  }
+  return line.sourceEnd
+}
+
+function getCaretXFromStops(
+  line: { caretStops?: InlineEditorCaretStop[] },
+  sourceIndex: number,
+): number | null {
+  const stops = line.caretStops
+  if (!stops?.length) return null
+  let previous = stops[0]!
+  if (sourceIndex <= previous.index) return previous.x
+  for (let index = 1; index < stops.length; index += 1) {
+    const current = stops[index]!
+    if (sourceIndex <= current.index) {
+      if (current.index === previous.index) return current.x
+      const ratio = (sourceIndex - previous.index) / (current.index - previous.index)
+      return previous.x + (current.x - previous.x) * ratio
+    }
+    previous = current
+  }
+  return stops[stops.length - 1]?.x ?? null
+}
+
+function getCaretXForIndex(
+  text: string,
+  line: InlineEditorLineMatch & { left: number; caretStops?: InlineEditorCaretStop[]; segments?: InlineEditorSegment[] },
+  sourceIndex: number,
+  measureText: (text: string, range?: { start: number; end: number }) => number,
+): number {
+  const fromStops = getCaretXFromStops(line, sourceIndex)
+  if (fromStops !== null) return fromStops
+  if (!line.segments?.length) {
+    return line.left + measurePrefixWidthForIndex(text, line, sourceIndex, measureText)
+  }
+
+  const clampedIndex = Math.max(getLineSourceStart(line), Math.min(getLineSourceEnd(line), sourceIndex))
+  for (let index = 0; index < line.segments.length; index += 1) {
+    const segment = line.segments[index]!
+    const nextSegment = line.segments[index + 1]
+    if (clampedIndex <= segment.start) {
+      return segment.x
+    }
+    if (clampedIndex === segment.end && nextSegment?.start === clampedIndex) {
+      return nextSegment.x
+    }
+    if (clampedIndex <= segment.end) {
+      const renderedPrefix = getRenderedPrefixForIndex(text, segment, clampedIndex)
+      return segment.x + measureText(renderedPrefix, { start: segment.start, end: clampedIndex })
+    }
+  }
+
+  const lastSegment = line.segments[line.segments.length - 1]
+  if (!lastSegment) return line.left
+  return lastSegment.x + measureText(lastSegment.text, { start: lastSegment.start, end: lastSegment.end })
 }
 
 function measurePrefixWidthForIndex(
@@ -197,13 +361,23 @@ export function computeInlineEditorTextBox({
   rect,
   textAlign,
   commands,
+  renderedLines,
   measureText,
 }: InlineEditorTextBoxInput): InlineEditorTextBox {
+  if (renderedLines?.length) {
+    const minX = Math.min(rect.x, ...renderedLines.map((line) => line.left))
+    const maxX = Math.max(rect.x + rect.width, ...renderedLines.map((line) => line.left + line.width))
+    return {
+      left: minX,
+      width: Math.max(1, maxX - minX),
+    }
+  }
+
   let minX = rect.x
   let maxX = rect.x + rect.width
 
   for (const command of commands) {
-    const renderedText = normalizeVisibleText(command.text)
+    const renderedText = getRenderedCommandText(command)
     const renderedWidth = measureText(renderedText, (
       typeof command.sourceStart === "number" && typeof command.sourceEnd === "number"
         ? { start: command.sourceStart, end: command.sourceEnd }
@@ -237,7 +411,18 @@ export function resolveInlineEditorLineMatches(
   let cursor = 0
 
   return commands.map((command) => {
-    const renderedText = normalizeVisibleText(command.text)
+    const renderedText = getRenderedCommandText(command)
+    if (typeof command.sourceStart === "number" && typeof command.sourceEnd === "number") {
+      const sourceStart = clampSelectionIndex(text, command.sourceStart)
+      const sourceEnd = clampSelectionIndex(text, Math.max(command.sourceStart, command.sourceEnd))
+      cursor = sourceEnd
+      return {
+        ...command,
+        renderedText,
+        sourceStart,
+        sourceEnd,
+      }
+    }
     const candidates = renderedText.endsWith("-")
       ? [renderedText, renderedText.slice(0, -1)]
       : [renderedText]
@@ -273,18 +458,50 @@ export function buildInlineEditorLineLayouts({
   text,
   textAlign,
   commands,
+  renderedLines,
+  segmentLines,
   textAscent,
   lineHeight,
   measureText,
 }: InlineEditorLineLayoutInput): InlineEditorLineLayout[] {
-  return resolveInlineEditorLineMatches(text, commands).map((line) => {
+  if (renderedLines?.length) {
+    return renderedLines.map((line, index) => {
+      const fallbackCommand = commands[index]
+      return {
+        text: fallbackCommand?.text ?? "",
+        x: fallbackCommand?.x ?? line.left,
+        y: fallbackCommand?.y ?? line.baselineY,
+        renderedText: fallbackCommand ? getRenderedCommandText(fallbackCommand) : "",
+        sourceStart: line.sourceStart,
+        sourceEnd: line.sourceEnd,
+        left: line.left,
+        top: line.top,
+        width: line.width,
+        height: line.height,
+        baselineY: line.baselineY,
+        caretStops: line.caretStops,
+        segments: segmentLines?.[index]?.length ? segmentLines[index] : undefined,
+      }
+    })
+  }
+
+  return resolveInlineEditorLineMatches(text, commands).map((line, index) => {
+    const segments = segmentLines?.[index]?.length ? segmentLines[index] : undefined
     const left = getLineStartX(line, textAlign, measureText)
+    const lineStart = segments?.[0]?.start ?? line.sourceStart
+    const lineEnd = segments?.[segments.length - 1]?.end ?? line.sourceEnd
+    const width = segments?.length
+      ? Math.max(1, getCaretXForIndex(text, { ...line, left, segments }, lineEnd, measureText) - (segments[0]?.x ?? left))
+      : measureText(line.renderedText, { start: line.sourceStart, end: line.sourceEnd })
     return {
       ...line,
-      left,
+      sourceStart: lineStart,
+      sourceEnd: lineEnd,
+      left: segments?.[0]?.x ?? left,
       top: line.y - textAscent,
-      width: measureText(line.renderedText, { start: line.sourceStart, end: line.sourceEnd }),
+      width,
       height: lineHeight,
+      segments,
     }
   })
 }
@@ -293,6 +510,8 @@ export function computeInlineEditorCaret({
   text,
   textAlign,
   commands,
+  renderedLines,
+  segmentLines,
   selectionStart,
   textAscent,
   textBoxTop,
@@ -302,19 +521,28 @@ export function computeInlineEditorCaret({
 }: InlineEditorCaretInput): InlineEditorCaret | null {
   if (!commands.length) return null
 
-  const lines = resolveInlineEditorLineMatches(text, commands)
+  const layoutLines = buildInlineEditorLineLayouts({
+    text,
+    textAlign,
+    commands,
+    renderedLines,
+    segmentLines,
+    textAscent,
+    lineHeight,
+    measureText,
+  })
   const clampedSelection = clampSelectionIndex(text, selectionStart)
-  const activeLineIndex = getActiveLineIndexForSelection(lines, clampedSelection)
-  const activeLine = lines[Math.max(0, activeLineIndex)] ?? lines[lines.length - 1]
+  const activeLineIndex = getActiveLineIndexForSelection(layoutLines, clampedSelection)
+  const activeLine = layoutLines[Math.max(0, activeLineIndex)] ?? layoutLines[layoutLines.length - 1]
+  if (!activeLine) return null
 
-  const caretX = getLineStartX(activeLine, textAlign, measureText)
-    + measurePrefixWidthForIndex(text, activeLine, clampedSelection, measureText)
-  const lineTop = activeLine.y - textAscent
+  const caretX = getCaretXForIndex(text, activeLine, clampedSelection, measureText)
+  const lineTop = activeLine.top
 
   return {
     x: caretX,
     top: lineTop - textBoxTop,
-    height: Math.max(1, caretHeight ?? lineHeight),
+    height: Math.max(1, caretHeight ?? activeLine.height ?? lineHeight),
   }
 }
 
@@ -322,6 +550,8 @@ export function computeInlineEditorSelectionRects({
   text,
   textAlign,
   commands,
+  renderedLines,
+  segmentLines,
   selectionStart,
   selectionEnd,
   textAscent,
@@ -338,6 +568,8 @@ export function computeInlineEditorSelectionRects({
     text,
     textAlign,
     commands,
+    renderedLines,
+    segmentLines,
     textAscent,
     lineHeight,
     measureText,
@@ -350,8 +582,8 @@ export function computeInlineEditorSelectionRects({
     if (lineStart > lineEnd) continue
     if (lineStart === lineEnd && !(lineEnd === line.sourceEnd && end > line.sourceEnd)) continue
 
-    const left = line.left + measurePrefixWidthForIndex(text, line, lineStart, measureText)
-    const right = line.left + measurePrefixWidthForIndex(
+    const left = getCaretXForIndex(text, line, lineStart, measureText)
+    const right = getCaretXForIndex(
       text,
       line,
       lineEnd === line.sourceEnd && end > line.sourceStart ? line.sourceEnd : lineEnd,
@@ -373,6 +605,8 @@ export function resolveInlineEditorLineNavigation({
   text,
   textAlign,
   commands,
+  renderedLines,
+  segmentLines,
   selectionIndex,
   direction,
   desiredX = null,
@@ -392,13 +626,15 @@ export function resolveInlineEditorLineNavigation({
     text,
     textAlign,
     commands,
+    renderedLines,
+    segmentLines,
     textAscent,
     lineHeight,
     measureText,
   })
   const activeLineIndex = getActiveLineIndexForSelection(lines, clampedSelection)
   const activeLine = lines[Math.max(0, activeLineIndex)] ?? lines[lines.length - 1]
-  const currentCaretX = activeLine.left + measurePrefixWidthForIndex(text, activeLine, clampedSelection, measureText)
+  const currentCaretX = getCaretXForIndex(text, activeLine, clampedSelection, measureText)
 
   if (direction === "home") {
     return {
@@ -410,7 +646,7 @@ export function resolveInlineEditorLineNavigation({
   if (direction === "end") {
     return {
       index: activeLine.sourceEnd,
-      desiredX: activeLine.left + measurePrefixWidthForIndex(text, activeLine, activeLine.sourceEnd, measureText),
+      desiredX: getCaretXForIndex(text, activeLine, activeLine.sourceEnd, measureText),
     }
   }
 
@@ -423,7 +659,7 @@ export function resolveInlineEditorLineNavigation({
   let bestIndex = targetLine.sourceStart
   let bestDistance = Number.POSITIVE_INFINITY
   for (let index = targetLine.sourceStart; index <= targetLine.sourceEnd; index += 1) {
-    const caretX = targetLine.left + measurePrefixWidthForIndex(text, targetLine, index, measureText)
+    const caretX = getCaretXForIndex(text, targetLine, index, measureText)
     const distance = Math.abs(targetCaretX - caretX)
     if (distance <= bestDistance) {
       bestDistance = distance
@@ -441,6 +677,8 @@ export function hitTestInlineEditorIndex({
   text,
   textAlign,
   commands,
+  renderedLines,
+  segmentLines,
   x,
   y,
   textAscent,
@@ -453,6 +691,8 @@ export function hitTestInlineEditorIndex({
     text,
     textAlign,
     commands,
+    renderedLines,
+    segmentLines,
     textAscent,
     lineHeight,
     measureText,
@@ -481,7 +721,7 @@ export function hitTestInlineEditorIndex({
   let bestIndex = activeLine.sourceStart
   let bestDistance = Number.POSITIVE_INFINITY
   for (let index = activeLine.sourceStart; index <= activeLine.sourceEnd; index += 1) {
-    const caretX = activeLine.left + measurePrefixWidthForIndex(text, activeLine, index, measureText)
+    const caretX = getCaretXForIndex(text, activeLine, index, measureText)
     const distance = Math.abs(x - caretX)
     if (distance <= bestDistance) {
       bestDistance = distance

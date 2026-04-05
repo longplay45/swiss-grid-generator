@@ -17,6 +17,7 @@ export type TextDrawCommand = {
   y: number
   sourceStart?: number
   sourceEnd?: number
+  leadingBoundaryWhitespace?: number
 }
 
 type TypographyStyleDefinition = {
@@ -330,6 +331,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
           y,
           sourceStart: line.sourceStart,
           sourceEnd: line.sourceEnd,
+          leadingBoundaryWhitespace: line.leadingBoundaryWhitespace,
         })
       }
     } else {
@@ -356,6 +358,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
           y,
           sourceStart: line.sourceStart,
           sourceEnd: line.sourceEnd,
+          leadingBoundaryWhitespace: line.leadingBoundaryWhitespace,
         })
       }
     }
@@ -492,6 +495,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         y,
         sourceStart: line.sourceStart,
         sourceEnd: line.sourceEnd,
+        leadingBoundaryWhitespace: line.leadingBoundaryWhitespace,
       })
     }
   } else {
@@ -521,6 +525,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         y,
         sourceStart: line.sourceStart,
         sourceEnd: line.sourceEnd,
+        leadingBoundaryWhitespace: line.leadingBoundaryWhitespace,
       })
     }
   }

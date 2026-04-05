@@ -29,12 +29,16 @@ type Args<Key extends string> = {
   blockColumnSpans: Partial<Record<Key, number>>
   blockGridPositions: Partial<Record<Key, TextBlockPosition>>
   blockModulePositions: Partial<Record<Key, ModulePosition>>
+  imageOrder: Key[]
+  imageGridPositions: Partial<Record<Key, TextBlockPosition>>
   textContent: Record<Key, string>
   scale: number
   result: GridResult
   getDefaultColumnSpan: (key: Key, gridCols: number) => number
   getBlockRows: (key: Key) => number
   getBlockSpan: (key: Key) => number
+  getImageRows: (key: Key) => number
+  getImageSpan: (key: Key) => number
   getStyleKeyForBlock: (key: Key) => string
   getBlockFont: (key: Key) => AutoFitStyle["fontFamily"]
   getBlockFontWeight: (key: Key) => number
@@ -59,12 +63,16 @@ export function usePreviewLayoutReflowController<Key extends string>({
   blockColumnSpans,
   blockGridPositions,
   blockModulePositions,
+  imageOrder,
+  imageGridPositions,
   textContent,
   scale,
   result,
   getDefaultColumnSpan,
   getBlockRows,
   getBlockSpan,
+  getImageRows,
+  getImageSpan,
   getStyleKeyForBlock,
   getBlockFont,
   getBlockFontWeight,
@@ -164,6 +172,8 @@ export function usePreviewLayoutReflowController<Key extends string>({
     blockColumnSpans,
     blockGridPositions,
     blockModulePositions,
+    imageOrder,
+    imageGridPositions,
     textContent,
     scale,
     gridCols: result.settings.gridCols,
@@ -182,6 +192,8 @@ export function usePreviewLayoutReflowController<Key extends string>({
     getDefaultColumnSpan,
     getBlockRows,
     getBlockSpan,
+    getImageRows,
+    getImageSpan,
     getStyleKeyForBlock,
     getBlockFont,
     getBlockFontWeight,

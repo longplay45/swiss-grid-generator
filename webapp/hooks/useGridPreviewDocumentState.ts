@@ -152,6 +152,7 @@ export function useGridPreviewDocumentState({
   const {
     imageOrder,
     setImageOrder,
+    imageGridPositions,
     imageModulePositions,
     setImageModulePositions,
     setImageColumnSpans,
@@ -280,6 +281,7 @@ export function useGridPreviewDocumentState({
     defaultTextColor,
     imageOrder,
     setImageOrder,
+    imageGridPositions,
     imageModulePositions,
     setImageModulePositions,
     setImageColumnSpans,
