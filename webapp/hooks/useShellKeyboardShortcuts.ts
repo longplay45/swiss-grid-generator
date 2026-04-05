@@ -18,7 +18,6 @@ type Args = {
   onToggleTypography: () => void
   onToggleLayersPanel: () => void
   onToggleRolloverInfo: () => void
-  onToggleSettingsPanel: () => void
   onToggleHelpPanel: () => void
   onToggleImprintPanel: () => void
   onOpenPresets: () => void
@@ -41,7 +40,6 @@ export function useShellKeyboardShortcuts({
   onToggleTypography,
   onToggleLayersPanel,
   onToggleRolloverInfo,
-  onToggleSettingsPanel,
   onToggleHelpPanel,
   onToggleImprintPanel,
   onOpenPresets,
@@ -109,9 +107,6 @@ export function useShellKeyboardShortcuts({
         case "toggle_rollover_info":
           onToggleRolloverInfo()
           return
-        case "toggle_settings_panel":
-          onToggleSettingsPanel()
-          return
         case "toggle_help_panel":
           onToggleHelpPanel()
           return
@@ -141,7 +136,6 @@ export function useShellKeyboardShortcuts({
     onToggleMargins,
     onToggleModules,
     onToggleRolloverInfo,
-    onToggleSettingsPanel,
     onToggleTypography,
     onUndo,
   ])

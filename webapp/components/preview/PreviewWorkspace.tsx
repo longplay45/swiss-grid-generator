@@ -342,28 +342,6 @@ export function PreviewWorkspace({
                 : "p-4 md:p-6"
             }`}
           >
-            {activeSidebarPanel === "settings" && (
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Settings</h3>
-                  <button
-                    type="button"
-                    aria-label="Close settings panel"
-                    onClick={closeSidebarPanel}
-                    className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className={`space-y-2 text-xs ${uiTheme.sidebarBody}`}>
-                  <p>This is a placeholder settings page.</p>
-                  <p>
-                    Future settings can be added here (profile, defaults, shortcuts, language,
-                    etc.).
-                  </p>
-                </div>
-              </div>
-            )}
             {activeSidebarPanel === "help" && (
               <HelpPanel
                 isDarkMode={isDarkUi}

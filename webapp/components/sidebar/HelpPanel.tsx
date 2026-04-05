@@ -259,10 +259,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
           <li>Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.</li>
           <li>The Project toggle sits directly after the typography toggle, separated by a divider.</li>
-          <li>The right-side trio is ordered as `i` (rollover info), `?` (help), and settings.</li>
-          <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+6</span>.</li>
-          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+5</span>.</li>
-          <li>`?` opens/closes help; settings opens/closes the right settings panel.</li>
+          <li>The right-side header actions are ordered as `i` (information/tooltips) and `?` (help).</li>
+          <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.</li>
+          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+1</span>.</li>
+          <li>`?` opens or closes the help sidebar. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+H</span>.</li>
           <li>While the presets browser is open, side panels and the header Project toggle are temporarily disabled.</li>
           <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
@@ -428,12 +428,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
-      <section id="help-header-settings" className="space-y-2">
+      <section id="help-header-information" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Settings Panel
+          Information Toggle
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens or closes the right-side settings placeholder panel. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+1</span>.
+          Toggles rollover info/tooltips globally across header controls, side panels, and editor affordances. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.
         </p>
       </section>
 

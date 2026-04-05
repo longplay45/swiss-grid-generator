@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 
 import type { HelpSectionId } from "@/lib/help-registry"
 
-export type SidebarPanel = "settings" | "help" | "imprint" | "layers" | "feedback" | null
+export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | null
 
 type Args = {
   showLayers: boolean

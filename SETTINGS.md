@@ -163,10 +163,9 @@ Default: `swiss`
 ### Sidebar Panels (icon selectors)
 
 - `Layers` (layers icon): opens the right sidebar Project panel
-- `Rollover Info` (`i` icon): toggles rollover info/tooltips globally
-- Shortcuts: `Cmd/Ctrl+Shift+5` toggles the Project sidebar, `Cmd/Ctrl+Shift+6` toggles Rollover Info
+- `Information` (`i` icon): toggles rollover info/tooltips globally
+- Shortcuts: `Cmd/Ctrl+Shift+1` toggles the Project sidebar, `Cmd/Ctrl+Shift+I` toggles Information
 - `Help` (`?` icon): opens help/reference panel
-- `Settings` (gear icon): opens right sidebar settings placeholder panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
 - Behavior: only one right sidebar panel can be open at a time; clicking the active project/help/settings icon closes that panel.
 - Behavior: while presets are open, the left settings panel and header Project toggle are disabled.
@@ -206,10 +205,9 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
-- `Cmd/Ctrl+Shift+5`: Toggle project sidebar
-- `Cmd/Ctrl+Shift+6`: Toggle rollover info
-- `Cmd/Ctrl+Shift+1`: Toggle settings sidebar
-- `Cmd/Ctrl+Shift+2`: Toggle help sidebar
+- `Cmd/Ctrl+Shift+1`: Toggle project sidebar
+- `Cmd/Ctrl+Shift+I`: Toggle information
+- `Cmd/Ctrl+Shift+H`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
 - `Cmd/Ctrl+Shift+4`: Toggle presets browser
 - `Esc`: Close presets browser without loading a preset

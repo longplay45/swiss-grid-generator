@@ -12,7 +12,6 @@ import {
   Redo2,
   Rows3,
   Save,
-  Settings,
   SquareDashed,
   Sun,
   Type,
@@ -20,7 +19,7 @@ import {
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
-export type SidebarPanel = "settings" | "help" | "imprint" | "layers" | "feedback" | null
+export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | null
 
 export type HeaderAction = {
   key: string
@@ -63,7 +62,6 @@ type Args = {
   onToggleTypography: () => void
   onToggleLayersPanel: () => void
   onToggleRolloverInfo: () => void
-  onToggleSettingsPanel: () => void
   onToggleHelpPanel: () => void
 }
 
@@ -242,8 +240,8 @@ export function useHeaderActions(args: Args) {
   const sidebarGroup: HeaderAction[] = [
     {
       key: "rollover-info",
-      ariaLabel: args.showRolloverInfo ? "Disable rollover info" : "Enable rollover info",
-      tooltip: "Toggle rollover info",
+      ariaLabel: args.showRolloverInfo ? "Disable information" : "Enable information",
+      tooltip: "Information",
       shortcutId: "toggle_rollover_info",
       variant: args.showRolloverInfo ? "default" : "outline",
       pressed: args.showRolloverInfo,
@@ -260,17 +258,6 @@ export function useHeaderActions(args: Args) {
       disabled: args.showPresetsBrowser,
       onClick: args.onToggleHelpPanel,
       icon: <CircleHelp className="h-4 w-4" />,
-    },
-    {
-      key: "settings",
-      ariaLabel: "Show settings panel",
-      tooltip: "Settings panel",
-      shortcutId: "toggle_settings_panel",
-      variant: args.activeSidebarPanel === "settings" ? "default" : "outline",
-      pressed: args.activeSidebarPanel === "settings",
-      disabled: args.showPresetsBrowser,
-      onClick: args.onToggleSettingsPanel,
-      icon: <Settings className="h-4 w-4" />,
     },
   ]
 

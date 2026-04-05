@@ -674,7 +674,6 @@ export default function Home() {
     onToggleTypography: toggleShowTypography,
     onToggleLayersPanel: toggleLayersPanel,
     onToggleRolloverInfo: toggleRolloverInfo,
-    onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
     onToggleHelpPanel: toggleHelpPanel,
     onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
     onOpenPresets: () => setShowPresetsBrowser(true),
@@ -713,7 +712,6 @@ export default function Home() {
     onToggleTypography: toggleShowTypography,
     onToggleLayersPanel: toggleLayersPanel,
     onToggleRolloverInfo: toggleRolloverInfo,
-    onToggleSettingsPanel: () => openSidebarPanel(activeSidebarPanel === "settings" ? null : "settings"),
     onToggleHelpPanel: toggleHelpPanel,
   })
 
