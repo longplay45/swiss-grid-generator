@@ -2,6 +2,7 @@ import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor
 import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
 import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
@@ -24,6 +25,7 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getBlockFontWeight: (key: string) => number
   getBlockTrackingScale: (key: string) => number
   getBlockTrackingRuns: (key: string) => TextTrackingRun[]
+  getBlockTextFormatRuns: (key: string, color: string) => TextFormatRun<StyleKey, FontFamily>[]
   getStyleLeading: (style: StyleKey) => number
   getStyleSize: (style: StyleKey) => number
   isBlockItalic: (key: string) => boolean
@@ -53,6 +55,7 @@ type NewBlockArgs<StyleKey extends string> = {
   opticalKerning?: boolean
   trackingScale?: number
   trackingRuns?: TextTrackingRun[]
+  textFormatRuns?: TextFormatRun<StyleKey, FontFamily>[]
   rotation?: number
   textEdited?: boolean
 }
@@ -73,6 +76,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getBlockFontWeight,
   getBlockTrackingScale,
   getBlockTrackingRuns,
+  getBlockTextFormatRuns,
   getStyleLeading,
   getStyleSize,
   isBlockItalic,
@@ -83,10 +87,15 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   fxStyle,
 }: ExistingBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
   const styleKey = styleAssignments[key] ?? fallbackStyle
+  const normalizedText = normalizeInlineEditorText(textContent[key] ?? "")
+  const draftFont = getBlockFont(key)
+  const draftFontWeight = getBlockFontWeight(key)
+  const draftItalic = isBlockItalic(key)
+  const draftColor = getBlockTextColor(key)
 
   return {
     target: key,
-    draftText: normalizeInlineEditorText(textContent[key] ?? ""),
+    draftText: normalizedText,
     draftStyle: styleKey,
     draftFxSize: styleKey === fxStyle
       ? clampFxSize(blockCustomSizes[key] ?? getStyleSize(fxStyle))
@@ -94,21 +103,32 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftFxLeading: styleKey === fxStyle
       ? clampFxLeading(blockCustomLeadings[key] ?? getStyleLeading(fxStyle))
       : getStyleLeading(fxStyle),
-    draftFont: getBlockFont(key),
-    draftFontWeight: getBlockFontWeight(key),
+    draftFont: draftFont,
+    draftFontWeight: draftFontWeight,
     draftColumns: getBlockSpan(key),
     draftRows: getBlockRows(key),
     draftAlign: blockTextAlignments[key] ?? "left",
-    draftColor: getBlockTextColor(key),
+    draftColor: draftColor,
     draftReflow: isTextReflowEnabled(key),
     draftSyllableDivision: isSyllableDivisionEnabled(key),
-    draftItalic: isBlockItalic(key),
+    draftItalic: draftItalic,
     draftOpticalKerning: isBlockOpticalKerningEnabled(key),
     draftTrackingScale: getBlockTrackingScale(key),
     draftTrackingRuns: normalizeTextTrackingRuns(
-      textContent[key] ?? "",
+      normalizedText,
       getBlockTrackingRuns(key),
       getBlockTrackingScale(key),
+    ),
+    draftTextFormatRuns: normalizeTextFormatRuns(
+      normalizedText,
+      getBlockTextFormatRuns(key, draftColor),
+      {
+        fontFamily: draftFont,
+        fontWeight: draftFontWeight,
+        italic: draftItalic,
+        styleKey,
+        color: draftColor,
+      },
     ),
     draftRotation: getBlockRotation(key),
     draftTextEdited: blockTextEdited[key] ?? true,
@@ -136,6 +156,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   opticalKerning = DEFAULT_OPTICAL_KERNING,
   trackingScale = DEFAULT_TRACKING_SCALE,
   trackingRuns = [],
+  textFormatRuns = [],
   rotation = 0,
   textEdited = false,
 }: NewBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
@@ -158,6 +179,17 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftOpticalKerning: opticalKerning,
     draftTrackingScale: trackingScale,
     draftTrackingRuns: normalizeTextTrackingRuns(normalizedText, trackingRuns, trackingScale),
+    draftTextFormatRuns: normalizeTextFormatRuns(
+      normalizedText,
+      textFormatRuns,
+      {
+        fontFamily: baseFont,
+        fontWeight,
+        italic,
+        styleKey: style,
+        color: defaultTextColor,
+      },
+    ),
     draftRotation: rotation,
     draftTextEdited: textEdited,
     draftSelectionStart: 0,

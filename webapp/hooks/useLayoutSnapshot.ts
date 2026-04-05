@@ -1,4 +1,5 @@
 import { useCallback } from "react"
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import {
   buildResolvedSnapshotState,
   normalizeSnapshotStateForApply,
@@ -8,7 +9,7 @@ import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 export type SnapshotState<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
 > = {
@@ -27,6 +28,7 @@ export type SnapshotState<
   blockOpticalKerning: Partial<Record<Key, boolean>>
   blockTrackingScales: Partial<Record<Key, number>>
   blockTrackingRuns: Partial<Record<Key, TextTrackingRun[]>>
+  blockTextFormatRuns: Partial<Record<Key, TextFormatRun<StyleKey, FontFamily>[]>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
 }
@@ -34,7 +36,7 @@ export type SnapshotState<
 type Args<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
   Snapshot,
@@ -62,7 +64,7 @@ type Args<
 export function useLayoutSnapshot<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
   Snapshot,

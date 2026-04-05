@@ -1,11 +1,17 @@
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
+import type { FontFamily } from "@/lib/config/fonts"
 import type { BlockRenderPlan, BlockRect, TextAlignMode } from "@/lib/preview-types"
 import {
   applyCanvasTextConfig,
   buildCanvasFont,
   drawCanvasText,
 } from "@/lib/text-rendering"
-import { buildPositionedTrackingSegments, type TextTrackingRun } from "@/lib/text-tracking-runs"
+import {
+  buildPositionedTextFormatTrackingSegments,
+  type BaseTextFormat,
+  type TextFormatRun,
+} from "@/lib/text-format-runs"
+import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { resolveScaledCanvasFontSize } from "./canvas-render-math.ts"
@@ -83,12 +89,13 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   getBlockColumnStart?: (key: BlockId, span: number) => number
   getBlockRowStart?: (key: BlockId, rowSpan: number) => number
   getOriginForBlock: (key: BlockId, fallbackX: number, fallbackY: number) => { x: number; y: number }
-  getBlockFont: (key: BlockId, styleKey: StyleKey) => string
+  getBlockFont: (key: BlockId, styleKey: StyleKey) => FontFamily
   getBlockFontWeight: (key: BlockId, styleKey: StyleKey) => number
   isBlockItalic: (key: BlockId, styleKey: StyleKey) => boolean
   isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   getBlockTrackingScale: (key: BlockId) => number
   getBlockTrackingRuns: (key: BlockId) => TextTrackingRun[]
+  getBlockTextFormatRuns: (key: BlockId, color: string) => TextFormatRun<StyleKey, FontFamily>[]
   getBlockTextColor: (key: BlockId) => string
   getWrappedText: (
     ctx: CanvasRenderingContext2D,
@@ -98,6 +105,9 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
     trackingScale: number,
     opticalKerning: boolean,
     trackingRuns?: readonly TextTrackingRun[],
+    baseFormat?: BaseTextFormat<StyleKey, FontFamily>,
+    formatRuns?: readonly TextFormatRun<StyleKey, FontFamily>[],
+    resolveFontSize?: (styleKey: StyleKey) => number,
   ) => WrappedTextLine[]
   getOpticalOffset: (
     ctx: CanvasRenderingContext2D,
@@ -213,6 +223,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   isBlockOpticalKerningEnabled,
   getBlockTrackingScale,
   getBlockTrackingRuns,
+  getBlockTextFormatRuns,
   getBlockTextColor,
   getWrappedText,
   getOpticalOffset,
@@ -274,7 +285,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       })
       return ctx
     },
-    wrapText: ({ context, key, text, maxWidth, hyphenate }) => (
+    wrapText: ({ context, key, styleKey, text, maxWidth, hyphenate }) => (
       getWrappedText(
         context,
         text,
@@ -283,6 +294,19 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         getBlockTrackingScale(key),
         isBlockOpticalKerningEnabled(key),
         getBlockTrackingRuns(key),
+        {
+          fontFamily: getBlockFont(key, styleKey),
+          fontWeight: getBlockFontWeight(key, styleKey),
+          italic: isBlockItalic(key, styleKey),
+          styleKey,
+          color: getBlockTextColor(key),
+        },
+        getBlockTextFormatRuns(key, getBlockTextColor(key)),
+        (segmentStyleKey) => resolveScaledCanvasFontSize(
+          getBlockFontSize(key, segmentStyleKey),
+          fontScale,
+          getBlockFontSize(key, styleKey),
+        ),
       )
     ),
     textAscent: ({ context, fontSize }) => getCanvasTextAscentPx(context, fontSize),
@@ -313,13 +337,25 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       opticalKerning,
     })
     const planFont = ctx.font
-    const segmentLines = plan.commands.map((command) => buildPositionedTrackingSegments(ctx, {
+    const segmentLines = plan.commands.map((command) => buildPositionedTextFormatTrackingSegments(ctx, {
       sourceText: textContent[plan.key] ?? "",
       command,
       textAlign: plan.textAlign,
+      baseFormat: {
+        fontFamily: blockFont,
+        fontWeight: blockFontWeight,
+        italic: blockItalic,
+        styleKey: plan.styleKey,
+        color: getBlockTextColor(plan.key),
+      },
+      formatRuns: getBlockTextFormatRuns(plan.key, getBlockTextColor(plan.key)),
       baseTrackingScale: trackingScale,
-      runs: trackingRuns,
-      fontSize: plan.fontSize,
+      trackingRuns,
+      resolveFontSize: (styleKey) => resolveScaledCanvasFontSize(
+        getBlockFontSize(plan.key, styleKey),
+        fontScale,
+        plan.fontSize,
+      ),
       opticalKerning,
     }))
     textPlans.set(plan.key, {
@@ -351,6 +387,11 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         plan.commands
           .map((command) => `${command.text}@${command.x.toFixed(3)},${command.y.toFixed(3)}`)
           .join("||"),
+        segmentLines
+          .map((segments) => segments.map((segment) => (
+            `${segment.text}:${segment.fontFamily}:${segment.fontWeight}:${segment.italic ? 1 : 0}:${segment.styleKey}:${segment.color}:${segment.fontSize}:${segment.trackingScale}`
+          )).join("||"))
+          .join("###"),
       ].join("|"),
       font: planFont,
       textColor: getBlockTextColor(plan.key),
@@ -411,13 +452,14 @@ export function drawCanvasLayerStack<Key extends string>(
     const textPlan = textPlans.get(key)
     if (!textPlan) continue
     ctx.fillStyle = textPlan.textColor
-    applyCanvasTextConfig(ctx, {
-      font: textPlan.font,
-      opticalKerning: textPlan.opticalKerning,
-    })
     ctx.textAlign = "left"
     for (const lineSegments of textPlan.segmentLines) {
       for (const segment of lineSegments) {
+        ctx.fillStyle = segment.color
+        applyCanvasTextConfig(ctx, {
+          font: buildCanvasFont(segment.fontFamily, segment.fontWeight, segment.italic, segment.fontSize),
+          opticalKerning: textPlan.opticalKerning,
+        })
         drawCanvasText(ctx, {
           text: segment.text,
           x: segment.x,
@@ -425,6 +467,7 @@ export function drawCanvasLayerStack<Key extends string>(
           textAlign: "left",
           trackingScale: segment.trackingScale,
           opticalKerning: textPlan.opticalKerning,
+          fontSize: segment.fontSize,
           blockRotation: textPlan.blockRotation,
           rotationOrigin: {
             x: textPlan.rotationOriginX,

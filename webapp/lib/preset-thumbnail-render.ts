@@ -21,6 +21,12 @@ import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { LayoutPresetBrowserPage } from "@/lib/presets/types"
 import {
+  measureFormattedTextRangeWidth,
+  normalizeTextFormatRuns,
+  type BaseTextFormat,
+  type TextFormatRun,
+} from "@/lib/text-format-runs"
+import {
   measureTrackedTextRangeWidth,
   normalizeTextTrackingRuns,
   type TextTrackingRun,
@@ -188,6 +194,7 @@ export function drawPresetThumbnailToCanvas(
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
   const blockTrackingRuns = layout?.blockTrackingRuns ?? {}
+  const blockTextFormatRuns = layout?.blockTextFormatRuns ?? {}
   const blockRotations = layout?.blockRotations ?? {}
   const blockCustomSizes = layout?.blockCustomSizes ?? {}
   const blockCustomLeadings = layout?.blockCustomLeadings ?? {}
@@ -263,6 +270,24 @@ export function drawPresetThumbnailToCanvas(
       getBlockTrackingScale(key),
     )
   }
+
+  const getBlockTextFormatRuns = (
+    key: BlockId,
+    styleKey: TypographyStyleKey,
+    color: string,
+  ): TextFormatRun<TypographyStyleKey, FontFamily>[] => (
+    normalizeTextFormatRuns(
+      textContent[key] ?? "",
+      blockTextFormatRuns[key],
+      {
+        fontFamily: getBlockFont(key, styleKey),
+        fontWeight: getBlockFontWeight(key, styleKey),
+        italic: isBlockItalic(key, styleKey),
+        styleKey,
+        color,
+      },
+    )
+  )
 
   const getBlockRotation = (key: BlockId): number => {
     const raw = blockRotations[key]
@@ -360,6 +385,9 @@ export function drawPresetThumbnailToCanvas(
       trackingScale: number,
       opticalKerning: boolean,
       trackingRuns: readonly TextTrackingRun[] = [],
+      baseFormat?: BaseTextFormat<TypographyStyleKey, FontFamily>,
+      formatRuns?: readonly TextFormatRun<TypographyStyleKey, FontFamily>[],
+      resolveFontSize?: (styleKey: TypographyStyleKey) => number,
     ) => {
       applyCanvasTextConfig(canvasContext, {
         font: canvasContext.font,
@@ -367,6 +395,19 @@ export function drawPresetThumbnailToCanvas(
       })
       const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, trackingScale)
       return wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => {
+        if (range && baseFormat && resolveFontSize && (normalizedRuns.length > 0 || (formatRuns?.length ?? 0) > 0)) {
+          return measureFormattedTextRangeWidth(canvasContext, {
+            sourceText: text,
+            renderedText: sample,
+            range,
+            baseFormat,
+            formatRuns,
+            baseTrackingScale: trackingScale,
+            trackingRuns: normalizedRuns,
+            resolveFontSize,
+            opticalKerning,
+          })
+        }
         if (range && normalizedRuns.length > 0) {
           return measureTrackedTextRangeWidth(canvasContext, {
             sourceText: text,
@@ -488,6 +529,10 @@ export function drawPresetThumbnailToCanvas(
       isBlockOpticalKerningEnabled,
       getBlockTrackingScale,
       getBlockTrackingRuns,
+      getBlockTextFormatRuns: (key, color) => {
+        const styleKey = getStyleKeyForBlock(key, styleAssignments, styleDefinitions)
+        return getBlockTextFormatRuns(key, styleKey, color)
+      },
       getBlockTextColor,
       getWrappedText: getWrappedTextForCanvas,
       getOpticalOffset: getOpticalOffsetForCanvas,

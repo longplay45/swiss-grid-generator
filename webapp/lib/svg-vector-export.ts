@@ -1,7 +1,7 @@
 import type { GridResult } from "@/lib/grid-calculator"
 import { DEFAULT_BASE_FONT, type FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import { formatSvgColor } from "@/lib/export-colors"
+import { formatSvgColor, parseHexColor } from "@/lib/export-colors"
 import { buildPageExportPlan } from "@/lib/page-export-plan"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
@@ -124,17 +124,17 @@ export function renderSwissGridVectorSvg({
       if (segments.length === 0) {
         const command = textPlan.commands[lineIndex]
         if (!command) return ""
-        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" xml:space="preserve">${escapeXml(command.text)}</text>`
+        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(command.text)}</text>`
       }
       return segments.map((segment) => {
         const tracking = segment.trackingScale === 0
           ? ""
-          : ` letter-spacing="${formatNumber((textPlan.fontSize * segment.trackingScale) / 1000)}"`
-        return `<text x="${formatNumber(segment.x)}" y="${formatNumber(segment.y)}" xml:space="preserve"${tracking}>${escapeXml(segment.text)}</text>`
+          : ` letter-spacing="${formatNumber((segment.fontSize * segment.trackingScale) / 1000)}"`
+        return `<text x="${formatNumber(segment.x)}" y="${formatNumber(segment.y)}" fill="${formatSvgColor(parseHexColor(segment.color) ?? textPlan.textColor)}" font-family="${quoteAttr(segment.fontFamily)}" font-size="${formatNumber(segment.fontSize)}" font-weight="${segment.fontWeight}" font-style="${segment.italic ? "italic" : "normal"}" xml:space="preserve"${tracking}>${escapeXml(segment.text)}</text>`
       }).join("")
     }).join("")
     return (
-      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" text-anchor="start"${kerning}${rotationTransform}>${lines}</g>`
+      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" text-anchor="start"${kerning}${rotationTransform}>${lines}</g>`
     )
   }).join("")
 

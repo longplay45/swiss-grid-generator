@@ -9,7 +9,7 @@ import { normalizeTextTrackingRuns } from "./text-tracking-runs.ts"
 type ResolvedSnapshotState<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
 > = SnapshotState<Key, StyleKey, FontFamily, TextAlignMode, Position> & {
@@ -22,6 +22,7 @@ type ResolvedSnapshotState<
   blockOpticalKerning: Record<Key, boolean>
   blockTrackingScales: Record<Key, number>
   blockTrackingRuns: Partial<Record<Key, ReturnType<typeof normalizeTextTrackingRuns>>>
+  blockTextFormatRuns: SnapshotState<Key, StyleKey, FontFamily, TextAlignMode, Position>["blockTextFormatRuns"]
   blockItalic: Record<Key, boolean>
   blockRotations: Record<Key, number>
 }
@@ -29,7 +30,7 @@ type ResolvedSnapshotState<
 export function buildResolvedSnapshotState<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
 >(
@@ -122,6 +123,7 @@ export function buildResolvedSnapshotState<
     blockOpticalKerning: resolvedOpticalKerning,
     blockTrackingScales: resolvedTrackingScales,
     blockTrackingRuns: resolvedTrackingRuns,
+    blockTextFormatRuns: { ...(state.blockTextFormatRuns ?? {}) },
     blockColumnSpans: resolvedSpans,
     blockRowSpans: resolvedRows,
     blockTextAlignments: resolvedAlignments,
@@ -136,7 +138,7 @@ export function buildResolvedSnapshotState<
 export function normalizeSnapshotStateForApply<
   Key extends string,
   StyleKey extends string,
-  FontFamily,
+  FontFamily extends string,
   TextAlignMode extends string,
   Position,
 >(
@@ -204,6 +206,7 @@ export function normalizeSnapshotStateForApply<
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
     blockTrackingRuns: nextTrackingRuns,
+    blockTextFormatRuns: { ...(state.blockTextFormatRuns ?? {}) },
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: { ...state.blockColumnSpans },

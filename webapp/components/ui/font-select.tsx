@@ -17,13 +17,14 @@ export type FontOption = {
 }
 
 type Props = {
-  value: string
+  value?: string
   onValueChange: (value: string) => void
   options: FontOption[]
   triggerClassName?: string
   triggerStyle?: CSSProperties
   contentClassName?: string
   fitToLongestOption?: boolean
+  placeholder?: string
 }
 
 const FONT_GROUPS = [
@@ -40,6 +41,7 @@ export function FontSelect({
   triggerStyle,
   contentClassName,
   fitToLongestOption = false,
+  placeholder,
 }: Props) {
   const resolvedTriggerStyle: CSSProperties | undefined = fitToLongestOption
     ? {
@@ -51,7 +53,7 @@ export function FontSelect({
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={triggerClassName} style={resolvedTriggerStyle}>
-        <SelectValue />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className={contentClassName}>
         {FONT_GROUPS.map((group, index) => {

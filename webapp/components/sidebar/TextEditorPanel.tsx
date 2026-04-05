@@ -21,6 +21,12 @@ import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constrai
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { TextEditorControls as SharedTextEditorControls } from "@/lib/preview-overlay-controls"
 import {
+  applyTextFormatToRange,
+  getUniformTextFormatValueForRange,
+  rebaseTextFormatRuns,
+  type BaseTextFormat,
+} from "@/lib/text-format-runs"
+import {
   formatTrackingScale,
   MAX_TRACKING_SCALE,
   MIN_TRACKING_SCALE,
@@ -87,14 +93,48 @@ export function TextEditorPanel<StyleKey extends string>({
   const characterCount = editorText.length
   const wordCount = editorText.trim() ? editorText.trim().split(/\s+/).length : 0
   const canUseNewspaperReflow = controls.editorState.draftColumns > 1
-  const selectedStyleLabel = controls.styleOptions.find((option) => option.value === controls.editorState.draftStyle)?.label
-    ?? controls.editorState.draftStyle
-  const selectedFontVariant = resolveFontVariant(
-    controls.editorState.draftFont,
-    controls.editorState.draftFontWeight,
-    controls.editorState.draftItalic,
+  const selectionRange = controls.editorState.draftSelectionStart !== controls.editorState.draftSelectionEnd
+    ? {
+      start: controls.editorState.draftSelectionStart,
+      end: controls.editorState.draftSelectionEnd,
+    }
+    : null
+  const selectionCoversWholeText = Boolean(
+    selectionRange
+    && selectionRange.start === 0
+    && selectionRange.end === editorText.length,
   )
-  const fontVariantOptions = getFontVariants(controls.editorState.draftFont)
+  const selectionUsesScopedRuns = Boolean(selectionRange && !selectionCoversWholeText)
+  const currentBaseTextFormat: BaseTextFormat<StyleKey, FontFamily> = {
+    fontFamily: controls.editorState.draftFont,
+    fontWeight: controls.editorState.draftFontWeight,
+    italic: controls.editorState.draftItalic,
+    styleKey: controls.editorState.draftStyle,
+    color: controls.editorState.draftColor,
+  }
+  const getSelectionFormatValue = <Prop extends keyof BaseTextFormat<StyleKey, FontFamily>>(prop: Prop) => (
+    selectionRange
+      ? getUniformTextFormatValueForRange(
+        controls.editorState.draftText,
+        selectionRange,
+        currentBaseTextFormat,
+        controls.editorState.draftTextFormatRuns,
+        prop,
+      )
+      : currentBaseTextFormat[prop]
+  )
+  const selectionFontFamily = getSelectionFormatValue("fontFamily")
+  const selectionFontWeight = getSelectionFormatValue("fontWeight")
+  const selectionItalic = getSelectionFormatValue("italic")
+  const selectionStyleKey = getSelectionFormatValue("styleKey")
+  const selectionColor = getSelectionFormatValue("color")
+  const selectedFontVariantForSelection = (
+    selectionFontFamily
+    && selectionFontWeight !== null
+    && selectionItalic !== null
+  )
+    ? resolveFontVariant(selectionFontFamily, selectionFontWeight, selectionItalic)
+    : null
   const selectionTrackingScale = controls.editorState.draftSelectionStart !== controls.editorState.draftSelectionEnd
     ? getUniformTrackingScaleForRange(
       controls.editorState.draftText,
@@ -108,6 +148,9 @@ export function TextEditorPanel<StyleKey extends string>({
     : controls.editorState.draftTrackingScale
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label
     ?? editorColorScheme
+  const selectedStyleLabelForSelection = selectionStyleKey
+    ? controls.styleOptions.find((option) => option.value === selectionStyleKey)?.label ?? selectionStyleKey
+    : "Mixed"
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
@@ -125,6 +168,64 @@ export function TextEditorPanel<StyleKey extends string>({
 
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = controls.colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? controls.palette
+
+  const rebaseDraftTextFormatRuns = (
+    state: typeof controls.editorState,
+    nextBase: BaseTextFormat<StyleKey, FontFamily>,
+  ) => rebaseTextFormatRuns(
+    state.draftText,
+    state.draftTextFormatRuns,
+    {
+      fontFamily: state.draftFont,
+      fontWeight: state.draftFontWeight,
+      italic: state.draftItalic,
+      styleKey: state.draftStyle,
+      color: state.draftColor,
+    },
+    nextBase,
+  )
+
+  const applySelectionTextFormat = (
+    patch: Partial<BaseTextFormat<StyleKey, FontFamily>>,
+  ) => {
+    controls.setEditorState((prev) => {
+      if (!prev) return prev
+      if (selectionUsesScopedRuns && selectionRange) {
+        return {
+          ...prev,
+          draftTextFormatRuns: applyTextFormatToRange(
+            prev.draftText,
+            selectionRange,
+            patch,
+            {
+              fontFamily: prev.draftFont,
+              fontWeight: prev.draftFontWeight,
+              italic: prev.draftItalic,
+              styleKey: prev.draftStyle,
+              color: prev.draftColor,
+            },
+            prev.draftTextFormatRuns,
+          ),
+        }
+      }
+      const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
+        fontFamily: patch.fontFamily ?? prev.draftFont,
+        fontWeight: patch.fontWeight ?? prev.draftFontWeight,
+        italic: patch.italic ?? prev.draftItalic,
+        styleKey: patch.styleKey ?? prev.draftStyle,
+        color: patch.color ?? prev.draftColor,
+      }
+      return {
+        ...prev,
+        draftFont: nextBase.fontFamily,
+        draftFontWeight: nextBase.fontWeight,
+        draftItalic: nextBase.italic,
+        draftStyle: nextBase.styleKey,
+        draftColor: nextBase.color,
+        draftTextFormatRuns: rebaseDraftTextFormatRuns(prev, nextBase),
+      }
+    })
+  }
 
   const tone = isDarkMode
     ? {
@@ -256,9 +357,9 @@ export function TextEditorPanel<StyleKey extends string>({
     { label: "Align", value: controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1), icon: AlignCenter },
     { label: "Reflow", value: controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off", icon: Pilcrow },
     { label: "Hyphen", value: controls.editorState.draftSyllableDivision ? "On" : "Off", icon: WholeWord },
-    { label: "Font", value: controls.editorState.draftFont, icon: CaseSensitive },
-    { label: "Cut", value: selectedFontVariant.label, icon: TypeOutline },
-    { label: "Hierarchy", value: selectedStyleLabel, icon: Type },
+    { label: "Font", value: selectionFontFamily ?? "Mixed", icon: CaseSensitive },
+    { label: "Cut", value: selectedFontVariantForSelection?.label ?? "Mixed", icon: TypeOutline },
+    { label: "Hierarchy", value: selectedStyleLabelForSelection, icon: Type },
     {
       label: "Size",
       value: `${controls.isFxStyle(controls.editorState.draftStyle)
@@ -286,7 +387,7 @@ export function TextEditorPanel<StyleKey extends string>({
       icon: MoveHorizontal,
     },
     { label: "Scheme", value: selectedSchemeLabel, icon: Palette },
-    { label: "Color", value: controls.editorState.draftColor, icon: Droplets },
+    { label: "Color", value: selectionColor ?? "Mixed", icon: Droplets },
     { label: "Chars", value: String(characterCount), icon: LetterText },
     { label: "Words", value: String(wordCount), icon: WholeWord },
     { label: "Max/Line", value: String(controls.maxCharsPerLine ?? 0), icon: MoveHorizontal },
@@ -497,46 +598,45 @@ export function TextEditorPanel<StyleKey extends string>({
                 <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
                 "Font",
                 withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
-                  value={controls.editorState.draftFont}
+                  value={selectionFontFamily ?? undefined}
                   onValueChange={(value) => {
                     const nextFont = value as FontFamily
-                    controls.setEditorState((prev) => {
-                      if (!prev) return prev
-                      const resolvedVariant = resolveFontVariant(nextFont, prev.draftFontWeight, prev.draftItalic)
-                      return {
-                        ...prev,
-                        draftFont: nextFont,
-                        draftFontWeight: resolvedVariant.weight,
-                        draftItalic: resolvedVariant.italic,
-                      }
+                    const requestedWeight = selectionFontWeight ?? controls.editorState.draftFontWeight
+                    const requestedItalic = selectionItalic ?? controls.editorState.draftItalic
+                    const resolvedVariant = resolveFontVariant(nextFont, requestedWeight, requestedItalic)
+                    applySelectionTextFormat({
+                      fontFamily: nextFont,
+                      fontWeight: resolvedVariant.weight,
+                      italic: resolvedVariant.italic,
                     })
                   }}
                   options={FONT_OPTIONS}
                   triggerClassName={`h-8 w-full text-xs ${tone.input}`}
                   triggerStyle={{ width: "100%" }}
                   contentClassName={tone.selectContent}
+                  placeholder="Mixed"
                 />),
               )}
               {renderSettingRow(
                 <TypeOutline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
                 "Cut",
                 withSubmenuTooltip("Choose the available cut for this paragraph", <Select
-                  value={selectedFontVariant.id}
+                  value={selectedFontVariantForSelection?.id}
                   onValueChange={(value) => {
-                    const nextVariant = getFontVariantById(controls.editorState.draftFont, value)
+                    const fontFamily = selectionFontFamily ?? controls.editorState.draftFont
+                    const nextVariant = getFontVariantById(fontFamily, value)
                     if (!nextVariant) return
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftFontWeight: nextVariant.weight,
-                      draftItalic: nextVariant.italic,
-                    } : prev)
+                    applySelectionTextFormat({
+                      fontWeight: nextVariant.weight,
+                      italic: nextVariant.italic,
+                    })
                   }}
                 >
                   <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
+                    <SelectValue placeholder="Mixed" />
                   </SelectTrigger>
                   <SelectContent className={tone.selectContent}>
-                    {fontVariantOptions.map((variant) => (
+                    {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
                       <SelectItem key={variant.id} value={variant.id}>
                         {variant.label}
                       </SelectItem>
@@ -548,9 +648,13 @@ export function TextEditorPanel<StyleKey extends string>({
                 <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
                 "Typo",
                 withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
-                  value={controls.editorState.draftStyle}
+                  value={selectionStyleKey ?? undefined}
                   onValueChange={(value) => {
                     const nextStyle = value as StyleKey
+                    if (selectionUsesScopedRuns && selectionRange) {
+                      applySelectionTextFormat({ styleKey: nextStyle })
+                      return
+                    }
                     controls.setEditorState((prev) => {
                       if (!prev) return prev
                       const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
@@ -564,11 +668,19 @@ export function TextEditorPanel<StyleKey extends string>({
                         ? nextDefaultItalic
                         : prev.draftItalic
                       const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
+                      const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
+                        fontFamily: prev.draftFont,
+                        fontWeight: resolvedVariant.weight,
+                        italic: resolvedVariant.italic,
+                        styleKey: nextStyle,
+                        color: prev.draftColor,
+                      }
                       return {
                         ...prev,
                         draftStyle: nextStyle,
                         draftFontWeight: resolvedVariant.weight,
                         draftItalic: resolvedVariant.italic,
+                        draftTextFormatRuns: rebaseDraftTextFormatRuns(prev, nextBase),
                         draftFxSize: controls.isFxStyle(nextStyle)
                           ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
                           : prev.draftFxSize,
@@ -581,7 +693,7 @@ export function TextEditorPanel<StyleKey extends string>({
                   }}
                 >
                   <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
+                    <SelectValue placeholder="Mixed" />
                   </SelectTrigger>
                   <SelectContent className={tone.selectContent}>
                     {controls.styleOptions.map((option) => (
@@ -735,7 +847,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 "Color",
                 <div className="flex flex-wrap items-center gap-1">
                   {previewPalette.map((color, index) => {
-                    const selected = controls.editorState.draftColor.toLowerCase() === color.toLowerCase()
+                    const selected = (selectionColor ?? controls.editorState.draftColor).toLowerCase() === color.toLowerCase()
                     const swatchKey = `${activeColorScheme}-${index}-${color}`
                     return (
                       <HoverTooltip
@@ -748,7 +860,7 @@ export function TextEditorPanel<StyleKey extends string>({
                         <button
                           type="button"
                           onClick={() => {
-                            controls.setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))
+                            applySelectionTextFormat({ color })
                           }}
                           className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
                           style={{ backgroundColor: color }}

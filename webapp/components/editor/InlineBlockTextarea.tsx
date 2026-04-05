@@ -18,9 +18,12 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import {
-  measureTrackedTextRangeWidth,
   remapTrackingRunsForTextEdit,
 } from "@/lib/text-tracking-runs"
+import {
+  measureFormattedTextRangeWidth,
+  rebaseTextFormatRunsForTextEdit,
+} from "@/lib/text-format-runs"
 import {
   useCallback,
   useEffect,
@@ -235,14 +238,26 @@ export function InlineBlockTextarea<StyleKey extends string>({
       font: canvasFont,
       opticalKerning: editorState.draftOpticalKerning,
     })
-    if (range && editorState.draftTrackingRuns.length > 0) {
-      return measureTrackedTextRangeWidth(ctx, {
+    if (range && (editorState.draftTrackingRuns.length > 0 || editorState.draftTextFormatRuns.length > 0)) {
+      return measureFormattedTextRangeWidth(ctx, {
         sourceText: editorState.draftText,
         renderedText: text,
         range,
+        baseFormat: {
+          fontFamily: editorState.draftFont,
+          fontWeight,
+          italic: editorState.draftItalic,
+          styleKey: editorState.draftStyle,
+          color: editorState.draftColor,
+        },
+        formatRuns: editorState.draftTextFormatRuns,
         baseTrackingScale: trackingScale,
-        runs: editorState.draftTrackingRuns,
-        fontSize: scaledFontSize,
+        trackingRuns: editorState.draftTrackingRuns,
+        resolveFontSize: (styleKey) => (
+          styleKey === editorState.draftStyle && isFxStyle(styleKey)
+            ? editorState.draftFxSize * scale
+            : getStyleSizeValue(styleKey) * scale
+        ),
         opticalKerning: editorState.draftOpticalKerning,
       })
     }
@@ -493,6 +508,18 @@ export function InlineBlockTextarea<StyleKey extends string>({
                   value,
                   prev.draftTrackingRuns,
                   prev.draftTrackingScale,
+                ),
+                draftTextFormatRuns: rebaseTextFormatRunsForTextEdit(
+                  prev.draftText,
+                  value,
+                  prev.draftTextFormatRuns,
+                  {
+                    fontFamily: prev.draftFont,
+                    fontWeight: prev.draftFontWeight,
+                    italic: prev.draftItalic,
+                    styleKey: prev.draftStyle,
+                    color: prev.draftColor,
+                  },
                 ),
                 draftTextEdited: true,
                 draftSelectionStart: nextSelection.start,

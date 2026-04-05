@@ -4,6 +4,7 @@ import type { MutableRefObject, RefObject } from "react"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
+import type { TextFormatRun, BaseTextFormat } from "@/lib/text-format-runs"
 import {
   buildCanvasImagePlans,
   buildCanvasTypographyRenderPlans,
@@ -47,6 +48,7 @@ type Args<BlockId extends string> = {
   getBlockFontWeight: (key: BlockId) => number
   getBlockTrackingScale: (key: BlockId) => number
   getBlockTrackingRuns: (key: BlockId) => TextTrackingRun[]
+  getBlockTextFormatRuns: (key: BlockId, color: string) => TextFormatRun<keyof GridResult["typography"]["styles"], FontFamily>[]
   isBlockItalic: (key: BlockId) => boolean
   isBlockOpticalKerningEnabled: (key: BlockId) => boolean
   getBlockRotation: (key: BlockId) => number
@@ -69,6 +71,9 @@ type Args<BlockId extends string> = {
     trackingScale: number,
     opticalKerning: boolean,
     trackingRuns?: readonly TextTrackingRun[],
+    baseFormat?: BaseTextFormat<keyof GridResult["typography"]["styles"], FontFamily>,
+    formatRuns?: readonly TextFormatRun<keyof GridResult["typography"]["styles"], FontFamily>[],
+    resolveFontSize?: (styleKey: keyof GridResult["typography"]["styles"]) => number,
   ) => WrappedTextLine[]
   getOpticalOffset: (
     ctx: CanvasRenderingContext2D,
@@ -139,6 +144,7 @@ export function useTypographyRenderer<BlockId extends string>({
   getBlockFontWeight,
   getBlockTrackingScale,
   getBlockTrackingRuns,
+  getBlockTextFormatRuns,
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockRotation,
@@ -326,6 +332,7 @@ export function useTypographyRenderer<BlockId extends string>({
           isBlockOpticalKerningEnabled,
           getBlockTrackingScale,
           getBlockTrackingRuns,
+          getBlockTextFormatRuns,
           getBlockTextColor,
           getWrappedText,
           getOpticalOffset: (context, key, styleKey, line, align, fontSize, opticalKerning) => (
@@ -421,6 +428,7 @@ export function useTypographyRenderer<BlockId extends string>({
     getBlockFontWeight,
     getBlockTrackingScale,
     getBlockTrackingRuns,
+    getBlockTextFormatRuns,
     getBlockRotation,
     getBlockRows,
     getBlockFontSize,

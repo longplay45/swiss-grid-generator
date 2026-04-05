@@ -31,6 +31,13 @@ import {
   type TypographyLayoutPlan,
 } from "@/lib/typography-layout-plan"
 import {
+  buildPositionedTextFormatTrackingSegments,
+  measureFormattedTextRangeWidth,
+  normalizeTextFormatRuns,
+  type TextFormatRun,
+  type PositionedTextFormatTrackingSegment,
+} from "@/lib/text-format-runs"
+import {
   applyCanvasTextConfig,
   buildCanvasFont,
   DEFAULT_OPTICAL_KERNING,
@@ -39,10 +46,8 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import {
-  buildPositionedTrackingSegments,
   measureTrackedTextRangeWidth,
   normalizeTextTrackingRuns,
-  type PositionedTrackingSegment,
   type TextTrackingRun,
 } from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
@@ -91,7 +96,7 @@ export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKe
   opticalKerning: boolean
   textColor: RgbColor
   sourceText: string
-  segmentLines: PositionedTrackingSegment[][]
+  segmentLines: PositionedTextFormatTrackingSegment<TypographyStyleKey, FontFamily>[][]
 }
 
 export type PageExportPlan = {
@@ -129,6 +134,15 @@ type ExportTextContext = {
   opticalKerning: boolean
   trackingScale: number
   trackingRuns: TextTrackingRun[]
+  baseFormat: {
+    fontFamily: FontFamily
+    fontWeight: number
+    italic: boolean
+    styleKey: TypographyStyleKey
+    color: string
+  }
+  formatRuns: TextFormatRun<TypographyStyleKey, FontFamily>[]
+  resolveFontSize: (styleKey: TypographyStyleKey) => number
   sourceText: string
   measureWidth: (text: string, range?: { start: number; end: number }) => number
 }
@@ -361,6 +375,7 @@ export function buildPageExportPlan({
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
   const blockTrackingRuns = layout?.blockTrackingRuns ?? {}
+  const blockTextFormatRuns = layout?.blockTextFormatRuns ?? {}
   const blockBold = layout?.blockBold ?? {}
   const blockItalic = layout?.blockItalic ?? {}
   const blockRotations = layout?.blockRotations ?? {}
@@ -438,6 +453,22 @@ export function buildPageExportPlan({
       textContent[key] ?? "",
       blockTrackingRuns[key],
       getBlockTrackingScale(key),
+    )
+  )
+  const getResolvedBlockTextColor = (key: BlockId) => (
+    resolveImageSchemeColor(blockTextColors[key], imageColorScheme)
+  )
+  const getBlockTextFormatRuns = (key: BlockId, styleKey: TypographyStyleKey) => (
+    normalizeTextFormatRuns(
+      textContent[key] ?? "",
+      blockTextFormatRuns[key],
+      {
+        fontFamily: getBlockFont(key),
+        fontWeight: getBlockFontWeight(key, styleKey),
+        italic: isBlockItalic(key, styleKey),
+        styleKey,
+        color: getResolvedBlockTextColor(key),
+      },
     )
   )
   const getBlockRotation = (key: BlockId) => {
@@ -536,10 +567,19 @@ export function buildPageExportPlan({
         const trackingScale = getBlockTrackingScale(key)
         const trackingRuns = getBlockTrackingRuns(key)
         const sourceText = textContent[key] ?? ""
+        const baseFormat = {
+          fontFamily: getBlockFont(key),
+          fontWeight: getBlockFontWeight(key, styleKey),
+          italic: isBlockItalic(key, styleKey),
+          styleKey,
+          color: getResolvedBlockTextColor(key),
+        }
+        const formatRuns = getBlockTextFormatRuns(key, styleKey)
+        const resolveFontSize = (segmentStyleKey: TypographyStyleKey) => getBlockFontSize(key, segmentStyleKey, fontSize)
         const canvasFont = buildCanvasFont(
-          getBlockFont(key),
-          getBlockFontWeight(key, styleKey),
-          isBlockItalic(key, styleKey),
+          baseFormat.fontFamily,
+          baseFormat.fontWeight,
+          baseFormat.italic,
           fontSize,
         )
         const measureWidth = (text: string, range?: { start: number; end: number }) => {
@@ -548,6 +588,19 @@ export function buildPageExportPlan({
               font: canvasFont,
               opticalKerning,
             })
+            if (range && (trackingRuns.length > 0 || formatRuns.length > 0)) {
+              return measureFormattedTextRangeWidth(textMeasureContext, {
+                sourceText,
+                renderedText: text,
+                range,
+                baseFormat,
+                formatRuns,
+                baseTrackingScale: trackingScale,
+                trackingRuns,
+                resolveFontSize,
+                opticalKerning,
+              })
+            }
             if (range && trackingRuns.length > 0) {
               return measureTrackedTextRangeWidth(textMeasureContext, {
                 sourceText,
@@ -571,7 +624,17 @@ export function buildPageExportPlan({
           }
           return text.length * fontSize * 0.56
         }
-        return { canvasFont, opticalKerning, trackingScale, trackingRuns, sourceText, measureWidth }
+        return {
+          canvasFont,
+          opticalKerning,
+          trackingScale,
+          trackingRuns,
+          baseFormat,
+          formatRuns,
+          resolveFontSize,
+          sourceText,
+          measureWidth,
+        }
       },
       wrapText: ({ context, text, maxWidth, hyphenate }) =>
         wrapTextDetailed(text, maxWidth, hyphenate, context.measureWidth),
@@ -602,7 +665,7 @@ export function buildPageExportPlan({
     trackingScale: getBlockTrackingScale(plan.key),
     trackingRuns: getBlockTrackingRuns(plan.key),
     opticalKerning: isBlockOpticalKerningEnabled(plan.key),
-    textColor: parseHexColor(blockTextColors[plan.key]) ?? { r: 31, g: 41, b: 55 },
+    textColor: parseHexColor(getResolvedBlockTextColor(plan.key)) ?? { r: 31, g: 41, b: 55 },
     sourceText: textContent[plan.key] ?? "",
     segmentLines: [],
   }))
@@ -613,13 +676,21 @@ export function buildPageExportPlan({
       font: buildCanvasFont(textPlan.fontFamily, textPlan.fontWeight, textPlan.italic, textPlan.fontSize),
       opticalKerning: textPlan.opticalKerning,
     })
-    textPlan.segmentLines = textPlan.commands.map((command) => buildPositionedTrackingSegments(textMeasureContext, {
+    textPlan.segmentLines = textPlan.commands.map((command) => buildPositionedTextFormatTrackingSegments(textMeasureContext, {
       sourceText: textPlan.sourceText,
       command,
       textAlign: textPlan.textAlign,
+      baseFormat: {
+        fontFamily: textPlan.fontFamily,
+        fontWeight: textPlan.fontWeight,
+        italic: textPlan.italic,
+        styleKey: textPlan.styleKey,
+        color: getResolvedBlockTextColor(textPlan.key),
+      },
+      formatRuns: getBlockTextFormatRuns(textPlan.key, textPlan.styleKey),
       baseTrackingScale: textPlan.trackingScale,
-      runs: textPlan.trackingRuns,
-      fontSize: textPlan.fontSize,
+      trackingRuns: textPlan.trackingRuns,
+      resolveFontSize: (styleKey) => getBlockFontSize(textPlan.key, styleKey, textPlan.fontSize),
       opticalKerning: textPlan.opticalKerning,
     }))
   }

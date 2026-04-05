@@ -14,7 +14,7 @@ import {
   getTrackingLetterSpacing,
 } from "@/lib/text-rendering"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import type { RgbColor } from "@/lib/export-colors"
+import { parseHexColor, type RgbColor } from "@/lib/export-colors"
 import type { PdfExportColorMode } from "@/lib/pdf-output-intent"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -405,21 +405,25 @@ export function renderSwissGridVectorPdf({
     const blockFont = plan.fontFamily
     const blockFontWeight = plan.fontWeight
     const blockIsItalic = plan.italic
-    const blockTextColor = plan.textColor
     pdf.setFont(getPdfFontFamily(blockFont, blockFontWeight), blockIsItalic ? "italic" : "normal")
-    setTextColor(pdf, blockTextColor, colorMode)
     pdf.setFontSize(plan.fontSize * scale)
     const rotationOrigin = { x: plan.rotationOriginX, y: plan.rotationOriginY }
     for (const segments of plan.segmentLines) {
       if (segments.length === 0) continue
       for (const segment of segments) {
+        setTextColor(pdf, parseHexColor(segment.color) ?? plan.textColor, colorMode)
+        pdf.setFont(
+          getPdfFontFamily(segment.fontFamily, segment.fontWeight),
+          segment.italic ? "italic" : "normal",
+        )
+        pdf.setFontSize(segment.fontSize * scale)
         drawText(
           segment.text,
           segment.x,
           segment.y,
           "left",
           segment.trackingScale,
-          plan.fontSize,
+          segment.fontSize,
           plan.blockRotation,
           rotationOrigin,
         )

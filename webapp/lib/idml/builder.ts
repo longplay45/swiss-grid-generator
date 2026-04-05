@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from "fflate"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
-import type { RgbColor } from "@/lib/export-colors"
+import { parseHexColor, type RgbColor } from "@/lib/export-colors"
 import { mmToPt } from "@/lib/units"
 import { resolveIdmlFontMetadata } from "@/lib/idml/font-metadata"
 import type { IdmlFontMetadata, SwissGridIdmlDocument } from "@/lib/idml/types"
@@ -251,6 +251,13 @@ function buildColorSwatches(document: SwissGridIdmlDocument): ColorSwatch[] {
     for (const guideGroup of page.exportPlan.guideGroups) register(guideGroup.strokeColor)
     for (const imagePlan of page.exportPlan.imagePlans) register(imagePlan.fillColor)
     for (const textPlan of page.exportPlan.textPlans) register(textPlan.textColor)
+    for (const textPlan of page.exportPlan.textPlans) {
+      for (const segments of textPlan.segmentLines) {
+        for (const segment of segments) {
+          register(parseHexColor(segment.color))
+        }
+      }
+    }
   }
 
   return [...swatches.values()]
@@ -266,6 +273,16 @@ async function buildFontCatalog(document: SwissGridIdmlDocument): Promise<Map<st
         signature,
         resolveIdmlFontMetadata(textPlan.fontFamily, textPlan.fontWeight, textPlan.italic),
       )
+      for (const segments of textPlan.segmentLines) {
+        for (const segment of segments) {
+          const segmentSignature = `${segment.fontFamily}:${segment.fontWeight}:${segment.italic ? "italic" : "normal"}`
+          if (requested.has(segmentSignature)) continue
+          requested.set(
+            segmentSignature,
+            resolveIdmlFontMetadata(segment.fontFamily, segment.fontWeight, segment.italic),
+          )
+        }
+      }
     }
   }
 
@@ -297,20 +314,18 @@ async function buildCharacterStyles(
       if (!font) continue
       const colorSignature = `${textPlan.textColor.r},${textPlan.textColor.g},${textPlan.textColor.b}`
       const fillColorId = colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID
-      const segmentTrackingScales = new Set<number>(
-        textPlan.segmentLines.flatMap((segments) => segments.map((segment) => segment.trackingScale)),
-      )
-      if (segmentTrackingScales.size === 0) {
-        segmentTrackingScales.add(textPlan.trackingScale)
-      }
-
-      for (const trackingScale of segmentTrackingScales) {
+      const registerCharacterStyle = (
+        segmentFont: IdmlFontMetadata,
+        pointSize: number,
+        trackingScale: number,
+        segmentFillColorId: string,
+      ) => {
         const styleSignature = [
-          font.postScriptName,
-          formatIdmlNumber(textPlan.fontSize),
+          segmentFont.postScriptName,
+          formatIdmlNumber(pointSize),
           formatIdmlNumber(textPlan.leading),
           formatIdmlNumber(trackingScale),
-          fillColorId,
+          segmentFillColorId,
         ].join("|")
 
         let style = stylesBySignature.get(styleSignature)
@@ -319,17 +334,30 @@ async function buildCharacterStyles(
           style = {
             id: `CharacterStyle/sgg/char_${String(sequence).padStart(3, "0")}`,
             name: `SGG Character ${String(sequence).padStart(3, "0")}`,
-            font,
-            pointSize: textPlan.fontSize,
+            font: segmentFont,
+            pointSize,
             leading: textPlan.leading,
             tracking: trackingScale,
-            fillColorId,
+            fillColorId: segmentFillColorId,
           }
           stylesBySignature.set(styleSignature, style)
           styles.push(style)
         }
 
         styleIdBySignature.set(styleSignature, style.id)
+      }
+
+      registerCharacterStyle(font, textPlan.fontSize, textPlan.trackingScale, fillColorId)
+      for (const segments of textPlan.segmentLines) {
+        for (const segment of segments) {
+          const segmentFontSignature = `${segment.fontFamily}:${segment.fontWeight}:${segment.italic ? "italic" : "normal"}`
+          const segmentFont = fontCatalog.get(segmentFontSignature)
+          if (!segmentFont) continue
+          const segmentColor = parseHexColor(segment.color) ?? textPlan.textColor
+          const segmentColorSignature = `${segmentColor.r},${segmentColor.g},${segmentColor.b}`
+          const segmentFillColorId = colorIdBySignature.get(segmentColorSignature) ?? COLOR_BLACK_ID
+          registerCharacterStyle(segmentFont, segment.fontSize, segment.trackingScale, segmentFillColorId)
+        }
       }
     }
   }
@@ -385,7 +413,14 @@ function buildCharacterStyleSignature(
 
 function formatStoryContentSegments(
   textPlan: SwissGridIdmlDocument["pages"][number]["exportPlan"]["textPlans"][number],
-  characterStyleIdForTracking: (tracking: number) => string,
+  characterStyleIdForSegment: (segment: {
+    fontFamily: string
+    fontWeight: number
+    italic: boolean
+    fontSize: number
+    trackingScale: number
+    color: string | RgbColor
+  }) => string,
 ): string {
   if (!textPlan.segmentLines.length) {
     return formatStoryContent(textPlan.commands.map((command) => command.text))
@@ -396,7 +431,7 @@ function formatStoryContentSegments(
       ? segments.map((segment) => renderIdmlElement(
         "CharacterStyleRange",
         {
-          AppliedCharacterStyle: characterStyleIdForTracking(segment.trackingScale),
+          AppliedCharacterStyle: characterStyleIdForSegment(segment),
           OTFContextualAlternate: false,
         },
         renderIdmlElement("Content", {}, escapeIdmlXml(segment.text)),
@@ -404,7 +439,14 @@ function formatStoryContentSegments(
       : renderIdmlElement(
         "CharacterStyleRange",
         {
-          AppliedCharacterStyle: characterStyleIdForTracking(textPlan.trackingScale),
+          AppliedCharacterStyle: characterStyleIdForSegment({
+            fontFamily: textPlan.fontFamily,
+            fontWeight: textPlan.fontWeight,
+            italic: textPlan.italic,
+            fontSize: textPlan.fontSize,
+            trackingScale: textPlan.trackingScale,
+            color: textPlan.textColor,
+          }),
           OTFContextualAlternate: false,
         },
         renderIdmlElement("Content", {}, ""),
@@ -564,13 +606,27 @@ function buildSpreadAndStories(
       if (!font) continue
       const colorSignature = `${textPlan.textColor.r},${textPlan.textColor.g},${textPlan.textColor.b}`
       const fillColorId = colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID
-      const characterStyleIdForTracking = (tracking: number) => {
+      const characterStyleIdForSegment = (segment: {
+        fontFamily: string
+        fontWeight: number
+        italic: boolean
+        fontSize: number
+        trackingScale: number
+        color: string | RgbColor
+      }) => {
+        const segmentFontSignature = `${segment.fontFamily}:${segment.fontWeight}:${segment.italic ? "italic" : "normal"}`
+        const segmentFont = fontCatalog.get(segmentFontSignature) ?? font
+        const segmentColor = typeof segment.color === "string"
+          ? parseHexColor(segment.color) ?? textPlan.textColor
+          : segment.color
+        const segmentColorSignature = `${segmentColor.r},${segmentColor.g},${segmentColor.b}`
+        const segmentFillColorId = colorIdBySignature.get(segmentColorSignature) ?? fillColorId
         const styleSignature = buildCharacterStyleSignature(
-          font,
-          textPlan.fontSize,
+          segmentFont,
+          segment.fontSize,
           textPlan.leading,
-          tracking,
-          fillColorId,
+          segment.trackingScale,
+          segmentFillColorId,
         )
         return characterStyleIds.get(styleSignature) ?? "CharacterStyle/$ID/[No character style]"
       }
@@ -643,7 +699,7 @@ function buildSpreadAndStories(
                   AppliedParagraphStyle: paragraphStyleId,
                   Justification: toJustification(textPlan.textAlign),
                 },
-                formatStoryContentSegments(textPlan, characterStyleIdForTracking),
+                formatStoryContentSegments(textPlan, characterStyleIdForSegment),
               ),
             ],
           ),

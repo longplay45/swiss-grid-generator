@@ -3,6 +3,7 @@ import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
+import { normalizeTextFormatRuns } from "@/lib/text-format-runs"
 import { toTextBlockPosition } from "@/lib/text-block-position"
 import {
   DEFAULT_OPTICAL_KERNING,
@@ -186,6 +187,23 @@ export function applyBlockEditorDraftToCollections<
   } else {
     nextTrackingRuns[draft.target as Key] = normalizedTrackingRuns
   }
+  const nextTextFormatRuns = { ...current.blockTextFormatRuns }
+  const normalizedTextFormatRuns = normalizeTextFormatRuns(
+    draft.draftText,
+    draft.draftTextFormatRuns,
+    {
+      fontFamily: draft.draftFont,
+      fontWeight: resolvedVariant.weight,
+      italic: resolvedVariant.italic,
+      styleKey: draft.draftStyle,
+      color: draft.draftColor,
+    },
+  )
+  if (normalizedTextFormatRuns.length === 0) {
+    delete nextTextFormatRuns[draft.target as Key]
+  } else {
+    nextTextFormatRuns[draft.target as Key] = normalizedTextFormatRuns
+  }
 
   const nextRotations = { ...current.blockRotations }
   const clampedRotation = clampRotation(draft.draftRotation)
@@ -238,6 +256,7 @@ export function applyBlockEditorDraftToCollections<
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
     blockTrackingRuns: nextTrackingRuns,
+    blockTextFormatRuns: nextTextFormatRuns,
     blockColumnSpans: {
       ...current.blockColumnSpans,
       [draft.target as Key]: draft.draftColumns,
@@ -333,6 +352,9 @@ export function insertTextLayerIntoCollections<
     blockTrackingRuns: {
       ...current.blockTrackingRuns,
     },
+    blockTextFormatRuns: {
+      ...current.blockTextFormatRuns,
+    },
     blockModulePositions: {
       ...current.blockModulePositions,
       [newKey]: clampTextBlockAnchorPosition({
@@ -414,6 +436,13 @@ export function duplicateTextLayerInCollections<
   } else {
     delete nextTrackingRuns[newKey]
   }
+  const nextTextFormatRuns = { ...current.blockTextFormatRuns }
+  const sourceTextFormatRuns = current.blockTextFormatRuns[sourceKey]
+  if (Array.isArray(sourceTextFormatRuns) && sourceTextFormatRuns.length > 0) {
+    nextTextFormatRuns[newKey] = sourceTextFormatRuns.map((run) => ({ ...run }))
+  } else {
+    delete nextTextFormatRuns[newKey]
+  }
 
   const nextRotations = { ...current.blockRotations }
   const sourceRotation = current.blockRotations[sourceKey]
@@ -443,6 +472,7 @@ export function duplicateTextLayerInCollections<
     blockOpticalKerning: nextOpticalKerning,
     blockTrackingScales: nextTrackingScales,
     blockTrackingRuns: nextTrackingRuns,
+    blockTextFormatRuns: nextTextFormatRuns,
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockColumnSpans: {

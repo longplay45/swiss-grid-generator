@@ -4,6 +4,7 @@ import type { MutableRefObject } from "react"
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import { toTextBlockPosition } from "@/lib/text-block-position"
+import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
 import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
 import { normalizeTextTrackingRuns, type TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
@@ -15,6 +16,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
   pushHistory: (snapshot: PreviewLayoutState<StyleKey, FontFamily, BlockKey>) => void
   buildSnapshot: () => PreviewLayoutState<StyleKey, FontFamily, BlockKey>
   baseFont: FontFamily
+  defaultTextColor: string
   gridCols: number
   gridRows: number
   typographyStyles: Record<StyleKey, unknown>
@@ -34,6 +36,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockOpticalKerning: Partial<Record<BlockKey, boolean>>
     blockTrackingScales: Partial<Record<BlockKey, number>>
     blockTrackingRuns: Partial<Record<BlockKey, TextTrackingRun[]>>
+    blockTextFormatRuns: Partial<Record<BlockKey, TextFormatRun<StyleKey, FontFamily>[]>>
     blockColumnSpans: Partial<Record<BlockKey, number>>
     blockRowSpans: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
@@ -54,6 +57,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
   pushHistory,
   buildSnapshot,
   baseFont,
+  defaultTextColor,
   gridCols,
   gridRows,
   typographyStyles,
@@ -186,6 +190,30 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       return acc
     }, {} as Record<BlockKey, boolean>)
 
+    const nextTextFormatRuns = normalizedKeys.reduce((acc, key) => {
+      const styleKey = nextStyleAssignments[key]
+      const fontFamily = nextFontFamilies[key] ?? baseFont
+      const fontWeight = nextFontWeights[key]
+        ?? (initialLayout.blockBold?.[key] === true ? 700 : initialLayout.blockBold?.[key] === false ? 400 : 400)
+      const italic = nextItalic[key] === true
+      const color = typeof initialLayout.blockTextColors?.[key] === "string" && initialLayout.blockTextColors[key]
+        ? initialLayout.blockTextColors[key] as string
+        : defaultTextColor
+      const runs = normalizeTextFormatRuns(
+        nextTextContent[key] ?? "",
+        initialLayout.blockTextFormatRuns?.[key],
+        {
+          fontFamily,
+          fontWeight,
+          italic,
+          styleKey,
+          color,
+        },
+      )
+      if (runs.length > 0) acc[key] = runs
+      return acc
+    }, {} as Record<BlockKey, TextFormatRun<StyleKey, FontFamily>[]>)
+
     const nextRotations = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockRotations?.[key]
       if (typeof raw === "number" && Number.isFinite(raw) && hasSignificantRotation(raw)) {
@@ -220,6 +248,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockOpticalKerning: nextOpticalKerning,
       blockTrackingScales: nextTrackingScales,
       blockTrackingRuns: nextTrackingRuns,
+      blockTextFormatRuns: nextTextFormatRuns,
       blockColumnSpans: nextSpans,
       blockRowSpans: nextRows,
       blockTextAlignments: nextAlignments,

@@ -24,6 +24,7 @@ import {
   normalizeOpticalKerning,
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
+import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
 import { normalizeTextTrackingRuns, type TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState as SharedPreviewLayoutState, TextBlockPosition } from "@/lib/types/preview-layout"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
@@ -61,6 +62,7 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockOpticalKerning: {},
     blockTrackingScales: {},
     blockTrackingRuns: {},
+    blockTextFormatRuns: {},
     blockItalic: {},
     blockRotations: {},
   }
@@ -91,6 +93,7 @@ export function usePreviewTextBlockState({
     blockOpticalKerning,
     blockTrackingScales,
     blockTrackingRuns,
+    blockTextFormatRuns,
     blockItalic,
     blockRotations,
   } = blockCollectionsState
@@ -213,6 +216,31 @@ export function usePreviewTextBlockState({
     return clampRotation(raw)
   }, [blockRotations])
 
+  const getBlockTextFormatRuns = useCallback((key: BlockId, color: string): TextFormatRun<TypographyStyleKey, FontFamily>[] => {
+    const styleKey = getStyleKeyForBlock(key)
+    const fontFamily = getBlockFont(key)
+    const fontWeight = getBlockFontWeight(key)
+    const italic = isBlockItalic(key)
+    return normalizeTextFormatRuns(
+      textContent[key] ?? "",
+      blockTextFormatRuns[key],
+      {
+        fontFamily,
+        fontWeight,
+        italic,
+        styleKey,
+        color,
+      },
+    )
+  }, [
+    blockTextFormatRuns,
+    getBlockFont,
+    getBlockFontWeight,
+    getStyleKeyForBlock,
+    isBlockItalic,
+    textContent,
+  ])
+
   const { buildSnapshot: buildTextSnapshot, applySnapshot: applyTextSnapshot } = useLayoutSnapshot<
     BlockId,
     TypographyStyleKey,
@@ -245,6 +273,7 @@ export function usePreviewTextBlockState({
       blockOpticalKerning: { ...(snapshot.blockOpticalKerning ?? {}) },
       blockTrackingScales: { ...(snapshot.blockTrackingScales ?? {}) },
       blockTrackingRuns: { ...(snapshot.blockTrackingRuns ?? {}) },
+      blockTextFormatRuns: { ...(snapshot.blockTextFormatRuns ?? {}) },
       blockItalic: { ...(snapshot.blockItalic ?? {}) },
       blockRotations: { ...(snapshot.blockRotations ?? {}) },
       blockColumnSpans: { ...snapshot.blockColumnSpans },
@@ -275,6 +304,7 @@ export function usePreviewTextBlockState({
     blockOpticalKerning,
     blockTrackingScales,
     blockTrackingRuns,
+    blockTextFormatRuns,
     blockItalic,
     blockRotations,
     setBlockOrder,
@@ -296,6 +326,7 @@ export function usePreviewTextBlockState({
     isBlockOpticalKerningEnabled,
     getBlockTrackingScale,
     getBlockTrackingRuns,
+    getBlockTextFormatRuns,
     isBlockBold,
     isBlockItalic,
     getBlockRotation,

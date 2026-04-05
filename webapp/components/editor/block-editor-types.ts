@@ -1,4 +1,5 @@
 import type { FontFamily } from "@/lib/config/fonts"
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
 
@@ -22,6 +23,7 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftOpticalKerning: boolean
   draftTrackingScale: number
   draftTrackingRuns: TextTrackingRun[]
+  draftTextFormatRuns: TextFormatRun<StyleKey, FontFamily>[]
   draftRotation: number
   draftTextEdited: boolean
   draftSelectionStart: number

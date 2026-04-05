@@ -16,6 +16,7 @@ import {
   type PreviewTextLayerCollectionsState,
 } from "@/lib/preview-text-layer-state"
 import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 import { useBlockEditorCanvasDoubleClick } from "@/hooks/useBlockEditorCanvasDoubleClick"
 import type { Updater } from "@/hooks/useStateCommands"
@@ -83,6 +84,7 @@ type Args = {
   getBlockFontWeight: (key: string) => number
   getBlockTrackingScale: (key: string) => number
   getBlockTrackingRuns: (key: string) => TextTrackingRun[]
+  getBlockTextFormatRuns: (key: string, color: string) => TextFormatRun<string, FontFamily>[]
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
@@ -134,6 +136,7 @@ export function useBlockEditorActions({
   getBlockFontWeight,
   getBlockTrackingScale,
   getBlockTrackingRuns,
+  getBlockTextFormatRuns,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
@@ -260,6 +263,7 @@ export function useBlockEditorActions({
     getBlockFontWeight,
     getBlockTrackingScale,
     getBlockTrackingRuns,
+    getBlockTextFormatRuns,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,

@@ -1,3 +1,4 @@
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { ModulePosition, TextAlignMode, TextBlockPosition } from "@/lib/types/layout-primitives"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 
@@ -18,6 +19,7 @@ export type PreviewLayoutState<
   blockOpticalKerning?: Partial<Record<Key, boolean>>
   blockTrackingScales?: Partial<Record<Key, number>>
   blockTrackingRuns?: Partial<Record<Key, TextTrackingRun[]>>
+  blockTextFormatRuns?: Partial<Record<Key, TextFormatRun<StyleKey, FontFamily>[]>>
   blockColumnSpans: Record<Key, number>
   blockRowSpans?: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>

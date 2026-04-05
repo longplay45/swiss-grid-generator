@@ -11,6 +11,7 @@ import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
 } from "@/lib/text-rendering"
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
 
@@ -48,6 +49,7 @@ type Args = {
   getBlockFontWeight: (key: string) => number
   getBlockTrackingScale: (key: string) => number
   getBlockTrackingRuns: (key: string) => TextTrackingRun[]
+  getBlockTextFormatRuns: (key: string, color: string) => TextFormatRun<string, FontFamily>[]
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
@@ -90,6 +92,7 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockFontWeight,
   getBlockTrackingScale,
   getBlockTrackingRuns,
+  getBlockTextFormatRuns,
   getBlockSpan,
   getBlockRows,
   isTextReflowEnabled,
@@ -128,6 +131,7 @@ export function useBlockEditorCanvasDoubleClick({
         getBlockFontWeight,
         getBlockTrackingScale,
         getBlockTrackingRuns,
+        getBlockTextFormatRuns,
         getStyleLeading,
         getStyleSize,
         isBlockItalic,
@@ -197,6 +201,7 @@ export function useBlockEditorCanvasDoubleClick({
     getBlockFontWeight,
     getBlockTrackingScale,
     getBlockTrackingRuns,
+    getBlockTextFormatRuns,
     getBlockRotation,
     getBlockRows,
     getBlockSpan,

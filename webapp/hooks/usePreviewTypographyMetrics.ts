@@ -6,6 +6,11 @@ import {
 } from "@/lib/optical-margin"
 import { wrapTextDetailed, type WrappedTextLine } from "@/lib/text-layout"
 import {
+  measureFormattedTextRangeWidth,
+  type BaseTextFormat,
+  type TextFormatRun,
+} from "@/lib/text-format-runs"
+import {
   measureCanvasTextWidth,
   DEFAULT_TRACKING_SCALE,
   normalizeTrackingScale,
@@ -119,6 +124,9 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     sourceText = text,
     trackingRuns: readonly TextTrackingRun[] = [],
     range?: { start: number; end: number },
+    baseFormat?: BaseTextFormat<StyleKey, FontFamily>,
+    formatRuns?: readonly TextFormatRun<StyleKey, FontFamily>[],
+    resolveFontSize?: (styleKey: StyleKey) => number,
   ): number => {
     const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
     const normalizedRuns = normalizeTextTrackingRuns(sourceText, trackingRuns, normalizedTrackingScale)
@@ -127,6 +135,19 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${rangeKey}::${runsKey}::${text}`
     return makeCachedValue(measureWidthCacheRef.current, key, () => {
       setCanvasFontKerning(ctx, opticalKerning)
+      if (range && baseFormat && resolveFontSize && (normalizedRuns.length > 0 || (formatRuns?.length ?? 0) > 0)) {
+        return measureFormattedTextRangeWidth(ctx, {
+          sourceText,
+          renderedText: text,
+          range,
+          baseFormat,
+          formatRuns,
+          baseTrackingScale: normalizedTrackingScale,
+          trackingRuns: normalizedRuns,
+          resolveFontSize,
+          opticalKerning,
+        })
+      }
       if (range && normalizedRuns.length > 0) {
         const sizeMatch = ctx.font.match(/(\d+(?:\.\d+)?)px/)
         const fontSize = sizeMatch ? Number(sizeMatch[1]) : 0
@@ -152,11 +173,20 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     trackingScale: number,
     opticalKerning: boolean,
     trackingRuns: readonly TextTrackingRun[] = [],
+    baseFormat?: BaseTextFormat<StyleKey, FontFamily>,
+    formatRuns?: readonly TextFormatRun<StyleKey, FontFamily>[],
+    resolveFontSize?: (styleKey: StyleKey) => number,
   ): WrappedTextLine[] => {
     const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
     const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, normalizedTrackingScale)
     const runsKey = normalizedRuns.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
+    const formatRunsKey = (formatRuns ?? [])
+      .map((run) => `${run.start}:${run.end}:${run.fontFamily ?? ""}:${run.fontWeight ?? ""}:${run.italic === true ? 1 : run.italic === false ? 0 : ""}:${run.styleKey ?? ""}:${run.color ?? ""}`)
+      .join("|")
+    const formatBaseKey = baseFormat
+      ? `${baseFormat.fontFamily}:${baseFormat.fontWeight}:${baseFormat.italic ? 1 : 0}:${baseFormat.styleKey}:${baseFormat.color}`
+      : "-"
+    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${formatBaseKey}::${formatRunsKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
     const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
       wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => getMeasuredTextWidth(
         ctx,
@@ -166,6 +196,9 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
         text,
         normalizedRuns,
         range,
+        baseFormat,
+        formatRuns,
+        resolveFontSize,
       )),
     )
     return cached.map((line) => ({ ...line }))
