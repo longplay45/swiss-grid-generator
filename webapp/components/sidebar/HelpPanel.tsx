@@ -261,7 +261,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The Project toggle sits directly after the typography toggle, separated by a divider.</li>
           <li>The right-side header actions are ordered as `i` (information/tooltips) and `?` (help).</li>
           <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.</li>
-          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+1</span>.</li>
+          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+P</span>.</li>
           <li>`?` opens or closes the help sidebar. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+H</span>.</li>
           <li>While the presets browser is open, side panels and the header Project toggle are temporarily disabled.</li>
           <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel.</li>

@@ -213,7 +213,7 @@ export const GridPreview = memo(function GridPreview({
     pageHeightPt: result.pageSizePt.height,
   })
 
-  const { showPerfOverlay, perfOverlay, recordPerfMetric } = usePreviewPerf({
+  const { recordPerfMetric } = usePreviewPerf({
     enabled: PERF_ENABLED,
     logIntervalMs: PERF_LOG_INTERVAL_MS,
     sampleLimit: PERF_SAMPLE_LIMIT,
@@ -908,8 +908,6 @@ export const GridPreview = memo(function GridPreview({
       />
 
       <GridPreviewOverlays
-        showPerfOverlay={PERF_ENABLED && showPerfOverlay}
-        perfOverlay={perfOverlay}
         showEditorHelpIcon={showEditorHelpIcon}
         showRolloverInfo={showRolloverInfo}
         pageWidthCss={pageWidthCss}

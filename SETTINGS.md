@@ -164,7 +164,7 @@ Default: `swiss`
 
 - `Layers` (layers icon): opens the right sidebar Project panel
 - `Information` (`i` icon): toggles rollover info/tooltips globally
-- Shortcuts: `Cmd/Ctrl+Shift+1` toggles the Project sidebar, `Cmd/Ctrl+Shift+I` toggles Information
+- Shortcuts: `Cmd/Ctrl+Shift+P` toggles the Project sidebar, `Cmd/Ctrl+Shift+I` toggles Information
 - `Help` (`?` icon): opens help/reference panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
 - Behavior: only one right sidebar panel can be open at a time; clicking the active project/help/settings icon closes that panel.
@@ -205,7 +205,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
-- `Cmd/Ctrl+Shift+1`: Toggle project sidebar
+- `Cmd/Ctrl+Shift+P`: Toggle project sidebar
 - `Cmd/Ctrl+Shift+I`: Toggle information
 - `Cmd/Ctrl+Shift+H`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar

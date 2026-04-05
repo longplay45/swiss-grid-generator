@@ -10,15 +10,7 @@ import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
 
-type PerfPayload = {
-  draw: { p50: number; p95: number } | null
-  reflow: { p50: number; p95: number } | null
-  autofit: { p50: number; p95: number } | null
-}
-
 type Props<StyleKey extends string> = {
-  showPerfOverlay: boolean
-  perfOverlay: PerfPayload | null
   showEditorHelpIcon: boolean
   showRolloverInfo: boolean
   pageWidthCss: number
@@ -49,8 +41,6 @@ type Props<StyleKey extends string> = {
 }
 
 export function GridPreviewOverlays<StyleKey extends string>({
-  showPerfOverlay,
-  perfOverlay,
   showEditorHelpIcon,
   showRolloverInfo,
   pageWidthCss,
@@ -112,19 +102,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
 
   return (
     <>
-      {showPerfOverlay ? (
-        <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-col gap-2">
-          {showPerfOverlay && perfOverlay ? (
-            <div className={`rounded-md border px-3 py-2 text-[11px] shadow-md backdrop-blur-sm ${isDarkMode ? "dark border-gray-700 bg-gray-900/95 text-gray-300" : "border-gray-300 bg-white/95 text-gray-700"}`}>
-              <div className={`font-semibold ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>Perf (Ctrl/Cmd+Shift+P)</div>
-              <div>draw p50/p95: {perfOverlay.draw?.p50.toFixed(1) ?? "-"} / {perfOverlay.draw?.p95.toFixed(1) ?? "-"} ms</div>
-              <div>reflow p50/p95: {perfOverlay.reflow?.p50.toFixed(1) ?? "-"} / {perfOverlay.reflow?.p95.toFixed(1) ?? "-"} ms</div>
-              <div>autofit p50/p95: {perfOverlay.autofit?.p50.toFixed(1) ?? "-"} / {perfOverlay.autofit?.p95.toFixed(1) ?? "-"} ms</div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
       {hoveredEditTarget && !editorState && !imageEditorState ? (
         <div
           className="pointer-events-none absolute z-40"

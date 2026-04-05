@@ -91,9 +91,9 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   },
   {
     id: "toggle_layers_panel",
-    combo: "Cmd/Ctrl+Shift+1",
+    combo: "Cmd/Ctrl+Shift+P",
     description: "Toggle project panel",
-    bindings: [{ key: "1", shift: true }],
+    bindings: [{ key: "p", shift: true }],
   },
   {
     id: "toggle_rollover_info",

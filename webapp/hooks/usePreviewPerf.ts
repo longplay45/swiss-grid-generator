@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef } from "react"
 
 type PerfMetricName = "drawMs" | "reflowMs" | "autofitMs"
 
@@ -49,10 +49,6 @@ function computePerfSnapshot(values: number[]): PerfSnapshot | null {
   }
 }
 
-function readPerfPayload(): PerfPayload | undefined {
-  return window.__sggPerf
-}
-
 function writePerfPayload(payload: PerfPayload) {
   window.__sggPerf = payload
 }
@@ -64,8 +60,6 @@ export function usePreviewPerf({ enabled, logIntervalMs, sampleLimit }: Args) {
     autofitMs: [],
     lastLogAt: 0,
   })
-  const [showPerfOverlay, setShowPerfOverlay] = useState(false)
-  const [perfOverlay, setPerfOverlay] = useState<PerfPayload | null>(null)
 
   const recordPerfMetric = useCallback((metric: PerfMetricName, valueMs: number) => {
     if (!enabled || !Number.isFinite(valueMs)) return
@@ -79,40 +73,13 @@ export function usePreviewPerf({ enabled, logIntervalMs, sampleLimit }: Args) {
       autofit: computePerfSnapshot(state.autofitMs),
     }
     writePerfPayload(payload)
-    setPerfOverlay(payload)
     const now = Date.now()
     if (now - state.lastLogAt < logIntervalMs) return
     state.lastLogAt = now
     console.debug("[SGG perf]", payload)
   }, [enabled, logIntervalMs, sampleLimit])
 
-  useEffect(() => {
-    if (!enabled) return
-    const syncPerfOverlay = () => {
-      const perf = readPerfPayload()
-      if (!perf) return
-      setPerfOverlay(perf)
-    }
-    syncPerfOverlay()
-    const timer = window.setInterval(syncPerfOverlay, 500)
-    return () => window.clearInterval(timer)
-  }, [enabled])
-
-  useEffect(() => {
-    if (!enabled) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) return
-      if (event.key.toLowerCase() !== "p") return
-      event.preventDefault()
-      setShowPerfOverlay((prev) => !prev)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [enabled])
-
   return {
-    showPerfOverlay,
-    perfOverlay,
     recordPerfMetric,
   }
 }
