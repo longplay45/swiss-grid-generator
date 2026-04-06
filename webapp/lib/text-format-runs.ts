@@ -299,6 +299,29 @@ function getResolvedFormatIntervals<
   return intervals
 }
 
+function getExplicitFormatIntervals<
+  StyleKey extends string,
+  FontFamily extends string,
+>(
+  text: string,
+  base: BaseTextFormat<StyleKey, FontFamily>,
+  runs: readonly TextFormatRun<StyleKey, FontFamily>[] | null | undefined,
+): Array<ResolvedTextFormat<StyleKey, FontFamily>> {
+  const normalizedRuns = (runs ?? [])
+    .map((run) => ({
+      ...run,
+      start: clampIndex(text, run.start),
+      end: clampIndex(text, run.end),
+    }))
+    .filter((run) => run.end > run.start && formatPatchHasValues(run))
+
+  if (normalizedRuns.length === 0) return []
+
+  return getResolvedFormatIntervals(text, base, normalizedRuns).filter((interval) => (
+    normalizedRuns.some((run) => interval.start >= run.start && interval.end <= run.end)
+  ))
+}
+
 export function normalizeTextFormatRuns<
   StyleKey extends string,
   FontFamily extends string,
@@ -449,7 +472,7 @@ export function rebaseTextFormatRuns<
   previousBase: BaseTextFormat<StyleKey, FontFamily>,
   nextBase: BaseTextFormat<StyleKey, FontFamily>,
 ): TextFormatRun<StyleKey, FontFamily>[] {
-  const effectiveRuns = getResolvedFormatIntervals(text, previousBase, runs)
+  const effectiveRuns = getExplicitFormatIntervals(text, previousBase, runs)
   return normalizeTextFormatRuns(text, effectiveRuns, nextBase)
 }
 
@@ -742,7 +765,7 @@ export function measureFormattedTextRangeWidth<
     return measureGraphemeWidth(context, graphemes[0]!)
   }
 
-  let width = measureGraphemeWidth(context, graphemes[0]!)
+  let width = 0
   for (let index = 1; index < graphemes.length; index += 1) {
     const previous = graphemes[index - 1]!
     const current = graphemes[index]!
@@ -750,7 +773,7 @@ export function measureFormattedTextRangeWidth<
       + getTrackingLetterSpacing(previous.fontSize, previous.trackingScale)
   }
 
-  return width
+  return width + measureGraphemeWidth(context, graphemes[graphemes.length - 1]!)
 }
 
 export function buildPositionedTextFormatTrackingGraphemes<

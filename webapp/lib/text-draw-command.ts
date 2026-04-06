@@ -4,6 +4,7 @@ export type ResolvedTextDrawCommandRange = {
   sourceStart: number
   sourceEnd: number
   leadingBoundaryWhitespace: number
+  trailingBoundaryWhitespace: number
   renderedText: string
   visibleRange: {
     start: number
@@ -12,8 +13,9 @@ export type ResolvedTextDrawCommandRange = {
 }
 
 export function getRenderedTextDrawCommandText(command: TextDrawCommand): string {
-  const trim = Math.max(0, Math.min(command.leadingBoundaryWhitespace ?? 0, command.text.length))
-  return trim > 0 ? command.text.slice(trim) : command.text
+  const trimStart = Math.max(0, Math.min(command.leadingBoundaryWhitespace ?? 0, command.text.length))
+  const trimEnd = Math.max(0, Math.min(command.trailingBoundaryWhitespace ?? 0, command.text.length - trimStart))
+  return command.text.slice(trimStart, Math.max(trimStart, command.text.length - trimEnd))
 }
 
 export function resolveTextDrawCommandRange(
@@ -33,18 +35,30 @@ export function resolveTextDrawCommandRange(
       command.text.length,
     ),
   )
+  const trailingBoundaryWhitespace = Math.max(
+    0,
+    Math.min(
+      command.trailingBoundaryWhitespace ?? 0,
+      sourceEnd - sourceStart - leadingBoundaryWhitespace,
+      command.text.length - leadingBoundaryWhitespace,
+    ),
+  )
+  const visibleStart = Math.min(sourceEnd, sourceStart + leadingBoundaryWhitespace)
+  const visibleEnd = Math.max(visibleStart, sourceEnd - trailingBoundaryWhitespace)
 
   return {
     sourceStart,
     sourceEnd,
     leadingBoundaryWhitespace,
+    trailingBoundaryWhitespace,
     renderedText: getRenderedTextDrawCommandText({
       ...command,
       leadingBoundaryWhitespace,
+      trailingBoundaryWhitespace,
     }),
     visibleRange: {
-      start: Math.min(sourceEnd, sourceStart + leadingBoundaryWhitespace),
-      end: sourceEnd,
+      start: visibleStart,
+      end: visibleEnd,
     },
   }
 }

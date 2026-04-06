@@ -28,7 +28,7 @@ test("wrapText preserves multiple spaces inside a line", () => {
 
 test("wrapText breaks using the real whitespace width instead of collapsing it", () => {
   const lines = wrapText("A   B", 4, false, monoMeasure)
-  assert.deepEqual(lines, ["A   ", "B"])
+  assert.deepEqual(lines, ["A", "B"])
 })
 
 test("wrapTextDetailed preserves blank lines and repeated spaces in source ranges", () => {
@@ -43,11 +43,33 @@ test("wrapTextDetailed preserves blank lines and repeated spaces in source range
 test("wrapTextDetailed marks wrapped leading whitespace as non-rendering boundary space", () => {
   const lines = wrapTextDetailed("Swiss  Style", 6, false, monoMeasure)
   assert.deepEqual(lines, [
-    { text: "Swiss", sourceStart: 0, sourceEnd: 5 },
-    { text: "  Style", sourceStart: 5, sourceEnd: 12, leadingBoundaryWhitespace: 2 },
+    { text: "Swiss  ", sourceStart: 0, sourceEnd: 7, trailingBoundaryWhitespace: 2 },
+    { text: "Style", sourceStart: 7, sourceEnd: 12 },
   ])
   assert.deepEqual(wrapText("Swiss  Style", 6, false, monoMeasure), [
     "Swiss",
     "Style",
+  ])
+})
+
+test("wrapTextDetailed marks trailing whitespace as non-rendering boundary space", () => {
+  const lines = wrapTextDetailed("Swiss ", 20, false, monoMeasure)
+  assert.deepEqual(lines, [
+    { text: "Swiss ", sourceStart: 0, sourceEnd: 6, trailingBoundaryWhitespace: 1 },
+  ])
+  assert.deepEqual(wrapText("Swiss ", 20, false, monoMeasure), [
+    "Swiss",
+  ])
+})
+
+test("wrapTextDetailed preserves wrapped interword whitespace on the preceding source line", () => {
+  const lines = wrapTextDetailed("A   B", 4, false, monoMeasure)
+  assert.deepEqual(lines, [
+    { text: "A   ", sourceStart: 0, sourceEnd: 4, trailingBoundaryWhitespace: 3 },
+    { text: "B", sourceStart: 4, sourceEnd: 5 },
+  ])
+  assert.deepEqual(wrapText("A   B", 4, false, monoMeasure), [
+    "A",
+    "B",
   ])
 })

@@ -74,7 +74,13 @@ export function ExportPdfDialog({
           "w-full max-w-md max-h-[90vh] space-y-4 overflow-y-auto rounded-lg border border-border bg-background p-4 text-foreground shadow-xl",
         )}
       >
-        <h3 className="text-base font-semibold">Export</h3>
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold">Export</h3>
+          <p className={helpTextClassName}>
+            WYSIWYG: exports exactly what is currently shown in the preview, including baselines, margins, grid/modules,
+            typography, and image placeholders.
+          </p>
+        </div>
         <div className="space-y-2">
           <Label>Format</Label>
           <div className="grid grid-cols-3 gap-2">

@@ -156,7 +156,9 @@ export function measureTextPairAdvance(
   if (!previous) return 0
   if (!current) return context.measureText(previous).width
   if (!opticalKerning) {
-    return context.measureText(`${previous}${current}`).width - context.measureText(previous).width
+    const pairWidth = context.measureText(`${previous}${current}`).width
+    const currentWidth = context.measureText(current).width
+    return Math.max(0, pairWidth - currentWidth)
   }
 
   const unkernedAdvance = context.measureText(previous).width
@@ -190,7 +192,7 @@ export function measureCanvasTextWidth(
     return context.measureText(text).width
   }
 
-  let width = context.measureText(glyphs[0] ?? "").width
+  let width = 0
   for (let index = 1; index < glyphCount; index += 1) {
     const previous = glyphs[index - 1] ?? ""
     const current = glyphs[index] ?? ""
@@ -204,7 +206,7 @@ export function measureCanvasTextWidth(
     ) + getTrackingLetterSpacing(resolvedFontSize, trackingValue)
   }
 
-  return width
+  return width + context.measureText(glyphs[glyphCount - 1] ?? "").width
 }
 
 export function drawCanvasText(

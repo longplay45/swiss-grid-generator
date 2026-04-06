@@ -34,6 +34,22 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
   }, [])
 
   useEffect(() => {
+    if (!showTypography) return
+    clearCaches()
+  }, [
+    blockOrder,
+    clearCaches,
+    getBlockFont,
+    getBlockFontWeight,
+    getBlockFontSize,
+    getStyleKeyForBlock,
+    isBlockItalic,
+    scale,
+    showTypography,
+    typographyStyles,
+  ])
+
+  useEffect(() => {
     if (!showTypography || typeof document === "undefined" || !("fonts" in document)) return
 
     let cancelled = false

@@ -37,6 +37,7 @@ export type InlineEditorCommand = {
   sourceStart?: number
   sourceEnd?: number
   leadingBoundaryWhitespace?: number
+  trailingBoundaryWhitespace?: number
 }
 
 export type InlineEditorTextBoxInput = {
@@ -180,13 +181,32 @@ function clampSelectionIndex(text: string, index: number): number {
   return Math.max(0, Math.min(normalizeVisibleText(text).length, index))
 }
 
+function getVisibleSourceRange(
+  line: Pick<InlineEditorLineMatch, "sourceStart" | "sourceEnd" | "leadingBoundaryWhitespace" | "trailingBoundaryWhitespace">,
+): { start: number; end: number } {
+  const sourceStart = Math.max(0, line.sourceStart)
+  const sourceEnd = Math.max(sourceStart, line.sourceEnd)
+  const visibleStart = Math.min(
+    sourceEnd,
+    sourceStart + Math.max(0, Math.min(line.leadingBoundaryWhitespace ?? 0, sourceEnd - sourceStart)),
+  )
+  const visibleEnd = Math.max(
+    visibleStart,
+    sourceEnd - Math.max(0, Math.min(line.trailingBoundaryWhitespace ?? 0, sourceEnd - visibleStart)),
+  )
+  return {
+    start: visibleStart,
+    end: visibleEnd,
+  }
+}
+
 function getLineStartX(
-  line: Pick<InlineEditorLineMatch, "x" | "renderedText" | "sourceStart" | "sourceEnd">,
+  line: Pick<InlineEditorLineMatch, "x" | "renderedText" | "sourceStart" | "sourceEnd" | "leadingBoundaryWhitespace" | "trailingBoundaryWhitespace">,
   textAlign: InlineEditorTextAlign,
   measureText: (text: string, range?: { start: number; end: number }) => number,
 ): number {
   const range = typeof line.sourceStart === "number" && typeof line.sourceEnd === "number"
-    ? { start: line.sourceStart, end: line.sourceEnd }
+    ? getVisibleSourceRange(line)
     : undefined
   if (textAlign === "center") {
     return line.x - measureText(line.renderedText, range) / 2
@@ -333,13 +353,16 @@ function measurePrefixWidthForIndex(
   sourceIndex: number,
   measureText: (text: string, range?: { start: number; end: number }) => number,
 ): number {
+  const visibleRange = getVisibleSourceRange(line)
   const clampedIndex = Math.max(line.sourceStart, Math.min(line.sourceEnd, sourceIndex))
-  const sourcePrefix = text.slice(line.sourceStart, clampedIndex)
+  if (clampedIndex <= visibleRange.start) return 0
+  const visibleIndex = Math.max(visibleRange.start, Math.min(visibleRange.end, clampedIndex))
+  const sourcePrefix = text.slice(visibleRange.start, visibleIndex)
   const normalizedPrefix = normalizePrefixText(sourcePrefix)
-  const renderedPrefix = clampedIndex >= line.sourceEnd && line.renderedText.endsWith("-")
+  const renderedPrefix = visibleIndex >= visibleRange.end && line.renderedText.endsWith("-")
     ? line.renderedText
     : normalizedPrefix
-  return measureText(renderedPrefix, { start: line.sourceStart, end: clampedIndex })
+  return measureText(renderedPrefix, { start: visibleRange.start, end: visibleIndex })
 }
 
 function getActiveLineIndexForSelection(
@@ -378,10 +401,16 @@ export function computeInlineEditorTextBox({
 
   for (const command of commands) {
     const renderedText = getRenderedCommandText(command)
+    const range = typeof command.sourceStart === "number" && typeof command.sourceEnd === "number"
+      ? getVisibleSourceRange({
+        sourceStart: command.sourceStart,
+        sourceEnd: command.sourceEnd,
+        leadingBoundaryWhitespace: command.leadingBoundaryWhitespace,
+        trailingBoundaryWhitespace: command.trailingBoundaryWhitespace,
+      })
+      : undefined
     const renderedWidth = measureText(renderedText, (
-      typeof command.sourceStart === "number" && typeof command.sourceEnd === "number"
-        ? { start: command.sourceStart, end: command.sourceEnd }
-        : undefined
+      range
     ))
     const lineLeft = textAlign === "right"
       ? command.x - renderedWidth
@@ -490,9 +519,10 @@ export function buildInlineEditorLineLayouts({
     const left = getLineStartX(line, textAlign, measureText)
     const lineStart = segments?.[0]?.start ?? line.sourceStart
     const lineEnd = segments?.[segments.length - 1]?.end ?? line.sourceEnd
+    const visibleRange = getVisibleSourceRange(line)
     const width = segments?.length
       ? Math.max(1, getCaretXForIndex(text, { ...line, left, segments }, lineEnd, measureText) - (segments[0]?.x ?? left))
-      : measureText(line.renderedText, { start: line.sourceStart, end: line.sourceEnd })
+      : measureText(line.renderedText, visibleRange)
     return {
       ...line,
       sourceStart: lineStart,

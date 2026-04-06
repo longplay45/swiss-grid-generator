@@ -105,8 +105,8 @@ function getEditorPlanSignature<BlockId extends string>(
     return `${target}|${rectSignature}|missing-plan`
   }
   const commandsSignature = plan.commands
-    .map(({ text, x, y, sourceStart, sourceEnd, leadingBoundaryWhitespace }) => (
-      `${x.toFixed(3)}:${y.toFixed(3)}:${sourceStart ?? ""}:${sourceEnd ?? ""}:${leadingBoundaryWhitespace ?? ""}:${text}`
+    .map(({ text, x, y, sourceStart, sourceEnd, leadingBoundaryWhitespace, trailingBoundaryWhitespace }) => (
+      `${x.toFixed(3)}:${y.toFixed(3)}:${sourceStart ?? ""}:${sourceEnd ?? ""}:${leadingBoundaryWhitespace ?? ""}:${trailingBoundaryWhitespace ?? ""}:${text}`
     ))
     .join("|")
   const renderedLinesSignature = plan.renderedLines

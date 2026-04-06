@@ -28,6 +28,39 @@ function makeCacheKeyForTrackingRuns(runs: readonly TextTrackingRun[]): string {
   return runs.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
 }
 
+function makeCacheKeyForBaseFormat<StyleKey extends string, Family extends string>(
+  baseFormat?: BaseTextFormat<StyleKey, Family>,
+): string {
+  if (!baseFormat) return "-"
+  return `${baseFormat.fontFamily}:${baseFormat.fontWeight}:${baseFormat.italic ? 1 : 0}:${baseFormat.styleKey}:${baseFormat.color}`
+}
+
+function makeCacheKeyForFormatRuns<StyleKey extends string, Family extends string>(
+  runs?: readonly TextFormatRun<StyleKey, Family>[],
+): string {
+  return (runs ?? [])
+    .map((run) => `${run.start}:${run.end}:${run.fontFamily ?? ""}:${run.fontWeight ?? ""}:${run.italic === true ? 1 : run.italic === false ? 0 : ""}:${run.styleKey ?? ""}:${run.color ?? ""}`)
+    .join("|")
+}
+
+function makeCacheKeyForResolvedFontSizes<StyleKey extends string, Family extends string>(
+  baseFormat?: BaseTextFormat<StyleKey, Family>,
+  formatRuns?: readonly TextFormatRun<StyleKey, Family>[],
+  resolveFontSize?: (styleKey: StyleKey) => number,
+): string {
+  if (!baseFormat || !resolveFontSize) return "-"
+  const styleKeys = new Set<StyleKey>([baseFormat.styleKey])
+  for (const run of formatRuns ?? []) {
+    if (run.styleKey !== undefined) {
+      styleKeys.add(run.styleKey)
+    }
+  }
+  return [...styleKeys]
+    .sort()
+    .map((styleKey) => `${styleKey}:${resolveFontSize(styleKey).toFixed(4)}`)
+    .join("|")
+}
+
 export function measureCanvasTextAscent(
   context: CanvasRenderingContext2D | null,
   canvasFont: string,
@@ -81,7 +114,10 @@ export function createTextMetricsService<StyleKey extends string, Family extends
     const normalizedRuns = normalizeTextTrackingRuns(sourceText, trackingRuns, normalizedTrackingScale)
     const rangeKey = range ? `${range.start}:${range.end}` : "-"
     const runsKey = makeCacheKeyForTrackingRuns(normalizedRuns)
-    const key = `${context.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${rangeKey}::${runsKey}::${text}`
+    const formatBaseKey = makeCacheKeyForBaseFormat(baseFormat)
+    const formatRunsKey = makeCacheKeyForFormatRuns(formatRuns)
+    const resolvedFontSizesKey = makeCacheKeyForResolvedFontSizes(baseFormat, formatRuns, resolveFontSize)
+    const key = `${context.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${rangeKey}::${runsKey}::${formatBaseKey}::${formatRunsKey}::${resolvedFontSizesKey}::${text}`
 
     return makeCachedValue(measureWidthCache, key, () => {
       setCanvasFontKerning(context, opticalKerning)
@@ -130,13 +166,10 @@ export function createTextMetricsService<StyleKey extends string, Family extends
     const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
     const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, normalizedTrackingScale)
     const runsKey = makeCacheKeyForTrackingRuns(normalizedRuns)
-    const formatRunsKey = (formatRuns ?? [])
-      .map((run) => `${run.start}:${run.end}:${run.fontFamily ?? ""}:${run.fontWeight ?? ""}:${run.italic === true ? 1 : run.italic === false ? 0 : ""}:${run.styleKey ?? ""}:${run.color ?? ""}`)
-      .join("|")
-    const formatBaseKey = baseFormat
-      ? `${baseFormat.fontFamily}:${baseFormat.fontWeight}:${baseFormat.italic ? 1 : 0}:${baseFormat.styleKey}:${baseFormat.color}`
-      : "-"
-    const key = `${context.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${formatBaseKey}::${formatRunsKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
+    const formatRunsKey = makeCacheKeyForFormatRuns(formatRuns)
+    const formatBaseKey = makeCacheKeyForBaseFormat(baseFormat)
+    const resolvedFontSizesKey = makeCacheKeyForResolvedFontSizes(baseFormat, formatRuns, resolveFontSize)
+    const key = `${context.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${formatBaseKey}::${formatRunsKey}::${resolvedFontSizesKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
     const wrapped = makeCachedValue(wrapTextCache, key, () =>
       wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => getMeasuredTextWidth(
         context,

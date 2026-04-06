@@ -68,6 +68,48 @@ test("computeInlineEditorTextBox keeps centered text symmetric around its anchor
   assert.equal(textBox.width, 200)
 })
 
+test("computeInlineEditorTextBox measures centered lines against the visible source range", () => {
+  const textBox = computeInlineEditorTextBox({
+    rect: { x: 40, y: 80, width: 200, height: 120 },
+    textAlign: "center",
+    commands: [
+      { text: "  Swiss", x: 140, y: 140, sourceStart: 0, sourceEnd: 7, leadingBoundaryWhitespace: 2 },
+    ],
+    measureText: (_text, range) => ((range?.end ?? 0) - (range?.start ?? 0)) * 10,
+  })
+
+  assert.equal(textBox.left, 40)
+  assert.equal(textBox.width, 200)
+})
+
+test("computeInlineEditorTextBox ignores trailing boundary whitespace on right-aligned lines", () => {
+  const textBox = computeInlineEditorTextBox({
+    rect: { x: 40, y: 80, width: 200, height: 120 },
+    textAlign: "right",
+    commands: [
+      { text: "Swiss ", x: 240, y: 140, sourceStart: 0, sourceEnd: 6, trailingBoundaryWhitespace: 1 },
+    ],
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.equal(textBox.left, 40)
+  assert.equal(textBox.width, 200)
+})
+
+test("computeInlineEditorTextBox measures right-aligned lines against the visible source range", () => {
+  const textBox = computeInlineEditorTextBox({
+    rect: { x: 40, y: 80, width: 200, height: 120 },
+    textAlign: "right",
+    commands: [
+      { text: "Cherubini ", x: 240, y: 140, sourceStart: 0, sourceEnd: 10, trailingBoundaryWhitespace: 1 },
+    ],
+    measureText: (_text, range) => ((range?.end ?? 0) - (range?.start ?? 0)) * 10,
+  })
+
+  assert.equal(textBox.left, 40)
+  assert.equal(textBox.width, 200)
+})
+
 test("resolveInlineEditorLineMatches keeps sequential line ranges for wrapped text", () => {
   const lines = resolveInlineEditorLineMatches("Hello world\nSecond line", [
     { text: "Hello world", x: 40, y: 120 },

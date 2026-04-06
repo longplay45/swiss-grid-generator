@@ -10,6 +10,7 @@ export type WrappedTextLine = {
   sourceStart: number
   sourceEnd: number
   leadingBoundaryWhitespace?: number
+  trailingBoundaryWhitespace?: number
 }
 
 const MIN_INLINE_HYPHEN_PREFIX_CHARS = 3
@@ -42,20 +43,38 @@ function getLeadingBoundaryWhitespace(tokens: readonly LineToken[]): number {
   return count
 }
 
+function getTrailingBoundaryWhitespace(tokens: readonly LineToken[]): number {
+  let count = 0
+  for (let index = tokens.length - 1; index >= 0; index -= 1) {
+    const token = tokens[index]
+    if (!token?.isWhitespace) break
+    count += token.text.length
+  }
+  return count
+}
+
 function getRenderedLineText(tokens: readonly LineToken[]): string {
   const fullText = joinTokens(tokens)
-  const trim = getLeadingBoundaryWhitespace(tokens)
-  return trim > 0 ? fullText.slice(trim) : fullText
+  const trimStart = getLeadingBoundaryWhitespace(tokens)
+  const trimEnd = getTrailingBoundaryWhitespace(tokens)
+  return fullText.slice(trimStart, Math.max(trimStart, fullText.length - trimEnd))
+}
+
+function shouldEmitWrappedLine(tokens: readonly LineToken[]): boolean {
+  return tokens.some((token) => !token.isWhitespace || token.suppressedAtLineStart !== true)
 }
 
 function measureTokens(tokens: readonly LineToken[], measureWidth: MeasureWidth): number {
   if (!tokens.length) return 0
   const renderedText = getRenderedLineText(tokens)
   if (!renderedText) return 0
-  const rangeStart = (tokens[0]?.start ?? 0) + getLeadingBoundaryWhitespace(tokens)
+  const trimStart = getLeadingBoundaryWhitespace(tokens)
+  const trimEnd = getTrailingBoundaryWhitespace(tokens)
+  const rangeStart = (tokens[0]?.start ?? 0) + trimStart
+  const rangeEnd = Math.max(rangeStart, (tokens[tokens.length - 1]?.end ?? tokens[0]?.start ?? 0) - trimEnd)
   return measureWidth(renderedText, {
     start: rangeStart,
-    end: tokens[tokens.length - 1]?.end ?? tokens[0]?.start ?? 0,
+    end: rangeEnd,
   })
 }
 
@@ -205,14 +224,19 @@ function splitOversizeWhitespaceToken(
   return lines
 }
 
-function toWrappedLine(tokens: readonly LineToken[], fallbackOffset: number): WrappedTextLine {
+function toWrappedLine(
+  tokens: readonly LineToken[],
+  fallbackOffset: number,
+): WrappedTextLine {
   const text = joinTokens(tokens)
   const leadingBoundaryWhitespace = getLeadingBoundaryWhitespace(tokens)
+  const trailingBoundaryWhitespace = getTrailingBoundaryWhitespace(tokens)
   return {
     text,
     sourceStart: tokens[0]?.start ?? fallbackOffset,
     sourceEnd: tokens[tokens.length - 1]?.end ?? fallbackOffset,
     ...(leadingBoundaryWhitespace > 0 ? { leadingBoundaryWhitespace } : {}),
+    ...(trailingBoundaryWhitespace > 0 ? { trailingBoundaryWhitespace } : {}),
   }
 }
 
@@ -302,7 +326,7 @@ function wrapSingleLineDetailed(
     }
 
     if (currentTokens.length > 0) {
-      if (getRenderedLineText(currentTokens).length > 0) {
+      if (shouldEmitWrappedLine(currentTokens)) {
         lines.push(toWrappedLine(currentTokens, sourceOffset))
       }
     }
@@ -348,7 +372,7 @@ function wrapSingleLineDetailed(
   }
 
   if (currentTokens.length > 0) {
-    if (getRenderedLineText(currentTokens).length > 0) {
+    if (shouldEmitWrappedLine(currentTokens)) {
       lines.push(toWrappedLine(currentTokens, sourceOffset))
     }
   }
@@ -381,8 +405,9 @@ export function wrapText(
   measureWidth: MeasureWidth,
 ): string[] {
   return wrapTextDetailed(text, maxWidth, hyphenate, measureWidth).map((line) => (
-    line.leadingBoundaryWhitespace
-      ? line.text.slice(line.leadingBoundaryWhitespace)
-      : line.text
+    line.text.slice(
+      line.leadingBoundaryWhitespace ?? 0,
+      Math.max(line.leadingBoundaryWhitespace ?? 0, line.text.length - (line.trailingBoundaryWhitespace ?? 0)),
+    )
   ))
 }

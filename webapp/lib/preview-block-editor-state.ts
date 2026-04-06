@@ -2,7 +2,12 @@ import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor
 import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
-import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
+import {
+  getUniformTextFormatValueForRange,
+  normalizeTextFormatRuns,
+  type BaseTextFormat,
+  type TextFormatRun,
+} from "@/lib/text-format-runs"
 import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
@@ -86,12 +91,90 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   fallbackStyle,
   fxStyle,
 }: ExistingBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
-  const styleKey = styleAssignments[key] ?? fallbackStyle
+  const assignedStyleKey = styleAssignments[key] ?? fallbackStyle
   const normalizedText = normalizeInlineEditorText(textContent[key] ?? "")
-  const draftFont = getBlockFont(key)
-  const draftFontWeight = getBlockFontWeight(key)
-  const draftItalic = isBlockItalic(key)
-  const draftColor = getBlockTextColor(key)
+  const initialBaseFormat: BaseTextFormat<StyleKey, FontFamily> = {
+    fontFamily: getBlockFont(key),
+    fontWeight: getBlockFontWeight(key),
+    italic: isBlockItalic(key),
+    styleKey: assignedStyleKey,
+    color: getBlockTextColor(key),
+  }
+  const initialRuns = normalizeTextFormatRuns(
+    normalizedText,
+    getBlockTextFormatRuns(key, initialBaseFormat.color),
+    initialBaseFormat,
+  )
+  const wholeTextRange = {
+    start: 0,
+    end: normalizedText.length,
+  }
+  const hasWholeText = wholeTextRange.end > wholeTextRange.start
+  const collapsedBaseFormat: BaseTextFormat<StyleKey, FontFamily> = hasWholeText
+    ? (() => {
+      const fontFamily = getUniformTextFormatValueForRange(
+        normalizedText,
+        wholeTextRange,
+        initialBaseFormat,
+        initialRuns,
+        "fontFamily",
+      )
+      const fontWeight = getUniformTextFormatValueForRange(
+        normalizedText,
+        wholeTextRange,
+        initialBaseFormat,
+        initialRuns,
+        "fontWeight",
+      )
+      const italic = getUniformTextFormatValueForRange(
+        normalizedText,
+        wholeTextRange,
+        initialBaseFormat,
+        initialRuns,
+        "italic",
+      )
+      const styleKey = getUniformTextFormatValueForRange(
+        normalizedText,
+        wholeTextRange,
+        initialBaseFormat,
+        initialRuns,
+        "styleKey",
+      )
+      const color = getUniformTextFormatValueForRange(
+        normalizedText,
+        wholeTextRange,
+        initialBaseFormat,
+        initialRuns,
+        "color",
+      )
+      if (
+        fontFamily === null
+        || fontWeight === null
+        || italic === null
+        || styleKey === null
+        || color === null
+      ) {
+        return initialBaseFormat
+      }
+      return {
+        fontFamily,
+        fontWeight,
+        italic,
+        styleKey,
+        color,
+      }
+    })()
+    : initialBaseFormat
+  const styleKey = collapsedBaseFormat.styleKey
+  const draftFont = collapsedBaseFormat.fontFamily
+  const draftFontWeight = collapsedBaseFormat.fontWeight
+  const draftItalic = collapsedBaseFormat.italic
+  const draftColor = collapsedBaseFormat.color
+  const draftTextFormatRuns = normalizeTextFormatRuns(
+    normalizedText,
+    initialRuns,
+    collapsedBaseFormat,
+  )
 
   return {
     target: key,
@@ -119,17 +202,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
       getBlockTrackingRuns(key),
       getBlockTrackingScale(key),
     ),
-    draftTextFormatRuns: normalizeTextFormatRuns(
-      normalizedText,
-      getBlockTextFormatRuns(key, draftColor),
-      {
-        fontFamily: draftFont,
-        fontWeight: draftFontWeight,
-        italic: draftItalic,
-        styleKey,
-        color: draftColor,
-      },
-    ),
+    draftTextFormatRuns,
     draftRotation: getBlockRotation(key),
     draftTextEdited: blockTextEdited[key] ?? true,
     draftSelectionStart: 0,

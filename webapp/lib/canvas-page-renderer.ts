@@ -20,7 +20,7 @@ import {
   splitTextForTracking,
 } from "@/lib/text-rendering"
 import {
-  buildPositionedTextFormatTrackingSegments,
+  buildPositionedTextFormatTrackingGraphemes,
   type BaseTextFormat,
   type TextFormatRun,
 } from "@/lib/text-format-runs"
@@ -534,7 +534,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       opticalKerning,
     })
     const planFont = ctx.font
-    const segmentLines = plan.commands.map((command) => buildPositionedTextFormatTrackingSegments(ctx, {
+    const segmentLines = plan.commands.map((command) => buildPositionedTextFormatTrackingGraphemes(ctx, {
       sourceText: textContent[plan.key] ?? "",
       command,
       textAlign: plan.textAlign,

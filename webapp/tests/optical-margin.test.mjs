@@ -31,6 +31,16 @@ test("right-aligned trailing punctuation receives positive optical offset", () =
   assert.ok(offset > 0)
 })
 
+test("right-aligned terminal hyphen receives positive optical offset", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "rhyth-",
+    align: "right",
+    fontSize: 10,
+    measureWidth: monoMeasure,
+  })
+  assert.ok(offset > 0)
+})
+
 test("leading uppercase letter receives negative fallback optical offset", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Swiss",
@@ -59,6 +69,22 @@ test("right-aligned trailing uppercase letter also receives subtle offset", () =
     measureWidth: monoMeasure,
   })
   assert.ok(offset > 0)
+})
+
+test("right optical offset ignores trailing whitespace", () => {
+  const tight = getOpticalMarginAnchorOffset({
+    line: "Sprache",
+    align: "right",
+    fontSize: 10,
+    measureWidth: monoMeasure,
+  })
+  const spaced = getOpticalMarginAnchorOffset({
+    line: "Sprache   ",
+    align: "right",
+    fontSize: 10,
+    measureWidth: monoMeasure,
+  })
+  assert.equal(spaced, tight)
 })
 
 test("measured left optical boundary is used as the alignment source of truth", () => {
@@ -91,6 +117,86 @@ test("measured right optical boundary is used as the alignment source of truth",
     ),
   })
   assert.equal(offset, 8)
+})
+
+test("right punctuation uses the stronger of measured and styled hanging", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Swiss.",
+    align: "right",
+    fontSize: 160,
+    styleKey: "display",
+    measureWidth: () => 44,
+    measureGlyphBounds: (char) => (
+      char === "."
+        ? { advanceWidth: 44, leftBoundary: 12, rightBoundary: 21 }
+        : null
+    ),
+  })
+  assert.equal(offset, 39.6)
+})
+
+test("right body text uses explicit trailing letter profiles when measured overhang is weak", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "bar",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: () => 10,
+    measureGlyphBounds: (char) => (
+      char === "r"
+        ? { advanceWidth: 10, leftBoundary: 1, rightBoundary: 9.8 }
+        : null
+    ),
+  })
+  assert.ok(Math.abs(offset - 0.54) < 1e-9)
+})
+
+test("right-aligned terminal T uses a horizontal overhang profile rather than a stem profile", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "AT",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: () => 10,
+    measureGlyphBounds: (char) => (
+      char === "T"
+        ? { advanceWidth: 10, leftBoundary: 1.5, rightBoundary: 9.4 }
+        : null
+    ),
+  })
+  assert.ok(Math.abs(offset - 1.98) < 1e-9)
+})
+
+test("right-aligned terminal d uses the restrained body-text straight-letter profile", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "unified",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: () => 10,
+    measureGlyphBounds: (char) => (
+      char === "d"
+        ? { advanceWidth: 10, leftBoundary: 1.2, rightBoundary: 9.75 }
+        : null
+    ),
+  })
+  assert.ok(Math.abs(offset - 0.108) < 1e-9)
+})
+
+test("right-aligned terminal y uses the styled body-text profile instead of the measured contour", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "typography",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: () => 10,
+    measureGlyphBounds: (char) => (
+      char === "y"
+        ? { advanceWidth: 10, leftBoundary: 1.3, rightBoundary: 9.9 }
+        : null
+    ),
+  })
+  assert.ok(Math.abs(offset - 0.216) < 1e-9)
 })
 
 test("measured glyph bounds override fallback style heuristics for straight-sided letters", () => {
@@ -142,6 +248,21 @@ test("terminal punctuation caret advance uses the visible glyph boundary", () =>
     ),
   })
   assert.equal(advance, 21)
+})
+
+test("terminal hyphen caret advance uses the visible glyph boundary", () => {
+  const advance = getOpticalTerminalCaretAdvance({
+    char: "-",
+    font: "400 160px Inter",
+    fontSize: 160,
+    styleKey: "display",
+    measureGlyphBounds: (char) => (
+      char === "-"
+        ? { advanceWidth: 60, leftBoundary: 12, rightBoundary: 42 }
+        : null
+    ),
+  })
+  assert.equal(advance, 42)
 })
 
 test("optical kerning tightens expressive pairs more than straight pairs", () => {

@@ -31,6 +31,7 @@ type Args = {
   dragEndedAtRef: RefObject<number>
   canvasRef: RefObject<HTMLCanvasElement | null>
   editorState: EditorState | null
+  editorStateRef: RefObject<EditorState | null>
   setEditorState: Dispatch<SetStateAction<EditorState | null>>
   baseFont: FontFamily
   resultGridCols: number
@@ -100,6 +101,7 @@ export function useBlockEditorActions({
   dragEndedAtRef,
   canvasRef,
   editorState,
+  editorStateRef,
   setEditorState,
   baseFont,
   resultGridCols,
@@ -206,13 +208,21 @@ export function useBlockEditorActions({
     setBlockCustomSizes,
   ])
 
+  const commitLiveEditorDraft = useCallback(() => {
+    const draft = editorStateRef.current
+    if (!draft) return
+    applyEditorDraftLive(draft)
+  }, [applyEditorDraftLive, editorStateRef])
+
   const closeEditor = useCallback(() => {
+    commitLiveEditorDraft()
     setEditorState(null)
-  }, [setEditorState])
+  }, [commitLiveEditorDraft, setEditorState])
 
   const saveEditor = useCallback(() => {
+    commitLiveEditorDraft()
     setEditorState(null)
-  }, [setEditorState])
+  }, [commitLiveEditorDraft, setEditorState])
 
   const deleteEditorBlock = useCallback(() => {
     if (!editorState) return

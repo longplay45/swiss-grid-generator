@@ -48,6 +48,11 @@ const LEADING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
 }
 
 const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
+  "-": 0.22,
+  "‐": 0.22,
+  "‑": 0.22,
+  "–": 0.18,
+  "—": 0.14,
   ".": 0.28,
   ",": 0.28,
   ":": 0.22,
@@ -97,19 +102,21 @@ const TRAILING_EXPRESSIVE_LETTERS_EM: Record<string, number> = {
   O: 0.055,
   Q: 0.055,
   S: 0.05,
+  T: 0.11,
   V: 0.04,
-  W: 0.035,
+  W: 0.036,
   Y: 0.04,
-  a: 0.016,
-  c: 0.022,
-  e: 0.022,
-  g: 0.016,
-  o: 0.026,
+  a: 0.012,
+  c: 0.018,
+  e: 0.014,
+  g: 0.012,
+  o: 0.018,
   q: 0.012,
-  s: 0.022,
-  v: 0.016,
-  w: 0.014,
-  y: 0.016,
+  r: 0.03,
+  s: 0.018,
+  v: 0.014,
+  w: 0.012,
+  y: 0.012,
 }
 
 function getOpticalGlyphScratchContext(): CanvasRenderingContext2D | null {
@@ -600,6 +607,29 @@ function resolveMeasuredLeftHangingOffset(
   return Math.min(measuredOffset, fallbackOffset)
 }
 
+function resolveMeasuredRightHangingOffset(
+  measuredOffset: number,
+  edgeOffset: { em: number; kind: OpticalMarginCharKind },
+  glyphWidth: number,
+  fontSize: number,
+  profile: OpticalMarginProfile,
+): number {
+  const fallbackOffset = resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
+  if (!(measuredOffset > 0)) return fallbackOffset
+  if (!(fallbackOffset > 0)) return measuredOffset
+  return Math.max(measuredOffset, fallbackOffset)
+}
+
+function shouldPreferStyledTrailingOffset(
+  edgeOffset: { em: number; kind: OpticalMarginCharKind },
+  profile: OpticalMarginProfile,
+  fontSize: number,
+): boolean {
+  if (edgeOffset.kind === "punctuation") return false
+  if (profile === "fx") return false
+  return fontSize <= 32
+}
+
 export function resolveOpticalKerningPairAdjustment({
   left,
   right,
@@ -735,11 +765,20 @@ export function getOpticalMarginAnchorOffset({
     return -resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
   }
 
-  // Right-aligned lines hang trailing punctuation into the right margin.
-  if (!TRAILING_PUNCTUATION_OFFSETS_EM[last]) {
-    const measured = measureGlyphBounds?.(last) ?? measureOpticalGlyphBoundsFromCanvas(last, font, fontSize, profile)
-    if (measured) return measured.advanceWidth - measured.rightBoundary
+  const edgeOffset = getTrailingOpticalOffsetEm(last)
+  const measured = measureGlyphBounds?.(last) ?? measureOpticalGlyphBoundsFromCanvas(last, font, fontSize, profile)
+  const glyphWidth = measureWidth(last) || measured?.advanceWidth || 0
+  if (shouldPreferStyledTrailingOffset(edgeOffset, profile, fontSize)) {
+    return resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
   }
-  const glyphWidth = measureWidth(last)
-  return resolveStyledHangingOffset(getTrailingOpticalOffsetEm(last), glyphWidth, fontSize, profile)
+  if (measured) {
+    return resolveMeasuredRightHangingOffset(
+      Math.max(0, measured.advanceWidth - measured.rightBoundary),
+      edgeOffset,
+      glyphWidth,
+      fontSize,
+      profile,
+    )
+  }
+  return resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
 }

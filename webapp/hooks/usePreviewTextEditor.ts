@@ -10,7 +10,7 @@ import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
 
 type BlockEditorActionsArgs = Omit<
   Parameters<typeof useBlockEditorActions>[0],
-  "editorState" | "setEditorState"
+  "editorState" | "editorStateRef" | "setEditorState"
 >
 
 type EditorState = BlockEditorState<string>
@@ -53,8 +53,17 @@ export function usePreviewTextEditor({
   undo,
   redo,
 }: Args) {
-  const [editorState, setEditorState] = useState<EditorState | null>(null)
+  const [editorState, setEditorStateState] = useState<EditorState | null>(null)
+  const editorStateRef = useRef<EditorState | null>(null)
   const lastLiveEditorSignatureRef = useRef("")
+
+  const setEditorState = useCallback((next: SetStateAction<EditorState | null>) => {
+    const resolved = typeof next === "function"
+      ? (next as (prev: EditorState | null) => EditorState | null)(editorStateRef.current)
+      : next
+    editorStateRef.current = resolved
+    setEditorStateState(resolved)
+  }, [])
 
   const {
     blockCustomLeadings,
@@ -90,8 +99,13 @@ export function usePreviewTextEditor({
   } = useBlockEditorActions({
     ...blockEditorArgs,
     editorState,
+    editorStateRef,
     setEditorState,
   })
+
+  useEffect(() => {
+    editorStateRef.current = editorState
+  }, [editorState])
 
   useEffect(() => {
     if (!editorState) {
