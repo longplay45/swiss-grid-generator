@@ -890,15 +890,25 @@ export default function Home() {
           orientation={orientation}
           rotation={rotation}
           isDarkUi={isDarkUi}
-          isDinOrAnsiRatio={isDinOrAnsiRatio}
           displayUnit={displayUnit}
           onDisplayUnitChange={setDisplayUnit}
           exportDialog={{
             isOpen: exportActions.isExportDialogOpen,
             onClose: () => exportActions.setIsExportDialogOpen(false),
+            selectedPageCount: exportActions.selectedPageCount,
+            ratioLabel: exportActions.ratioLabel,
+            orientation: exportActions.orientation,
+            rotation: exportActions.rotation,
+            isDinOrAnsiRatio: exportActions.isDinOrAnsiRatio,
+            usesStoredPageSizes: exportActions.usesStoredPageSizes,
+            pageRangeOptions: exportActions.pageRangeOptions,
+            rangeStart: exportActions.exportRangeStartDraft,
+            onRangeStartChange: exportActions.setExportRangeStartDraft,
+            rangeEnd: exportActions.exportRangeEndDraft,
+            onRangeEndChange: exportActions.setExportRangeEndDraft,
             paperSize: exportActions.exportPaperSizeDraft,
             onPaperSizeChange: exportActions.setExportPaperSizeDraft,
-            paperSizeOptions,
+            paperSizeOptions: exportActions.paperSizeOptions,
             width: exportActions.exportWidthDraft,
             onWidthChange: exportActions.setExportWidthDraft,
             format: exportActions.exportFormatDraft,

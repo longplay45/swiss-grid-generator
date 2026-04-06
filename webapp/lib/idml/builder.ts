@@ -1071,7 +1071,6 @@ function buildPreferencesXml(document: SwissGridIdmlDocument): string {
     renderIdmlElement("DocumentPreference", {
       PageHeight: formatIdmlNumber(firstHeight),
       PageWidth: formatIdmlNumber(firstWidth),
-      PagesPerDocument: document.pages.length,
       FacingPages: false,
       DocumentBleedTopOffset: formatIdmlNumber(bleedPt),
       DocumentBleedBottomOffset: formatIdmlNumber(bleedPt),
@@ -1425,22 +1424,6 @@ function buildDesignMapXml(
     ),
     renderIdmlElement("idPkg:MasterSpread", { src: "MasterSpreads/MasterSpread_sggMaster.xml" }),
     renderIdmlElement(
-      "Section",
-      {
-        Self: "sggSection",
-        Length: document.pages.length,
-        Name: "",
-        ContinueNumbering: false,
-        IncludeSectionPrefix: false,
-        PageNumberStart: 1,
-        Marker: "",
-        PageStart: sectionPageStart,
-        SectionPrefix: "",
-      },
-      renderIdmlElement("Properties", {}, renderIdmlElement("PageNumberStyle", { type: "enumeration" }, "Arabic")),
-    ),
-    renderIdmlElement("idPkg:BackingStory", { src: "XML/BackingStory.xml" }),
-    renderIdmlElement(
       "ColorGroup",
       {
         Self: "ColorGroup/[Root Color Group]",
@@ -1467,6 +1450,22 @@ function buildDesignMapXml(
       ],
     ),
     ...spreads.map((spread) => renderIdmlElement("idPkg:Spread", { src: spread.filePath })),
+    renderIdmlElement(
+      "Section",
+      {
+        Self: "sggSection",
+        Length: document.pages.length,
+        Name: "",
+        ContinueNumbering: false,
+        IncludeSectionPrefix: false,
+        PageNumberStart: 1,
+        Marker: "",
+        PageStart: sectionPageStart,
+        SectionPrefix: "",
+      },
+      renderIdmlElement("Properties", {}, renderIdmlElement("PageNumberStyle", { type: "enumeration" }, "Arabic")),
+    ),
+    renderIdmlElement("idPkg:BackingStory", { src: "XML/BackingStory.xml" }),
     ...stories.map((story) => renderIdmlElement("idPkg:Story", { src: story.filePath })),
     `</Document>`,
   ].join("")

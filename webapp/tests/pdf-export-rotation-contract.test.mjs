@@ -100,7 +100,7 @@ test("pdf export action forwards placeholder visibility and active image color s
   const source = readText("hooks/useExportActions.ts")
   assert.match(source, /showImagePlaceholders:\s*boolean/)
   assert.match(source, /imageColorScheme:\s*ImageColorSchemeId/)
-  assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme,[\s\S]*?canvasBackground,[\s\S]*?showImagePlaceholders,[\s\S]*?showTypography,/)
+  assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme:\s*page\.imageColorScheme,[\s\S]*?canvasBackground:\s*page\.resolvedCanvasBackground,[\s\S]*?showImagePlaceholders:\s*page\.uiSettings\.showImagePlaceholders,[\s\S]*?showTypography:\s*page\.uiSettings\.showTypography,/)
 })
 
 test("pdf export switches between rgb and cmyk setters based on export color mode", () => {
@@ -173,10 +173,11 @@ test("export dialog groups units and paper size in one dark-mode-safe section", 
   assert.match(source, /text-muted-foreground/)
 })
 
-test("default export preset stays on digital print in the bundled default document", () => {
-  const source = JSON.parse(readText("public/feedback/default_v001.json"))
-  assert.equal(source.uiSettings.exportPrintPro, false)
-  assert.equal(source.uiSettings.exportBleedMm, 0)
-  assert.equal(source.uiSettings.exportRegistrationMarks, false)
-  assert.equal("exportFinalSafeGuides" in source.uiSettings, false)
+test("default export preset stays on digital print in code defaults and no longer depends on the bundled preset JSON", () => {
+  const source = readText("lib/config/ui-defaults.ts")
+  assert.doesNotMatch(source, /default_v001\.json/)
+  assert.match(source, /exportPrintPro:\s*false/)
+  assert.match(source, /exportBleedMm:\s*0/)
+  assert.match(source, /exportRegistrationMarks:\s*false/)
+  assert.doesNotMatch(source, /exportFinalSafeGuides/)
 })

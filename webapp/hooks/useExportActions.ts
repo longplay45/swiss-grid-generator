@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { FORMATS_PT } from "@/lib/grid-calculator"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { CANVAS_RATIOS, FORMATS_PT } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
@@ -9,8 +9,17 @@ import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
 import { renderSwissGridIdmlProject } from "@/lib/idml-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
-import { parseLoadedProject } from "@/lib/document-session"
+import { parseLoadedProject, type LoadedProject } from "@/lib/document-session"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
+import {
+  buildResolvedProjectPageExportSources,
+  filterProjectByExportRange,
+  normalizeProjectExportPageRange,
+  resolveProjectPageUiSettings,
+  type ProjectExportPageRange,
+  type ResolvedProjectPageExportSource,
+} from "@/lib/project-page-export-source"
+import { PREVIEW_DEFAULT_FORMAT_BY_RATIO } from "@/lib/config/ui-defaults"
 import { mmToPt, formatValue } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -69,6 +78,7 @@ export const EXPORT_DIALOG_PRINT_PRESETS = PRINT_PRESETS.filter((preset) => pres
 
 const PRINT_CROP_OFFSET_MM = 2
 const PRINT_CROP_LENGTH_MM = 5
+const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option] as const))
 
 function isSamePrintPresetConfig(left: PrintPresetConfig, right: PrintPresetConfig): boolean {
   return left.enabled === right.enabled
@@ -96,6 +106,41 @@ function resolvePdfExportColorManagement(config: Pick<PrintPresetConfig, "enable
     colorMode: "cmyk",
     outputIntentProfileId: "coated-fogra39",
   }
+}
+
+function buildProjectPageSourcePath(pageName: string, pageId: string, pageNumber: number): string {
+  return `${pageName || `Page ${pageNumber}`} (${pageId})`
+}
+
+function normalizeFilenameSegment(value: string): string {
+  const trimmed = value.trim().toLowerCase()
+  if (!trimmed) return "page"
+  return trimmed
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || "page"
+}
+
+function resolveExportDownloadExtension(format: ExportFormat, selectedPageCount: number): string {
+  if (format === "svg" && selectedPageCount > 1) return ".zip"
+  if (format === "svg") return ".svg"
+  if (format === "idml") return ".idml"
+  return ".pdf"
+}
+
+function updateFilenameForExport(
+  current: string,
+  format: ExportFormat,
+  selectedPageCount: number,
+  getDefaultExportFilename: (format: ExportFormat, selectedPageCount: number) => string,
+): string {
+  const trimmed = current.trim()
+  const extension = resolveExportDownloadExtension(format, selectedPageCount)
+  if (!trimmed) return getDefaultExportFilename(format, selectedPageCount)
+  if (/\.(pdf|svg|idml|zip)$/i.test(trimmed)) {
+    return trimmed.replace(/\.(pdf|svg|idml|zip)$/i, extension)
+  }
+  return `${trimmed}${extension}`
 }
 
 export type ExportActionsContext = {
@@ -145,19 +190,6 @@ export type ExportActionsContext = {
 
 export function useExportActions(ctx: ExportActionsContext) {
   const {
-    result,
-    previewLayout,
-    baseFont,
-    orientation,
-    rotation,
-    imageColorScheme,
-    canvasBackground,
-    showBaselines,
-    showModules,
-    showMargins,
-    showImagePlaceholders,
-    showTypography,
-    isDinOrAnsiRatio,
     displayUnit,
     exportPaperSize,
     setExportPaperSize,
@@ -167,7 +199,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMm,
     exportRegistrationMarks,
     setExportRegistrationMarks,
-    previewFormat,
     defaultPdfFilename,
     defaultIdmlFilename,
     defaultJsonFilename,
@@ -184,38 +215,148 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(exportBleedMm))
   const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(exportRegistrationMarks)
   const [exportWidthDraft, setExportWidthDraft] = useState("")
+  const [exportRangeStartDraft, setExportRangeStartDraft] = useState(1)
+  const [exportRangeEndDraft, setExportRangeEndDraft] = useState(1)
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
   const [saveTitleDraft, setSaveTitleDraft] = useState("")
   const [saveDescriptionDraft, setSaveDescriptionDraft] = useState("")
   const [saveAuthorDraft, setSaveAuthorDraft] = useState("")
   const [saveFilenameTouched, setSaveFilenameTouched] = useState(false)
 
-  const getOrientedDimensions = useCallback(
-    (paperSize: string) => {
-      const base = FORMATS_PT[paperSize] ?? FORMATS_PT[previewFormat]
-      if (orientation === "landscape") {
-        return { width: base.height, height: base.width }
-      }
-      return { width: base.width, height: base.height }
-    },
-    [orientation, previewFormat],
-  )
+  const currentProject = useMemo(() => parseLoadedProject<Record<string, unknown>>({
+    title: projectMetadata.title,
+    description: projectMetadata.description,
+    author: projectMetadata.author,
+    createdAt: projectMetadata.createdAt,
+    ...buildProjectPayload(),
+  }), [
+    buildProjectPayload,
+    projectMetadata.author,
+    projectMetadata.createdAt,
+    projectMetadata.description,
+    projectMetadata.title,
+  ])
 
-  const getDefaultExportFilename = useCallback((format: ExportFormat) => {
-    if (format === "svg") return ctx.defaultSvgFilename
-    if (format === "idml") return defaultIdmlFilename
-    return defaultPdfFilename
+  const projectPageCount = currentProject.pages.length
+  const activeProjectPageNumber = useMemo(() => {
+    const index = currentProject.pages.findIndex((page) => page.id === currentProject.activePageId)
+    return index >= 0 ? index + 1 : 1
+  }, [currentProject.activePageId, currentProject.pages])
+
+  const normalizedRange = useMemo(() => normalizeProjectExportPageRange(
+    projectPageCount,
+    exportRangeStartDraft,
+    exportRangeEndDraft,
+  ), [exportRangeEndDraft, exportRangeStartDraft, projectPageCount])
+
+  const selectedProjectPages = useMemo(
+    () => currentProject.pages.slice(normalizedRange.startIndex, normalizedRange.endIndex + 1),
+    [currentProject.pages, normalizedRange.endIndex, normalizedRange.startIndex],
+  )
+  const selectedPageCount = selectedProjectPages.length
+  const isMultiPageRange = selectedPageCount > 1
+  const selectedSinglePage = selectedPageCount === 1 ? selectedProjectPages[0] ?? null : null
+
+  const pageRangeOptions = useMemo(() => currentProject.pages.map((page, index) => ({
+    value: String(index + 1),
+    label: `${index + 1}. ${page.name || `Page ${index + 1}`}`,
+  })), [currentProject.pages])
+
+  const singlePageContext = useMemo(() => {
+    if (!selectedSinglePage) return null
+
+    const sourcePath = buildProjectPageSourcePath(
+      selectedSinglePage.name,
+      selectedSinglePage.id,
+      normalizedRange.fromPage,
+    )
+    const uiSettings = resolveProjectPageUiSettings(selectedSinglePage.uiSettings, sourcePath)
+    const ratioOption = CANVAS_RATIO_INDEX.get(uiSettings.canvasRatio) ?? null
+    const fallbackFormat = PREVIEW_DEFAULT_FORMAT_BY_RATIO[uiSettings.canvasRatio]
+    const defaultPaperSize = (
+      typeof uiSettings.exportPaperSize === "string"
+      && ratioOption?.paperSizes.includes(uiSettings.exportPaperSize)
+    )
+      ? uiSettings.exportPaperSize
+      : (ratioOption?.paperSizes.includes(fallbackFormat) ? fallbackFormat : ratioOption?.paperSizes[0] ?? fallbackFormat)
+    const baseDimensions = FORMATS_PT[defaultPaperSize] ?? FORMATS_PT[fallbackFormat]
+    const orientedDimensions = uiSettings.orientation === "landscape"
+      ? { width: baseDimensions.height, height: baseDimensions.width }
+      : { width: baseDimensions.width, height: baseDimensions.height }
+
+    return {
+      pageNumber: normalizedRange.fromPage,
+      page: selectedSinglePage,
+      uiSettings,
+      ratioLabel: ratioOption?.label ?? selectedSinglePage.name ?? `Page ${normalizedRange.fromPage}`,
+      orientation: uiSettings.orientation,
+      rotation: uiSettings.rotation,
+      isDinOrAnsiRatio: uiSettings.canvasRatio === "din_ab" || uiSettings.canvasRatio === "letter_ansi_ab",
+      paperSizeOptions: (ratioOption?.paperSizes ?? [fallbackFormat])
+        .filter((name) => Boolean(FORMATS_PT[name]))
+        .map((name) => {
+          const dims = FORMATS_PT[name]
+          return {
+            value: name,
+            label: `${name} (${formatValue(dims.width, displayUnit)}×${formatValue(dims.height, displayUnit)} ${displayUnit})`,
+          }
+        }),
+      defaultPaperSize,
+      storedWidthPt: orientedDimensions.width,
+      storedHeightPt: orientedDimensions.height,
+    }
+  }, [displayUnit, normalizedRange.fromPage, selectedSinglePage])
+
+  const getOrientedDimensions = useCallback((paperSize: string) => {
+    if (!singlePageContext) {
+      return { width: 0, height: 0 }
+    }
+    const fallbackPaperSize = singlePageContext.defaultPaperSize
+    const base = FORMATS_PT[paperSize] ?? FORMATS_PT[fallbackPaperSize]
+    if (singlePageContext.orientation === "landscape") {
+      return { width: base.height, height: base.width }
+    }
+    return { width: base.width, height: base.height }
+  }, [singlePageContext])
+
+  const getDefaultExportFilename = useCallback((format: ExportFormat, selectedPages: number) => {
+    const base = format === "svg"
+      ? ctx.defaultSvgFilename
+      : format === "idml"
+        ? defaultIdmlFilename
+        : defaultPdfFilename
+    const extension = resolveExportDownloadExtension(format, selectedPages)
+    return base.replace(/\.(pdf|svg|idml|zip)$/i, extension)
   }, [ctx.defaultSvgFilename, defaultIdmlFilename, defaultPdfFilename])
 
-  const updateFilenameForFormat = useCallback((current: string, format: ExportFormat) => {
-    const trimmed = current.trim()
-    const extension = format === "svg" ? ".svg" : format === "idml" ? ".idml" : ".pdf"
-    if (!trimmed) return getDefaultExportFilename(format)
-    if (/\.(pdf|svg|idml)$/i.test(trimmed)) {
-      return trimmed.replace(/\.(pdf|svg|idml)$/i, extension)
-    }
-    return `${trimmed}${extension}`
-  }, [getDefaultExportFilename])
+  const syncExportSizeDrafts = useCallback((range: ProjectExportPageRange) => {
+    const normalized = normalizeProjectExportPageRange(projectPageCount, range.fromPage, range.toPage)
+    if (normalized.endIndex !== normalized.startIndex) return
+    const page = currentProject.pages[normalized.startIndex]
+    if (!page) return
+
+    const sourcePath = buildProjectPageSourcePath(page.name, page.id, normalized.fromPage)
+    const uiSettings = resolveProjectPageUiSettings(page.uiSettings, sourcePath)
+    const ratioOption = CANVAS_RATIO_INDEX.get(uiSettings.canvasRatio) ?? null
+    const fallbackFormat = PREVIEW_DEFAULT_FORMAT_BY_RATIO[uiSettings.canvasRatio]
+    const defaultPaperSize = (
+      typeof uiSettings.exportPaperSize === "string"
+      && ratioOption?.paperSizes.includes(uiSettings.exportPaperSize)
+    )
+      ? uiSettings.exportPaperSize
+      : (ratioOption?.paperSizes.includes(fallbackFormat) ? fallbackFormat : ratioOption?.paperSizes[0] ?? fallbackFormat)
+    const dims = FORMATS_PT[defaultPaperSize] ?? FORMATS_PT[fallbackFormat]
+    const orientedDimensions = uiSettings.orientation === "landscape"
+      ? { width: dims.height, height: dims.width }
+      : { width: dims.width, height: dims.height }
+
+    setExportPaperSizeDraft(defaultPaperSize)
+    setExportWidthDraft(formatValue(orientedDimensions.width, uiSettings.canvasRatio === "din_ab" || uiSettings.canvasRatio === "letter_ansi_ab" ? displayUnit : "mm"))
+  }, [currentProject.pages, displayUnit, projectPageCount])
+
+  const updateFilenameForFormat = useCallback((current: string, format: ExportFormat, selectedPages: number) => (
+    updateFilenameForExport(current, format, selectedPages, getDefaultExportFilename)
+  ), [getDefaultExportFilename])
 
   const saveJSON = useCallback(
     (filename: string, metadata: { title: string; description: string; author: string; createdAt: string }) => {
@@ -292,80 +433,109 @@ export function useExportActions(ctx: ExportActionsContext) {
     saveTitleDraft,
   ])
 
-  const exportPDF = useCallback(
-    async (
-      width: number,
-      height: number,
-      filename: string,
-      printPresetConfig: PrintPresetConfig,
-    ) => {
-      const { default: jsPDF } = await import("jspdf")
-      const { enabled, bleedMm, registrationMarks } = printPresetConfig
-      const { colorMode, outputIntentProfileId } = resolvePdfExportColorManagement({ enabled })
-      const bleedPt = mmToPt(bleedMm)
-      const cropOffsetPt = mmToPt(PRINT_CROP_OFFSET_MM)
-      const cropLengthPt = mmToPt(PRINT_CROP_LENGTH_MM)
-      const cropMarginPt = bleedPt + cropOffsetPt + cropLengthPt
-      const originX = enabled ? cropMarginPt : 0
-      const originY = enabled ? cropMarginPt : 0
-      const pageWidth = enabled ? width + cropMarginPt * 2 : width
-      const pageHeight = enabled ? height + cropMarginPt * 2 : height
+  const downloadBlob = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = filename
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }, [])
 
-      const pdf = new jsPDF({
-        orientation: pageWidth > pageHeight ? "landscape" : "portrait",
-        unit: "pt",
-        format: [pageWidth, pageHeight],
-        compress: true,
-        putOnlyUsedFonts: true,
-        precision: 12,
-        floatPrecision: "smart",
-        userUnit: 1,
-      })
-      const trimmedTitle = projectMetadata.title.trim()
-      const trimmedDescription = projectMetadata.description.trim()
-      const trimmedAuthor = projectMetadata.author.trim()
-      const parsedCreatedAt = projectMetadata.createdAt ? Date.parse(projectMetadata.createdAt) : Number.NaN
-      pdf.setDocumentProperties({
-        title: trimmedTitle || filename,
-        author: trimmedAuthor || "Generated by Swiss Grid Generator",
-        subject: trimmedDescription || "Swiss Grid Vector Export",
-        creator: "Swiss Grid Generator",
-        keywords: "swiss grid, typography, modular grid, vector pdf",
-      })
-      pdf.setCreationDate(Number.isNaN(parsedCreatedAt) ? new Date() : new Date(parsedCreatedAt))
-      pdf.setLanguage("en-US")
-      pdf.viewerPreferences({
-        DisplayDocTitle: true,
-        PrintScaling: "None",
-        PickTrayByPDFSize: true,
-        PrintArea: "TrimBox",
-        PrintClip: "TrimBox",
-        ViewArea: "TrimBox",
-        ViewClip: "TrimBox",
-      })
+  const exportPDF = useCallback(async (
+    pages: ResolvedProjectPageExportSource[],
+    filename: string,
+    printPresetConfig: PrintPresetConfig,
+    singlePageOverride: { width: number; height: number } | null,
+  ) => {
+    if (pages.length === 0) return
 
-      const fontsToRegister = new Set<FontFamily>([baseFont])
-      const blockFonts = previewLayout?.blockFontFamilies
-      if (blockFonts) {
-        for (const family of Object.values(blockFonts)) {
-          if (family) fontsToRegister.add(family)
-        }
+    const { default: jsPDF } = await import("jspdf")
+    const { enabled, bleedMm, registrationMarks } = printPresetConfig
+    const { colorMode, outputIntentProfileId } = resolvePdfExportColorManagement({ enabled })
+    const bleedPt = mmToPt(bleedMm)
+    const cropOffsetPt = mmToPt(PRINT_CROP_OFFSET_MM)
+    const cropLengthPt = mmToPt(PRINT_CROP_LENGTH_MM)
+    const cropMarginPt = bleedPt + cropOffsetPt + cropLengthPt
+    const originX = enabled ? cropMarginPt : 0
+    const originY = enabled ? cropMarginPt : 0
+    const resolveOutputDimensions = (page: ResolvedProjectPageExportSource, pageIndex: number) => {
+      if (singlePageOverride && pageIndex === 0 && pages.length === 1) return singlePageOverride
+      return {
+        width: page.result.pageSizePt.width,
+        height: page.result.pageSizePt.height,
       }
-      await ensurePdfFontsRegistered(pdf, fontsToRegister)
-      await attachPdfOutputIntent(pdf, outputIntentProfileId)
+    }
+    const firstDimensions = resolveOutputDimensions(pages[0], 0)
+    const firstPageWidth = enabled ? firstDimensions.width + cropMarginPt * 2 : firstDimensions.width
+    const firstPageHeight = enabled ? firstDimensions.height + cropMarginPt * 2 : firstDimensions.height
+
+    const pdf = new jsPDF({
+      orientation: firstPageWidth > firstPageHeight ? "landscape" : "portrait",
+      unit: "pt",
+      format: [firstPageWidth, firstPageHeight],
+      compress: true,
+      putOnlyUsedFonts: true,
+      precision: 12,
+      floatPrecision: "smart",
+      userUnit: 1,
+    })
+    const trimmedTitle = projectMetadata.title.trim()
+    const trimmedDescription = projectMetadata.description.trim()
+    const trimmedAuthor = projectMetadata.author.trim()
+    const parsedCreatedAt = projectMetadata.createdAt ? Date.parse(projectMetadata.createdAt) : Number.NaN
+    pdf.setDocumentProperties({
+      title: trimmedTitle || filename,
+      author: trimmedAuthor || "Generated by Swiss Grid Generator",
+      subject: trimmedDescription || "Swiss Grid Vector Export",
+      creator: "Swiss Grid Generator",
+      keywords: "swiss grid, typography, modular grid, vector pdf",
+    })
+    pdf.setCreationDate(Number.isNaN(parsedCreatedAt) ? new Date() : new Date(parsedCreatedAt))
+    pdf.setLanguage("en-US")
+    pdf.viewerPreferences({
+      DisplayDocTitle: true,
+      PrintScaling: "None",
+      PickTrayByPDFSize: true,
+      PrintArea: "TrimBox",
+      PrintClip: "TrimBox",
+      ViewArea: "TrimBox",
+      ViewClip: "TrimBox",
+    })
+
+    const fontsToRegister = new Set<FontFamily>()
+    pages.forEach((page) => {
+      fontsToRegister.add(page.baseFont)
+      const blockFonts = page.previewLayout?.blockFontFamilies
+      if (!blockFonts) return
+      Object.values(blockFonts).forEach((family) => {
+        if (family) fontsToRegister.add(family)
+      })
+    })
+    await ensurePdfFontsRegistered(pdf, fontsToRegister)
+    await attachPdfOutputIntent(pdf, outputIntentProfileId)
+
+    pages.forEach((page, index) => {
+      const dimensions = resolveOutputDimensions(page, index)
+      const pageWidth = enabled ? dimensions.width + cropMarginPt * 2 : dimensions.width
+      const pageHeight = enabled ? dimensions.height + cropMarginPt * 2 : dimensions.height
+
+      if (index > 0) {
+        pdf.addPage([pageWidth, pageHeight], pageWidth > pageHeight ? "landscape" : "portrait")
+      }
 
       renderSwissGridVectorPdf({
         pdf,
-        width,
-        height,
-        result,
-        layout: previewLayout,
-        baseFont,
+        width: dimensions.width,
+        height: dimensions.height,
+        result: page.result,
+        layout: page.previewLayout,
+        baseFont: page.baseFont,
         originX,
         originY,
         colorMode,
-        imageColorScheme,
-        canvasBackground,
+        imageColorScheme: page.imageColorScheme,
+        canvasBackground: page.resolvedCanvasBackground,
         printPro: {
           enabled,
           bleedPt,
@@ -374,134 +544,172 @@ export function useExportActions(ctx: ExportActionsContext) {
           showBleedGuide: enabled,
           registrationMarks,
         },
-        rotation,
-        showBaselines,
-        showModules,
-        showMargins,
-        showImagePlaceholders,
-        showTypography,
+        rotation: page.uiSettings.rotation,
+        showBaselines: page.uiSettings.showBaselines,
+        showModules: page.uiSettings.showModules,
+        showMargins: page.uiSettings.showMargins,
+        showImagePlaceholders: page.uiSettings.showImagePlaceholders,
+        showTypography: page.uiSettings.showTypography,
       })
-      pdf.save(filename)
-    },
-    [
-      baseFont,
-      projectMetadata.author,
-      projectMetadata.createdAt,
-      projectMetadata.description,
-      projectMetadata.title,
-      previewLayout,
-      result,
-      rotation,
-      imageColorScheme,
-      canvasBackground,
-      showBaselines,
-      showMargins,
-      showModules,
-      showImagePlaceholders,
-      showTypography,
-    ],
-  )
+    })
 
-  const exportSVG = useCallback((
-    width: number,
-    height: number,
-    filename: string,
-  ) => {
-    const trimmedTitle = projectMetadata.title.trim()
-    const trimmedDescription = projectMetadata.description.trim()
-    const svg = renderSwissGridVectorSvg({
-      width,
-      height,
-      result,
-      layout: previewLayout,
-      baseFont,
-      imageColorScheme,
-      canvasBackground,
-      rotation,
-      showBaselines,
-      showModules,
-      showMargins,
-      showImagePlaceholders,
-      showTypography,
-      title: trimmedTitle || filename,
-      description: trimmedDescription || "Swiss Grid Vector Export",
-    })
-    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
+    pdf.save(filename)
   }, [
-    baseFont,
-    canvasBackground,
-    imageColorScheme,
-    previewLayout,
-    projectMetadata.description,
-    projectMetadata.title,
-    result,
-    rotation,
-    showBaselines,
-    showImagePlaceholders,
-    showMargins,
-    showModules,
-    showTypography,
-  ])
-
-  const exportIDML = useCallback(async (filename: string) => {
-    const project = parseLoadedProject<Record<string, unknown>>({
-      title: projectMetadata.title,
-      description: projectMetadata.description,
-      author: projectMetadata.author,
-      createdAt: projectMetadata.createdAt,
-      ...buildProjectPayload(),
-    })
-    const bytes = await renderSwissGridIdmlProject(project)
-    const buffer = new ArrayBuffer(bytes.byteLength)
-    new Uint8Array(buffer).set(bytes)
-    const blob = new Blob([buffer], {
-      type: "application/vnd.adobe.indesign-idml-package",
-    })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement("a")
-    anchor.href = url
-    anchor.download = filename
-    anchor.click()
-    URL.revokeObjectURL(url)
-  }, [
-    buildProjectPayload,
     projectMetadata.author,
     projectMetadata.createdAt,
     projectMetadata.description,
     projectMetadata.title,
   ])
 
+  const exportSVG = useCallback(async (
+    pages: ResolvedProjectPageExportSource[],
+    filename: string,
+    singlePageOverride: { width: number; height: number } | null,
+    startPageNumber: number,
+  ) => {
+    if (pages.length === 0) return
+
+    const trimmedTitle = projectMetadata.title.trim()
+    const trimmedDescription = projectMetadata.description.trim()
+
+    if (pages.length === 1) {
+      const page = pages[0]
+      const width = singlePageOverride?.width ?? page.result.pageSizePt.width
+      const height = singlePageOverride?.height ?? page.result.pageSizePt.height
+      const svg = renderSwissGridVectorSvg({
+        width,
+        height,
+        result: page.result,
+        layout: page.previewLayout,
+        baseFont: page.baseFont,
+        imageColorScheme: page.imageColorScheme,
+        canvasBackground: page.resolvedCanvasBackground,
+        rotation: page.uiSettings.rotation,
+        showBaselines: page.uiSettings.showBaselines,
+        showModules: page.uiSettings.showModules,
+        showMargins: page.uiSettings.showMargins,
+        showImagePlaceholders: page.uiSettings.showImagePlaceholders,
+        showTypography: page.uiSettings.showTypography,
+        title: trimmedTitle || filename,
+        description: trimmedDescription || "Swiss Grid Vector Export",
+      })
+      downloadBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), filename)
+      return
+    }
+
+    const { strToU8, zipSync } = await import("fflate")
+    const zipEntries: Record<string, Uint8Array> = {}
+    const archiveBaseName = filename.replace(/\.(pdf|svg|idml|zip)$/i, "")
+    const normalizedArchiveBaseName = normalizeFilenameSegment(archiveBaseName)
+
+    pages.forEach((page, index) => {
+      const pageNumber = startPageNumber + index
+      const pageSlug = normalizeFilenameSegment(page.name || `page-${pageNumber}`)
+      const pageFilename = `${normalizedArchiveBaseName}_page_${String(pageNumber).padStart(3, "0")}_${pageSlug}.svg`
+      const svg = renderSwissGridVectorSvg({
+        width: page.result.pageSizePt.width,
+        height: page.result.pageSizePt.height,
+        result: page.result,
+        layout: page.previewLayout,
+        baseFont: page.baseFont,
+        imageColorScheme: page.imageColorScheme,
+        canvasBackground: page.resolvedCanvasBackground,
+        rotation: page.uiSettings.rotation,
+        showBaselines: page.uiSettings.showBaselines,
+        showModules: page.uiSettings.showModules,
+        showMargins: page.uiSettings.showMargins,
+        showImagePlaceholders: page.uiSettings.showImagePlaceholders,
+        showTypography: page.uiSettings.showTypography,
+        title: trimmedTitle ? `${trimmedTitle} - Page ${pageNumber}` : `${archiveBaseName} - Page ${pageNumber}`,
+        description: trimmedDescription || `Swiss Grid Vector Export - Page ${pageNumber}`,
+      })
+      zipEntries[pageFilename] = strToU8(svg)
+    })
+
+    const zipBytes = zipSync(zipEntries)
+    const zipBuffer = new ArrayBuffer(zipBytes.byteLength)
+    new Uint8Array(zipBuffer).set(zipBytes)
+    downloadBlob(new Blob([zipBuffer], { type: "application/zip" }), filename)
+  }, [
+    downloadBlob,
+    projectMetadata.description,
+    projectMetadata.title,
+  ])
+
+  const exportIDML = useCallback(async (
+    project: LoadedProject<Record<string, unknown>>,
+    filename: string,
+  ) => {
+    const bytes = await renderSwissGridIdmlProject(project)
+    const buffer = new ArrayBuffer(bytes.byteLength)
+    new Uint8Array(buffer).set(bytes)
+    downloadBlob(new Blob([buffer], {
+      type: "application/vnd.adobe.indesign-idml-package",
+    }), filename)
+  }, [downloadBlob])
+
   const openExportDialog = useCallback(() => {
-    const dims = getOrientedDimensions(exportPaperSize)
-    setExportPaperSizeDraft(exportPaperSize)
+    const defaultRange = exportFormatDraft === "idml" && projectPageCount > 1
+      ? { fromPage: 1, toPage: projectPageCount }
+      : { fromPage: activeProjectPageNumber, toPage: activeProjectPageNumber }
+
+    setExportRangeStartDraft(defaultRange.fromPage)
+    setExportRangeEndDraft(defaultRange.toPage)
+    syncExportSizeDrafts(defaultRange)
     setPrintPresetEnabledDraft(persistedPrintPresetEnabled)
     setExportBleedMmDraft(String(exportBleedMm))
     setExportRegistrationMarksDraft(exportRegistrationMarks)
-    setExportFilenameDraft(getDefaultExportFilename(exportFormatDraft))
-    setExportWidthDraft(formatValue(dims.width, isDinOrAnsiRatio ? displayUnit : "mm"))
+    setExportFilenameDraft(getDefaultExportFilename(
+      exportFormatDraft,
+      defaultRange.toPage - defaultRange.fromPage + 1,
+    ))
     setIsExportDialogOpen(true)
   }, [
-    displayUnit,
+    activeProjectPageNumber,
     exportBleedMm,
     exportFormatDraft,
-    exportPaperSize,
-    persistedPrintPresetEnabled,
     exportRegistrationMarks,
     getDefaultExportFilename,
-    getOrientedDimensions,
-    isDinOrAnsiRatio,
+    persistedPrintPresetEnabled,
+    projectPageCount,
+    syncExportSizeDrafts,
   ])
 
   const handleExportFormatChange = useCallback((format: ExportFormat) => {
     setExportFormatDraft(format)
-    setExportFilenameDraft((current) => updateFilenameForFormat(current, format))
-  }, [updateFilenameForFormat])
+    setExportFilenameDraft((current) => updateFilenameForFormat(current, format, selectedPageCount))
+  }, [selectedPageCount, updateFilenameForFormat])
+
+  const applyExportRange = useCallback((nextRange: ProjectExportPageRange) => {
+    const normalized = normalizeProjectExportPageRange(projectPageCount, nextRange.fromPage, nextRange.toPage)
+    setExportRangeStartDraft(normalized.fromPage)
+    setExportRangeEndDraft(normalized.toPage)
+    syncExportSizeDrafts({
+      fromPage: normalized.fromPage,
+      toPage: normalized.toPage,
+    })
+    setExportFilenameDraft((current) => updateFilenameForFormat(
+      current,
+      exportFormatDraft,
+      normalized.toPage - normalized.fromPage + 1,
+    ))
+  }, [exportFormatDraft, projectPageCount, syncExportSizeDrafts, updateFilenameForFormat])
+
+  const handleExportRangeStartChange = useCallback((value: string) => {
+    const nextStart = Number(value)
+    applyExportRange({
+      fromPage: nextStart,
+      toPage: Math.max(nextStart, exportRangeEndDraft),
+    })
+  }, [applyExportRange, exportRangeEndDraft])
+
+  const handleExportRangeEndChange = useCallback((value: string) => {
+    const nextEnd = Number(value)
+    applyExportRange({
+      fromPage: Math.min(exportRangeStartDraft, nextEnd),
+      toPage: nextEnd,
+    })
+  }, [applyExportRange, exportRangeStartDraft])
 
   const applyPrintPresetConfig = useCallback((config: PrintPresetConfig) => {
     setPrintPresetEnabledDraft(config.enabled)
@@ -518,61 +726,94 @@ export function useExportActions(ctx: ExportActionsContext) {
   const confirmExport = useCallback(async () => {
     const trimmedName = exportFilenameDraft.trim()
     if (!trimmedName) return
-    const extension = exportFormatDraft === "svg"
-      ? ".svg"
-      : exportFormatDraft === "idml"
-        ? ".idml"
-        : ".pdf"
-    const filename = trimmedName.toLowerCase().endsWith(extension) ? trimmedName : `${trimmedName}${extension}`
+    if (selectedPageCount === 0) return
+
+    const filename = updateFilenameForExport(
+      trimmedName,
+      exportFormatDraft,
+      selectedPageCount,
+      getDefaultExportFilename,
+    )
+    const selectedRange = {
+      fromPage: normalizedRange.fromPage,
+      toPage: normalizedRange.toPage,
+    } satisfies ProjectExportPageRange
+    const selectedProject = filterProjectByExportRange(currentProject, selectedRange)
+    const resolvedPages = buildResolvedProjectPageExportSources(currentProject, selectedRange)
+    const parsedBleed = Number(exportBleedMmDraft)
+    const bleedMm = Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : exportBleedMm
+    const shouldPersistActivePageExportSettings = (
+      selectedPageCount === 1
+      && selectedSinglePage?.id === currentProject.activePageId
+    )
+    const singlePageOverride = selectedPageCount === 1 && singlePageContext
+      ? (() => {
+          const baseDims = getOrientedDimensions(exportPaperSizeDraft)
+          const safeBaseWidth = Math.max(baseDims.width, 0.0001)
+          const aspectRatio = baseDims.height / safeBaseWidth
+          const parsedWidth = Number(exportWidthDraft)
+          const width = singlePageContext.isDinOrAnsiRatio
+            ? baseDims.width
+            : Number.isFinite(parsedWidth) && parsedWidth > 0
+              ? mmToPt(parsedWidth)
+              : baseDims.width
+          return {
+            width,
+            height: width * aspectRatio,
+          }
+        })()
+      : null
+
     if (exportFormatDraft === "idml") {
-      await exportIDML(filename)
+      await exportIDML(selectedProject, filename)
       setIsExportDialogOpen(false)
       return
     }
-    const baseDims = getOrientedDimensions(exportPaperSizeDraft)
-    const aspectRatio = baseDims.height / baseDims.width
-    const parsedWidth = Number(exportWidthDraft)
-    const parsedBleed = Number(exportBleedMmDraft)
-    const bleedMm =
-      Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : exportBleedMm
-    const width = isDinOrAnsiRatio
-      ? baseDims.width
-      : Number.isFinite(parsedWidth) && parsedWidth > 0
-        ? mmToPt(parsedWidth)
-        : baseDims.width
-    const height = width * aspectRatio
-    setExportPaperSize(exportPaperSizeDraft)
+
+    if (shouldPersistActivePageExportSettings) {
+      setExportPaperSize(exportPaperSizeDraft)
+    }
+
     if (exportFormatDraft === "pdf") {
-      setPersistedPrintPresetEnabled(printPresetEnabledDraft)
-      setExportBleedMm(bleedMm)
-      setExportRegistrationMarks(exportRegistrationMarksDraft)
-      await exportPDF(width, height, filename, {
+      if (shouldPersistActivePageExportSettings) {
+        setPersistedPrintPresetEnabled(printPresetEnabledDraft)
+        setExportBleedMm(bleedMm)
+        setExportRegistrationMarks(exportRegistrationMarksDraft)
+      }
+      await exportPDF(resolvedPages, filename, {
         enabled: printPresetEnabledDraft,
         bleedMm,
         registrationMarks: exportRegistrationMarksDraft,
-      })
+      }, singlePageOverride)
     } else {
-      exportSVG(width, height, filename)
+      await exportSVG(resolvedPages, filename, singlePageOverride, normalizedRange.fromPage)
     }
+
     setIsExportDialogOpen(false)
   }, [
+    currentProject,
     exportBleedMm,
     exportBleedMmDraft,
     exportFormatDraft,
     exportFilenameDraft,
     exportPaperSizeDraft,
-    printPresetEnabledDraft,
     exportRegistrationMarksDraft,
     exportWidthDraft,
-    exportPDF,
     exportIDML,
+    exportPDF,
     exportSVG,
+    getDefaultExportFilename,
     getOrientedDimensions,
-    isDinOrAnsiRatio,
+    normalizedRange.fromPage,
+    normalizedRange.toPage,
+    printPresetEnabledDraft,
+    selectedPageCount,
+    selectedSinglePage?.id,
     setExportBleedMm,
     setExportPaperSize,
     setPersistedPrintPresetEnabled,
     setExportRegistrationMarks,
+    singlePageContext,
   ])
 
   const parsedDraftBleed = Number(exportBleedMmDraft)
@@ -582,6 +823,14 @@ export function useExportActions(ctx: ExportActionsContext) {
     bleedMm: resolvedDraftBleedMm,
     registrationMarks: exportRegistrationMarksDraft,
   })
+
+  useEffect(() => {
+    if (!isExportDialogOpen) return
+    const next = normalizeProjectExportPageRange(projectPageCount, exportRangeStartDraft, exportRangeEndDraft)
+    if (next.fromPage === exportRangeStartDraft && next.toPage === exportRangeEndDraft) return
+    setExportRangeStartDraft(next.fromPage)
+    setExportRangeEndDraft(next.toPage)
+  }, [exportRangeEndDraft, exportRangeStartDraft, isExportDialogOpen, projectPageCount])
 
   // Close export dialog on Escape
   useEffect(() => {
@@ -619,6 +868,18 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportFilenameDraft,
     exportPaperSizeDraft,
     setExportPaperSizeDraft,
+    exportRangeStartDraft,
+    setExportRangeStartDraft: handleExportRangeStartChange,
+    exportRangeEndDraft,
+    setExportRangeEndDraft: handleExportRangeEndChange,
+    pageRangeOptions,
+    selectedPageCount,
+    ratioLabel: singlePageContext?.ratioLabel ?? `${normalizedRange.fromPage}-${normalizedRange.toPage}`,
+    orientation: singlePageContext?.orientation ?? "per-page",
+    rotation: singlePageContext?.rotation ?? 0,
+    isDinOrAnsiRatio: !isMultiPageRange && Boolean(singlePageContext?.isDinOrAnsiRatio),
+    paperSizeOptions: singlePageContext?.paperSizeOptions ?? [],
+    usesStoredPageSizes: isMultiPageRange,
     activePrintPresetDraft,
     showPrintAdjustmentsDraft: printPresetEnabledDraft,
     exportBleedMmDraft,
@@ -630,7 +891,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     openExportDialog,
     applyPrintPreset,
     confirmExport,
-    defaultExportFilename: getDefaultExportFilename(exportFormatDraft),
+    defaultExportFilename: getDefaultExportFilename(exportFormatDraft, selectedPageCount),
     getOrientedDimensions,
   }
 }

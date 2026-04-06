@@ -1,4 +1,4 @@
-import type { ProjectPage } from "@/lib/document-session"
+import type { LoadedProject, ProjectPage } from "@/lib/document-session"
 import { clampRotation } from "@/lib/block-constraints"
 import {
   DEFAULT_IMAGE_COLOR_SCHEME_ID,
@@ -78,6 +78,16 @@ export type ResolvedProjectPageExportSource = {
   resolvedCanvasBackground: string | null
 }
 
+export type ProjectExportPageRange = {
+  fromPage: number
+  toPage: number
+}
+
+export type NormalizedProjectExportPageRange = ProjectExportPageRange & {
+  startIndex: number
+  endIndex: number
+}
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null
 )
@@ -125,6 +135,55 @@ function resolveBooleanSetting(value: unknown, fallback: boolean): boolean {
 function resolveNonNegativeNumber(value: unknown, fallback: number): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return fallback
   return value
+}
+
+function clampPageNumber(value: number, pageCount: number): number {
+  if (!Number.isFinite(value)) return 1
+  if (pageCount <= 0) return 1
+  return Math.min(pageCount, Math.max(1, Math.round(value)))
+}
+
+export function normalizeProjectExportPageRange(
+  pageCount: number,
+  fromPage: number,
+  toPage: number,
+): NormalizedProjectExportPageRange {
+  const normalizedFrom = clampPageNumber(fromPage, pageCount)
+  const normalizedTo = clampPageNumber(toPage, pageCount)
+  const startIndex = Math.min(normalizedFrom, normalizedTo) - 1
+  const endIndex = Math.max(normalizedFrom, normalizedTo) - 1
+
+  return {
+    fromPage: startIndex + 1,
+    toPage: endIndex + 1,
+    startIndex,
+    endIndex,
+  }
+}
+
+export function sliceProjectPagesForExportRange<Layout>(
+  project: LoadedProject<Layout>,
+  range: ProjectExportPageRange,
+): ProjectPage<Layout>[] {
+  if (project.pages.length === 0) return []
+  const normalized = normalizeProjectExportPageRange(project.pages.length, range.fromPage, range.toPage)
+  return project.pages.slice(normalized.startIndex, normalized.endIndex + 1)
+}
+
+export function filterProjectByExportRange<Layout>(
+  project: LoadedProject<Layout>,
+  range: ProjectExportPageRange,
+): LoadedProject<Layout> {
+  const pages = sliceProjectPagesForExportRange(project, range)
+  if (pages.length === 0) return project
+
+  return {
+    ...project,
+    activePageId: pages.some((page) => page.id === project.activePageId)
+      ? project.activePageId
+      : pages[0].id,
+    pages,
+  }
 }
 
 export function resolveProjectPageUiSettings(
@@ -299,4 +358,16 @@ export function buildResolvedProjectPageExportSource(
       ? resolveImageSchemeColor(uiSettings.canvasBackground, imageColorScheme)
       : null,
   }
+}
+
+export function buildResolvedProjectPageExportSources(
+  project: LoadedProject<Record<string, unknown>>,
+  range: ProjectExportPageRange,
+): ResolvedProjectPageExportSource[] {
+  const normalizedRange = normalizeProjectExportPageRange(project.pages.length, range.fromPage, range.toPage)
+  return sliceProjectPagesForExportRange(project, range).map((page, index) => {
+    const pageNumber = normalizedRange.startIndex + index + 1
+    const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
+    return buildResolvedProjectPageExportSource(page, sourcePath)
+  })
 }

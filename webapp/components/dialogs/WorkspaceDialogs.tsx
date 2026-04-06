@@ -21,12 +21,22 @@ type Props = {
   orientation: "portrait" | "landscape"
   rotation: number
   isDarkUi: boolean
-  isDinOrAnsiRatio: boolean
   displayUnit: DisplayUnit
   onDisplayUnitChange: (unit: DisplayUnit) => void
   exportDialog: {
     isOpen: boolean
     onClose: () => void
+    selectedPageCount: number
+    ratioLabel: string
+    orientation: string
+    rotation: number
+    isDinOrAnsiRatio: boolean
+    usesStoredPageSizes: boolean
+    pageRangeOptions: PaperSizeOption[]
+    rangeStart: number
+    onRangeStartChange: (value: string) => void
+    rangeEnd: number
+    onRangeEndChange: (value: string) => void
     paperSize: string
     onPaperSizeChange: (value: string) => void
     paperSizeOptions: PaperSizeOption[]
@@ -70,7 +80,6 @@ export function WorkspaceDialogs({
   orientation,
   rotation,
   isDarkUi,
-  isDinOrAnsiRatio,
   displayUnit,
   onDisplayUnitChange,
   exportDialog,
@@ -84,10 +93,17 @@ export function WorkspaceDialogs({
         isOpen={exportDialog.isOpen}
         onClose={exportDialog.onClose}
         isDarkUi={isDarkUi}
-        ratioLabel={ratioLabel}
-        orientation={orientation}
-        rotation={rotation}
-        isDinOrAnsiRatio={isDinOrAnsiRatio}
+        selectedPageCount={exportDialog.selectedPageCount}
+        ratioLabel={exportDialog.ratioLabel}
+        orientation={exportDialog.orientation}
+        rotation={exportDialog.rotation}
+        isDinOrAnsiRatio={exportDialog.isDinOrAnsiRatio}
+        usesStoredPageSizes={exportDialog.usesStoredPageSizes}
+        pageRangeOptions={exportDialog.pageRangeOptions}
+        exportRangeStartDraft={exportDialog.rangeStart}
+        onExportRangeStartChange={exportDialog.onRangeStartChange}
+        exportRangeEndDraft={exportDialog.rangeEnd}
+        onExportRangeEndChange={exportDialog.onRangeEndChange}
         displayUnit={displayUnit}
         onDisplayUnitChange={onDisplayUnitChange}
         exportPaperSizeDraft={exportDialog.paperSize}

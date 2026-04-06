@@ -61,6 +61,20 @@ test("idml builder places spread items in page coordinates with an explicit page
   assert.match(source, /renderRectPathGeometry\(0,\s*0,\s*pageWidth,\s*pageHeight\)/)
 })
 
+test("idml designmap declares spreads before section metadata to avoid a synthetic lead page", () => {
+  const source = readText("lib/idml/builder.ts")
+  assert.match(
+    source,
+    /\.\.\.spreads\.map\(\(spread\)\s*=>\s*renderIdmlElement\("idPkg:Spread",\s*\{\s*src:\s*spread\.filePath\s*\}\)\),[\s\S]*renderIdmlElement\(\s*"Section"/,
+  )
+})
+
+test("idml preferences do not predeclare document pages when spreads already define the export range", () => {
+  const source = readText("lib/idml/builder.ts")
+  assert.doesNotMatch(source, /PagesPerDocument:/)
+  assert.match(source, /FacingPages:\s*false/)
+})
+
 test("idml styles include paragraph families plus per-block character styles for frozen text geometry", () => {
   const source = readText("lib/idml/builder.ts")
   assert.match(source, /buildParagraphStyleKeys\(/)

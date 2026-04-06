@@ -12,10 +12,17 @@ type Props = {
   onClose: () => void
   isDarkUi: boolean
   // Info
+  selectedPageCount: number
   ratioLabel: string
   orientation: string
   rotation: number
   isDinOrAnsiRatio: boolean
+  usesStoredPageSizes: boolean
+  pageRangeOptions: Array<{ value: string; label: string }>
+  exportRangeStartDraft: number
+  onExportRangeStartChange: (value: string) => void
+  exportRangeEndDraft: number
+  onExportRangeEndChange: (value: string) => void
   // Paper size (DIN/ANSI)
   displayUnit: "pt" | "mm" | "px"
   onDisplayUnitChange: (unit: "pt" | "mm" | "px") => void
@@ -47,10 +54,17 @@ export function ExportPdfDialog({
   isOpen,
   onClose,
   isDarkUi,
+  selectedPageCount,
   ratioLabel,
   orientation,
   rotation,
   isDinOrAnsiRatio,
+  usesStoredPageSizes,
+  pageRangeOptions,
+  exportRangeStartDraft,
+  onExportRangeStartChange,
+  exportRangeEndDraft,
+  onExportRangeEndChange,
   displayUnit,
   onDisplayUnitChange,
   exportPaperSizeDraft,
@@ -82,6 +96,11 @@ export function ExportPdfDialog({
   const isPdfExport = exportFormatDraft === "pdf"
   const isSvgExport = exportFormatDraft === "svg"
   const isIdmlExport = exportFormatDraft === "idml"
+  const isSinglePageSelection = selectedPageCount === 1
+  const showPageSizeControls = !isIdmlExport && isSinglePageSelection
+  const pageSummary = isSinglePageSelection
+    ? `Page ${exportRangeStartDraft} | Ratio: ${ratioLabel} | Orientation: ${orientation} | Rotation: ${rotation}°`
+    : `Pages ${exportRangeStartDraft}-${exportRangeEndDraft} | Stored size per page`
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 md:items-center">
@@ -93,7 +112,7 @@ export function ExportPdfDialog({
       >
         <h3 className="text-base font-semibold">Export</h3>
         <p className={helpTextClassName}>
-          Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
+          {pageSummary}
         </p>
         <div className="space-y-2">
           <Label>Format</Label>
@@ -127,13 +146,56 @@ export function ExportPdfDialog({
             </Button>
           </div>
         </div>
+        {pageRangeOptions.length > 1 && (
+          <div className="space-y-2">
+            <Label>Pages</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">From</Label>
+                <Select
+                  value={String(exportRangeStartDraft)}
+                  onValueChange={onExportRangeStartChange}
+                >
+                  <SelectTrigger aria-label="Export from page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={dialogThemeClassName}>
+                    {pageRangeOptions.map((option) => (
+                      <SelectItem key={`from-${option.value}`} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">To</Label>
+                <Select
+                  value={String(exportRangeEndDraft)}
+                  onValueChange={onExportRangeEndChange}
+                >
+                  <SelectTrigger aria-label="Export to page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={dialogThemeClassName}>
+                    {pageRangeOptions.map((option) => (
+                      <SelectItem key={`to-${option.value}`} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
         {isIdmlExport && (
           <p className={helpTextClassName}>
-            IDML v1 exports the full project. Each page keeps its stored size, margins, bleed, guides, placeholders,
-            and frozen text geometry for InDesign continuation.
+            IDML v1 exports the selected page range. Each page keeps its stored size, margins, bleed, guides,
+            placeholders, and frozen text geometry for InDesign continuation.
           </p>
         )}
-        {!isIdmlExport && isDinOrAnsiRatio && (
+        {showPageSizeControls && isDinOrAnsiRatio && (
           <div className="space-y-2">
             <Label>Units / Paper Size</Label>
             <div className="grid grid-cols-[116px_minmax(0,1fr)] gap-2">
@@ -176,7 +238,7 @@ export function ExportPdfDialog({
             </div>
           </div>
         )}
-        {!isIdmlExport && !isDinOrAnsiRatio && (
+        {showPageSizeControls && !isDinOrAnsiRatio && (
           <div className="space-y-2">
             <Label>Width (mm)</Label>
             <input
@@ -189,9 +251,14 @@ export function ExportPdfDialog({
             />
           </div>
         )}
-        {!isIdmlExport && (
+        {showPageSizeControls && (
           <p className={helpTextClassName}>
             Height will follow the selected aspect ratio automatically.
+          </p>
+        )}
+        {!isIdmlExport && usesStoredPageSizes && (
+          <p className={helpTextClassName}>
+            Multi-page PDF and SVG exports keep each selected page at its stored document size.
           </p>
         )}
         <div className="space-y-2">
@@ -251,12 +318,14 @@ export function ExportPdfDialog({
           </>
         ) : isSvgExport ? (
           <p className={helpTextClassName}>
-            SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied.
+            {usesStoredPageSizes
+              ? "SVG v1 exports a ZIP with one trim-sized live-text SVG per selected page. PDF print presets are not applied."
+              : "SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied."}
           </p>
         ) : (
           <p className={helpTextClassName}>
-            IDML v1 exports the entire project as an InDesign package with separate guides, typography, and placeholder
-            layers.
+            IDML v1 exports the selected project page range as an InDesign package with separate guides, typography,
+            and placeholder layers.
           </p>
         )}
         <div className="flex items-center justify-end gap-2">
