@@ -225,15 +225,14 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ### Export popup
 
 - Format buttons: `PDF`, `SVG`, `IDML`
-- DIN/ANSI ratios for `PDF` and `SVG`:
-  - `Units / Paper Size` row with unit dropdown (`pt`, `mm`, `px`) and filtered paper-size dropdown
-- Non-DIN/ANSI ratios for `PDF` and `SVG`:
-  - Width input in `mm`
-  - Height is derived automatically from aspect ratio
+- `Pages` range controls (`From`, `To`) appear for multipage projects
+  - default selection is the full project page range
+- All export formats use each page's stored document size
+  - no paper-size override controls
+  - no custom width override controls
 - `IDML`:
-  - exports the full project
+  - exports the selected page range
   - keeps each page at its stored document size
-  - does not expose paper-size overrides in the popup
 - Filename input
 - `PDF` print presets:
   - `Digital Print` (default)
@@ -347,9 +346,9 @@ Behavior:
 ## Export Format Notes
 
 - JSON: full UI + preview layout state.
-- PDF: vector active-page output with `Digital Print` and `Press Proof` presets, embedded output intents, and grouped guide vectors.
-- SVG: trim-size active-page vector output with live text, guides, and placeholders.
-- IDML: full-project export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers.
+- PDF: vector selected-range output with `Digital Print` and `Press Proof` presets, embedded output intents, grouped guide vectors, and stored page geometry per exported page.
+- SVG: single-page trim-size vector output with live text, guides, and placeholders, or a ZIP with one SVG per selected page for multi-page ranges.
+- IDML: selected-range export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers.
 
 ## JSON UI Fields (current)
 

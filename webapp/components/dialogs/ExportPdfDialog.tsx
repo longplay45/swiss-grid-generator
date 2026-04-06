@@ -4,37 +4,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { EXPORT_DIALOG_PRINT_PRESETS } from "@/hooks/useExportActions"
 import type { ExportFormat, PrintPresetKey } from "@/hooks/useExportActions"
-import { formatValue } from "@/lib/units"
 import { cn } from "@/lib/utils"
 
 type Props = {
   isOpen: boolean
   onClose: () => void
   isDarkUi: boolean
-  // Info
   selectedPageCount: number
-  ratioLabel: string
-  orientation: string
-  rotation: number
-  isDinOrAnsiRatio: boolean
-  usesStoredPageSizes: boolean
   pageRangeOptions: Array<{ value: string; label: string }>
   exportRangeStartDraft: number
   onExportRangeStartChange: (value: string) => void
   exportRangeEndDraft: number
   onExportRangeEndChange: (value: string) => void
-  // Paper size (DIN/ANSI)
-  displayUnit: "pt" | "mm" | "px"
-  onDisplayUnitChange: (unit: "pt" | "mm" | "px") => void
-  exportPaperSizeDraft: string
-  onExportPaperSizeChange: (value: string) => void
-  paperSizeOptions: Array<{ value: string; label: string }>
-  // Custom width (non-DIN/ANSI)
-  exportWidthDraft: string
-  onExportWidthChange: (value: string) => void
   exportFormatDraft: ExportFormat
   onExportFormatChange: (value: ExportFormat) => void
-  // Filename
   exportFilenameDraft: string
   onExportFilenameChange: (value: string) => void
   defaultFilename: string
@@ -45,9 +28,7 @@ type Props = {
   onExportBleedMmChange: (value: string) => void
   exportRegistrationMarksDraft: boolean
   onExportRegistrationMarksChange: (value: boolean) => void
-  // Actions
   onConfirm: () => void
-  getOrientedDimensions: (paperSize: string) => { width: number; height: number }
 }
 
 export function ExportPdfDialog({
@@ -55,23 +36,11 @@ export function ExportPdfDialog({
   onClose,
   isDarkUi,
   selectedPageCount,
-  ratioLabel,
-  orientation,
-  rotation,
-  isDinOrAnsiRatio,
-  usesStoredPageSizes,
   pageRangeOptions,
   exportRangeStartDraft,
   onExportRangeStartChange,
   exportRangeEndDraft,
   onExportRangeEndChange,
-  displayUnit,
-  onDisplayUnitChange,
-  exportPaperSizeDraft,
-  onExportPaperSizeChange,
-  paperSizeOptions,
-  exportWidthDraft,
-  onExportWidthChange,
   exportFormatDraft,
   onExportFormatChange,
   exportFilenameDraft,
@@ -85,7 +54,6 @@ export function ExportPdfDialog({
   exportRegistrationMarksDraft,
   onExportRegistrationMarksChange,
   onConfirm,
-  getOrientedDimensions,
 }: Props) {
   if (!isOpen) return null
 
@@ -96,11 +64,7 @@ export function ExportPdfDialog({
   const isPdfExport = exportFormatDraft === "pdf"
   const isSvgExport = exportFormatDraft === "svg"
   const isIdmlExport = exportFormatDraft === "idml"
-  const isSinglePageSelection = selectedPageCount === 1
-  const showPageSizeControls = !isIdmlExport && isSinglePageSelection
-  const pageSummary = isSinglePageSelection
-    ? `Page ${exportRangeStartDraft} | Ratio: ${ratioLabel} | Orientation: ${orientation} | Rotation: ${rotation}°`
-    : `Pages ${exportRangeStartDraft}-${exportRangeEndDraft} | Stored size per page`
+  const isMultiPageSelection = selectedPageCount > 1
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 md:items-center">
@@ -111,9 +75,6 @@ export function ExportPdfDialog({
         )}
       >
         <h3 className="text-base font-semibold">Export</h3>
-        <p className={helpTextClassName}>
-          {pageSummary}
-        </p>
         <div className="space-y-2">
           <Label>Format</Label>
           <div className="grid grid-cols-3 gap-2">
@@ -195,68 +156,7 @@ export function ExportPdfDialog({
             placeholders, and frozen text geometry for InDesign continuation.
           </p>
         )}
-        {showPageSizeControls && isDinOrAnsiRatio && (
-          <div className="space-y-2">
-            <Label>Units / Paper Size</Label>
-            <div className="grid grid-cols-[116px_minmax(0,1fr)] gap-2">
-              <Select
-                value={displayUnit}
-                onValueChange={(nextUnit: "pt" | "mm" | "px") => {
-                  const dims = getOrientedDimensions(exportPaperSizeDraft)
-                  onDisplayUnitChange(nextUnit)
-                  onExportWidthChange(formatValue(dims.width, nextUnit))
-                }}
-              >
-                <SelectTrigger aria-label="Export units">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={dialogThemeClassName}>
-                  <SelectItem value="mm">mm</SelectItem>
-                  <SelectItem value="pt">pt</SelectItem>
-                  <SelectItem value="px">px</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={exportPaperSizeDraft}
-                onValueChange={(value) => {
-                  onExportPaperSizeChange(value)
-                  const dims = getOrientedDimensions(value)
-                  onExportWidthChange(formatValue(dims.width, displayUnit))
-                }}
-              >
-                <SelectTrigger aria-label="Export paper size">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={dialogThemeClassName}>
-                  {paperSizeOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-        {showPageSizeControls && !isDinOrAnsiRatio && (
-          <div className="space-y-2">
-            <Label>Width (mm)</Label>
-            <input
-              type="number"
-              min={1}
-              step="0.001"
-              value={exportWidthDraft}
-              onChange={(event) => onExportWidthChange(event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-        )}
-        {showPageSizeControls && (
-          <p className={helpTextClassName}>
-            Height will follow the selected aspect ratio automatically.
-          </p>
-        )}
-        {!isIdmlExport && usesStoredPageSizes && (
+        {!isIdmlExport && isMultiPageSelection && (
           <p className={helpTextClassName}>
             Multi-page PDF and SVG exports keep each selected page at its stored document size.
           </p>
@@ -318,7 +218,7 @@ export function ExportPdfDialog({
           </>
         ) : isSvgExport ? (
           <p className={helpTextClassName}>
-            {usesStoredPageSizes
+            {isMultiPageSelection
               ? "SVG v1 exports a ZIP with one trim-sized live-text SVG per selected page. PDF print presets are not applied."
               : "SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied."}
           </p>

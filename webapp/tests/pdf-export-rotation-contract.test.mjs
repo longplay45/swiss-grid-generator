@@ -164,15 +164,16 @@ test("export dialog relies on print presets instead of a separate print-pro swit
   assert.doesNotMatch(source, /onExportPrintProChange/)
 })
 
-test("export dialog groups units and paper size in one dark-mode-safe section", () => {
+test("export dialog stays dark-mode-safe after removing size override controls", () => {
   const source = readText("components/dialogs/ExportPdfDialog.tsx")
   assert.match(source, /isDarkUi:\s*boolean/)
-  assert.match(source, /Label>Units \/ Paper Size<\/Label>/)
   assert.match(source, /const\s+dialogThemeClassName\s*=\s*isDarkUi\s*\?\s*"dark"\s*:\s*undefined/)
-  assert.match(source, /grid-cols-\[116px_minmax\(0,1fr\)\]/)
   assert.match(source, /SelectContent className=\{dialogThemeClassName\}/)
   assert.match(source, /bg-background/)
   assert.match(source, /text-muted-foreground/)
+  assert.doesNotMatch(source, /Units \/ Paper Size/)
+  assert.doesNotMatch(source, /Width \(mm\)/)
+  assert.doesNotMatch(source, /Height will follow the selected aspect ratio automatically\./)
 })
 
 test("default export preset stays on digital print in code defaults and no longer depends on the bundled preset JSON", () => {

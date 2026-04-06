@@ -12,7 +12,6 @@ import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
 import { ControlSidebar } from "@/components/layout/ControlSidebar"
 import { SettingsSidebarPanels } from "@/components/layout/SettingsSidebarPanels"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { formatValue } from "@/lib/units"
 import { SECTION_KEYS } from "@/hooks/useSettingsHistory"
 import type { UiSettingsSnapshot, SectionKey } from "@/hooks/useSettingsHistory"
 import { useExportActions } from "@/hooks/useExportActions"
@@ -104,11 +103,11 @@ export default function Home() {
     setGridReductionWarningToast(null)
   }, [])
   const {
-    canvasRatio, exportPaperSize, exportPrintPro, exportBleedMm,
+    canvasRatio, exportPrintPro, exportBleedMm,
     exportRegistrationMarks, orientation, rotation,
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm,
     rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
-    typographyScale, baseFont, imageColorScheme, canvasBackground, customBaseline, displayUnit,
+    typographyScale, baseFont, imageColorScheme, canvasBackground, customBaseline,
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, showLayers, collapsed,
   } = ui
@@ -135,8 +134,6 @@ export default function Home() {
     setCustomBaseline,
     setUseCustomMargins,
     setCustomMarginMultipliers,
-    setDisplayUnit,
-    setExportPaperSize,
     setExportPrintPro,
     setExportBleedMm,
     setExportRegistrationMarks,
@@ -208,34 +205,11 @@ export default function Home() {
     () => CANVAS_RATIO_INDEX.get(canvasRatio) ?? CANVAS_RATIOS[0],
     [canvasRatio],
   )
-  const isDinOrAnsiRatio = canvasRatio === "din_ab" || canvasRatio === "letter_ansi_ab"
-
   const previewFormat = useMemo(() => {
     return PREVIEW_DEFAULT_FORMAT_BY_RATIO[canvasRatio] ?? (selectedCanvasRatio.paperSizes[0] ?? "A4")
   }, [canvasRatio, selectedCanvasRatio])
 
   const gridUnit = customBaseline ?? DEFAULT_A4_BASELINE
-
-  const paperSizeOptions = useMemo(
-    () =>
-      selectedCanvasRatio.paperSizes
-        .filter((name) => Boolean(FORMATS_PT[name]))
-        .map((name) => {
-          const dims = FORMATS_PT[name]
-          return {
-            value: name,
-            label: `${name} (${formatValue(dims.width, displayUnit)}×${formatValue(dims.height, displayUnit)} ${displayUnit})`,
-          }
-        }),
-    [displayUnit, selectedCanvasRatio],
-  )
-
-  useEffect(() => {
-    const available = selectedCanvasRatio.paperSizes
-    if (!available.includes(exportPaperSize) && available.length > 0) {
-      dispatch({ type: "SET", key: "exportPaperSize", value: available[0] })
-    }
-  }, [dispatch, exportPaperSize, selectedCanvasRatio])
 
   const resolvedCustomMargins = useMemo(() => (
     useCustomMargins
@@ -309,12 +283,12 @@ export default function Home() {
   }, [canvasRatio, orientation, gridCols, gridRows, marginMethod, customBaseline, result.grid.gridUnit])
 
   const defaultPdfFilename = useMemo(
-    () => `${baseFilename}_${exportPaperSize}_grid.pdf`,
-    [baseFilename, exportPaperSize],
+    () => `${baseFilename}_grid.pdf`,
+    [baseFilename],
   )
   const defaultSvgFilename = useMemo(
-    () => `${baseFilename}_${exportPaperSize}_grid.svg`,
-    [baseFilename, exportPaperSize],
+    () => `${baseFilename}_grid.svg`,
+    [baseFilename],
   )
   const defaultIdmlFilename = useMemo(
     () => `${baseFilename}.idml`,
@@ -598,18 +572,12 @@ export default function Home() {
       showMargins,
       showImagePlaceholders,
       showTypography,
-      isDinOrAnsiRatio,
-      displayUnit,
-      setDisplayUnit,
-      exportPaperSize,
-      setExportPaperSize,
       exportPrintPro,
       setExportPrintPro,
       exportBleedMm,
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
@@ -632,18 +600,12 @@ export default function Home() {
       showMargins,
       showImagePlaceholders,
       showTypography,
-      isDinOrAnsiRatio,
-      displayUnit,
-      setDisplayUnit,
-      exportPaperSize,
-      setExportPaperSize,
       exportPrintPro,
       setExportPrintPro,
       exportBleedMm,
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      paperSizeOptions,
       previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
@@ -890,27 +852,15 @@ export default function Home() {
           orientation={orientation}
           rotation={rotation}
           isDarkUi={isDarkUi}
-          displayUnit={displayUnit}
-          onDisplayUnitChange={setDisplayUnit}
           exportDialog={{
             isOpen: exportActions.isExportDialogOpen,
             onClose: () => exportActions.setIsExportDialogOpen(false),
             selectedPageCount: exportActions.selectedPageCount,
-            ratioLabel: exportActions.ratioLabel,
-            orientation: exportActions.orientation,
-            rotation: exportActions.rotation,
-            isDinOrAnsiRatio: exportActions.isDinOrAnsiRatio,
-            usesStoredPageSizes: exportActions.usesStoredPageSizes,
             pageRangeOptions: exportActions.pageRangeOptions,
             rangeStart: exportActions.exportRangeStartDraft,
             onRangeStartChange: exportActions.setExportRangeStartDraft,
             rangeEnd: exportActions.exportRangeEndDraft,
             onRangeEndChange: exportActions.setExportRangeEndDraft,
-            paperSize: exportActions.exportPaperSizeDraft,
-            onPaperSizeChange: exportActions.setExportPaperSizeDraft,
-            paperSizeOptions: exportActions.paperSizeOptions,
-            width: exportActions.exportWidthDraft,
-            onWidthChange: exportActions.setExportWidthDraft,
             format: exportActions.exportFormatDraft,
             onFormatChange: exportActions.setExportFormatDraft,
             filename: exportActions.exportFilenameDraft,
@@ -924,7 +874,6 @@ export default function Home() {
             registrationMarks: exportActions.exportRegistrationMarksDraft,
             onRegistrationMarksChange: exportActions.setExportRegistrationMarksDraft,
             onConfirm: exportActions.confirmExport,
-            getOrientedDimensions: exportActions.getOrientedDimensions,
           }}
           saveDialog={{
             isOpen: exportActions.isSaveDialogOpen,

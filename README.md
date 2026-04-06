@@ -101,8 +101,10 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ### Export
 - High-quality vector **PDF export**
 - Trim-size **SVG v1 export** with live vector text
-- Full-project **IDML v1 export** for InDesign continuation
-- `PDF` and `SVG` export the active page; `IDML` exports every project page
+- **IDML v1 export** for InDesign continuation
+- Export opens with the full project page range selected by default
+- `PDF`, `SVG`, and `IDML` all export the selected page range using each page's stored document size
+- Multi-page `SVG` export downloads a ZIP with one SVG per page
 - PDF print options: bleed, registration-style marks, and output intents
 - PDF presets: **Digital Print** (RGB / sRGB) and **Press Proof** (CMYK / FOGRA39)
 - IDML separates **Guides**, **Typography**, and **Placeholders** into distinct layers

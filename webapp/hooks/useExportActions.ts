@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { CANVAS_RATIOS, FORMATS_PT } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
@@ -15,12 +14,10 @@ import {
   buildResolvedProjectPageExportSources,
   filterProjectByExportRange,
   normalizeProjectExportPageRange,
-  resolveProjectPageUiSettings,
   type ProjectExportPageRange,
   type ResolvedProjectPageExportSource,
 } from "@/lib/project-page-export-source"
-import { PREVIEW_DEFAULT_FORMAT_BY_RATIO } from "@/lib/config/ui-defaults"
-import { mmToPt, formatValue } from "@/lib/units"
+import { mmToPt } from "@/lib/units"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
@@ -78,7 +75,6 @@ export const EXPORT_DIALOG_PRINT_PRESETS = PRINT_PRESETS.filter((preset) => pres
 
 const PRINT_CROP_OFFSET_MM = 2
 const PRINT_CROP_LENGTH_MM = 5
-const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option] as const))
 
 function isSamePrintPresetConfig(left: PrintPresetConfig, right: PrintPresetConfig): boolean {
   return left.enabled === right.enabled
@@ -106,10 +102,6 @@ function resolvePdfExportColorManagement(config: Pick<PrintPresetConfig, "enable
     colorMode: "cmyk",
     outputIntentProfileId: "coated-fogra39",
   }
-}
-
-function buildProjectPageSourcePath(pageName: string, pageId: string, pageNumber: number): string {
-  return `${pageName || `Page ${pageNumber}`} (${pageId})`
 }
 
 function normalizeFilenameSegment(value: string): string {
@@ -156,18 +148,12 @@ export type ExportActionsContext = {
   showMargins: boolean
   showImagePlaceholders: boolean
   showTypography: boolean
-  isDinOrAnsiRatio: boolean
-  displayUnit: "pt" | "mm" | "px"
-  setDisplayUnit: (u: "pt" | "mm" | "px") => void
-  exportPaperSize: string
-  setExportPaperSize: (s: string) => void
   exportPrintPro: boolean
   setExportPrintPro: (b: boolean) => void
   exportBleedMm: number
   setExportBleedMm: (n: number) => void
   exportRegistrationMarks: boolean
   setExportRegistrationMarks: (b: boolean) => void
-  paperSizeOptions: Array<{ value: string; label: string }>
   previewFormat: string
   defaultPdfFilename: string
   defaultSvgFilename: string
@@ -190,9 +176,6 @@ export type ExportActionsContext = {
 
 export function useExportActions(ctx: ExportActionsContext) {
   const {
-    displayUnit,
-    exportPaperSize,
-    setExportPaperSize,
     exportPrintPro: persistedPrintPresetEnabled,
     setExportPrintPro: setPersistedPrintPresetEnabled,
     exportBleedMm,
@@ -210,11 +193,9 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [exportFormatDraft, setExportFormatDraft] = useState<ExportFormat>("pdf")
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
-  const [exportPaperSizeDraft, setExportPaperSizeDraft] = useState(exportPaperSize)
   const [printPresetEnabledDraft, setPrintPresetEnabledDraft] = useState(persistedPrintPresetEnabled)
   const [exportBleedMmDraft, setExportBleedMmDraft] = useState(String(exportBleedMm))
   const [exportRegistrationMarksDraft, setExportRegistrationMarksDraft] = useState(exportRegistrationMarks)
-  const [exportWidthDraft, setExportWidthDraft] = useState("")
   const [exportRangeStartDraft, setExportRangeStartDraft] = useState(1)
   const [exportRangeEndDraft, setExportRangeEndDraft] = useState(1)
   const [saveFilenameDraft, setSaveFilenameDraft] = useState("")
@@ -238,10 +219,6 @@ export function useExportActions(ctx: ExportActionsContext) {
   ])
 
   const projectPageCount = currentProject.pages.length
-  const activeProjectPageNumber = useMemo(() => {
-    const index = currentProject.pages.findIndex((page) => page.id === currentProject.activePageId)
-    return index >= 0 ? index + 1 : 1
-  }, [currentProject.activePageId, currentProject.pages])
 
   const normalizedRange = useMemo(() => normalizeProjectExportPageRange(
     projectPageCount,
@@ -254,70 +231,12 @@ export function useExportActions(ctx: ExportActionsContext) {
     [currentProject.pages, normalizedRange.endIndex, normalizedRange.startIndex],
   )
   const selectedPageCount = selectedProjectPages.length
-  const isMultiPageRange = selectedPageCount > 1
   const selectedSinglePage = selectedPageCount === 1 ? selectedProjectPages[0] ?? null : null
 
   const pageRangeOptions = useMemo(() => currentProject.pages.map((page, index) => ({
     value: String(index + 1),
     label: `${index + 1}. ${page.name || `Page ${index + 1}`}`,
   })), [currentProject.pages])
-
-  const singlePageContext = useMemo(() => {
-    if (!selectedSinglePage) return null
-
-    const sourcePath = buildProjectPageSourcePath(
-      selectedSinglePage.name,
-      selectedSinglePage.id,
-      normalizedRange.fromPage,
-    )
-    const uiSettings = resolveProjectPageUiSettings(selectedSinglePage.uiSettings, sourcePath)
-    const ratioOption = CANVAS_RATIO_INDEX.get(uiSettings.canvasRatio) ?? null
-    const fallbackFormat = PREVIEW_DEFAULT_FORMAT_BY_RATIO[uiSettings.canvasRatio]
-    const defaultPaperSize = (
-      typeof uiSettings.exportPaperSize === "string"
-      && ratioOption?.paperSizes.includes(uiSettings.exportPaperSize)
-    )
-      ? uiSettings.exportPaperSize
-      : (ratioOption?.paperSizes.includes(fallbackFormat) ? fallbackFormat : ratioOption?.paperSizes[0] ?? fallbackFormat)
-    const baseDimensions = FORMATS_PT[defaultPaperSize] ?? FORMATS_PT[fallbackFormat]
-    const orientedDimensions = uiSettings.orientation === "landscape"
-      ? { width: baseDimensions.height, height: baseDimensions.width }
-      : { width: baseDimensions.width, height: baseDimensions.height }
-
-    return {
-      pageNumber: normalizedRange.fromPage,
-      page: selectedSinglePage,
-      uiSettings,
-      ratioLabel: ratioOption?.label ?? selectedSinglePage.name ?? `Page ${normalizedRange.fromPage}`,
-      orientation: uiSettings.orientation,
-      rotation: uiSettings.rotation,
-      isDinOrAnsiRatio: uiSettings.canvasRatio === "din_ab" || uiSettings.canvasRatio === "letter_ansi_ab",
-      paperSizeOptions: (ratioOption?.paperSizes ?? [fallbackFormat])
-        .filter((name) => Boolean(FORMATS_PT[name]))
-        .map((name) => {
-          const dims = FORMATS_PT[name]
-          return {
-            value: name,
-            label: `${name} (${formatValue(dims.width, displayUnit)}×${formatValue(dims.height, displayUnit)} ${displayUnit})`,
-          }
-        }),
-      defaultPaperSize,
-      storedWidthPt: orientedDimensions.width,
-      storedHeightPt: orientedDimensions.height,
-    }
-  }, [displayUnit, normalizedRange.fromPage, selectedSinglePage])
-
-  const getOrientedDimensions = useCallback((paperSize: string) => {
-    if (!singlePageContext) {
-      return { width: 0, height: 0 }
-    }
-    const fallbackPaperSize = singlePageContext.defaultPaperSize
-    const base = FORMATS_PT[paperSize] ?? FORMATS_PT[fallbackPaperSize]
-    if (singlePageContext.orientation === "landscape") {
-      return { width: base.height, height: base.width }
-    }
-    return { width: base.width, height: base.height }
-  }, [singlePageContext])
 
   const getDefaultExportFilename = useCallback((format: ExportFormat, selectedPages: number) => {
     const base = format === "svg"
@@ -328,31 +247,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     const extension = resolveExportDownloadExtension(format, selectedPages)
     return base.replace(/\.(pdf|svg|idml|zip)$/i, extension)
   }, [ctx.defaultSvgFilename, defaultIdmlFilename, defaultPdfFilename])
-
-  const syncExportSizeDrafts = useCallback((range: ProjectExportPageRange) => {
-    const normalized = normalizeProjectExportPageRange(projectPageCount, range.fromPage, range.toPage)
-    if (normalized.endIndex !== normalized.startIndex) return
-    const page = currentProject.pages[normalized.startIndex]
-    if (!page) return
-
-    const sourcePath = buildProjectPageSourcePath(page.name, page.id, normalized.fromPage)
-    const uiSettings = resolveProjectPageUiSettings(page.uiSettings, sourcePath)
-    const ratioOption = CANVAS_RATIO_INDEX.get(uiSettings.canvasRatio) ?? null
-    const fallbackFormat = PREVIEW_DEFAULT_FORMAT_BY_RATIO[uiSettings.canvasRatio]
-    const defaultPaperSize = (
-      typeof uiSettings.exportPaperSize === "string"
-      && ratioOption?.paperSizes.includes(uiSettings.exportPaperSize)
-    )
-      ? uiSettings.exportPaperSize
-      : (ratioOption?.paperSizes.includes(fallbackFormat) ? fallbackFormat : ratioOption?.paperSizes[0] ?? fallbackFormat)
-    const dims = FORMATS_PT[defaultPaperSize] ?? FORMATS_PT[fallbackFormat]
-    const orientedDimensions = uiSettings.orientation === "landscape"
-      ? { width: dims.height, height: dims.width }
-      : { width: dims.width, height: dims.height }
-
-    setExportPaperSizeDraft(defaultPaperSize)
-    setExportWidthDraft(formatValue(orientedDimensions.width, uiSettings.canvasRatio === "din_ab" || uiSettings.canvasRatio === "letter_ansi_ab" ? displayUnit : "mm"))
-  }, [currentProject.pages, displayUnit, projectPageCount])
 
   const updateFilenameForFormat = useCallback((current: string, format: ExportFormat, selectedPages: number) => (
     updateFilenameForExport(current, format, selectedPages, getDefaultExportFilename)
@@ -446,7 +340,6 @@ export function useExportActions(ctx: ExportActionsContext) {
     pages: ResolvedProjectPageExportSource[],
     filename: string,
     printPresetConfig: PrintPresetConfig,
-    singlePageOverride: { width: number; height: number } | null,
   ) => {
     if (pages.length === 0) return
 
@@ -459,14 +352,10 @@ export function useExportActions(ctx: ExportActionsContext) {
     const cropMarginPt = bleedPt + cropOffsetPt + cropLengthPt
     const originX = enabled ? cropMarginPt : 0
     const originY = enabled ? cropMarginPt : 0
-    const resolveOutputDimensions = (page: ResolvedProjectPageExportSource, pageIndex: number) => {
-      if (singlePageOverride && pageIndex === 0 && pages.length === 1) return singlePageOverride
-      return {
-        width: page.result.pageSizePt.width,
-        height: page.result.pageSizePt.height,
-      }
+    const firstDimensions = {
+      width: pages[0].result.pageSizePt.width,
+      height: pages[0].result.pageSizePt.height,
     }
-    const firstDimensions = resolveOutputDimensions(pages[0], 0)
     const firstPageWidth = enabled ? firstDimensions.width + cropMarginPt * 2 : firstDimensions.width
     const firstPageHeight = enabled ? firstDimensions.height + cropMarginPt * 2 : firstDimensions.height
 
@@ -516,7 +405,10 @@ export function useExportActions(ctx: ExportActionsContext) {
     await attachPdfOutputIntent(pdf, outputIntentProfileId)
 
     pages.forEach((page, index) => {
-      const dimensions = resolveOutputDimensions(page, index)
+      const dimensions = {
+        width: page.result.pageSizePt.width,
+        height: page.result.pageSizePt.height,
+      }
       const pageWidth = enabled ? dimensions.width + cropMarginPt * 2 : dimensions.width
       const pageHeight = enabled ? dimensions.height + cropMarginPt * 2 : dimensions.height
 
@@ -564,7 +456,6 @@ export function useExportActions(ctx: ExportActionsContext) {
   const exportSVG = useCallback(async (
     pages: ResolvedProjectPageExportSource[],
     filename: string,
-    singlePageOverride: { width: number; height: number } | null,
     startPageNumber: number,
   ) => {
     if (pages.length === 0) return
@@ -574,11 +465,9 @@ export function useExportActions(ctx: ExportActionsContext) {
 
     if (pages.length === 1) {
       const page = pages[0]
-      const width = singlePageOverride?.width ?? page.result.pageSizePt.width
-      const height = singlePageOverride?.height ?? page.result.pageSizePt.height
       const svg = renderSwissGridVectorSvg({
-        width,
-        height,
+        width: page.result.pageSizePt.width,
+        height: page.result.pageSizePt.height,
         result: page.result,
         layout: page.previewLayout,
         baseFont: page.baseFont,
@@ -649,13 +538,10 @@ export function useExportActions(ctx: ExportActionsContext) {
   }, [downloadBlob])
 
   const openExportDialog = useCallback(() => {
-    const defaultRange = exportFormatDraft === "idml" && projectPageCount > 1
-      ? { fromPage: 1, toPage: projectPageCount }
-      : { fromPage: activeProjectPageNumber, toPage: activeProjectPageNumber }
+    const defaultRange = { fromPage: 1, toPage: projectPageCount }
 
     setExportRangeStartDraft(defaultRange.fromPage)
     setExportRangeEndDraft(defaultRange.toPage)
-    syncExportSizeDrafts(defaultRange)
     setPrintPresetEnabledDraft(persistedPrintPresetEnabled)
     setExportBleedMmDraft(String(exportBleedMm))
     setExportRegistrationMarksDraft(exportRegistrationMarks)
@@ -665,14 +551,12 @@ export function useExportActions(ctx: ExportActionsContext) {
     ))
     setIsExportDialogOpen(true)
   }, [
-    activeProjectPageNumber,
     exportBleedMm,
     exportFormatDraft,
     exportRegistrationMarks,
     getDefaultExportFilename,
     persistedPrintPresetEnabled,
     projectPageCount,
-    syncExportSizeDrafts,
   ])
 
   const handleExportFormatChange = useCallback((format: ExportFormat) => {
@@ -684,16 +568,12 @@ export function useExportActions(ctx: ExportActionsContext) {
     const normalized = normalizeProjectExportPageRange(projectPageCount, nextRange.fromPage, nextRange.toPage)
     setExportRangeStartDraft(normalized.fromPage)
     setExportRangeEndDraft(normalized.toPage)
-    syncExportSizeDrafts({
-      fromPage: normalized.fromPage,
-      toPage: normalized.toPage,
-    })
     setExportFilenameDraft((current) => updateFilenameForFormat(
       current,
       exportFormatDraft,
       normalized.toPage - normalized.fromPage + 1,
     ))
-  }, [exportFormatDraft, projectPageCount, syncExportSizeDrafts, updateFilenameForFormat])
+  }, [exportFormatDraft, projectPageCount, updateFilenameForFormat])
 
   const handleExportRangeStartChange = useCallback((value: string) => {
     const nextStart = Number(value)
@@ -746,32 +626,11 @@ export function useExportActions(ctx: ExportActionsContext) {
       selectedPageCount === 1
       && selectedSinglePage?.id === currentProject.activePageId
     )
-    const singlePageOverride = selectedPageCount === 1 && singlePageContext
-      ? (() => {
-          const baseDims = getOrientedDimensions(exportPaperSizeDraft)
-          const safeBaseWidth = Math.max(baseDims.width, 0.0001)
-          const aspectRatio = baseDims.height / safeBaseWidth
-          const parsedWidth = Number(exportWidthDraft)
-          const width = singlePageContext.isDinOrAnsiRatio
-            ? baseDims.width
-            : Number.isFinite(parsedWidth) && parsedWidth > 0
-              ? mmToPt(parsedWidth)
-              : baseDims.width
-          return {
-            width,
-            height: width * aspectRatio,
-          }
-        })()
-      : null
 
     if (exportFormatDraft === "idml") {
       await exportIDML(selectedProject, filename)
       setIsExportDialogOpen(false)
       return
-    }
-
-    if (shouldPersistActivePageExportSettings) {
-      setExportPaperSize(exportPaperSizeDraft)
     }
 
     if (exportFormatDraft === "pdf") {
@@ -784,9 +643,9 @@ export function useExportActions(ctx: ExportActionsContext) {
         enabled: printPresetEnabledDraft,
         bleedMm,
         registrationMarks: exportRegistrationMarksDraft,
-      }, singlePageOverride)
+      })
     } else {
-      await exportSVG(resolvedPages, filename, singlePageOverride, normalizedRange.fromPage)
+      await exportSVG(resolvedPages, filename, normalizedRange.fromPage)
     }
 
     setIsExportDialogOpen(false)
@@ -796,24 +655,19 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportBleedMmDraft,
     exportFormatDraft,
     exportFilenameDraft,
-    exportPaperSizeDraft,
     exportRegistrationMarksDraft,
-    exportWidthDraft,
     exportIDML,
     exportPDF,
     exportSVG,
     getDefaultExportFilename,
-    getOrientedDimensions,
     normalizedRange.fromPage,
     normalizedRange.toPage,
     printPresetEnabledDraft,
     selectedPageCount,
     selectedSinglePage?.id,
     setExportBleedMm,
-    setExportPaperSize,
     setPersistedPrintPresetEnabled,
     setExportRegistrationMarks,
-    singlePageContext,
   ])
 
   const parsedDraftBleed = Number(exportBleedMmDraft)
@@ -866,32 +720,21 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportFormatDraft: handleExportFormatChange,
     exportFilenameDraft,
     setExportFilenameDraft,
-    exportPaperSizeDraft,
-    setExportPaperSizeDraft,
     exportRangeStartDraft,
     setExportRangeStartDraft: handleExportRangeStartChange,
     exportRangeEndDraft,
     setExportRangeEndDraft: handleExportRangeEndChange,
     pageRangeOptions,
     selectedPageCount,
-    ratioLabel: singlePageContext?.ratioLabel ?? `${normalizedRange.fromPage}-${normalizedRange.toPage}`,
-    orientation: singlePageContext?.orientation ?? "per-page",
-    rotation: singlePageContext?.rotation ?? 0,
-    isDinOrAnsiRatio: !isMultiPageRange && Boolean(singlePageContext?.isDinOrAnsiRatio),
-    paperSizeOptions: singlePageContext?.paperSizeOptions ?? [],
-    usesStoredPageSizes: isMultiPageRange,
     activePrintPresetDraft,
     showPrintAdjustmentsDraft: printPresetEnabledDraft,
     exportBleedMmDraft,
     setExportBleedMmDraft,
     exportRegistrationMarksDraft,
     setExportRegistrationMarksDraft,
-    exportWidthDraft,
-    setExportWidthDraft,
     openExportDialog,
     applyPrintPreset,
     confirmExport,
     defaultExportFilename: getDefaultExportFilename(exportFormatDraft, selectedPageCount),
-    getOrientedDimensions,
   }
 }

@@ -562,11 +562,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Export is vector-based (not raster screenshot export).</li>
-          <li>`PDF` and `SVG` export the current active page. `IDML` exports the full project with one InDesign page per app page.</li>
-          <li>DIN/ANSI ratios expose paper-size selection for `PDF` and `SVG`; other ratios use width-based sizing. `IDML` keeps each page at its stored document size.</li>
+          <li>The export dialog defaults to the full project page range and lets you narrow it with `From` / `To` selectors when the project has multiple pages.</li>
+          <li>All export formats use each page&apos;s stored document size directly; the dialog no longer offers paper-size or width overrides.</li>
           <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, registration-style marks, and embedded output intents where applicable.</li>
-          <li>`SVG v1` exports trim-size live vector text, guides, and placeholders.</li>
-          <li>`IDML v1` exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry and resolved font family/style names.</li>
+          <li>`SVG v1` exports a trim-size live-text SVG for a single selected page, or a ZIP with one trim-size SVG per page for multi-page ranges.</li>
+          <li>`IDML v1` exports the selected page range with separate `Guides`, `Typography`, and `Placeholders` layers plus frozen text-frame geometry and resolved font family/style names.</li>
           <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>
         </ul>
       </section>

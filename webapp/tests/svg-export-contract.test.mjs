@@ -54,7 +54,8 @@ test("export actions support pdf, svg, and idml formats with format-specific fil
   assert.match(source, /buildResolvedProjectPageExportSources\(currentProject,\s*selectedRange\)/)
   assert.match(source, /if\s*\(exportFormatDraft\s*===\s*"idml"\)\s*\{[\s\S]*?await\s+exportIDML\(selectedProject,\s*filename\)/)
   assert.match(source, /await\s+exportPDF\(resolvedPages,\s*filename,/)
-  assert.match(source, /await\s+exportSVG\(resolvedPages,\s*filename,\s*singlePageOverride,\s*normalizedRange\.fromPage\)/)
+  assert.match(source, /await\s+exportSVG\(resolvedPages,\s*filename,\s*normalizedRange\.fromPage\)/)
+  assert.match(source, /const\s+defaultRange\s*=\s*\{\s*fromPage:\s*1,\s*toPage:\s*projectPageCount\s*\}/)
 })
 
 test("multi-page svg export switches to zip packaging with one file per selected page", () => {
@@ -78,4 +79,14 @@ test("export dialog exposes an explicit pdf-svg-idml format switch", () => {
   assert.match(source, /SVG v1 exports a ZIP with one trim-sized live-text SVG per selected page\./)
   assert.match(source, /IDML v1 exports the selected page range\./)
   assert.match(source, /Export IDML/)
+  assert.doesNotMatch(source, /Units \/ Paper Size/)
+  assert.doesNotMatch(source, /Width \(mm\)/)
+  assert.doesNotMatch(source, /Ratio:/)
+})
+
+test("default pdf and svg filenames no longer encode a paper-size override", () => {
+  const source = readText("app/page.tsx")
+  assert.match(source, /const\s+defaultPdfFilename\s*=\s*useMemo\(\s*\(\)\s*=>\s*`\$\{baseFilename\}_grid\.pdf`/)
+  assert.match(source, /const\s+defaultSvgFilename\s*=\s*useMemo\(\s*\(\)\s*=>\s*`\$\{baseFilename\}_grid\.svg`/)
+  assert.doesNotMatch(source, /baseFilename}_\$\{exportPaperSize\}_grid\.(pdf|svg)/)
 })
