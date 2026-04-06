@@ -80,7 +80,6 @@ type Props = {
   onBaseFontChange: (value: FontFamily) => void
   colorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
-  onResetParagraphColors: () => void
   canvasBackground: string | null
   onCanvasBackgroundChange: (value: string | null) => void
   isDarkMode: boolean
@@ -139,7 +138,6 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   onBaseFontChange,
   colorScheme,
   onColorSchemeChange,
-  onResetParagraphColors,
   canvasBackground,
   onCanvasBackgroundChange,
   isDarkMode,
@@ -234,7 +232,6 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           onHeaderDoubleClick={onSectionHeaderDoubleClick}
           colorScheme={colorScheme}
           onColorSchemeChange={onColorSchemeChange}
-          onResetParagraphColors={onResetParagraphColors}
           canvasBackground={canvasBackground}
           onCanvasBackgroundChange={onCanvasBackgroundChange}
           isDarkMode={isDarkMode}

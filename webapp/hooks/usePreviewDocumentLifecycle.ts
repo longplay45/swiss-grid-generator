@@ -1,7 +1,6 @@
 import { useEffect } from "react"
 import type { Dispatch, MutableRefObject, SetStateAction } from "react"
 
-import { getClosestImageSchemeColorToken, type ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { TextFormatRun } from "@/lib/text-format-runs"
@@ -30,15 +29,13 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockModulePositions: Partial<Record<Key, TextBlockPosition>>
 }
 
-type Args<StyleKey extends string, Key extends string, DragState, TextEditorState extends { draftColor: string }, ImageEditorState> = {
+type Args<StyleKey extends string, Key extends string, DragState, TextEditorState, ImageEditorState> = {
   historyResetToken: number
-  paragraphColorResetToken: number
   initialLayout: PreviewLayoutState<StyleKey, FontFamily, Key> | null
   initialLayoutToken: number
   requestedLayerOrder: Key[] | null
   requestedLayerOrderToken: number
   lastHistoryResetTokenRef: MutableRefObject<number>
-  lastParagraphColorResetTokenRef: MutableRefObject<number>
   lastAppliedLayoutKeyRef: MutableRefObject<number>
   lastAppliedImageLayoutKeyRef: MutableRefObject<number>
   lastAppliedCustomSizeLayoutKeyRef: MutableRefObject<number>
@@ -52,14 +49,7 @@ type Args<StyleKey extends string, Key extends string, DragState, TextEditorStat
   setDragState: Dispatch<SetStateAction<DragState | null>>
   setEditorState: Dispatch<SetStateAction<TextEditorState | null>>
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
-  blockTextColors: Partial<Record<Key, string>>
-  setBlockTextColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
-  imageOrder: Key[]
-  imageColors: Partial<Record<Key, string>>
-  setImageColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
-  defaultImageColor: string
   defaultTextColor: string
-  imageColorScheme: ImageColorSchemeId
   recordHistoryBeforeChange: () => void
   pushHistory: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   buildSnapshot: () => PreviewLayoutState<StyleKey, FontFamily, Key>
@@ -78,6 +68,7 @@ type Args<StyleKey extends string, Key extends string, DragState, TextEditorStat
   applyLayerOrderSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   applyCustomSizeSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   blockOrder: Key[]
+  imageOrder: Key[]
   layerOrder: Key[]
   setLayerOrder: Dispatch<SetStateAction<Key[]>>
 }
@@ -86,17 +77,15 @@ export function usePreviewDocumentLifecycle<
   StyleKey extends string,
   Key extends string,
   DragState,
-  TextEditorState extends { draftColor: string },
+  TextEditorState,
   ImageEditorState,
 >({
   historyResetToken,
-  paragraphColorResetToken,
   initialLayout,
   initialLayoutToken,
   requestedLayerOrder,
   requestedLayerOrderToken,
   lastHistoryResetTokenRef,
-  lastParagraphColorResetTokenRef,
   lastAppliedLayoutKeyRef,
   lastAppliedImageLayoutKeyRef,
   lastAppliedCustomSizeLayoutKeyRef,
@@ -110,14 +99,7 @@ export function usePreviewDocumentLifecycle<
   setDragState,
   setEditorState,
   setImageEditorState,
-  blockTextColors,
-  setBlockTextColors,
-  imageOrder,
-  imageColors,
-  setImageColors,
-  defaultImageColor,
   defaultTextColor,
-  imageColorScheme,
   recordHistoryBeforeChange,
   pushHistory,
   buildSnapshot,
@@ -136,6 +118,7 @@ export function usePreviewDocumentLifecycle<
   applyLayerOrderSnapshot,
   applyCustomSizeSnapshot,
   blockOrder,
+  imageOrder,
   layerOrder,
   setLayerOrder,
 }: Args<StyleKey, Key, DragState, TextEditorState, ImageEditorState>) {
@@ -169,42 +152,6 @@ export function usePreviewDocumentLifecycle<
     setDragState,
     setEditorState,
     suppressReflowCheckRef,
-  ])
-
-  useEffect(() => {
-    if (paragraphColorResetToken === lastParagraphColorResetTokenRef.current) return
-    lastParagraphColorResetTokenRef.current = paragraphColorResetToken
-    const hasCustomParagraphColors = Object.keys(blockTextColors).length > 0
-    const nextImageColors = imageOrder.reduce((acc, key) => {
-      acc[key] = getClosestImageSchemeColorToken(imageColors[key] ?? defaultImageColor, imageColorScheme)
-      return acc
-    }, {} as Partial<Record<Key, string>>)
-    const hasCustomImageColors = imageOrder.some((key) => nextImageColors[key] !== imageColors[key])
-      || Object.keys(imageColors).some((key) => !imageOrder.includes(key as Key))
-
-    setEditorState((prev) => {
-      if (!prev) return prev
-      if (prev.draftColor.toLowerCase() === defaultTextColor.toLowerCase()) return prev
-      return { ...prev, draftColor: defaultTextColor }
-    })
-
-    if (!hasCustomParagraphColors && !hasCustomImageColors) return
-    recordHistoryBeforeChange()
-    if (hasCustomParagraphColors) setBlockTextColors({})
-    if (hasCustomImageColors) setImageColors(nextImageColors)
-  }, [
-    blockTextColors,
-    defaultImageColor,
-    defaultTextColor,
-    imageColorScheme,
-    imageColors,
-    imageOrder,
-    lastParagraphColorResetTokenRef,
-    paragraphColorResetToken,
-    recordHistoryBeforeChange,
-    setBlockTextColors,
-    setEditorState,
-    setImageColors,
   ])
 
   useInitialLayoutHydration<StyleKey, Key>({

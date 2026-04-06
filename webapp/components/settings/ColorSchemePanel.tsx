@@ -1,5 +1,4 @@
 import { memo, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -24,7 +23,6 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   colorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
-  onResetParagraphColors: () => void
   canvasBackground: string | null
   onCanvasBackgroundChange: (value: string | null) => void
   isDarkMode: boolean
@@ -36,7 +34,6 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   onHeaderDoubleClick,
   colorScheme,
   onColorSchemeChange,
-  onResetParagraphColors,
   canvasBackground,
   onCanvasBackgroundChange,
   isDarkMode,
@@ -147,18 +144,6 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Paragraph Colors</Label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          onClick={onResetParagraphColors}
-        >
-          Reset Colors To Scheme
-        </Button>
       </div>
     </PanelCard>
   )

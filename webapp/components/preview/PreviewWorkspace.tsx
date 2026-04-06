@@ -59,7 +59,6 @@ type Props = {
   previewUndoNonce: number
   previewRedoNonce: number
   documentHistoryResetNonce: number
-  paragraphColorResetNonce: number
   selectedLayerKey: string | null
   projectTitle: string
   projectPages: PreviewProjectPage[]
@@ -157,7 +156,6 @@ export function PreviewWorkspace({
   previewUndoNonce,
   previewRedoNonce,
   documentHistoryResetNonce,
-  paragraphColorResetNonce,
   selectedLayerKey,
   projectTitle,
   projectPages,
@@ -304,7 +302,6 @@ export function PreviewWorkspace({
               undoNonce={previewUndoNonce}
               redoNonce={previewRedoNonce}
               historyResetToken={documentHistoryResetNonce}
-              paragraphColorResetToken={paragraphColorResetNonce}
               onHistoryRecord={onHistoryRecord}
               onUndoRequest={onUndoRequest}
               onRedoRequest={onRedoRequest}

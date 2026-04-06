@@ -109,7 +109,6 @@ export default function Home() {
     useCustomMargins, customMarginMultipliers, showBaselines, showModules,
     showMargins, showImagePlaceholders, showTypography, showLayers, collapsed,
   } = ui
-  const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
   const {
     setCanvasRatio,
     setCustomRatioWidth,
@@ -130,7 +129,6 @@ export default function Home() {
     setBaseFont,
     setImageColorScheme,
     setCanvasBackground,
-    resetParagraphColorsToScheme,
     setCustomBaseline,
     setUseCustomMargins,
     setCustomMarginMultipliers,
@@ -146,7 +144,6 @@ export default function Home() {
   } = useWorkspaceUiActions({
     dispatch,
     canvasBackground,
-    setParagraphColorResetNonce,
   })
   const {
     isDarkUi,
@@ -606,7 +603,6 @@ export default function Home() {
       previewUndoNonce={previewUndoNonce}
       previewRedoNonce={previewRedoNonce}
       documentHistoryResetNonce={documentHistoryResetNonce}
-      paragraphColorResetNonce={paragraphColorResetNonce}
       selectedLayerKey={selectedLayerKey}
       projectTitle={projectMetadata.title}
       projectPages={projectPages}
@@ -746,7 +742,6 @@ export default function Home() {
               onBaseFontChange={setBaseFont}
               colorScheme={imageColorScheme}
               onColorSchemeChange={setImageColorScheme}
-              onResetParagraphColors={resetParagraphColorsToScheme}
               canvasBackground={canvasBackground}
               onCanvasBackgroundChange={setCanvasBackground}
               isDarkMode={isDarkUi}

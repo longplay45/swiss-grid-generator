@@ -1,5 +1,4 @@
 import { useCallback } from "react"
-import type { Dispatch, SetStateAction } from "react"
 
 import { clampRotation } from "@/lib/block-constraints"
 import {
@@ -21,13 +20,11 @@ import type { UiAction } from "@/lib/workspace-ui-state"
 type Args = {
   dispatch: (action: UiAction) => void
   canvasBackground: string | null
-  setParagraphColorResetNonce: Dispatch<SetStateAction<number>>
 }
 
 export function useWorkspaceUiActions({
   dispatch,
   canvasBackground,
-  setParagraphColorResetNonce,
 }: Args) {
   const setCanvasRatio = useCallback((value: CanvasRatioKey) => {
     dispatch({ type: "SET", key: "canvasRatio", value })
@@ -113,10 +110,6 @@ export function useWorkspaceUiActions({
     dispatch({ type: "SET", key: "canvasBackground", value })
   }, [dispatch])
 
-  const resetParagraphColorsToScheme = useCallback(() => {
-    setParagraphColorResetNonce((nonce) => nonce + 1)
-  }, [setParagraphColorResetNonce])
-
   const setCustomBaseline = useCallback((value: number) => {
     dispatch({ type: "SET", key: "customBaseline", value })
   }, [dispatch])
@@ -185,7 +178,6 @@ export function useWorkspaceUiActions({
     setBaseFont,
     setImageColorScheme,
     setCanvasBackground,
-    resetParagraphColorsToScheme,
     setCustomBaseline,
     setUseCustomMargins,
     setCustomMarginMultipliers,

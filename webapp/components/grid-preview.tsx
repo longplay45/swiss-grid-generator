@@ -88,7 +88,6 @@ interface GridPreviewProps {
   undoNonce?: number
   redoNonce?: number
   historyResetToken?: number
-  paragraphColorResetToken?: number
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
   onLayoutChange?: (layout: PreviewLayoutState) => void
   onSnapshotGetterChange?: (getSnapshot: (() => PreviewLayoutState) | null) => void
@@ -137,7 +136,6 @@ export const GridPreview = memo(function GridPreview({
   undoNonce = 0,
   redoNonce = 0,
   historyResetToken = 0,
-  paragraphColorResetToken = 0,
   onCanvasReady,
   onLayoutChange,
   onSnapshotGetterChange,
@@ -189,7 +187,6 @@ export const GridPreview = memo(function GridPreview({
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan<BlockId>>>(new Map())
   const typographyBufferTransformRef = useRef("")
   const lastHistoryResetTokenRef = useRef(historyResetToken)
-  const lastParagraphColorResetTokenRef = useRef(paragraphColorResetToken)
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock<BlockId>>({})
@@ -269,7 +266,6 @@ export const GridPreview = memo(function GridPreview({
     blockTextColors,
     setBlockTextColors,
     imagePalette,
-    defaultImageColor,
     defaultTextColor,
     imageOrder,
     setImageOrder,
@@ -278,7 +274,6 @@ export const GridPreview = memo(function GridPreview({
     setImageModulePositions,
     setImageColumnSpans,
     setImageRowSpans,
-    imageColors,
     setImageColors,
     imageEditorState,
     setImageEditorState,
@@ -574,13 +569,11 @@ export const GridPreview = memo(function GridPreview({
 
   usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
     historyResetToken,
-    paragraphColorResetToken,
     initialLayout,
     initialLayoutToken,
     requestedLayerOrder,
     requestedLayerOrderToken,
     lastHistoryResetTokenRef,
-    lastParagraphColorResetTokenRef,
     lastAppliedLayoutKeyRef,
     lastAppliedImageLayoutKeyRef,
     lastAppliedCustomSizeLayoutKeyRef,
@@ -594,14 +587,8 @@ export const GridPreview = memo(function GridPreview({
     setDragState,
     setEditorState,
     setImageEditorState,
-    blockTextColors,
-    setBlockTextColors,
     imageOrder,
-    imageColors,
-    setImageColors,
-    defaultImageColor,
     defaultTextColor,
-    imageColorScheme,
     recordHistoryBeforeChange,
     pushHistory,
     buildSnapshot,
