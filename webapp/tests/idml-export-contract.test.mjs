@@ -75,6 +75,14 @@ test("idml preferences do not predeclare document pages when spreads already def
   assert.match(source, /FacingPages:\s*false/)
 })
 
+test("idml builder switches to absolute grapheme frames when export geometry is available", () => {
+  const source = readText("lib/idml/builder.ts")
+  assert.match(source, /if\s*\(textPlan\.graphemeLines\.length\s*>\s*0\)/)
+  assert.match(source, /buildTextFramePreference\(frameWidth,\s*"AscentOffset"\)/)
+  assert.match(source, /Justification:\s*"LeftAlign"/)
+  assert.match(source, /escapeIdmlXml\(grapheme\.text\)/)
+})
+
 test("idml styles include paragraph families plus per-block character styles for frozen text geometry", () => {
   const source = readText("lib/idml/builder.ts")
   assert.match(source, /buildParagraphStyleKeys\(/)

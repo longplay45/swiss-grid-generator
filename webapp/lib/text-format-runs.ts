@@ -99,6 +99,17 @@ export type PositionedTextFormatTrackingSegment<
   y: number
 }
 
+export type PositionedTextFormatTrackingGrapheme<
+  StyleKey extends string = string,
+  FontFamily extends string = string,
+> = TextFormatTrackingSegment<StyleKey, FontFamily> & {
+  x: number
+  y: number
+  width: number
+  ascent: number
+  descent: number
+}
+
 const INVISIBLE_TEXT_ARTIFACTS_RE = /[\u00AD\u200B\u200C\u200D\uFEFF]/g
 
 function clampIndex(text: string, value: number): number {
@@ -609,6 +620,31 @@ function measureGraphemeWidth<
   return context.measureText(grapheme.text).width
 }
 
+function measureGraphemeMetrics<
+  StyleKey extends string,
+  FontFamily extends string,
+>(
+  context: CanvasMeasureContext,
+  grapheme: ResolvedFormatTrackingGrapheme<StyleKey, FontFamily>,
+): {
+  width: number
+  ascent: number
+  descent: number
+} {
+  context.font = buildCanvasFont(
+    grapheme.fontFamily,
+    grapheme.fontWeight,
+    grapheme.italic,
+    grapheme.fontSize,
+  )
+  const metrics = context.measureText(grapheme.text)
+  return {
+    width: metrics.width,
+    ascent: metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : grapheme.fontSize * 0.8,
+    descent: metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : grapheme.fontSize * 0.2,
+  }
+}
+
 function measureGraphemeAdvance<
   StyleKey extends string,
   FontFamily extends string,
@@ -717,7 +753,7 @@ export function measureFormattedTextRangeWidth<
   return width
 }
 
-export function buildPositionedTextFormatTrackingSegments<
+export function buildPositionedTextFormatTrackingGraphemes<
   StyleKey extends string,
   FontFamily extends string,
 >(
@@ -743,7 +779,7 @@ export function buildPositionedTextFormatTrackingSegments<
     resolveFontSize: (styleKey: StyleKey) => number
     opticalKerning?: boolean
   },
-): PositionedTextFormatTrackingSegment<StyleKey, FontFamily>[] {
+): PositionedTextFormatTrackingGrapheme<StyleKey, FontFamily>[] {
   const commandRange = resolveTextDrawCommandRange(command, sourceText.length)
   const normalizedTrackingRuns = normalizeTextTrackingRuns(
     sourceText,
@@ -780,8 +816,74 @@ export function buildPositionedTextFormatTrackingSegments<
       ? command.x - lineWidth
       : command.x
 
-  const positioned: PositionedTextFormatTrackingSegment<StyleKey, FontFamily>[] = []
   let cursorX = lineStartX
+  return graphemes.map((grapheme, index) => {
+    if (index > 0) {
+      const previous = graphemes[index - 1]!
+      cursorX += measureGraphemeAdvance(context, previous, grapheme, opticalKerning)
+        + getTrackingLetterSpacing(previous.fontSize, previous.trackingScale)
+    }
+    const metrics = measureGraphemeMetrics(context, grapheme)
+    return {
+      text: grapheme.text,
+      start: grapheme.start,
+      end: grapheme.end,
+      trackingScale: grapheme.trackingScale,
+      fontFamily: grapheme.fontFamily,
+      fontWeight: grapheme.fontWeight,
+      italic: grapheme.italic,
+      styleKey: grapheme.styleKey,
+      color: grapheme.color,
+      fontSize: grapheme.fontSize,
+      x: cursorX,
+      y: command.y,
+      width: metrics.width,
+      ascent: metrics.ascent,
+      descent: metrics.descent,
+    }
+  })
+}
+
+export function buildPositionedTextFormatTrackingSegments<
+  StyleKey extends string,
+  FontFamily extends string,
+>(
+  context: CanvasMeasureContext,
+  {
+    sourceText,
+    command,
+    textAlign,
+    baseFormat,
+    formatRuns,
+    baseTrackingScale = DEFAULT_TRACKING_SCALE,
+    trackingRuns,
+    resolveFontSize,
+    opticalKerning = true,
+  }: {
+    sourceText: string
+    command: TextDrawCommand
+    textAlign: TextAlignMode
+    baseFormat: BaseTextFormat<StyleKey, FontFamily>
+    formatRuns: readonly TextFormatRun<StyleKey, FontFamily>[] | null | undefined
+    baseTrackingScale?: number
+    trackingRuns?: readonly TextTrackingRun[] | null | undefined
+    resolveFontSize: (styleKey: StyleKey) => number
+    opticalKerning?: boolean
+  },
+): PositionedTextFormatTrackingSegment<StyleKey, FontFamily>[] {
+  const graphemes = buildPositionedTextFormatTrackingGraphemes(context, {
+    sourceText,
+    command,
+    textAlign,
+    baseFormat,
+    formatRuns,
+    baseTrackingScale,
+    trackingRuns,
+    resolveFontSize,
+    opticalKerning,
+  })
+  if (!graphemes.length) return []
+  const positioned: PositionedTextFormatTrackingSegment<StyleKey, FontFamily>[] = []
   let active: PositionedTextFormatTrackingSegment<StyleKey, FontFamily> = {
     text: graphemes[0]!.text,
     start: graphemes[0]!.start,
@@ -793,16 +895,12 @@ export function buildPositionedTextFormatTrackingSegments<
     styleKey: graphemes[0]!.styleKey,
     color: graphemes[0]!.color,
     fontSize: graphemes[0]!.fontSize,
-    x: cursorX,
-    y: command.y,
+    x: graphemes[0]!.x,
+    y: graphemes[0]!.y,
   }
 
   for (let index = 1; index < graphemes.length; index += 1) {
-    const previous = graphemes[index - 1]!
     const current = graphemes[index]!
-    cursorX += measureGraphemeAdvance(context, previous, current, opticalKerning)
-      + getTrackingLetterSpacing(previous.fontSize, previous.trackingScale)
-
     if (segmentAttributesMatch(active, current)) {
       active.text += current.text
       active.end = current.end
@@ -821,8 +919,8 @@ export function buildPositionedTextFormatTrackingSegments<
       styleKey: current.styleKey,
       color: current.color,
       fontSize: current.fontSize,
-      x: cursorX,
-      y: command.y,
+      x: current.x,
+      y: current.y,
     }
   }
 

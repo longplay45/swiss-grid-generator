@@ -26,6 +26,16 @@ test("svg export emits a trim-sized svg with page clipping, guide groups, placeh
   assert.match(source, /xml:space="preserve"/)
 })
 
+test("svg export prefers absolute grapheme positions before falling back to live tracking segments", () => {
+  const source = readText("lib/svg-vector-export.ts")
+  assert.match(source, /const\s+graphemeLines\s*=\s*textPlan\.graphemeLines\.map/)
+  assert.match(source, /grapheme\.x/)
+  assert.match(source, /grapheme\.y/)
+  assert.match(source, /font-family="\$\{quoteAttr\(grapheme\.fontFamily\)\}"/)
+  assert.match(source, /if\s*\(graphemeLines\)\s*\{/)
+  assert.match(source, /const\s+lines\s*=\s*textPlan\.segmentLines\.map/)
+})
+
 test("svg export keeps block and page rotation explicit in svg transforms", () => {
   const source = readText("lib/svg-vector-export.ts")
   assert.match(source, /function\s+renderRotationTransform\(rotation:\s*number,\s*originX:\s*number,\s*originY:\s*number\)/)

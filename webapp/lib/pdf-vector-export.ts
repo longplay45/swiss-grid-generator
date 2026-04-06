@@ -158,6 +158,9 @@ function setFillColor(pdf: jsPDF, color: RgbColor, colorMode: PdfExportColorMode
   setFillColorRgb(pdf, color)
 }
 
+function isRenderableTextFragment(text: string): boolean {
+  return text.replace(/\s+/g, "").length > 0
+}
 
 export function renderSwissGridVectorPdf({
   pdf,
@@ -438,6 +441,30 @@ export function renderSwissGridVectorPdf({
     pdf.setFont(getPdfFontFamily(blockFont, blockFontWeight), blockIsItalic ? "italic" : "normal")
     pdf.setFontSize(plan.fontSize * scale)
     const rotationOrigin = { x: plan.rotationOriginX, y: plan.rotationOriginY }
+    if (plan.graphemeLines.length > 0) {
+      for (const graphemes of plan.graphemeLines) {
+        for (const grapheme of graphemes) {
+          if (!isRenderableTextFragment(grapheme.text)) continue
+          setTextColor(pdf, parseHexColor(grapheme.color) ?? plan.textColor, colorMode)
+          pdf.setFont(
+            getPdfFontFamily(grapheme.fontFamily, grapheme.fontWeight),
+            grapheme.italic ? "italic" : "normal",
+          )
+          pdf.setFontSize(grapheme.fontSize * scale)
+          drawText(
+            grapheme.text,
+            grapheme.x,
+            grapheme.y,
+            "left",
+            0,
+            grapheme.fontSize,
+            plan.blockRotation,
+            rotationOrigin,
+          )
+        }
+      }
+      continue
+    }
     for (const segments of plan.segmentLines) {
       if (segments.length === 0) continue
       for (const segment of segments) {

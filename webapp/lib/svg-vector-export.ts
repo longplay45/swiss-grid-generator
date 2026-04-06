@@ -45,6 +45,10 @@ function quoteAttr(value: string): string {
   return escapeXml(value)
 }
 
+function isRenderableTextFragment(text: string): boolean {
+  return text.replace(/\s+/g, "").length > 0
+}
+
 function renderRotationTransform(rotation: number, originX: number, originY: number): string {
   if (Math.abs(rotation) <= 0.0001) return ""
   return ` transform="rotate(${formatNumber(rotation)} ${formatNumber(originX)} ${formatNumber(originY)})"`
@@ -122,6 +126,17 @@ export function renderSwissGridVectorSvg({
       textPlan.rotationOriginX,
       textPlan.rotationOriginY,
     )
+    const graphemeLines = textPlan.graphemeLines.map((graphemes) => graphemes
+      .filter((grapheme) => isRenderableTextFragment(grapheme.text))
+      .map((grapheme) => (
+        `<text x="${formatNumber(grapheme.x)}" y="${formatNumber(grapheme.y)}" fill="${formatSvgColor(parseHexColor(grapheme.color) ?? textPlan.textColor)}" font-family="${quoteAttr(grapheme.fontFamily)}" font-size="${formatNumber(grapheme.fontSize)}" font-weight="${grapheme.fontWeight}" font-style="${grapheme.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(grapheme.text)}</text>`
+      )).join(""))
+      .join("")
+    if (graphemeLines) {
+      return (
+        `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" text-anchor="start"${rotationTransform}>${graphemeLines}</g>`
+      )
+    }
     const lines = textPlan.segmentLines.map((segments, lineIndex) => {
       if (segments.length === 0) {
         const command = textPlan.commands[lineIndex]

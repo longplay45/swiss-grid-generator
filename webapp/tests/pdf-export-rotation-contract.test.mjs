@@ -92,8 +92,10 @@ test("pdf export applies tracking through charSpace instead of horizontal scalin
 
 test("pdf export draws pre-positioned tracking segments with explicit left anchors", () => {
   const source = readText("lib/pdf-vector-export.ts")
+  assert.match(source, /if\s*\(plan\.graphemeLines\.length\s*>\s*0\)/)
+  assert.match(source, /for\s*\(const\s+graphemes\s+of\s+plan\.graphemeLines\)/)
+  assert.match(source, /drawText\(\s*grapheme\.text,\s*grapheme\.x,\s*grapheme\.y,\s*"left",\s*0,/)
   assert.match(source, /for\s*\(const\s+segments\s+of\s+plan\.segmentLines\)/)
-  assert.match(source, /drawText\(\s*segment\.text,\s*segment\.x,\s*segment\.y,\s*"left",/)
 })
 
 test("pdf export action forwards placeholder visibility and active image color scheme", () => {

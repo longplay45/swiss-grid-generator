@@ -37,10 +37,12 @@ import {
   type TypographyLayoutPlan,
 } from "@/lib/typography-layout-plan"
 import {
+  buildPositionedTextFormatTrackingGraphemes,
   buildPositionedTextFormatTrackingSegments,
   measureFormattedTextRangeWidth,
   normalizeTextFormatRuns,
   type TextFormatRun,
+  type PositionedTextFormatTrackingGrapheme,
   type PositionedTextFormatTrackingSegment,
 } from "@/lib/text-format-runs"
 import {
@@ -104,6 +106,7 @@ export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKe
   textColor: RgbColor
   sourceText: string
   segmentLines: PositionedTextFormatTrackingSegment<TypographyStyleKey, FontFamily>[][]
+  graphemeLines: PositionedTextFormatTrackingGrapheme<TypographyStyleKey, FontFamily>[][]
 }
 
 export type PageExportPlan = {
@@ -682,6 +685,7 @@ export function buildPageExportPlan({
     textColor: parseHexColor(getResolvedBlockTextColor(plan.key)) ?? { r: 31, g: 41, b: 55 },
     sourceText: textContent[plan.key] ?? "",
     segmentLines: [],
+    graphemeLines: [],
   }))
 
   for (const textPlan of textPlans) {
@@ -690,6 +694,23 @@ export function buildPageExportPlan({
       font: buildCanvasFont(textPlan.fontFamily, textPlan.fontWeight, textPlan.italic, textPlan.fontSize),
       opticalKerning: textPlan.opticalKerning,
     })
+    textPlan.graphemeLines = textPlan.commands.map((command) => buildPositionedTextFormatTrackingGraphemes(textMeasureContext, {
+      sourceText: textPlan.sourceText,
+      command,
+      textAlign: textPlan.textAlign,
+      baseFormat: {
+        fontFamily: textPlan.fontFamily,
+        fontWeight: textPlan.fontWeight,
+        italic: textPlan.italic,
+        styleKey: textPlan.styleKey,
+        color: getResolvedBlockTextColor(textPlan.key),
+      },
+      formatRuns: getBlockTextFormatRuns(textPlan.key, textPlan.styleKey),
+      baseTrackingScale: textPlan.trackingScale,
+      trackingRuns: textPlan.trackingRuns,
+      resolveFontSize: (styleKey) => getBlockFontSize(textPlan.key, styleKey, textPlan.fontSize),
+      opticalKerning: textPlan.opticalKerning,
+    }))
     textPlan.segmentLines = textPlan.commands.map((command) => buildPositionedTextFormatTrackingSegments(textMeasureContext, {
       sourceText: textPlan.sourceText,
       command,
