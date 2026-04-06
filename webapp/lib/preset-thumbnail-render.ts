@@ -17,33 +17,28 @@ import {
 } from "@/lib/config/fonts"
 import { DEFAULT_STYLE_ASSIGNMENTS, DEFAULT_TEXT_CONTENT, isBaseBlockId } from "@/lib/document-defaults"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
-import { getOpticalMarginAnchorOffset } from "@/lib/optical-margin"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { LayoutPresetBrowserPage } from "@/lib/presets/types"
 import {
-  measureFormattedTextRangeWidth,
   normalizeTextFormatRuns,
-  type BaseTextFormat,
   type TextFormatRun,
 } from "@/lib/text-format-runs"
 import {
-  measureTrackedTextRangeWidth,
   normalizeTextTrackingRuns,
   type TextTrackingRun,
 } from "@/lib/text-tracking-runs"
 import {
-  applyCanvasTextConfig,
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
-  measureCanvasTextWidth,
   normalizeOpticalKerning,
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
-import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
+import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
+import { createTextMetricsService } from "@/lib/text-metrics-service"
 
 type BlockId = string
 type TypographyStyleKey = string
@@ -381,75 +376,8 @@ export function drawPresetThumbnailToCanvas(
   ctx.clip()
 
   if (blockOrder.length > 0) {
-    const getWrappedTextForCanvas = (
-      canvasContext: CanvasRenderingContext2D,
-      text: string,
-      maxWidth: number,
-      hyphenate: boolean,
-      trackingScale: number,
-      opticalKerning: boolean,
-      trackingRuns: readonly TextTrackingRun[] = [],
-      baseFormat?: BaseTextFormat<TypographyStyleKey, FontFamily>,
-      formatRuns?: readonly TextFormatRun<TypographyStyleKey, FontFamily>[],
-      resolveFontSize?: (styleKey: TypographyStyleKey) => number,
-    ) => {
-      applyCanvasTextConfig(canvasContext, {
-        font: canvasContext.font,
-        opticalKerning,
-      })
-      const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, trackingScale)
-      return wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => {
-        if (range && baseFormat && resolveFontSize && (normalizedRuns.length > 0 || (formatRuns?.length ?? 0) > 0)) {
-          return measureFormattedTextRangeWidth(canvasContext, {
-            sourceText: text,
-            renderedText: sample,
-            range,
-            baseFormat,
-            formatRuns,
-            baseTrackingScale: trackingScale,
-            trackingRuns: normalizedRuns,
-            resolveFontSize,
-            opticalKerning,
-          })
-        }
-        if (range && normalizedRuns.length > 0) {
-          return measureTrackedTextRangeWidth(canvasContext, {
-            sourceText: text,
-            renderedText: sample,
-            range,
-            baseTrackingScale: trackingScale,
-            runs: normalizedRuns,
-            fontSize: Number.parseFloat(canvasContext.font.match(/(\d+(?:\.\d+)?)px/)?.[1] ?? "0"),
-            opticalKerning,
-          })
-        }
-        return measureCanvasTextWidth(canvasContext, sample, trackingScale, undefined, opticalKerning)
-      })
-    }
-
-    const getOpticalOffsetForCanvas = (
-      canvasContext: CanvasRenderingContext2D,
-      _key: BlockId,
-      styleKey: TypographyStyleKey,
-      line: string,
-      align: TextAlignMode,
-      fontSize: number,
-      opticalKerning: boolean,
-      trackingScale: number,
-    ) => {
-      applyCanvasTextConfig(canvasContext, {
-        font: canvasContext.font,
-        opticalKerning,
-      })
-      return getOpticalMarginAnchorOffset({
-        line,
-        align,
-        fontSize,
-        styleKey,
-        font: canvasContext.font,
-        measureWidth: (sample) => measureCanvasTextWidth(canvasContext, sample, trackingScale, fontSize, opticalKerning),
-      })
-    }
+    const textMetrics = createTextMetricsService<TypographyStyleKey, FontFamily>()
+    textMetrics.clearCaches()
 
     const typographyRenderState = buildCanvasTypographyRenderPlans<BlockId, TypographyStyleKey>({
       ctx,
@@ -538,8 +466,17 @@ export function drawPresetThumbnailToCanvas(
         return getBlockTextFormatRuns(key, styleKey, color)
       },
       getBlockTextColor,
-      getWrappedText: getWrappedTextForCanvas,
-      getOpticalOffset: getOpticalOffsetForCanvas,
+      getWrappedText: textMetrics.getWrappedText,
+      getOpticalOffset: (canvasContext, _key, styleKey, line, align, fontSize, opticalKerning) => (
+        textMetrics.getOpticalOffset(
+          canvasContext,
+          styleKey,
+          line,
+          align,
+          fontSize,
+          opticalKerning,
+        )
+      ),
     })
     const orderedKeys = buildOrderedCanvasLayerKeys(
       layerOrder,

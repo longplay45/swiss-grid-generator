@@ -1,28 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import {
-  clearOpticalMarginMeasurementCache,
-  getOpticalMarginAnchorOffset,
-} from "@/lib/optical-margin"
-import { wrapTextDetailed, type WrappedTextLine } from "@/lib/text-layout"
-import {
-  measureFormattedTextRangeWidth,
-  type BaseTextFormat,
-  type TextFormatRun,
-} from "@/lib/text-format-runs"
-import {
-  measureCanvasTextWidth,
-  DEFAULT_TRACKING_SCALE,
-  normalizeTrackingScale,
-  setCanvasFontKerning,
-} from "@/lib/text-rendering"
 import type { FontFamily } from "@/lib/config/fonts"
-import {
-  measureTrackedTextRangeWidth,
-  normalizeTextTrackingRuns,
-  type TextTrackingRun,
-} from "@/lib/text-tracking-runs"
-import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import { createTextMetricsService } from "@/lib/text-metrics-service"
 
 type Args<Key extends string, StyleKey extends string> = {
   showTypography: boolean
@@ -36,8 +15,6 @@ type Args<Key extends string, StyleKey extends string> = {
   scale: number
 }
 
-const TEXT_CACHE_LIMIT = 5000
-
 export function usePreviewTypographyMetrics<Key extends string, StyleKey extends string>({
   showTypography,
   blockOrder,
@@ -49,28 +26,11 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
   getBlockFontSize,
   scale,
 }: Args<Key, StyleKey>) {
-  const measureWidthCacheRef = useRef<Map<string, number>>(new Map())
-  const wrapTextCacheRef = useRef<Map<string, WrappedTextLine[]>>(new Map())
-  const opticalOffsetCacheRef = useRef<Map<string, number>>(new Map())
+  const textMetricsRef = useRef(createTextMetricsService<StyleKey, FontFamily>())
   const [fontRenderEpoch, setFontRenderEpoch] = useState(0)
 
-  const makeCachedValue = useCallback(
-    <T,>(cache: Map<string, T>, key: string, compute: () => T): T => {
-      const existing = cache.get(key)
-      if (existing !== undefined) return existing
-      const value = compute()
-      cache.set(key, value)
-      if (cache.size > TEXT_CACHE_LIMIT) cache.clear()
-      return value
-    },
-    [],
-  )
-
   const clearCaches = useCallback(() => {
-    measureWidthCacheRef.current.clear()
-    wrapTextCacheRef.current.clear()
-    opticalOffsetCacheRef.current.clear()
-    clearOpticalMarginMeasurementCache()
+    textMetricsRef.current.clearCaches()
   }, [])
 
   useEffect(() => {
@@ -116,123 +76,9 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     typographyStyles,
   ])
 
-  const getMeasuredTextWidth = useCallback((
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    trackingScale: number,
-    opticalKerning: boolean,
-    sourceText = text,
-    trackingRuns: readonly TextTrackingRun[] = [],
-    range?: { start: number; end: number },
-    baseFormat?: BaseTextFormat<StyleKey, FontFamily>,
-    formatRuns?: readonly TextFormatRun<StyleKey, FontFamily>[],
-    resolveFontSize?: (styleKey: StyleKey) => number,
-  ): number => {
-    const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
-    const normalizedRuns = normalizeTextTrackingRuns(sourceText, trackingRuns, normalizedTrackingScale)
-    const rangeKey = range ? `${range.start}:${range.end}` : "-"
-    const runsKey = normalizedRuns.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${rangeKey}::${runsKey}::${text}`
-    return makeCachedValue(measureWidthCacheRef.current, key, () => {
-      setCanvasFontKerning(ctx, opticalKerning)
-      if (range && baseFormat && resolveFontSize && (normalizedRuns.length > 0 || (formatRuns?.length ?? 0) > 0)) {
-        return measureFormattedTextRangeWidth(ctx, {
-          sourceText,
-          renderedText: text,
-          range,
-          baseFormat,
-          formatRuns,
-          baseTrackingScale: normalizedTrackingScale,
-          trackingRuns: normalizedRuns,
-          resolveFontSize,
-          opticalKerning,
-        })
-      }
-      if (range && normalizedRuns.length > 0) {
-        const sizeMatch = ctx.font.match(/(\d+(?:\.\d+)?)px/)
-        const fontSize = sizeMatch ? Number(sizeMatch[1]) : 0
-        return measureTrackedTextRangeWidth(ctx, {
-          sourceText,
-          renderedText: text,
-          range,
-          baseTrackingScale: normalizedTrackingScale,
-          runs: normalizedRuns,
-          fontSize,
-          opticalKerning,
-        })
-      }
-      return measureCanvasTextWidth(ctx, text, normalizedTrackingScale, undefined, opticalKerning)
-    })
-  }, [makeCachedValue])
-
-  const getWrappedText = useCallback((
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxWidth: number,
-    hyphenate: boolean,
-    trackingScale: number,
-    opticalKerning: boolean,
-    trackingRuns: readonly TextTrackingRun[] = [],
-    baseFormat?: BaseTextFormat<StyleKey, FontFamily>,
-    formatRuns?: readonly TextFormatRun<StyleKey, FontFamily>[],
-    resolveFontSize?: (styleKey: StyleKey) => number,
-  ): WrappedTextLine[] => {
-    const normalizedTrackingScale = normalizeTrackingScale(trackingScale)
-    const normalizedRuns = normalizeTextTrackingRuns(text, trackingRuns, normalizedTrackingScale)
-    const runsKey = normalizedRuns.map((run) => `${run.start}:${run.end}:${run.trackingScale}`).join("|")
-    const formatRunsKey = (formatRuns ?? [])
-      .map((run) => `${run.start}:${run.end}:${run.fontFamily ?? ""}:${run.fontWeight ?? ""}:${run.italic === true ? 1 : run.italic === false ? 0 : ""}:${run.styleKey ?? ""}:${run.color ?? ""}`)
-      .join("|")
-    const formatBaseKey = baseFormat
-      ? `${baseFormat.fontFamily}:${baseFormat.fontWeight}:${baseFormat.italic ? 1 : 0}:${baseFormat.styleKey}:${baseFormat.color}`
-      : "-"
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${normalizedTrackingScale}::${runsKey}::${formatBaseKey}::${formatRunsKey}::${maxWidth.toFixed(4)}::${hyphenate ? 1 : 0}::${text}`
-    const cached = makeCachedValue(wrapTextCacheRef.current, key, () =>
-      wrapTextDetailed(text, maxWidth, hyphenate, (sample, range) => getMeasuredTextWidth(
-        ctx,
-        sample,
-        normalizedTrackingScale,
-        opticalKerning,
-        text,
-        normalizedRuns,
-        range,
-        baseFormat,
-        formatRuns,
-        resolveFontSize,
-      )),
-    )
-    return cached.map((line) => ({ ...line }))
-  }, [getMeasuredTextWidth, makeCachedValue])
-
-  const getOpticalOffset = useCallback((
-    ctx: CanvasRenderingContext2D,
-    styleKey: StyleKey,
-    line: string,
-    align: TextAlignMode,
-    fontSize: number,
-    opticalKerning: boolean,
-  ): number => {
-    const key = `${ctx.font}::${opticalKerning ? 1 : 0}::${styleKey}::${line}::${align}::${fontSize.toFixed(4)}`
-    return makeCachedValue(opticalOffsetCacheRef.current, key, () =>
-      getOpticalMarginAnchorOffset({
-        line,
-        align,
-        fontSize,
-        styleKey,
-        font: ctx.font,
-        measureWidth: (sample) => getMeasuredTextWidth(
-          ctx,
-          sample,
-          DEFAULT_TRACKING_SCALE,
-          opticalKerning,
-        ),
-      }),
-    )
-  }, [getMeasuredTextWidth, makeCachedValue])
-
   return {
     fontRenderEpoch,
-    getWrappedText,
-    getOpticalOffset,
+    getWrappedText: textMetricsRef.current.getWrappedText,
+    getOpticalOffset: textMetricsRef.current.getOpticalOffset,
   }
 }

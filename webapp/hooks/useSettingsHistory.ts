@@ -1,59 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react"
-import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import type { FontFamily } from "@/lib/config/fonts"
-import type {
-  DisplayUnit,
-  GridRhythm,
-  GridRhythmColsDirection,
-  GridRhythmRowsDirection,
-  TypographyScale,
-} from "@/lib/config/defaults"
-import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import { SECTION_KEYS, type UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 
-export const SECTION_KEYS = ["format", "baseline", "margins", "gutter", "typo", "color", "summary"] as const
-export type SectionKey = typeof SECTION_KEYS[number]
-
-export type UiSettingsSnapshot = {
-  canvasRatio: CanvasRatioKey
-  exportPaperSize: string
-  exportPrintPro: boolean
-  exportBleedMm: number
-  exportRegistrationMarks: boolean
-  orientation: "portrait" | "landscape"
-  rotation: number
-  marginMethod: 1 | 2 | 3
-  gridCols: number
-  gridRows: number
-  baselineMultiple: number
-  gutterMultiple: number
-  rhythm: GridRhythm
-  rhythmRowsEnabled: boolean
-  rhythmRowsDirection: GridRhythmRowsDirection
-  rhythmColsEnabled: boolean
-  rhythmColsDirection: GridRhythmColsDirection
-  typographyScale: TypographyScale
-  baseFont: FontFamily
-  imageColorScheme: ImageColorSchemeId
-  canvasBackground: string | null
-  customBaseline: number
-  displayUnit: DisplayUnit
-  useCustomMargins: boolean
-  customMarginMultipliers: { top: number; left: number; right: number; bottom: number }
-  showBaselines: boolean
-  showModules: boolean
-  showMargins: boolean
-  showImagePlaceholders: boolean
-  showTypography: boolean
-  showLayers: boolean
-  collapsed: Record<SectionKey, boolean>
-}
+export { SECTION_KEYS, type SectionKey, type UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 
 const SETTINGS_HISTORY_LIMIT = 100
 
 function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolean {
   return (
     a.canvasRatio === b.canvasRatio
-    && a.exportPaperSize === b.exportPaperSize
     && a.exportPrintPro === b.exportPrintPro
     && a.exportBleedMm === b.exportBleedMm
     && a.exportRegistrationMarks === b.exportRegistrationMarks
@@ -74,7 +28,6 @@ function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolea
     && a.imageColorScheme === b.imageColorScheme
     && a.canvasBackground === b.canvasBackground
     && a.customBaseline === b.customBaseline
-    && a.displayUnit === b.displayUnit
     && a.useCustomMargins === b.useCustomMargins
     && a.customMarginMultipliers.top === b.customMarginMultipliers.top
     && a.customMarginMultipliers.left === b.customMarginMultipliers.left

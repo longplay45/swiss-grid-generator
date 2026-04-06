@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 
 import {
   createDefaultProject,
@@ -106,18 +106,18 @@ export function useProjectState<Layout>({
     [currentPreviewLayout, getCurrentPreviewLayout],
   )
 
-  const persistProjectSnapshot = useCallback((currentProject: LoadedProject<Layout>) => (
-    persistActivePageSnapshot(currentProject, currentUiSettings, getLivePreviewLayout())
-  ), [currentUiSettings, getLivePreviewLayout])
+  const getCurrentProjectSnapshot = useCallback(() => (
+    persistActivePageSnapshot(project, currentUiSettings, getLivePreviewLayout())
+  ), [currentUiSettings, getLivePreviewLayout, project])
 
-  useEffect(() => {
-    // NEW: Project/Pages/Layers architecture
-    setProject((current) => persistActivePageSnapshot(current, currentUiSettings, currentPreviewLayout))
-  }, [currentPreviewLayout, currentUiSettings])
+  const projectSnapshot = useMemo(
+    () => persistActivePageSnapshot(project, currentUiSettings, currentPreviewLayout),
+    [currentPreviewLayout, currentUiSettings, project],
+  )
 
   const activePage = useMemo(
-    () => project.pages.find((page) => page.id === project.activePageId) ?? project.pages[0],
-    [project],
+    () => projectSnapshot.pages.find((page) => page.id === projectSnapshot.activePageId) ?? projectSnapshot.pages[0],
+    [projectSnapshot],
   )
 
   const applyLoadedProject = useCallback((loadedProject: LoadedProject<Layout>) => {
@@ -131,32 +131,32 @@ export function useProjectState<Layout>({
   const selectPage = useCallback((pageId: string) => {
     if (pageId === project.activePageId) return
 
-    const persistedProject = persistProjectSnapshot(project)
-    const nextActivePage = persistedProject.pages.find((page) => page.id === pageId)
+    const currentProject = getCurrentProjectSnapshot()
+    const nextActivePage = currentProject.pages.find((page) => page.id === pageId)
     if (!nextActivePage) return
 
     setProject({
-      ...persistedProject,
+      ...currentProject,
       activePageId: pageId,
     })
     onApplyPage(nextActivePage)
-  }, [onApplyPage, persistProjectSnapshot, project])
+  }, [getCurrentProjectSnapshot, onApplyPage, project.activePageId])
 
   const addPage = useCallback(() => {
-    const persistedProject = persistProjectSnapshot(project)
+    const currentProject = getCurrentProjectSnapshot()
     const nextPage = createProjectPage({
-      name: getNextPageName(persistedProject.pages),
+      name: getNextPageName(currentProject.pages),
       uiSettings: cloneSerializable(currentUiSettings),
       previewLayout: cloneSerializable(getLivePreviewLayout() ?? defaultPreviewLayout),
     })
 
     setProject({
-      ...persistedProject,
+      ...currentProject,
       activePageId: nextPage.id,
-      pages: [...persistedProject.pages, nextPage],
+      pages: [...currentProject.pages, nextPage],
     })
     onApplyPage(nextPage)
-  }, [currentUiSettings, defaultPreviewLayout, getLivePreviewLayout, onApplyPage, persistProjectSnapshot, project])
+  }, [currentUiSettings, defaultPreviewLayout, getCurrentProjectSnapshot, getLivePreviewLayout, onApplyPage])
 
   const renamePage = useCallback((pageId: string, nextName: string) => {
     const trimmedName = nextName.trim()
@@ -173,18 +173,18 @@ export function useProjectState<Layout>({
   }, [])
 
   const deletePage = useCallback((pageId: string) => {
-    if (project.pages.length <= 1) return
+    if (projectSnapshot.pages.length <= 1) return
 
-    const persistedProject = persistProjectSnapshot(project)
-    const pageIndex = persistedProject.pages.findIndex((page) => page.id === pageId)
+    const currentProject = getCurrentProjectSnapshot()
+    const pageIndex = currentProject.pages.findIndex((page) => page.id === pageId)
     if (pageIndex === -1) return
 
-    const remainingPages = persistedProject.pages.filter((page) => page.id !== pageId)
+    const remainingPages = currentProject.pages.filter((page) => page.id !== pageId)
     if (!remainingPages.length) return
 
-    if (pageId !== persistedProject.activePageId) {
+    if (pageId !== currentProject.activePageId) {
       setProject({
-        ...persistedProject,
+        ...currentProject,
         pages: remainingPages,
       })
       return
@@ -195,32 +195,33 @@ export function useProjectState<Layout>({
     if (!nextActivePage) return
 
     setProject({
-      ...persistedProject,
+      ...currentProject,
       activePageId: nextActivePage.id,
       pages: remainingPages,
     })
     onApplyPage(nextActivePage)
-  }, [onApplyPage, persistProjectSnapshot, project])
+  }, [getCurrentProjectSnapshot, onApplyPage, projectSnapshot.pages.length])
 
   const reorderPages = useCallback((orderedIds: string[]) => {
-    const persistedProject = persistProjectSnapshot(project)
-    const nextPages = reconcilePageOrder(persistedProject.pages, orderedIds)
-    const hasChanged = nextPages.length !== persistedProject.pages.length
-      || nextPages.some((page, index) => page.id !== persistedProject.pages[index]?.id)
+    const currentProject = getCurrentProjectSnapshot()
+    const nextPages = reconcilePageOrder(currentProject.pages, orderedIds)
+    const hasChanged = nextPages.length !== currentProject.pages.length
+      || nextPages.some((page, index) => page.id !== currentProject.pages[index]?.id)
 
     if (!hasChanged) return
 
     setProject({
-      ...persistedProject,
+      ...currentProject,
       pages: nextPages,
     })
-  }, [persistProjectSnapshot, project])
+  }, [getCurrentProjectSnapshot])
 
   return {
-    project,
-    pages: project.pages,
+    project: projectSnapshot,
+    pages: projectSnapshot.pages,
     activePage,
-    activePageId: project.activePageId,
+    activePageId: projectSnapshot.activePageId,
+    getCurrentProjectSnapshot,
     applyLoadedProject,
     selectPage,
     addPage,

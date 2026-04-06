@@ -10,7 +10,6 @@ import {
 } from "@/lib/config/color-schemes"
 import type { FontFamily } from "@/lib/config/fonts"
 import type {
-  DisplayUnit,
   GridRhythm,
   GridRhythmColsDirection,
   GridRhythmRowsDirection,
@@ -122,14 +121,6 @@ export function useWorkspaceUiActions({
     dispatch({ type: "SET", key: "customMarginMultipliers", value })
   }, [dispatch])
 
-  const setDisplayUnit = useCallback((value: DisplayUnit) => {
-    dispatch({ type: "SET", key: "displayUnit", value })
-  }, [dispatch])
-
-  const setExportPaperSize = useCallback((value: string) => {
-    dispatch({ type: "SET", key: "exportPaperSize", value })
-  }, [dispatch])
-
   const setExportPrintPro = useCallback((value: boolean) => {
     dispatch({ type: "SET", key: "exportPrintPro", value })
   }, [dispatch])
@@ -188,8 +179,6 @@ export function useWorkspaceUiActions({
     setCustomBaseline,
     setUseCustomMargins,
     setCustomMarginMultipliers,
-    setDisplayUnit,
-    setExportPaperSize,
     setExportPrintPro,
     setExportBleedMm,
     setExportRegistrationMarks,

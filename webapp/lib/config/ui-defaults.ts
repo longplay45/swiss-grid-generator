@@ -1,49 +1,9 @@
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
-import {
-  defaultGridRhythmAxisSettings,
-  isGridRhythm,
-  isGridRhythmColsDirection,
-  isGridRhythmRowsDirection,
-  isDisplayUnit,
-  isTypographyScale,
-  resolveLegacyGridRhythmAxisSettings,
-  type DisplayUnit,
-  type GridRhythmAxisSettings,
-  type GridRhythmColsDirection,
-  type GridRhythm,
-  type GridRhythmRowsDirection,
-  type TypographyScale,
-} from "@/lib/config/defaults"
-import {
-  type CanvasBackgroundColor,
-  DEFAULT_IMAGE_COLOR_SCHEME_ID,
-  getImageSchemeColorToken,
-  normalizeImageColorSchemeId,
-  type ImageColorSchemeId,
-} from "@/lib/config/color-schemes"
+import { getImageSchemeColorToken } from "@/lib/config/color-schemes"
+import type { UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 
 export type MarginMethod = 1 | 2 | 3
 export type Orientation = "portrait" | "landscape"
-
-type UiSettingsLike = {
-  canvasRatio?: unknown
-  orientation?: unknown
-  marginMethod?: unknown
-  typographyScale?: unknown
-  displayUnit?: unknown
-  baseFont?: unknown
-  imageColorScheme?: unknown
-  canvasBackground?: unknown
-  rhythm?: unknown
-  rhythmRowsEnabled?: unknown
-  rhythmRowsDirection?: unknown
-  rhythmColsEnabled?: unknown
-  rhythmColsDirection?: unknown
-  rhythmRotation?: unknown
-  rhythmRotate90?: unknown
-  customBaseline?: unknown
-}
 
 export const CANVAS_RATIO_KEYS = [
   "din_ab",
@@ -73,48 +33,7 @@ export const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
   wide_2_1: "WIDE_2_1",
 }
 
-type DefaultUiSettings = {
-  canvasRatio: CanvasRatioKey
-  orientation: Orientation
-  rotation: number
-  marginMethod: MarginMethod
-  gridCols: number
-  gridRows: number
-  baselineMultiple: number
-  gutterMultiple: number
-  rhythm: GridRhythm
-  rhythmRowsEnabled: boolean
-  rhythmRowsDirection: GridRhythmRowsDirection
-  rhythmColsEnabled: boolean
-  rhythmColsDirection: GridRhythmColsDirection
-  typographyScale: TypographyScale
-  baseFont: FontFamily
-  imageColorScheme: ImageColorSchemeId
-  canvasBackground: string | null
-  customBaseline: number
-  useCustomMargins: boolean
-  customMarginMultipliers: {
-    top: number
-    left: number
-    right: number
-    bottom: number
-  }
-  showBaselines: boolean
-  showModules: boolean
-  showMargins: boolean
-  showImagePlaceholders: boolean
-  showTypography: boolean
-  showLayers: boolean
-  collapsed: Record<"format" | "baseline" | "margins" | "gutter" | "typo" | "color" | "summary", boolean>
-  exportPaperSize: string
-  exportPrintPro: boolean
-  exportBleedMm: number
-  exportRegistrationMarks: boolean
-  displayUnit: DisplayUnit
-  format: string
-}
-
-export const DEFAULT_UI: DefaultUiSettings = {
+export const DEFAULT_UI: UiSettingsSnapshot = {
   canvasRatio: "din_ab",
   orientation: "portrait",
   rotation: 0,
@@ -131,7 +50,7 @@ export const DEFAULT_UI: DefaultUiSettings = {
   typographyScale: "swiss",
   baseFont: "Inter",
   imageColorScheme: "swiss-modern",
-  canvasBackground: null,
+  canvasBackground: getImageSchemeColorToken(0),
   customBaseline: 12,
   useCustomMargins: true,
   customMarginMultipliers: {
@@ -155,113 +74,7 @@ export const DEFAULT_UI: DefaultUiSettings = {
     color: true,
     summary: true,
   },
-  exportPaperSize: "A4",
   exportPrintPro: false,
   exportBleedMm: 0,
   exportRegistrationMarks: false,
-  displayUnit: "pt",
-  format: "A4",
-}
-
-function resolveOrientation(value: unknown): Orientation {
-  return value === "landscape" ? "landscape" : "portrait"
-}
-
-function resolveMarginMethod(value: unknown): MarginMethod {
-  return value === 2 || value === 3 ? value : 1
-}
-
-function resolveTypographyScale(value: unknown): TypographyScale {
-  return isTypographyScale(value) ? value : "swiss"
-}
-
-function resolveDisplayUnit(value: unknown): DisplayUnit {
-  return isDisplayUnit(value) ? value : "pt"
-}
-
-function resolveBaseFont(value: unknown): FontFamily {
-  return isFontFamily(value) ? value : DEFAULT_BASE_FONT
-}
-
-function resolveImageColorScheme(value: unknown): ImageColorSchemeId {
-  return normalizeImageColorSchemeId(value) ?? DEFAULT_IMAGE_COLOR_SCHEME_ID
-}
-
-function resolveCanvasBackground(value: unknown): CanvasBackgroundColor {
-  return typeof value === "string" && value.trim().length > 0 ? value : getImageSchemeColorToken(0)
-}
-
-function resolveRhythm(value: unknown): GridRhythm {
-  return isGridRhythm(value) ? value : "repetitive"
-}
-
-function resolveRhythmRowsDirection(value: unknown, fallback: GridRhythmRowsDirection): GridRhythmRowsDirection {
-  return isGridRhythmRowsDirection(value) ? value : fallback
-}
-
-function resolveRhythmColsDirection(value: unknown, fallback: GridRhythmColsDirection): GridRhythmColsDirection {
-  return isGridRhythmColsDirection(value) ? value : fallback
-}
-
-function resolveRhythmAxisSettings(uiSettings: UiSettingsLike): GridRhythmAxisSettings {
-  const fallback = resolveLegacyGridRhythmAxisSettings(uiSettings.rhythmRotation, uiSettings.rhythmRotate90)
-  const defaults = defaultGridRhythmAxisSettings()
-  return {
-    rhythmRowsEnabled: typeof uiSettings.rhythmRowsEnabled === "boolean"
-      ? uiSettings.rhythmRowsEnabled
-      : fallback.rhythmRowsEnabled ?? defaults.rhythmRowsEnabled,
-    rhythmRowsDirection: resolveRhythmRowsDirection(
-      uiSettings.rhythmRowsDirection,
-      fallback.rhythmRowsDirection ?? defaults.rhythmRowsDirection,
-    ),
-    rhythmColsEnabled: typeof uiSettings.rhythmColsEnabled === "boolean"
-      ? uiSettings.rhythmColsEnabled
-      : fallback.rhythmColsEnabled ?? defaults.rhythmColsEnabled,
-    rhythmColsDirection: resolveRhythmColsDirection(
-      uiSettings.rhythmColsDirection,
-      fallback.rhythmColsDirection ?? defaults.rhythmColsDirection,
-    ),
-  }
-}
-
-function resolveCustomBaseline(value: unknown, defaultA4Baseline: number): number {
-  return typeof value === "number" ? value : defaultA4Baseline
-}
-
-export function resolveUiDefaults(
-  uiSettings: UiSettingsLike,
-  defaultA4Baseline: number,
-): {
-  canvasRatio: CanvasRatioKey
-  orientation: Orientation
-  marginMethod: MarginMethod
-  typographyScale: TypographyScale
-  displayUnit: DisplayUnit
-  baseFont: FontFamily
-  imageColorScheme: ImageColorSchemeId
-  canvasBackground: CanvasBackgroundColor
-  rhythm: GridRhythm
-  rhythmRowsEnabled: boolean
-  rhythmRowsDirection: GridRhythmRowsDirection
-  rhythmColsEnabled: boolean
-  rhythmColsDirection: GridRhythmColsDirection
-  customBaseline: number
-} {
-  const rhythmAxisSettings = resolveRhythmAxisSettings(uiSettings)
-  return {
-    canvasRatio: isCanvasRatioKey(uiSettings.canvasRatio) ? uiSettings.canvasRatio : "din_ab",
-    orientation: resolveOrientation(uiSettings.orientation),
-    marginMethod: resolveMarginMethod(uiSettings.marginMethod),
-    typographyScale: resolveTypographyScale(uiSettings.typographyScale),
-    displayUnit: resolveDisplayUnit(uiSettings.displayUnit),
-    baseFont: resolveBaseFont(uiSettings.baseFont),
-    imageColorScheme: resolveImageColorScheme(uiSettings.imageColorScheme),
-    canvasBackground: resolveCanvasBackground(uiSettings.canvasBackground),
-    rhythm: resolveRhythm(uiSettings.rhythm),
-    rhythmRowsEnabled: rhythmAxisSettings.rhythmRowsEnabled,
-    rhythmRowsDirection: rhythmAxisSettings.rhythmRowsDirection,
-    rhythmColsEnabled: rhythmAxisSettings.rhythmColsEnabled,
-    rhythmColsDirection: rhythmAxisSettings.rhythmColsDirection,
-    customBaseline: resolveCustomBaseline(uiSettings.customBaseline, defaultA4Baseline),
-  }
 }

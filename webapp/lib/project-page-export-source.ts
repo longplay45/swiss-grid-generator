@@ -16,16 +16,14 @@ import {
 } from "@/lib/config/defaults"
 import {
   isCanvasRatioKey,
-  PREVIEW_DEFAULT_FORMAT_BY_RATIO,
   DEFAULT_UI,
-  resolveUiDefaults,
   type MarginMethod,
   type Orientation,
 } from "@/lib/config/ui-defaults"
-import { FORMAT_BASELINES, generateSwissGrid, type CanvasRatioKey, type GridResult } from "@/lib/grid-calculator"
+import { type GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-
-const DEFAULT_A4_BASELINE = FORMAT_BASELINES.A4 ?? 12
+import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
+import type { UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 
 type TypographyStyleKey = string
 type BlockId = string
@@ -38,34 +36,7 @@ type CustomMarginMultipliers = {
   bottom: number
 }
 
-export type ResolvedProjectPageUiSettings = Record<string, unknown> & {
-  gridCols: number
-  gridRows: number
-  canvasRatio: CanvasRatioKey
-  orientation: Orientation
-  marginMethod: MarginMethod
-  baselineMultiple: number
-  gutterMultiple: number
-  rotation: number
-  typographyScale: ReturnType<typeof resolveUiDefaults>["typographyScale"]
-  baseFont: FontFamily
-  imageColorScheme: ImageColorSchemeId
-  canvasBackground: string | null
-  customBaseline: number
-  useCustomMargins: boolean
-  customMarginMultipliers?: CustomMarginMultipliers
-  rhythm: ReturnType<typeof resolveUiDefaults>["rhythm"]
-  rhythmRowsEnabled: boolean
-  rhythmRowsDirection: ReturnType<typeof resolveUiDefaults>["rhythmRowsDirection"]
-  rhythmColsEnabled: boolean
-  rhythmColsDirection: ReturnType<typeof resolveUiDefaults>["rhythmColsDirection"]
-  showBaselines: boolean
-  showModules: boolean
-  showMargins: boolean
-  showImagePlaceholders: boolean
-  showTypography: boolean
-  exportBleedMm: number
-}
+export type ResolvedProjectPageUiSettings = Record<string, unknown> & UiSettingsSnapshot
 
 export type ResolvedProjectPageExportSource = {
   id: string
@@ -256,7 +227,6 @@ export function resolveProjectPageUiSettings(
     throw new Error(`Invalid project page "${sourcePath}": uiSettings.typographyScale is not supported`)
   }
 
-  const defaults = resolveUiDefaults(source, DEFAULT_A4_BASELINE)
   const legacyRhythmAxisSettings = resolveLegacyGridRhythmAxisSettings(
     rhythmRotationSource,
     rhythmRotate90Source,
@@ -264,27 +234,29 @@ export function resolveProjectPageUiSettings(
   const customMarginMultipliers = useCustomMargins
     ? resolveCustomMarginMultipliers(source.customMarginMultipliers, sourcePath)
     : undefined
+  const resolved = resolveUiSettingsSnapshot(source)
 
   return {
+    ...resolved,
     ...source,
     gridCols,
     gridRows,
-    canvasRatio: defaults.canvasRatio,
+    canvasRatio: resolved.canvasRatio,
     orientation,
     marginMethod,
     baselineMultiple,
     gutterMultiple,
     rotation: typeof source.rotation === "number" && Number.isFinite(source.rotation)
       ? clampRotation(source.rotation)
-      : 0,
-    typographyScale: defaults.typographyScale,
-    baseFont: defaults.baseFont,
-    imageColorScheme: defaults.imageColorScheme,
-    canvasBackground: source.canvasBackground === null ? null : defaults.canvasBackground,
-    customBaseline: customBaseline ?? defaults.customBaseline,
+      : resolved.rotation,
+    typographyScale: resolved.typographyScale,
+    baseFont: resolved.baseFont,
+    imageColorScheme: resolved.imageColorScheme,
+    canvasBackground: resolved.canvasBackground,
+    customBaseline: customBaseline ?? resolved.customBaseline,
     useCustomMargins,
-    customMarginMultipliers,
-    rhythm: isGridRhythm(rhythmSource) ? rhythmSource : defaults.rhythm,
+    customMarginMultipliers: customMarginMultipliers ?? resolved.customMarginMultipliers,
+    rhythm: isGridRhythm(rhythmSource) ? rhythmSource : resolved.rhythm,
     rhythmRowsEnabled: typeof rhythmRowsEnabledSource === "boolean"
       ? rhythmRowsEnabledSource
       : legacyRhythmAxisSettings.rhythmRowsEnabled,
@@ -300,10 +272,7 @@ export function resolveProjectPageUiSettings(
     showBaselines: resolveBooleanSetting(source.showBaselines, DEFAULT_UI.showBaselines),
     showModules: resolveBooleanSetting(source.showModules, DEFAULT_UI.showModules),
     showMargins: resolveBooleanSetting(source.showMargins, DEFAULT_UI.showMargins),
-    showImagePlaceholders: resolveBooleanSetting(
-      source.showImagePlaceholders,
-      typeof DEFAULT_UI.showImagePlaceholders === "boolean" ? DEFAULT_UI.showImagePlaceholders : true,
-    ),
+    showImagePlaceholders: resolveBooleanSetting(source.showImagePlaceholders, DEFAULT_UI.showImagePlaceholders),
     showTypography: resolveBooleanSetting(source.showTypography, DEFAULT_UI.showTypography),
     exportBleedMm: resolveNonNegativeNumber(source.exportBleedMm, DEFAULT_UI.exportBleedMm),
   }
@@ -318,32 +287,7 @@ export function buildResolvedProjectPageExportSource(
   }
 
   const uiSettings = resolveProjectPageUiSettings(page.uiSettings, sourcePath)
-  const baseline = uiSettings.customBaseline ?? DEFAULT_A4_BASELINE
-  const customMargins = uiSettings.useCustomMargins && uiSettings.customMarginMultipliers
-    ? {
-        top: uiSettings.customMarginMultipliers.top * uiSettings.baselineMultiple * baseline,
-        left: uiSettings.customMarginMultipliers.left * uiSettings.baselineMultiple * baseline,
-        right: uiSettings.customMarginMultipliers.right * uiSettings.baselineMultiple * baseline,
-        bottom: uiSettings.customMarginMultipliers.bottom * uiSettings.baselineMultiple * baseline,
-      }
-    : undefined
-  const result = generateSwissGrid({
-    format: PREVIEW_DEFAULT_FORMAT_BY_RATIO[uiSettings.canvasRatio],
-    orientation: uiSettings.orientation,
-    marginMethod: uiSettings.marginMethod,
-    gridCols: uiSettings.gridCols,
-    gridRows: uiSettings.gridRows,
-    baseline,
-    baselineMultiple: uiSettings.baselineMultiple,
-    gutterMultiple: uiSettings.gutterMultiple,
-    rhythm: uiSettings.rhythm,
-    rhythmRowsEnabled: uiSettings.rhythmRowsEnabled,
-    rhythmRowsDirection: uiSettings.rhythmRowsDirection,
-    rhythmColsEnabled: uiSettings.rhythmColsEnabled,
-    rhythmColsDirection: uiSettings.rhythmColsDirection,
-    customMargins,
-    typographyScale: uiSettings.typographyScale,
-  })
+  const result = buildGridResultFromUiSettings(uiSettings)
   const imageColorScheme = uiSettings.imageColorScheme ?? DEFAULT_IMAGE_COLOR_SCHEME_ID
 
   return {

@@ -2,7 +2,6 @@
 
 import { useReducer, useState, useMemo, useRef, useEffect, useCallback } from "react"
 import {
-  generateSwissGrid,
   FORMATS_PT,
   getMaxBaseline,
   CANVAS_RATIOS,
@@ -12,8 +11,7 @@ import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
 import { ControlSidebar } from "@/components/layout/ControlSidebar"
 import { SettingsSidebarPanels } from "@/components/layout/SettingsSidebarPanels"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
-import { SECTION_KEYS } from "@/hooks/useSettingsHistory"
-import type { UiSettingsSnapshot, SectionKey } from "@/hooks/useSettingsHistory"
+import { SECTION_KEYS, type SectionKey, type UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 import { useExportActions } from "@/hooks/useExportActions"
 import { useHeaderActions } from "@/hooks/useHeaderActions"
 import {
@@ -35,17 +33,19 @@ import {
   resolveImageSchemeColor,
 } from "@/lib/config/color-schemes"
 import {
-  PREVIEW_DEFAULT_FORMAT_BY_RATIO,
-} from "@/lib/config/ui-defaults"
-import {
   DEFAULT_A4_BASELINE,
   INITIAL_EXPORT_UI_STATE,
   INITIAL_GRID_UI_STATE,
-  buildUiActionsFromLoadedSettings,
+  buildUiSnapshotFromLoadedSettings,
   exportUiReducer,
   gridUiReducer,
   type UiAction,
 } from "@/lib/workspace-ui-state"
+import {
+  buildGridResultFromUiSettings,
+  buildSerializableUiSettingsSnapshot,
+  resolvePreviewFormatForCanvasRatio,
+} from "@/lib/ui-settings-resolver"
 import { useProjectState } from "@/hooks/useProjectState"
 import {
   findTextLayerGridReductionConflicts,
@@ -206,59 +206,14 @@ export default function Home() {
     [canvasRatio],
   )
   const previewFormat = useMemo(() => {
-    return PREVIEW_DEFAULT_FORMAT_BY_RATIO[canvasRatio] ?? (selectedCanvasRatio.paperSizes[0] ?? "A4")
-  }, [canvasRatio, selectedCanvasRatio])
+    return resolvePreviewFormatForCanvasRatio(canvasRatio)
+  }, [canvasRatio])
 
   const gridUnit = customBaseline ?? DEFAULT_A4_BASELINE
 
-  const resolvedCustomMargins = useMemo(() => (
-    useCustomMargins
-      ? {
-          top: customMarginMultipliers.top * baselineMultiple * gridUnit,
-          bottom: customMarginMultipliers.bottom * baselineMultiple * gridUnit,
-          left: customMarginMultipliers.left * baselineMultiple * gridUnit,
-          right: customMarginMultipliers.right * baselineMultiple * gridUnit,
-        }
-      : undefined
-  ), [baselineMultiple, customMarginMultipliers, gridUnit, useCustomMargins])
-
-  const buildGridResult = useCallback((nextGridCols: number, nextGridRows: number) => (
-    generateSwissGrid({
-      format: previewFormat,
-      orientation,
-      marginMethod,
-      gridCols: nextGridCols,
-      gridRows: nextGridRows,
-      baseline: customBaseline ?? DEFAULT_A4_BASELINE,
-      baselineMultiple,
-      gutterMultiple,
-      rhythm,
-      rhythmRowsEnabled,
-      rhythmRowsDirection,
-      rhythmColsEnabled,
-      rhythmColsDirection,
-      customMargins: resolvedCustomMargins,
-      typographyScale,
-    })
-  ), [
-    baselineMultiple,
-    customBaseline,
-    gutterMultiple,
-    marginMethod,
-    orientation,
-    previewFormat,
-    resolvedCustomMargins,
-    rhythm,
-    rhythmColsDirection,
-    rhythmColsEnabled,
-    rhythmRowsDirection,
-    rhythmRowsEnabled,
-    typographyScale,
-  ])
-
   const result = useMemo(
-    () => buildGridResult(gridCols, gridRows),
-    [buildGridResult, gridCols, gridRows],
+    () => buildGridResultFromUiSettings(ui),
+    [ui],
   )
 
   const maxBaseline = useMemo(() => {
@@ -318,21 +273,16 @@ export default function Home() {
     requestPreviewRedo,
   })
 
-  const applyLoadedUiActions = useCallback((actions: UiAction[]) => {
-    const nextGridUi = actions.reduce(gridUiReducer, gridUi)
-    const nextExportUi = actions.reduce(exportUiReducer, exportUi)
-    const nextSnapshot = { ...nextGridUi, ...nextExportUi } as UiSettingsSnapshot
-    resetSettingsHistory(nextSnapshot)
+  const applyLoadedUiSnapshot = useCallback((snapshot: UiSettingsSnapshot) => {
+    resetSettingsHistory(snapshot)
     resetHistoryDomains()
-    if (actions.length > 0) {
-      suppressNextSettingsHistory()
-      dispatch({ type: "BATCH", actions })
-    }
-  }, [dispatch, exportUi, gridUi, resetHistoryDomains, resetSettingsHistory, suppressNextSettingsHistory])
+    suppressNextSettingsHistory()
+    dispatch({ type: "APPLY_SNAPSHOT", snapshot })
+  }, [dispatch, resetHistoryDomains, resetSettingsHistory, suppressNextSettingsHistory])
 
   const currentUiSettingsPayload = useMemo(
-    () => ({ ...ui, format: previewFormat }),
-    [previewFormat, ui],
+    () => buildSerializableUiSettingsSnapshot(ui),
+    [ui],
   )
 
   const getCurrentPreviewLayout = useCallback(
@@ -345,15 +295,16 @@ export default function Home() {
   }, [])
 
   const handleApplyProjectPage = useCallback((page: ProjectPage<PreviewLayoutState>) => {
-    const actions = buildUiActionsFromLoadedSettings(page.uiSettings, collapsed)
-    applyLoadedUiActions(actions)
+    const snapshot = buildUiSnapshotFromLoadedSettings(page.uiSettings, collapsed)
+    applyLoadedUiSnapshot(snapshot)
     applyLoadedPreviewLayout(page.previewLayout)
     setShowPresetsBrowser(false)
-  }, [applyLoadedPreviewLayout, applyLoadedUiActions, collapsed, setShowPresetsBrowser])
+  }, [applyLoadedPreviewLayout, applyLoadedUiSnapshot, collapsed, setShowPresetsBrowser])
 
   const {
     pages: projectPages,
     activePageId,
+    getCurrentProjectSnapshot,
     applyLoadedProject,
     selectPage,
     addPage,
@@ -538,21 +489,6 @@ export default function Home() {
 
   // ─── Export / Save actions ────────────────────────────────────────────────
 
-  const buildProjectPayload = useCallback(() => {
-    const currentPreviewSnapshot = getCurrentPreviewLayout()
-    const exportedPages = projectPages.map((page) => ({
-      id: page.id,
-      name: page.name,
-      uiSettings: page.id === activePageId ? currentUiSettingsPayload : page.uiSettings,
-      previewLayout: page.id === activePageId ? currentPreviewSnapshot : page.previewLayout,
-    }))
-
-    return {
-      activePageId,
-      pages: exportedPages,
-    }
-  }, [activePageId, currentUiSettingsPayload, getCurrentPreviewLayout, projectPages])
-
   const resolvedCanvasBackground = useMemo(
     () => (canvasBackground ? resolveImageSchemeColor(canvasBackground, imageColorScheme) : null),
     [canvasBackground, imageColorScheme],
@@ -560,60 +496,34 @@ export default function Home() {
 
   const exportActionsContext = useMemo(
     () => ({
-      result,
-      previewLayout,
-      baseFont,
-      orientation,
-      rotation,
-      imageColorScheme,
-      canvasBackground: resolvedCanvasBackground,
-      showBaselines,
-      showModules,
-      showMargins,
-      showImagePlaceholders,
-      showTypography,
       exportPrintPro,
       setExportPrintPro,
       exportBleedMm,
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
       defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
       onProjectMetadataChange: setProjectMetadata,
-      buildProjectPayload,
+      getCurrentProjectSnapshot,
     }),
     [
-      result,
-      previewLayout,
-      baseFont,
-      orientation,
-      rotation,
-      imageColorScheme,
-      resolvedCanvasBackground,
-      showBaselines,
-      showModules,
-      showMargins,
-      showImagePlaceholders,
-      showTypography,
       exportPrintPro,
       setExportPrintPro,
       exportBleedMm,
       setExportBleedMm,
       exportRegistrationMarks,
       setExportRegistrationMarks,
-      previewFormat,
       defaultPdfFilename,
       defaultSvgFilename,
       defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
       setProjectMetadata,
-      buildProjectPayload,
+      getCurrentProjectSnapshot,
     ],
   )
 

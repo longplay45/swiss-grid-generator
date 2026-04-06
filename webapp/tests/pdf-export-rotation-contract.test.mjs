@@ -100,8 +100,6 @@ test("pdf export draws pre-positioned tracking segments with explicit left ancho
 
 test("pdf export action forwards placeholder visibility and active image color scheme", () => {
   const source = readText("hooks/useExportActions.ts")
-  assert.match(source, /showImagePlaceholders:\s*boolean/)
-  assert.match(source, /imageColorScheme:\s*ImageColorSchemeId/)
   assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme:\s*page\.imageColorScheme,[\s\S]*?canvasBackground:\s*page\.resolvedCanvasBackground,[\s\S]*?showImagePlaceholders:\s*page\.uiSettings\.showImagePlaceholders,[\s\S]*?showTypography:\s*page\.uiSettings\.showTypography,/)
 })
 

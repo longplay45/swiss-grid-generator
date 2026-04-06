@@ -25,11 +25,7 @@ import {
   resolveAxisSizes,
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
-import {
-  clearOpticalMarginMeasurementCache,
-  getOpticalMarginAnchorOffset,
-} from "@/lib/optical-margin"
-import { wrapTextDetailed, getDefaultColumnSpan } from "@/lib/text-layout"
+import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import {
@@ -39,7 +35,6 @@ import {
 import {
   buildPositionedTextFormatTrackingGraphemes,
   buildPositionedTextFormatTrackingSegments,
-  measureFormattedTextRangeWidth,
   normalizeTextFormatRuns,
   type TextFormatRun,
   type PositionedTextFormatTrackingGrapheme,
@@ -54,12 +49,12 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import {
-  measureTrackedTextRangeWidth,
   normalizeTextTrackingRuns,
   type TextTrackingRun,
 } from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
+import { createTextMetricsService, measureCanvasTextAscent } from "@/lib/text-metrics-service"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -162,17 +157,6 @@ function createTextMeasureContext(): CanvasRenderingContext2D | null {
   return canvas.getContext("2d")
 }
 
-function estimateTextAscent(
-  measureContext: CanvasRenderingContext2D | null,
-  canvasFont: string,
-  fallbackFontSize: number,
-): number {
-  if (!measureContext) return fallbackFontSize * 0.8
-  measureContext.font = canvasFont
-  const metrics = measureContext.measureText("Hg")
-  return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSize * 0.8
-}
-
 function reconcileLayerOrder(
   current: readonly BlockId[],
   blockOrder: readonly BlockId[],
@@ -216,8 +200,6 @@ export function buildPageExportPlan({
   showImagePlaceholders,
   showTypography,
 }: BuildPageExportPlanArgs): PageExportPlan {
-  clearOpticalMarginMeasurementCache()
-
   const sourceWidth = result.pageSizePt.width
   const sourceHeight = result.pageSizePt.height
   const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
@@ -403,6 +385,8 @@ export function buildPageExportPlan({
   )
 
   const textMeasureContext = createTextMeasureContext()
+  const textMetrics = createTextMetricsService<TypographyStyleKey, FontFamily>()
+  textMetrics.clearCaches()
 
   const getBlockSpan = (key: BlockId) => {
     const raw = blockColumnSpans[key] ?? getDefaultColumnSpan(key, gridCols)
@@ -605,39 +589,18 @@ export function buildPageExportPlan({
               font: canvasFont,
               opticalKerning,
             })
-            if (range && (trackingRuns.length > 0 || formatRuns.length > 0)) {
-              return measureFormattedTextRangeWidth(textMeasureContext, {
-                sourceText,
-                renderedText: text,
-                range,
-                baseFormat,
-                formatRuns,
-                baseTrackingScale: trackingScale,
-                trackingRuns,
-                resolveFontSize,
-                opticalKerning,
-              })
-            }
-            if (range && trackingRuns.length > 0) {
-              return measureTrackedTextRangeWidth(textMeasureContext, {
-                sourceText,
-                renderedText: text,
-                range,
-                baseTrackingScale: trackingScale,
-                runs: trackingRuns,
-                fontSize,
-                opticalKerning,
-              })
-            }
-            return measureTrackedTextRangeWidth(textMeasureContext, {
-              sourceText,
-              renderedText: text,
-              range: range ?? { start: 0, end: sourceText.length },
-              baseTrackingScale: trackingScale,
-              runs: trackingRuns,
-              fontSize,
+            return textMetrics.getMeasuredTextWidth(
+              textMeasureContext,
+              text,
+              trackingScale,
               opticalKerning,
-            })
+              sourceText,
+              trackingRuns,
+              range,
+              baseFormat,
+              formatRuns,
+              resolveFontSize,
+            )
           }
           return text.length * fontSize * 0.56
         }
@@ -653,19 +616,40 @@ export function buildPageExportPlan({
           measureWidth,
         }
       },
-      wrapText: ({ context, text, maxWidth, hyphenate }) =>
-        wrapTextDetailed(text, maxWidth, hyphenate, context.measureWidth),
-      textAscent: ({ context, fontSize }) =>
-        estimateTextAscent(textMeasureContext, context.canvasFont, fontSize),
-      opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
-        getOpticalMarginAnchorOffset({
-          line,
-          align,
-          fontSize,
-          styleKey,
+      wrapText: ({ context, text, maxWidth, hyphenate }) => {
+        if (!textMeasureContext) {
+          return wrapTextDetailed(text, maxWidth, hyphenate, context.measureWidth)
+        }
+        applyCanvasTextConfig(textMeasureContext, {
           font: context.canvasFont,
-          measureWidth: context.measureWidth,
-        }),
+          opticalKerning: context.opticalKerning,
+        })
+        return textMetrics.getWrappedText(
+          textMeasureContext,
+          text,
+          maxWidth,
+          hyphenate,
+          context.trackingScale,
+          context.opticalKerning,
+          context.trackingRuns,
+          context.baseFormat,
+          context.formatRuns,
+          context.resolveFontSize,
+        )
+      },
+      textAscent: ({ context, fontSize }) =>
+        measureCanvasTextAscent(textMeasureContext, context.canvasFont, fontSize),
+      opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
+        textMeasureContext
+          ? textMetrics.getOpticalOffset(
+              textMeasureContext,
+              styleKey,
+              line,
+              align,
+              fontSize,
+              context.opticalKerning,
+            )
+          : 0,
     })
     : { plans: [] as TypographyLayoutPlan<BlockId, TypographyStyleKey>[], rects: {} as Record<BlockId, PageExportRect>, overflowByBlock: {} }
 

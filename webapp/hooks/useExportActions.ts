@@ -1,14 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import type { GridResult } from "@/lib/grid-calculator"
-import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { FontFamily } from "@/lib/config/fonts"
-import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
 import { renderSwissGridIdmlProject } from "@/lib/idml-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
-import { parseLoadedProject, type LoadedProject } from "@/lib/document-session"
+import { type LoadedProject } from "@/lib/document-session"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import {
   buildResolvedProjectPageExportSources,
@@ -18,8 +15,6 @@ import {
   type ResolvedProjectPageExportSource,
 } from "@/lib/project-page-export-source"
 import { mmToPt } from "@/lib/units"
-type TypographyStyleKey = keyof GridResult["typography"]["styles"]
-type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 
 export type ExportFormat = "pdf" | "svg" | "idml"
 
@@ -136,25 +131,12 @@ function updateFilenameForExport(
 }
 
 export type ExportActionsContext = {
-  result: GridResult
-  previewLayout: PreviewLayoutState | null
-  baseFont: FontFamily
-  orientation: "portrait" | "landscape"
-  rotation: number
-  imageColorScheme: ImageColorSchemeId
-  canvasBackground: string | null
-  showBaselines: boolean
-  showModules: boolean
-  showMargins: boolean
-  showImagePlaceholders: boolean
-  showTypography: boolean
   exportPrintPro: boolean
   setExportPrintPro: (b: boolean) => void
   exportBleedMm: number
   setExportBleedMm: (n: number) => void
   exportRegistrationMarks: boolean
   setExportRegistrationMarks: (b: boolean) => void
-  previewFormat: string
   defaultPdfFilename: string
   defaultSvgFilename: string
   defaultIdmlFilename: string
@@ -171,7 +153,7 @@ export type ExportActionsContext = {
     author: string
     createdAt?: string
   }) => void
-  buildProjectPayload: () => object
+  getCurrentProjectSnapshot: () => LoadedProject<Record<string, unknown>>
 }
 
 export function useExportActions(ctx: ExportActionsContext) {
@@ -187,7 +169,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     defaultJsonFilename,
     projectMetadata,
     onProjectMetadataChange,
-    buildProjectPayload,
+    getCurrentProjectSnapshot,
   } = ctx
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
@@ -204,19 +186,23 @@ export function useExportActions(ctx: ExportActionsContext) {
   const [saveAuthorDraft, setSaveAuthorDraft] = useState("")
   const [saveFilenameTouched, setSaveFilenameTouched] = useState(false)
 
-  const currentProject = useMemo(() => parseLoadedProject<Record<string, unknown>>({
-    title: projectMetadata.title,
-    description: projectMetadata.description,
-    author: projectMetadata.author,
-    createdAt: projectMetadata.createdAt,
-    ...buildProjectPayload(),
+  const getCurrentProjectWithMetadata = useCallback(() => ({
+    ...getCurrentProjectSnapshot(),
+    metadata: {
+      title: projectMetadata.title,
+      description: projectMetadata.description,
+      author: projectMetadata.author,
+      createdAt: projectMetadata.createdAt,
+    },
   }), [
-    buildProjectPayload,
+    getCurrentProjectSnapshot,
     projectMetadata.author,
     projectMetadata.createdAt,
     projectMetadata.description,
     projectMetadata.title,
   ])
+
+  const currentProject = useMemo(() => getCurrentProjectWithMetadata(), [getCurrentProjectWithMetadata])
 
   const projectPageCount = currentProject.pages.length
 
@@ -257,6 +243,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       const trimmed = filename.trim()
       if (!trimmed) return
       const normalizedFilename = trimmed.toLowerCase().endsWith(".json") ? trimmed : `${trimmed}.json`
+      const projectSnapshot = getCurrentProjectSnapshot()
       const payload = {
         schemaVersion: 2,
         exportedAt: new Date().toISOString(),
@@ -264,7 +251,8 @@ export function useExportActions(ctx: ExportActionsContext) {
         description: metadata.description,
         author: metadata.author,
         createdAt: metadata.createdAt,
-        ...buildProjectPayload(),
+        activePageId: projectSnapshot.activePageId,
+        pages: projectSnapshot.pages,
       }
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -274,7 +262,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       a.click()
       URL.revokeObjectURL(url)
     },
-    [buildProjectPayload],
+    [getCurrentProjectSnapshot],
   )
 
   const openSaveDialog = useCallback(() => {
@@ -614,17 +602,18 @@ export function useExportActions(ctx: ExportActionsContext) {
       selectedPageCount,
       getDefaultExportFilename,
     )
+    const currentProjectSnapshot = getCurrentProjectWithMetadata()
     const selectedRange = {
       fromPage: normalizedRange.fromPage,
       toPage: normalizedRange.toPage,
     } satisfies ProjectExportPageRange
-    const selectedProject = filterProjectByExportRange(currentProject, selectedRange)
-    const resolvedPages = buildResolvedProjectPageExportSources(currentProject, selectedRange)
+    const selectedProject = filterProjectByExportRange(currentProjectSnapshot, selectedRange)
+    const resolvedPages = buildResolvedProjectPageExportSources(currentProjectSnapshot, selectedRange)
     const parsedBleed = Number(exportBleedMmDraft)
     const bleedMm = Number.isFinite(parsedBleed) && parsedBleed >= 0 ? parsedBleed : exportBleedMm
     const shouldPersistActivePageExportSettings = (
       selectedPageCount === 1
-      && selectedSinglePage?.id === currentProject.activePageId
+      && selectedSinglePage?.id === currentProjectSnapshot.activePageId
     )
 
     if (exportFormatDraft === "idml") {
@@ -650,7 +639,6 @@ export function useExportActions(ctx: ExportActionsContext) {
 
     setIsExportDialogOpen(false)
   }, [
-    currentProject,
     exportBleedMm,
     exportBleedMmDraft,
     exportFormatDraft,
@@ -659,6 +647,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     exportIDML,
     exportPDF,
     exportSVG,
+    getCurrentProjectWithMetadata,
     getDefaultExportFilename,
     normalizedRange.fromPage,
     normalizedRange.toPage,
