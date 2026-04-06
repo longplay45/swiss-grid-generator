@@ -1,5 +1,4 @@
 import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import defaultPreset from "@/public/feedback/default_v001.json"
 import { DEFAULT_BASE_FONT, isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import {
   defaultGridRhythmAxisSettings,
@@ -74,8 +73,95 @@ export const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
   wide_2_1: "WIDE_2_1",
 }
 
-export const DEFAULT_UI = defaultPreset.uiSettings
-export const DEFAULT_PREVIEW_LAYOUT = defaultPreset.previewLayout
+type DefaultUiSettings = {
+  canvasRatio: CanvasRatioKey
+  orientation: Orientation
+  rotation: number
+  marginMethod: MarginMethod
+  gridCols: number
+  gridRows: number
+  baselineMultiple: number
+  gutterMultiple: number
+  rhythm: GridRhythm
+  rhythmRowsEnabled: boolean
+  rhythmRowsDirection: GridRhythmRowsDirection
+  rhythmColsEnabled: boolean
+  rhythmColsDirection: GridRhythmColsDirection
+  typographyScale: TypographyScale
+  baseFont: FontFamily
+  imageColorScheme: ImageColorSchemeId
+  canvasBackground: string | null
+  customBaseline: number
+  useCustomMargins: boolean
+  customMarginMultipliers: {
+    top: number
+    left: number
+    right: number
+    bottom: number
+  }
+  showBaselines: boolean
+  showModules: boolean
+  showMargins: boolean
+  showImagePlaceholders: boolean
+  showTypography: boolean
+  showLayers: boolean
+  collapsed: Record<"format" | "baseline" | "margins" | "gutter" | "typo" | "color" | "summary", boolean>
+  exportPaperSize: string
+  exportPrintPro: boolean
+  exportBleedMm: number
+  exportRegistrationMarks: boolean
+  displayUnit: DisplayUnit
+  format: string
+}
+
+export const DEFAULT_UI: DefaultUiSettings = {
+  canvasRatio: "din_ab",
+  orientation: "portrait",
+  rotation: 0,
+  marginMethod: 1,
+  gridCols: 3,
+  gridRows: 6,
+  baselineMultiple: 1,
+  gutterMultiple: 1,
+  rhythm: "repetitive",
+  rhythmRowsEnabled: true,
+  rhythmRowsDirection: "ltr",
+  rhythmColsEnabled: true,
+  rhythmColsDirection: "ttb",
+  typographyScale: "swiss",
+  baseFont: "Inter",
+  imageColorScheme: "swiss-modern",
+  canvasBackground: null,
+  customBaseline: 12,
+  useCustomMargins: true,
+  customMarginMultipliers: {
+    top: 2,
+    left: 2,
+    right: 2,
+    bottom: 3,
+  },
+  showBaselines: true,
+  showModules: true,
+  showMargins: true,
+  showImagePlaceholders: true,
+  showTypography: true,
+  showLayers: false,
+  collapsed: {
+    format: true,
+    baseline: true,
+    margins: true,
+    gutter: true,
+    typo: true,
+    color: true,
+    summary: true,
+  },
+  exportPaperSize: "A4",
+  exportPrintPro: false,
+  exportBleedMm: 0,
+  exportRegistrationMarks: false,
+  displayUnit: "pt",
+  format: "A4",
+}
 
 function resolveOrientation(value: unknown): Orientation {
   return value === "landscape" ? "landscape" : "portrait"

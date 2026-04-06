@@ -36,7 +36,6 @@ import {
   resolveImageSchemeColor,
 } from "@/lib/config/color-schemes"
 import {
-  DEFAULT_PREVIEW_LAYOUT,
   PREVIEW_DEFAULT_FORMAT_BY_RATIO,
 } from "@/lib/config/ui-defaults"
 import {
@@ -62,7 +61,7 @@ const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLo
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
-const DEFAULT_PAGE_PREVIEW_LAYOUT = DEFAULT_PREVIEW_LAYOUT as unknown as PreviewLayoutState | null
+const DEFAULT_PAGE_PREVIEW_LAYOUT: PreviewLayoutState | null = null
 
 type NoticeState = {
   title: string
