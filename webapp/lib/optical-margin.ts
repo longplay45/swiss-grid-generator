@@ -71,6 +71,7 @@ const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
 }
 
 const TRAILING_DASH_PUNCTUATION = new Set(["-", "‐", "‑", "–", "—"])
+const DEFAULT_TRAILING_PUNCTUATION_SCALE = 0.2
 
 const LEADING_EXPRESSIVE_LETTERS_EM: Record<string, number> = {
   A: 0.046,
@@ -640,6 +641,21 @@ function shouldHangTrailingPunctuation(
   return profile !== "default"
 }
 
+function resolveDefaultProfileTrailingPunctuationOffset(
+  char: string,
+  edgeOffset: { em: number; kind: OpticalMarginCharKind },
+  glyphWidth: number,
+  fontSize: number,
+): number {
+  if (edgeOffset.kind !== "punctuation" || TRAILING_DASH_PUNCTUATION.has(char)) return 0
+  return resolveStyledHangingOffset(
+    { ...edgeOffset, em: edgeOffset.em * DEFAULT_TRAILING_PUNCTUATION_SCALE },
+    glyphWidth,
+    fontSize,
+    "default",
+  )
+}
+
 export function resolveOpticalKerningPairAdjustment({
   left,
   right,
@@ -776,22 +792,23 @@ export function getOpticalMarginAnchorOffset({
   }
 
   const edgeOffset = getTrailingOpticalOffsetEm(last)
+  const glyphWidth = measureWidth(last)
   if (edgeOffset.kind === "punctuation" && !shouldHangTrailingPunctuation(last, profile)) {
-    return 0
+    return resolveDefaultProfileTrailingPunctuationOffset(last, edgeOffset, glyphWidth, fontSize)
   }
   const measured = measureGlyphBounds?.(last) ?? measureOpticalGlyphBoundsFromCanvas(last, font, fontSize, profile)
-  const glyphWidth = measureWidth(last) || measured?.advanceWidth || 0
+  const resolvedGlyphWidth = glyphWidth || measured?.advanceWidth || 0
   if (shouldPreferStyledTrailingOffset(edgeOffset, profile, fontSize)) {
-    return resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
+    return resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile)
   }
   if (measured) {
     return resolveMeasuredRightHangingOffset(
       Math.max(0, measured.advanceWidth - measured.rightBoundary),
       edgeOffset,
-      glyphWidth,
+      resolvedGlyphWidth,
       fontSize,
       profile,
     )
   }
-  return resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
+  return resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile)
 }

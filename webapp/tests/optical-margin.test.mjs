@@ -32,15 +32,15 @@ test("right-aligned display punctuation receives positive optical offset", () =>
   assert.ok(offset > 0)
 })
 
-test("right-aligned body punctuation stays on the margin", () => {
+test("right-aligned body punctuation receives a restrained optical hang", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Swiss.",
     align: "right",
     fontSize: 18,
     styleKey: "body",
-    measureWidth: monoMeasure,
+    measureWidth: () => 6,
   })
-  assert.equal(offset, 0)
+  assert.ok(Math.abs(offset - 1.008) < 1e-9)
 })
 
 test("right-aligned display terminal hyphen receives positive optical offset", () => {
