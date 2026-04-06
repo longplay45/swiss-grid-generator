@@ -73,3 +73,19 @@ test("wrapTextDetailed preserves wrapped interword whitespace on the preceding s
     "B",
   ])
 })
+
+test("wrapText keeps sentence punctuation attached to the preceding line", () => {
+  const lines = wrapText("alpha;tool", 6, false, monoMeasure)
+  assert.deepEqual(lines, [
+    "alpha;",
+    "tool",
+  ])
+})
+
+test("wrapText backtracks to avoid starting a new line with punctuation", () => {
+  const lines = wrapText("alpha beta;", 10, false, monoMeasure)
+  assert.deepEqual(lines, [
+    "alpha",
+    "beta;",
+  ])
+})

@@ -21,24 +21,48 @@ test("left-aligned opening punctuation receives negative optical offset", () => 
   assert.ok(offset < 0)
 })
 
-test("right-aligned trailing punctuation receives positive optical offset", () => {
+test("right-aligned display punctuation receives positive optical offset", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Swiss.",
     align: "right",
-    fontSize: 10,
+    fontSize: 160,
+    styleKey: "display",
     measureWidth: monoMeasure,
   })
   assert.ok(offset > 0)
 })
 
-test("right-aligned terminal hyphen receives positive optical offset", () => {
+test("right-aligned body punctuation stays on the margin", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Swiss.",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: monoMeasure,
+  })
+  assert.equal(offset, 0)
+})
+
+test("right-aligned display terminal hyphen receives positive optical offset", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "rhyth-",
     align: "right",
-    fontSize: 10,
+    fontSize: 160,
+    styleKey: "display",
     measureWidth: monoMeasure,
   })
   assert.ok(offset > 0)
+})
+
+test("right-aligned body terminal hyphen stays on the margin", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "rhyth-",
+    align: "right",
+    fontSize: 18,
+    styleKey: "body",
+    measureWidth: monoMeasure,
+  })
+  assert.equal(offset, 0)
 })
 
 test("leading uppercase letter receives negative fallback optical offset", () => {

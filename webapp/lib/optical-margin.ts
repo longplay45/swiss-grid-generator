@@ -70,6 +70,8 @@ const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
   "}": 0.18,
 }
 
+const TRAILING_DASH_PUNCTUATION = new Set(["-", "‐", "‑", "–", "—"])
+
 const LEADING_EXPRESSIVE_LETTERS_EM: Record<string, number> = {
   A: 0.046,
   C: 0.055,
@@ -630,6 +632,14 @@ function shouldPreferStyledTrailingOffset(
   return fontSize <= 32
 }
 
+function shouldHangTrailingPunctuation(
+  char: string,
+  profile: OpticalMarginProfile,
+): boolean {
+  if (TRAILING_DASH_PUNCTUATION.has(char)) return profile !== "default"
+  return profile !== "default"
+}
+
 export function resolveOpticalKerningPairAdjustment({
   left,
   right,
@@ -766,6 +776,9 @@ export function getOpticalMarginAnchorOffset({
   }
 
   const edgeOffset = getTrailingOpticalOffsetEm(last)
+  if (edgeOffset.kind === "punctuation" && !shouldHangTrailingPunctuation(last, profile)) {
+    return 0
+  }
   const measured = measureGlyphBounds?.(last) ?? measureOpticalGlyphBoundsFromCanvas(last, font, fontSize, profile)
   const glyphWidth = measureWidth(last) || measured?.advanceWidth || 0
   if (shouldPreferStyledTrailingOffset(edgeOffset, profile, fontSize)) {

@@ -24,6 +24,23 @@ type LineToken = {
   suppressedAtLineStart?: boolean
 }
 
+const SPLITTABLE_PUNCTUATION = new Set([
+  ",",
+  ".",
+  ";",
+  ":",
+  "!",
+  "?",
+  "%",
+  ")",
+  "]",
+  "}",
+  "»",
+  "›",
+  "”",
+  "’",
+])
+
 type InlineSplitResult = {
   leadingWithHyphen: string
   leadingEnd: number
@@ -171,14 +188,99 @@ function toLineTokens(text: string, offset: number): LineToken[] {
   for (const match of matches) {
     const value = match[0]
     const index = match.index ?? 0
-    tokens.push({
-      text: value,
-      start: offset + index,
-      end: offset + index + value.length,
-      isWhitespace: /^\s+$/.test(value),
-    })
+    const start = offset + index
+    if (/^\s+$/.test(value)) {
+      tokens.push({
+        text: value,
+        start,
+        end: start + value.length,
+        isWhitespace: true,
+      })
+      continue
+    }
+
+    let cursor = start
+    let bufferedText = ""
+    let bufferedStart = start
+    for (const grapheme of splitTextForTracking(value)) {
+      const graphemeStart = cursor
+      const graphemeEnd = graphemeStart + grapheme.length
+      cursor = graphemeEnd
+      if (SPLITTABLE_PUNCTUATION.has(grapheme)) {
+        if (bufferedText) {
+          tokens.push({
+            text: bufferedText,
+            start: bufferedStart,
+            end: graphemeStart,
+            isWhitespace: false,
+          })
+          bufferedText = ""
+        }
+        tokens.push({
+          text: grapheme,
+          start: graphemeStart,
+          end: graphemeEnd,
+          isWhitespace: false,
+        })
+        bufferedStart = graphemeEnd
+        continue
+      }
+
+      if (!bufferedText) bufferedStart = graphemeStart
+      bufferedText += grapheme
+    }
+
+    if (bufferedText) {
+      tokens.push({
+        text: bufferedText,
+        start: bufferedStart,
+        end: start + value.length,
+        isWhitespace: false,
+      })
+    }
   }
   return tokens
+}
+
+function isLineStartForbiddenPunctuationToken(token: LineToken | undefined): boolean {
+  return Boolean(token && !token.isWhitespace && SPLITTABLE_PUNCTUATION.has(token.text))
+}
+
+function suppressLeadingWhitespace(tokens: readonly LineToken[]): LineToken[] {
+  let seenVisible = false
+  return tokens.map((token) => {
+    if (seenVisible) return token
+    if (token.isWhitespace) {
+      return { ...token, suppressedAtLineStart: true }
+    }
+    seenVisible = true
+    return token
+  })
+}
+
+function tryRebalanceForLeadingPunctuation(
+  currentTokens: readonly LineToken[],
+  token: LineToken,
+  maxWidth: number,
+  measureWidth: MeasureWidth,
+): { lineTokens: LineToken[]; carryTokens: LineToken[] } | null {
+  if (!isLineStartForbiddenPunctuationToken(token) || currentTokens.length === 0) return null
+
+  for (let splitIndex = currentTokens.length; splitIndex > 0; splitIndex -= 1) {
+    const lineTokens = currentTokens.slice(0, splitIndex)
+    if (!shouldEmitWrappedLine(lineTokens)) continue
+    const carryTokens = suppressLeadingWhitespace(currentTokens.slice(splitIndex).concat(token))
+    const firstVisible = carryTokens.find((candidate) => !candidate.isWhitespace || candidate.suppressedAtLineStart !== true)
+    if (isLineStartForbiddenPunctuationToken(firstVisible)) continue
+    if (measureTokens(carryTokens, measureWidth) <= maxWidth) {
+      return {
+        lineTokens,
+        carryTokens,
+      }
+    }
+  }
+
+  return null
 }
 
 function splitOversizeWhitespaceToken(
@@ -323,6 +425,13 @@ function wrapSingleLineDetailed(
         tokens.splice(index + 1, 0, split.remainder)
         continue
       }
+    }
+
+    const punctuationRebalance = tryRebalanceForLeadingPunctuation(currentTokens, token, maxWidth, measureWidth)
+    if (punctuationRebalance) {
+      lines.push(toWrappedLine(punctuationRebalance.lineTokens, sourceOffset))
+      currentTokens = punctuationRebalance.carryTokens
+      continue
     }
 
     if (currentTokens.length > 0) {
