@@ -2,7 +2,6 @@ import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 import { PanelCard } from "@/components/settings/PanelCard"
 import { BASELINE_MULTIPLE_RANGE } from "@/lib/config/defaults"
 
@@ -44,19 +43,21 @@ export const MarginsPanel = memo(function MarginsPanel({
 }: Props) {
   const clampCustomMarginMultiplier = (value: number) => Math.max(1, Math.min(9, Math.round(value)))
 
-  const handleCustomMarginsToggle = (checked: boolean) => {
-    if (checked) {
-      const defaultBaselineMultiple = BASELINE_MULTIPLE_RANGE.min
-      const customMarginScale = gridUnit * defaultBaselineMultiple
-      onBaselineMultipleChange(defaultBaselineMultiple)
+  const handleMarginModeChange = (value: "1" | "2" | "3" | "custom") => {
+    if (value === "custom") {
+      const customMarginScale = gridUnit * baselineMultiple
       onCustomMarginMultipliersChange({
         top: clampCustomMarginMultiplier(currentMargins.top / customMarginScale),
         left: clampCustomMarginMultiplier(currentMargins.left / customMarginScale),
         right: clampCustomMarginMultiplier(currentMargins.right / customMarginScale),
         bottom: clampCustomMarginMultiplier(currentMargins.bottom / customMarginScale),
       })
+      onUseCustomMarginsChange(true)
+      return
     }
-    onUseCustomMarginsChange(checked)
+
+    onMarginMethodChange(parseInt(value, 10) as 1 | 2 | 3)
+    onUseCustomMarginsChange(false)
   }
 
   const collapsedSummary = useCustomMargins
@@ -85,7 +86,7 @@ export const MarginsPanel = memo(function MarginsPanel({
   return (
     <PanelCard
       title="III. Margins"
-      tooltip="Margin method and custom margin controls"
+      tooltip="Margin method dropdown, baseline multiple, and custom per-side controls"
       collapsed={collapsed}
       collapsedSummary={collapsedSummary}
       onHeaderClick={onHeaderClick}
@@ -93,38 +94,26 @@ export const MarginsPanel = memo(function MarginsPanel({
       helpSectionKey="margins"
       isDarkMode={isDarkMode}
     >
-      <div className="flex items-center justify-between">
-        <Label className="text-sm text-gray-600">Custom Margins</Label>
-        <Switch
-          checked={useCustomMargins}
-          onCheckedChange={handleCustomMarginsToggle}
-          className="h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
-          thumbClassName="h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
-        />
+      <div className="space-y-2">
+        <Label className="text-sm text-gray-600">Margin Method</Label>
+        <Select
+          value={useCustomMargins ? "custom" : marginMethod.toString()}
+          onValueChange={(value) => handleMarginModeChange(value as "1" | "2" | "3" | "custom")}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
+            <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
+            <SelectItem value="3">Baseline (1:1:1:1)</SelectItem>
+            <SelectItem value="custom">Custom Margins</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {!useCustomMargins ? (
-        <>
-          <div className="space-y-2">
-            <Label className="text-sm text-gray-600">Margin Method</Label>
-            <Select
-              value={marginMethod.toString()}
-              onValueChange={(v) => onMarginMethodChange(parseInt(v) as 1 | 2 | 3)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
-                <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
-                <SelectItem value="3">Baseline (1:1:1:1)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {baselineMultipleControl}
-        </>
-      ) : (
-        <div className="space-y-4">
+      {useCustomMargins ? (
+        <div className="space-y-4 pt-1">
           {(["top", "left", "right"] as const).map((side) => (
             <div key={side} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -163,6 +152,8 @@ export const MarginsPanel = memo(function MarginsPanel({
           </div>
           {baselineMultipleControl}
         </div>
+      ) : (
+        baselineMultipleControl
       )}
     </PanelCard>
   )

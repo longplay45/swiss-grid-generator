@@ -23,7 +23,15 @@ import {
   type MarginMethod,
   type Orientation,
 } from "@/lib/config/ui-defaults"
-import { FORMAT_BASELINES, FORMATS_PT, generateSwissGrid, type GridResult } from "@/lib/grid-calculator"
+import {
+  FORMAT_BASELINES,
+  FORMATS_PT,
+  CUSTOM_CANVAS_FORMAT,
+  clampCustomCanvasRatioUnit,
+  generateSwissGrid,
+  getCustomCanvasFormatDimensions,
+  type GridResult,
+} from "@/lib/grid-calculator"
 import {
   buildCollapsedSectionState,
   type SectionKey,
@@ -55,6 +63,7 @@ function resolveCanvasRatio(source: UiSettingsSource): UiSettingsSnapshot["canva
   if (isCanvasRatioKey(source.canvasRatio)) return source.canvasRatio
 
   if (typeof source.format === "string") {
+    if (source.format === CUSTOM_CANVAS_FORMAT) return "custom"
     const fromFormat = CANVAS_RATIO_BY_FORMAT[source.format]
     if (fromFormat && isCanvasRatioKey(fromFormat)) return fromFormat
     if (/^[AB]/.test(source.format)) return "din_ab"
@@ -62,6 +71,10 @@ function resolveCanvasRatio(source: UiSettingsSource): UiSettingsSnapshot["canva
   }
 
   return DEFAULT_UI.canvasRatio
+}
+
+function resolveCustomRatioUnit(value: unknown, fallback: number): number {
+  return clampCustomCanvasRatioUnit(value, fallback)
 }
 
 function resolveOrientation(value: unknown): Orientation {
@@ -129,6 +142,8 @@ export function resolveUiSettingsSnapshot(
 
   return {
     canvasRatio,
+    customRatioWidth: resolveCustomRatioUnit(source.customRatioWidth, DEFAULT_UI.customRatioWidth),
+    customRatioHeight: resolveCustomRatioUnit(source.customRatioHeight, DEFAULT_UI.customRatioHeight),
     exportPrintPro: resolveBoolean(source.exportPrintPro, DEFAULT_UI.exportPrintPro),
     exportBleedMm: resolveNonNegativeNumber(source.exportBleedMm, DEFAULT_UI.exportBleedMm),
     exportRegistrationMarks: resolveBoolean(source.exportRegistrationMarks, DEFAULT_UI.exportRegistrationMarks),
@@ -203,6 +218,9 @@ export function buildGridResultFromUiSettings(snapshot: UiSettingsSnapshot): Gri
 
   return generateSwissGrid({
     format: resolvePreviewFormat(snapshot.canvasRatio),
+    customFormatDimensions: snapshot.canvasRatio === "custom"
+      ? getCustomCanvasFormatDimensions(snapshot.customRatioWidth, snapshot.customRatioHeight)
+      : undefined,
     orientation: snapshot.orientation,
     marginMethod: snapshot.marginMethod,
     gridCols: snapshot.gridCols,

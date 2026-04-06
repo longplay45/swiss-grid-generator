@@ -2,7 +2,9 @@ import test from "node:test"
 import assert from "node:assert/strict"
 
 import {
+  CUSTOM_CANVAS_FORMAT,
   FORMATS_PT,
+  getCustomCanvasFormatDimensions,
   generateSwissGrid,
   getMaxBaseline,
 } from "../lib/grid-calculator.ts"
@@ -97,6 +99,38 @@ test("orientation swaps page dimensions for same format", () => {
     baseline: 12,
   })
 
+  assert.equal(landscape.pageSizePt.width, portrait.pageSizePt.height)
+  assert.equal(landscape.pageSizePt.height, portrait.pageSizePt.width)
+})
+
+test("custom ratio dimensions preserve A4 area and respect orientation", () => {
+  const customDimensions = getCustomCanvasFormatDimensions(16, 9)
+  const a4Area = FORMATS_PT.A4.width * FORMATS_PT.A4.height
+
+  approxEqual(customDimensions.width * customDimensions.height, a4Area, "custom ratio area should match A4")
+  assert.ok(customDimensions.width < customDimensions.height, "custom dimensions should resolve to portrait base")
+
+  const portrait = generateSwissGrid({
+    format: CUSTOM_CANVAS_FORMAT,
+    customFormatDimensions: customDimensions,
+    orientation: "portrait",
+    marginMethod: 1,
+    gridCols: 6,
+    gridRows: 8,
+    baseline: 12,
+  })
+
+  const landscape = generateSwissGrid({
+    format: CUSTOM_CANVAS_FORMAT,
+    customFormatDimensions: customDimensions,
+    orientation: "landscape",
+    marginMethod: 1,
+    gridCols: 6,
+    gridRows: 8,
+    baseline: 12,
+  })
+
+  assert.equal(portrait.format, CUSTOM_CANVAS_FORMAT)
   assert.equal(landscape.pageSizePt.width, portrait.pageSizePt.height)
   assert.equal(landscape.pageSizePt.height, portrait.pageSizePt.width)
 })

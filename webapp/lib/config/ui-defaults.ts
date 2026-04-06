@@ -1,4 +1,9 @@
-import type { CanvasRatioKey } from "@/lib/grid-calculator"
+import {
+  DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT,
+  DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH,
+  CUSTOM_CANVAS_FORMAT,
+  type CanvasRatioKey,
+} from "@/lib/grid-calculator"
 import { getImageSchemeColorToken } from "@/lib/config/color-schemes"
 import type { UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 
@@ -14,6 +19,7 @@ export const CANVAS_RATIO_KEYS = [
   "square_1_1",
   "editorial_4_5",
   "wide_2_1",
+  "custom",
 ] as const satisfies readonly CanvasRatioKey[]
 
 const CANVAS_RATIO_SET = new Set<CanvasRatioKey>(CANVAS_RATIO_KEYS)
@@ -31,10 +37,13 @@ export const PREVIEW_DEFAULT_FORMAT_BY_RATIO: Record<CanvasRatioKey, string> = {
   square_1_1: "SQUARE_1_1",
   editorial_4_5: "EDITORIAL_4_5",
   wide_2_1: "WIDE_2_1",
+  custom: CUSTOM_CANVAS_FORMAT,
 }
 
 export const DEFAULT_UI: UiSettingsSnapshot = {
   canvasRatio: "din_ab",
+  customRatioWidth: DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH,
+  customRatioHeight: DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT,
   orientation: "portrait",
   rotation: 0,
   marginMethod: 1,

@@ -4,6 +4,8 @@ import type { GridResult, CanvasRatioKey } from "@/lib/grid-calculator"
 
 export type LayoutPresetUiSettings = Record<string, unknown> & {
   canvasRatio: CanvasRatioKey
+  customRatioWidth?: number
+  customRatioHeight?: number
   orientation: "portrait" | "landscape"
   marginMethod: 1 | 2 | 3
   gridCols: number

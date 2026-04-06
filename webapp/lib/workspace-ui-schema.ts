@@ -15,6 +15,8 @@ export type CustomMarginMultipliers = {
 
 export type UiSettingsSnapshot = {
   canvasRatio: CanvasRatioKey
+  customRatioWidth: number
+  customRatioHeight: number
   exportPrintPro: boolean
   exportBleedMm: number
   exportRegistrationMarks: boolean

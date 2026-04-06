@@ -8,6 +8,8 @@ const SETTINGS_HISTORY_LIMIT = 100
 function areSnapshotsEqual(a: UiSettingsSnapshot, b: UiSettingsSnapshot): boolean {
   return (
     a.canvasRatio === b.canvasRatio
+    && a.customRatioWidth === b.customRatioWidth
+    && a.customRatioHeight === b.customRatioHeight
     && a.exportPrintPro === b.exportPrintPro
     && a.exportBleedMm === b.exportBleedMm
     && a.exportRegistrationMarks === b.exportRegistrationMarks

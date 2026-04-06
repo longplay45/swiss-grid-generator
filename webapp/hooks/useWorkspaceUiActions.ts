@@ -33,6 +33,14 @@ export function useWorkspaceUiActions({
     dispatch({ type: "SET", key: "canvasRatio", value })
   }, [dispatch])
 
+  const setCustomRatioWidth = useCallback((value: number) => {
+    dispatch({ type: "SET", key: "customRatioWidth", value })
+  }, [dispatch])
+
+  const setCustomRatioHeight = useCallback((value: number) => {
+    dispatch({ type: "SET", key: "customRatioHeight", value })
+  }, [dispatch])
+
   const setOrientation = useCallback((value: "portrait" | "landscape") => {
     dispatch({ type: "SET", key: "orientation", value })
   }, [dispatch])
@@ -159,6 +167,8 @@ export function useWorkspaceUiActions({
 
   return {
     setCanvasRatio,
+    setCustomRatioWidth,
+    setCustomRatioHeight,
     setOrientation,
     setRotation,
     setMarginMethod,

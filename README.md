@@ -36,9 +36,10 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ## 🚀 Current Features
 
 ### Canvas & Format
-- Multiple ratio families: **DIN, ANSI, Balanced, Photo, Screen, Square, Editorial, Wide Impact**
+- Multiple ratio families: **DIN, ANSI, Balanced, Photo, Screen, Square, Editorial, Wide Impact, Custom Ratio**
 - Portrait / Landscape orientation
 - Full canvas rotation (-180° to 180°)
+- Custom width:height ratios resolved to A4-equivalent page area
 - Multi-page project support with independent page settings
 
 ### Baseline Grid
@@ -51,7 +52,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Three classic systems:
   - Progressive (1:2:2:3)
   - Van de Graaf (2:3:4:6)
-  - Equal (1:1:1:1)
+  - Baseline (1:1:1:1)
+- `Custom Margins` available as the last option in the margin-method dropdown
 - Shared baseline multiple scaling
 - Full custom margin control
 

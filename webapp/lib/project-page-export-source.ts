@@ -108,6 +108,18 @@ function resolveNonNegativeNumber(value: unknown, fallback: number): number {
   return value
 }
 
+function resolvePositiveNumberSetting(
+  value: unknown,
+  sourcePath: string,
+  label: string,
+): number | undefined {
+  if (value === undefined) return undefined
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    throw new Error(`Invalid project page "${sourcePath}": ${label} must be a positive number`)
+  }
+  return value
+}
+
 function clampPageNumber(value: number, pageCount: number): number {
   if (!Number.isFinite(value)) return 1
   if (pageCount <= 0) return 1
@@ -169,6 +181,8 @@ export function resolveProjectPageUiSettings(
   const baselineMultiple = source.baselineMultiple
   const gutterMultiple = source.gutterMultiple
   const customBaseline = source.customBaseline
+  const customRatioWidth = resolvePositiveNumberSetting(source.customRatioWidth, sourcePath, "uiSettings.customRatioWidth")
+  const customRatioHeight = resolvePositiveNumberSetting(source.customRatioHeight, sourcePath, "uiSettings.customRatioHeight")
   const rhythmSource = source.rhythm
   const rhythmRowsEnabledSource = source.rhythmRowsEnabled
   const rhythmRowsDirectionSource = source.rhythmRowsDirection
@@ -242,6 +256,8 @@ export function resolveProjectPageUiSettings(
     gridCols,
     gridRows,
     canvasRatio: resolved.canvasRatio,
+    customRatioWidth: customRatioWidth ?? resolved.customRatioWidth,
+    customRatioHeight: customRatioHeight ?? resolved.customRatioHeight,
     orientation,
     marginMethod,
     baselineMultiple,

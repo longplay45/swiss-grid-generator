@@ -13,11 +13,12 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Grid System
 
-- Ratio families: `DIN`, `ANSI`, `Balanced`, `Photo`, `Screen`, `Square`, `Editorial`, `Wide Impact`.
+- Ratio families: `DIN`, `ANSI`, `Balanced`, `Photo`, `Screen`, `Square`, `Editorial`, `Wide Impact`, `Custom Ratio`.
+- Custom ratio width:height input resolved to A4-equivalent page area.
 - Portrait and landscape orientation.
 - Full page rotation from `-180..180`.
 - Baseline units from `6pt` to `72pt`, filtered by usable line count.
-- Margin methods: `Progressive`, `Van de Graaf`, `Baseline`.
+- Margin method dropdown: `Progressive`, `Van de Graaf`, `Baseline`, `Custom Margins`.
 - Custom per-side margins with shared baseline multiple.
 - Grid size from `1..13` for both columns and rows.
 - Gutter multiple from `1.0..4.0` in `0.5` steps.

@@ -1,9 +1,15 @@
-import { memo } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
-import { CANVAS_RATIOS } from "@/lib/grid-calculator"
-import type { CanvasRatioKey } from "@/lib/grid-calculator"
+import {
+  CANVAS_RATIOS,
+  clampCustomCanvasRatioUnit,
+  formatCustomCanvasRatio,
+  getCanvasRatioDecimal,
+  getCanvasRatioDisplayLabel,
+  type CanvasRatioKey,
+} from "@/lib/grid-calculator"
 import { PanelCard } from "@/components/settings/PanelCard"
 
 type Props = {
@@ -12,6 +18,10 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   canvasRatio: CanvasRatioKey
   onCanvasRatioChange: (value: CanvasRatioKey) => void
+  customRatioWidth: number
+  onCustomRatioWidthChange: (value: number) => void
+  customRatioHeight: number
+  onCustomRatioHeightChange: (value: number) => void
   orientation: "portrait" | "landscape"
   onOrientationChange: (value: "portrait" | "landscape") => void
   rotation: number
@@ -25,18 +35,50 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
   onHeaderDoubleClick,
   canvasRatio,
   onCanvasRatioChange,
+  customRatioWidth,
+  onCustomRatioWidthChange,
+  customRatioHeight,
+  onCustomRatioHeightChange,
   orientation,
   onOrientationChange,
   rotation,
   onRotationChange,
   isDarkMode,
 }: Props) {
-  const ratioLabel = CANVAS_RATIOS.find((opt) => opt.key === canvasRatio)?.label ?? canvasRatio
+  const [customRatioWidthInput, setCustomRatioWidthInput] = useState(customRatioWidth.toString())
+  const [customRatioHeightInput, setCustomRatioHeightInput] = useState(customRatioHeight.toString())
+
+  useEffect(() => {
+    setCustomRatioWidthInput(customRatioWidth.toString())
+  }, [customRatioWidth])
+
+  useEffect(() => {
+    setCustomRatioHeightInput(customRatioHeight.toString())
+  }, [customRatioHeight])
+
+  const ratioLabel = getCanvasRatioDisplayLabel(canvasRatio, customRatioWidth, customRatioHeight)
+  const customRatioText = formatCustomCanvasRatio(customRatioWidth, customRatioHeight)
+  const customRatioDecimal = getCanvasRatioDecimal(customRatioWidth, customRatioHeight)
+  const inputClassName = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+
+  const commitCustomRatioWidth = useCallback(() => {
+    const parsed = Number(customRatioWidthInput)
+    const nextValue = clampCustomCanvasRatioUnit(parsed, customRatioWidth)
+    onCustomRatioWidthChange(nextValue)
+    setCustomRatioWidthInput(nextValue.toString())
+  }, [customRatioWidth, customRatioWidthInput, onCustomRatioWidthChange])
+
+  const commitCustomRatioHeight = useCallback(() => {
+    const parsed = Number(customRatioHeightInput)
+    const nextValue = clampCustomCanvasRatioUnit(parsed, customRatioHeight)
+    onCustomRatioHeightChange(nextValue)
+    setCustomRatioHeightInput(nextValue.toString())
+  }, [customRatioHeight, customRatioHeightInput, onCustomRatioHeightChange])
 
   return (
     <PanelCard
       title="I. Canvas Ratio & Rotation"
-      tooltip="Ratio, orientation, and preview rotation"
+      tooltip="Ratio preset or custom width:height, orientation, and preview rotation"
       collapsed={collapsed}
       collapsedSummary={`${ratioLabel}, ${orientation}, ${rotation}°`}
       onHeaderClick={onHeaderClick}
@@ -53,12 +95,72 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
           <SelectContent>
             {CANVAS_RATIOS.map((opt) => (
               <SelectItem key={opt.key} value={opt.key}>
-                {opt.label} ({opt.ratioLabel} / 1:{opt.ratioDecimal.toFixed(3)})
+                {opt.key === "custom"
+                  ? `${opt.label} (${customRatioText} / 1:${customRatioDecimal.toFixed(3)})`
+                  : `${opt.label} (${opt.ratioLabel} / 1:${opt.ratioDecimal.toFixed(3)})`}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+      {canvasRatio === "custom" ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-sm text-gray-600">Ratio Units</Label>
+            <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-800 dark:text-gray-100">
+              {customRatioText}
+            </span>
+          </div>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-[0.08em] text-gray-500">Width</Label>
+              <input
+                type="number"
+                min={0.1}
+                max={100}
+                step={0.001}
+                inputMode="decimal"
+                value={customRatioWidthInput}
+                onChange={(event) => setCustomRatioWidthInput(event.target.value)}
+                onBlur={commitCustomRatioWidth}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return
+                  event.preventDefault()
+                  commitCustomRatioWidth()
+                  ;(event.currentTarget as HTMLInputElement).blur()
+                }}
+                className={inputClassName}
+                aria-label="Custom ratio width unit"
+              />
+            </div>
+            <span className="pb-2 text-sm text-gray-500">:</span>
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-[0.08em] text-gray-500">Height</Label>
+              <input
+                type="number"
+                min={0.1}
+                max={100}
+                step={0.001}
+                inputMode="decimal"
+                value={customRatioHeightInput}
+                onChange={(event) => setCustomRatioHeightInput(event.target.value)}
+                onBlur={commitCustomRatioHeight}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return
+                  event.preventDefault()
+                  commitCustomRatioHeight()
+                  ;(event.currentTarget as HTMLInputElement).blur()
+                }}
+                className={inputClassName}
+                aria-label="Custom ratio height unit"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+            Orientation is applied after the ratio pair; page area stays aligned to the A4 reference.
+          </p>
+        </div>
+      ) : null}
       <div className="space-y-2">
         <Label className="text-sm text-gray-600">Orientation</Label>
         <Select

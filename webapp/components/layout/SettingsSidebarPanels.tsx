@@ -36,6 +36,10 @@ type Props = {
   onSectionHeaderDoubleClick: (event: React.MouseEvent) => void
   canvasRatio: CanvasRatioKey
   onCanvasRatioChange: (value: CanvasRatioKey) => void
+  customRatioWidth: number
+  onCustomRatioWidthChange: (value: number) => void
+  customRatioHeight: number
+  onCustomRatioHeightChange: (value: number) => void
   orientation: "portrait" | "landscape"
   onOrientationChange: (value: "portrait" | "landscape") => void
   rotation: number
@@ -91,6 +95,10 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   onSectionHeaderDoubleClick,
   canvasRatio,
   onCanvasRatioChange,
+  customRatioWidth,
+  onCustomRatioWidthChange,
+  customRatioHeight,
+  onCustomRatioHeightChange,
   orientation,
   onOrientationChange,
   rotation,
@@ -147,6 +155,10 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           onHeaderDoubleClick={onSectionHeaderDoubleClick}
           canvasRatio={canvasRatio}
           onCanvasRatioChange={onCanvasRatioChange}
+          customRatioWidth={customRatioWidth}
+          onCustomRatioWidthChange={onCustomRatioWidthChange}
+          customRatioHeight={customRatioHeight}
+          onCustomRatioHeightChange={onCustomRatioHeightChange}
           orientation={orientation}
           onOrientationChange={onOrientationChange}
           rotation={rotation}

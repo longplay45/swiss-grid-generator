@@ -43,6 +43,20 @@ Where A4 = 595.276 × 841.890 pt.
 | A1     | 2.828       |
 | A0     | 4.000       |
 
+### Custom Ratio Dimensions
+
+When the user selects `Custom Ratio`, the page dimensions are generated from the entered width:height pair while preserving A4 area. The ratio pair is normalized to a portrait base before orientation is applied.
+
+```
+targetArea = A4_width × A4_height
+portraitRatio = min(widthUnit, heightUnit) / max(widthUnit, heightUnit)
+
+customHeight = sqrt(targetArea / portraitRatio)
+customWidth  = targetArea / customHeight
+```
+
+This keeps custom ratios aligned with the same baseline/scale logic as the built-in single-size families.
+
 ---
 
 ## Baseline Grid

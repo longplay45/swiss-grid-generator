@@ -122,9 +122,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Quick Start
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Pick a ratio in `I. Canvas Ratio` and set orientation/rotation.</li>
+          <li>Pick a ratio preset or `Custom Ratio` in `I. Canvas Ratio` and set orientation/rotation.</li>
           <li>Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.</li>
-          <li>Choose margin method in `III. Margins` or enable `Custom Margins`.</li>
+          <li>Choose a margin method in `III. Margins`, or select `Custom Margins` from the same dropdown.</li>
           <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
           <li>Set type hierarchy and base font in `V. Typo`.</li>
           <li>Set default placeholder palette in `VI. Color Scheme`.</li>
@@ -452,9 +452,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           I. Canvas Ratio &amp; Rotation
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Choose the base canvas ratio preset (DIN, ANSI, photo, square, editorial, etc.).</li>
+          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly.</li>
           <li>Orientation changes between portrait and landscape at the layout level.</li>
           <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
+          <li>Custom ratios generate page dimensions at A4-equivalent area before orientation is applied.</li>
           <li>Paper sizing for DIN/ANSI exports is derived from this ratio selection.</li>
         </ul>
       </section>
@@ -480,9 +481,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           III. Margins
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Margin methods: Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`).</li>
+          <li>The `Margin Method` dropdown offers Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`), and `Custom Margins`.</li>
           <li>`Baseline Multiple` scales both method ratios and custom margin ratios while staying baseline-aligned.</li>
-          <li>`Custom Margins` sets top/left/right/bottom independently, then scales them by the shared baseline multiple.</li>
+          <li>Selecting `Custom Margins` reveals independent top/left/right/bottom sliders that still scale through the shared baseline multiple.</li>
           <li>Bottom margin is expected to align with the last baseline line.</li>
         </ul>
       </section>

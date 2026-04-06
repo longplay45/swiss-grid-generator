@@ -19,6 +19,7 @@ export interface FormatDimensions {
 export interface GridSettings {
   format: string;
   orientation: "portrait" | "landscape";
+  customFormatDimensions?: FormatDimensions;
   marginMethod: 1 | 2 | 3;
   gridCols: number;
   gridRows: number;
@@ -111,7 +112,8 @@ export type CanvasRatioKey =
   | "screen_16_9"
   | "square_1_1"
   | "editorial_4_5"
-  | "wide_2_1";
+  | "wide_2_1"
+  | "custom";
 
 export interface CanvasRatioOption {
   key: CanvasRatioKey;
@@ -121,6 +123,14 @@ export interface CanvasRatioOption {
   ratioDecimal: number;
   paperSizes: string[];
 }
+
+export const CUSTOM_CANVAS_FORMAT = "CUSTOM";
+export const CUSTOM_CANVAS_RATIO_RANGE = {
+  min: 0.1,
+  max: 100,
+} as const;
+export const DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH = 4;
+export const DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT = 5;
 
 // Paper formats in points (1in = 72pt)
 export const FORMATS_PT: Record<string, FormatDimensions> = {
@@ -217,7 +227,115 @@ export const CANVAS_RATIOS: CanvasRatioOption[] = [
     ratioDecimal: 2.0,
     paperSizes: ["WIDE_2_1"],
   },
+  {
+    key: "custom",
+    category: "Universal",
+    label: "Custom Ratio",
+    ratioLabel: `${DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH}:${DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT}`,
+    ratioDecimal: DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT / DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH,
+    paperSizes: [CUSTOM_CANVAS_FORMAT],
+  },
 ];
+
+function roundRatioUnit(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+export function clampCustomCanvasRatioUnit(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return roundRatioUnit(fallback);
+  }
+
+  return roundRatioUnit(
+    Math.min(CUSTOM_CANVAS_RATIO_RANGE.max, Math.max(CUSTOM_CANVAS_RATIO_RANGE.min, value)),
+  );
+}
+
+export function normalizeCustomCanvasRatio(
+  width: unknown,
+  height: unknown,
+): { width: number; height: number } {
+  return {
+    width: clampCustomCanvasRatioUnit(width, DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH),
+    height: clampCustomCanvasRatioUnit(height, DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT),
+  };
+}
+
+function formatRatioNumber(value: number): string {
+  return roundRatioUnit(value).toString();
+}
+
+export function formatCustomCanvasRatio(width: unknown, height: unknown): string {
+  const normalized = normalizeCustomCanvasRatio(width, height);
+  return `${formatRatioNumber(normalized.width)}:${formatRatioNumber(normalized.height)}`;
+}
+
+export function getCanvasRatioDisplayLabel(
+  canvasRatio: CanvasRatioKey,
+  customRatioWidth?: number,
+  customRatioHeight?: number,
+): string {
+  if (canvasRatio === "custom") {
+    return `Custom ${formatCustomCanvasRatio(customRatioWidth, customRatioHeight)}`;
+  }
+
+  return CANVAS_RATIOS.find((option) => option.key === canvasRatio)?.label ?? canvasRatio;
+}
+
+export function getCanvasRatioDecimal(width: unknown, height: unknown): number {
+  const normalized = normalizeCustomCanvasRatio(width, height);
+  const shortSide = Math.min(normalized.width, normalized.height);
+  const longSide = Math.max(normalized.width, normalized.height);
+  return shortSide > 0 ? longSide / shortSide : 1;
+}
+
+export function getCustomCanvasFormatDimensions(width: unknown, height: unknown): FormatDimensions {
+  const normalized = normalizeCustomCanvasRatio(width, height);
+  const shortUnit = Math.min(normalized.width, normalized.height);
+  const longUnit = Math.max(normalized.width, normalized.height);
+  const a4 = FORMATS_PT.A4;
+  const targetArea = a4.width * a4.height;
+  const portraitRatio = shortUnit / longUnit;
+  const resolvedHeight = Math.sqrt(targetArea / portraitRatio);
+  const resolvedWidth = targetArea / resolvedHeight;
+
+  return {
+    width: resolvedWidth,
+    height: resolvedHeight,
+  };
+}
+
+export function resolveFormatDimensions(
+  formatName: string,
+  customFormatDimensions?: FormatDimensions,
+): FormatDimensions {
+  if (formatName === CUSTOM_CANVAS_FORMAT) {
+    if (!customFormatDimensions) {
+      return getCustomCanvasFormatDimensions(
+        DEFAULT_CUSTOM_CANVAS_RATIO_WIDTH,
+        DEFAULT_CUSTOM_CANVAS_RATIO_HEIGHT,
+      );
+    }
+
+    if (
+      !Number.isFinite(customFormatDimensions.width)
+      || customFormatDimensions.width <= 0
+      || !Number.isFinite(customFormatDimensions.height)
+      || customFormatDimensions.height <= 0
+    ) {
+      throw new Error(`Unsupported custom format dimensions for ${formatName}`);
+    }
+
+    return customFormatDimensions;
+  }
+
+  const format = FORMATS_PT[formatName];
+  if (!format) {
+    throw new Error(`Unsupported format: ${formatName}`);
+  }
+
+  return format;
+}
 
 // Base typographic values for A4
 const BASE_GRID_UNIT = 12.0;
@@ -502,9 +620,13 @@ export function getMaxBaseline(
   return Math.min(BASELINE_HARD_CAP, maxDynamic);
 }
 
-function calculateScaleFactor(formatName: string, orientation: "portrait" | "landscape"): number {
+function calculateScaleFactor(
+  formatName: string,
+  orientation: "portrait" | "landscape",
+  customFormatDimensions?: FormatDimensions,
+): number {
   const a4 = FORMATS_PT.A4;
-  const format = FORMATS_PT[formatName];
+  const format = resolveFormatDimensions(formatName, customFormatDimensions);
   const w = orientation === "landscape" ? format.height : format.width;
   const h = orientation === "landscape" ? format.width : format.height;
 
@@ -554,6 +676,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
   const {
     format,
     orientation,
+    customFormatDimensions,
     marginMethod,
     gridCols,
     gridRows,
@@ -581,9 +704,6 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     : legacyRhythmAxisSettings.rhythmColsEnabled;
   const resolvedRhythmColsDirection = rhythmColsDirection ?? legacyRhythmAxisSettings.rhythmColsDirection;
 
-  if (!FORMATS_PT[format]) {
-    throw new Error(`Unsupported format: ${format}`);
-  }
   if (orientation !== "portrait" && orientation !== "landscape") {
     throw new Error(`Unsupported orientation: ${String(orientation)}`);
   }
@@ -612,7 +732,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     }
   }
 
-  const formatDim = FORMATS_PT[format];
+  const formatDim = resolveFormatDimensions(format, customFormatDimensions);
   let w = formatDim.width;
   let h = formatDim.height;
 
@@ -620,7 +740,7 @@ export function generateSwissGrid(settings: GridSettings): GridResult {
     [w, h] = [h, w];
   }
 
-  const formatScaleFactor = calculateScaleFactor(format, orientation);
+  const formatScaleFactor = calculateScaleFactor(format, orientation, customFormatDimensions);
   // When customBaseline is set (manual mode), use that value
   // When undefined (auto mode), use format-specific baseline from table
   const gridUnit = customBaseline ?? FORMAT_BASELINES[format] ?? BASE_GRID_UNIT;

@@ -2,9 +2,8 @@
 
 import { useReducer, useState, useMemo, useRef, useEffect, useCallback } from "react"
 import {
-  FORMATS_PT,
+  getCanvasRatioDisplayLabel,
   getMaxBaseline,
-  CANVAS_RATIOS,
 } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
 import { PreviewWorkspace } from "@/components/preview/PreviewWorkspace"
@@ -44,7 +43,6 @@ import {
 import {
   buildGridResultFromUiSettings,
   buildSerializableUiSettingsSnapshot,
-  resolvePreviewFormatForCanvasRatio,
 } from "@/lib/ui-settings-resolver"
 import { useProjectState } from "@/hooks/useProjectState"
 import {
@@ -54,7 +52,6 @@ import {
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 
-const CANVAS_RATIO_INDEX = new Map(CANVAS_RATIOS.map((option) => [option.key, option]))
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
@@ -104,6 +101,7 @@ export default function Home() {
   }, [])
   const {
     canvasRatio, exportPrintPro, exportBleedMm,
+    customRatioWidth, customRatioHeight,
     exportRegistrationMarks, orientation, rotation,
     marginMethod, gridCols, gridRows, baselineMultiple, gutterMultiple, rhythm,
     rhythmRowsEnabled, rhythmRowsDirection, rhythmColsEnabled, rhythmColsDirection,
@@ -114,6 +112,8 @@ export default function Home() {
   const [paragraphColorResetNonce, setParagraphColorResetNonce] = useState(0)
   const {
     setCanvasRatio,
+    setCustomRatioWidth,
+    setCustomRatioHeight,
     setOrientation,
     setRotation,
     setMarginMethod,
@@ -201,15 +201,11 @@ export default function Home() {
 
   // ─── Derived values ───────────────────────────────────────────────────────
 
-  const selectedCanvasRatio = useMemo(
-    () => CANVAS_RATIO_INDEX.get(canvasRatio) ?? CANVAS_RATIOS[0],
-    [canvasRatio],
-  )
-  const previewFormat = useMemo(() => {
-    return resolvePreviewFormatForCanvasRatio(canvasRatio)
-  }, [canvasRatio])
-
   const gridUnit = customBaseline ?? DEFAULT_A4_BASELINE
+  const canvasRatioLabel = useMemo(
+    () => getCanvasRatioDisplayLabel(canvasRatio, customRatioWidth, customRatioHeight),
+    [canvasRatio, customRatioWidth, customRatioHeight],
+  )
 
   const result = useMemo(
     () => buildGridResultFromUiSettings(ui),
@@ -217,13 +213,11 @@ export default function Home() {
   )
 
   const maxBaseline = useMemo(() => {
-    const formatDim = FORMATS_PT[previewFormat]
-    const pageHeight = orientation === "landscape" ? formatDim.width : formatDim.height
     const customMarginUnits = useCustomMargins
       ? baselineMultiple * (customMarginMultipliers.top + customMarginMultipliers.bottom)
       : undefined
-    return getMaxBaseline(pageHeight, marginMethod, baselineMultiple, customMarginUnits)
-  }, [previewFormat, orientation, marginMethod, baselineMultiple, useCustomMargins, customMarginMultipliers])
+    return getMaxBaseline(result.pageSizePt.height, marginMethod, baselineMultiple, customMarginUnits)
+  }, [result.pageSizePt.height, marginMethod, baselineMultiple, useCustomMargins, customMarginMultipliers])
 
   const availableBaselineOptions = useMemo(
     () => BASELINE_OPTIONS.filter((val) => val <= maxBaseline),
@@ -234,8 +228,11 @@ export default function Home() {
     const baselineStr = customBaseline
       ? customBaseline.toFixed(3)
       : result.grid.gridUnit.toFixed(3)
-    return `${canvasRatio}_${orientation}_${gridCols}x${gridRows}_method${marginMethod}_${baselineStr}pt`
-  }, [canvasRatio, orientation, gridCols, gridRows, marginMethod, customBaseline, result.grid.gridUnit])
+    const ratioKeyForFilename = canvasRatio === "custom"
+      ? `custom_${customRatioWidth}x${customRatioHeight}`
+      : canvasRatio
+    return `${ratioKeyForFilename}_${orientation}_${gridCols}x${gridRows}_method${marginMethod}_${baselineStr}pt`
+  }, [canvasRatio, customRatioWidth, customRatioHeight, orientation, gridCols, gridRows, marginMethod, customBaseline, result.grid.gridUnit])
 
   const defaultPdfFilename = useMemo(
     () => `${baseFilename}_grid.pdf`,
@@ -705,6 +702,10 @@ export default function Home() {
               onSectionHeaderDoubleClick={handleSectionHeaderDoubleClick}
               canvasRatio={canvasRatio}
               onCanvasRatioChange={setCanvasRatio}
+              customRatioWidth={customRatioWidth}
+              onCustomRatioWidthChange={setCustomRatioWidth}
+              customRatioHeight={customRatioHeight}
+              onCustomRatioHeightChange={setCustomRatioHeight}
               orientation={orientation}
               onOrientationChange={setOrientation}
               rotation={rotation}
@@ -758,7 +759,7 @@ export default function Home() {
         {previewWorkspace}
 
         <WorkspaceDialogs
-          ratioLabel={selectedCanvasRatio.label}
+          ratioLabel={canvasRatioLabel}
           orientation={orientation}
           rotation={rotation}
           isDarkUi={isDarkUi}

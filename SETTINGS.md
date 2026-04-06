@@ -43,6 +43,16 @@ Default: `swiss`
 | `Square` | 1:1 | 1.000 |
 | `Editorial` | 4:5 | 1.250 |
 | `Wide Impact` | 2:1 | 2.000 |
+| `Custom Ratio` | user-defined | derived from width:height |
+
+#### Custom Ratio
+
+- Available when `Ratio` is set to `Custom Ratio`
+- Two numeric ratio-unit inputs: `Width` and `Height`
+- Range per field: min `0.1`, max `100`, step `0.001`
+- Default: `4 : 5`
+- Orientation is applied after the ratio pair.
+- Export/preview dimensions are generated from the custom ratio at A4-equivalent area.
 
 #### Orientation
 
@@ -64,13 +74,14 @@ Default: `swiss`
 
 ### III. Margins
 
-#### Margin method (when Custom Margins is off)
+#### Margin method
 
 | ID | Label | Top | Left | Right | Bottom |
 |---:|---|---:|---:|---:|---:|
 | `1` | Progressive (1:2:2:3) | 1x | 2x | 2x | 3x |
 | `2` | Van de Graaf (2:3:4:6) | 2x | 3x | 4x | 6x |
 | `3` | Baseline (1:1:1:1) | 1x | 1x | 1x | 1x |
+| `custom` | Custom Margins | user-defined | user-defined | user-defined | user-defined |
 
 #### Baseline Multiple (Margins and Custom Margins)
 
@@ -81,8 +92,9 @@ Default: `swiss`
 
 #### Custom Margins
 
-- toggle: on/off
+- available as the last option in the `Margin Method` dropdown
 - per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
+- selecting `Custom Margins` reveals the four side sliders
 - actual custom margin = `sideMultiplier × baselineMultiple × gridUnit`
 
 ### IV. Grid & Rhythms
@@ -352,7 +364,7 @@ Behavior:
 
 ## JSON UI Fields (current)
 
-`canvasRatio`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
+`canvasRatio`, `customRatioWidth`, `customRatioHeight`, `format`, `exportPaperSize`, `exportPrintPro`, `exportBleedMm`, `exportRegistrationMarks`, `orientation`, `rotation`, `marginMethod`, `gridCols`, `gridRows`, `baselineMultiple`, `gutterMultiple`, `rhythm`, `rhythmRowsEnabled`, `rhythmRowsDirection`, `rhythmColsEnabled`, `rhythmColsDirection`, `typographyScale`, `baseFont`, `imageColorScheme`, `canvasBackground`, `customBaseline`, `displayUnit`, `useCustomMargins`, `customMarginMultipliers`, `showBaselines`, `showModules`, `showMargins`, `showImagePlaceholders`, `showTypography`, `collapsed`
 
 Notes:
 - `exportPrintPro` is retained as the persisted legacy backing field for the PDF print-preset mode.

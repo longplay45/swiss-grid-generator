@@ -1,5 +1,8 @@
-import type { CanvasRatioKey } from "@/lib/grid-calculator"
-import { FORMAT_BASELINES } from "@/lib/grid-calculator"
+import {
+  FORMAT_BASELINES,
+  clampCustomCanvasRatioUnit,
+  type CanvasRatioKey,
+} from "@/lib/grid-calculator"
 import { clampRotation } from "@/lib/block-constraints"
 import {
   BASELINE_MULTIPLE_RANGE,
@@ -25,6 +28,8 @@ import type { SectionKey, UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 export type GridUiState = Pick<
   UiSettingsSnapshot,
   | "canvasRatio"
+  | "customRatioWidth"
+  | "customRatioHeight"
   | "orientation"
   | "rotation"
   | "marginMethod"
@@ -70,8 +75,14 @@ function clampGutterMultiple(value: number): number {
   return Math.min(GUTTER_MULTIPLE_RANGE.max, Math.max(GUTTER_MULTIPLE_RANGE.min, value))
 }
 
+function clampCustomRatioUnit(value: number, fallback: number): number {
+  return clampCustomCanvasRatioUnit(value, fallback)
+}
+
 export const INITIAL_GRID_UI_STATE: GridUiState = {
   canvasRatio: DEFAULT_UI.canvasRatio,
+  customRatioWidth: DEFAULT_UI.customRatioWidth,
+  customRatioHeight: DEFAULT_UI.customRatioHeight,
   orientation: DEFAULT_UI.orientation,
   rotation: DEFAULT_UI.rotation,
   marginMethod: DEFAULT_UI.marginMethod,
@@ -115,6 +126,8 @@ export const INITIAL_EXPORT_UI_STATE: ExportUiState = {
 
 export type UiAction =
   | { type: "SET"; key: "canvasRatio"; value: CanvasRatioKey }
+  | { type: "SET"; key: "customRatioWidth"; value: number }
+  | { type: "SET"; key: "customRatioHeight"; value: number }
   | { type: "SET"; key: "exportPrintPro"; value: boolean }
   | { type: "SET"; key: "exportBleedMm"; value: number }
   | { type: "SET"; key: "exportRegistrationMarks"; value: boolean }
@@ -185,6 +198,16 @@ export function gridUiReducer(state: GridUiState, action: UiAction): GridUiState
           if (state.rotation === nextRotation) return state
           return { ...state, rotation: nextRotation }
         }
+        case "customRatioWidth": {
+          const nextCustomRatioWidth = clampCustomRatioUnit(action.value, state.customRatioWidth)
+          if (state.customRatioWidth === nextCustomRatioWidth) return state
+          return { ...state, customRatioWidth: nextCustomRatioWidth }
+        }
+        case "customRatioHeight": {
+          const nextCustomRatioHeight = clampCustomRatioUnit(action.value, state.customRatioHeight)
+          if (state.customRatioHeight === nextCustomRatioHeight) return state
+          return { ...state, customRatioHeight: nextCustomRatioHeight }
+        }
         case "baselineMultiple": {
           const nextBaselineMultiple = clampBaselineMultiple(action.value)
           if (state.baselineMultiple === nextBaselineMultiple) return state
@@ -216,6 +239,8 @@ export function gridUiReducer(state: GridUiState, action: UiAction): GridUiState
     case "APPLY_SNAPSHOT":
       return {
         canvasRatio: action.snapshot.canvasRatio,
+        customRatioWidth: action.snapshot.customRatioWidth,
+        customRatioHeight: action.snapshot.customRatioHeight,
         orientation: action.snapshot.orientation,
         rotation: action.snapshot.rotation,
         marginMethod: action.snapshot.marginMethod,
