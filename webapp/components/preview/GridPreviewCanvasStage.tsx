@@ -1,6 +1,6 @@
 "use client"
 
-import type { MouseEventHandler, PointerEventHandler, RefObject } from "react"
+import type { CSSProperties, MouseEventHandler, PointerEventHandler, RefObject } from "react"
 import type { Dispatch, SetStateAction } from "react"
 
 import { InlineBlockTextarea, type InlineEditorLayout } from "@/components/editor/InlineBlockTextarea"
@@ -18,6 +18,7 @@ type Props<StyleKey extends string> = {
   pageWidthPx: number
   pageHeightPx: number
   canvasCursorClass: string
+  canvasCursorStyle?: CSSProperties
   handlePreviewPointerDown: PointerEventHandler<HTMLCanvasElement>
   handleCanvasPointerMove: PointerEventHandler<HTMLCanvasElement>
   handleCanvasPointerUp: PointerEventHandler<HTMLCanvasElement>
@@ -52,6 +53,7 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
   pageWidthPx,
   pageHeightPx,
   canvasCursorClass,
+  canvasCursorStyle,
   handlePreviewPointerDown,
   handleCanvasPointerMove,
   handleCanvasPointerUp,
@@ -98,7 +100,7 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
         ref={canvasRef}
         width={pageWidthPx}
         height={pageHeightPx}
-        style={{ width: pageWidthCss, height: pageHeightCss }}
+        style={{ width: pageWidthCss, height: pageHeightCss, ...canvasCursorStyle }}
         className={`absolute inset-0 block touch-none ${canvasCursorClass}`}
         onPointerDown={handlePreviewPointerDown}
         onPointerMove={handleCanvasPointerMove}

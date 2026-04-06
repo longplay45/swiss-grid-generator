@@ -9,6 +9,7 @@ import {
   buildCanvasImagePlans,
   buildCanvasTypographyRenderPlans,
   buildOrderedCanvasLayerKeys,
+  drawCanvasTextPlan,
   drawCanvasLayerStack,
 } from "@/lib/canvas-page-renderer"
 import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
@@ -19,6 +20,7 @@ import type { WrappedTextLine } from "@/lib/text-layout"
 type DragState<BlockId extends string> = {
   key: BlockId
   preview: ModulePosition
+  copyOnDrop: boolean
 }
 
 type Args<BlockId extends string> = {
@@ -277,10 +279,19 @@ export function useTypographyRenderer<BlockId extends string>({
       const gutterX = gridMarginHorizontal * scale
       let draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
       let imagePlans = new Map<BlockId, { rect: BlockRect; color: string; opacity: number }>()
+      let dragPreviewTextPlan: BlockRenderPlan<BlockId> | null = null
+      const textDuplicatePreviewKey = dragState?.copyOnDrop && blockOrder.includes(dragState.key)
+        ? dragState.key
+        : null
+
+      const resolveTextManualPosition = (key: BlockId, dragPreviewOverride?: ModulePosition) => {
+        if (dragPreviewOverride && textDuplicatePreviewKey === key) return dragPreviewOverride
+        if (textDuplicatePreviewKey === key) return blockModulePositions[key]
+        return dragState?.key === key ? dragState.preview : blockModulePositions[key]
+      }
 
       const getOriginForBlock = (key: BlockId, fallbackX: number, fallbackY: number) => {
-        const dragged = dragState?.key === key ? dragState.preview : undefined
-        const manual = dragged ?? blockModulePositions[key]
+        const manual = resolveTextManualPosition(key)
         if (!manual) return { x: fallbackX, y: fallbackY }
         const span = getBlockSpan(key)
         const minCol = -Math.max(0, span - 1)
@@ -320,9 +331,12 @@ export function useTypographyRenderer<BlockId extends string>({
       }
 
       if (showTypography) {
-        const typographyRenderState = buildCanvasTypographyRenderPlans<BlockId, keyof GridResult["typography"]["styles"]>({
+        const buildTextRenderState = (
+          keys: BlockId[],
+          dragPreviewOverride?: ModulePosition,
+        ) => buildCanvasTypographyRenderPlans<BlockId, keyof GridResult["typography"]["styles"]>({
           ctx,
-          blockOrder,
+          blockOrder: keys,
           textContent,
           styleAssignments,
           styles,
@@ -353,19 +367,36 @@ export function useTypographyRenderer<BlockId extends string>({
           getBlockRotation,
           isTextReflowEnabled,
           isSyllableDivisionEnabled,
-          isBlockPositionManual: (key) => blockModulePositions[key] !== undefined,
+          isBlockPositionManual: (key) => (
+            dragPreviewOverride && textDuplicatePreviewKey === key
+              ? true
+              : blockModulePositions[key] !== undefined
+          ),
           getBlockColumnStart: (key, span) => {
-            const manual = (dragState?.key === key ? dragState.preview : blockModulePositions[key])
+            const manual = resolveTextManualPosition(key, dragPreviewOverride)
             if (!manual) return 0
             const minCol = -Math.max(0, span - 1)
             return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
           },
           getBlockRowStart: (key) => {
-            const manual = (dragState?.key === key ? dragState.preview : blockModulePositions[key])
+            const manual = resolveTextManualPosition(key, dragPreviewOverride)
             if (!manual) return 0
             return toClosestRowIndex(manual.row)
           },
-          getOriginForBlock,
+          getOriginForBlock: (key, fallbackX, fallbackY) => {
+            const manual = resolveTextManualPosition(key, dragPreviewOverride)
+            if (!manual) return getOriginForBlock(key, fallbackX, fallbackY)
+            const span = getBlockSpan(key)
+            const minCol = -Math.max(0, span - 1)
+            const clamped = {
+              col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col)),
+              row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
+            }
+            return {
+              x: toColumnX(clamped.col),
+              y: baselineOriginTop + clamped.row * baselineStep,
+            }
+          },
           getBlockFont: (key) => getBlockFont(key),
           getBlockFontWeight: (key) => getBlockFontWeight(key),
           isBlockItalic: (key) => isBlockItalic(key),
@@ -379,9 +410,14 @@ export function useTypographyRenderer<BlockId extends string>({
             getOpticalOffset(context, styleKey, line, align, fontSize, opticalKerning)
           ),
         })
+        const typographyRenderState = buildTextRenderState(blockOrder)
         draftPlans = typographyRenderState.textPlans
         blockRectsRef.current = typographyRenderState.blockRects
         Object.assign(overflowByBlock, typographyRenderState.overflowByBlock)
+        if (textDuplicatePreviewKey && dragState) {
+          const duplicatePreviewState = buildTextRenderState([textDuplicatePreviewKey], dragState.preview)
+          dragPreviewTextPlan = duplicatePreviewState.textPlans.get(textDuplicatePreviewKey) ?? null
+        }
       } else {
         previousPlansRef.current.clear()
       }
@@ -436,6 +472,9 @@ export function useTypographyRenderer<BlockId extends string>({
       bufferCtx.rotate((rotation * Math.PI) / 180)
       bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
       drawCanvasLayerStack(bufferCtx, orderedKeys, imagePlans, draftPlans)
+      if (dragPreviewTextPlan) {
+        drawCanvasTextPlan(bufferCtx, dragPreviewTextPlan)
+      }
       bufferCtx.restore()
 
       ctx.setTransform(1, 0, 0, 1, 0, 0)

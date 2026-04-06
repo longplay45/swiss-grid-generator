@@ -195,6 +195,7 @@ export const GridPreview = memo(function GridPreview({
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock<BlockId>>({})
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
+  const [hoverCopyIntent, setHoverCopyIntent] = useState(false)
   const HISTORY_LIMIT = 50
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
@@ -470,6 +471,7 @@ export const GridPreview = memo(function GridPreview({
   const clearHover = useCallback(() => {
     setHoverState(null)
     setHoverImageKey(null)
+    setHoverCopyIntent(false)
   }, [])
 
   const handleCanvasMouseLeave = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
@@ -550,14 +552,17 @@ export const GridPreview = memo(function GridPreview({
   const {
     handleCanvasMouseMove,
     canvasCursorClass,
+    canvasCursorStyle,
   } = usePreviewHoverState<BlockId>({
     showTypography,
     editorOpen: Boolean(editorState || imageEditorState),
     dragState,
     hoverState,
     hoverImageKey,
+    hoverCopyIntent,
     setHoverState,
     setHoverImageKey,
+    setHoverCopyIntent,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,
     toPagePointFromClient,
@@ -878,6 +883,7 @@ export const GridPreview = memo(function GridPreview({
         pageWidthPx={pageWidthPx}
         pageHeightPx={pageHeightPx}
         canvasCursorClass={canvasCursorClass}
+        canvasCursorStyle={canvasCursorStyle}
         handlePreviewPointerDown={handlePreviewPointerDown}
         handleCanvasPointerMove={handleCanvasPointerMove}
         handleCanvasPointerUp={handleCanvasPointerUp}

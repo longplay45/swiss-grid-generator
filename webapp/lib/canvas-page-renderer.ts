@@ -657,30 +657,37 @@ export function drawCanvasLayerStack<Key extends string>(
 
     const textPlan = textPlans.get(key)
     if (!textPlan) continue
-    ctx.fillStyle = textPlan.textColor
-    ctx.textAlign = "left"
-    for (const lineSegments of textPlan.segmentLines) {
-      for (const segment of lineSegments) {
-        ctx.fillStyle = segment.color
-        applyCanvasTextConfig(ctx, {
-          font: buildCanvasFont(segment.fontFamily, segment.fontWeight, segment.italic, segment.fontSize),
-          opticalKerning: textPlan.opticalKerning,
-        })
-        drawCanvasText(ctx, {
-          text: segment.text,
-          x: segment.x,
-          y: segment.y,
-          textAlign: "left",
-          trackingScale: segment.trackingScale,
-          opticalKerning: textPlan.opticalKerning,
-          fontSize: segment.fontSize,
-          blockRotation: textPlan.blockRotation,
-          rotationOrigin: {
-            x: textPlan.rotationOriginX,
-            y: textPlan.rotationOriginY,
-          },
-        })
-      }
+    drawCanvasTextPlan(ctx, textPlan)
+  }
+}
+
+export function drawCanvasTextPlan<Key extends string>(
+  ctx: CanvasRenderingContext2D,
+  textPlan: BlockRenderPlan<Key>,
+): void {
+  ctx.fillStyle = textPlan.textColor
+  ctx.textAlign = "left"
+  for (const lineSegments of textPlan.segmentLines) {
+    for (const segment of lineSegments) {
+      ctx.fillStyle = segment.color
+      applyCanvasTextConfig(ctx, {
+        font: buildCanvasFont(segment.fontFamily, segment.fontWeight, segment.italic, segment.fontSize),
+        opticalKerning: textPlan.opticalKerning,
+      })
+      drawCanvasText(ctx, {
+        text: segment.text,
+        x: segment.x,
+        y: segment.y,
+        textAlign: "left",
+        trackingScale: segment.trackingScale,
+        opticalKerning: textPlan.opticalKerning,
+        fontSize: segment.fontSize,
+        blockRotation: textPlan.blockRotation,
+        rotationOrigin: {
+          x: textPlan.rotationOriginX,
+          y: textPlan.rotationOriginY,
+        },
+      })
     }
   }
 }
