@@ -32,11 +32,11 @@ export const FONT_DEFINITIONS = [
     cssVar: "--font-work-sans",
   },
   {
-    value: "Nunito Sans",
-    label: "Nunito Sans",
+    value: "Jost",
+    label: "Jost",
     category: "Sans-Serif",
-    stack: "Nunito Sans, sans-serif",
-    cssVar: "--font-nunito-sans",
+    stack: "Jost, sans-serif",
+    cssVar: "--font-jost",
   },
   {
     value: "IBM Plex Sans",

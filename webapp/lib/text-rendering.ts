@@ -30,7 +30,7 @@ type CanvasDrawContext = CanvasMeasureContext & {
 const FONT_STACKS: Record<string, string> = {
   Inter: "Inter, system-ui, -apple-system, sans-serif",
   "Work Sans": "Work Sans, sans-serif",
-  "Nunito Sans": "Nunito Sans, sans-serif",
+  Jost: "Jost, sans-serif",
   "IBM Plex Sans": "IBM Plex Sans, sans-serif",
   "Libre Franklin": "Libre Franklin, sans-serif",
   "EB Garamond": "EB Garamond, serif",
