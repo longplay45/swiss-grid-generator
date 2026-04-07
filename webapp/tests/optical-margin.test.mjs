@@ -243,7 +243,7 @@ test("measured glyph bounds override fallback style heuristics for straight-side
   assert.equal(fxOffset, bodyOffset)
 })
 
-test("leading T caps measured overhang to the subtle fallback offset", () => {
+test("leading T uses the measured overhang when treated as an expressive letter", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Type",
     align: "left",
@@ -256,7 +256,18 @@ test("leading T caps measured overhang to the subtle fallback offset", () => {
         : null
     ),
   })
-  assert.equal(offset, -(0.018 * 200))
+  assert.equal(offset, -14)
+})
+
+test("leading T falls back to a stronger styled hang when no glyph measurement is available", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Type",
+    align: "left",
+    fontSize: 100,
+    styleKey: "body",
+    measureWidth: () => 80,
+  })
+  assert.equal(offset, -(0.052 * 100))
 })
 
 test("terminal punctuation caret advance uses the visible glyph boundary", () => {

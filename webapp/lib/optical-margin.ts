@@ -81,6 +81,7 @@ const LEADING_EXPRESSIVE_LETTERS_EM: Record<string, number> = {
   O: 0.06,
   Q: 0.06,
   S: 0.055,
+  T: 0.052,
   V: 0.042,
   W: 0.038,
   Y: 0.042,
