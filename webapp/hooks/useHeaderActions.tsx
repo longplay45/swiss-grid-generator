@@ -38,6 +38,7 @@ export type HeaderItem = { type: "action"; action: HeaderAction } | { type: "div
 type Args = {
   activeSidebarPanel: SidebarPanel
   showPresetsBrowser: boolean
+  hasPreviewLayout: boolean
   isDarkUi: boolean
   showBaselines: boolean
   showMargins: boolean
@@ -99,6 +100,7 @@ export function useHeaderActions(args: Args) {
         ariaLabel: "Save",
         tooltip: "Save project JSON",
         shortcutId: "save_json",
+        disabled: !args.hasPreviewLayout,
         onClick: args.onSaveJson,
         icon: <Save className="h-4 w-4" />,
       },
@@ -110,6 +112,7 @@ export function useHeaderActions(args: Args) {
         ariaLabel: "Export",
         tooltip: "Export",
         shortcutId: "export_pdf",
+        disabled: !args.hasPreviewLayout,
         onClick: args.onExportPdf,
         icon: <Download className="h-4 w-4" />,
       },
@@ -165,6 +168,7 @@ export function useHeaderActions(args: Args) {
         shortcutId: "toggle_baselines",
         variant: args.showBaselines ? "default" : "outline",
         pressed: args.showBaselines,
+        disabled: !args.hasPreviewLayout,
         onClick: args.onToggleBaselines,
         icon: <Rows3 className="h-4 w-4" />,
       },
@@ -178,6 +182,7 @@ export function useHeaderActions(args: Args) {
         shortcutId: "toggle_margins",
         variant: args.showMargins ? "default" : "outline",
         pressed: args.showMargins,
+        disabled: !args.hasPreviewLayout,
         onClick: args.onToggleMargins,
         icon: <SquareDashed className="h-4 w-4" />,
       },
@@ -191,20 +196,9 @@ export function useHeaderActions(args: Args) {
         shortcutId: "toggle_modules",
         variant: args.showModules ? "default" : "outline",
         pressed: args.showModules,
+        disabled: !args.hasPreviewLayout,
         onClick: args.onToggleModules,
         icon: <LayoutGrid className="h-4 w-4" />,
-      },
-    },
-    {
-      type: "action",
-      action: {
-        key: "image-placeholders",
-        ariaLabel: "Toggle image placeholders",
-        tooltip: "Toggle image placeholders",
-        variant: args.showImagePlaceholders ? "default" : "outline",
-        pressed: args.showImagePlaceholders,
-        onClick: args.onToggleImagePlaceholders,
-        icon: <Image className="h-4 w-4" />,
       },
     },
     {
@@ -216,8 +210,22 @@ export function useHeaderActions(args: Args) {
         shortcutId: "toggle_typography",
         variant: args.showTypography ? "default" : "outline",
         pressed: args.showTypography,
+        disabled: !args.hasPreviewLayout,
         onClick: args.onToggleTypography,
         icon: <Type className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "image-placeholders",
+        ariaLabel: "Toggle image placeholders",
+        tooltip: "Toggle image placeholders",
+        variant: args.showImagePlaceholders ? "default" : "outline",
+        pressed: args.showImagePlaceholders,
+        disabled: !args.hasPreviewLayout,
+        onClick: args.onToggleImagePlaceholders,
+        icon: <Image className="h-4 w-4" />,
       },
     },
     { type: "divider", key: "divider-typography-layers" },

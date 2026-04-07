@@ -6,6 +6,7 @@ type Args = {
   canUndo: boolean
   canRedo: boolean
   showPresetsBrowser: boolean
+  hasPreviewLayout: boolean
   onLoadJson: () => void
   onSaveJson: () => void
   onExportPdf: () => void
@@ -28,6 +29,7 @@ export function useShellKeyboardShortcuts({
   canUndo,
   canRedo,
   showPresetsBrowser,
+  hasPreviewLayout,
   onLoadJson,
   onSaveJson,
   onExportPdf,
@@ -75,10 +77,10 @@ export function useShellKeyboardShortcuts({
           onLoadJson()
           return
         case "save_json":
-          onSaveJson()
+          if (hasPreviewLayout) onSaveJson()
           return
         case "export_pdf":
-          onExportPdf()
+          if (hasPreviewLayout) onExportPdf()
           return
         case "undo":
           if (canUndo) onUndo()
@@ -90,16 +92,16 @@ export function useShellKeyboardShortcuts({
           onToggleDarkMode()
           return
         case "toggle_baselines":
-          onToggleBaselines()
+          if (hasPreviewLayout) onToggleBaselines()
           return
         case "toggle_margins":
-          onToggleMargins()
+          if (hasPreviewLayout) onToggleMargins()
           return
         case "toggle_modules":
-          onToggleModules()
+          if (hasPreviewLayout) onToggleModules()
           return
         case "toggle_typography":
-          onToggleTypography()
+          if (hasPreviewLayout) onToggleTypography()
           return
         case "toggle_layers_panel":
           onToggleLayersPanel()
@@ -123,6 +125,7 @@ export function useShellKeyboardShortcuts({
   }, [
     canRedo,
     canUndo,
+    hasPreviewLayout,
     onExportPdf,
     onLoadJson,
     onOpenPresets,

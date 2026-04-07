@@ -39,15 +39,17 @@ export function ControlSidebar({
         </p>
       </div>
 
-      <div className={`relative flex min-h-0 flex-1 flex-col ${showPresetsBrowser ? "opacity-50" : ""}`}>
-        {showPresetsBrowser ? (
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 z-10 cursor-not-allowed"
-          />
-        ) : null}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className={`relative min-h-0 flex-1 ${showPresetsBrowser ? "opacity-50" : ""}`}>
+          {showPresetsBrowser ? (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-10 cursor-not-allowed"
+            />
+          ) : null}
 
-        {settingsPanels}
+          {settingsPanels}
+        </div>
 
         <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
           <div className="flex items-center justify-between gap-3">

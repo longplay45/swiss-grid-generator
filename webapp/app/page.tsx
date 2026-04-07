@@ -522,11 +522,13 @@ export default function Home() {
   )
 
   const exportActions = useExportActions(exportActionsContext)
+  const hasPreviewLayout = previewLayout !== null
 
   useShellKeyboardShortcuts({
     canUndo,
     canRedo,
     showPresetsBrowser,
+    hasPreviewLayout,
     onLoadJson: () => loadFileInputRef.current?.click(),
     onSaveJson: exportActions.openSaveDialog,
     onExportPdf: exportActions.openExportDialog,
@@ -553,6 +555,7 @@ export default function Home() {
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
     showPresetsBrowser,
+    hasPreviewLayout,
     isDarkUi,
     showBaselines,
     showMargins,

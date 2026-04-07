@@ -38,19 +38,14 @@ export function ImprintPanel({ isDarkMode = false, onClose }: Props) {
           Copyleft &amp; -right 2026. All rights reserved.
         </p>
         <p>
-          <strong>Source Code:</strong>
+          <strong>Contact:</strong>
           <br />
           <a
-            href="https://github.com/longplay45/swiss-grid-generator"
+            href="mailto:hello@swiss-grid-generator.com"
             className={isDarkMode ? "text-blue-400 hover:underline" : "text-blue-600 hover:underline"}
           >
-            github.com/longplay45/swiss-grid-generator
+            hello@swiss-grid-generator.com
           </a>
-        </p>
-        <p>
-          <strong>Technologies:</strong>
-          <br />
-          Next.js, React, TypeScript, Tailwind CSS, jsPDF
         </p>
         <p className={`pt-2 text-[11px] ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
           This tool is inspired by the principles of Swiss Design and the International Typographic

@@ -258,13 +258,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
           <li>Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.</li>
-          <li>The Project toggle sits directly after the typography toggle, separated by a divider.</li>
+          <li>`Save`, `Export`, and the display toggles stay disabled until a preview layout is available.</li>
+          <li>The Project toggle sits directly after the image-placeholder toggle, separated by a divider.</li>
           <li>The right-side header actions are ordered as `i` (information/tooltips) and `?` (help).</li>
           <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.</li>
           <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+P</span>.</li>
           <li>`?` opens or closes the help sidebar. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+H</span>.</li>
           <li>While the presets browser is open, side panels and the header Project toggle are temporarily disabled.</li>
-          <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel.</li>
+          <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel, and both remain active while presets are open.</li>
           <li>Right-side content panels include close icons in their header rows.</li>
           <li>Only one right-side panel is open at a time.</li>
         </ul>

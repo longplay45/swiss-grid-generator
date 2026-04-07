@@ -147,6 +147,7 @@ Default: `swiss`
 - `Load` (folder icon): load project JSON
 - `Save` (save icon): opens Save Project JSON popup
 - `Export` (download icon): opens the export popup
+- `Save` and `Export` stay disabled until a preview layout is available.
 - Divider placement: between `Presets` and `Load`, and between `Export` and `Undo`
 - `Esc` closes the presets browser without loading a preset
 
@@ -168,9 +169,11 @@ Default: `swiss`
 - Margins
 - Gutter/modules
 - Typo
+- Image placeholders
 - Project panel toggle (layers icon)
 - Divider placement: dark mode and baselines are separated by a divider
-- Divider placement: typography and the Project toggle are separated by a divider
+- Divider placement: image placeholders and the Project toggle are separated by a divider
+- Baselines, margins, gutter/modules, typo, and image placeholders stay disabled until a preview layout is available.
 
 ### Sidebar Panels (icon selectors)
 
@@ -202,6 +205,7 @@ Default: `swiss`
 - `Version` label: shows current app version string.
 - `Feedback` link: opens the right sidebar feedback panel.
 - `Imprint` link: opens the right sidebar imprint panel.
+- `Feedback` and `Imprint` remain active even while the presets browser is open.
 
 When `i` is active, header icons show rollover tooltips with a second line for keyboard shortcuts (including Undo/Redo).
 
