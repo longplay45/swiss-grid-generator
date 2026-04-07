@@ -39,6 +39,7 @@ export type CanvasImageRenderPlan = {
 type ImageDragState<Key extends string> = {
   key: Key
   preview: ModulePosition
+  copyOnDrop?: boolean
 }
 
 type TypographyStyleDefinition = {
@@ -347,14 +348,15 @@ export function buildCanvasImagePlans<Key extends string>({
 }: BuildCanvasImagePlansArgs<Key>): {
   imagePlans: Map<Key, CanvasImageRenderPlan>
   imageRects: Record<Key, BlockRect>
+  dragPreviewImagePlan: CanvasImageRenderPlan | null
 } {
   const imagePlans = new Map<Key, CanvasImageRenderPlan>()
   const imageRects = {} as Record<Key, BlockRect>
+  const imageDuplicatePreviewKey = dragState?.copyOnDrop && imageOrder.includes(dragState.key)
+    ? dragState.key
+    : null
 
-  for (const key of imageOrder) {
-    const basePosition = imageModulePositions[key]
-    const position = dragState?.key === key ? dragState.preview : basePosition
-    if (!position) continue
+  const createImagePlan = (position: ModulePosition, key: Key): CanvasImageRenderPlan => {
     const columns = getImageSpan(key)
     const rows = getImageRows(key)
     const clamped = clampImageBaselinePosition(position, columns)
@@ -364,17 +366,36 @@ export function buildCanvasImagePlans<Key extends string>({
       0,
       Math.min(gridRows - 1, findNearestAxisIndex(rowStartsInBaselines, clamped.row)),
     )
-    const rect = {
-      x,
-      y,
-      width: sumAxisSpan(moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale,
-      height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale,
+    return {
+      rect: {
+        x,
+        y,
+        width: sumAxisSpan(moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale,
+        height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale,
+      },
+      color: getImageColor(key),
+      opacity: getImageOpacity(key),
     }
-    imageRects[key] = rect
-    imagePlans.set(key, { rect, color: getImageColor(key), opacity: getImageOpacity(key) })
   }
 
-  return { imagePlans, imageRects }
+  for (const key of imageOrder) {
+    const basePosition = imageModulePositions[key]
+    const position = imageDuplicatePreviewKey === key
+      ? basePosition
+      : dragState?.key === key
+        ? dragState.preview
+        : basePosition
+    if (!position) continue
+    const imagePlan = createImagePlan(position, key)
+    imageRects[key] = imagePlan.rect
+    imagePlans.set(key, imagePlan)
+  }
+
+  const dragPreviewImagePlan = imageDuplicatePreviewKey && dragState
+    ? createImagePlan(dragState.preview, imageDuplicatePreviewKey)
+    : null
+
+  return { imagePlans, imageRects, dragPreviewImagePlan }
 }
 
 export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKey extends string>({
@@ -648,10 +669,7 @@ export function drawCanvasLayerStack<Key extends string>(
   for (const key of orderedKeys) {
     const imagePlan = imagePlans.get(key)
     if (imagePlan) {
-      ctx.fillStyle = imagePlan.color
-      ctx.globalAlpha = imagePlan.opacity
-      ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
-      ctx.globalAlpha = 1
+      drawCanvasImagePlan(ctx, imagePlan)
       continue
     }
 
@@ -659,6 +677,16 @@ export function drawCanvasLayerStack<Key extends string>(
     if (!textPlan) continue
     drawCanvasTextPlan(ctx, textPlan)
   }
+}
+
+export function drawCanvasImagePlan(
+  ctx: CanvasRenderingContext2D,
+  imagePlan: CanvasImageRenderPlan,
+): void {
+  ctx.fillStyle = imagePlan.color
+  ctx.globalAlpha = imagePlan.opacity
+  ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
+  ctx.globalAlpha = 1
 }
 
 export function drawCanvasTextPlan<Key extends string>(

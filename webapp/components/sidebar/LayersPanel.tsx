@@ -12,6 +12,7 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { DEFAULT_BASE_FONT, getFontFamilyCss, isFontFamily } from "@/lib/config/fonts"
+import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import {
   clearWindowSelection,
   isCardDragIgnoreTarget,
@@ -47,6 +48,7 @@ type LayerThumb = {
   font: string
   textPreview: string
   color: string
+  opacity: number
 }
 
 const STYLE_LABELS: Record<string, string> = {
@@ -145,6 +147,7 @@ export function LayersPanel({
         color: typeof rawColor === "string" && isImagePlaceholderColor(rawColor)
           ? rawColor.toLowerCase()
           : defaultTextColor,
+        opacity: 1,
       })
     }
     for (const key of imageOrder) {
@@ -158,6 +161,7 @@ export function LayersPanel({
         font: "—",
         textPreview: "",
         color: resolveImageSchemeColor(rawColor, imageColorScheme),
+        opacity: normalizeImagePlaceholderOpacity(layout?.imageOpacities?.[key]),
       })
     }
     return next
@@ -391,9 +395,16 @@ export function LayersPanel({
                         </div>
                       ) : (
                         <div
-                          className={`mt-1 h-4 rounded-sm border border-black/10 ${tone.stripeBg}`}
-                          style={{ backgroundColor: thumb.color }}
-                        />
+                          className={`mt-1 h-4 overflow-hidden rounded-sm border border-black/10 ${tone.stripeBg}`}
+                        >
+                          <div
+                            className="h-full w-full"
+                            style={{
+                              backgroundColor: thumb.color,
+                              opacity: thumb.opacity,
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
                     <button

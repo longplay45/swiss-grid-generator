@@ -9,6 +9,7 @@ import {
   buildCanvasImagePlans,
   buildCanvasTypographyRenderPlans,
   buildOrderedCanvasLayerKeys,
+  drawCanvasImagePlan,
   drawCanvasTextPlan,
   drawCanvasLayerStack,
 } from "@/lib/canvas-page-renderer"
@@ -279,6 +280,7 @@ export function useTypographyRenderer<BlockId extends string>({
       const gutterX = gridMarginHorizontal * scale
       let draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
       let imagePlans = new Map<BlockId, { rect: BlockRect; color: string; opacity: number }>()
+      let dragPreviewImagePlan: { rect: BlockRect; color: string; opacity: number } | null = null
       let dragPreviewTextPlan: BlockRenderPlan<BlockId> | null = null
       const textDuplicatePreviewKey = dragState?.copyOnDrop && blockOrder.includes(dragState.key)
         ? dragState.key
@@ -328,6 +330,7 @@ export function useTypographyRenderer<BlockId extends string>({
         })
         imagePlans = imageRenderState.imagePlans
         imageRectsRef.current = imageRenderState.imageRects
+        dragPreviewImagePlan = imageRenderState.dragPreviewImagePlan
       }
 
       if (showTypography) {
@@ -472,6 +475,9 @@ export function useTypographyRenderer<BlockId extends string>({
       bufferCtx.rotate((rotation * Math.PI) / 180)
       bufferCtx.translate(-pageWidth / 2, -pageHeight / 2)
       drawCanvasLayerStack(bufferCtx, orderedKeys, imagePlans, draftPlans)
+      if (dragPreviewImagePlan) {
+        drawCanvasImagePlan(bufferCtx, dragPreviewImagePlan)
+      }
       if (dragPreviewTextPlan) {
         drawCanvasTextPlan(bufferCtx, dragPreviewTextPlan)
       }
