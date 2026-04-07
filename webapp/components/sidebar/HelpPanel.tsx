@@ -518,6 +518,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
+          <li>Available families: Sans-Serif `Inter`, `Work Sans`, `Jost`, `IBM Plex Sans`, `Libre Franklin`; Serif `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`; Poster `Playfair Display`.</li>
           <li>The text editor can override the paragraph cut with any available family variant, while untouched weight/slant defaults still follow the selected hierarchy.</li>
         </ul>
       </section>

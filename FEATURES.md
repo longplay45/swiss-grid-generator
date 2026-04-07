@@ -31,6 +31,7 @@ Current capability inventory for Swiss Grid Generator.
 - Scale systems: `Swiss`, `Golden Ratio`, `Fibonacci`, `Perfect Fourth`, `Perfect Fifth`.
 - Base font inheritance plus block-level override support.
 - Font family groups: `Sans-Serif`, `Serif`, `Poster`.
+- Available families: Sans-Serif `Inter`, `Work Sans`, `Jost`, `IBM Plex Sans`, `Libre Franklin`; Serif `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`; Poster `Playfair Display`.
 - Family cut selection from available local variants.
 - Optical or metric kerning.
 - Tracking input from `-120` to `+300` (`1/1000 em`).

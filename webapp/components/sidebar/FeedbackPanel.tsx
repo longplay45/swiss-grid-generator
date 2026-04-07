@@ -45,6 +45,7 @@ type FeedbackFormState = {
   top_improvement: string
   missing_features: string
   anything_else: string
+  email: string
   nps_score: number | null
 }
 
@@ -72,6 +73,7 @@ const INITIAL_FORM_STATE: FeedbackFormState = {
   top_improvement: "",
   missing_features: "",
   anything_else: "",
+  email: "",
   nps_score: null,
 }
 
@@ -115,6 +117,9 @@ function getValidationErrors(values: FeedbackFormState): Partial<Record<FieldKey
   if (values.firstresult === null) errors.firstresult = "Rate this statement."
   if (values.bugs_found === "yes" && !values.bug_description.trim()) {
     errors.bug_description = "Describe the issue you ran into."
+  }
+  if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+    errors.email = "Enter a valid email address or leave this field empty."
   }
   if (values.nps_score === null) errors.nps_score = "Choose a score from 0 to 10."
 
@@ -215,6 +220,7 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
           top_improvement: form.top_improvement.trim(),
           missing_features: form.missing_features.trim(),
           anything_else: form.anything_else.trim(),
+          email: form.email.trim(),
         }),
       })
 
@@ -330,13 +336,41 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
     </div>
   )
 
+  const renderInput = ({
+    field,
+    label,
+    placeholder,
+    type = "text",
+  }: {
+    field: Extract<FieldKey, "email">
+    label: string
+    placeholder: string
+    type?: "text" | "email"
+  }) => (
+    <div className="space-y-1.5">
+      <label className={`block text-[11px] font-semibold uppercase tracking-[0.08em] ${tone.heading}`}>
+        {label}
+      </label>
+      <input
+        type={type}
+        value={form[field]}
+        onChange={(event) => setField(field, event.target.value)}
+        className={`w-full border px-3 py-2 text-xs leading-relaxed outline-none transition-colors ${tone.input}`}
+        placeholder={placeholder}
+        autoComplete="email"
+        inputMode={type === "email" ? "email" : undefined}
+      />
+      <FieldError message={errors[field]} />
+    </div>
+  )
+
   return (
     <div ref={rootRef} className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
           <h3 className={`text-sm font-semibold ${tone.heading}`}>Feedback</h3>
           <p className={`text-[11px] leading-relaxed ${tone.body}`}>
-            Help improve the tool. The survey takes about 5 minutes and responses are anonymous.
+            Help improve the tool. The survey takes about 5 minutes. Responses stay anonymous unless you choose to leave an email for follow-up.
           </p>
         </div>
         <button
@@ -605,9 +639,22 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, onClose }: Props
             })}
           </Section>
 
+          <Section
+            number="13."
+            title="Optional Follow-Up"
+            borderClassName={tone.divider}
+          >
+            {renderInput({
+              field: "email",
+              type: "email",
+              label: "Email address (optional)",
+              placeholder: "name@example.com",
+            })}
+          </Section>
+
           <div className={`space-y-3 border-t pt-4 ${tone.divider}`}>
             <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
-              Anonymous. Version {appVersion}.
+              Version {appVersion}. Optional email only if you want follow-up.
             </p>
             <div className="flex items-center gap-2">
               <button

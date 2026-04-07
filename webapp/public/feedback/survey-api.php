@@ -68,6 +68,7 @@ try {
             top_improvement TEXT,
             missing_features TEXT,
             anything_else TEXT,
+            email TEXT,
             nps_score INTEGER NOT NULL,
             raw_json TEXT NOT NULL
         )
@@ -79,6 +80,8 @@ try {
             last_submit TEXT NOT NULL
         )
     ');
+
+    ensure_optional_column($db, 'feedback_responses', 'email', 'TEXT');
 } catch (Exception $e) {
     respond(500, ['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }
@@ -119,6 +122,7 @@ $clean = [
     'top_improvement' => sanitize_text($data['top_improvement'] ?? null),
     'missing_features' => sanitize_text($data['missing_features'] ?? null),
     'anything_else' => sanitize_text($data['anything_else'] ?? null),
+    'email' => normalize_email($data['email'] ?? null),
     'nps_score' => normalize_range_int($data['nps_score'] ?? null, 0, 10),
 ];
 
@@ -143,6 +147,9 @@ if ($clean['nps_score'] === null) {
 }
 if ($clean['bugs_found'] === 'yes' && $clean['bug_description'] === null) {
     $errors['bug_description'] = 'Describe the issue you ran into.';
+}
+if (($data['email'] ?? null) !== null && sanitize_text($data['email'] ?? null, 320) !== null && $clean['email'] === null) {
+    $errors['email'] = 'Provide a valid email address or leave the field empty.';
 }
 
 if (!empty($errors)) {
@@ -243,6 +250,37 @@ function normalize_exact_int($value, int $expected): ?int {
     }
 
     return $intValue === $expected ? $intValue : null;
+}
+
+function normalize_email($value): ?string {
+    $text = sanitize_text($value, 320);
+    if ($text === null) {
+        return null;
+    }
+
+    $email = filter_var($text, FILTER_VALIDATE_EMAIL);
+    if ($email === false) {
+        return null;
+    }
+
+    return mb_strtolower($email);
+}
+
+function ensure_optional_column(SQLite3 $db, string $table, string $column, string $type): void {
+    $escapedTable = str_replace("'", "''", $table);
+    $escapedColumn = str_replace("'", "''", $column);
+    $result = $db->query(sprintf("PRAGMA table_info('%s')", $escapedTable));
+    if ($result === false) {
+        throw new Exception('Could not inspect feedback schema');
+    }
+
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        if (($row['name'] ?? null) === $column) {
+            return;
+        }
+    }
+
+    $db->exec(sprintf('ALTER TABLE %s ADD COLUMN %s %s', $table, $column, $type));
 }
 
 function respond(int $code, array $payload): void {
