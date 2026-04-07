@@ -1,0 +1,753 @@
+{
+  "schemaVersion": 2,
+  "exportedAt": "2026-04-07T12:00:00.000Z",
+  "title": "Swiss Grid Generator Quick Start",
+  "description": "Three-page starter manual in the native project JSON format.",
+  "author": "Swiss Grid Generator",
+  "createdAt": "2026-04-07T12:00:00.000Z",
+  "activePageId": "page-quick-start-cover",
+  "pages": [
+    {
+      "id": "page-quick-start-cover",
+      "name": "Quick Start",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 3,
+        "gridCols": 3,
+        "gridRows": 4,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": true,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": true,
+        "rhythmColsDirection": "ttb",
+        "typographyScale": "swiss",
+        "baseFont": "Jost",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 4,
+          "right": 4,
+          "bottom": 2
+        },
+        "showBaselines": false,
+        "showModules": false,
+        "showMargins": false,
+        "showImagePlaceholders": false,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPaperSize": "A4",
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "displayUnit": "pt",
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "cover-title",
+          "cover-app",
+          "cover-intro",
+          "cover-step-1",
+          "cover-step-2",
+          "cover-step-3",
+          "cover-caption"
+        ],
+        "textContent": {
+          "cover-title": "Quick Start",
+          "cover-app": "Swiss Grid Generator",
+          "cover-intro": "This file is a short guided project. Load it through the header to review the workflow inside the live layout engine.",
+          "cover-step-1": "1. Define the page system.\nRatio, baseline, margins, modules.",
+          "cover-step-2": "2. Add and refine content.\nText, image, drag, edit, reflow.",
+          "cover-step-3": "3. Save or export the result.\nProject JSON, PDF, SVG, IDML.",
+          "cover-caption": "Open the Project panel to move through the pages."
+        },
+        "blockTextEdited": {
+          "cover-title": true,
+          "cover-app": true,
+          "cover-intro": true,
+          "cover-step-1": true,
+          "cover-step-2": true,
+          "cover-step-3": true,
+          "cover-caption": true
+        },
+        "styleAssignments": {
+          "cover-title": "display",
+          "cover-app": "headline",
+          "cover-intro": "body",
+          "cover-step-1": "body",
+          "cover-step-2": "body",
+          "cover-step-3": "body",
+          "cover-caption": "caption"
+        },
+        "blockOpticalKerning": {
+          "cover-title": true,
+          "cover-app": true,
+          "cover-intro": true,
+          "cover-step-1": true,
+          "cover-step-2": true,
+          "cover-step-3": true,
+          "cover-caption": true
+        },
+        "blockTrackingScales": {
+          "cover-title": 0,
+          "cover-app": 0,
+          "cover-intro": 0,
+          "cover-step-1": 0,
+          "cover-step-2": 0,
+          "cover-step-3": 0,
+          "cover-caption": 0
+        },
+        "blockColumnSpans": {
+          "cover-title": 3,
+          "cover-app": 2,
+          "cover-intro": 2,
+          "cover-step-1": 1,
+          "cover-step-2": 1,
+          "cover-step-3": 1,
+          "cover-caption": 3
+        },
+        "blockRowSpans": {
+          "cover-title": 1,
+          "cover-app": 1,
+          "cover-intro": 1,
+          "cover-step-1": 1,
+          "cover-step-2": 1,
+          "cover-step-3": 1,
+          "cover-caption": 1
+        },
+        "blockTextAlignments": {
+          "cover-title": "left",
+          "cover-app": "left",
+          "cover-intro": "left",
+          "cover-step-1": "left",
+          "cover-step-2": "left",
+          "cover-step-3": "left",
+          "cover-caption": "left"
+        },
+        "blockTextReflow": {
+          "cover-title": false,
+          "cover-app": false,
+          "cover-intro": false,
+          "cover-step-1": false,
+          "cover-step-2": false,
+          "cover-step-3": false,
+          "cover-caption": false
+        },
+        "blockSyllableDivision": {
+          "cover-title": false,
+          "cover-app": false,
+          "cover-intro": true,
+          "cover-step-1": false,
+          "cover-step-2": false,
+          "cover-step-3": false,
+          "cover-caption": true
+        },
+        "blockItalic": {
+          "cover-title": false,
+          "cover-app": false,
+          "cover-intro": false,
+          "cover-step-1": false,
+          "cover-step-2": false,
+          "cover-step-3": false,
+          "cover-caption": false
+        },
+        "blockRotations": {
+          "cover-title": 0,
+          "cover-app": 0,
+          "cover-intro": 0,
+          "cover-step-1": 0,
+          "cover-step-2": 0,
+          "cover-step-3": 0,
+          "cover-caption": 0
+        },
+        "blockModulePositions": {
+          "cover-title": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 0
+          },
+          "cover-app": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 7
+          },
+          "cover-intro": {
+            "column": 0,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "cover-step-1": {
+            "column": 0,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "cover-step-2": {
+            "column": 1,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "cover-step-3": {
+            "column": 2,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "cover-caption": {
+            "column": 0,
+            "row": 3,
+            "baselineOffset": 14
+          }
+        },
+        "layerOrder": [
+          "cover-title",
+          "cover-app",
+          "cover-intro",
+          "cover-step-1",
+          "cover-step-2",
+          "cover-step-3",
+          "cover-caption"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageColors": {}
+      }
+    },
+    {
+      "id": "page-quick-start-system",
+      "name": "Build the Page System",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 3,
+        "gridCols": 3,
+        "gridRows": 4,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": true,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": true,
+        "rhythmColsDirection": "ttb",
+        "typographyScale": "swiss",
+        "baseFont": "Jost",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 4,
+          "right": 4,
+          "bottom": 2
+        },
+        "showBaselines": false,
+        "showModules": false,
+        "showMargins": false,
+        "showImagePlaceholders": false,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPaperSize": "A4",
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "displayUnit": "pt",
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "system-title",
+          "system-subhead",
+          "system-a",
+          "system-b",
+          "system-c",
+          "system-d",
+          "system-e",
+          "system-f",
+          "system-caption"
+        ],
+        "textContent": {
+          "system-title": "1. Build the Page System",
+          "system-subhead": "Set structure first. The content field and the baseline grid define the whole composition.",
+          "system-a": "Canvas Ratio sets format, orientation, and rotation. Start here.",
+          "system-b": "Baseline Grid sets the vertical rhythm. Keep it stable.",
+          "system-c": "Margins define the printable field. Use a method or custom values.",
+          "system-d": "Grid & Rhythm sets columns, rows, gutter, and module cadence.",
+          "system-e": "Typo defines hierarchy and base font. Untouched blocks inherit it.",
+          "system-f": "Color Scheme sets the page background and new placeholder colors.",
+          "system-caption": "Recommended order: Ratio -> Baseline -> Margins -> Grid -> Typo -> Color."
+        },
+        "blockTextEdited": {
+          "system-title": true,
+          "system-subhead": true,
+          "system-a": true,
+          "system-b": true,
+          "system-c": true,
+          "system-d": true,
+          "system-e": true,
+          "system-f": true,
+          "system-caption": true
+        },
+        "styleAssignments": {
+          "system-title": "headline",
+          "system-subhead": "subhead",
+          "system-a": "body",
+          "system-b": "body",
+          "system-c": "body",
+          "system-d": "body",
+          "system-e": "body",
+          "system-f": "body",
+          "system-caption": "caption"
+        },
+        "blockOpticalKerning": {
+          "system-title": true,
+          "system-subhead": true,
+          "system-a": true,
+          "system-b": true,
+          "system-c": true,
+          "system-d": true,
+          "system-e": true,
+          "system-f": true,
+          "system-caption": true
+        },
+        "blockTrackingScales": {
+          "system-title": 0,
+          "system-subhead": 0,
+          "system-a": 0,
+          "system-b": 0,
+          "system-c": 0,
+          "system-d": 0,
+          "system-e": 0,
+          "system-f": 0,
+          "system-caption": 0
+        },
+        "blockColumnSpans": {
+          "system-title": 3,
+          "system-subhead": 2,
+          "system-a": 1,
+          "system-b": 1,
+          "system-c": 1,
+          "system-d": 1,
+          "system-e": 1,
+          "system-f": 1,
+          "system-caption": 3
+        },
+        "blockRowSpans": {
+          "system-title": 1,
+          "system-subhead": 1,
+          "system-a": 1,
+          "system-b": 1,
+          "system-c": 1,
+          "system-d": 1,
+          "system-e": 1,
+          "system-f": 1,
+          "system-caption": 1
+        },
+        "blockTextAlignments": {
+          "system-title": "left",
+          "system-subhead": "left",
+          "system-a": "left",
+          "system-b": "left",
+          "system-c": "left",
+          "system-d": "left",
+          "system-e": "left",
+          "system-f": "left",
+          "system-caption": "left"
+        },
+        "blockTextReflow": {
+          "system-title": false,
+          "system-subhead": false,
+          "system-a": false,
+          "system-b": false,
+          "system-c": false,
+          "system-d": false,
+          "system-e": false,
+          "system-f": false,
+          "system-caption": false
+        },
+        "blockSyllableDivision": {
+          "system-title": false,
+          "system-subhead": false,
+          "system-a": true,
+          "system-b": true,
+          "system-c": true,
+          "system-d": true,
+          "system-e": true,
+          "system-f": true,
+          "system-caption": true
+        },
+        "blockItalic": {
+          "system-title": false,
+          "system-subhead": false,
+          "system-a": false,
+          "system-b": false,
+          "system-c": false,
+          "system-d": false,
+          "system-e": false,
+          "system-f": false,
+          "system-caption": false
+        },
+        "blockRotations": {
+          "system-title": 0,
+          "system-subhead": 0,
+          "system-a": 0,
+          "system-b": 0,
+          "system-c": 0,
+          "system-d": 0,
+          "system-e": 0,
+          "system-f": 0,
+          "system-caption": 0
+        },
+        "blockModulePositions": {
+          "system-title": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 0
+          },
+          "system-subhead": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 5
+          },
+          "system-a": {
+            "column": 0,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "system-b": {
+            "column": 1,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "system-c": {
+            "column": 2,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "system-d": {
+            "column": 0,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "system-e": {
+            "column": 1,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "system-f": {
+            "column": 2,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "system-caption": {
+            "column": 0,
+            "row": 3,
+            "baselineOffset": 14
+          }
+        },
+        "layerOrder": [
+          "system-title",
+          "system-subhead",
+          "system-a",
+          "system-b",
+          "system-c",
+          "system-d",
+          "system-e",
+          "system-f",
+          "system-caption"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageColors": {}
+      }
+    },
+    {
+      "id": "page-quick-start-workflow",
+      "name": "Place, Refine, Export",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 3,
+        "gridCols": 3,
+        "gridRows": 4,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": true,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": true,
+        "rhythmColsDirection": "ttb",
+        "typographyScale": "swiss",
+        "baseFont": "Jost",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 4,
+          "right": 4,
+          "bottom": 2
+        },
+        "showBaselines": false,
+        "showModules": false,
+        "showMargins": false,
+        "showImagePlaceholders": false,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPaperSize": "A4",
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "displayUnit": "pt",
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "workflow-title",
+          "workflow-subhead",
+          "workflow-a",
+          "workflow-b",
+          "workflow-c",
+          "workflow-d",
+          "workflow-e",
+          "workflow-f",
+          "workflow-caption"
+        ],
+        "textContent": {
+          "workflow-title": "2. Place, Refine, Export",
+          "workflow-subhead": "The preview is canvas-rendered. The same calculated layout drives export, so screen and output stay aligned.",
+          "workflow-a": "Double-click an empty module to add text. Shift + double-click adds an image placeholder.",
+          "workflow-b": "Hover a block to edit it. Drag to reposition it. Alt/Option + drag duplicates it.",
+          "workflow-c": "Use the editor rail for geometry, type, color, reflow, rotation, and delete.",
+          "workflow-d": "Header toggles let you inspect baselines, margins, modules, typography, and placeholders.",
+          "workflow-e": "Save Project JSON stores pages, settings, layers, and logical block positions.",
+          "workflow-f": "Export creates vector PDF, SVG, or IDML from the same layout calculation.",
+          "workflow-caption": "Shortcuts: Cmd/Ctrl+O load, Cmd/Ctrl+S save, Cmd/Ctrl+Z undo."
+        },
+        "blockTextEdited": {
+          "workflow-title": true,
+          "workflow-subhead": true,
+          "workflow-a": true,
+          "workflow-b": true,
+          "workflow-c": true,
+          "workflow-d": true,
+          "workflow-e": true,
+          "workflow-f": true,
+          "workflow-caption": true
+        },
+        "styleAssignments": {
+          "workflow-title": "headline",
+          "workflow-subhead": "subhead",
+          "workflow-a": "body",
+          "workflow-b": "body",
+          "workflow-c": "body",
+          "workflow-d": "body",
+          "workflow-e": "body",
+          "workflow-f": "body",
+          "workflow-caption": "caption"
+        },
+        "blockOpticalKerning": {
+          "workflow-title": true,
+          "workflow-subhead": true,
+          "workflow-a": true,
+          "workflow-b": true,
+          "workflow-c": true,
+          "workflow-d": true,
+          "workflow-e": true,
+          "workflow-f": true,
+          "workflow-caption": true
+        },
+        "blockTrackingScales": {
+          "workflow-title": 0,
+          "workflow-subhead": 0,
+          "workflow-a": 0,
+          "workflow-b": 0,
+          "workflow-c": 0,
+          "workflow-d": 0,
+          "workflow-e": 0,
+          "workflow-f": 0,
+          "workflow-caption": 0
+        },
+        "blockColumnSpans": {
+          "workflow-title": 3,
+          "workflow-subhead": 3,
+          "workflow-a": 1,
+          "workflow-b": 1,
+          "workflow-c": 1,
+          "workflow-d": 1,
+          "workflow-e": 1,
+          "workflow-f": 1,
+          "workflow-caption": 3
+        },
+        "blockRowSpans": {
+          "workflow-title": 1,
+          "workflow-subhead": 1,
+          "workflow-a": 1,
+          "workflow-b": 1,
+          "workflow-c": 1,
+          "workflow-d": 1,
+          "workflow-e": 1,
+          "workflow-f": 1,
+          "workflow-caption": 1
+        },
+        "blockTextAlignments": {
+          "workflow-title": "left",
+          "workflow-subhead": "left",
+          "workflow-a": "left",
+          "workflow-b": "left",
+          "workflow-c": "left",
+          "workflow-d": "left",
+          "workflow-e": "left",
+          "workflow-f": "left",
+          "workflow-caption": "left"
+        },
+        "blockTextReflow": {
+          "workflow-title": false,
+          "workflow-subhead": false,
+          "workflow-a": false,
+          "workflow-b": false,
+          "workflow-c": false,
+          "workflow-d": false,
+          "workflow-e": false,
+          "workflow-f": false,
+          "workflow-caption": false
+        },
+        "blockSyllableDivision": {
+          "workflow-title": false,
+          "workflow-subhead": false,
+          "workflow-a": true,
+          "workflow-b": true,
+          "workflow-c": true,
+          "workflow-d": true,
+          "workflow-e": true,
+          "workflow-f": true,
+          "workflow-caption": true
+        },
+        "blockItalic": {
+          "workflow-title": false,
+          "workflow-subhead": false,
+          "workflow-a": false,
+          "workflow-b": false,
+          "workflow-c": false,
+          "workflow-d": false,
+          "workflow-e": false,
+          "workflow-f": false,
+          "workflow-caption": false
+        },
+        "blockRotations": {
+          "workflow-title": 0,
+          "workflow-subhead": 0,
+          "workflow-a": 0,
+          "workflow-b": 0,
+          "workflow-c": 0,
+          "workflow-d": 0,
+          "workflow-e": 0,
+          "workflow-f": 0,
+          "workflow-caption": 0
+        },
+        "blockModulePositions": {
+          "workflow-title": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 0
+          },
+          "workflow-subhead": {
+            "column": 0,
+            "row": 0,
+            "baselineOffset": 5
+          },
+          "workflow-a": {
+            "column": 0,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "workflow-b": {
+            "column": 1,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "workflow-c": {
+            "column": 2,
+            "row": 1,
+            "baselineOffset": 0
+          },
+          "workflow-d": {
+            "column": 0,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "workflow-e": {
+            "column": 1,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "workflow-f": {
+            "column": 2,
+            "row": 2,
+            "baselineOffset": 0
+          },
+          "workflow-caption": {
+            "column": 0,
+            "row": 3,
+            "baselineOffset": 14
+          }
+        },
+        "layerOrder": [
+          "workflow-title",
+          "workflow-subhead",
+          "workflow-a",
+          "workflow-b",
+          "workflow-c",
+          "workflow-d",
+          "workflow-e",
+          "workflow-f",
+          "workflow-caption"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageColors": {}
+      }
+    }
+  ]
+}

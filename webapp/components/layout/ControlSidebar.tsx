@@ -29,7 +29,7 @@ export function ControlSidebar({
   onToggleImprintPanel,
 }: Props) {
   return (
-    <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
+    <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col overflow-hidden border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
       <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
         <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
         <p className={`text-sm ${uiTheme.bodyText}`}>
@@ -39,8 +39,8 @@ export function ControlSidebar({
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className={`relative min-h-0 flex-1 ${showPresetsBrowser ? "opacity-50" : ""}`}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${showPresetsBrowser ? "opacity-50" : ""}`}>
           {showPresetsBrowser ? (
             <div
               aria-hidden="true"
