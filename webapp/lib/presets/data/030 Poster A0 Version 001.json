@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-07T15:11:41.656Z",
+  "exportedAt": "2026-04-07T15:52:12.506Z",
   "title": "Poster A0 Version 001",
   "description": "",
   "author": "netzwerkerei@gmail.com",
@@ -68,7 +68,7 @@
           "paragraph-1773671949302-15nbra"
         ],
         "textContent": {
-          "display": "m",
+          "display": "m.",
           "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
           "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
           "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
@@ -121,7 +121,7 @@
         "blockTrackingRuns": {},
         "blockTextFormatRuns": {},
         "blockColumnSpans": {
-          "display": 1,
+          "display": 3,
           "paragraph-1773671347303-6ze5tl": 1,
           "paragraph-1773671562475-vr75kg": 1,
           "paragraph-1773671586677-x9575v": 1,
@@ -142,7 +142,7 @@
           "paragraph-1773671562475-vr75kg": "left",
           "paragraph-1773671586677-x9575v": "left",
           "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "left",
-          "paragraph-1773671949302-15nbra": "left"
+          "paragraph-1773671949302-15nbra": "right"
         },
         "blockTextReflow": {
           "display": false,
@@ -180,7 +180,7 @@
           "display": {
             "column": 0,
             "row": 2,
-            "baselineOffset": 4
+            "baselineOffset": 7
           },
           "paragraph-1773671347303-6ze5tl": {
             "column": 0,
@@ -203,9 +203,9 @@
             "baselineOffset": 0
           },
           "paragraph-1773671949302-15nbra": {
-            "column": 0,
-            "row": 3,
-            "baselineOffset": 14
+            "column": 2,
+            "row": 0,
+            "baselineOffset": 0
           }
         },
         "blockCustomSizes": {
@@ -217,20 +217,20 @@
           "paragraph-1773671347303-6ze5tl": 84
         },
         "blockTextColors": {
-          "display": "#ffffff",
+          "display": "#c0c0c0",
           "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-          "paragraph-1773671562475-vr75kg": "#ffffff",
-          "paragraph-1773671586677-x9575v": "#ffffff",
-          "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "#ffffff",
-          "paragraph-1773671949302-15nbra": "#ffffff"
+          "paragraph-1773671562475-vr75kg": "#c0c0c0",
+          "paragraph-1773671586677-x9575v": "#c0c0c0",
+          "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "#c0c0c0",
+          "paragraph-1773671949302-15nbra": "#c0c0c0"
         },
         "layerOrder": [
-          "paragraph-1773671949302-15nbra",
           "display",
+          "paragraph-1773671347303-6ze5tl",
+          "paragraph-1773671562475-vr75kg",
           "paragraph-1773671586677-x9575v",
           "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
-          "paragraph-1773671562475-vr75kg",
-          "paragraph-1773671347303-6ze5tl"
+          "paragraph-1773671949302-15nbra"
         ],
         "imageOrder": [],
         "imageModulePositions": {},

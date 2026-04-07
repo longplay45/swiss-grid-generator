@@ -58,6 +58,17 @@ type InlineEditorOverlayCaret = {
   height: number
 }
 
+function areSelectionStatesEqual(
+  current: InlineEditorSelectionState,
+  next: InlineEditorSelectionState,
+): boolean {
+  return current.start === next.start
+    && current.end === next.end
+    && current.anchor === next.anchor
+    && current.focusIndex === next.focusIndex
+    && current.focused === next.focused
+}
+
 export type InlineEditorLayout = {
   rect: {
     x: number
@@ -244,16 +255,20 @@ export function InlineBlockTextarea<StyleKey extends string>({
     return buildSelectionState(selectionStart, selectionEnd, focused, selectionDirection)
   }, [buildSelectionState])
 
+  const commitSelectionState = useCallback((next: InlineEditorSelectionState) => {
+    setSelection((current) => (areSelectionStatesEqual(current, next) ? current : next))
+  }, [])
+
   const syncSelectionFromTextarea = useCallback((focused = selection.focused) => {
     const element = textareaRef.current
     if (!element) return
-    setSelection(readTextareaSelection(element, focused))
-  }, [readTextareaSelection, selection.focused, textareaRef])
+    commitSelectionState(readTextareaSelection(element, focused))
+  }, [commitSelectionState, readTextareaSelection, selection.focused, textareaRef])
 
   useEffect(() => {
     if (!editorState) {
       keyboardDesiredXRef.current = null
-      setSelection({
+      commitSelectionState({
         start: 0,
         end: 0,
         anchor: 0,
@@ -265,10 +280,10 @@ export function InlineBlockTextarea<StyleKey extends string>({
     const frame = window.requestAnimationFrame(() => {
       const element = textareaRef.current
       if (!element) return
-      setSelection(readTextareaSelection(element, document.activeElement === element))
+      commitSelectionState(readTextareaSelection(element, document.activeElement === element))
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [editorState, readTextareaSelection, textareaRef])
+  }, [commitSelectionState, editorState, readTextareaSelection, textareaRef])
 
   useEffect(() => {
     if (!editorState) return
@@ -463,7 +478,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
       element.focus({ preventScroll: true })
     }
     element.setSelectionRange(start, end, direction)
-    setSelection(buildSelectionState(start, end, focused, direction))
+    commitSelectionState(buildSelectionState(start, end, focused, direction))
   }
 
   const rotatePoint = (x: number, y: number, originX: number, originY: number, angleDeg: number) => {
@@ -622,7 +637,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
                 draftSelectionEnd: nextSelection.end,
               } : prev)
               keyboardDesiredXRef.current = null
-              setSelection(nextSelection)
+              commitSelectionState(nextSelection)
             }}
             onKeyDown={(event) => {
               const isVisualNavigationKey = event.key === "Home"
