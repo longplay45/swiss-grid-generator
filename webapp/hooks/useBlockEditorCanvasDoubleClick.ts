@@ -57,6 +57,7 @@ type Args = {
   isBlockItalic: (key: string) => boolean
   isBlockOpticalKerningEnabled: (key: string) => boolean
   getBlockRotation: (key: string) => number
+  promoteLayerToTop: (key: string) => void
   onRequestNotice?: (notice: NoticeRequest) => void
 }
 
@@ -100,6 +101,7 @@ export function useBlockEditorCanvasDoubleClick({
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockRotation,
+  promoteLayerToTop,
   onRequestNotice,
 }: Args) {
   return useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
@@ -171,6 +173,7 @@ export function useBlockEditorCanvasDoubleClick({
       position: snapped,
       rowStartBaselines,
     }))
+    promoteLayerToTop(newKey)
     setEditorState(buildNewBlockEditorState({
       key: newKey,
       style: "body",
@@ -217,6 +220,7 @@ export function useBlockEditorCanvasDoubleClick({
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onRequestNotice,
+    promoteLayerToTop,
     recordHistoryBeforeChange,
     resultGridCols,
     resultGridRows,

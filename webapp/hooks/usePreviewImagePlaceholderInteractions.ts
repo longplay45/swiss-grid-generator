@@ -20,6 +20,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "insertImagePlaceholder"
   | "setImageModulePositions"
   | "onSelectLayer"
+  | "promoteLayerToTop"
   | "getNextImagePlaceholderId"
   | "ensureImagePlaceholdersVisible"
   | "openImageEditor"
@@ -43,6 +44,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   insertImagePlaceholder,
   setImageModulePositions,
   onSelectLayer,
+  promoteLayerToTop,
   getNextImagePlaceholderId,
   ensureImagePlaceholdersVisible,
   openImageEditor,
@@ -70,6 +72,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
         color: sourceColor,
         afterKey: drag.key,
       })
+      promoteLayerToTop(newKey)
       onSelectLayer?.(newKey)
       return
     }
@@ -88,6 +91,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     gridCols,
     insertImagePlaceholder,
     onSelectLayer,
+    promoteLayerToTop,
     recordHistoryBeforeChange,
     setImageModulePositions,
   ])
@@ -109,6 +113,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     ensureImagePlaceholdersVisible?.()
     recordHistoryBeforeChange()
     insertImagePlaceholder(newKey, { position: snapped })
+    promoteLayerToTop(newKey)
     openImageEditor(newKey, { recordHistory: false })
     return true
   }, [
@@ -118,6 +123,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     insertImagePlaceholder,
     ensureImagePlaceholdersVisible,
     openImageEditor,
+    promoteLayerToTop,
     recordHistoryBeforeChange,
     resolveModulePositionAtPagePoint,
   ])

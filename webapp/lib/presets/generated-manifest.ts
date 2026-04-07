@@ -3,630 +3,39 @@
 
 export const GENERATED_PRESET_MANIFEST = [
   {
-    path: "./data/4x4 12pt grid with image placeholder.json",
+    path: "./data/000 Blank.json",
     source: {
       "schemaVersion": 2,
-      "exportedAt": "2026-04-02T10:28:01.844Z",
-      "title": "4x4 12pt grid with image placeholder.",
-      "description": "",
-      "author": "netzwerkerei@gmail.com",
-      "createdAt": "2026-03-16T14:40:58.992Z",
-      "activePageId": "page-b28b5ad2-6c39-4e4e-9a95-a79cfdefe8ce",
+      "exportedAt": "2026-04-07T15:15:16.602Z",
+      "title": "Blank Start Page",
+      "description": "Blank Start Page to get you started.",
+      "author": "Swiss Grid Generator",
+      "createdAt": "2026-04-07T12:00:00.000Z",
+      "activePageId": "page-font-playfair-display",
       "pages": [
         {
-          "id": "page-b28b5ad2-6c39-4e4e-9a95-a79cfdefe8ce",
-          "name": "Page 1",
+          "id": "page-font-playfair-display",
+          "name": "Font Playfair Display",
           "uiSettings": {
             "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
             "orientation": "portrait",
             "rotation": 0,
             "marginMethod": 3,
             "gridCols": 3,
-            "gridRows": 4,
+            "gridRows": 6,
             "baselineMultiple": 1,
             "gutterMultiple": 1,
-            "rhythm": "repetitive",
-            "rhythmRowsEnabled": true,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
             "rhythmRowsDirection": "ltr",
-            "rhythmColsEnabled": true,
-            "rhythmColsDirection": "ttb",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
             "typographyScale": "swiss",
-            "baseFont": "Inter",
+            "baseFont": "Jost",
             "imageColorScheme": "mono",
-            "canvasBackground": "#404040",
-            "customBaseline": 12,
-            "useCustomMargins": true,
-            "customMarginMultipliers": {
-              "top": 3,
-              "left": 4,
-              "right": 4,
-              "bottom": 2
-            },
-            "showBaselines": true,
-            "showModules": true,
-            "showMargins": true,
-            "showImagePlaceholders": true,
-            "showTypography": true,
-            "showLayers": true,
-            "collapsed": {
-              "format": true,
-              "baseline": true,
-              "margins": false,
-              "gutter": false,
-              "typo": true,
-              "color": false,
-              "summary": true
-            },
-            "exportPaperSize": "A4",
-            "exportPrintPro": false,
-            "exportBleedMm": 0,
-            "exportRegistrationMarks": false,
-            "displayUnit": "pt",
-            "format": "A4"
-          },
-          "previewLayout": {
-            "blockOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
-              "paragraph-1773671949302-15nbra"
-            ],
-            "textContent": {
-              "display": "m",
-              "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
-              "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671949302-15nbra": "Swiss Grid Generator, 2026",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr"
-            },
-            "blockTextEdited": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true
-            },
-            "styleAssignments": {
-              "display": "fx",
-              "paragraph-1773671347303-6ze5tl": "fx",
-              "paragraph-1773671562475-vr75kg": "body",
-              "paragraph-1773671586677-x9575v": "body",
-              "paragraph-1773671949302-15nbra": "caption",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "body"
-            },
-            "blockFontFamilies": {
-              "display": "Playfair Display"
-            },
-            "blockFontWeights": {
-              "display": 700,
-              "paragraph-1773671347303-6ze5tl": 400,
-              "paragraph-1773671562475-vr75kg": 400,
-              "paragraph-1773671586677-x9575v": 400,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 400,
-              "paragraph-1773671949302-15nbra": 400
-            },
-            "blockOpticalKerning": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "blockTrackingScales": {
-              "display": 0,
-              "paragraph-1773671347303-6ze5tl": 0,
-              "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
-              "paragraph-1773671949302-15nbra": 0
-            },
-            "blockColumnSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 1,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockRowSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 1,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockTextAlignments": {
-              "display": "left",
-              "paragraph-1773671347303-6ze5tl": "left",
-              "paragraph-1773671562475-vr75kg": "left",
-              "paragraph-1773671586677-x9575v": "left",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "left",
-              "paragraph-1773671949302-15nbra": "left"
-            },
-            "blockTextReflow": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockSyllableDivision": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "blockItalic": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockRotations": {
-              "display": 0,
-              "paragraph-1773671347303-6ze5tl": 0,
-              "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
-              "paragraph-1773671949302-15nbra": 0
-            },
-            "blockModulePositions": {
-              "display": {
-                "column": 0,
-                "row": 2,
-                "baselineOffset": 4
-              },
-              "paragraph-1773671347303-6ze5tl": {
-                "column": 0,
-                "row": 0,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671562475-vr75kg": {
-                "column": 0,
-                "row": 2,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671586677-x9575v": {
-                "column": 2,
-                "row": 2,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671949302-15nbra": {
-                "column": 0,
-                "row": 3,
-                "baselineOffset": 14
-              },
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": {
-                "column": 1,
-                "row": 2,
-                "baselineOffset": 0
-              }
-            },
-            "blockCustomSizes": {
-              "display": 400,
-              "paragraph-1773671347303-6ze5tl": 96
-            },
-            "blockCustomLeadings": {
-              "display": 106,
-              "paragraph-1773671347303-6ze5tl": 84
-            },
-            "blockTextColors": {
-              "display": "#ffffff",
-              "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-              "paragraph-1773671562475-vr75kg": "#ffffff",
-              "paragraph-1773671586677-x9575v": "#ffffff",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "#ffffff",
-              "paragraph-1773671949302-15nbra": "#ffffff"
-            },
-            "layerOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671949302-15nbra",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab"
-            ],
-            "imageOrder": [],
-            "imageModulePositions": {},
-            "imageColumnSpans": {},
-            "imageRowSpans": {},
-            "imageColors": {}
-          }
-        },
-        {
-          "id": "page-c2429484-17b9-4995-b78b-31a19fdebe59",
-          "name": "Page 2",
-          "uiSettings": {
-            "canvasRatio": "din_ab",
-            "orientation": "portrait",
-            "rotation": 0,
-            "marginMethod": 3,
-            "gridCols": 3,
-            "gridRows": 4,
-            "baselineMultiple": 1,
-            "gutterMultiple": 1,
-            "rhythm": "repetitive",
-            "rhythmRowsEnabled": true,
-            "rhythmRowsDirection": "ltr",
-            "rhythmColsEnabled": true,
-            "rhythmColsDirection": "ttb",
-            "typographyScale": "swiss",
-            "baseFont": "Inter",
-            "imageColorScheme": "mono",
-            "canvasBackground": "#404040",
-            "customBaseline": 12,
-            "useCustomMargins": true,
-            "customMarginMultipliers": {
-              "top": 3,
-              "left": 4,
-              "right": 4,
-              "bottom": 2
-            },
-            "showBaselines": true,
-            "showModules": true,
-            "showMargins": true,
-            "showImagePlaceholders": true,
-            "showTypography": true,
-            "showLayers": true,
-            "collapsed": {
-              "format": true,
-              "baseline": true,
-              "margins": false,
-              "gutter": false,
-              "typo": true,
-              "color": false,
-              "summary": true
-            },
-            "exportPaperSize": "A4",
-            "exportPrintPro": false,
-            "exportBleedMm": 0,
-            "exportRegistrationMarks": false,
-            "displayUnit": "pt",
-            "format": "A4"
-          },
-          "previewLayout": {
-            "blockOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671585233-cpbkzw",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-1773671949302-15nbra"
-            ],
-            "textContent": {
-              "display": "m",
-              "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
-              "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671585233-cpbkzw": "Oper von Luigi Cherubini\nErstaufführung in italienischer SprachSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671949302-15nbra": "Swiss Grid Generator, 2026"
-            },
-            "blockTextEdited": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671585233-cpbkzw": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "styleAssignments": {
-              "display": "fx",
-              "paragraph-1773671347303-6ze5tl": "fx",
-              "paragraph-1773671562475-vr75kg": "body",
-              "paragraph-1773671585233-cpbkzw": "body",
-              "paragraph-1773671586677-x9575v": "body",
-              "paragraph-1773671949302-15nbra": "caption"
-            },
-            "blockFontFamilies": {
-              "display": "Playfair Display"
-            },
-            "blockFontWeights": {
-              "display": 700,
-              "paragraph-1773671347303-6ze5tl": 400,
-              "paragraph-1773671562475-vr75kg": 400,
-              "paragraph-1773671585233-cpbkzw": 400,
-              "paragraph-1773671586677-x9575v": 400,
-              "paragraph-1773671949302-15nbra": 400
-            },
-            "blockOpticalKerning": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671585233-cpbkzw": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "blockTrackingScales": {
-              "display": 0,
-              "paragraph-1773671347303-6ze5tl": 0,
-              "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671585233-cpbkzw": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-1773671949302-15nbra": 0
-            },
-            "blockColumnSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 1,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671585233-cpbkzw": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockRowSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 1,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671585233-cpbkzw": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockTextAlignments": {
-              "display": "left",
-              "paragraph-1773671347303-6ze5tl": "left",
-              "paragraph-1773671562475-vr75kg": "left",
-              "paragraph-1773671585233-cpbkzw": "left",
-              "paragraph-1773671586677-x9575v": "left",
-              "paragraph-1773671949302-15nbra": "left"
-            },
-            "blockTextReflow": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671585233-cpbkzw": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockSyllableDivision": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671585233-cpbkzw": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "blockItalic": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671585233-cpbkzw": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockRotations": {
-              "display": 0,
-              "paragraph-1773671347303-6ze5tl": 0,
-              "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671585233-cpbkzw": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-1773671949302-15nbra": 0
-            },
-            "blockModulePositions": {
-              "display": {
-                "column": 0,
-                "row": 2,
-                "baselineOffset": 4
-              },
-              "paragraph-1773671347303-6ze5tl": {
-                "column": 0,
-                "row": 0,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671562475-vr75kg": {
-                "column": 0,
-                "row": 2,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671585233-cpbkzw": {
-                "column": 1,
-                "row": 2,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671586677-x9575v": {
-                "column": 2,
-                "row": 2,
-                "baselineOffset": 0
-              },
-              "paragraph-1773671949302-15nbra": {
-                "column": 0,
-                "row": 3,
-                "baselineOffset": 14
-              }
-            },
-            "blockCustomSizes": {
-              "display": 400,
-              "paragraph-1773671347303-6ze5tl": 96
-            },
-            "blockCustomLeadings": {
-              "display": 106,
-              "paragraph-1773671347303-6ze5tl": 84
-            },
-            "blockTextColors": {
-              "display": "#ffffff",
-              "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-              "paragraph-1773671562475-vr75kg": "#ffffff",
-              "paragraph-1773671585233-cpbkzw": "#ffffff",
-              "paragraph-1773671586677-x9575v": "#ffffff",
-              "paragraph-1773671949302-15nbra": "#ffffff"
-            },
-            "layerOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671585233-cpbkzw",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-1773671949302-15nbra"
-            ],
-            "imageOrder": [],
-            "imageModulePositions": {},
-            "imageColumnSpans": {},
-            "imageRowSpans": {},
-            "imageColors": {}
-          }
-        }
-      ]
-    },
-  },
-  {
-    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json",
-    source: {
-      "schemaVersion": 1,
-      "exportedAt": "2026-03-16T14:40:58.992Z",
-      "title": "4x4 12pt grid with image placeholder.",
-      "description": "",
-      "author": "netzwerkerei@gmail.com",
-      "gridResult": {
-        "format": "A4",
-        "settings": {
-          "orientation": "portrait",
-          "marginMethod": "Baseline (1:1:1:1)",
-          "marginMethodId": 3,
-          "gridCols": 3,
-          "gridRows": 4,
-          "baselineMultiple": 2,
-          "customBaseline": 12,
-          "rhythm": "repetitive",
-          "rhythmRowsEnabled": true,
-          "rhythmRowsDirection": "ltr",
-          "rhythmColsEnabled": true,
-          "rhythmColsDirection": "ttb"
-        },
-        "pageSizePt": {
-          "width": 595.276,
-          "height": 841.89
-        },
-        "grid": {
-          "gridUnit": 12,
-          "gridMarginHorizontal": 12,
-          "gridMarginVertical": 12,
-          "margins": {
-            "top": 36,
-            "bottom": 24,
-            "left": 48,
-            "right": 48
-          },
-          "gutter": 12,
-          "scaleFactor": 1,
-          "baselineUnitsPerCell": 16
-        },
-        "contentArea": {
-          "width": 499.276,
-          "height": 756
-        },
-        "module": {
-          "width": 158.425,
-          "height": 180,
-          "aspectRatio": 0.88,
-          "widths": [
-            158.425,
-            158.425,
-            158.425
-          ],
-          "heights": [
-            180,
-            180,
-            180,
-            180
-          ]
-        },
-        "typography": {
-          "metadata": {
-            "format": "A4",
-            "unit": "pt",
-            "baselineGrid": 12,
-            "a4Baseline": 12,
-            "scaleFactor": 1
-          },
-          "styles": {
-            "fx": {
-              "size": 96,
-              "leading": 96,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 8,
-              "bodyLines": 8
-            },
-            "caption": {
-              "size": 7,
-              "leading": 8,
-              "weight": "Regular",
-              "blockItalic": true,
-              "alignment": "Left",
-              "baselineMultiplier": 0.6666666666666666,
-              "bodyLines": 1
-            },
-            "body": {
-              "size": 10,
-              "leading": 12,
-              "weight": "Regular",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 1,
-              "bodyLines": 1
-            },
-            "subhead": {
-              "size": 20,
-              "leading": 24,
-              "weight": "Regular",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 2,
-              "bodyLines": 2
-            },
-            "headline": {
-              "size": 30,
-              "leading": 36,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 3,
-              "bodyLines": 3
-            },
-            "display": {
-              "size": 64,
-              "leading": 72,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 6,
-              "bodyLines": 6
-            }
-          }
-        }
-      },
-      "activePageId": "page-din-ab-portrait-4x4-method1-12-000pt-grid-002",
-      "pages": [
-        {
-          "id": "page-din-ab-portrait-4x4-method1-12-000pt-grid-002",
-          "name": "Page 1",
-          "uiSettings": {
-            "canvasRatio": "din_ab",
-            "orientation": "portrait",
-            "rotation": 0,
-            "marginMethod": 3,
-            "gridCols": 3,
-            "gridRows": 4,
-            "baselineMultiple": 2,
-            "gutterMultiple": 1,
-            "rhythm": "repetitive",
-            "rhythmRowsEnabled": true,
-            "rhythmRowsDirection": "ltr",
-            "rhythmColsEnabled": true,
-            "rhythmColsDirection": "ttb",
-            "typographyScale": "swiss",
-            "baseFont": "Inter",
-            "imageColorScheme": "mono",
-            "canvasBackground": "#404040",
+            "canvasBackground": null,
             "customBaseline": 12,
             "useCustomMargins": true,
             "customMarginMultipliers": {
@@ -636,325 +45,81 @@ export const GENERATED_PRESET_MANIFEST = [
               "bottom": 2
             },
             "showBaselines": false,
-            "showModules": true,
-            "showMargins": true,
+            "showModules": false,
+            "showMargins": false,
             "showImagePlaceholders": true,
             "showTypography": true,
             "showLayers": true,
             "collapsed": {
               "format": true,
               "baseline": true,
-              "margins": false,
+              "margins": true,
               "gutter": false,
               "typo": true,
-              "color": false,
+              "color": true,
               "summary": true
             },
-            "exportPaperSize": "A4",
             "exportPrintPro": false,
             "exportBleedMm": 0,
             "exportRegistrationMarks": false,
-            "displayUnit": "pt",
             "format": "A4"
           },
           "previewLayout": {
-            "blockOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671585233-cpbkzw",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-1773671949302-15nbra"
-            ],
-            "textContent": {
-              "display": "m",
-              "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
-              "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671585233-cpbkzw": "Oper von Luigi Cherubini\nErstaufführung in italienischer SprachSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671949302-15nbra": "Swiss Grid Designer"
-            },
-            "blockTextEdited": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671585233-cpbkzw": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "styleAssignments": {
-              "display": "fx",
-              "paragraph-1773671347303-6ze5tl": "fx",
-              "paragraph-1773671562475-vr75kg": "body",
-              "paragraph-1773671585233-cpbkzw": "body",
-              "paragraph-1773671586677-x9575v": "body",
-              "paragraph-1773671949302-15nbra": "caption"
-            },
+            "blockOrder": [],
+            "textContent": {},
+            "blockTextEdited": {},
+            "styleAssignments": {},
             "blockFontFamilies": {},
-            "blockColumnSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 3,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671585233-cpbkzw": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockRowSpans": {
-              "display": 1,
-              "paragraph-1773671347303-6ze5tl": 1,
-              "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671585233-cpbkzw": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-1773671949302-15nbra": 1
-            },
-            "blockTextAlignments": {
-              "display": "left",
-              "paragraph-1773671347303-6ze5tl": "left",
-              "paragraph-1773671562475-vr75kg": "left",
-              "paragraph-1773671585233-cpbkzw": "left",
-              "paragraph-1773671586677-x9575v": "left",
-              "paragraph-1773671949302-15nbra": "left"
-            },
-            "blockTextReflow": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671585233-cpbkzw": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockSyllableDivision": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": true,
-              "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671585233-cpbkzw": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-1773671949302-15nbra": true
-            },
-            "blockBold": {
-              "display": true,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671585233-cpbkzw": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockItalic": {
-              "display": false,
-              "paragraph-1773671347303-6ze5tl": false,
-              "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671585233-cpbkzw": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-1773671949302-15nbra": false
-            },
-            "blockRotations": {
-              "display": 0,
-              "paragraph-1773671347303-6ze5tl": 0,
-              "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671585233-cpbkzw": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-1773671949302-15nbra": 0
-            },
-            "blockCustomSizes": {
-              "display": 400,
-              "paragraph-1773671347303-6ze5tl": 56
-            },
-            "blockCustomLeadings": {
-              "display": 106,
-              "paragraph-1773671347303-6ze5tl": 96
-            },
-            "blockTextColors": {
-              "display": "#ffffff",
-              "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-              "paragraph-1773671562475-vr75kg": "#ffffff",
-              "paragraph-1773671585233-cpbkzw": "#ffffff",
-              "paragraph-1773671586677-x9575v": "#ffffff",
-              "paragraph-1773671949302-15nbra": "#ffffff"
-            },
-            "blockModulePositions": {
-              "display": {
-                "col": 0,
-                "row": 34
-              },
-              "paragraph-1773671347303-6ze5tl": {
-                "col": 0,
-                "row": 0
-              },
-              "paragraph-1773671562475-vr75kg": {
-                "col": 0,
-                "row": 16
-              },
-              "paragraph-1773671585233-cpbkzw": {
-                "col": 1,
-                "row": 16
-              },
-              "paragraph-1773671586677-x9575v": {
-                "col": 2,
-                "row": 16
-              },
-              "paragraph-1773671949302-15nbra": {
-                "col": 0,
-                "row": 62
-              }
-            },
-            "layerOrder": [
-              "display",
-              "paragraph-1773671347303-6ze5tl",
-              "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671585233-cpbkzw",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-1773671949302-15nbra"
-            ],
+            "blockFontWeights": {},
+            "blockOpticalKerning": {},
+            "blockTrackingScales": {},
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {},
+            "blockRowSpans": {},
+            "blockTextAlignments": {},
+            "blockTextReflow": {},
+            "blockSyllableDivision": {},
+            "blockItalic": {},
+            "blockRotations": {},
+            "blockModulePositions": {},
+            "blockCustomSizes": {},
+            "blockCustomLeadings": {},
+            "blockTextColors": {},
+            "layerOrder": [],
             "imageOrder": [],
             "imageModulePositions": {},
             "imageColumnSpans": {},
             "imageRowSpans": {},
-            "imageColors": {}
+            "imageColors": {},
+            "imageOpacities": {}
           }
         }
       ]
     },
   },
   {
-    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json",
+    path: "./data/010 Swiss Grid Generator Quick Start.json",
     source: {
-      "schemaVersion": 1,
-      "exportedAt": "2026-03-09T12:51:56.921Z",
-      "title": "4x4 12pt grid with image placeholder.",
-      "description": "",
-      "author": "netzwerkerei@gmail.com",
-      "gridResult": {
-        "format": "A4",
-        "settings": {
-          "orientation": "portrait",
-          "marginMethod": "Progressive (1:2:2:3)",
-          "marginMethodId": 1,
-          "gridCols": 4,
-          "gridRows": 4,
-          "baselineMultiple": 1,
-          "customBaseline": 12,
-          "rhythm": "repetitive",
-          "rhythmRowsEnabled": true,
-          "rhythmRowsDirection": "ltr",
-          "rhythmColsEnabled": true,
-          "rhythmColsDirection": "ttb"
-        },
-        "pageSizePt": {
-          "width": 595.276,
-          "height": 841.89
-        },
-        "grid": {
-          "gridUnit": 12,
-          "gridMarginHorizontal": 12,
-          "gridMarginVertical": 12,
-          "margins": {
-            "top": 12,
-            "bottom": 12,
-            "left": 12,
-            "right": 12
-          },
-          "gutter": 12,
-          "scaleFactor": 1,
-          "baselineUnitsPerCell": 17
-        },
-        "contentArea": {
-          "width": 571.276,
-          "height": 804
-        },
-        "module": {
-          "width": 133.819,
-          "height": 192,
-          "aspectRatio": 0.697,
-          "widths": [
-            133.819,
-            133.819,
-            133.819,
-            133.819
-          ],
-          "heights": [
-            192,
-            192,
-            192,
-            192
-          ]
-        },
-        "typography": {
-          "metadata": {
-            "format": "A4",
-            "unit": "pt",
-            "baselineGrid": 12,
-            "a4Baseline": 12,
-            "scaleFactor": 1
-          },
-          "styles": {
-            "fx": {
-              "size": 96,
-              "leading": 96,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 8,
-              "bodyLines": 8
-            },
-            "caption": {
-              "size": 7,
-              "leading": 8,
-              "weight": "Regular",
-              "blockItalic": true,
-              "alignment": "Left",
-              "baselineMultiplier": 0.6666666666666666,
-              "bodyLines": 1
-            },
-            "body": {
-              "size": 10,
-              "leading": 12,
-              "weight": "Regular",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 1,
-              "bodyLines": 1
-            },
-            "subhead": {
-              "size": 20,
-              "leading": 24,
-              "weight": "Regular",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 2,
-              "bodyLines": 2
-            },
-            "headline": {
-              "size": 30,
-              "leading": 36,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 3,
-              "bodyLines": 3
-            },
-            "display": {
-              "size": 64,
-              "leading": 72,
-              "weight": "Bold",
-              "blockItalic": false,
-              "alignment": "Left",
-              "baselineMultiplier": 6,
-              "bodyLines": 6
-            }
-          }
-        }
-      },
-      "activePageId": "page-din-ab-portrait-4x4-method1-12-000pt-grid",
+      "schemaVersion": 2,
+      "exportedAt": "2026-04-07T15:05:40.455Z",
+      "title": "Swiss Grid Generator Quick Start",
+      "description": "Quick-start manual with specimen pages for every bundled font.",
+      "author": "Swiss Grid Generator",
+      "createdAt": "2026-04-07T12:00:00.000Z",
+      "activePageId": "page-quick-start-cover",
       "pages": [
         {
-          "id": "page-din-ab-portrait-4x4-method1-12-000pt-grid",
-          "name": "Page 1",
+          "id": "page-quick-start-cover",
+          "name": "Quick Start",
           "uiSettings": {
             "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
             "orientation": "portrait",
             "rotation": 0,
-            "marginMethod": 1,
-            "gridCols": 4,
+            "marginMethod": 3,
+            "gridCols": 3,
             "gridRows": 4,
             "baselineMultiple": 1,
             "gutterMultiple": 1,
@@ -964,21 +129,21 @@ export const GENERATED_PRESET_MANIFEST = [
             "rhythmColsEnabled": true,
             "rhythmColsDirection": "ttb",
             "typographyScale": "swiss",
-            "baseFont": "Inter",
-            "imageColorScheme": "swiss-modern",
-            "canvasBackground": "scheme:0",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
             "customBaseline": 12,
             "useCustomMargins": true,
             "customMarginMultipliers": {
-              "top": 1,
-              "left": 1,
-              "right": 1,
-              "bottom": 1
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
             },
-            "showBaselines": true,
-            "showModules": true,
-            "showMargins": true,
-            "showImagePlaceholders": true,
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
             "showTypography": true,
             "showLayers": true,
             "collapsed": {
@@ -990,207 +155,4242 @@ export const GENERATED_PRESET_MANIFEST = [
               "color": true,
               "summary": true
             },
-            "exportPaperSize": "A4",
             "exportPrintPro": false,
             "exportBleedMm": 0,
             "exportRegistrationMarks": false,
-            "exportFinalSafeGuides": true,
-            "displayUnit": "pt",
             "format": "A4"
           },
           "previewLayout": {
             "blockOrder": [
-              "display",
-              "headline",
-              "paragraph-1772610247079-0uugg8",
-              "paragraph-1772610667455-372iaj",
-              "paragraph-1772610667455-aooo5z",
-              "body",
-              "paragraph-1772528695124-y56i9f"
+              "cover-title",
+              "cover-app",
+              "cover-intro",
+              "cover-step-1",
+              "cover-step-2",
+              "cover-step-3",
+              "cover-caption"
             ],
             "textContent": {
-              "display": "Swiss Style",
-              "headline": "Swiss 'Style\nGrid System",
-              "paragraph-1772610247079-0uugg8": "12 pt Baseline Grid",
-              "paragraph-1772610667455-372iaj": "DIN Ratio\nPortrait",
-              "paragraph-1772610667455-aooo5z": "Progressive Margin\n1:2:2:3",
-              "body": "The modular grid allows designers to organize content hierarchically and rhythmically. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide rhythm, contrast, and emphasis while preserving clarity across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet coherent systems.",
-              "paragraph-1772528695124-y56i9f": "Graphic design today\nstill carries the imprint\nof the International Typographic Style."
+              "cover-title": "Quick Start",
+              "cover-app": "Swiss Grid Generator",
+              "cover-intro": "This file is a short guided project. Load it through the header to review the workflow inside the live layout engine.",
+              "cover-step-1": "1. Define the page system.\nRatio, baseline, margins, modules.",
+              "cover-step-2": "2. Add and refine content.\nText, image, drag, edit, reflow.",
+              "cover-step-3": "3. Save or export the result.\nProject JSON, PDF, SVG, IDML.",
+              "cover-caption": "Open the Project panel to move through the pages."
             },
             "blockTextEdited": {
-              "display": true,
-              "headline": true,
-              "paragraph-1772610247079-0uugg8": true,
-              "paragraph-1772610667455-372iaj": true,
-              "paragraph-1772610667455-aooo5z": true,
-              "body": true,
-              "paragraph-1772528695124-y56i9f": true
+              "cover-title": true,
+              "cover-app": true,
+              "cover-intro": true,
+              "cover-step-1": true,
+              "cover-step-2": true,
+              "cover-step-3": true,
+              "cover-caption": true
             },
             "styleAssignments": {
-              "display": "fx",
-              "headline": "body",
-              "paragraph-1772610247079-0uugg8": "body",
-              "paragraph-1772610667455-372iaj": "body",
-              "paragraph-1772610667455-aooo5z": "body",
-              "body": "body",
-              "paragraph-1772528695124-y56i9f": "subhead"
+              "cover-title": "display",
+              "cover-app": "headline",
+              "cover-intro": "body",
+              "cover-step-1": "body",
+              "cover-step-2": "body",
+              "cover-step-3": "body",
+              "cover-caption": "caption"
             },
             "blockFontFamilies": {},
+            "blockFontWeights": {
+              "cover-title": 700,
+              "cover-app": 700,
+              "cover-intro": 400,
+              "cover-step-1": 400,
+              "cover-step-2": 400,
+              "cover-step-3": 400,
+              "cover-caption": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "cover-app": true,
+              "cover-intro": true,
+              "cover-step-1": true,
+              "cover-step-2": true,
+              "cover-step-3": true,
+              "cover-caption": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "cover-app": 0,
+              "cover-intro": 0,
+              "cover-step-1": 0,
+              "cover-step-2": 0,
+              "cover-step-3": 0,
+              "cover-caption": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
             "blockColumnSpans": {
-              "display": 2,
-              "headline": 1,
-              "paragraph-1772610247079-0uugg8": 1,
-              "paragraph-1772610667455-372iaj": 1,
-              "paragraph-1772610667455-aooo5z": 1,
-              "body": 1,
-              "paragraph-1772528695124-y56i9f": 2
+              "cover-title": 3,
+              "cover-app": 2,
+              "cover-intro": 2,
+              "cover-step-1": 1,
+              "cover-step-2": 1,
+              "cover-step-3": 1,
+              "cover-caption": 3
             },
             "blockRowSpans": {
-              "display": 1,
-              "headline": 1,
-              "paragraph-1772610247079-0uugg8": 1,
-              "paragraph-1772610667455-372iaj": 1,
-              "paragraph-1772610667455-aooo5z": 1,
-              "body": 1,
-              "paragraph-1772528695124-y56i9f": 1
+              "cover-title": 1,
+              "cover-app": 1,
+              "cover-intro": 1,
+              "cover-step-1": 1,
+              "cover-step-2": 1,
+              "cover-step-3": 1,
+              "cover-caption": 1
             },
             "blockTextAlignments": {
-              "display": "left",
-              "headline": "left",
-              "paragraph-1772610247079-0uugg8": "left",
-              "paragraph-1772610667455-372iaj": "left",
-              "paragraph-1772610667455-aooo5z": "left",
-              "body": "left",
-              "paragraph-1772528695124-y56i9f": "left"
+              "cover-title": "left",
+              "cover-app": "left",
+              "cover-intro": "left",
+              "cover-step-1": "left",
+              "cover-step-2": "left",
+              "cover-step-3": "left",
+              "cover-caption": "left"
             },
             "blockTextReflow": {
-              "display": false,
-              "headline": false,
-              "paragraph-1772610247079-0uugg8": false,
-              "paragraph-1772610667455-372iaj": false,
-              "paragraph-1772610667455-aooo5z": false,
-              "body": false,
-              "paragraph-1772528695124-y56i9f": false
+              "cover-title": false,
+              "cover-app": false,
+              "cover-intro": false,
+              "cover-step-1": false,
+              "cover-step-2": false,
+              "cover-step-3": false,
+              "cover-caption": false
             },
             "blockSyllableDivision": {
-              "display": false,
-              "headline": false,
-              "paragraph-1772610247079-0uugg8": false,
-              "paragraph-1772610667455-372iaj": false,
-              "paragraph-1772610667455-aooo5z": false,
-              "body": true,
-              "paragraph-1772528695124-y56i9f": false
-            },
-            "blockBold": {
-              "display": false,
-              "headline": false,
-              "paragraph-1772610247079-0uugg8": false,
-              "paragraph-1772610667455-372iaj": false,
-              "paragraph-1772610667455-aooo5z": false,
-              "body": false,
-              "paragraph-1772528695124-y56i9f": false
+              "cover-title": false,
+              "cover-app": false,
+              "cover-intro": true,
+              "cover-step-1": false,
+              "cover-step-2": false,
+              "cover-step-3": false,
+              "cover-caption": true
             },
             "blockItalic": {
-              "display": false,
-              "headline": false,
-              "paragraph-1772610247079-0uugg8": false,
-              "paragraph-1772610667455-372iaj": false,
-              "paragraph-1772610667455-aooo5z": false,
-              "body": false,
-              "paragraph-1772528695124-y56i9f": false
+              "cover-title": false,
+              "cover-app": false,
+              "cover-intro": false,
+              "cover-step-1": false,
+              "cover-step-2": false,
+              "cover-step-3": false,
+              "cover-caption": false
             },
             "blockRotations": {
-              "display": 0,
-              "headline": 0,
-              "paragraph-1772610247079-0uugg8": 0,
-              "paragraph-1772610667455-372iaj": 0,
-              "paragraph-1772610667455-aooo5z": 0,
-              "body": 0,
-              "paragraph-1772528695124-y56i9f": 0
-            },
-            "blockCustomSizes": {
-              "display": 106
-            },
-            "blockCustomLeadings": {
-              "display": 90
-            },
-            "blockTextColors": {
-              "body": "#0b3536"
+              "cover-title": 0,
+              "cover-app": 0,
+              "cover-intro": 0,
+              "cover-step-1": 0,
+              "cover-step-2": 0,
+              "cover-step-3": 0,
+              "cover-caption": 0
             },
             "blockModulePositions": {
-              "display": {
-                "col": 0,
-                "row": 17
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
               },
-              "headline": {
-                "col": 0,
-                "row": 0
+              "cover-app": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 7
               },
-              "paragraph-1772610247079-0uugg8": {
-                "col": 2,
-                "row": 0
+              "cover-intro": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
               },
-              "paragraph-1772610667455-372iaj": {
-                "col": 1,
-                "row": 0
+              "cover-step-1": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
               },
-              "paragraph-1772610667455-aooo5z": {
-                "col": 3,
-                "row": 0
+              "cover-step-2": {
+                "column": 1,
+                "row": 2,
+                "baselineOffset": 0
               },
-              "body": {
-                "col": 3,
-                "row": 51
+              "cover-step-3": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
               },
-              "paragraph-1772528695124-y56i9f": {
-                "col": 0,
-                "row": 51
+              "cover-caption": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 14
               }
             },
+            "blockCustomSizes": {},
+            "blockCustomLeadings": {},
+            "blockTextColors": {},
             "layerOrder": [
-              "image-1772622609257-u7uqot",
-              "image-1772784142956-s1tyrm",
-              "body",
-              "paragraph-1772528695124-y56i9f",
-              "display",
-              "paragraph-1772610667455-aooo5z",
-              "paragraph-1772610247079-0uugg8",
-              "paragraph-1772610667455-372iaj",
-              "headline"
+              "cover-title",
+              "cover-app",
+              "cover-intro",
+              "cover-step-1",
+              "cover-step-2",
+              "cover-step-3",
+              "cover-caption"
             ],
-            "imageOrder": [
-              "image-1772622609257-u7uqot",
-              "image-1772784142956-s1tyrm"
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-quick-start-system",
+          "name": "Build the Page System",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 4,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "repetitive",
+            "rhythmRowsEnabled": true,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": true,
+            "rhythmColsDirection": "ttb",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": true,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "system-title",
+              "system-subhead",
+              "system-a",
+              "system-b",
+              "system-c",
+              "system-d",
+              "system-e",
+              "system-f",
+              "system-caption"
             ],
-            "imageModulePositions": {
-              "image-1772622609257-u7uqot": {
-                "col": 3,
-                "row": 34
+            "textContent": {
+              "system-title": "1. Build the Page System",
+              "system-subhead": "Set structure first. The content field and the baseline grid define the whole composition.",
+              "system-a": "Canvas Ratio sets format, orientation, and rotation. Start here.",
+              "system-b": "Baseline Grid sets the vertical rhythm. Keep it stable.",
+              "system-c": "Margins define the printable field. Use a method or custom values.",
+              "system-d": "Grid & Rhythm sets columns, rows, gutter, and module cadence.",
+              "system-e": "Typo defines hierarchy and base font. Untouched blocks inherit it.",
+              "system-f": "Color Scheme sets the page background and new placeholder colors.",
+              "system-caption": "Recommended order: Ratio -> Baseline -> Margins -> Grid -> Typo -> Color."
+            },
+            "blockTextEdited": {
+              "system-title": true,
+              "system-subhead": true,
+              "system-a": true,
+              "system-b": true,
+              "system-c": true,
+              "system-d": true,
+              "system-e": true,
+              "system-f": true,
+              "system-caption": true
+            },
+            "styleAssignments": {
+              "system-title": "headline",
+              "system-subhead": "subhead",
+              "system-a": "body",
+              "system-b": "body",
+              "system-c": "body",
+              "system-d": "body",
+              "system-e": "body",
+              "system-f": "body",
+              "system-caption": "caption"
+            },
+            "blockFontFamilies": {},
+            "blockFontWeights": {
+              "system-title": 700,
+              "system-subhead": 400,
+              "system-a": 400,
+              "system-b": 400,
+              "system-c": 400,
+              "system-d": 400,
+              "system-e": 400,
+              "system-f": 400,
+              "system-caption": 400
+            },
+            "blockOpticalKerning": {
+              "system-title": true,
+              "system-subhead": true,
+              "system-a": true,
+              "system-b": true,
+              "system-c": true,
+              "system-d": true,
+              "system-e": true,
+              "system-f": true,
+              "system-caption": true
+            },
+            "blockTrackingScales": {
+              "system-title": 0,
+              "system-subhead": 0,
+              "system-a": 0,
+              "system-b": 0,
+              "system-c": 0,
+              "system-d": 0,
+              "system-e": 0,
+              "system-f": 0,
+              "system-caption": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "system-title": 3,
+              "system-subhead": 2,
+              "system-a": 1,
+              "system-b": 1,
+              "system-c": 1,
+              "system-d": 1,
+              "system-e": 1,
+              "system-f": 1,
+              "system-caption": 3
+            },
+            "blockRowSpans": {
+              "system-title": 1,
+              "system-subhead": 1,
+              "system-a": 1,
+              "system-b": 1,
+              "system-c": 1,
+              "system-d": 1,
+              "system-e": 1,
+              "system-f": 1,
+              "system-caption": 1
+            },
+            "blockTextAlignments": {
+              "system-title": "left",
+              "system-subhead": "left",
+              "system-a": "left",
+              "system-b": "left",
+              "system-c": "left",
+              "system-d": "left",
+              "system-e": "left",
+              "system-f": "left",
+              "system-caption": "left"
+            },
+            "blockTextReflow": {
+              "system-title": false,
+              "system-subhead": false,
+              "system-a": false,
+              "system-b": false,
+              "system-c": false,
+              "system-d": false,
+              "system-e": false,
+              "system-f": false,
+              "system-caption": false
+            },
+            "blockSyllableDivision": {
+              "system-title": false,
+              "system-subhead": false,
+              "system-a": true,
+              "system-b": true,
+              "system-c": true,
+              "system-d": true,
+              "system-e": true,
+              "system-f": true,
+              "system-caption": true
+            },
+            "blockItalic": {
+              "system-title": false,
+              "system-subhead": false,
+              "system-a": false,
+              "system-b": false,
+              "system-c": false,
+              "system-d": false,
+              "system-e": false,
+              "system-f": false,
+              "system-caption": false
+            },
+            "blockRotations": {
+              "system-title": 0,
+              "system-subhead": 0,
+              "system-a": 0,
+              "system-b": 0,
+              "system-c": 0,
+              "system-d": 0,
+              "system-e": 0,
+              "system-f": 0,
+              "system-caption": 0
+            },
+            "blockModulePositions": {
+              "system-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
               },
-              "image-1772784142956-s1tyrm": {
-                "col": 2,
-                "row": 17
+              "system-subhead": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 5
+              },
+              "system-a": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "system-b": {
+                "column": 1,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "system-c": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "system-d": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "system-e": {
+                "column": 1,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "system-f": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "system-caption": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 14
               }
             },
-            "imageColumnSpans": {
-              "image-1772622609257-u7uqot": 1,
-              "image-1772784142956-s1tyrm": 2
+            "blockCustomSizes": {},
+            "blockCustomLeadings": {},
+            "blockTextColors": {},
+            "layerOrder": [
+              "system-title",
+              "system-subhead",
+              "system-a",
+              "system-b",
+              "system-c",
+              "system-d",
+              "system-e",
+              "system-f",
+              "system-caption"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-quick-start-workflow",
+          "name": "Place, Refine, Export",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 4,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "repetitive",
+            "rhythmRowsEnabled": true,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": true,
+            "rhythmColsDirection": "ttb",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
             },
-            "imageRowSpans": {
-              "image-1772622609257-u7uqot": 1,
-              "image-1772784142956-s1tyrm": 1
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": true,
+              "typo": true,
+              "color": true,
+              "summary": true
             },
-            "imageColors": {
-              "image-1772622609257-u7uqot": "scheme:2",
-              "image-1772784142956-s1tyrm": "scheme:1"
-            }
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "workflow-title",
+              "workflow-subhead",
+              "workflow-a",
+              "workflow-b",
+              "workflow-c",
+              "workflow-d",
+              "workflow-e",
+              "workflow-f",
+              "workflow-caption"
+            ],
+            "textContent": {
+              "workflow-title": "2. Place, Refine, Export",
+              "workflow-subhead": "The preview is canvas-rendered. The same calculated layout drives export, so screen and output stay aligned.",
+              "workflow-a": "Double-click an empty module to add text. Shift + double-click adds an image placeholder.",
+              "workflow-b": "Hover a block to edit it. Drag to reposition it. Alt/Option + drag duplicates it.",
+              "workflow-c": "Use the editor rail for geometry, type, color, reflow, rotation, and delete.",
+              "workflow-d": "Header toggles let you inspect baselines, margins, modules, typography, and placeholders.",
+              "workflow-e": "Save Project JSON stores pages, settings, layers, and logical block positions.",
+              "workflow-f": "Export creates vector PDF, SVG, or IDML from the same layout calculation.",
+              "workflow-caption": "Shortcuts: Cmd/Ctrl+O load, Cmd/Ctrl+S save, Cmd/Ctrl+Z undo."
+            },
+            "blockTextEdited": {
+              "workflow-title": true,
+              "workflow-subhead": true,
+              "workflow-a": true,
+              "workflow-b": true,
+              "workflow-c": true,
+              "workflow-d": true,
+              "workflow-e": true,
+              "workflow-f": true,
+              "workflow-caption": true
+            },
+            "styleAssignments": {
+              "workflow-title": "headline",
+              "workflow-subhead": "subhead",
+              "workflow-a": "body",
+              "workflow-b": "body",
+              "workflow-c": "body",
+              "workflow-d": "body",
+              "workflow-e": "body",
+              "workflow-f": "body",
+              "workflow-caption": "caption"
+            },
+            "blockFontFamilies": {},
+            "blockFontWeights": {
+              "workflow-title": 700,
+              "workflow-subhead": 400,
+              "workflow-a": 400,
+              "workflow-b": 400,
+              "workflow-c": 400,
+              "workflow-d": 400,
+              "workflow-e": 400,
+              "workflow-f": 400,
+              "workflow-caption": 400
+            },
+            "blockOpticalKerning": {
+              "workflow-title": true,
+              "workflow-subhead": true,
+              "workflow-a": true,
+              "workflow-b": true,
+              "workflow-c": true,
+              "workflow-d": true,
+              "workflow-e": true,
+              "workflow-f": true,
+              "workflow-caption": true
+            },
+            "blockTrackingScales": {
+              "workflow-title": 0,
+              "workflow-subhead": 0,
+              "workflow-a": 0,
+              "workflow-b": 0,
+              "workflow-c": 0,
+              "workflow-d": 0,
+              "workflow-e": 0,
+              "workflow-f": 0,
+              "workflow-caption": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "workflow-title": 3,
+              "workflow-subhead": 3,
+              "workflow-a": 1,
+              "workflow-b": 1,
+              "workflow-c": 1,
+              "workflow-d": 1,
+              "workflow-e": 1,
+              "workflow-f": 1,
+              "workflow-caption": 3
+            },
+            "blockRowSpans": {
+              "workflow-title": 1,
+              "workflow-subhead": 1,
+              "workflow-a": 1,
+              "workflow-b": 1,
+              "workflow-c": 1,
+              "workflow-d": 1,
+              "workflow-e": 1,
+              "workflow-f": 1,
+              "workflow-caption": 1
+            },
+            "blockTextAlignments": {
+              "workflow-title": "left",
+              "workflow-subhead": "left",
+              "workflow-a": "left",
+              "workflow-b": "left",
+              "workflow-c": "left",
+              "workflow-d": "left",
+              "workflow-e": "left",
+              "workflow-f": "left",
+              "workflow-caption": "left"
+            },
+            "blockTextReflow": {
+              "workflow-title": false,
+              "workflow-subhead": false,
+              "workflow-a": false,
+              "workflow-b": false,
+              "workflow-c": false,
+              "workflow-d": false,
+              "workflow-e": false,
+              "workflow-f": false,
+              "workflow-caption": false
+            },
+            "blockSyllableDivision": {
+              "workflow-title": false,
+              "workflow-subhead": false,
+              "workflow-a": true,
+              "workflow-b": true,
+              "workflow-c": true,
+              "workflow-d": true,
+              "workflow-e": true,
+              "workflow-f": true,
+              "workflow-caption": true
+            },
+            "blockItalic": {
+              "workflow-title": false,
+              "workflow-subhead": false,
+              "workflow-a": false,
+              "workflow-b": false,
+              "workflow-c": false,
+              "workflow-d": false,
+              "workflow-e": false,
+              "workflow-f": false,
+              "workflow-caption": false
+            },
+            "blockRotations": {
+              "workflow-title": 0,
+              "workflow-subhead": 0,
+              "workflow-a": 0,
+              "workflow-b": 0,
+              "workflow-c": 0,
+              "workflow-d": 0,
+              "workflow-e": 0,
+              "workflow-f": 0,
+              "workflow-caption": 0
+            },
+            "blockModulePositions": {
+              "workflow-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "workflow-subhead": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 5
+              },
+              "workflow-a": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "workflow-b": {
+                "column": 1,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "workflow-c": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "workflow-d": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "workflow-e": {
+                "column": 1,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "workflow-f": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "workflow-caption": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 14
+              }
+            },
+            "blockCustomSizes": {},
+            "blockCustomLeadings": {},
+            "blockTextColors": {},
+            "layerOrder": [
+              "workflow-title",
+              "workflow-subhead",
+              "workflow-a",
+              "workflow-b",
+              "workflow-c",
+              "workflow-d",
+              "workflow-e",
+              "workflow-f",
+              "workflow-caption"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-inter",
+          "name": "Font Inter",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Inter",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Inter",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Inter",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Inter",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Inter",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Inter",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Inter"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-work-sans",
+          "name": "Font Work Sans",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Work Sans",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Work Sans",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Work Sans",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Work Sans",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Work Sans",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Work Sans",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Work Sans"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-jost",
+          "name": "Font Jost",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Jost",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {},
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-ibm-plex-sans",
+          "name": "Font IBM Plex Sans",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "IBM Plex ",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "IBM Plex Sans",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "IBM Plex Sans",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "IBM Plex Sans",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "IBM Plex Sans",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "IBM Plex Sans",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "IBM Plex Sans"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-libre-franklin",
+          "name": "Font Libre Franklin",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Franklin",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Libre Franklin",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Libre Franklin",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Libre Franklin",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Libre Franklin",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Libre Franklin",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Libre Franklin"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-eb-garamond",
+          "name": "Font EB Garamond",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Garamond",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "EB Garamond",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "EB Garamond",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "EB Garamond",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "EB Garamond",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "EB Garamond",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "EB Garamond"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-libre-baskerville",
+          "name": "Font Libre Baskerville",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Baskerville",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Libre Baskerville",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Libre Baskerville",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Libre Baskerville",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Libre Baskerville",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Libre Baskerville",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Libre Baskerville"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-bodoni-moda",
+          "name": "Font Bodoni Moda",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Bodoni ",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Bodoni Moda",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Bodoni Moda",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Bodoni Moda",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Bodoni Moda",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Bodoni Moda",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Bodoni Moda"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-besley",
+          "name": "Font Besley",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Besley",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Besley",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Besley",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Besley",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Besley",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Besley",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Besley"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        },
+        {
+          "id": "page-font-playfair-display",
+          "name": "Font Playfair Display",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 6,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "fibonacci",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "swiss",
+            "baseFont": "Jost",
+            "imageColorScheme": "mono",
+            "canvasBackground": null,
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": false,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": false,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "textContent": {
+              "cover-title": "Playfair ",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Swiss Design",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "The modular grid allows designers to organize content with clarity and purpose. All typography aligns to the baseline grid, ensuring harmony across the page. Modular proportions guide contrast and emphasis while preserving coherence across complex layouts. Structure becomes a tool for expression rather than a constraint, enabling flexible yet unified systems.",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Based on Müller-Brockmann's Book Grid Systems in Graphic Design (1981). Copyleft & -right 2026 by lp45.net",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Modular Grid Systems",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "A grid creates coherent visual structure and establishes a consistent spatial rhythm",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "Headline",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "Sub-Headline",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "Body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "Caption",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "Display",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "FX"
+            },
+            "blockTextEdited": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "styleAssignments": {
+              "cover-title": "fx",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "body",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "caption",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "headline",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "subhead",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "body",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "body",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "body",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "body",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "body",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "body"
+            },
+            "blockFontFamilies": {
+              "cover-title": "Playfair Display",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "Playfair Display",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "Playfair Display",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "Playfair Display",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "Playfair Display",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "Playfair Display"
+            },
+            "blockFontWeights": {
+              "cover-title": 700,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 700,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 400,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 400,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 700,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 400,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 400,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 400,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 400,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 400,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 400,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 400
+            },
+            "blockOpticalKerning": {
+              "cover-title": true,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": true,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockTrackingScales": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "cover-title": 3,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 3,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 3,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 2,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockRowSpans": {
+              "cover-title": 1,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 1,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 1,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 1,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 1,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 1,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 1,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 1,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 1,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 1,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 1,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 1
+            },
+            "blockTextAlignments": {
+              "cover-title": "left",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": "left",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": "left",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": "left",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": "left",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": "left",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": "right",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": "right",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": "right",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": "right",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": "right",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": "right"
+            },
+            "blockTextReflow": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": false,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockSyllableDivision": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": true,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": true,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": true,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": true,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": true,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": true,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": true,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": true,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": true
+            },
+            "blockItalic": {
+              "cover-title": false,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": false,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": false,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": true,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": false,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": false,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": false,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": false,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": false,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": false,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": false,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": false
+            },
+            "blockRotations": {
+              "cover-title": 0,
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": 0,
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": 0,
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": 0,
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": 0,
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": 0,
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": 0,
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": 0,
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": 0,
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": 0,
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": 0,
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": 0
+            },
+            "blockModulePositions": {
+              "cover-title": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75": {
+                "column": 0,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614": {
+                "column": 0,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802": {
+                "column": 0,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f": {
+                "column": 2,
+                "row": 3,
+                "baselineOffset": 0
+              },
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0": {
+                "column": 2,
+                "row": 4,
+                "baselineOffset": 0
+              },
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d": {
+                "column": 2,
+                "row": 5,
+                "baselineOffset": 8
+              },
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d": {
+                "column": 2,
+                "row": 1,
+                "baselineOffset": 0
+              },
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c": {
+                "column": 2,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "cover-title": 96
+            },
+            "blockCustomLeadings": {
+              "cover-title": 96
+            },
+            "blockTextColors": {},
+            "layerOrder": [
+              "cover-title",
+              "paragraph-918216ea-f847-4be2-a47e-62332022df75",
+              "paragraph-262daa7c-7543-42bf-83eb-6d3ae0838614",
+              "paragraph-870d1f8d-d33a-4409-9ad2-de574538c802",
+              "paragraph-b2d89e9e-d1a1-4980-bdc3-688ba83b7817",
+              "paragraph-37eb7649-41f0-4764-9160-71702689cb0f",
+              "paragraph-a9881b97-6c64-4733-a176-8ea80ded2c20",
+              "paragraph-d639460d-e61b-4a9e-94cd-b4ae35aa382d",
+              "paragraph-2efb81a2-4fcf-4e85-91dd-45fe40a9c31f",
+              "paragraph-4ef9a1d7-3512-4212-92c4-87e14e41b2e0",
+              "paragraph-10d99e8d-dd81-40f5-98e0-17f0839ed35d",
+              "paragraph-24ad73b3-ffcf-411d-b775-1bb526cf376c"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
           }
         }
       ]
     },
   },
   {
-    path: "./data/Swiss Style Poster A0 001.json",
+    path: "./data/020 Poster A0 001.json",
     source: {
       "schemaVersion": 2,
       "exportedAt": "2026-04-07T07:09:34.928Z",
@@ -1433,6 +4633,253 @@ export const GENERATED_PRESET_MANIFEST = [
               "paragraph-1772610247079-0uugg8",
               "paragraph-1772610667455-372iaj",
               "headline"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        }
+      ]
+    },
+  },
+  {
+    path: "./data/030 Poster A0 Version 001.json",
+    source: {
+      "schemaVersion": 2,
+      "exportedAt": "2026-04-07T15:11:41.656Z",
+      "title": "Poster A0 Version 001",
+      "description": "",
+      "author": "netzwerkerei@gmail.com",
+      "createdAt": "2026-03-16T14:40:58.992Z",
+      "activePageId": "page-b28b5ad2-6c39-4e4e-9a95-a79cfdefe8ce",
+      "pages": [
+        {
+          "id": "page-b28b5ad2-6c39-4e4e-9a95-a79cfdefe8ce",
+          "name": "Poster AO",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 3,
+            "gridRows": 4,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "repetitive",
+            "rhythmRowsEnabled": true,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": true,
+            "rhythmColsDirection": "ttb",
+            "typographyScale": "swiss",
+            "baseFont": "Inter",
+            "imageColorScheme": "mono",
+            "canvasBackground": "#404040",
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 4,
+              "right": 4,
+              "bottom": 2
+            },
+            "showBaselines": false,
+            "showModules": false,
+            "showMargins": false,
+            "showImagePlaceholders": true,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": false,
+              "gutter": false,
+              "typo": true,
+              "color": false,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "display",
+              "paragraph-1773671347303-6ze5tl",
+              "paragraph-1773671562475-vr75kg",
+              "paragraph-1773671586677-x9575v",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
+              "paragraph-1773671949302-15nbra"
+            ],
+            "textContent": {
+              "display": "m",
+              "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
+              "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
+              "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
+              "paragraph-1773671949302-15nbra": "Swiss Grid Generator, 2026"
+            },
+            "blockTextEdited": {
+              "display": true,
+              "paragraph-1773671347303-6ze5tl": true,
+              "paragraph-1773671562475-vr75kg": true,
+              "paragraph-1773671586677-x9575v": true,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-1773671949302-15nbra": true
+            },
+            "styleAssignments": {
+              "display": "fx",
+              "paragraph-1773671347303-6ze5tl": "fx",
+              "paragraph-1773671562475-vr75kg": "body",
+              "paragraph-1773671586677-x9575v": "body",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "body",
+              "paragraph-1773671949302-15nbra": "caption"
+            },
+            "blockFontFamilies": {
+              "display": "Playfair Display"
+            },
+            "blockFontWeights": {
+              "display": 700,
+              "paragraph-1773671347303-6ze5tl": 400,
+              "paragraph-1773671562475-vr75kg": 400,
+              "paragraph-1773671586677-x9575v": 400,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 400,
+              "paragraph-1773671949302-15nbra": 400
+            },
+            "blockOpticalKerning": {
+              "display": true,
+              "paragraph-1773671347303-6ze5tl": true,
+              "paragraph-1773671562475-vr75kg": true,
+              "paragraph-1773671586677-x9575v": true,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-1773671949302-15nbra": true
+            },
+            "blockTrackingScales": {
+              "display": 0,
+              "paragraph-1773671347303-6ze5tl": 0,
+              "paragraph-1773671562475-vr75kg": 0,
+              "paragraph-1773671586677-x9575v": 0,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
+              "paragraph-1773671949302-15nbra": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {},
+            "blockColumnSpans": {
+              "display": 1,
+              "paragraph-1773671347303-6ze5tl": 1,
+              "paragraph-1773671562475-vr75kg": 1,
+              "paragraph-1773671586677-x9575v": 1,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
+              "paragraph-1773671949302-15nbra": 1
+            },
+            "blockRowSpans": {
+              "display": 1,
+              "paragraph-1773671347303-6ze5tl": 1,
+              "paragraph-1773671562475-vr75kg": 1,
+              "paragraph-1773671586677-x9575v": 1,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
+              "paragraph-1773671949302-15nbra": 1
+            },
+            "blockTextAlignments": {
+              "display": "left",
+              "paragraph-1773671347303-6ze5tl": "left",
+              "paragraph-1773671562475-vr75kg": "left",
+              "paragraph-1773671586677-x9575v": "left",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "left",
+              "paragraph-1773671949302-15nbra": "left"
+            },
+            "blockTextReflow": {
+              "display": false,
+              "paragraph-1773671347303-6ze5tl": false,
+              "paragraph-1773671562475-vr75kg": false,
+              "paragraph-1773671586677-x9575v": false,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
+              "paragraph-1773671949302-15nbra": false
+            },
+            "blockSyllableDivision": {
+              "display": false,
+              "paragraph-1773671347303-6ze5tl": false,
+              "paragraph-1773671562475-vr75kg": true,
+              "paragraph-1773671586677-x9575v": true,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-1773671949302-15nbra": true
+            },
+            "blockItalic": {
+              "display": false,
+              "paragraph-1773671347303-6ze5tl": false,
+              "paragraph-1773671562475-vr75kg": false,
+              "paragraph-1773671586677-x9575v": false,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
+              "paragraph-1773671949302-15nbra": false
+            },
+            "blockRotations": {
+              "display": 0,
+              "paragraph-1773671347303-6ze5tl": 0,
+              "paragraph-1773671562475-vr75kg": 0,
+              "paragraph-1773671586677-x9575v": 0,
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
+              "paragraph-1773671949302-15nbra": 0
+            },
+            "blockModulePositions": {
+              "display": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 4
+              },
+              "paragraph-1773671347303-6ze5tl": {
+                "column": 0,
+                "row": 0,
+                "baselineOffset": 0
+              },
+              "paragraph-1773671562475-vr75kg": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-1773671586677-x9575v": {
+                "column": 2,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": {
+                "column": 1,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-1773671949302-15nbra": {
+                "column": 0,
+                "row": 3,
+                "baselineOffset": 14
+              }
+            },
+            "blockCustomSizes": {
+              "display": 400,
+              "paragraph-1773671347303-6ze5tl": 96
+            },
+            "blockCustomLeadings": {
+              "display": 106,
+              "paragraph-1773671347303-6ze5tl": 84
+            },
+            "blockTextColors": {
+              "display": "#ffffff",
+              "paragraph-1773671347303-6ze5tl": "#c0c0c0",
+              "paragraph-1773671562475-vr75kg": "#ffffff",
+              "paragraph-1773671586677-x9575v": "#ffffff",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "#ffffff",
+              "paragraph-1773671949302-15nbra": "#ffffff"
+            },
+            "layerOrder": [
+              "paragraph-1773671949302-15nbra",
+              "display",
+              "paragraph-1773671586677-x9575v",
+              "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
+              "paragraph-1773671562475-vr75kg",
+              "paragraph-1773671347303-6ze5tl"
             ],
             "imageOrder": [],
             "imageModulePositions": {},

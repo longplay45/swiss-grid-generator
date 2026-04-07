@@ -34,6 +34,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "setBlockTextColors"
   | "setBlockModulePositions"
   | "onSelectLayer"
+  | "promoteLayerToTop"
   | "onRequestNotice"
   | "getNextCustomBlockId"
   | "handleTextCanvasDoubleClick"
@@ -62,6 +63,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
   setBlockTextColors,
   setBlockModulePositions,
   onSelectLayer,
+  promoteLayerToTop,
   onRequestNotice,
   getNextCustomBlockId,
   handleTextCanvasDoubleClick,
@@ -136,6 +138,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         else delete next[newKey]
         return next
       })
+      promoteLayerToTop(newKey)
       onSelectLayer?.(newKey)
       return
     }
@@ -169,6 +172,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
     isTextReflowEnabled,
     onRequestNotice,
     onSelectLayer,
+    promoteLayerToTop,
     recordHistoryBeforeChange,
     setBlockCollections,
     setBlockCustomLeadings,

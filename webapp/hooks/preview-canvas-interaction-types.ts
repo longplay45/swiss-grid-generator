@@ -74,6 +74,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   setBlockTextColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
   setBlockModulePositions: Dispatch<SetStateAction<Partial<Record<Key, ModulePosition>>>>
   onSelectLayer?: (key: Key | null) => void
+  promoteLayerToTop: (key: Key) => void
   onRequestNotice?: (notice: NoticeRequest) => void
   getNextCustomBlockId: () => Key
   getNextImagePlaceholderId: () => Key

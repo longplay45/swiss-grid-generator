@@ -389,6 +389,10 @@ export const GridPreview = memo(function GridPreview({
     isBlockOpticalKerningEnabled,
   })
 
+  const promoteLayerToTop = useCallback((key: BlockId) => {
+    setLayerOrder((current) => [...current.filter((item) => item !== key), key])
+  }, [setLayerOrder])
+
   const {
     editorState,
     setEditorState,
@@ -446,6 +450,7 @@ export const GridPreview = memo(function GridPreview({
       isBlockItalic,
       isBlockOpticalKerningEnabled,
       getBlockRotation,
+      promoteLayerToTop,
       onRequestNotice,
     },
     blockOrder,
@@ -534,6 +539,7 @@ export const GridPreview = memo(function GridPreview({
     setBlockTextColors,
     setBlockModulePositions,
     onSelectLayer,
+    promoteLayerToTop,
     onRequestNotice,
     getNextCustomBlockId,
     getNextImagePlaceholderId,

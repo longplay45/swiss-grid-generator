@@ -93,6 +93,7 @@ type Args = {
   isBlockItalic: (key: string) => boolean
   isBlockOpticalKerningEnabled: (key: string) => boolean
   getBlockRotation: (key: string) => number
+  promoteLayerToTop: (key: string) => void
   onRequestNotice?: (notice: NoticeRequest) => void
 }
 
@@ -146,6 +147,7 @@ export function useBlockEditorActions({
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockRotation,
+  promoteLayerToTop,
   onRequestNotice,
 }: Args) {
   const applyEditorDraftLive = useCallback((draft: EditorState) => {
@@ -294,6 +296,7 @@ export function useBlockEditorActions({
     isSyllableDivisionEnabled,
     isBlockItalic,
     isBlockOpticalKerningEnabled,
+    promoteLayerToTop,
     onRequestNotice,
   })
 
