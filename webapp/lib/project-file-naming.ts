@@ -10,6 +10,10 @@ export function toProjectFilenameStem(value: string): string {
     .trim()
 }
 
+export function toProjectFilename(projectTitle: string, fallbackStem: string, extension: string): string {
+  return `${toProjectFilenameStem(projectTitle) || fallbackStem}${extension}`
+}
+
 export function toProjectJsonFilename(projectTitle: string, fallbackStem: string): string {
-  return `${toProjectFilenameStem(projectTitle) || fallbackStem}.json`
+  return toProjectFilename(projectTitle, fallbackStem, ".json")
 }

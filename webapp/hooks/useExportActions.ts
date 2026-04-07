@@ -6,7 +6,7 @@ import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
 import { renderSwissGridIdmlProject } from "@/lib/idml-export"
 import { ensurePdfFontsRegistered } from "@/lib/pdf-font-registry"
 import { type LoadedProject } from "@/lib/document-session"
-import { toProjectJsonFilename } from "@/lib/project-file-naming"
+import { toProjectFilename, toProjectJsonFilename } from "@/lib/project-file-naming"
 import {
   buildResolvedProjectPageExportSources,
   filterProjectByExportRange,
@@ -231,8 +231,9 @@ export function useExportActions(ctx: ExportActionsContext) {
         ? defaultIdmlFilename
         : defaultPdfFilename
     const extension = resolveExportDownloadExtension(format, selectedPages)
-    return base.replace(/\.(pdf|svg|idml|zip)$/i, extension)
-  }, [ctx.defaultSvgFilename, defaultIdmlFilename, defaultPdfFilename])
+    const fallbackStem = base.replace(/\.(pdf|svg|idml|zip)$/i, "")
+    return toProjectFilename(projectMetadata.title, fallbackStem, extension)
+  }, [ctx.defaultSvgFilename, defaultIdmlFilename, defaultPdfFilename, projectMetadata.title])
 
   const updateFilenameForFormat = useCallback((current: string, format: ExportFormat, selectedPages: number) => (
     updateFilenameForExport(current, format, selectedPages, getDefaultExportFilename)
