@@ -77,6 +77,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   onRequestNotice?: (notice: NoticeRequest) => void
   getNextCustomBlockId: () => Key
   getNextImagePlaceholderId: () => Key
+  ensureImagePlaceholdersVisible?: () => void
   handleTextCanvasDoubleClick: (event: ReactMouseEvent<HTMLCanvasElement>) => void
   openImageEditor: (key: Key, options?: OpenImageEditorOptions) => void
   closeImageEditorPanel: () => void

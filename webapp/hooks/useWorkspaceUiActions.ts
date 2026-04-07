@@ -138,6 +138,10 @@ export function useWorkspaceUiActions({
     dispatch({ type: "SET", key: "showLayers", value })
   }, [dispatch])
 
+  const setShowImagePlaceholders = useCallback((value: boolean) => {
+    dispatch({ type: "SET", key: "showImagePlaceholders", value })
+  }, [dispatch])
+
   const toggleShowBaselines = useCallback(() => {
     dispatch({ type: "TOGGLE", key: "showBaselines" })
   }, [dispatch])
@@ -185,6 +189,7 @@ export function useWorkspaceUiActions({
     setExportBleedMm,
     setExportRegistrationMarks,
     setShowLayers,
+    setShowImagePlaceholders,
     toggleShowBaselines,
     toggleShowMargins,
     toggleShowModules,

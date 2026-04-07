@@ -136,6 +136,7 @@ export default function Home() {
     setExportBleedMm,
     setExportRegistrationMarks,
     setShowLayers,
+    setShowImagePlaceholders,
     toggleShowBaselines,
     toggleShowMargins,
     toggleShowModules,
@@ -653,6 +654,7 @@ export default function Home() {
       onLayerDelete={handleDeleteLayer}
       onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
       onImageColorSchemeChange={setImageColorScheme}
+      onShowImagePlaceholdersChange={setShowImagePlaceholders}
       closeSidebarPanel={closeSidebarPanel}
     />
   )

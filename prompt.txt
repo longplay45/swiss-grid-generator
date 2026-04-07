@@ -1,0 +1,226 @@
+You generate exactly one valid Swiss Grid Generator JSON project file.
+
+Output rules:
+- Output raw JSON only.
+- Do not use Markdown.
+- Do not explain anything.
+- Do not add comments.
+- Do not add trailing commas.
+- Do not add any keys that are not shown in TEMPLATE.
+- Every quoted string must begin and end on the same physical line.
+- If a line break is needed inside text content, use \n, never a real line break inside the string.
+- For maximum reliability, use ASCII-only text content.
+
+Task:
+Create one professional Swiss/editorial starter layout by filling only the allowed placeholder values in TEMPLATE.
+
+Allowed fields to change:
+- exportedAt
+- title
+- description
+- author
+- createdAt
+- textContent.block_1
+- textContent.block_2
+- textContent.block_3
+- textContent.block_4
+- textContent.block_5
+
+Do not change anything else.
+
+TEMPLATE:
+{
+  "schemaVersion": 2,
+  "exportedAt": "__EXPORTED_AT__",
+  "title": "__TITLE__",
+  "description": "__DESCRIPTION__",
+  "author": "__AUTHOR__",
+  "createdAt": "__CREATED_AT__",
+  "activePageId": "page_0",
+  "pages": [
+    {
+      "id": "page_0",
+      "name": "Page 1",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 3,
+        "gridCols": 3,
+        "gridRows": 4,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": true,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": true,
+        "rhythmColsDirection": "ttb",
+        "typographyScale": "swiss",
+        "baseFont": "Jost",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 4,
+          "right": 4,
+          "bottom": 2
+        },
+        "showBaselines": false,
+        "showModules": false,
+        "showMargins": false,
+        "showImagePlaceholders": false,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPaperSize": "A4",
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "displayUnit": "pt",
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "block_1",
+          "block_2",
+          "block_3",
+          "block_4",
+          "block_5"
+        ],
+        "textContent": {
+          "block_1": "__BLOCK_1__",
+          "block_2": "__BLOCK_2__",
+          "block_3": "__BLOCK_3__",
+          "block_4": "__BLOCK_4__",
+          "block_5": "__BLOCK_5__"
+        },
+        "blockTextEdited": {
+          "block_1": true,
+          "block_2": true,
+          "block_3": true,
+          "block_4": true,
+          "block_5": true
+        },
+        "styleAssignments": {
+          "block_1": "headline",
+          "block_2": "subhead",
+          "block_3": "body",
+          "block_4": "body",
+          "block_5": "caption"
+        },
+        "blockOpticalKerning": {
+          "block_1": true,
+          "block_2": true,
+          "block_3": true,
+          "block_4": true,
+          "block_5": true
+        },
+        "blockTrackingScales": {
+          "block_1": 0,
+          "block_2": 0,
+          "block_3": 0,
+          "block_4": 0,
+          "block_5": 0
+        },
+        "blockColumnSpans": {
+          "block_1": 3,
+          "block_2": 2,
+          "block_3": 1,
+          "block_4": 2,
+          "block_5": 1
+        },
+        "blockRowSpans": {
+          "block_1": 1,
+          "block_2": 1,
+          "block_3": 1,
+          "block_4": 1,
+          "block_5": 1
+        },
+        "blockTextAlignments": {
+          "block_1": "left",
+          "block_2": "left",
+          "block_3": "left",
+          "block_4": "left",
+          "block_5": "left"
+        },
+        "blockTextReflow": {
+          "block_1": false,
+          "block_2": false,
+          "block_3": false,
+          "block_4": false,
+          "block_5": false
+        },
+        "blockSyllableDivision": {
+          "block_1": true,
+          "block_2": true,
+          "block_3": true,
+          "block_4": true,
+          "block_5": true
+        },
+        "blockItalic": {
+          "block_1": false,
+          "block_2": false,
+          "block_3": false,
+          "block_4": false,
+          "block_5": false
+        },
+        "blockRotations": {
+          "block_1": 0,
+          "block_2": 0,
+          "block_3": 0,
+          "block_4": 0,
+          "block_5": 0
+        },
+        "blockModulePositions": {
+          "block_1": { "column": 0, "row": 0, "baselineOffset": 0 },
+          "block_2": { "column": 0, "row": 1, "baselineOffset": 0 },
+          "block_3": { "column": 2, "row": 1, "baselineOffset": 0 },
+          "block_4": { "column": 0, "row": 2, "baselineOffset": 0 },
+          "block_5": { "column": 2, "row": 3, "baselineOffset": 0 }
+        },
+        "layerOrder": [
+          "block_1",
+          "block_2",
+          "block_3",
+          "block_4",
+          "block_5"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageColors": {}
+      }
+    }
+  ]
+}
+
+Content constraints:
+- block_1: strong headline, max 40 characters
+- block_2: restrained subhead, max 100 characters
+- block_3: short body text, max 140 characters
+- block_4: short body text, max 180 characters
+- block_5: caption, max 80 characters
+- no lorem ipsum
+- professional Swiss/editorial tone
+
+Silent validation before output:
+- JSON.parse must succeed
+- activePageId must equal "page_0"
+- layerOrder must be an array, not an object
+- no extra keys
+- no missing keys
+- no real line breaks inside string literals
+- do not change geometry, ids, spans, positions, or uiSettings
+
+Now output the final JSON only.

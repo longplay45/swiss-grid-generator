@@ -116,6 +116,7 @@ interface GridPreviewProps {
   baseFont?: FontFamily
   imageColorScheme?: ImageColorSchemeId
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
+  onShowImagePlaceholdersChange?: (value: boolean) => void
   isDarkMode?: boolean
 }
 
@@ -164,6 +165,7 @@ export const GridPreview = memo(function GridPreview({
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
   onImageColorSchemeChange,
+  onShowImagePlaceholdersChange,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -535,6 +537,7 @@ export const GridPreview = memo(function GridPreview({
     onRequestNotice,
     getNextCustomBlockId,
     getNextImagePlaceholderId,
+    ensureImagePlaceholdersVisible: () => onShowImagePlaceholdersChange?.(true),
     handleTextCanvasDoubleClick,
     openImageEditor,
     closeImageEditorPanel: closeImageEditorState,

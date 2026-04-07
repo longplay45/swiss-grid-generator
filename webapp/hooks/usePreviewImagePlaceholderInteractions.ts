@@ -8,7 +8,6 @@ import type { ModulePosition } from "@/lib/types/preview-layout"
 
 type Args<Key extends string, StyleKey extends string> = Pick<
   PreviewCanvasInteractionArgs<Key, StyleKey>,
-  | "showImagePlaceholders"
   | "findTopmostImageAtPoint"
   | "resolveModulePositionAtPagePoint"
   | "clampImageModulePosition"
@@ -22,6 +21,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "setImageModulePositions"
   | "onSelectLayer"
   | "getNextImagePlaceholderId"
+  | "ensureImagePlaceholdersVisible"
   | "openImageEditor"
 >
 
@@ -31,7 +31,6 @@ type DoubleClickArgs = {
 }
 
 export function usePreviewImagePlaceholderInteractions<Key extends string, StyleKey extends string>({
-  showImagePlaceholders,
   findTopmostImageAtPoint,
   resolveModulePositionAtPagePoint,
   clampImageModulePosition,
@@ -45,6 +44,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   setImageModulePositions,
   onSelectLayer,
   getNextImagePlaceholderId,
+  ensureImagePlaceholdersVisible,
   openImageEditor,
 }: Args<Key, StyleKey>) {
   const handleImageDrop = useCallback((drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => {
@@ -61,6 +61,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
 
     if (copyOnDrop) {
       const newKey = getNextImagePlaceholderId()
+      ensureImagePlaceholdersVisible?.()
       recordHistoryBeforeChange()
       insertImagePlaceholder(newKey, {
         position: resolvedPosition,
@@ -92,8 +93,6 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   ])
 
   const handleImageDoubleClick = useCallback(({ event, pagePoint }: DoubleClickArgs): boolean => {
-    if (!showImagePlaceholders) return false
-
     if (!(event.shiftKey || event.ctrlKey)) {
       return false
     }
@@ -107,6 +106,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
 
     const newKey = getNextImagePlaceholderId()
     const snapped = clampImageModulePosition(rawPosition, 1, 1)
+    ensureImagePlaceholdersVisible?.()
     recordHistoryBeforeChange()
     insertImagePlaceholder(newKey, { position: snapped })
     openImageEditor(newKey, { recordHistory: false })
@@ -116,10 +116,10 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     findTopmostImageAtPoint,
     getNextImagePlaceholderId,
     insertImagePlaceholder,
+    ensureImagePlaceholdersVisible,
     openImageEditor,
     recordHistoryBeforeChange,
     resolveModulePositionAtPagePoint,
-    showImagePlaceholders,
   ])
 
   return {

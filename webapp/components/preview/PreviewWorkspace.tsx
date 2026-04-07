@@ -97,6 +97,7 @@ type Props = {
   onLayerDelete: (target: string, kind: "text" | "image") => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onImageColorSchemeChange: (value: ImageColorSchemeId) => void
+  onShowImagePlaceholdersChange: (value: boolean) => void
   closeSidebarPanel: () => void
 }
 
@@ -194,6 +195,7 @@ export function PreviewWorkspace({
   onLayerDelete,
   onSelectedLayerKeyChange,
   onImageColorSchemeChange,
+  onShowImagePlaceholdersChange,
   closeSidebarPanel,
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
@@ -301,6 +303,7 @@ export function PreviewWorkspace({
               imageColorScheme={imageColorScheme}
               canvasBackground={resolvedCanvasBackground}
               onImageColorSchemeChange={onImageColorSchemeChange}
+              onShowImagePlaceholdersChange={onShowImagePlaceholdersChange}
               initialLayout={loadedPreviewLayout?.layout ?? null}
               initialLayoutToken={loadedPreviewLayout?.token ?? 0}
               rotation={rotation}

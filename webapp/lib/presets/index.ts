@@ -4,33 +4,32 @@ import type {
   LayoutPresetProjectSource,
 } from "@/lib/presets/types"
 import { buildPresetBrowserPage } from "@/lib/presets/browser-page"
-import presetDinAbPortrait4x4Method1 from "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json"
-import presetDinAbPortrait4x4Method1Alt from "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json"
-import presetImagePlaceholder from "./data/4x4 12pt grid with image placeholder.json"
+import { GENERATED_PRESET_MANIFEST } from "./generated-manifest"
 
 type PresetManifestEntry = {
   path: string
   source: unknown
-  label?: string
 }
 
-const PRESET_MANIFEST: readonly PresetManifestEntry[] = [
-  {
-    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json",
-    source: presetDinAbPortrait4x4Method1,
+type PresetMetadataOverride = {
+  label?: string
+  sortOrder?: number
+}
+
+const PRESET_METADATA_OVERRIDES: Readonly<Record<string, PresetMetadataOverride>> = {
+  "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json": {
     label: "4x4 Progressive",
+    sortOrder: 10,
   },
-  {
-    path: "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json",
-    source: presetDinAbPortrait4x4Method1Alt,
+  "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json": {
     label: "3x4 Baseline",
+    sortOrder: 20,
   },
-  {
-    path: "./data/4x4 12pt grid with image placeholder.json",
-    source: presetImagePlaceholder,
+  "./data/4x4 12pt grid with image placeholder.json": {
     label: "Image Placeholder",
+    sortOrder: 30,
   },
-] as const
+}
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null
@@ -84,8 +83,16 @@ function toProjectSource(source: unknown, sourcePath: string): LayoutPresetProje
 
   return payload
 }
+
+function comparePresetEntries(a: PresetManifestEntry, b: PresetManifestEntry): number {
+  const aOrder = PRESET_METADATA_OVERRIDES[a.path]?.sortOrder ?? Number.MAX_SAFE_INTEGER
+  const bOrder = PRESET_METADATA_OVERRIDES[b.path]?.sortOrder ?? Number.MAX_SAFE_INTEGER
+  if (aOrder !== bOrder) return aOrder - bOrder
+  return a.path.localeCompare(b.path)
+}
+
 function parseLayoutPreset(
-  { path: sourcePath, source, label: manifestLabel }: PresetManifestEntry,
+  { path: sourcePath, source }: PresetManifestEntry,
 ): LayoutPreset {
   const projectSource = toProjectSource(source, sourcePath)
   const project = parseLoadedProject<Record<string, unknown>>(projectSource)
@@ -101,7 +108,7 @@ function parseLayoutPreset(
 
   return {
     id: toPresetId(sourcePath),
-    label: manifestLabel ?? title ?? toPresetLabel(sourcePath),
+    label: PRESET_METADATA_OVERRIDES[sourcePath]?.label ?? title ?? toPresetLabel(sourcePath),
     title,
     description,
     author,
@@ -111,6 +118,8 @@ function parseLayoutPreset(
   }
 }
 
-export const LAYOUT_PRESETS: LayoutPreset[] = PRESET_MANIFEST.map((entry) => parseLayoutPreset(entry))
+export const LAYOUT_PRESETS: LayoutPreset[] = [...GENERATED_PRESET_MANIFEST]
+  .sort(comparePresetEntries)
+  .map((entry) => parseLayoutPreset(entry))
 
 export type { LayoutPreset }

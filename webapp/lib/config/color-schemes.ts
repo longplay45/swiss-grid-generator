@@ -6,6 +6,7 @@ export type ImageColorScheme = {
 
 const IMAGE_COLOR_SLOT_COUNT = 4
 const IMAGE_COLOR_REFERENCE_PREFIX = "scheme:"
+const DEFAULT_IMAGE_PLACEHOLDER_SLOT_INDEX = IMAGE_COLOR_SLOT_COUNT - 1
 
 type ImageColorSlotIndex = 0 | 1 | 2 | 3
 
@@ -127,11 +128,11 @@ export function getImageColorScheme(id: ImageColorSchemeId): (typeof IMAGE_COLOR
 }
 
 export function getDefaultImagePlaceholderColor(id: ImageColorSchemeId): string {
-  return getImageColorScheme(id).colors[0]
+  return getImageColorScheme(id).colors[DEFAULT_IMAGE_PLACEHOLDER_SLOT_INDEX]
 }
 
 export function getDefaultTextSchemeColor(id: ImageColorSchemeId): string {
-  return getImageColorScheme(id).colors[IMAGE_COLOR_SLOT_COUNT - 1]
+  return getImageColorScheme(id).colors[DEFAULT_IMAGE_PLACEHOLDER_SLOT_INDEX]
 }
 
 export function getImageSchemeColorByIndex(id: ImageColorSchemeId, index: number): string {
@@ -191,7 +192,7 @@ export function getImageSchemeColorReference(value: unknown, schemeId: ImageColo
   if (isImageSchemeColorToken(value)) {
     return value
   }
-  return typeof value === "string" ? value.toLowerCase() : getImageSchemeColorToken(0)
+  return typeof value === "string" ? value.toLowerCase() : getImageSchemeColorToken(DEFAULT_IMAGE_PLACEHOLDER_SLOT_INDEX)
 }
 
 export function getClosestImageSchemeColorToken(value: unknown, schemeId: ImageColorSchemeId): string {
@@ -200,7 +201,7 @@ export function getClosestImageSchemeColorToken(value: unknown, schemeId: ImageC
     return getImageSchemeColorToken(colorIndex)
   }
   if (typeof value !== "string" || !isImagePlaceholderColor(value)) {
-    return getImageSchemeColorToken(0)
+    return getImageSchemeColorToken(DEFAULT_IMAGE_PLACEHOLDER_SLOT_INDEX)
   }
   const normalized = value.toLowerCase()
   const exactIndex = getImageColorScheme(schemeId)
