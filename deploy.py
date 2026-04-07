@@ -103,6 +103,12 @@ EXCLUDE_GLOBS = [
     "*.pyc",
 ]
 
+# Remote runtime data that must survive deploys.
+PRESERVE_REMOTE_GLOBS = [
+    "feedback/survey.db",
+    "feedback/survey.db-*",
+]
+
 
 def _to_posix(rel_path: str) -> str:
     return rel_path.replace(os.sep, "/").lstrip("/")
@@ -194,6 +200,8 @@ def remote_is_file(attr: paramiko.SFTPAttributes) -> bool:
 def rm_remote_tree_contents(
     sftp: paramiko.SFTPClient,
     remote_dir: str,
+    preserve_globs: Optional[List[str]] = None,
+    preserve_root: Optional[str] = None,
     dry_run: bool = False,
 ) -> None:
     """
@@ -203,6 +211,8 @@ def rm_remote_tree_contents(
     normalized = remote_dir.rstrip("/")
     if normalized in ("", "/"):
         raise ValueError("Refusing to delete contents of '/' (unsafe).")
+    if preserve_root is None:
+        preserve_root = normalized
 
     try:
         entries = list_remote_dir(sftp, normalized)
@@ -212,9 +222,25 @@ def rm_remote_tree_contents(
     for attr in entries:
         name = attr.filename
         full = posixpath.join(normalized, name)
+        rel_from_root = posixpath.relpath(full, preserve_root)
+        if preserve_globs and _is_excluded(rel_from_root, preserve_globs):
+            print(f"{'[dry-run] ' if dry_run else ''}preserve {full}")
+            continue
         if remote_is_dir(attr):
             # Recurse, then rmdir
-            rm_remote_tree_contents(sftp, full, dry_run=dry_run)
+            rm_remote_tree_contents(
+                sftp,
+                full,
+                preserve_globs=preserve_globs,
+                preserve_root=preserve_root,
+                dry_run=dry_run,
+            )
+            try:
+                remaining_entries = list_remote_dir(sftp, full)
+            except IOError:
+                remaining_entries = []
+            if remaining_entries:
+                continue
             if dry_run:
                 print(f"[dry-run] rmdir {full}")
             else:
@@ -354,7 +380,7 @@ def main() -> int:
         print(f"Local path is not a directory: {local_root}", file=sys.stderr)
         return 2
 
-    exclude = EXCLUDE_GLOBS + (args.exclude or [])
+    exclude = EXCLUDE_GLOBS + PRESERVE_REMOTE_GLOBS + (args.exclude or [])
 
     # Determine auth
     password = args.password
@@ -398,7 +424,12 @@ def main() -> int:
 
         # Safety: show what will be wiped
         print(f"{'[dry-run] ' if args.dry_run else ''}Wiping remote contents: {remote_root}")
-        rm_remote_tree_contents(sftp, remote_root, dry_run=args.dry_run)
+        rm_remote_tree_contents(
+            sftp,
+            remote_root,
+            preserve_globs=PRESERVE_REMOTE_GLOBS,
+            dry_run=args.dry_run,
+        )
 
         print(f"{'[dry-run] ' if args.dry_run else ''}Uploading {local_root} -> {remote_root}")
         upload_tree(sftp, local_root, remote_root, exclude, dry_run=args.dry_run)

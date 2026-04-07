@@ -9,6 +9,10 @@ type Args = {
   onShowLayersChange: (next: boolean) => void
 }
 
+function isPanelAllowedWhilePresetsOpen(panel: SidebarPanel): boolean {
+  return panel === null || panel === "feedback" || panel === "imprint"
+}
+
 export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<SidebarPanel>(null)
   const [showPresetsBrowser, setShowPresetsBrowser] = useState(true)
@@ -16,7 +20,9 @@ export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
 
   useEffect(() => {
     if (showPresetsBrowser) {
-      setActiveSidebarPanel(null)
+      if (!isPanelAllowedWhilePresetsOpen(activeSidebarPanel)) {
+        setActiveSidebarPanel(null)
+      }
       onShowLayersChange(false)
       return
     }
@@ -30,7 +36,7 @@ export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
   }, [activeSidebarPanel, onShowLayersChange, showLayers, showPresetsBrowser])
 
   const openSidebarPanel = useCallback((panel: SidebarPanel) => {
-    if (showPresetsBrowser && panel !== null) return
+    if (showPresetsBrowser && !isPanelAllowedWhilePresetsOpen(panel)) return
     setActiveSidebarPanel(panel)
     onShowLayersChange(panel === "layers")
   }, [onShowLayersChange, showPresetsBrowser])

@@ -202,6 +202,11 @@ export function PreviewWorkspace({
   const [layersCollapsed, setLayersCollapsed] = useState(false)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
+  const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
+    !showPresetsBrowser
+    || activeSidebarPanel === "feedback"
+    || activeSidebarPanel === "imprint"
+  )
 
   useEffect(() => {
     if (activeSidebarPanel === "layers" && !showPresetsBrowser) return
@@ -330,7 +335,7 @@ export function PreviewWorkspace({
             />
           )}
         </div>
-        {!showPresetsBrowser && activeSidebarPanel && (
+        {shouldRenderSidebarPanel && (
           <div
             data-help-scroll-root="true"
             className={`min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
