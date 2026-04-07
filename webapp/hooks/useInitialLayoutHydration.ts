@@ -83,7 +83,30 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
     const normalizedKeys = (Array.isArray(initialLayout.blockOrder) ? initialLayout.blockOrder : [])
       .filter((key): key is BlockKey => typeof key === "string" && key.length > 0)
       .filter((key, idx, arr) => arr.indexOf(key) === idx)
-    if (!normalizedKeys.length) return
+    if (!normalizedKeys.length) {
+      setBlockCollections(() => ({
+        blockOrder: [],
+        textContent: {} as Record<BlockKey, string>,
+        blockTextEdited: {} as Record<BlockKey, boolean>,
+        styleAssignments: {} as Record<BlockKey, StyleKey>,
+        blockFontFamilies: {},
+        blockFontWeights: {},
+        blockOpticalKerning: {},
+        blockTrackingScales: {},
+        blockTrackingRuns: {},
+        blockTextFormatRuns: {},
+        blockColumnSpans: {},
+        blockRowSpans: {},
+        blockTextAlignments: {} as Record<BlockKey, TextAlignMode>,
+        blockTextReflow: {},
+        blockSyllableDivision: {},
+        blockItalic: {},
+        blockRotations: {},
+        blockModulePositions: {},
+      }))
+      onAfterApply()
+      return
+    }
     const validStyles = new Set(Object.keys(typographyStyles))
 
     const nextTextContent = normalizedKeys.reduce((acc, key) => {

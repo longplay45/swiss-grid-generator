@@ -6,16 +6,16 @@ export const GENERATED_PRESET_MANIFEST = [
     path: "./data/000 Blank.json",
     source: {
       "schemaVersion": 2,
-      "exportedAt": "2026-04-07T15:15:16.602Z",
+      "exportedAt": "2026-04-07T16:05:56.755Z",
       "title": "Blank Start Page",
       "description": "Blank Start Page to get you started.",
       "author": "Swiss Grid Generator",
       "createdAt": "2026-04-07T12:00:00.000Z",
-      "activePageId": "page-font-playfair-display",
+      "activePageId": "page-blank-start",
       "pages": [
         {
-          "id": "page-font-playfair-display",
-          "name": "Font Playfair Display",
+          "id": "page-blank-start",
+          "name": "Blank Start Page",
           "uiSettings": {
             "canvasRatio": "din_ab",
             "customRatioWidth": 4,
@@ -23,26 +23,26 @@ export const GENERATED_PRESET_MANIFEST = [
             "orientation": "portrait",
             "rotation": 0,
             "marginMethod": 3,
-            "gridCols": 3,
-            "gridRows": 6,
+            "gridCols": 4,
+            "gridRows": 5,
             "baselineMultiple": 1,
             "gutterMultiple": 1,
-            "rhythm": "fibonacci",
+            "rhythm": "repetitive",
             "rhythmRowsEnabled": false,
             "rhythmRowsDirection": "ltr",
             "rhythmColsEnabled": false,
             "rhythmColsDirection": "btt",
             "typographyScale": "swiss",
-            "baseFont": "Jost",
+            "baseFont": "Inter",
             "imageColorScheme": "mono",
             "canvasBackground": null,
             "customBaseline": 12,
             "useCustomMargins": true,
             "customMarginMultipliers": {
               "top": 3,
-              "left": 4,
-              "right": 4,
-              "bottom": 2
+              "left": 2,
+              "right": 2,
+              "bottom": 3
             },
             "showBaselines": false,
             "showModules": false,
@@ -54,7 +54,7 @@ export const GENERATED_PRESET_MANIFEST = [
               "format": true,
               "baseline": true,
               "margins": true,
-              "gutter": false,
+              "gutter": true,
               "typo": true,
               "color": true,
               "summary": true
@@ -69,20 +69,20 @@ export const GENERATED_PRESET_MANIFEST = [
             "textContent": {},
             "blockTextEdited": {},
             "styleAssignments": {},
+            "blockModulePositions": {},
+            "blockColumnSpans": {},
+            "blockRowSpans": {},
+            "blockTextAlignments": {},
+            "blockTextReflow": {},
+            "blockSyllableDivision": {},
             "blockFontFamilies": {},
             "blockFontWeights": {},
             "blockOpticalKerning": {},
             "blockTrackingScales": {},
             "blockTrackingRuns": {},
             "blockTextFormatRuns": {},
-            "blockColumnSpans": {},
-            "blockRowSpans": {},
-            "blockTextAlignments": {},
-            "blockTextReflow": {},
-            "blockSyllableDivision": {},
             "blockItalic": {},
             "blockRotations": {},
-            "blockModulePositions": {},
             "blockCustomSizes": {},
             "blockCustomLeadings": {},
             "blockTextColors": {},
@@ -4952,7 +4952,7 @@ export const GENERATED_PRESET_MANIFEST = [
     path: "./data/030 Poster A0 Version 001.json",
     source: {
       "schemaVersion": 2,
-      "exportedAt": "2026-04-07T15:52:12.506Z",
+      "exportedAt": "2026-04-07T15:58:14.051Z",
       "title": "Poster A0 Version 001",
       "description": "",
       "author": "netzwerkerei@gmail.com",
@@ -4980,8 +4980,8 @@ export const GENERATED_PRESET_MANIFEST = [
             "rhythmColsDirection": "ttb",
             "typographyScale": "swiss",
             "baseFont": "Inter",
-            "imageColorScheme": "mono",
-            "canvasBackground": "#404040",
+            "imageColorScheme": "coral-bay",
+            "canvasBackground": "scheme:0",
             "customBaseline": 12,
             "useCustomMargins": true,
             "customMarginMultipliers": {
@@ -5015,32 +5015,32 @@ export const GENERATED_PRESET_MANIFEST = [
               "display",
               "paragraph-1773671347303-6ze5tl",
               "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394",
               "paragraph-1773671949302-15nbra"
             ],
             "textContent": {
               "display": "m.",
               "paragraph-1773671347303-6ze5tl": "Swiss Grid System",
               "paragraph-1773671562475-vr75kg": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-1773671586677-x9575v": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "Oper von Luigi Cherubini Erstaufführung in italienischer Sprache\nSamstag, 19. Februar 1972 20 Uhr",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": "Oper von Luigi Cherubini Erstaufführung in italienischer SpracheSamstag, 19. Februar 1972 20 Uhr",
               "paragraph-1773671949302-15nbra": "Swiss Grid Generator, 2026"
             },
             "blockTextEdited": {
               "display": true,
               "paragraph-1773671347303-6ze5tl": true,
               "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": true,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": true,
               "paragraph-1773671949302-15nbra": true
             },
             "styleAssignments": {
               "display": "fx",
               "paragraph-1773671347303-6ze5tl": "fx",
               "paragraph-1773671562475-vr75kg": "body",
-              "paragraph-1773671586677-x9575v": "body",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "body",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": "body",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": "body",
               "paragraph-1773671949302-15nbra": "caption"
             },
             "blockFontFamilies": {
@@ -5050,24 +5050,24 @@ export const GENERATED_PRESET_MANIFEST = [
               "display": 700,
               "paragraph-1773671347303-6ze5tl": 400,
               "paragraph-1773671562475-vr75kg": 400,
-              "paragraph-1773671586677-x9575v": 400,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 400,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": 400,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": 400,
               "paragraph-1773671949302-15nbra": 400
             },
             "blockOpticalKerning": {
               "display": true,
               "paragraph-1773671347303-6ze5tl": true,
               "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": true,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": true,
               "paragraph-1773671949302-15nbra": true
             },
             "blockTrackingScales": {
               "display": 0,
               "paragraph-1773671347303-6ze5tl": 0,
               "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": 0,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": 0,
               "paragraph-1773671949302-15nbra": 0
             },
             "blockTrackingRuns": {},
@@ -5076,56 +5076,56 @@ export const GENERATED_PRESET_MANIFEST = [
               "display": 3,
               "paragraph-1773671347303-6ze5tl": 1,
               "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": 1,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": 1,
               "paragraph-1773671949302-15nbra": 1
             },
             "blockRowSpans": {
               "display": 1,
               "paragraph-1773671347303-6ze5tl": 1,
               "paragraph-1773671562475-vr75kg": 1,
-              "paragraph-1773671586677-x9575v": 1,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 1,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": 1,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": 1,
               "paragraph-1773671949302-15nbra": 1
             },
             "blockTextAlignments": {
               "display": "left",
               "paragraph-1773671347303-6ze5tl": "left",
               "paragraph-1773671562475-vr75kg": "left",
-              "paragraph-1773671586677-x9575v": "left",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "left",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": "left",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": "left",
               "paragraph-1773671949302-15nbra": "right"
             },
             "blockTextReflow": {
               "display": false,
               "paragraph-1773671347303-6ze5tl": false,
               "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": false,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": false,
               "paragraph-1773671949302-15nbra": false
             },
             "blockSyllableDivision": {
               "display": false,
               "paragraph-1773671347303-6ze5tl": false,
               "paragraph-1773671562475-vr75kg": true,
-              "paragraph-1773671586677-x9575v": true,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": true,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": true,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": true,
               "paragraph-1773671949302-15nbra": true
             },
             "blockItalic": {
               "display": false,
               "paragraph-1773671347303-6ze5tl": false,
               "paragraph-1773671562475-vr75kg": false,
-              "paragraph-1773671586677-x9575v": false,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": false,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": false,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": false,
               "paragraph-1773671949302-15nbra": false
             },
             "blockRotations": {
               "display": 0,
               "paragraph-1773671347303-6ze5tl": 0,
               "paragraph-1773671562475-vr75kg": 0,
-              "paragraph-1773671586677-x9575v": 0,
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": 0,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": 0,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": 0,
               "paragraph-1773671949302-15nbra": 0
             },
             "blockModulePositions": {
@@ -5144,13 +5144,13 @@ export const GENERATED_PRESET_MANIFEST = [
                 "row": 2,
                 "baselineOffset": 0
               },
-              "paragraph-1773671586677-x9575v": {
-                "column": 2,
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": {
+                "column": 1,
                 "row": 2,
                 "baselineOffset": 0
               },
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": {
-                "column": 1,
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": {
+                "column": 2,
                 "row": 2,
                 "baselineOffset": 0
               },
@@ -5169,20 +5169,20 @@ export const GENERATED_PRESET_MANIFEST = [
               "paragraph-1773671347303-6ze5tl": 84
             },
             "blockTextColors": {
-              "display": "#c0c0c0",
-              "paragraph-1773671347303-6ze5tl": "#c0c0c0",
-              "paragraph-1773671562475-vr75kg": "#c0c0c0",
-              "paragraph-1773671586677-x9575v": "#c0c0c0",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab": "#c0c0c0",
-              "paragraph-1773671949302-15nbra": "#c0c0c0"
+              "display": "#fe9f97",
+              "paragraph-1773671347303-6ze5tl": "#404040",
+              "paragraph-1773671562475-vr75kg": "#404040",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1": "#404040",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394": "#404040",
+              "paragraph-1773671949302-15nbra": "#404040"
             },
             "layerOrder": [
               "display",
-              "paragraph-1773671347303-6ze5tl",
+              "paragraph-71765c39-34ec-4d6f-8c65-b44b54922394",
+              "paragraph-9168b9c1-1fce-47ac-a415-8402baf243b1",
               "paragraph-1773671562475-vr75kg",
-              "paragraph-1773671586677-x9575v",
-              "paragraph-77d427de-8908-4c40-8779-51724b9573ab",
-              "paragraph-1773671949302-15nbra"
+              "paragraph-1773671949302-15nbra",
+              "paragraph-1773671347303-6ze5tl"
             ],
             "imageOrder": [],
             "imageModulePositions": {},
