@@ -192,6 +192,7 @@ export const GutterPanel = memo(function GutterPanel({
           max={GUTTER_MULTIPLE_RANGE.max}
           step={GUTTER_MULTIPLE_RANGE.step}
           onValueCommit={([v]) => onGutterMultipleChange(v)}
+          onThumbDoubleClick={() => onGutterMultipleChange(1)}
         />
       </div>
     </PanelCard>

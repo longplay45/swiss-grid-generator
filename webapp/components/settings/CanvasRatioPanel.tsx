@@ -184,6 +184,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
           max={180}
           step={1}
           onValueCommit={([v]) => onRotationChange(v)}
+          onThumbDoubleClick={() => onRotationChange(0)}
         />
       </div>
     </PanelCard>

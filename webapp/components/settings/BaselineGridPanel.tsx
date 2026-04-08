@@ -51,6 +51,7 @@ export const BaselineGridPanel = memo(function BaselineGridPanel({
             max={availableBaselineOptions.length - 1}
             step={1}
             onValueCommit={([v]) => onCustomBaselineChange(availableBaselineOptions[v])}
+            onThumbDoubleClick={() => onCustomBaselineChange(12)}
           />
         </div>
       )}

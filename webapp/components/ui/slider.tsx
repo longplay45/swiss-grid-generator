@@ -9,10 +9,14 @@ const TRACK_CLASS = "relative h-[2px] w-full grow overflow-hidden bg-primary/15"
 const RANGE_CLASS = "absolute h-full min-w-[1px] min-h-[1px] bg-primary"
 const THUMB_CLASS = "block h-3 w-3 border border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none  disabled:pointer-events-none disabled:opacity-50"
 
+type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
+  onThumbDoubleClick?: React.MouseEventHandler<HTMLSpanElement>
+}
+
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
+  SliderProps
+>(({ className, onThumbDoubleClick, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
@@ -24,20 +28,26 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Track className={TRACK_CLASS}>
       <SliderPrimitive.Range className={RANGE_CLASS} />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className={THUMB_CLASS} />
+    <SliderPrimitive.Thumb className={THUMB_CLASS} onDoubleClick={onThumbDoubleClick} />
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName
 
 type DebouncedSliderProps = Omit<
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>,
+  SliderProps,
   "value" | "onValueChange" | "onValueCommit"
 > & {
   value: number[]
   onValueCommit: (value: number[]) => void
 }
 
-function DebouncedSlider({ value, onValueCommit, className, ...props }: DebouncedSliderProps) {
+function DebouncedSlider({
+  value,
+  onValueCommit,
+  className,
+  onThumbDoubleClick,
+  ...props
+}: DebouncedSliderProps) {
   const [localValue, setLocalValue] = React.useState(value)
   const dragging = React.useRef(false)
   const lastEmittedRef = React.useRef<number[] | null>(null)
@@ -80,7 +90,7 @@ function DebouncedSlider({ value, onValueCommit, className, ...props }: Debounce
       <SliderPrimitive.Track className={TRACK_CLASS}>
         <SliderPrimitive.Range className={RANGE_CLASS} />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className={THUMB_CLASS} />
+      <SliderPrimitive.Thumb className={THUMB_CLASS} onDoubleClick={onThumbDoubleClick} />
     </SliderPrimitive.Root>
   )
 }

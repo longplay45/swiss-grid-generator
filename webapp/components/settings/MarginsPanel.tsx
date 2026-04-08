@@ -79,6 +79,7 @@ export const MarginsPanel = memo(function MarginsPanel({
         max={BASELINE_MULTIPLE_RANGE.max}
         step={BASELINE_MULTIPLE_RANGE.step}
         onValueCommit={([v]) => onBaselineMultipleChange(v)}
+        onThumbDoubleClick={() => onBaselineMultipleChange(1)}
       />
     </div>
   )
