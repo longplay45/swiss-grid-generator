@@ -602,47 +602,6 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           </table>
         </div>
       </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-troubleshooting" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Troubleshooting
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>If blocks disappear, check display toggles and whether text content is empty.</li>
-          <li>If paragraph flow looks clipped, increase row span or disable reflow for that block.</li>
-          <li>If reducing rows or columns is refused, reposition or remove paragraphs that sit beyond the proposed grid size.</li>
-          <li>If custom margins seem odd, verify baseline value and side multipliers first.</li>
-          <li>If hover tooltips or rollover hints are missing, enable the header `i` toggle.</li>
-          <li>If keyboard shortcuts do not trigger, focus outside active text inputs.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-grid-theory" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Grid Theory Notes
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>
-            <span className={tone.emphasis}>Baseline alignment:</span> leading is an integer multiple of baseline.
-          </li>
-          <li>
-            <span className={tone.emphasis}>Margins:</span> use proportional baseline-unit systems to balance page weight.
-          </li>
-          <li>
-            <span className={tone.emphasis}>Modules:</span> define consistent content rhythm and repeatable placement anchors.
-          </li>
-          <li>
-            <span className={tone.emphasis}>Typographic hierarchy:</span> scale presets keep proportion while preserving baseline rhythm.
-          </li>
-        </ul>
-        <p className={`mt-3 text-[11px] leading-relaxed ${tone.caption}`}>
-          Reference: Josef M{"\u00FC"}ller-Brockmann, <em>Grid Systems in Graphic Design</em> (1981)
-        </p>
-      </section>
     </div>
   )
 }

@@ -156,9 +156,6 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
               />
             </div>
           </div>
-          <p className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
-            Orientation is applied after the ratio pair; page area stays aligned to the A4 reference.
-          </p>
         </div>
       ) : null}
       <div className="space-y-2">

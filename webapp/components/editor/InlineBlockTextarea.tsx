@@ -259,11 +259,30 @@ export function InlineBlockTextarea<StyleKey extends string>({
     setSelection((current) => (areSelectionStatesEqual(current, next) ? current : next))
   }, [])
 
+  const syncEditorSelection = useCallback((next: InlineEditorSelectionState) => {
+    setEditorState((prev) => {
+      if (!prev) return prev
+      if (
+        prev.draftSelectionStart === next.start
+        && prev.draftSelectionEnd === next.end
+      ) {
+        return prev
+      }
+      return {
+        ...prev,
+        draftSelectionStart: next.start,
+        draftSelectionEnd: next.end,
+      }
+    })
+  }, [setEditorState])
+
   const syncSelectionFromTextarea = useCallback((focused = selection.focused) => {
     const element = textareaRef.current
     if (!element) return
-    commitSelectionState(readTextareaSelection(element, focused))
-  }, [commitSelectionState, readTextareaSelection, selection.focused, textareaRef])
+    const nextSelection = readTextareaSelection(element, focused)
+    commitSelectionState(nextSelection)
+    syncEditorSelection(nextSelection)
+  }, [commitSelectionState, readTextareaSelection, selection.focused, syncEditorSelection, textareaRef])
 
   useEffect(() => {
     if (!editorState) {
@@ -284,24 +303,6 @@ export function InlineBlockTextarea<StyleKey extends string>({
     })
     return () => window.cancelAnimationFrame(frame)
   }, [commitSelectionState, editorState, readTextareaSelection, textareaRef])
-
-  useEffect(() => {
-    if (!editorState) return
-    setEditorState((prev) => {
-      if (!prev || prev.target !== editorState.target) return prev
-      if (
-        prev.draftSelectionStart === selection.start
-        && prev.draftSelectionEnd === selection.end
-      ) {
-        return prev
-      }
-      return {
-        ...prev,
-        draftSelectionStart: selection.start,
-        draftSelectionEnd: selection.end,
-      }
-    })
-  }, [editorState, selection.end, selection.start, setEditorState])
 
   if (!editorState || !layout) return null
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
@@ -478,7 +479,9 @@ export function InlineBlockTextarea<StyleKey extends string>({
       element.focus({ preventScroll: true })
     }
     element.setSelectionRange(start, end, direction)
-    commitSelectionState(buildSelectionState(start, end, focused, direction))
+    const nextSelection = buildSelectionState(start, end, focused, direction)
+    commitSelectionState(nextSelection)
+    syncEditorSelection(nextSelection)
   }
 
   const rotatePoint = (x: number, y: number, originX: number, originY: number, angleDeg: number) => {

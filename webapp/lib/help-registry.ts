@@ -12,8 +12,6 @@ export const GENERAL_INDEX_ITEMS = [
   { id: "help-history-reflow", label: "History and Reflow" },
   { id: "help-save-load", label: "Save and Load Project JSON" },
   { id: "help-export", label: "Export" },
-  { id: "help-troubleshooting", label: "Troubleshooting" },
-  { id: "help-grid-theory", label: "Grid Theory Notes" },
 ] as const
 
 export const GRID_SETTINGS_INDEX_ITEMS = [
