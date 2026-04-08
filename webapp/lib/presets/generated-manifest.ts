@@ -5196,7 +5196,7 @@ export const GENERATED_PRESET_MANIFEST = [
     },
   },
   {
-    path: "./data/040 Classic Poster Lookalike.json",
+    path: "./data/040 Der Film Lookalike.json",
     source: {
       "schemaVersion": 2,
       "exportedAt": "2026-04-08T08:34:00.427Z",
