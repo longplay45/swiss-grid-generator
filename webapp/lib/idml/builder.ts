@@ -190,10 +190,6 @@ function buildTextFramePreference(
   )
 }
 
-function isRenderableTextFragment(text: string): boolean {
-  return text.replace(/\s+/g, "").length > 0
-}
-
 function buildTextWrapPreference(): string {
   return renderIdmlElement(
     "TextWrapPreference",
@@ -647,92 +643,6 @@ function buildSpreadAndStories(
         textPlan.rotationOriginY,
       )
       const frameMatrix = multiplyMatrices(pageTransformMatrix, blockRotationMatrix)
-
-      if (textPlan.graphemeLines.length > 0) {
-        for (const [lineIndex, graphemes] of textPlan.graphemeLines.entries()) {
-          for (const [graphemeIndex, grapheme] of graphemes.entries()) {
-            if (!isRenderableTextFragment(grapheme.text)) continue
-            localStorySequence += 1
-            const storyId = `sggStory_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`
-            const storyFilePath = `Stories/Story_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}.xml`
-            const frameLeft = grapheme.x
-            const frameTop = grapheme.y - grapheme.ascent
-            const frameWidth = Math.max(grapheme.width, 1)
-            const frameHeight = Math.max(grapheme.ascent + grapheme.descent, grapheme.fontSize)
-            const characterStyleId = characterStyleIdForSegment(grapheme)
-
-            textItems.push(
-              renderIdmlElement(
-                "TextFrame",
-                {
-                  Self: `sggTextFrame_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`,
-                  ParentStory: storyId,
-                  Name: `${page.name} / ${textPlan.key} / ${lineIndex + 1}:${graphemeIndex + 1}`,
-                  ItemLayer: LAYER_TYPOGRAPHY_ID,
-                  ItemTransform: isIdentityMatrix(frameMatrix) ? undefined : formatMatrix(frameMatrix),
-                  Visible: true,
-                  ContentType: "TextType",
-                  FillColor: SWATCH_NONE_ID,
-                  StrokeColor: SWATCH_NONE_ID,
-                  StrokeWeight: 0,
-                },
-                [
-                  renderRectPathGeometry(frameLeft, frameTop, frameWidth, frameHeight),
-                  buildTextFramePreference(frameWidth, "AscentOffset"),
-                  buildTextWrapPreference(),
-                ],
-              ),
-            )
-
-            stories.push({
-              id: storyId,
-              filePath: storyFilePath,
-              xml: [
-                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`,
-                `<idPkg:Story xmlns:idPkg="http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging" DOMVersion="20.0">`,
-                renderIdmlElement(
-                  "Story",
-                  {
-                    Self: storyId,
-                    UserText: true,
-                    IsEndnoteStory: false,
-                    AppliedTOCStyle: "n",
-                    TrackChanges: false,
-                    StoryTitle: `${page.name} / ${textPlan.key} / ${lineIndex + 1}:${graphemeIndex + 1}`,
-                    AppliedNamedGrid: "n",
-                  },
-                  [
-                    renderIdmlElement("StoryPreference", {
-                      OpticalMarginAlignment: false,
-                      OpticalMarginSize: formatIdmlNumber(grapheme.fontSize),
-                      FrameType: "TextFrameType",
-                      StoryOrientation: "Horizontal",
-                      StoryDirection: "LeftToRightDirection",
-                    }),
-                    renderIdmlElement(
-                      "ParagraphStyleRange",
-                      {
-                        AppliedParagraphStyle: paragraphStyleId,
-                        Justification: "LeftAlign",
-                      },
-                      renderIdmlElement(
-                        "CharacterStyleRange",
-                        {
-                          AppliedCharacterStyle: characterStyleId,
-                          OTFContextualAlternate: false,
-                        },
-                        renderIdmlElement("Content", {}, escapeIdmlXml(grapheme.text)),
-                      ),
-                    ),
-                  ],
-                ),
-                `</idPkg:Story>`,
-              ].join(""),
-            })
-          }
-        }
-        continue
-      }
 
       localStorySequence += 1
       const storyId = `sggStory_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`

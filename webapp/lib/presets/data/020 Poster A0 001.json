@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-07T07:09:34.928Z",
+  "exportedAt": "2026-04-08T09:05:16.422Z",
   "title": "Swiss Style Poster A0 001",
   "description": "",
   "author": "netzwerkerei@gmail.com",
@@ -131,7 +131,7 @@
           "paragraph-1772610247079-0uugg8": 1,
           "paragraph-1772610667455-372iaj": 1,
           "paragraph-1772610667455-aooo5z": 1,
-          "body": 1,
+          "body": 2,
           "paragraph-1772528695124-y56i9f": 2
         },
         "blockRowSpans": {
@@ -215,7 +215,7 @@
             "baselineOffset": 0
           },
           "body": {
-            "column": 3,
+            "column": 2,
             "row": 3,
             "baselineOffset": 0
           },
@@ -234,12 +234,12 @@
         "blockTextColors": {},
         "layerOrder": [
           "body",
-          "paragraph-1772528695124-y56i9f",
           "display",
-          "paragraph-1772610667455-aooo5z",
+          "headline",
           "paragraph-1772610247079-0uugg8",
           "paragraph-1772610667455-372iaj",
-          "headline"
+          "paragraph-1772610667455-aooo5z",
+          "paragraph-1772528695124-y56i9f"
         ],
         "imageOrder": [],
         "imageModulePositions": {},

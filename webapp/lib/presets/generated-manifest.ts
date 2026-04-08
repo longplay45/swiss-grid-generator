@@ -4696,7 +4696,7 @@ export const GENERATED_PRESET_MANIFEST = [
     path: "./data/020 Poster A0 001.json",
     source: {
       "schemaVersion": 2,
-      "exportedAt": "2026-04-07T07:09:34.928Z",
+      "exportedAt": "2026-04-08T09:05:16.422Z",
       "title": "Swiss Style Poster A0 001",
       "description": "",
       "author": "netzwerkerei@gmail.com",
@@ -4827,7 +4827,7 @@ export const GENERATED_PRESET_MANIFEST = [
               "paragraph-1772610247079-0uugg8": 1,
               "paragraph-1772610667455-372iaj": 1,
               "paragraph-1772610667455-aooo5z": 1,
-              "body": 1,
+              "body": 2,
               "paragraph-1772528695124-y56i9f": 2
             },
             "blockRowSpans": {
@@ -4911,7 +4911,7 @@ export const GENERATED_PRESET_MANIFEST = [
                 "baselineOffset": 0
               },
               "body": {
-                "column": 3,
+                "column": 2,
                 "row": 3,
                 "baselineOffset": 0
               },
@@ -4930,12 +4930,12 @@ export const GENERATED_PRESET_MANIFEST = [
             "blockTextColors": {},
             "layerOrder": [
               "body",
-              "paragraph-1772528695124-y56i9f",
               "display",
-              "paragraph-1772610667455-aooo5z",
+              "headline",
               "paragraph-1772610247079-0uugg8",
               "paragraph-1772610667455-372iaj",
-              "headline"
+              "paragraph-1772610667455-aooo5z",
+              "paragraph-1772528695124-y56i9f"
             ],
             "imageOrder": [],
             "imageModulePositions": {},
@@ -4949,7 +4949,7 @@ export const GENERATED_PRESET_MANIFEST = [
     },
   },
   {
-    path: "./data/030 Poster A0 Version 001.json",
+    path: "./data/030 Poster A0 002.json",
     source: {
       "schemaVersion": 2,
       "exportedAt": "2026-04-07T15:58:14.051Z",
@@ -5183,6 +5183,217 @@ export const GENERATED_PRESET_MANIFEST = [
               "paragraph-1773671562475-vr75kg",
               "paragraph-1773671949302-15nbra",
               "paragraph-1773671347303-6ze5tl"
+            ],
+            "imageOrder": [],
+            "imageModulePositions": {},
+            "imageColumnSpans": {},
+            "imageRowSpans": {},
+            "imageColors": {},
+            "imageOpacities": {}
+          }
+        }
+      ]
+    },
+  },
+  {
+    path: "./data/040 Classic Poster Lookalike.json",
+    source: {
+      "schemaVersion": 2,
+      "exportedAt": "2026-04-08T08:34:00.427Z",
+      "title": "Classic Poster Lookalike",
+      "description": "",
+      "author": "Swiss Grid Generator",
+      "createdAt": "2026-04-07T12:00:00.000Z",
+      "activePageId": "page-blank-start",
+      "pages": [
+        {
+          "id": "page-blank-start",
+          "name": "Classic Poster Lookalike",
+          "uiSettings": {
+            "canvasRatio": "din_ab",
+            "customRatioWidth": 4,
+            "customRatioHeight": 5,
+            "orientation": "portrait",
+            "rotation": 0,
+            "marginMethod": 3,
+            "gridCols": 4,
+            "gridRows": 4,
+            "baselineMultiple": 1,
+            "gutterMultiple": 1,
+            "rhythm": "repetitive",
+            "rhythmRowsEnabled": false,
+            "rhythmRowsDirection": "ltr",
+            "rhythmColsEnabled": false,
+            "rhythmColsDirection": "btt",
+            "typographyScale": "golden",
+            "baseFont": "Inter",
+            "imageColorScheme": "mono",
+            "canvasBackground": "#404040",
+            "customBaseline": 12,
+            "useCustomMargins": true,
+            "customMarginMultipliers": {
+              "top": 3,
+              "left": 2,
+              "right": 2,
+              "bottom": 3
+            },
+            "showBaselines": true,
+            "showModules": true,
+            "showMargins": true,
+            "showImagePlaceholders": true,
+            "showTypography": true,
+            "showLayers": true,
+            "collapsed": {
+              "format": true,
+              "baseline": true,
+              "margins": true,
+              "gutter": true,
+              "typo": true,
+              "color": true,
+              "summary": true
+            },
+            "exportPrintPro": false,
+            "exportBleedMm": 0,
+            "exportRegistrationMarks": false,
+            "format": "A4"
+          },
+          "previewLayout": {
+            "blockOrder": [
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437",
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed"
+            ],
+            "textContent": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "der",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "Film",
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "10. Januar bis 30. April 1960\n\nOffen: Montag 14-18, 20-22\nDienstag-Freitag 10-12, 20-22\nSamstag-Sonntag 10-12, 14-17",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "Kunstgewerbemuseum Zürich\nAusstellung"
+            },
+            "blockTextEdited": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": true,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": true,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
+            },
+            "styleAssignments": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "fx",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "fx",
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "subhead",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "subhead"
+            },
+            "blockFontFamilies": {},
+            "blockFontWeights": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 700,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 700,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 400,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 400
+            },
+            "blockOpticalKerning": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": true,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": true,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
+            },
+            "blockTrackingScales": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": -20,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 16,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 0,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 0
+            },
+            "blockTrackingRuns": {},
+            "blockTextFormatRuns": {
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": [
+                {
+                  "start": 0,
+                  "end": 29,
+                  "fontWeight": 700
+                }
+              ]
+            },
+            "blockColumnSpans": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 2,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 2,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 3,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 3
+            },
+            "blockRowSpans": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 1,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 1,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 1,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 1
+            },
+            "blockTextAlignments": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "right",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "left",
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "left",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "left"
+            },
+            "blockTextReflow": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": false,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": false,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": false,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": false
+            },
+            "blockSyllableDivision": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": false,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": false,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
+            },
+            "blockItalic": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": false,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": false,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": false,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": false
+            },
+            "blockRotations": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 0,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 0,
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 0,
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 0
+            },
+            "blockModulePositions": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": {
+                "column": 0,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": {
+                "column": 1,
+                "row": 2,
+                "baselineOffset": 0
+              },
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": {
+                "column": 1,
+                "row": 3,
+                "baselineOffset": 5
+              },
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": {
+                "column": 1,
+                "row": 0,
+                "baselineOffset": 0
+              }
+            },
+            "blockCustomSizes": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 228,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 228
+            },
+            "blockCustomLeadings": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 96,
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 96
+            },
+            "blockTextColors": {
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "#c0c0c0",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "#ffffff",
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "#c0c0c0",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "#c0c0c0"
+            },
+            "layerOrder": [
+              "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe",
+              "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111",
+              "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437",
+              "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed"
             ],
             "imageOrder": [],
             "imageModulePositions": {},

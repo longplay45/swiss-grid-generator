@@ -83,7 +83,7 @@ export function ExportPdfDialog({
         </div>
         <div className="space-y-2">
           <Label>Format</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               variant={exportFormatDraft === "pdf" ? "default" : "outline"}
@@ -101,15 +101,6 @@ export function ExportPdfDialog({
               onClick={() => onExportFormatChange("svg")}
             >
               SVG
-            </Button>
-            <Button
-              type="button"
-              variant={exportFormatDraft === "idml" ? "default" : "outline"}
-              size="sm"
-              className="text-[11px]"
-              onClick={() => onExportFormatChange("idml")}
-            >
-              IDML
             </Button>
           </div>
         </div>
