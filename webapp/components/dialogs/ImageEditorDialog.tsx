@@ -390,11 +390,13 @@ export function ImageEditorDialog({
           {activeSubmenu === "info" ? (
             <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
               {infoRows.map((row) => (
-                renderSettingRow(
-                  <row.icon key={`${row.label}-icon`} className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                  row.label,
-                  <span key={`${row.label}-value`} className={settingValueClassName}>{row.value}</span>,
-                )
+                <div key={row.label}>
+                  {renderSettingRow(
+                    <row.icon className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                    row.label,
+                    <span className={settingValueClassName}>{row.value}</span>,
+                  )}
+                </div>
               ))}
             </div>
           ) : null}
