@@ -102,7 +102,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 
 ### Export
 - High-quality vector **PDF export**
-- Trim-size **SVG v1 export** with live vector text
+- Trim-size **SVG v1 export** with exact glyph-outline typography
 - **IDML v1 export** for InDesign continuation
 - Export opens with the full project page range selected by default
 - `PDF`, `SVG`, and `IDML` all export the selected page range using each page's stored document size

@@ -16,24 +16,31 @@ test("svg export is rendered through the shared page export plan", () => {
   assert.match(source, /showBaselines,\s*showModules,\s*showMargins,\s*showImagePlaceholders,\s*showTypography,/)
 })
 
-test("svg export emits a trim-sized svg with page clipping, guide groups, placeholders, and live text", () => {
+test("svg export emits a trim-sized svg with page clipping, guide groups, placeholders, and outline groups", () => {
   const source = readText("lib/svg-vector-export.ts")
   assert.match(source, /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
   assert.match(source, /<defs><clipPath id="\$\{pageClipId\}"><rect x="0" y="0" width="\$\{formatNumber\(exportPlan\.pageWidth\)\}" height="\$\{formatNumber\(exportPlan\.pageHeight\)\}" \/><\/clipPath><\/defs>/)
   assert.match(source, /guides-\$\{guideGroup\.id\}/)
   assert.match(source, /<rect id="image-\$\{quoteAttr\(key\)\}"/)
   assert.match(source, /<g id="text-\$\{quoteAttr\(key\)\}"/)
-  assert.match(source, /xml:space="preserve"/)
+  assert.match(source, /data-text-rendering="glyph-outline"/)
+  assert.match(source, /<path d="\$\{quoteAttr\(pathData\)\}"/)
 })
 
-test("svg export prefers absolute grapheme positions before falling back to live tracking segments", () => {
+test("svg export converts positioned graphemes into outline paths from the resolved font variant", () => {
   const source = readText("lib/svg-vector-export.ts")
-  assert.match(source, /const\s+graphemeLines\s*=\s*textPlan\.graphemeLines\.map/)
+  assert.match(source, /import\s+\{\s*parse\s+as\s+parseOpenType\s*\}\s+from\s+"opentype\.js"/)
+  assert.match(source, /async\s+function\s+loadSvgOutlineFont/)
+  assert.match(source, /getFontAssetPath/)
+  assert.match(source, /resolveFontVariant/)
+  assert.match(source, /await\s+Promise\.all\(exportPlan\.textPlans\.flatMap/)
+  assert.match(source, /textPlan\.graphemeLines\.map/)
   assert.match(source, /grapheme\.x/)
   assert.match(source, /grapheme\.y/)
-  assert.match(source, /font-family="\$\{quoteAttr\(grapheme\.fontFamily\)\}"/)
-  assert.match(source, /if\s*\(graphemeLines\)\s*\{/)
-  assert.match(source, /const\s+lines\s*=\s*textPlan\.segmentLines\.map/)
+  assert.match(source, /font\.getPath\(/)
+  assert.match(source, /kerning:\s*false/)
+  assert.match(source, /hinting:\s*false/)
+  assert.match(source, /toPathData\(3\)/)
 })
 
 test("svg export keeps block and page rotation explicit in svg transforms", () => {
@@ -41,6 +48,13 @@ test("svg export keeps block and page rotation explicit in svg transforms", () =
   assert.match(source, /function\s+renderRotationTransform\(rotation:\s*number,\s*originX:\s*number,\s*originY:\s*number\)/)
   assert.match(source, /const\s+pageRotationTransform\s*=\s*renderRotationTransform\(/)
   assert.match(source, /const\s+rotationTransform\s*=\s*renderRotationTransform\(/)
+})
+
+test("svg export keeps a narrow live-text fallback if outline loading fails unexpectedly", () => {
+  const source = readText("lib/svg-vector-export.ts")
+  assert.match(source, /if\s*\(!font\)\s*\{/)
+  assert.match(source, /xml:space="preserve"/)
+  assert.match(source, /data-text-rendering="text-fallback"/)
 })
 
 test("export actions support pdf, svg, and idml formats with format-specific filenames", () => {
@@ -76,8 +90,8 @@ test("export dialog exposes an explicit pdf-svg-idml format switch", () => {
   assert.match(source, /onExportFormatChange\("idml"\)/)
   assert.match(source, /onExportRangeStartChange/)
   assert.match(source, /onExportRangeEndChange/)
-  assert.match(source, /SVG v1 exports live vector text, guides, and placeholders at trim size\./)
-  assert.match(source, /SVG v1 exports a ZIP with one trim-sized live-text SVG per selected page\./)
+  assert.match(source, /SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders\./)
+  assert.match(source, /SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page\./)
   assert.match(source, /IDML v1 exports the selected page range\./)
   assert.match(source, /Export IDML/)
   assert.doesNotMatch(source, /Units \/ Paper Size/)

@@ -83,7 +83,7 @@ export function ExportPdfDialog({
         </div>
         <div className="space-y-2">
           <Label>Format</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant={exportFormatDraft === "pdf" ? "default" : "outline"}
@@ -101,6 +101,15 @@ export function ExportPdfDialog({
               onClick={() => onExportFormatChange("svg")}
             >
               SVG
+            </Button>
+            <Button
+              type="button"
+              variant={exportFormatDraft === "idml" ? "default" : "outline"}
+              size="sm"
+              className="text-[11px]"
+              onClick={() => onExportFormatChange("idml")}
+            >
+              IDML
             </Button>
           </div>
         </div>
@@ -216,8 +225,8 @@ export function ExportPdfDialog({
         ) : isSvgExport ? (
           <p className={helpTextClassName}>
             {isMultiPageSelection
-              ? "SVG v1 exports a ZIP with one trim-sized live-text SVG per selected page. PDF print presets are not applied."
-              : "SVG v1 exports live vector text, guides, and placeholders at trim size. PDF print presets are not applied."}
+              ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity. PDF print presets are not applied."
+              : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths. PDF print presets are not applied."}
           </p>
         ) : (
           <p className={helpTextClassName}>

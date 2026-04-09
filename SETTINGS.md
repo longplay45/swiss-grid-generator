@@ -363,7 +363,7 @@ Behavior:
 
 - JSON: full UI + preview layout state.
 - PDF: vector selected-range output with `Digital Print` and `Press Proof` presets, embedded output intents, grouped guide vectors, and stored page geometry per exported page.
-- SVG: single-page trim-size vector output with live text, guides, and placeholders, or a ZIP with one SVG per selected page for multi-page ranges.
+- SVG: single-page trim-size vector output with typography converted to exact glyph outlines plus guides and placeholders, or a ZIP with one SVG per selected page for multi-page ranges.
 - IDML: selected-range export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers.
 
 ## JSON UI Fields (current)

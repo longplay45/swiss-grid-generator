@@ -454,7 +454,7 @@ export function useExportActions(ctx: ExportActionsContext) {
 
     if (pages.length === 1) {
       const page = pages[0]
-      const svg = renderSwissGridVectorSvg({
+      const svg = await renderSwissGridVectorSvg({
         width: page.result.pageSizePt.width,
         height: page.result.pageSizePt.height,
         result: page.result,
@@ -480,11 +480,11 @@ export function useExportActions(ctx: ExportActionsContext) {
     const archiveBaseName = filename.replace(/\.(pdf|svg|idml|zip)$/i, "")
     const normalizedArchiveBaseName = normalizeFilenameSegment(archiveBaseName)
 
-    pages.forEach((page, index) => {
+    for (const [index, page] of pages.entries()) {
       const pageNumber = startPageNumber + index
       const pageSlug = normalizeFilenameSegment(page.name || `page-${pageNumber}`)
       const pageFilename = `${normalizedArchiveBaseName}_page_${String(pageNumber).padStart(3, "0")}_${pageSlug}.svg`
-      const svg = renderSwissGridVectorSvg({
+      const svg = await renderSwissGridVectorSvg({
         width: page.result.pageSizePt.width,
         height: page.result.pageSizePt.height,
         result: page.result,
@@ -502,7 +502,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         description: trimmedDescription || `Swiss Grid Vector Export - Page ${pageNumber}`,
       })
       zipEntries[pageFilename] = strToU8(svg)
-    })
+    }
 
     const zipBytes = zipSync(zipEntries)
     const zipBuffer = new ArrayBuffer(zipBytes.byteLength)

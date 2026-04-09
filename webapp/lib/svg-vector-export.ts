@@ -1,5 +1,12 @@
+import { parse as parseOpenType } from "opentype.js"
+
 import type { GridResult } from "@/lib/grid-calculator"
-import { DEFAULT_BASE_FONT, type FontFamily } from "@/lib/config/fonts"
+import {
+  DEFAULT_BASE_FONT,
+  getFontAssetPath,
+  resolveFontVariant,
+  type FontFamily,
+} from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { formatSvgColor, parseHexColor } from "@/lib/export-colors"
 import { buildPageExportPlan } from "@/lib/page-export-plan"
@@ -8,6 +15,21 @@ import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
+type OpenTypePath = {
+  toPathData: (decimalPlaces?: number) => string
+}
+type OpenTypeFont = {
+  getPath: (
+    text: string,
+    x: number,
+    y: number,
+    fontSize: number,
+    options?: {
+      kerning?: boolean
+      hinting?: boolean
+    },
+  ) => OpenTypePath
+}
 
 type ExportVectorSvgOptions = {
   width: number
@@ -26,6 +48,8 @@ type ExportVectorSvgOptions = {
   title?: string
   description?: string
 }
+
+const svgOutlineFontCache = new Map<string, Promise<OpenTypeFont | null>>()
 
 function formatNumber(value: number): string {
   if (!Number.isFinite(value)) return "0"
@@ -54,7 +78,81 @@ function renderRotationTransform(rotation: number, originX: number, originY: num
   return ` transform="rotate(${formatNumber(rotation)} ${formatNumber(originX)} ${formatNumber(originY)})"`
 }
 
-export function renderSwissGridVectorSvg({
+function getResolvedSvgFontFace(fontFamily: FontFamily, fontWeight: number, italic: boolean) {
+  const resolvedVariant = resolveFontVariant(fontFamily, fontWeight, italic)
+  return {
+    cacheKey: `${fontFamily}:${resolvedVariant.weight}:${resolvedVariant.italic ? "italic" : "normal"}`,
+    assetPath: getFontAssetPath(fontFamily, resolvedVariant.weight, resolvedVariant.italic),
+    fontFamily,
+    fontWeight: resolvedVariant.weight,
+    italic: resolvedVariant.italic,
+  }
+}
+
+async function loadSvgOutlineFont(
+  fontFamily: FontFamily,
+  fontWeight: number,
+  italic: boolean,
+): Promise<OpenTypeFont | null> {
+  const resolvedFace = getResolvedSvgFontFace(fontFamily, fontWeight, italic)
+  const cached = svgOutlineFontCache.get(resolvedFace.cacheKey)
+  if (cached) return cached
+
+  const pending = (async () => {
+    if (typeof fetch !== "function") return null
+
+    try {
+      const response = await fetch(resolvedFace.assetPath)
+      if (!response.ok) return null
+      const buffer = await response.arrayBuffer()
+      return parseOpenType(buffer) as OpenTypeFont
+    } catch {
+      return null
+    }
+  })()
+
+  svgOutlineFontCache.set(resolvedFace.cacheKey, pending)
+  return pending
+}
+
+async function renderOutlinedGrapheme(
+  grapheme: {
+    text: string
+    x: number
+    y: number
+    fontFamily: FontFamily
+    fontWeight: number
+    italic: boolean
+    fontSize: number
+    color: string
+  },
+  fallbackColor: ReturnType<typeof parseHexColor> | null,
+): Promise<string> {
+  if (!isRenderableTextFragment(grapheme.text)) return ""
+
+  const font = await loadSvgOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)
+  const fillColor = formatSvgColor(parseHexColor(grapheme.color) ?? fallbackColor ?? { r: 0, g: 0, b: 0 })
+
+  if (!font) {
+    return `<text x="${formatNumber(grapheme.x)}" y="${formatNumber(grapheme.y)}" fill="${fillColor}" font-family="${quoteAttr(grapheme.fontFamily)}" font-size="${formatNumber(grapheme.fontSize)}" font-weight="${grapheme.fontWeight}" font-style="${grapheme.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(grapheme.text)}</text>`
+  }
+
+  const pathData = font.getPath(
+    grapheme.text,
+    grapheme.x,
+    grapheme.y,
+    grapheme.fontSize,
+    {
+      kerning: false,
+      hinting: false,
+    },
+  ).toPathData(3).trim()
+
+  if (!pathData) return ""
+  return `<path d="${quoteAttr(pathData)}" fill="${fillColor}" />`
+}
+
+export async function renderSwissGridVectorSvg({
   width,
   height,
   result,
@@ -70,7 +168,7 @@ export function renderSwissGridVectorSvg({
   showTypography,
   title = "Swiss Grid Vector Export",
   description = "Swiss Grid Generator SVG export",
-}: ExportVectorSvgOptions): string {
+}: ExportVectorSvgOptions): Promise<string> {
   const exportPlan = buildPageExportPlan({
     result,
     layout,
@@ -94,6 +192,10 @@ export function renderSwissGridVectorSvg({
     exportPlan.pageHeight / 2,
   )
 
+  await Promise.all(exportPlan.textPlans.flatMap((textPlan) => textPlan.graphemeLines.flatMap((line) => line
+    .filter((grapheme) => isRenderableTextFragment(grapheme.text))
+    .map((grapheme) => loadSvgOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)))))
+
   const guideMarkup = exportPlan.guideGroups.map((guideGroup) => {
     const stroke = formatSvgColor(guideGroup.strokeColor)
     const dashAttr = guideGroup.dashPattern.length
@@ -111,7 +213,7 @@ export function renderSwissGridVectorSvg({
     return `<g id="guides-${guideGroup.id}"${clipAttr} fill="none" stroke="${stroke}" stroke-width="${formatNumber(guideGroup.strokeWidth)}"${dashAttr}>${body}</g>`
   }).join("")
 
-  const layerMarkup = exportPlan.orderedLayerKeys.map((key) => {
+  const layerMarkup = (await Promise.all(exportPlan.orderedLayerKeys.map(async (key) => {
     const imagePlan = imagePlans.get(key)
     if (imagePlan) {
       const opacityAttr = imagePlan.opacity < 0.999 ? ` fill-opacity="${formatNumber(imagePlan.opacity)}"` : ""
@@ -120,41 +222,34 @@ export function renderSwissGridVectorSvg({
 
     const textPlan = textPlans.get(key)
     if (!textPlan) return ""
-    const kerning = textPlan.opticalKerning ? ` font-kerning="none"` : ` font-kerning="normal"`
+
     const rotationTransform = renderRotationTransform(
       textPlan.blockRotation,
       textPlan.rotationOriginX,
       textPlan.rotationOriginY,
     )
-    const graphemeLines = textPlan.graphemeLines.map((graphemes) => graphemes
-      .filter((grapheme) => isRenderableTextFragment(grapheme.text))
-      .map((grapheme) => (
-        `<text x="${formatNumber(grapheme.x)}" y="${formatNumber(grapheme.y)}" fill="${formatSvgColor(parseHexColor(grapheme.color) ?? textPlan.textColor)}" font-family="${quoteAttr(grapheme.fontFamily)}" font-size="${formatNumber(grapheme.fontSize)}" font-weight="${grapheme.fontWeight}" font-style="${grapheme.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(grapheme.text)}</text>`
-      )).join(""))
-      .join("")
-    if (graphemeLines) {
-      return (
-        `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" text-anchor="start"${rotationTransform}>${graphemeLines}</g>`
-      )
+
+    const outlinedLines = await Promise.all(textPlan.graphemeLines.map(async (graphemes) => {
+      const outlinedGraphemes = await Promise.all(graphemes.map((grapheme) => renderOutlinedGrapheme(
+        grapheme,
+        textPlan.textColor,
+      )))
+      return outlinedGraphemes.join("")
+    }))
+
+    const outlinedMarkup = outlinedLines.join("")
+    if (outlinedMarkup) {
+      return `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" data-text-rendering="glyph-outline"${rotationTransform}>${outlinedMarkup}</g>`
     }
-    const lines = textPlan.segmentLines.map((segments, lineIndex) => {
-      if (segments.length === 0) {
-        const command = textPlan.commands[lineIndex]
-        if (!command) return ""
-        const renderedText = getRenderedTextDrawCommandText(command)
-        return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(renderedText)}</text>`
-      }
-      return segments.map((segment) => {
-        const tracking = segment.trackingScale === 0
-          ? ""
-          : ` letter-spacing="${formatNumber((segment.fontSize * segment.trackingScale) / 1000)}"`
-        return `<text x="${formatNumber(segment.x)}" y="${formatNumber(segment.y)}" fill="${formatSvgColor(parseHexColor(segment.color) ?? textPlan.textColor)}" font-family="${quoteAttr(segment.fontFamily)}" font-size="${formatNumber(segment.fontSize)}" font-weight="${segment.fontWeight}" font-style="${segment.italic ? "italic" : "normal"}" xml:space="preserve"${tracking}>${escapeXml(segment.text)}</text>`
-      }).join("")
+
+    const fallbackLines = textPlan.commands.map((command) => {
+      const renderedText = getRenderedTextDrawCommandText(command)
+      if (!isRenderableTextFragment(renderedText)) return ""
+      return `<text x="${formatNumber(command.x)}" y="${formatNumber(command.y)}" fill="${formatSvgColor(textPlan.textColor)}" font-family="${quoteAttr(textPlan.fontFamily)}" font-size="${formatNumber(textPlan.fontSize)}" font-weight="${textPlan.fontWeight}" font-style="${textPlan.italic ? "italic" : "normal"}" xml:space="preserve">${escapeXml(renderedText)}</text>`
     }).join("")
-    return (
-      `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" text-anchor="start"${kerning}${rotationTransform}>${lines}</g>`
-    )
-  }).join("")
+
+    return `<g id="text-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" data-style-key="${quoteAttr(textPlan.styleKey)}" data-text-rendering="text-fallback"${rotationTransform}>${fallbackLines}</g>`
+  }))).join("")
 
   const backgroundMarkup = exportPlan.backgroundColor
     ? `<rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" fill="${formatSvgColor(exportPlan.backgroundColor)}" />`

@@ -108,7 +108,7 @@ Current capability inventory for Swiss Grid Generator.
   - `sRGB IEC61966-2.1` for digital export
   - `Coated FOGRA39` for print export
 - PDF guide groups exported as separate form objects for margins, modules, and baselines.
-- Single-page SVG exports a trim-size vector file with live text, guides, and placeholders.
+- Single-page SVG exports a trim-size vector file with exact glyph-outline typography, guides, and placeholders.
 - Multi-page SVG exports a ZIP with one trim-size SVG per page.
 - IDML exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry.
 
