@@ -221,6 +221,7 @@ export function useHeaderActions(args: Args) {
         key: "image-placeholders",
         ariaLabel: "Toggle image placeholders",
         tooltip: "Toggle image placeholders",
+        shortcutId: "toggle_image_placeholders",
         variant: args.showImagePlaceholders ? "default" : "outline",
         pressed: args.showImagePlaceholders,
         disabled: !args.hasPreviewLayout,

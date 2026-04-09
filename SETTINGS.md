@@ -221,6 +221,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+M`: Toggle margins
 - `Cmd/Ctrl+Shift+G`: Toggle modules/gutter
 - `Cmd/Ctrl+Shift+T`: Toggle typography
+- `Cmd/Ctrl+Shift+J`: Toggle image placeholders
 - `Cmd/Ctrl+Shift+P`: Toggle project sidebar
 - `Cmd/Ctrl+Shift+I`: Toggle information
 - `Cmd/Ctrl+Shift+H`: Toggle help sidebar

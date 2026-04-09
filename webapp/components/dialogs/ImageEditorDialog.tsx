@@ -32,6 +32,8 @@ type MainSubmenu = "geometry" | "info" | null
 const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
 const SUBMENU_PANEL_WIDTH_PX = 304
 const SUBMENU_LABEL_WIDTH_PX = 76
+const SUBMENU_TOOLTIP_ANCHOR_SELECTOR = '[data-submenu-tooltip-anchor="image-editor"]'
+const PREVIEW_TOOLTIP_BOUNDARY_SELECTOR = '[data-tooltip-boundary="preview-workspace"]'
 
 type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
@@ -140,12 +142,27 @@ export function ImageEditorDialog({
     })
   }
   const withRailTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip className="block" label={label} disabled={!showRolloverInfo} tooltipClassName={railTooltipClassName}>
+    <HoverTooltip
+      className="block"
+      label={label}
+      disabled={!showRolloverInfo}
+      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+      horizontalAlign="start"
+      tooltipClassName={railTooltipClassName}
+    >
       {child}
     </HoverTooltip>
   )
   const withSubmenuTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip className="block" label={label} disabled={!showRolloverInfo} tooltipClassName={submenuTooltipClassName}>
+    <HoverTooltip
+      className="block"
+      label={label}
+      disabled={!showRolloverInfo}
+      anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
+      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+      horizontalAlign="start"
+      tooltipClassName={submenuTooltipClassName}
+    >
       {child}
     </HoverTooltip>
   )
@@ -224,6 +241,7 @@ export function ImageEditorDialog({
 
       {activeSubmenu ? (
         <div
+          data-submenu-tooltip-anchor="image-editor"
           className={`absolute left-full ml-2 max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
           style={{ top: activeSubmenuTop }}
         >
@@ -293,7 +311,13 @@ export function ImageEditorDialog({
                   >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
+                  <SelectContent
+                    className={tone.selectContent}
+                    side="top"
+                    sideOffset={4}
+                    avoidCollisions={false}
+                    onPointerLeave={() => setPreviewColorScheme(null)}
+                  >
                     {colorSchemes.map((scheme) => (
                       <SelectItem
                         key={scheme.id}
@@ -320,6 +344,9 @@ export function ImageEditorDialog({
                         className="block"
                         label={`Set the placeholder color to ${color}`}
                         disabled={!showRolloverInfo}
+                        anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
+                        constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+                        horizontalAlign="start"
                         tooltipClassName={submenuTooltipClassName}
                       >
                         <button

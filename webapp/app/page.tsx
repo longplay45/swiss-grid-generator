@@ -540,6 +540,7 @@ export default function Home() {
     onToggleMargins: toggleShowMargins,
     onToggleModules: toggleShowModules,
     onToggleTypography: toggleShowTypography,
+    onToggleImagePlaceholders: toggleShowImagePlaceholders,
     onToggleLayersPanel: toggleLayersPanel,
     onToggleRolloverInfo: toggleRolloverInfo,
     onToggleHelpPanel: toggleHelpPanel,

@@ -9,6 +9,7 @@ export type PreviewHeaderShortcutId =
   | "toggle_margins"
   | "toggle_modules"
   | "toggle_typography"
+  | "toggle_image_placeholders"
   | "toggle_layers_panel"
   | "toggle_rollover_info"
   | "toggle_help_panel"
@@ -88,6 +89,12 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
     combo: "Cmd/Ctrl+Shift+T",
     description: "Toggle typography",
     bindings: [{ key: "t", shift: true }],
+  },
+  {
+    id: "toggle_image_placeholders",
+    combo: "Cmd/Ctrl+Shift+J",
+    description: "Toggle image placeholders",
+    bindings: [{ key: "j", shift: true }],
   },
   {
     id: "toggle_layers_panel",

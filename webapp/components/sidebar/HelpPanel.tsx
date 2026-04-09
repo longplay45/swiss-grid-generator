@@ -412,6 +412,17 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <hr className={tone.divider} />
 
+      <section id="help-header-image-placeholders" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          Image Placeholders Toggle
+        </SectionHeading>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Shows or hides image placeholder overlays. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+J</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
       <section id="help-header-layers" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
           Project Panel

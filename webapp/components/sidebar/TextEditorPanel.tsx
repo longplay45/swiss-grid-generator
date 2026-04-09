@@ -72,6 +72,8 @@ type MainSubmenu = "geometry" | "type" | "info" | null
 const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
 const SUBMENU_PANEL_WIDTH_PX = 304
 const SUBMENU_LABEL_WIDTH_PX = 76
+const SUBMENU_TOOLTIP_ANCHOR_SELECTOR = '[data-submenu-tooltip-anchor="text-editor"]'
+const PREVIEW_TOOLTIP_BOUNDARY_SELECTOR = '[data-tooltip-boundary="preview-workspace"]'
 
 export function TextEditorPanel<StyleKey extends string>({
   controls,
@@ -282,6 +284,8 @@ export function TextEditorPanel<StyleKey extends string>({
       className="block"
       label={label}
       disabled={!showRolloverInfo}
+      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+      horizontalAlign="start"
       tooltipClassName={railTooltipClassName}
     >
       {child}
@@ -292,6 +296,9 @@ export function TextEditorPanel<StyleKey extends string>({
       className="block"
       label={label}
       disabled={!showRolloverInfo}
+      anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
+      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+      horizontalAlign="start"
       tooltipClassName={submenuTooltipClassName}
     >
       {child}
@@ -443,6 +450,7 @@ export function TextEditorPanel<StyleKey extends string>({
 
       {activeSubmenu ? (
         <div
+          data-submenu-tooltip-anchor="text-editor"
           className={`absolute left-full ml-2 max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
           style={{ top: activeSubmenuTop }}
         >
@@ -828,7 +836,13 @@ export function TextEditorPanel<StyleKey extends string>({
                   <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className={tone.selectContent} onPointerLeave={() => setPreviewColorScheme(null)}>
+                  <SelectContent
+                    className={tone.selectContent}
+                    side="top"
+                    sideOffset={4}
+                    avoidCollisions={false}
+                    onPointerLeave={() => setPreviewColorScheme(null)}
+                  >
                     {controls.colorSchemes.map((scheme) => (
                       <SelectItem
                         key={scheme.id}
@@ -855,6 +869,9 @@ export function TextEditorPanel<StyleKey extends string>({
                         className="block"
                         label={`Set the paragraph color to ${color}`}
                         disabled={!showRolloverInfo}
+                        anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
+                        constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
+                        horizontalAlign="start"
                         tooltipClassName={submenuTooltipClassName}
                       >
                         <button

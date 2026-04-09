@@ -7,7 +7,9 @@ type HoverTooltipProps = {
   children: ReactNode
   className?: string
   tooltipClassName?: string
+  anchorToClosestSelector?: string
   constrainToClosestSelector?: string
+  horizontalAlign?: "center" | "start" | "end"
   viewportPaddingPx?: number
   disabled?: boolean
 }
@@ -24,7 +26,9 @@ export function HoverTooltip({
   children,
   className,
   tooltipClassName,
+  anchorToClosestSelector,
   constrainToClosestSelector,
+  horizontalAlign = "center",
   viewportPaddingPx = 12,
   disabled = false,
 }: HoverTooltipProps) {
@@ -35,7 +39,12 @@ export function HoverTooltip({
 
   const updateTooltipPosition = useCallback(() => {
     if (disabled || !isActive || typeof window === "undefined") return
-    const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+    const anchorElement = anchorToClosestSelector
+      ? wrapperRef.current?.closest(anchorToClosestSelector)
+      : wrapperRef.current
+    const wrapperRect = anchorElement instanceof HTMLElement
+      ? anchorElement.getBoundingClientRect()
+      : wrapperRef.current?.getBoundingClientRect()
     const node = tooltipRef.current
     if (!node || !wrapperRect) return
     const rect = node.getBoundingClientRect()
@@ -65,8 +74,12 @@ export function HoverTooltip({
 
     const minLeft = minX
     const maxLeft = Math.max(minLeft, maxX - rect.width)
-    const anchorCenterX = wrapperRect.left + wrapperRect.width / 2
-    const nextLeft = Math.min(Math.max(anchorCenterX - rect.width / 2, minLeft), maxLeft)
+    const preferredLeft = horizontalAlign === "start"
+      ? wrapperRect.left
+      : horizontalAlign === "end"
+        ? wrapperRect.right - rect.width
+        : wrapperRect.left + wrapperRect.width / 2 - rect.width / 2
+    const nextLeft = Math.min(Math.max(preferredLeft, minLeft), maxLeft)
 
     const belowTop = wrapperRect.bottom + TOOLTIP_ANCHOR_GAP_PX
     const aboveTop = wrapperRect.top - TOOLTIP_ANCHOR_GAP_PX - rect.height
@@ -77,7 +90,7 @@ export function HoverTooltip({
     const nextTop = Math.min(Math.max(preferredTop, minY), maxTop)
 
     setTooltipPosition({ x: nextLeft, y: nextTop })
-  }, [constrainToClosestSelector, disabled, isActive, viewportPaddingPx])
+  }, [anchorToClosestSelector, constrainToClosestSelector, disabled, horizontalAlign, isActive, viewportPaddingPx])
 
   useLayoutEffect(() => {
     if (disabled || !isActive) {
