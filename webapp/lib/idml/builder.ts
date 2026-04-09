@@ -1,13 +1,13 @@
 import { strToU8, zipSync } from "fflate"
-import type { TextAlignMode } from "@/lib/types/layout-primitives"
 import { parseHexColor, type RgbColor } from "@/lib/export-colors"
+import { loadOutlineFont, type OpenTypePathCommand } from "@/lib/font-outline"
 import { mmToPt } from "@/lib/units"
 import { resolveIdmlFontMetadata } from "@/lib/idml/font-metadata"
-import { getRenderedTextDrawCommandText } from "@/lib/text-draw-command"
 import type { IdmlFontMetadata, SwissGridIdmlDocument } from "@/lib/idml/types"
 import { escapeIdmlXml, formatIdmlNumber, renderIdmlElement } from "@/lib/idml/xml"
 
 type Matrix = readonly [number, number, number, number, number, number]
+type Point = { x: number; y: number }
 
 type ColorSwatch = {
   id: string
@@ -35,6 +35,17 @@ type SpreadExportRecord = {
   filePath: string
   xml: string
   pageId: string
+}
+
+type IdmlPathPoint = {
+  anchor: Point
+  left: Point
+  right: Point
+}
+
+type IdmlGeometryPath = {
+  open: boolean
+  points: IdmlPathPoint[]
 }
 
 const IDML_MIMETYPE = "application/vnd.adobe.indesign-idml-package"
@@ -92,6 +103,22 @@ function formatPoint(x: number, y: number): string {
   return `${formatIdmlNumber(x)} ${formatIdmlNumber(y)}`
 }
 
+function clonePoint(point: Point): Point {
+  return { x: point.x, y: point.y }
+}
+
+function buildStraightPathPoint(point: Point): IdmlPathPoint {
+  return {
+    anchor: clonePoint(point),
+    left: clonePoint(point),
+    right: clonePoint(point),
+  }
+}
+
+function pointsEqual(left: Point, right: Point): boolean {
+  return Math.abs(left.x - right.x) <= 0.0001 && Math.abs(left.y - right.y) <= 0.0001
+}
+
 function buildPageCoordinateTransform(pageHeight: number): Matrix {
   return [1, 0, 0, 1, 0, -pageHeight / 2]
 }
@@ -103,32 +130,29 @@ function buildPageItemTransform(pageWidth: number, pageHeight: number, pageRotat
   return multiplyMatrices(pageCoordinateTransform, pageRotationTransform)
 }
 
-function renderPathGeometry(
-  points: Array<{ x: number; y: number }>,
-  open: boolean,
-): string {
+function renderPathGeometry(paths: IdmlGeometryPath[]): string {
   return renderIdmlElement(
     "Properties",
     {},
     renderIdmlElement(
       "PathGeometry",
       {},
-      renderIdmlElement(
+      paths.map((path) => renderIdmlElement(
         "GeometryPathType",
         {
           GeometryPathType: "NormalPath",
-          PathOpen: open,
+          PathOpen: path.open,
         },
         renderIdmlElement(
           "PathPointArray",
           {},
-          points.map((point) => renderIdmlElement("PathPointType", {
-            Anchor: formatPoint(point.x, point.y),
-            LeftDirection: formatPoint(point.x, point.y),
-            RightDirection: formatPoint(point.x, point.y),
+          path.points.map((point) => renderIdmlElement("PathPointType", {
+            Anchor: formatPoint(point.anchor.x, point.anchor.y),
+            LeftDirection: formatPoint(point.left.x, point.left.y),
+            RightDirection: formatPoint(point.right.x, point.right.y),
           })),
         ),
-      ),
+      )),
     ),
   )
 }
@@ -139,83 +163,107 @@ function renderRectPathGeometry(
   width: number,
   height: number,
 ): string {
-  return renderPathGeometry([
-    { x, y },
-    { x: x + width, y },
-    { x: x + width, y: y + height },
-    { x, y: y + height },
-  ], false)
+  return renderPathGeometry([{
+    open: false,
+    points: [
+      buildStraightPathPoint({ x, y }),
+      buildStraightPathPoint({ x: x + width, y }),
+      buildStraightPathPoint({ x: x + width, y: y + height }),
+      buildStraightPathPoint({ x, y: y + height }),
+    ],
+  }])
 }
 
-function buildTextFramePreference(
-  width: number,
-  firstBaselineOffset: "LeadingOffset" | "AscentOffset" = "LeadingOffset",
-): string {
-  return renderIdmlElement(
-    "TextFramePreference",
-    {
-      FootnotesEnableOverrides: false,
-      FootnotesSpanAcrossColumns: false,
-      FootnotesMinimumSpacing: 12,
-      FootnotesSpaceBetween: 6,
-      TextColumnCount: 1,
-      TextColumnGutter: 12,
-      TextColumnFixedWidth: formatIdmlNumber(width),
-      UseFixedColumnWidth: false,
-      FirstBaselineOffset: firstBaselineOffset,
-      MinimumFirstBaselineOffset: 0,
-      VerticalJustification: "TopAlign",
-      VerticalThreshold: 0,
-      IgnoreWrap: false,
-      VerticalBalanceColumns: false,
-      UseFlexibleColumnWidth: false,
-      TextColumnMaxWidth: 0,
-      AutoSizingType: "Off",
-      AutoSizingReferencePoint: "CenterPoint",
+function isRenderableTextFragment(text: string): boolean {
+  return text.replace(/\s+/g, "").length > 0
+}
+
+function quadraticToCubic(start: Point, control: Point, end: Point): { control1: Point; control2: Point } {
+  return {
+    control1: {
+      x: start.x + ((control.x - start.x) * 2) / 3,
+      y: start.y + ((control.y - start.y) * 2) / 3,
     },
-    renderIdmlElement(
-      "Properties",
-      {},
-      renderIdmlElement(
-        "InsetSpacing",
-        { type: "list" },
-        [
-          renderIdmlElement("ListItem", { type: "unit" }, "0"),
-          renderIdmlElement("ListItem", { type: "unit" }, "0"),
-          renderIdmlElement("ListItem", { type: "unit" }, "0"),
-          renderIdmlElement("ListItem", { type: "unit" }, "0"),
-        ],
-      ),
-    ),
-  )
-}
-
-function buildTextWrapPreference(): string {
-  return renderIdmlElement(
-    "TextWrapPreference",
-    {
-      Inverse: false,
-      ApplyToMasterPageOnly: false,
-      TextWrapSide: "BothSides",
-      TextWrapMode: "None",
+    control2: {
+      x: end.x + ((control.x - end.x) * 2) / 3,
+      y: end.y + ((control.y - end.y) * 2) / 3,
     },
-    renderIdmlElement(
-      "Properties",
-      {},
-      renderIdmlElement("TextWrapOffset", {
-        Top: 0,
-        Left: 0,
-        Bottom: 0,
-        Right: 0,
-      }),
-    ),
-  )
+  }
 }
 
-function toJustification(align: TextAlignMode): string {
-  if (align === "center") return "CenterAlign"
-  if (align === "right") return "RightAlign"
-  return "LeftAlign"
+function convertOpenTypeCommandsToGeometryPaths(commands: readonly OpenTypePathCommand[]): IdmlGeometryPath[] {
+  const paths: IdmlGeometryPath[] = []
+  let current: IdmlPathPoint[] = []
+
+  const finalizeCurrent = (open: boolean) => {
+    if (current.length === 0) return
+    if (!open && current.length > 1) {
+      const first = current[0]!
+      const last = current[current.length - 1]!
+      if (pointsEqual(first.anchor, last.anchor)) {
+        first.left = clonePoint(last.left)
+        current = current.slice(0, -1)
+      }
+    }
+    if (current.length > 0) {
+      paths.push({ open, points: current })
+    }
+    current = []
+  }
+
+  for (const command of commands) {
+    switch (command.type) {
+      case "M": {
+        finalizeCurrent(true)
+        current = [buildStraightPathPoint({ x: command.x, y: command.y })]
+        break
+      }
+      case "L": {
+        if (current.length === 0) break
+        const lastPoint = current[current.length - 1]!
+        const nextPoint = buildStraightPathPoint({ x: command.x, y: command.y })
+        lastPoint.right = clonePoint(lastPoint.anchor)
+        current.push(nextPoint)
+        break
+      }
+      case "C": {
+        if (current.length === 0) break
+        const lastPoint = current[current.length - 1]!
+        lastPoint.right = { x: command.x1, y: command.y1 }
+        current.push({
+          anchor: { x: command.x, y: command.y },
+          left: { x: command.x2, y: command.y2 },
+          right: { x: command.x, y: command.y },
+        })
+        break
+      }
+      case "Q": {
+        if (current.length === 0) break
+        const lastPoint = current[current.length - 1]!
+        const cubic = quadraticToCubic(
+          lastPoint.anchor,
+          { x: command.x1, y: command.y1 },
+          { x: command.x, y: command.y },
+        )
+        lastPoint.right = cubic.control1
+        current.push({
+          anchor: { x: command.x, y: command.y },
+          left: cubic.control2,
+          right: { x: command.x, y: command.y },
+        })
+        break
+      }
+      case "Z": {
+        finalizeCurrent(false)
+        break
+      }
+      default:
+        break
+    }
+  }
+
+  finalizeCurrent(true)
+  return paths.filter((path) => path.points.length > 0)
 }
 
 function buildColorId(color: RgbColor): string {
@@ -388,79 +436,6 @@ function buildParagraphStyleId(styleKey: string): string {
   return `ParagraphStyle/sgg/${styleKey.replace(/[^A-Za-z0-9_-]/g, "_")}`
 }
 
-function formatStoryContent(lines: string[]): string {
-  return lines.map((line, index) => {
-    if (!line) {
-      return renderIdmlElement("Br")
-    }
-    const content = renderIdmlElement("Content", {}, escapeIdmlXml(line))
-    if (index === lines.length - 1) return content
-    return `${content}${renderIdmlElement("Br")}`
-  }).join("")
-}
-
-function buildCharacterStyleSignature(
-  font: IdmlFontMetadata,
-  pointSize: number,
-  leading: number,
-  tracking: number,
-  fillColorId: string,
-): string {
-  return [
-    font.postScriptName,
-    formatIdmlNumber(pointSize),
-    formatIdmlNumber(leading),
-    formatIdmlNumber(tracking),
-    fillColorId,
-  ].join("|")
-}
-
-function formatStoryContentSegments(
-  textPlan: SwissGridIdmlDocument["pages"][number]["exportPlan"]["textPlans"][number],
-  characterStyleIdForSegment: (segment: {
-    fontFamily: string
-    fontWeight: number
-    italic: boolean
-    fontSize: number
-    trackingScale: number
-    color: string | RgbColor
-  }) => string,
-): string {
-  if (!textPlan.segmentLines.length) {
-    return formatStoryContent(textPlan.commands.map((command) => getRenderedTextDrawCommandText(command)))
-  }
-
-  return textPlan.segmentLines.map((segments, lineIndex) => {
-    const lineContent = segments.length > 0
-      ? segments.map((segment) => renderIdmlElement(
-        "CharacterStyleRange",
-        {
-          AppliedCharacterStyle: characterStyleIdForSegment(segment),
-          OTFContextualAlternate: false,
-        },
-        renderIdmlElement("Content", {}, escapeIdmlXml(segment.text)),
-      )).join("")
-      : renderIdmlElement(
-        "CharacterStyleRange",
-        {
-          AppliedCharacterStyle: characterStyleIdForSegment({
-            fontFamily: textPlan.fontFamily,
-            fontWeight: textPlan.fontWeight,
-            italic: textPlan.italic,
-            fontSize: textPlan.fontSize,
-            trackingScale: textPlan.trackingScale,
-            color: textPlan.textColor,
-          }),
-          OTFContextualAlternate: false,
-        },
-        renderIdmlElement("Content", {}, ""),
-      )
-    return lineIndex === textPlan.segmentLines.length - 1
-      ? lineContent
-      : `${lineContent}${renderIdmlElement("Br")}`
-  }).join("")
-}
-
 function buildGuidesXml(
   pageTransformMatrix: Matrix,
   rects: Array<{
@@ -492,20 +467,17 @@ function buildGuidesXml(
   ))
 }
 
-function buildSpreadAndStories(
+async function buildSpreadAndStories(
   document: SwissGridIdmlDocument,
-  paragraphStyleIds: Map<string, string>,
-  characterStyleIds: Map<string, string>,
   colorIdBySignature: Map<string, string>,
-  fontCatalog: Map<string, IdmlFontMetadata>,
-): {
+): Promise<{
   spreads: SpreadExportRecord[]
   stories: StoryExportRecord[]
-} {
+}> {
   const spreads: SpreadExportRecord[] = []
   const stories: StoryExportRecord[] = []
 
-  document.pages.forEach((page, pageIndex) => {
+  for (const [pageIndex, page] of document.pages.entries()) {
     const spreadId = `sggSpread${String(pageIndex + 1).padStart(3, "0")}`
     const pageId = `sggPage${String(pageIndex + 1).padStart(3, "0")}`
     const pageWidth = page.exportPlan.pageWidth
@@ -517,7 +489,6 @@ function buildSpreadAndStories(
     const placeholderItems: string[] = []
     const textItems: string[] = []
     let localItemSequence = 0
-    let localStorySequence = 0
 
     if (page.exportPlan.backgroundColor) {
       const signature = `${page.exportPlan.backgroundColor.r},${page.exportPlan.backgroundColor.g},${page.exportPlan.backgroundColor.b}`
@@ -605,114 +576,62 @@ function buildSpreadAndStories(
     }
 
     for (const textPlan of page.exportPlan.textPlans) {
-      if (textPlan.commands.length === 0) continue
-      const paragraphStyleId = paragraphStyleIds.get(String(textPlan.styleKey)) ?? buildParagraphStyleId(String(textPlan.styleKey))
-      const fontSignature = `${textPlan.fontFamily}:${textPlan.fontWeight}:${textPlan.italic ? "italic" : "normal"}`
-      const font = fontCatalog.get(fontSignature)
-      if (!font) continue
-      const colorSignature = `${textPlan.textColor.r},${textPlan.textColor.g},${textPlan.textColor.b}`
-      const fillColorId = colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID
-      const characterStyleIdForSegment = (segment: {
-        fontFamily: string
-        fontWeight: number
-        italic: boolean
-        fontSize: number
-        trackingScale: number
-        color: string | RgbColor
-      }) => {
-        const segmentFontSignature = `${segment.fontFamily}:${segment.fontWeight}:${segment.italic ? "italic" : "normal"}`
-        const segmentFont = fontCatalog.get(segmentFontSignature) ?? font
-        const segmentColor = typeof segment.color === "string"
-          ? parseHexColor(segment.color) ?? textPlan.textColor
-          : segment.color
-        const segmentColorSignature = `${segmentColor.r},${segmentColor.g},${segmentColor.b}`
-        const segmentFillColorId = colorIdBySignature.get(segmentColorSignature) ?? fillColorId
-        const styleSignature = buildCharacterStyleSignature(
-          segmentFont,
-          segment.fontSize,
-          textPlan.leading,
-          segment.trackingScale,
-          segmentFillColorId,
-        )
-        return characterStyleIds.get(styleSignature) ?? "CharacterStyle/$ID/[No character style]"
-      }
-
+      if (textPlan.graphemeLines.length === 0) continue
       const blockRotationMatrix = buildRotationMatrix(
         textPlan.blockRotation,
         textPlan.rotationOriginX,
         textPlan.rotationOriginY,
       )
-      const frameMatrix = multiplyMatrices(pageTransformMatrix, blockRotationMatrix)
+      const itemMatrix = multiplyMatrices(pageTransformMatrix, blockRotationMatrix)
+      const outlinedGraphemeTasks: Array<Promise<string | null>> = []
 
-      localStorySequence += 1
-      const storyId = `sggStory_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`
-      const storyFilePath = `Stories/Story_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}.xml`
-      const frameLeft = textPlan.rect.x
-      const frameTop = textPlan.commands[0].y - textPlan.leading
-      const frameWidth = Math.max(textPlan.rect.width, 1)
-      const frameHeight = Math.max(textPlan.rect.height, textPlan.leading * (textPlan.commands.length + 1))
+      for (const [lineIndex, graphemeLine] of textPlan.graphemeLines.entries()) {
+        for (const [graphemeIndex, grapheme] of graphemeLine.entries()) {
+          if (!isRenderableTextFragment(grapheme.text)) continue
+          localItemSequence += 1
+          const itemId = `sggGlyph_${String(pageIndex + 1).padStart(3, "0")}_${String(localItemSequence).padStart(4, "0")}`
+          const itemName = `${page.name} / ${textPlan.key} / glyph ${lineIndex + 1}.${graphemeIndex + 1}`
+          outlinedGraphemeTasks.push((async () => {
+            const font = await loadOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)
+            if (!font) {
+              throw new Error(`Unable to resolve outline font for IDML export: ${grapheme.fontFamily} ${grapheme.fontWeight}${grapheme.italic ? " italic" : ""}`)
+            }
 
-      textItems.push(
-        renderIdmlElement(
-          "TextFrame",
-          {
-            Self: `sggTextFrame_${String(pageIndex + 1).padStart(3, "0")}_${String(localStorySequence).padStart(3, "0")}`,
-            ParentStory: storyId,
-            Name: `${page.name} / ${textPlan.key}`,
-            ItemLayer: LAYER_TYPOGRAPHY_ID,
-            ItemTransform: isIdentityMatrix(frameMatrix) ? undefined : formatMatrix(frameMatrix),
-            Visible: true,
-            ContentType: "TextType",
-            FillColor: SWATCH_NONE_ID,
-            StrokeColor: SWATCH_NONE_ID,
-            StrokeWeight: 0,
-          },
-          [
-            renderRectPathGeometry(frameLeft, frameTop, frameWidth, frameHeight),
-            buildTextFramePreference(frameWidth),
-            buildTextWrapPreference(),
-          ],
-        ),
-      )
-
-      stories.push({
-        id: storyId,
-        filePath: storyFilePath,
-        xml: [
-          `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`,
-          `<idPkg:Story xmlns:idPkg="http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging" DOMVersion="20.0">`,
-          renderIdmlElement(
-            "Story",
-            {
-              Self: storyId,
-              UserText: true,
-              IsEndnoteStory: false,
-              AppliedTOCStyle: "n",
-              TrackChanges: false,
-              StoryTitle: `${page.name} / ${textPlan.key}`,
-              AppliedNamedGrid: "n",
-            },
-            [
-              renderIdmlElement("StoryPreference", {
-                OpticalMarginAlignment: false,
-                OpticalMarginSize: formatIdmlNumber(textPlan.fontSize),
-                FrameType: "TextFrameType",
-                StoryOrientation: "Horizontal",
-                StoryDirection: "LeftToRightDirection",
-              }),
-              renderIdmlElement(
-                "ParagraphStyleRange",
+            const geometryPaths = convertOpenTypeCommandsToGeometryPaths(
+              font.getPath(
+                grapheme.text,
+                grapheme.x,
+                grapheme.y,
+                grapheme.fontSize,
                 {
-                  AppliedParagraphStyle: paragraphStyleId,
-                  Justification: toJustification(textPlan.textAlign),
+                  kerning: false,
+                  hinting: false,
                 },
-                formatStoryContentSegments(textPlan, characterStyleIdForSegment),
-              ),
-            ],
-          ),
-          `</idPkg:Story>`,
-        ].join(""),
-      })
+              ).commands,
+            )
+            if (geometryPaths.length === 0) return null
+
+            const graphemeColor = parseHexColor(grapheme.color) ?? textPlan.textColor
+            const colorSignature = `${graphemeColor.r},${graphemeColor.g},${graphemeColor.b}`
+            return renderIdmlElement(
+              "Polygon",
+              {
+                Self: itemId,
+                Name: itemName,
+                ItemLayer: LAYER_TYPOGRAPHY_ID,
+                ItemTransform: isIdentityMatrix(itemMatrix) ? undefined : formatMatrix(itemMatrix),
+                Visible: true,
+                FillColor: colorIdBySignature.get(colorSignature) ?? COLOR_BLACK_ID,
+                StrokeColor: SWATCH_NONE_ID,
+                StrokeWeight: 0,
+              },
+              renderPathGeometry(geometryPaths),
+            )
+          })())
+        }
+      }
+
+      textItems.push(...(await Promise.all(outlinedGraphemeTasks)).filter((item): item is string => item !== null))
     }
 
     spreads.push({
@@ -800,7 +719,7 @@ function buildSpreadAndStories(
         `</idPkg:Spread>`,
       ].join(""),
     })
-  })
+  }
 
   return { spreads, stories }
 }
@@ -1488,20 +1407,13 @@ export async function buildSwissGridIdmlPackage(document: SwissGridIdmlDocument)
   ])
   const fontCatalog = await buildFontCatalog(document)
   const fonts = [...new Map(fontCatalog.values().map((font) => [`${font.family}|${font.styleName}`, font] as const)).values()]
-  const { styles: characterStyles, styleIdBySignature } = await buildCharacterStyles(
+  const { styles: characterStyles } = await buildCharacterStyles(
     document,
     colorIdBySignature,
     fontCatalog,
   )
   const paragraphStyleKeys = buildParagraphStyleKeys(document)
-  const paragraphStyleIds = new Map(paragraphStyleKeys.map((styleKey) => [styleKey, buildParagraphStyleId(styleKey)] as const))
-  const { spreads, stories } = buildSpreadAndStories(
-    document,
-    paragraphStyleIds,
-    styleIdBySignature,
-    colorIdBySignature,
-    fontCatalog,
-  )
+  const { spreads, stories } = await buildSpreadAndStories(document, colorIdBySignature)
   const designMapXml = buildDesignMapXml(document, customSwatches, spreads, stories)
 
   return zipSync({

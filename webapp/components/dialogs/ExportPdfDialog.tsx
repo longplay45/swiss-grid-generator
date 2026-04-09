@@ -159,7 +159,7 @@ export function ExportPdfDialog({
         {isIdmlExport && (
           <p className={helpTextClassName}>
             IDML v1 exports the selected page range. Each page keeps its stored size, margins, bleed, guides,
-            placeholders, and frozen text geometry for InDesign continuation.
+            placeholders, and outlined glyph geometry for maximum fidelity.
           </p>
         )}
         {!isIdmlExport && isMultiPageSelection && (
@@ -230,8 +230,8 @@ export function ExportPdfDialog({
           </p>
         ) : (
           <p className={helpTextClassName}>
-            IDML v1 exports the selected project page range as an InDesign package with separate guides, typography,
-            and placeholder layers.
+            IDML v1 exports the selected project page range as an InDesign package with separate guides, outlined
+            typography, and placeholder layers.
           </p>
         )}
         <div className="flex items-center justify-end gap-2">

@@ -21,7 +21,7 @@ test("idml export rebuilds each project page through the shared resolver and pag
   assert.match(source, /showTypography:\s*resolved\.uiSettings\.showTypography/)
 })
 
-test("idml package builder writes a packaged document with resources, spreads, and stories", () => {
+test("idml package builder writes a packaged document with resources, spreads, and a backing story", () => {
   const source = readText("lib/idml/builder.ts")
   assert.match(source, /zipSync\(/)
   assert.match(source, /application\/vnd\.adobe\.indesign-idml-package/)
@@ -36,7 +36,6 @@ test("idml package builder writes a packaged document with resources, spreads, a
   assert.match(source, /"XML\/Tags\.xml"/)
   assert.match(source, /"designmap\.xml"/)
   assert.match(source, /Spreads\/Spread_\$\{String\(pageIndex \+ 1\)\.padStart\(3,\s*"0"\)\}\.xml/)
-  assert.match(source, /Stories\/Story_\$\{String\(pageIndex \+ 1\)\.padStart\(3,\s*"0"\)\}_\$\{String\(localStorySequence\)\.padStart\(3,\s*"0"\)\}\.xml/)
 })
 
 test("idml builder separates guides, typography, and placeholders on dedicated layers", () => {
@@ -75,23 +74,25 @@ test("idml preferences do not predeclare document pages when spreads already def
   assert.match(source, /FacingPages:\s*false/)
 })
 
-test("idml builder switches to absolute grapheme frames when export geometry is available", () => {
+test("idml builder converts grapheme export geometry into outlined polygon items", () => {
   const source = readText("lib/idml/builder.ts")
-  assert.match(source, /if\s*\(textPlan\.graphemeLines\.length\s*>\s*0\)/)
-  assert.match(source, /buildTextFramePreference\(frameWidth,\s*"AscentOffset"\)/)
-  assert.match(source, /Justification:\s*"LeftAlign"/)
-  assert.match(source, /escapeIdmlXml\(grapheme\.text\)/)
+  assert.match(source, /if\s*\(textPlan\.graphemeLines\.length\s*===\s*0\)\s*continue/)
+  assert.match(source, /loadOutlineFont\(grapheme\.fontFamily,\s*grapheme\.fontWeight,\s*grapheme\.italic\)/)
+  assert.match(source, /font\.getPath\(\s*grapheme\.text,\s*grapheme\.x,\s*grapheme\.y,\s*grapheme\.fontSize/)
+  assert.match(source, /convertOpenTypeCommandsToGeometryPaths\(/)
+  assert.match(source, /renderIdmlElement\(\s*"Polygon"/)
+  assert.match(source, /renderPathGeometry\(geometryPaths\)/)
 })
 
-test("idml styles include paragraph families plus per-block character styles for frozen text geometry", () => {
+test("idml styles still include paragraph families plus per-character vector export resources", () => {
   const source = readText("lib/idml/builder.ts")
+  assert.match(source, /buildCharacterStyles\(/)
   assert.match(source, /buildParagraphStyleKeys\(/)
   assert.match(source, /"body",\s*"headline",\s*"display",\s*"fx",\s*"caption"/)
   assert.match(source, /CharacterStyle\/sgg\/char_/)
   assert.match(source, /ParagraphStyle\/sgg\//)
   assert.match(source, /AppliedFont",\s*\{\s*type:\s*"string"\s*\}/)
   assert.match(source, /Leading",\s*\{\s*type:\s*"unit"\s*\}/)
-  assert.match(source, /formatStoryContent\(textPlan\.commands\.map/)
 })
 
 test("idml font metadata prefers parsed font-file names and keeps a fallback path", () => {

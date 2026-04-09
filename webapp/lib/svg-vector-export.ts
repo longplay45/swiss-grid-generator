@@ -1,35 +1,17 @@
-import { parse as parseOpenType } from "opentype.js"
-
 import type { GridResult } from "@/lib/grid-calculator"
 import {
   DEFAULT_BASE_FONT,
-  getFontAssetPath,
-  resolveFontVariant,
   type FontFamily,
 } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { formatSvgColor, parseHexColor } from "@/lib/export-colors"
+import { loadOutlineFont } from "@/lib/font-outline"
 import { buildPageExportPlan } from "@/lib/page-export-plan"
 import { getRenderedTextDrawCommandText } from "@/lib/text-draw-command"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
-type OpenTypePath = {
-  toPathData: (decimalPlaces?: number) => string
-}
-type OpenTypeFont = {
-  getPath: (
-    text: string,
-    x: number,
-    y: number,
-    fontSize: number,
-    options?: {
-      kerning?: boolean
-      hinting?: boolean
-    },
-  ) => OpenTypePath
-}
 
 type ExportVectorSvgOptions = {
   width: number
@@ -48,8 +30,6 @@ type ExportVectorSvgOptions = {
   title?: string
   description?: string
 }
-
-const svgOutlineFontCache = new Map<string, Promise<OpenTypeFont | null>>()
 
 function formatNumber(value: number): string {
   if (!Number.isFinite(value)) return "0"
@@ -78,43 +58,6 @@ function renderRotationTransform(rotation: number, originX: number, originY: num
   return ` transform="rotate(${formatNumber(rotation)} ${formatNumber(originX)} ${formatNumber(originY)})"`
 }
 
-function getResolvedSvgFontFace(fontFamily: FontFamily, fontWeight: number, italic: boolean) {
-  const resolvedVariant = resolveFontVariant(fontFamily, fontWeight, italic)
-  return {
-    cacheKey: `${fontFamily}:${resolvedVariant.weight}:${resolvedVariant.italic ? "italic" : "normal"}`,
-    assetPath: getFontAssetPath(fontFamily, resolvedVariant.weight, resolvedVariant.italic),
-    fontFamily,
-    fontWeight: resolvedVariant.weight,
-    italic: resolvedVariant.italic,
-  }
-}
-
-async function loadSvgOutlineFont(
-  fontFamily: FontFamily,
-  fontWeight: number,
-  italic: boolean,
-): Promise<OpenTypeFont | null> {
-  const resolvedFace = getResolvedSvgFontFace(fontFamily, fontWeight, italic)
-  const cached = svgOutlineFontCache.get(resolvedFace.cacheKey)
-  if (cached) return cached
-
-  const pending = (async () => {
-    if (typeof fetch !== "function") return null
-
-    try {
-      const response = await fetch(resolvedFace.assetPath)
-      if (!response.ok) return null
-      const buffer = await response.arrayBuffer()
-      return parseOpenType(buffer) as OpenTypeFont
-    } catch {
-      return null
-    }
-  })()
-
-  svgOutlineFontCache.set(resolvedFace.cacheKey, pending)
-  return pending
-}
-
 async function renderOutlinedGrapheme(
   grapheme: {
     text: string
@@ -130,7 +73,7 @@ async function renderOutlinedGrapheme(
 ): Promise<string> {
   if (!isRenderableTextFragment(grapheme.text)) return ""
 
-  const font = await loadSvgOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)
+  const font = await loadOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)
   const fillColor = formatSvgColor(parseHexColor(grapheme.color) ?? fallbackColor ?? { r: 0, g: 0, b: 0 })
 
   if (!font) {
@@ -194,7 +137,7 @@ export async function renderSwissGridVectorSvg({
 
   await Promise.all(exportPlan.textPlans.flatMap((textPlan) => textPlan.graphemeLines.flatMap((line) => line
     .filter((grapheme) => isRenderableTextFragment(grapheme.text))
-    .map((grapheme) => loadSvgOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)))))
+    .map((grapheme) => loadOutlineFont(grapheme.fontFamily, grapheme.fontWeight, grapheme.italic)))))
 
   const guideMarkup = exportPlan.guideGroups.map((guideGroup) => {
     const stroke = formatSvgColor(guideGroup.strokeColor)
