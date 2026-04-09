@@ -17,7 +17,7 @@ type TooltipPoint = {
   y: number
 }
 
-const TOOLTIP_CURSOR_OFFSET_PX = 14
+const TOOLTIP_ANCHOR_GAP_PX = 8
 
 export function HoverTooltip({
   label,
@@ -31,13 +31,13 @@ export function HoverTooltip({
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const [isActive, setIsActive] = useState(false)
-  const [anchorPoint, setAnchorPoint] = useState<TooltipPoint | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<TooltipPoint | null>(null)
 
   const updateTooltipPosition = useCallback(() => {
-    if (disabled || !isActive || !anchorPoint || typeof window === "undefined") return
+    if (disabled || !isActive || typeof window === "undefined") return
+    const wrapperRect = wrapperRef.current?.getBoundingClientRect()
     const node = tooltipRef.current
-    if (!node) return
+    if (!node || !wrapperRect) return
     const rect = node.getBoundingClientRect()
 
     let minX = viewportPaddingPx
@@ -65,10 +65,11 @@ export function HoverTooltip({
 
     const minLeft = minX
     const maxLeft = Math.max(minLeft, maxX - rect.width)
-    const nextLeft = Math.min(Math.max(anchorPoint.x - rect.width / 2, minLeft), maxLeft)
+    const anchorCenterX = wrapperRect.left + wrapperRect.width / 2
+    const nextLeft = Math.min(Math.max(anchorCenterX - rect.width / 2, minLeft), maxLeft)
 
-    const belowTop = anchorPoint.y + TOOLTIP_CURSOR_OFFSET_PX
-    const aboveTop = anchorPoint.y - TOOLTIP_CURSOR_OFFSET_PX - rect.height
+    const belowTop = wrapperRect.bottom + TOOLTIP_ANCHOR_GAP_PX
+    const aboveTop = wrapperRect.top - TOOLTIP_ANCHOR_GAP_PX - rect.height
     const maxTop = Math.max(minY, maxY - rect.height)
     const preferredTop = belowTop + rect.height <= maxY || aboveTop < minY
       ? belowTop
@@ -76,10 +77,10 @@ export function HoverTooltip({
     const nextTop = Math.min(Math.max(preferredTop, minY), maxTop)
 
     setTooltipPosition({ x: nextLeft, y: nextTop })
-  }, [anchorPoint, constrainToClosestSelector, disabled, isActive, viewportPaddingPx])
+  }, [constrainToClosestSelector, disabled, isActive, viewportPaddingPx])
 
   useLayoutEffect(() => {
-    if (disabled || !isActive || !anchorPoint) {
+    if (disabled || !isActive) {
       setTooltipPosition(null)
       return
     }
@@ -91,39 +92,25 @@ export function HoverTooltip({
       window.removeEventListener("resize", handleViewportChange)
       window.removeEventListener("scroll", handleViewportChange, true)
     }
-  }, [anchorPoint, disabled, isActive, updateTooltipPosition])
-
-  const activateFromPointer = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    setIsActive(true)
-    setAnchorPoint({ x: event.clientX, y: event.clientY })
-  }, [])
+  }, [disabled, isActive, updateTooltipPosition])
 
   const activateFromElement = useCallback(() => {
-    const rect = wrapperRef.current?.getBoundingClientRect()
-    if (!rect) return
     setIsActive(true)
-    setAnchorPoint({
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-    })
   }, [])
 
   return (
     <div
       ref={wrapperRef}
       className={cn(!disabled && "relative", className)}
-      onMouseEnter={disabled ? undefined : activateFromPointer}
-      onMouseMove={disabled ? undefined : activateFromPointer}
+      onMouseEnter={disabled ? undefined : activateFromElement}
       onMouseLeave={disabled ? undefined : () => {
         setIsActive(false)
-        setAnchorPoint(null)
       }}
       onFocusCapture={disabled ? undefined : activateFromElement}
       onBlurCapture={disabled ? undefined : (event) => {
         const nextTarget = event.relatedTarget
         if (!(nextTarget instanceof Node) || !wrapperRef.current?.contains(nextTarget)) {
           setIsActive(false)
-          setAnchorPoint(null)
         }
       }}
     >
