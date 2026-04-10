@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-08T09:05:16.422Z",
+  "exportedAt": "2026-04-10T10:43:25.446Z",
   "title": "Swiss Style Poster A0 001",
   "description": "",
-  "author": "netzwerkerei@gmail.com",
+  "author": "",
   "createdAt": "2026-03-09T12:51:56.921Z",
   "activePageId": "page-din-ab-portrait-4x4-method1-12-000pt-grid",
   "pages": [
@@ -41,7 +41,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -234,12 +234,12 @@
         "blockTextColors": {},
         "layerOrder": [
           "body",
+          "paragraph-1772528695124-y56i9f",
           "display",
-          "headline",
+          "paragraph-1772610667455-aooo5z",
           "paragraph-1772610247079-0uugg8",
           "paragraph-1772610667455-372iaj",
-          "paragraph-1772610667455-aooo5z",
-          "paragraph-1772528695124-y56i9f"
+          "headline"
         ],
         "imageOrder": [],
         "imageModulePositions": {},
