@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { FONT_DEFINITIONS } from "@/lib/config/fonts"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
 import type { HelpSectionId } from "@/lib/help-registry"
@@ -16,6 +17,23 @@ type SectionHeadingProps = {
   className: string
   jumpButtonClassName: string
   children: ReactNode
+}
+
+const GOOGLE_FONTS_SPECIMEN_BASE_URL = "https://fonts.google.com/specimen/"
+const FONT_CATEGORY_ORDER = ["Sans-Serif", "Serif", "Display"] as const
+const FONT_CATEGORY_LABEL: Record<(typeof FONT_CATEGORY_ORDER)[number], string> = {
+  "Sans-Serif": "Sans-Serif",
+  Serif: "Serif",
+  Display: "Poster",
+}
+const AVAILABLE_FONT_GROUPS = FONT_CATEGORY_ORDER.map((category) => ({
+  category,
+  label: FONT_CATEGORY_LABEL[category],
+  fonts: FONT_DEFINITIONS.filter((definition) => definition.category === category),
+}))
+
+function getGoogleFontsSpecimenUrl(fontLabel: string): string {
+  return `${GOOGLE_FONTS_SPECIMEN_BASE_URL}${fontLabel.replace(/\s+/g, "+")}`
 }
 
 function SectionHeading({
@@ -126,8 +144,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.</li>
           <li>Choose a margin method in `III. Margins`, or select `Custom Margins` from the same dropdown.</li>
           <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
-          <li>Set type hierarchy and base font in `V. Typo`.</li>
-          <li>Set default placeholder palette in `VI. Color Scheme`.</li>
+          <li>Set type hierarchy and base font in `V. Typo`, then use `VI. Available Fonts` for the full family list and Google Fonts links.</li>
+          <li>Set default placeholder palette in `VII. Color Scheme`.</li>
           <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
         </ul>
       </section>
@@ -530,17 +548,48 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and FX is `96pt / 96pt`.</li>
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
-          <li>Font groups: `Sans-Serif`, `Serif`, `Poster`.</li>
-          <li>Available families: Sans-Serif `Inter`, `Work Sans`, `Jost`, `IBM Plex Sans`, `Libre Franklin`; Serif `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`; Poster `Playfair Display`.</li>
           <li>The text editor can override the paragraph cut with any available family variant, while untouched weight/slant defaults still follow the selected hierarchy.</li>
         </ul>
       </section>
 
       <hr className={tone.divider} />
 
+      <section id="help-available-fonts" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          VI. Available Fonts
+        </SectionHeading>
+        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          <li>Base-font and paragraph font-family pickers use the same grouped family list.</li>
+          <li>Every listed family links to its Google Fonts specimen/download page.</li>
+        </ul>
+        <div className="space-y-3">
+          {AVAILABLE_FONT_GROUPS.map((group) => (
+            <div key={group.category} className="space-y-1">
+              <p className={`text-xs font-semibold ${tone.heading}`}>{group.label}</p>
+              <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+                {group.fonts.map((font) => (
+                  <li key={font.value}>
+                    <a
+                      href={getGoogleFontsSpecimenUrl(font.label)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={tone.indexLink}
+                    >
+                      {font.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <hr className={tone.divider} />
+
       <section id="help-color-scheme" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          VI. Color Scheme
+          VII. Color Scheme
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Selects the base scheme used for new image placeholders.</li>

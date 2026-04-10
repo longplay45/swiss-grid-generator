@@ -787,6 +787,12 @@ export const GridPreview = memo(function GridPreview({
   const hoveredImageRect = hoverImageKey
     ? imageRectsRef.current[hoverImageKey] ?? null
     : linkedHoveredImageRect
+  const activeTextEditorRect = editorState?.target
+    ? blockRectsRef.current[editorState.target] ?? null
+    : null
+  const activeImageEditorRect = imageEditorState?.target
+    ? imageRectsRef.current[imageEditorState.target] ?? null
+    : null
 
   usePreviewOverlayCanvas({
     overlayCanvasRef,
@@ -978,6 +984,8 @@ export const GridPreview = memo(function GridPreview({
         editorState={editorState}
         imageEditorState={imageEditorState}
         textEditorControls={textEditorControls}
+        activeTextEditorRect={activeTextEditorRect}
+        activeImageEditorRect={activeImageEditorRect}
         hoveredTextKey={hoverState?.key ?? null}
         hoveredTextRect={hoveredTextGuideRect}
         hoveredTextAlign={hoveredTextAlign}

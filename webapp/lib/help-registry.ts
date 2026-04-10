@@ -20,7 +20,8 @@ export const GRID_SETTINGS_INDEX_ITEMS = [
   { id: "help-margins", label: "III. Margins" },
   { id: "help-gutter", label: "IV. Gutter" },
   { id: "help-typo", label: "V. Typo" },
-  { id: "help-color-scheme", label: "VI. Color Scheme" },
+  { id: "help-available-fonts", label: "VI. Available Fonts" },
+  { id: "help-color-scheme", label: "VII. Color Scheme" },
 ] as const
 
 export const HEADER_CONTROLS_INDEX_ITEMS = [

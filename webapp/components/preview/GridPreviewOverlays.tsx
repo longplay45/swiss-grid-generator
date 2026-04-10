@@ -19,6 +19,8 @@ type Props<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey> | null
   imageEditorState: ImageEditorState | null
   textEditorControls: TextEditorControls<StyleKey> | null
+  activeTextEditorRect: BlockRect | null
+  activeImageEditorRect: BlockRect | null
   hoveredTextKey: string | null
   hoveredTextRect: BlockRect | null
   hoveredTextAlign: TextAlignMode | null
@@ -49,6 +51,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
   editorState,
   imageEditorState,
   textEditorControls,
+  activeTextEditorRect,
+  activeImageEditorRect,
   hoveredTextKey,
   hoveredTextRect,
   hoveredTextAlign,
@@ -69,11 +73,24 @@ export function GridPreviewOverlays<StyleKey extends string>({
   onOpenHelpSection,
   isDarkMode = false,
 }: Props<StyleKey>) {
+  const PREVIEW_EDITOR_INSET_PX = 12
   const hoveredEditTarget = hoveredTextKey && hoveredTextRect
     ? { kind: "text" as const, key: hoveredTextKey, rect: hoveredTextRect }
-    : hoveredImageKey && hoveredImageRect
+      : hoveredImageKey && hoveredImageRect
       ? { kind: "image" as const, key: hoveredImageKey, rect: hoveredImageRect }
       : null
+  const resolveEditorDockSide = (rect: BlockRect | null): "left" | "right" => {
+    if (!rect) return "left"
+    const rectCenterX = rect.x + rect.width / 2
+    return rectCenterX < pageWidthCss / 2 ? "right" : "left"
+  }
+  const getDockStyle = (dockSide: "left" | "right") => (
+    dockSide === "left"
+      ? { left: PREVIEW_EDITOR_INSET_PX }
+      : { right: PREVIEW_EDITOR_INSET_PX }
+  )
+  const textEditorDockSide = resolveEditorDockSide(activeTextEditorRect)
+  const imageEditorDockSide = resolveEditorDockSide(activeImageEditorRect)
   const editButtonSize = 26
   const editButtonInset = 6
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
@@ -153,7 +170,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
       {editorState && textEditorControls ? (
         <div
           data-text-editor-panel="true"
-          className="absolute left-3 top-3 z-40"
+          className="absolute top-3 z-40"
+          style={getDockStyle(textEditorDockSide)}
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
         >
           <TextEditorPanel
@@ -161,6 +179,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
             showRolloverInfo={showRolloverInfo}
             controls={textEditorControls}
             isDarkMode={isDarkMode}
+            dockSide={textEditorDockSide}
           />
         </div>
       ) : null}
@@ -168,7 +187,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
       {imageEditorState ? (
         <div
           data-image-editor-panel="true"
-          className="absolute left-3 top-3 z-40"
+          className="absolute top-3 z-40"
+          style={getDockStyle(imageEditorDockSide)}
           onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
         >
           <ImageEditorDialog
@@ -185,6 +205,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
             isHelpActive={showEditorHelpIcon}
             showRolloverInfo={showRolloverInfo}
             isDarkMode={isDarkMode}
+            dockSide={imageEditorDockSide}
           />
         </div>
       ) : null}

@@ -124,9 +124,9 @@ Default: `swiss`
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
-  - Sans-Serif: `Inter`, `Work Sans`, `Jost`, `IBM Plex Sans`, `Libre Franklin`
-  - Serif: `EB Garamond`, `Libre Baskerville`, `Bodoni Moda`, `Besley`
-  - Poster: `Playfair Display`
+  - Sans-Serif: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
+  - Serif: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
+  - Poster: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display)
 
 ### VI. Color Scheme
 

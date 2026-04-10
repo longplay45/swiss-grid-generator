@@ -74,10 +74,10 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ### Typography System
 - Five harmonious type scales (Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth)
 - Six hierarchy levels: **FX · Display · Headline · Subhead · Body · Caption**
-- Grouped Google Fonts:
-  - **Sans-Serif**: Inter, Work Sans, Jost, IBM Plex Sans, Libre Franklin…
-  - **Serif**: EB Garamond, Libre Baskerville, Bodoni Moda…
-  - **Poster/Display**: Playfair Display + custom FX control
+- Available Fonts:
+  - **Sans-Serif**: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
+  - **Serif**: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
+  - **Poster**: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display)
 - Paragraph-level geometry and alignment plus selection-level font family, cut, hierarchy, color, and tracking
 - Optical/metric kerning toggle with shared render/export behavior
 - Inline editor caret and selection follow rendered text geometry

@@ -49,6 +49,7 @@ type ImageEditorDialogProps = {
   isHelpActive?: boolean
   showRolloverInfo?: boolean
   isDarkMode?: boolean
+  dockSide?: "left" | "right"
 }
 
 export function ImageEditorDialog({
@@ -65,6 +66,7 @@ export function ImageEditorDialog({
   isHelpActive = false,
   showRolloverInfo = true,
   isDarkMode = false,
+  dockSide = "left",
 }: ImageEditorDialogProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
   const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
@@ -128,6 +130,8 @@ export function ImageEditorDialog({
   const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
   const railTooltipClassName = tone.railTooltip
   const submenuTooltipClassName = tone.submenuTooltip
+  const tooltipHorizontalAlign = dockSide === "left" ? "start" : "end"
+  const submenuPositionClassName = dockSide === "left" ? "left-full ml-2" : "right-full mr-2"
   const positionSubmenu = (anchor: HTMLElement) => {
     const panelRect = panelRef.current?.getBoundingClientRect()
     if (!panelRect) return
@@ -147,7 +151,7 @@ export function ImageEditorDialog({
       label={label}
       disabled={!showRolloverInfo}
       constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign="start"
+      horizontalAlign={tooltipHorizontalAlign}
       tooltipClassName={railTooltipClassName}
     >
       {child}
@@ -160,7 +164,7 @@ export function ImageEditorDialog({
       disabled={!showRolloverInfo}
       anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
       constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign="start"
+      horizontalAlign={tooltipHorizontalAlign}
       tooltipClassName={submenuTooltipClassName}
     >
       {child}
@@ -242,7 +246,7 @@ export function ImageEditorDialog({
       {activeSubmenu ? (
         <div
           data-submenu-tooltip-anchor="image-editor"
-          className={`absolute left-full ml-2 max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
+          className={`absolute ${submenuPositionClassName} max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
           style={{ top: activeSubmenuTop }}
         >
           {isHelpActive ? <HelpIndicatorLine /> : null}
