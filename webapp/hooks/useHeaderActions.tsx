@@ -105,6 +105,7 @@ export function useHeaderActions(args: Args) {
         icon: <Save className="h-4 w-4" />,
       },
     },
+    { type: "divider", key: "divider-save-export" },
     {
       type: "action",
       action: {
