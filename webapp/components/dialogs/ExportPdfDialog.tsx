@@ -78,7 +78,8 @@ export function ExportPdfDialog({
           <h3 className="text-base font-semibold">Export</h3>
           <p className={helpTextClassName}>
             WYSIWYG: exports exactly what is currently shown in the preview, including baselines, margins, grid/modules,
-            typography, and image placeholders.
+            typography, and image placeholders. All exports stay vector-based. Use `SVG` or `IDML` when you need
+            typography frozen into non-live geometry.
           </p>
         </div>
         <div className="space-y-2">
@@ -159,7 +160,8 @@ export function ExportPdfDialog({
         {isIdmlExport && (
           <p className={helpTextClassName}>
             IDML v1 exports the selected page range. Each page keeps its stored size, margins, bleed, guides,
-            placeholders, and outlined glyph geometry for maximum fidelity.
+            placeholders, and outlined glyph geometry for maximum fidelity. Typography is no longer editable as live
+            text downstream.
           </p>
         )}
         {!isIdmlExport && isMultiPageSelection && (
@@ -225,13 +227,13 @@ export function ExportPdfDialog({
         ) : isSvgExport ? (
           <p className={helpTextClassName}>
             {isMultiPageSelection
-              ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity. PDF print presets are not applied."
-              : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths. PDF print presets are not applied."}
+              ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity, so exported text is not live-editable. PDF print presets are not applied."
+              : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths, so exported text is not live-editable. PDF print presets are not applied."}
           </p>
         ) : (
           <p className={helpTextClassName}>
             IDML v1 exports the selected project page range as an InDesign package with separate guides, outlined
-            typography, and placeholder layers.
+            typography, and placeholder layers. Exported typography is frozen as geometry rather than live text.
           </p>
         )}
         <div className="flex items-center justify-end gap-2">

@@ -100,6 +100,7 @@ Current capability inventory for Swiss Grid Generator.
 - `IDML v1` selected-range export.
 - Export defaults to the full project page range.
 - All export formats use stored page geometry directly.
+- All export formats are vector-based, not raster captures.
 - `PDF` print presets:
   - `Digital Print`
   - `Press Proof`
@@ -108,9 +109,11 @@ Current capability inventory for Swiss Grid Generator.
   - `sRGB IEC61966-2.1` for digital export
   - `Coated FOGRA39` for print export
 - PDF guide groups exported as separate form objects for margins, modules, and baselines.
+- Use `SVG` or `IDML` when typography must be frozen as non-live geometry.
 - Single-page SVG exports a trim-size vector file with exact glyph-outline typography, guides, and placeholders.
 - Multi-page SVG exports a ZIP with one trim-size SVG per page.
-- IDML exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry.
+- SVG typography is exported as outline geometry, so downstream text is not live-editable.
+- IDML exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry, so downstream text is not live-editable.
 
 ## UI and Workflow
 

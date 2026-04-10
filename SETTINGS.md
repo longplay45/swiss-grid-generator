@@ -247,9 +247,12 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - All export formats use each page's stored document size
   - no paper-size override controls
   - no custom width override controls
+- All export formats stay vector-based
+- Use `SVG` or `IDML` when typography must be frozen as non-live geometry
 - `IDML`:
   - exports the selected page range
   - keeps each page at its stored document size
+  - freezes typography into outlined/non-live geometry
 - Filename input
 - `PDF` print presets:
   - `Digital Print` (default)
@@ -257,6 +260,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
   - Bleed input (mm)
   - Registration-style marks toggle
 - `SVG` does not expose PDF print settings
+  - converts typography to exact glyph outlines, so exported text is not live-editable
 - Confirm/Cancel
 - Esc closes popup
 
@@ -364,8 +368,8 @@ Behavior:
 
 - JSON: full UI + preview layout state.
 - PDF: vector selected-range output with `Digital Print` and `Press Proof` presets, embedded output intents, grouped guide vectors, and stored page geometry per exported page.
-- SVG: single-page trim-size vector output with typography converted to exact glyph outlines plus guides and placeholders, or a ZIP with one SVG per selected page for multi-page ranges.
-- IDML: selected-range export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers.
+- SVG: single-page trim-size vector output with typography converted to exact glyph outlines plus guides and placeholders, or a ZIP with one SVG per selected page for multi-page ranges; exported text is not live-editable.
+- IDML: selected-range export with one InDesign page per app page and separate `Guides`, `Typography`, and `Placeholders` layers; exported text is frozen as geometry rather than live text.
 
 ## JSON UI Fields (current)
 

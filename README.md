@@ -106,10 +106,13 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - **IDML v1 export** for InDesign continuation
 - Export opens with the full project page range selected by default
 - `PDF`, `SVG`, and `IDML` all export the selected page range using each page's stored document size
+- All export formats are vector-based rather than raster screenshot captures
 - Multi-page `SVG` export downloads a ZIP with one SVG per page
 - PDF print options: bleed, registration-style marks, and output intents
 - PDF presets: **Digital Print** (RGB / sRGB) and **Press Proof** (CMYK / FOGRA39)
-- IDML separates **Guides**, **Typography**, and **Placeholders** into distinct layers
+- Use `SVG` or `IDML` when you need typography frozen as non-live geometry
+- `SVG` converts typography to exact glyph outlines, so exported text is not live-editable
+- `IDML` separates **Guides**, **Typography**, and **Placeholders** into distinct layers and freezes typography geometry
 
 ### Extras
 - Undo / Redo

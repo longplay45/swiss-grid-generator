@@ -329,7 +329,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Export
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens the export dialog for vector PDF, SVG, and IDML output. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
+          Opens the export dialog for vector PDF, SVG, and IDML output. Use `SVG` or `IDML` when you need typography
+          frozen into non-live geometry. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
         </p>
       </section>
 
@@ -575,12 +576,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Export
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Export is vector-based (not raster screenshot export).</li>
+          <li>All export formats are vector-based, not raster screenshots.</li>
           <li>The export dialog defaults to the full project page range and lets you narrow it with `From` / `To` selectors when the project has multiple pages.</li>
           <li>All export formats use each page&apos;s stored document size directly; the dialog no longer offers paper-size or width overrides.</li>
-          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, registration-style marks, and embedded output intents where applicable.</li>
-          <li>`SVG v1` exports trim-size SVGs with typography converted to exact glyph outlines, or a ZIP with one trim-size SVG per page for multi-page ranges.</li>
-          <li>`IDML v1` exports the selected page range with separate `Guides`, `Typography`, and `Placeholders` layers plus frozen text-frame geometry and resolved font family/style names.</li>
+          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, registration-style marks, and embedded output intents where applicable. It remains vector-based and visually faithful, but frozen non-live typography is the `SVG` / `IDML` path.</li>
+          <li>`SVG v1` exports trim-size SVGs with typography converted to exact glyph outlines, or a ZIP with one trim-size SVG per page for multi-page ranges. Exported text is no longer live-editable.</li>
+          <li>`IDML v1` exports the selected page range with separate `Guides`, `Typography`, and `Placeholders` layers plus frozen text-frame geometry and resolved font family/style names. Exported text is no longer live-editable.</li>
           <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>
         </ul>
       </section>

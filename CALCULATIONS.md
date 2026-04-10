@@ -458,6 +458,12 @@ PDF export embeds selected Google font assets before layout/draw:
 
 This keeps preview/PDF wrap and anchor calculations aligned across font choices.
 
+Export rendering note:
+- All export targets remain vector-based.
+- Use `SVG` or `IDML` when typography must be frozen as non-live geometry.
+- `SVG` and `IDML` resolve typography to frozen outline geometry for downstream fidelity.
+- `PDF` keeps vector text drawing aligned with preview metrics rather than forcing all text into outlines.
+
 ---
 
 ## Unit Conversions
