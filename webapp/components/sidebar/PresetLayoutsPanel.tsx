@@ -80,6 +80,7 @@ export function PresetLayoutsPanel({
             className="block"
             disabled={!showRolloverInfo}
             constrainToClosestSelector='[data-tooltip-boundary="preset-browser"]'
+            constrainAxes="horizontal"
             viewportPaddingPx={36}
             tooltipClassName={`w-72 max-w-[80vw] whitespace-normal border px-2 py-2 text-[11px] leading-snug ${
               isDarkMode

@@ -9,6 +9,7 @@ type HoverTooltipProps = {
   tooltipClassName?: string
   anchorToClosestSelector?: string
   constrainToClosestSelector?: string
+  constrainAxes?: "both" | "horizontal" | "vertical"
   horizontalAlign?: "center" | "start" | "end"
   viewportPaddingPx?: number
   disabled?: boolean
@@ -28,6 +29,7 @@ export function HoverTooltip({
   tooltipClassName,
   anchorToClosestSelector,
   constrainToClosestSelector,
+  constrainAxes = "both",
   horizontalAlign = "center",
   viewportPaddingPx = 12,
   disabled = false,
@@ -58,10 +60,14 @@ export function HoverTooltip({
       const boundary = wrapperRef.current?.closest(constrainToClosestSelector)
       if (boundary instanceof HTMLElement) {
         const boundaryRect = boundary.getBoundingClientRect()
-        minX = Math.max(minX, boundaryRect.left + viewportPaddingPx)
-        maxX = Math.min(maxX, boundaryRect.right - viewportPaddingPx)
-        minY = Math.max(minY, boundaryRect.top + viewportPaddingPx)
-        maxY = Math.min(maxY, boundaryRect.bottom - viewportPaddingPx)
+        if (constrainAxes === "both" || constrainAxes === "horizontal") {
+          minX = Math.max(minX, boundaryRect.left + viewportPaddingPx)
+          maxX = Math.min(maxX, boundaryRect.right - viewportPaddingPx)
+        }
+        if (constrainAxes === "both" || constrainAxes === "vertical") {
+          minY = Math.max(minY, boundaryRect.top + viewportPaddingPx)
+          maxY = Math.min(maxY, boundaryRect.bottom - viewportPaddingPx)
+        }
       }
     }
 
@@ -84,13 +90,21 @@ export function HoverTooltip({
     const belowTop = wrapperRect.bottom + TOOLTIP_ANCHOR_GAP_PX
     const aboveTop = wrapperRect.top - TOOLTIP_ANCHOR_GAP_PX - rect.height
     const maxTop = Math.max(minY, maxY - rect.height)
-    const preferredTop = belowTop + rect.height <= maxY || aboveTop < minY
+    const canFitBelow = belowTop + rect.height <= maxY
+    const canFitAbove = aboveTop >= minY
+    const nextTop = canFitBelow
       ? belowTop
-      : aboveTop
-    const nextTop = Math.min(Math.max(preferredTop, minY), maxTop)
+      : canFitAbove
+        ? aboveTop
+        : Math.min(Math.max(
+          (maxY - wrapperRect.bottom) >= (wrapperRect.top - minY)
+            ? belowTop
+            : aboveTop,
+          minY,
+        ), maxTop)
 
     setTooltipPosition({ x: nextLeft, y: nextTop })
-  }, [anchorToClosestSelector, constrainToClosestSelector, disabled, horizontalAlign, isActive, viewportPaddingPx])
+  }, [anchorToClosestSelector, constrainAxes, constrainToClosestSelector, disabled, horizontalAlign, isActive, viewportPaddingPx])
 
   useLayoutEffect(() => {
     if (disabled || !isActive) {
