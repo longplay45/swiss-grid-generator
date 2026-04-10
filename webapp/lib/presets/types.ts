@@ -56,6 +56,6 @@ export type LayoutPreset = {
   description?: string
   author?: string
   createdAt?: string
-  projectSource: LayoutPresetProjectSource
+  projectSourceJson: string
   browserPage: LayoutPresetBrowserPage
 }

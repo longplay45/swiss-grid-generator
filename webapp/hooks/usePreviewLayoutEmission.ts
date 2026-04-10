@@ -3,18 +3,20 @@ import { useEffect, useRef } from "react"
 type Args<Snapshot> = {
   buildSnapshot: () => Snapshot
   debounceMs: number
+  enabled?: boolean
   onLayoutChange?: ((layout: Snapshot) => void) | undefined
 }
 
 export function usePreviewLayoutEmission<Snapshot>({
   buildSnapshot,
   debounceMs,
+  enabled = true,
   onLayoutChange,
 }: Args<Snapshot>) {
   const timeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!onLayoutChange) {
+    if (!enabled || !onLayoutChange) {
       if (timeoutRef.current !== null) {
         window.clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -37,5 +39,5 @@ export function usePreviewLayoutEmission<Snapshot>({
         timeoutRef.current = null
       }
     }
-  }, [buildSnapshot, debounceMs, onLayoutChange])
+  }, [buildSnapshot, debounceMs, enabled, onLayoutChange])
 }

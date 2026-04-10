@@ -45,6 +45,7 @@ import {
   buildSerializableUiSettingsSnapshot,
 } from "@/lib/ui-settings-resolver"
 import { useProjectState } from "@/hooks/useProjectState"
+import { resolveCurrentPreviewLayout } from "@/lib/current-preview-layout"
 import {
   findTextLayerGridReductionConflicts,
   getGridReductionWarningMessage,
@@ -72,6 +73,7 @@ type GridReductionWarningToastState = {
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
+  const preferCommittedPreviewLayoutRef = useRef(false)
   const headerClickTimeoutRef = useRef<number | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
@@ -281,7 +283,11 @@ export default function Home() {
   )
 
   const getCurrentPreviewLayout = useCallback(
-    () => livePreviewSnapshotGetterRef.current?.() ?? previewLayout,
+    () => resolveCurrentPreviewLayout({
+      preferCommittedLayout: preferCommittedPreviewLayoutRef.current,
+      committedLayout: previewLayout,
+      getLivePreviewLayout: livePreviewSnapshotGetterRef.current,
+    }),
     [previewLayout],
   )
 
@@ -292,6 +298,7 @@ export default function Home() {
   const handleApplyProjectPage = useCallback((page: ProjectPage<PreviewLayoutState>) => {
     const snapshot = buildUiSnapshotFromLoadedSettings(page.uiSettings, collapsed)
     applyLoadedUiSnapshot(snapshot)
+    preferCommittedPreviewLayoutRef.current = true
     applyLoadedPreviewLayout(page.previewLayout)
     setShowPresetsBrowser(false)
   }, [applyLoadedPreviewLayout, applyLoadedUiSnapshot, collapsed, setShowPresetsBrowser])
@@ -426,9 +433,24 @@ export default function Home() {
         : {
             ...current,
             title: trimmedTitle,
-          }
+        }
     ))
   }, [setProjectMetadata])
+
+  const handleCommittedLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
+    preferCommittedPreviewLayoutRef.current = true
+    handleLayerOrderChange(nextLayerOrder)
+  }, [handleLayerOrderChange])
+
+  const handleCommittedLayerDelete = useCallback((target: string, kind: "text" | "image") => {
+    preferCommittedPreviewLayoutRef.current = true
+    handleDeleteLayer(target, kind)
+  }, [handleDeleteLayer])
+
+  const handleCommittedPreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
+    preferCommittedPreviewLayoutRef.current = false
+    handlePreviewLayoutChange(layout)
+  }, [handlePreviewLayoutChange])
 
   const handlePreviewGridRestore = useCallback((cols: number, rows: number) => {
     suppressNextSettingsHistory()
@@ -641,7 +663,7 @@ export default function Home() {
       onDismissGridReductionWarningToast={dismissGridReductionWarningToast}
       onRequestGridReductionWarning={handleRequestGridReductionWarning}
       onRequestNotice={handleRequestNotice}
-      onLayoutChange={handlePreviewLayoutChange}
+      onLayoutChange={handleCommittedPreviewLayoutChange}
       onSnapshotGetterChange={handlePreviewSnapshotGetterChange}
       onProjectTitleChange={handleProjectTitleChange}
       onPageSelect={selectPage}
@@ -649,10 +671,10 @@ export default function Home() {
       onPageRename={renamePage}
       onPageDelete={deletePage}
       onPageOrderChange={reorderPages}
-      onLayerOrderChange={handleLayerOrderChange}
+      onLayerOrderChange={handleCommittedLayerOrderChange}
       onLayerSelect={handlePreviewLayerSelect}
       onLayerEditorToggle={handleToggleLayerEditor}
-      onLayerDelete={handleDeleteLayer}
+      onLayerDelete={handleCommittedLayerDelete}
       onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
       onImageColorSchemeChange={setImageColorScheme}
       onShowImagePlaceholdersChange={setShowImagePlaceholders}

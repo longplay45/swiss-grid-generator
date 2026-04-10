@@ -59,7 +59,7 @@ export function useProjectController<Layout>({
 
   const loadPresetProject = useCallback((preset: LayoutPreset) => {
     try {
-      applyLoadedProject(parseLoadedProject<Layout>(preset.projectSource))
+      applyLoadedProject(parseLoadedProject<Layout>(JSON.parse(preset.projectSourceJson)))
     } catch (error) {
       console.error(error)
       onLoadFailed(error)

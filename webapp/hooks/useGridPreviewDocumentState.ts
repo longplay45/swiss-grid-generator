@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 
 import { useImagePlaceholderState } from "@/hooks/useImagePlaceholderState"
 import { usePreviewTextBlockState } from "@/hooks/usePreviewTextBlockState"
@@ -191,16 +191,6 @@ export function useGridPreviewDocumentState({
     () => reconcileLayerOrder(layerOrder, blockOrder, imageOrder),
     [blockOrder, imageOrder, layerOrder],
   )
-
-  useEffect(() => {
-    setLayerOrder((prev) => {
-      const next = reconcileLayerOrder(prev, blockOrder, imageOrder)
-      if (prev.length === next.length && prev.every((key, index) => key === next[index])) {
-        return prev
-      }
-      return next
-    })
-  }, [blockOrder, imageOrder])
 
   const getPlacementSpan = useCallback((key: BlockId): number => (
     isImagePlaceholderKey(key) ? getImageSpan(key) : getBlockSpan(key)

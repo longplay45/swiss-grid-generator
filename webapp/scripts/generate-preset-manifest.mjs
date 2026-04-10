@@ -39,7 +39,7 @@ function buildManifestSource(entries) {
     .map(({ fileName, payload }) => [
       "  {",
       `    path: "./data/${escapeTsString(fileName)}",`,
-      `${indentBlock(JSON.stringify(payload, null, 2), "    ").replace(/^    \{/, "    source: {")},`,
+      `    sourceJson: ${JSON.stringify(JSON.stringify(payload))},`,
       "  },",
     ].join("\n"))
     .join("\n")

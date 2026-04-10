@@ -8,7 +8,7 @@ import { GENERATED_PRESET_MANIFEST } from "./generated-manifest"
 
 type PresetManifestEntry = {
   path: string
-  source: unknown
+  sourceJson: string
 }
 
 type PresetMetadataOverride = {
@@ -68,11 +68,15 @@ function toOptionalText(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-function toProjectSource(source: unknown, sourcePath: string): LayoutPresetProjectSource {
-  const payload = isObjectRecord(source) && isObjectRecord(source.default)
-    ? source.default
-    : source
-
+function parseProjectSourceJson(sourceJson: string, sourcePath: string): LayoutPresetProjectSource {
+  let payload: unknown
+  try {
+    payload = JSON.parse(sourceJson)
+  } catch (error) {
+    throw new Error(
+      `Invalid preset "${sourcePath}": ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
   if (!isObjectRecord(payload)) {
     throw new Error(`Invalid preset "${sourcePath}": expected an object`)
   }
@@ -92,10 +96,9 @@ function comparePresetEntries(a: PresetManifestEntry, b: PresetManifestEntry): n
 }
 
 function parseLayoutPreset(
-  { path: sourcePath, source }: PresetManifestEntry,
+  { path: sourcePath, sourceJson }: PresetManifestEntry,
 ): LayoutPreset {
-  const projectSource = toProjectSource(source, sourcePath)
-  const project = parseLoadedProject<Record<string, unknown>>(projectSource)
+  const project = parseLoadedProject<Record<string, unknown>>(parseProjectSourceJson(sourceJson, sourcePath))
   const browserPage = project.pages[0]
 
   if (!browserPage) {
@@ -113,7 +116,7 @@ function parseLayoutPreset(
     description,
     author,
     createdAt: project.metadata.createdAt,
-    projectSource,
+    projectSourceJson: sourceJson,
     browserPage: buildPresetBrowserPage(browserPage, sourcePath),
   }
 }

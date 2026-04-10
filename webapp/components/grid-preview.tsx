@@ -185,6 +185,7 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedLayerEditorRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const dragEndedAtRef = useRef(0)
+  const layoutEmissionFrameRef = useRef<number | null>(null)
   const typographyBufferRef = useRef<HTMLCanvasElement | null>(null)
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan<BlockId>>>(new Map())
   const typographyBufferTransformRef = useRef("")
@@ -195,6 +196,7 @@ export const GridPreview = memo(function GridPreview({
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [hoverCopyIntent, setHoverCopyIntent] = useState(false)
+  const [layoutEmissionEnabled, setLayoutEmissionEnabled] = useState(initialLayoutToken === 0)
   const HISTORY_LIMIT = 50
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
@@ -576,6 +578,62 @@ export const GridPreview = memo(function GridPreview({
     onHoverLayerChange?.(hoverState?.key ?? hoverImageKey ?? null)
   }, [hoverImageKey, hoverState?.key, onHoverLayerChange])
 
+  useEffect(() => {
+    if (layoutEmissionFrameRef.current !== null) {
+      window.cancelAnimationFrame(layoutEmissionFrameRef.current)
+      layoutEmissionFrameRef.current = null
+    }
+    if (initialLayoutToken === 0) {
+      setLayoutEmissionEnabled(true)
+      return
+    }
+    setLayoutEmissionEnabled(false)
+  }, [initialLayoutToken])
+
+  useEffect(() => {
+    if (initialLayoutToken === 0) return
+    if (
+      lastAppliedLayoutKeyRef.current !== initialLayoutToken
+      || lastAppliedImageLayoutKeyRef.current !== initialLayoutToken
+      || lastAppliedLayerLayoutKeyRef.current !== initialLayoutToken
+      || lastAppliedCustomSizeLayoutKeyRef.current !== initialLayoutToken
+    ) {
+      return
+    }
+    if (layoutEmissionEnabled) return
+    if (layoutEmissionFrameRef.current !== null) {
+      window.cancelAnimationFrame(layoutEmissionFrameRef.current)
+    }
+    layoutEmissionFrameRef.current = window.requestAnimationFrame(() => {
+      layoutEmissionFrameRef.current = null
+      setLayoutEmissionEnabled(true)
+    })
+    return () => {
+      if (layoutEmissionFrameRef.current !== null) {
+        window.cancelAnimationFrame(layoutEmissionFrameRef.current)
+        layoutEmissionFrameRef.current = null
+      }
+    }
+  }, [
+    blockCustomLeadings,
+    blockCustomSizes,
+    blockOrder,
+    blockTextColors,
+    imageOrder,
+    initialLayoutToken,
+    layoutEmissionEnabled,
+    layerOrder,
+  ])
+
+  useEffect(() => (
+    () => {
+      if (layoutEmissionFrameRef.current !== null) {
+        window.cancelAnimationFrame(layoutEmissionFrameRef.current)
+        layoutEmissionFrameRef.current = null
+      }
+    }
+  ), [])
+
   usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
     historyResetToken,
     initialLayout,
@@ -799,6 +857,7 @@ export const GridPreview = memo(function GridPreview({
   usePreviewLayoutEmission({
     buildSnapshot,
     debounceMs: PREVIEW_LAYOUT_CHANGE_DEBOUNCE_MS,
+    enabled: layoutEmissionEnabled,
     onLayoutChange,
   })
 
