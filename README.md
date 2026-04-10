@@ -149,17 +149,6 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 
 ---
 
-## Roadmap (Coming Soon)
-
-- Full bilingual interface (English + German with original Müller-Brockmann terms)
-- More presets inspired by classic Swiss posters
-- IDML polish and broader downstream validation in InDesign
-- HTML/CSS export for web handoff
-- Cloud save / shareable links
-- Improved layer system & master pages
-
----
-
 ## License
 
 MIT © [lp45.net](https://lp45.net)
