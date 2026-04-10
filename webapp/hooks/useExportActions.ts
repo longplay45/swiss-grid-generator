@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import jsPDF from "jspdf"
 import type { FontFamily } from "@/lib/config/fonts"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
@@ -332,7 +333,6 @@ export function useExportActions(ctx: ExportActionsContext) {
   ) => {
     if (pages.length === 0) return
 
-    const { default: jsPDF } = await import("jspdf")
     const { enabled, bleedMm, registrationMarks } = printPresetConfig
     const { colorMode, outputIntentProfileId } = resolvePdfExportColorManagement({ enabled })
     const bleedPt = mmToPt(bleedMm)
