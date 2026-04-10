@@ -15,11 +15,16 @@ export function usePreviewViewport({
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
+  const [containerWidthCss, setContainerWidthCss] = useState(0)
+  const [containerHeightCss, setContainerHeightCss] = useState(0)
 
   useEffect(() => {
     const calculateScale = () => {
       const container = previewContainerRef.current
       if (!container) return
+
+      setContainerWidthCss((prev) => (Math.abs(prev - container.clientWidth) < 0.5 ? prev : container.clientWidth))
+      setContainerHeightCss((prev) => (Math.abs(prev - container.clientHeight) < 0.5 ? prev : container.clientHeight))
 
       const containerWidth = container.clientWidth - 40
       const containerHeight = container.clientHeight - 40
@@ -87,6 +92,8 @@ export function usePreviewViewport({
     scale,
     pixelRatio,
     isMobile,
+    containerWidthCss,
+    containerHeightCss,
     pageWidthCss,
     pageHeightCss,
     pageWidthPx,

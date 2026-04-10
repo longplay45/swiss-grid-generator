@@ -13,6 +13,7 @@ import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
 type Props<StyleKey extends string> = {
   showEditorHelpIcon: boolean
   showRolloverInfo: boolean
+  previewWidthCss: number
   pageWidthCss: number
   pageHeightCss: number
   pageRotation: number
@@ -45,6 +46,7 @@ type Props<StyleKey extends string> = {
 export function GridPreviewOverlays<StyleKey extends string>({
   showEditorHelpIcon,
   showRolloverInfo,
+  previewWidthCss,
   pageWidthCss,
   pageHeightCss,
   pageRotation,
@@ -74,13 +76,30 @@ export function GridPreviewOverlays<StyleKey extends string>({
   isDarkMode = false,
 }: Props<StyleKey>) {
   const PREVIEW_EDITOR_INSET_PX = 12
+  const PREVIEW_EDITOR_RAIL_WIDTH_PX = 40
+  const PREVIEW_EDITOR_SUBMENU_GAP_PX = 8
+  const PREVIEW_EDITOR_SUBMENU_WIDTH_PX = 304
+  const PREVIEW_EDITOR_LEFT_DOCK_REQUIRED_WIDTH_PX = (
+    PREVIEW_EDITOR_INSET_PX
+    + PREVIEW_EDITOR_RAIL_WIDTH_PX
+    + PREVIEW_EDITOR_SUBMENU_GAP_PX
+    + PREVIEW_EDITOR_SUBMENU_WIDTH_PX
+  )
   const hoveredEditTarget = hoveredTextKey && hoveredTextRect
     ? { kind: "text" as const, key: hoveredTextKey, rect: hoveredTextRect }
       : hoveredImageKey && hoveredImageRect
       ? { kind: "image" as const, key: hoveredImageKey, rect: hoveredImageRect }
       : null
   const resolveEditorDockSide = (rect: BlockRect | null): "left" | "right" => {
+    const leftDocumentGutterPx = Math.max(0, (previewWidthCss - pageWidthCss) / 2)
+    if (leftDocumentGutterPx >= PREVIEW_EDITOR_LEFT_DOCK_REQUIRED_WIDTH_PX) {
+      return "left"
+    }
     if (!rect) return "left"
+    const rectCenterY = rect.y + rect.height / 2
+    if (rectCenterY >= pageHeightCss / 2) {
+      return "left"
+    }
     const rectCenterX = rect.x + rect.width / 2
     return rectCenterX < pageWidthCss / 2 ? "right" : "left"
   }

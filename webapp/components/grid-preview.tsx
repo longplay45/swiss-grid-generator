@@ -205,6 +205,7 @@ export const GridPreview = memo(function GridPreview({
     scale,
     pixelRatio,
     isMobile,
+    containerWidthCss,
     pageWidthCss,
     pageHeightCss,
     pageWidthPx,
@@ -978,6 +979,7 @@ export const GridPreview = memo(function GridPreview({
       <GridPreviewOverlays
         showEditorHelpIcon={showEditorHelpIcon}
         showRolloverInfo={showRolloverInfo}
+        previewWidthCss={containerWidthCss}
         pageWidthCss={pageWidthCss}
         pageHeightCss={pageHeightCss}
         pageRotation={rotation}
