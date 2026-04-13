@@ -171,6 +171,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The preview page is the live layout surface for the active project page, including placement, editing, duplication, and deletion.</li>
           <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
           <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
+          <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
+          <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
           <li>Click the hover edit affordance to open the matching text or image editor overlay without leaving the page.</li>
           <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
@@ -189,7 +191,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, and Info, plus Delete on the rail.</li>
-          <li>Geometry submenu: row span, column span, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+          <li>Geometry submenu: rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+          <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
+          <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
           <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, scheme, color, and FX size/leading when `FX` is selected.</li>
           <li>When a text range is selected, type controls apply font family, cut, hierarchy, color, and tracking to that selection instead of rebasing the whole paragraph.</li>
           <li>Info submenu includes geometry, type summary, character count, word count, and `Max/Line`.</li>
@@ -209,9 +213,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
           <li>Layout uses a left icon rail with contextual submenus for Geometry and Info, plus Delete on the rail.</li>
-          <li>Geometry submenu: row span, column span, scheme, swatch color, and transparency.</li>
+          <li>Geometry submenu: rows, baselines, columns, scheme, swatch color, and transparency.</li>
+          <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
+          <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
           <li>Each image setting sits on its own row with icon, label, and value/control, matching the text editor structure.</li>
-          <li>Info submenu summarizes the current rows, columns, scheme, color, and transparency for the active placeholder.</li>
+          <li>Info submenu summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
           <li>Delete lives in the rail and removes the placeholder immediately.</li>
           <li>`Esc` or click outside closes the editor.</li>
         </ul>

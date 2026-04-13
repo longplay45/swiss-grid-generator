@@ -77,6 +77,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
   - **Serif**: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
   - **Poster**: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display)
 - Paragraph-level geometry and alignment plus selection-level font family, cut, hierarchy, color, and tracking
+- Paragraph and image-placeholder height can be composed as `rows + baselines`, including shallow frames such as `0 rows + 1 baseline`
 - Optical/metric kerning toggle with shared render/export behavior
 - Inline editor caret and selection follow rendered text geometry
 - Live character & word count
@@ -95,7 +96,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Double-click empty module → create text
 - Shift + double-click → create image placeholder
 - Hover interactions and edit affordances
+- Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
 - Image placeholder editor matches the text editor rail pattern with geometry/info submenus
+- Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
 - Placeholder editor includes scheme, swatch color, and transparency controls
 
 ### Export

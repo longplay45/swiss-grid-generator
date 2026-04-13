@@ -294,11 +294,15 @@ Editor controls:
 - left icon rail with contextual submenus: `Geometry`, `Type`, `Info`, plus `Delete`
 - Geometry submenu:
   - rows
+  - baselines
   - cols
   - alignment (`left`, `center`, `right`)
   - reflow (`On` / `Off`, available only when cols > 1)
   - hyphenation (`On` / `Off`)
   - rotation (`-180..180`, integer degrees)
+- paragraph and placeholder height resolve as `rows + baselines`
+- `rows` may be `0` when `baselines > 0`
+- `Baselines` is a dropdown from `0` to the current document's `baselines per grid module`
 - Type submenu:
   - font family
   - font cut
@@ -311,7 +315,7 @@ Editor controls:
 - Info submenu: geometry, type, counts, and `Max/Line`
 - delete lives on the rail
 - newspaper reflow is available only with cols > 1
-- reflow with cols > 1: newspaper flow across configured columns, exhausting the selected row-span height before moving to the next column
+- reflow with cols > 1: newspaper flow across configured columns, exhausting the selected `rows + baselines` height before moving to the next column
 - font cut uses the available family-specific weight/style list
 - tracking applies letter-spacing, not horizontal scaling
 - tracking is stored in `1/1000 em`
@@ -351,6 +355,7 @@ Drag behavior:
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
 - Paragraphs and image placeholders are stored as logical grid anchors: `{ column, row, baselineOffset }`.
 - `Shift` (or `Ctrl`) + drag snaps to nearest baseline row/column at drop point and allows overset placement.
+- Hovering a paragraph reveals the edit affordance at the paragraph's exact top-left origin so very shallow frames remain reachable.
 
 ## Grid Change Reflow Logic
 
@@ -380,8 +385,9 @@ Notes:
 
 ## JSON Preview Layout Fields (current)
 
-`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageColors`
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockHeightBaselines`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageHeightBaselines`, `imageColors`, `imageOpacities`
 
 Notes:
 - `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.
 - `blockModulePositions` and `imageModulePositions` are stored as logical anchors `{ column, row, baselineOffset }`; legacy absolute `{ col, row }` values are normalized on load.
+- `blockRowSpans` / `imageRowSpans` store the module-row component of block height, while `blockHeightBaselines` / `imageHeightBaselines` store the additional baseline component.

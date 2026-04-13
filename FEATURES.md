@@ -47,7 +47,9 @@ Current capability inventory for Swiss Grid Generator.
 ## Text Editing
 
 - Inline editor overlay on the page surface.
-- Geometry submenu: rows, cols, alignment, reflow, hyphenation, rotation.
+- Geometry submenu: rows, baselines, cols, alignment, reflow, hyphenation, rotation.
+- Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
+- `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Type submenu: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
 - Info submenu: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
@@ -68,6 +70,8 @@ Current capability inventory for Swiss Grid Generator.
 - Drag paragraphs and placeholders to move them.
 - `Alt/Option` + drag duplicates the hovered layer.
 - `Shift` + drag switches to baseline/overset placement (`Ctrl` fallback).
+- Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
+- Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Project panel supports page switching, reordering, renaming, deletion, and duplication.
 - Layer cards support selection, reordering, deletion, and editor opening.
 - Text paragraphs and image placeholders use logical grid anchors:
@@ -80,14 +84,15 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Image Placeholders
 
-- Independent row/column spans.
+- Independent row/column spans plus additional baseline height.
 - Color-scheme aware placeholder fills.
 - Placeholder-specific transparency control.
 - Stable logical positioning across grid changes.
 - Separate editor with Geometry and Info rails.
 - Geometry submenu uses one parameter row per setting.
 - Scheme, swatch color, and transparency live in the geometry submenu.
-- Info submenu summarizes rows, columns, scheme, color, and transparency.
+- `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
+- Info submenu summarizes rows, baselines, columns, scheme, color, and transparency.
 
 ## Presets
 

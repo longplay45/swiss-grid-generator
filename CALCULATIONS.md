@@ -554,8 +554,17 @@ row range (shift-drag): [-maxBaselineRow, +maxBaselineRow]
 
 Each paragraph has:
 - `colSpan` (`1..gridCols`)
-- `rowSpan` (`1..gridRows`)
+- `rowSpan` (`0..gridRows`)
+- `heightBaselines` (`0..baselinesPerGridModule`)
 - `reflow` (on/off)
+
+Effective block height is the combined paragraph/image frame height:
+
+```
+blockHeight = rows + baselines
+```
+
+`rows = 0` is valid when `heightBaselines > 0`.
 
 ### Reflow Modes
 
@@ -568,10 +577,12 @@ If `reflow = true`:
 - lines per column constrained by selected row span height
 
 ```
-moduleHeightForBlock = sumAxisSpan(moduleHeights, rowStartIndex, rowSpan, verticalGutter)
+moduleHeightForBlock = resolveBlockHeight(rowStartIndex, rowSpan, heightBaselines)
 maxLinesPerColumn = floor(moduleHeightForBlock / lineStep)
 neededCols = ceil(totalWrappedLines / maxLinesPerColumn)
 ```
+
+The same combined `rows + baselines` height is also used for image placeholders, preview guide lines, hover affordances, and export geometry.
 
 ### Grid Structural Changes
 
