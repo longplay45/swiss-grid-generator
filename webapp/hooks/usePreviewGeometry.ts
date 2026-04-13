@@ -156,7 +156,7 @@ export function usePreviewGeometry({
   ): ModulePosition => {
     const metrics = getGridMetrics()
     const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
-    const safeRows = Math.max(1, Math.min(result.settings.gridRows, rows))
+    const safeRows = Math.max(1, Math.min(result.settings.gridRows, Math.max(1, rows)))
     const maxCol = Math.max(0, metrics.gridCols - safeCols)
     const maxRowStartIndex = Math.max(0, result.settings.gridRows - safeRows)
     const maxRow = metrics.rowStartBaselines[maxRowStartIndex] ?? 0

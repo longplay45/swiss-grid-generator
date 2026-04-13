@@ -21,6 +21,7 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockTextFormatRuns: Partial<Record<Key, TextFormatRun<StyleKey, FontFamily>[]>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
+  blockHeightBaselines: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>

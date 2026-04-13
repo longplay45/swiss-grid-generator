@@ -1,3 +1,4 @@
+import { resolveBlockHeight } from "@/lib/block-height"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getOpticalTerminalCaretAdvance } from "@/lib/optical-margin"
@@ -53,6 +54,7 @@ type BuildCanvasImagePlansArgs<Key extends string> = {
   dragState?: ImageDragState<Key> | null
   getImageSpan: (key: Key) => number
   getImageRows: (key: Key) => number
+  getImageHeightBaselines: (key: Key) => number
   getImageColor: (key: Key) => string
   getImageOpacity: (key: Key) => number
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
@@ -96,6 +98,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   defaultCaptionStyleKey: StyleKey
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
+  getBlockHeightBaselines: (key: BlockId) => number
   getBlockFontSize: (key: BlockId, styleKey: StyleKey) => number
   getBlockBaselineMultiplier: (key: BlockId, styleKey: StyleKey) => number
   getBlockRotation: (key: BlockId) => number
@@ -332,6 +335,7 @@ export function buildCanvasImagePlans<Key extends string>({
   dragState,
   getImageSpan,
   getImageRows,
+  getImageHeightBaselines,
   getImageColor,
   getImageOpacity,
   clampImageBaselinePosition,
@@ -359,6 +363,7 @@ export function buildCanvasImagePlans<Key extends string>({
   const createImagePlan = (position: ModulePosition, key: Key): CanvasImageRenderPlan => {
     const columns = getImageSpan(key)
     const rows = getImageRows(key)
+    const heightBaselines = getImageHeightBaselines(key)
     const clamped = clampImageBaselinePosition(position, columns)
     const x = toColumnX(clamped.col)
     const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
@@ -371,7 +376,16 @@ export function buildCanvasImagePlans<Key extends string>({
         x,
         y,
         width: sumAxisSpan(moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale,
-        height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical) * scale,
+        height: resolveBlockHeight({
+          rowStart: rowStartIndex,
+          rows,
+          baselines: heightBaselines,
+          gridRows,
+          moduleHeights,
+          fallbackModuleHeight: moduleHeights[rowStartIndex] ?? moduleHeights[0] ?? 0,
+          gutterY: gridMarginVertical,
+          baselineStep: baselineStep / Math.max(scale, 0.0001),
+        }) * scale,
       },
       color: getImageColor(key),
       opacity: getImageOpacity(key),
@@ -426,6 +440,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   defaultCaptionStyleKey,
   getBlockSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockFontSize,
   getBlockBaselineMultiplier,
   getBlockRotation,
@@ -477,6 +492,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     defaultCaptionStyleKey,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockFontSize: ({ key, styleKey, defaultSize }) => (
       resolveScaledCanvasFontSize(getBlockFontSize(key, styleKey), fontScale, defaultSize)
     ),
@@ -601,6 +617,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         plan.span,
         plan.rowSpan,
         plan.columnReflow ? 1 : 0,
+        plan.heightBaselines,
         plan.rotationOriginX.toFixed(3),
         plan.rotationOriginY.toFixed(3),
         plan.rect.width.toFixed(3),

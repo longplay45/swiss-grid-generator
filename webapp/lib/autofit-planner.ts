@@ -1,4 +1,5 @@
 import type { FontFamily } from "@/lib/config/fonts"
+import { resolveBlockHeight } from "./block-height.ts"
 import type { TextRange, TextTrackingRun } from "./text-tracking-runs.ts"
 import { wrapTextDetailed } from "./text-layout.ts"
 import {
@@ -28,6 +29,7 @@ export type AutoFitItem = {
   text: string
   style: AutoFitStyle
   rowSpan: number
+  heightBaselines: number
   syllableDivision: boolean
   position: AutoFitPosition
   currentSpan: number
@@ -93,12 +95,16 @@ export function computeAutoFitBatch(
       0,
       Math.min(resolvedGridRows - 1, findNearestAxisIndex(resolvedModuleRowStarts, item.position.row)),
     )
-    const moduleHeightPx = sumAxisSpan(
-      resolvedModuleHeights,
-      rowStartIndex,
-      item.rowSpan,
-      input.gridMarginVertical,
-    ) * input.scale
+    const moduleHeightPx = resolveBlockHeight({
+      rowStart: rowStartIndex,
+      rows: item.rowSpan,
+      baselines: item.heightBaselines,
+      gridRows: resolvedGridRows,
+      moduleHeights: resolvedModuleHeights,
+      fallbackModuleHeight: input.moduleHeight,
+      gutterY: input.gridMarginVertical,
+      baselineStep: input.gridUnit,
+    }) * input.scale
     let maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
 
     const contentTop = input.marginTop * input.scale

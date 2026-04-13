@@ -52,6 +52,7 @@ type Args = {
   getBlockTextFormatRuns: (key: string, color: string) => TextFormatRun<string, FontFamily>[]
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
+  getBlockHeightBaselines: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
@@ -96,6 +97,7 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockTextFormatRuns,
   getBlockSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isBlockItalic,
@@ -128,6 +130,7 @@ export function useBlockEditorCanvasDoubleClick({
         getBlockFont,
         getBlockRotation,
         getBlockRows,
+        getBlockHeightBaselines,
         getBlockSpan,
         getBlockTextColor,
         getBlockFontWeight,
@@ -170,6 +173,7 @@ export function useBlockEditorCanvasDoubleClick({
       gridRows: resultGridRows,
       columns: defaultSpan,
       rows: 1,
+      heightBaselines: 0,
       position: snapped,
       rowStartBaselines,
     }))
@@ -180,6 +184,7 @@ export function useBlockEditorCanvasDoubleClick({
       text: defaultText,
       columns: defaultSpan,
       rows: 1,
+      heightBaselines: 0,
       baseFont,
       defaultTextColor,
       fontWeight: 400,
@@ -207,6 +212,7 @@ export function useBlockEditorCanvasDoubleClick({
     getBlockTextFormatRuns,
     getBlockRotation,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getBlockTextColor,
     getDefaultColumnSpan,

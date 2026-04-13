@@ -20,6 +20,7 @@ function makeInput() {
           trackingRuns: [],
         },
         rowSpan: 2,
+        heightBaselines: 0,
         syllableDivision: true,
         position: { col: 1, row: 6 },
         currentSpan: 1,
@@ -38,6 +39,7 @@ function makeInput() {
           trackingRuns: [],
         },
         rowSpan: 1,
+        heightBaselines: 0,
         syllableDivision: false,
         position: { col: 5, row: 12 },
         currentSpan: 1,
@@ -115,6 +117,30 @@ test("computeAutoFitBatch respects tracking in width measurement", () => {
   }, (style, text) => text.length * 4 + Math.max(0, text.length - 1) * (style.size * style.trackingScale) / 1000)
 
   assert.ok((trackedOutput.spanUpdates.tracked ?? 1) >= (normalOutput.spanUpdates.tracked ?? 1))
+})
+
+test("computeAutoFitBatch counts extra baseline height when estimating column capacity", () => {
+  const input = makeInput()
+  input.items = [
+    {
+      ...input.items[0],
+      key: "baseline-height",
+      rowSpan: 0,
+      heightBaselines: 6,
+      currentSpan: 1,
+      text: "One two three four five six seven eight nine ten eleven twelve thirteen fourteen",
+    },
+  ]
+
+  const withBaselines = computeAutoFitBatch(input, (_style, text) => text.length * 5)
+  const withoutBaselines = computeAutoFitBatch({
+    ...input,
+    items: [{ ...input.items[0], heightBaselines: 0 }],
+  }, (_style, text) => text.length * 5)
+
+  assert.ok(
+    (withBaselines.spanUpdates["baseline-height"] ?? 1) <= (withoutBaselines.spanUpdates["baseline-height"] ?? 1),
+  )
 })
 
 test("computeAutoFitBatch passes range-aware measurements for mixed tracking runs", () => {

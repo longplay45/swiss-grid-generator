@@ -1,4 +1,5 @@
 import type { GridResult } from "@/lib/grid-calculator"
+import { normalizeHeightMetrics, resolveBlockHeight } from "@/lib/block-height"
 import {
   DEFAULT_BASE_FONT,
   getStyleDefaultFontWeight,
@@ -316,6 +317,7 @@ export function buildPageExportPlan({
   const storedImageModulePositions = layout?.imageModulePositions ?? {}
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
+  const imageHeightBaselines = layout?.imageHeightBaselines ?? {}
   const imageColors = layout?.imageColors ?? {}
   const imageOpacities = layout?.imageOpacities ?? {}
   const fallbackImageColor = parseHexColor(resolveImageSchemeColor(undefined, imageColorScheme)) ?? { r: 11, g: 53, b: 54 }
@@ -329,9 +331,14 @@ export function buildPageExportPlan({
       if (!manual || typeof manual.col !== "number" || typeof manual.row !== "number") continue
 
       const spanRaw = imageColumnSpans[key] ?? 1
-      const rowRaw = imageRowSpans[key] ?? 1
       const span = Math.max(1, Math.min(gridCols, spanRaw))
-      const rows = Math.max(1, Math.min(gridRows, rowRaw))
+      const height = normalizeHeightMetrics({
+        rows: imageRowSpans[key],
+        baselines: imageHeightBaselines[key],
+        gridRows,
+      })
+      const rows = height.rows
+      const heightBaselines = height.baselines
       const minCol = -Math.max(0, span - 1)
       const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
       const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
@@ -344,7 +351,16 @@ export function buildPageExportPlan({
         x: contentLeft + (col < 0 ? col * firstColumnStep : (colStarts[col] ?? col * firstColumnStep)),
         y: baselineOriginTop + row * baselineStep + baselineStep,
         width: sumAxisSpan(moduleWidths, col, span, gridMarginHorizontal),
-        height: sumAxisSpan(moduleHeights, rowStartIndex, rows, gridMarginVertical),
+        height: resolveBlockHeight({
+          rowStart: rowStartIndex,
+          rows,
+          baselines: heightBaselines,
+          gridRows,
+          moduleHeights,
+          fallbackModuleHeight: modH,
+          gutterY: gridMarginVertical,
+          baselineStep: gridUnit,
+        }),
         fillColor: parseHexColor(resolveImageSchemeColor(imageColors[key], imageColorScheme)) ?? fallbackImageColor,
         opacity: normalizeImagePlaceholderOpacity(imageOpacities[key]),
       })
@@ -362,6 +378,7 @@ export function buildPageExportPlan({
   const blockFontFamilies = layout?.blockFontFamilies ?? {}
   const blockColumnSpans = layout?.blockColumnSpans ?? {}
   const blockRowSpans = layout?.blockRowSpans ?? {}
+  const blockHeightBaselines = layout?.blockHeightBaselines ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
@@ -394,8 +411,19 @@ export function buildPageExportPlan({
   }
 
   const getBlockRows = (key: BlockId) => {
-    const raw = blockRowSpans[key] ?? 1
-    return Math.max(1, Math.min(gridRows, raw))
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows,
+    }).rows
+  }
+
+  const getBlockHeightBaselines = (key: BlockId) => {
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows,
+    }).baselines
   }
 
   const getStyleKeyForBlock = (key: BlockId): TypographyStyleKey => {
@@ -537,6 +565,7 @@ export function buildPageExportPlan({
       defaultCaptionStyleKey: "caption",
       getBlockSpan,
       getBlockRows,
+      getBlockHeightBaselines,
       getBlockFontSize: ({ key, styleKey, defaultSize }) => getBlockFontSize(key, styleKey, defaultSize),
       getBlockBaselineMultiplier: ({ key, styleKey, defaultMultiplier }) => (
         getBlockBaselineMultiplier(key, styleKey, defaultMultiplier)

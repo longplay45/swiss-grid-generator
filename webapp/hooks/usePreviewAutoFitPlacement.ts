@@ -3,6 +3,7 @@ import type { RefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
 import type { GridResult } from "@/lib/grid-calculator"
+import { resolveBlockHeight } from "@/lib/block-height"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import { applyCanvasTextConfig, buildCanvasFont } from "@/lib/text-rendering"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
@@ -55,6 +56,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     text,
     styleKey,
     rowSpan,
+    heightBaselines,
     reflow,
     syllableDivision,
     fontFamily,
@@ -70,6 +72,7 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
       text: string
       styleKey: StyleKey
       rowSpan: number
+      heightBaselines: number
       reflow: boolean
       syllableDivision: boolean
       fontFamily?: FontFamily
@@ -106,7 +109,16 @@ export function usePreviewAutoFitPlacement<Key extends string, StyleKey extends 
     const startRowIndex = position
       ? Math.max(0, Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, position.row)))
       : 0
-    const moduleHeightPx = sumAxisSpan(metrics.moduleHeights, startRowIndex, rowSpan, gridMarginVertical) * scale
+    const moduleHeightPx = resolveBlockHeight({
+      rowStart: startRowIndex,
+      rows: rowSpan,
+      baselines: heightBaselines,
+      gridRows: result.settings.gridRows,
+      moduleHeights: metrics.moduleHeights,
+      fallbackModuleHeight: result.module.height,
+      gutterY: gridMarginVertical,
+      baselineStep: gridUnit,
+    }) * scale
     let maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightPx / lineStep))
 
     if (position) {

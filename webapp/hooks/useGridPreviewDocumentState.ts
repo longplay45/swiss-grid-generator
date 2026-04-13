@@ -59,6 +59,7 @@ export function useGridPreviewDocumentState({
     blockModulePositions: blockGridPositions,
     blockColumnSpans,
     blockRowSpans,
+    blockHeightBaselines,
     blockTextAlignments,
     blockTextReflow,
     blockSyllableDivision,
@@ -79,6 +80,7 @@ export function useGridPreviewDocumentState({
     setBlockModulePositions: setBlockGridPositions,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getStyleKeyForBlock,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
@@ -157,6 +159,7 @@ export function useGridPreviewDocumentState({
     setImageModulePositions,
     setImageColumnSpans,
     setImageRowSpans,
+    setImageHeightBaselines,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -165,6 +168,7 @@ export function useGridPreviewDocumentState({
     setImageEditorState,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColorReference,
     getImageColor,
     getImageOpacity,
@@ -199,6 +203,10 @@ export function useGridPreviewDocumentState({
   const getPlacementRows = useCallback((key: BlockId): number => (
     isImagePlaceholderKey(key) ? getImageRows(key) : getBlockRows(key)
   ), [getBlockRows, getImageRows, isImagePlaceholderKey])
+
+  const getPlacementHeightBaselines = useCallback((key: BlockId): number => (
+    isImagePlaceholderKey(key) ? getImageHeightBaselines(key) : getBlockHeightBaselines(key)
+  ), [getBlockHeightBaselines, getImageHeightBaselines, isImagePlaceholderKey])
 
   const buildSnapshot = useCallback((): PreviewLayoutState => ({
     ...buildTextSnapshot(),
@@ -242,6 +250,7 @@ export function useGridPreviewDocumentState({
     blockModulePositions,
     blockColumnSpans,
     blockRowSpans,
+    blockHeightBaselines,
     blockTextAlignments,
     blockTextReflow,
     blockSyllableDivision,
@@ -279,6 +288,7 @@ export function useGridPreviewDocumentState({
     setImageModulePositions,
     setImageColumnSpans,
     setImageRowSpans,
+    setImageHeightBaselines,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -287,6 +297,7 @@ export function useGridPreviewDocumentState({
     setImageEditorState,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColorReference,
     getImageColor,
     getImageOpacity,
@@ -301,8 +312,10 @@ export function useGridPreviewDocumentState({
     resetImageTransientState,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getPlacementSpan,
     getPlacementRows,
+    getPlacementHeightBaselines,
     getStyleKeyForBlock,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,

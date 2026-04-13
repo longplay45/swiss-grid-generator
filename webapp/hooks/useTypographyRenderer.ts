@@ -57,11 +57,13 @@ type Args<BlockId extends string> = {
   getBlockRotation: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
+  getBlockHeightBaselines: (key: BlockId) => number
   getBlockFontSize: (key: BlockId, styleKey: keyof GridResult["typography"]["styles"]) => number
   getBlockBaselineMultiplier: (key: BlockId, styleKey: keyof GridResult["typography"]["styles"]) => number
   getBlockTextColor: (key: BlockId) => string
   getImageSpan: (key: BlockId) => number
   getImageRows: (key: BlockId) => number
+  getImageHeightBaselines: (key: BlockId) => number
   getImageColor: (key: BlockId) => string
   getImageOpacity: (key: BlockId) => number
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
@@ -191,11 +193,13 @@ export function useTypographyRenderer<BlockId extends string>({
   getBlockRotation,
   getBlockSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockFontSize,
   getBlockBaselineMultiplier,
   getBlockTextColor,
   getImageSpan,
   getImageRows,
+  getImageHeightBaselines,
   getImageColor,
   getImageOpacity,
   clampImageBaselinePosition,
@@ -314,6 +318,7 @@ export function useTypographyRenderer<BlockId extends string>({
           dragState,
           getImageSpan,
           getImageRows,
+          getImageHeightBaselines,
           getImageColor,
           getImageOpacity,
           clampImageBaselinePosition,
@@ -365,6 +370,7 @@ export function useTypographyRenderer<BlockId extends string>({
           defaultCaptionStyleKey: "caption",
           getBlockSpan,
           getBlockRows,
+          getBlockHeightBaselines,
           getBlockFontSize,
           getBlockBaselineMultiplier,
           getBlockRotation,

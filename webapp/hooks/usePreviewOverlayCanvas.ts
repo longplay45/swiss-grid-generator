@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import type { MutableRefObject, RefObject } from "react"
 
+import { resolveBlockHeight } from "@/lib/block-height"
 import type { GridResult } from "@/lib/grid-calculator"
 import { getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
@@ -21,6 +22,7 @@ type DragState<Key extends string> = {
 type OverlayPlan<Key extends string> = {
   key: Key
   rect: BlockRect
+  guideRects: BlockRect[]
   rotationOriginX: number
   rotationOriginY: number
 }
@@ -45,8 +47,10 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   editorTarget: Key | null
   blockModulePositions: Partial<Record<Key, ModulePosition>>
   getBlockRows: (key: Key) => number
+  getBlockHeightBaselines: (key: Key) => number
   getBlockSpan: (key: Key) => number
   getPlacementRows: (key: Key) => number
+  getPlacementHeightBaselines: (key: Key) => number
   getPlacementSpan: (key: Key) => number
   getGridMetrics: () => PreviewGridMetrics
 }
@@ -71,8 +75,10 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   editorTarget,
   blockModulePositions,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockSpan,
   getPlacementRows,
+  getPlacementHeightBaselines,
   getPlacementSpan,
   getGridMetrics,
 }: Args<Key, Plan>) {
@@ -131,6 +137,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       if (dragState) {
         const dragSpan = getPlacementSpan(dragState.key)
         const dragRows = getPlacementRows(dragState.key)
+        const dragHeightBaselines = getPlacementHeightBaselines(dragState.key)
         const snapX = dragState.preview.col < 0
           ? contentLeft + dragState.preview.col * firstColumnStepPt * scale
           : contentLeft + (metrics.colStarts[dragState.preview.col] ?? dragState.preview.col * firstColumnStepPt) * scale
@@ -140,7 +147,16 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, dragState.preview.row)),
         )
         const snapWidth = sumAxisSpan(metrics.moduleWidths, dragState.preview.col, dragSpan, gridMarginHorizontal) * scale
-        const snapHeight = sumAxisSpan(metrics.moduleHeights, dragRowStart, dragRows, gridMarginVertical) * scale
+        const snapHeight = resolveBlockHeight({
+          rowStart: dragRowStart,
+          rows: dragRows,
+          baselines: dragHeightBaselines,
+          gridRows: result.settings.gridRows,
+          moduleHeights: metrics.moduleHeights,
+          fallbackModuleHeight: result.module.height,
+          gutterY: gridMarginVertical,
+          baselineStep: gridUnit,
+        }) * scale
         drawPlacementGuide(snapX, snapY + baselineStep, snapWidth, snapHeight)
       } else if (hoveredTextGuideRect) {
         drawPlacementGuide(
@@ -176,6 +192,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       if (activeEditorPlan) {
         const editorSpan = getBlockSpan(activeEditorPlan.key)
         const editorRows = getBlockRows(activeEditorPlan.key)
+        const editorHeightBaselines = getBlockHeightBaselines(activeEditorPlan.key)
         const manual = blockModulePositions[activeEditorPlan.key]
         const startCol = manual
           ? Math.max(-Math.max(0, editorSpan - 1), Math.min(result.settings.gridCols - 1, manual.col))
@@ -187,7 +204,16 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
             )
           : 0
         const editorWidth = sumAxisSpan(metrics.moduleWidths, startCol, editorSpan, gridMarginHorizontal) * scale
-        const editorHeight = sumAxisSpan(metrics.moduleHeights, startRow, editorRows, gridMarginVertical) * scale
+        const editorHeight = resolveBlockHeight({
+          rowStart: startRow,
+          rows: editorRows,
+          baselines: editorHeightBaselines,
+          gridRows: result.settings.gridRows,
+          moduleHeights: metrics.moduleHeights,
+          fallbackModuleHeight: result.module.height,
+          gutterY: gridMarginVertical,
+          baselineStep: gridUnit,
+        }) * scale
         const lineY = activeEditorPlan.rotationOriginY + baselineStep
 
         ctx.strokeStyle = "#ef4444"
@@ -233,9 +259,11 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
     blockOrder,
     dragState,
     editorTarget,
+    getBlockHeightBaselines,
     getBlockRows,
     getBlockSpan,
     getGridMetrics,
+    getPlacementHeightBaselines,
     getPlacementRows,
     getPlacementSpan,
     hoveredTextGuideRect,

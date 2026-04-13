@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Columns3, Droplets, Info, Palette, Percent, Rows3, Trash2 } from "lucide-react"
+import { Baseline, Columns3, Droplets, Info, Palette, Percent, Rows3, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
@@ -23,6 +23,7 @@ export type ImageEditorState = {
   target: string
   draftColumns: number
   draftRows: number
+  draftHeightBaselines: number
   draftColor: string
   draftOpacity: number
 }
@@ -39,6 +40,7 @@ type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
   setEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
   deleteEditor: () => void
+  baselinesPerGridModule: number
   gridRows: number
   gridCols: number
   colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
@@ -56,6 +58,7 @@ export function ImageEditorDialog({
   editorState,
   setEditorState,
   deleteEditor,
+  baselinesPerGridModule,
   gridRows,
   gridCols,
   colorSchemes,
@@ -87,8 +90,22 @@ export function ImageEditorDialog({
     setTransparencyInput(String(opacityToTransparencyPercent(editorState.draftOpacity)))
   }, [editorState])
 
+  useEffect(() => {
+    if (!editorState) return
+    if (editorState.draftHeightBaselines <= baselinesPerGridModule) return
+    setEditorState((prev) => (
+      prev
+        ? {
+          ...prev,
+          draftHeightBaselines: baselinesPerGridModule,
+        }
+        : prev
+    ))
+  }, [baselinesPerGridModule, editorState, setEditorState])
+
   if (!editorState) return null
 
+  const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
   const colorSchemeTriggerWidthCh = Math.max(
     ...colorSchemes.map((scheme) => scheme.label.length),
     12,
@@ -96,6 +113,7 @@ export function ImageEditorDialog({
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
   const transparencyPercent = opacityToTransparencyPercent(editorState.draftOpacity)
+  const resolvedHeightBaselines = Math.max(0, Math.min(maxHeightBaselines, editorState.draftHeightBaselines))
 
   const tone = isDarkMode
     ? {
@@ -198,6 +216,7 @@ export function ImageEditorDialog({
   }
   const infoRows = [
     { label: "Rows", value: String(editorState.draftRows), icon: Rows3 },
+    { label: "Baselines", value: String(editorState.draftHeightBaselines), icon: Baseline },
     { label: "Cols", value: String(editorState.draftColumns), icon: Columns3 },
     { label: "Scheme", value: colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme, icon: Palette },
     { label: "Color", value: editorState.draftColor, icon: Droplets },
@@ -208,7 +227,7 @@ export function ImageEditorDialog({
     <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
       <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
         {isHelpActive ? <HelpIndicatorLine /> : null}
-        {withRailTooltip("Rows, columns, color, and transparency", <Button
+        {withRailTooltip("Rows, baselines, columns, color, and transparency", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -258,17 +277,48 @@ export function ImageEditorDialog({
                 withSubmenuTooltip("Set the row span of this image placeholder", <Select
                   value={String(editorState.draftRows)}
                   onValueChange={(value) => {
-                    const rows = Math.max(1, Math.min(gridRows, Number(value)))
-                    setEditorState((prev) => (prev ? { ...prev, draftRows: rows } : prev))
+                    const rows = Math.max(0, Math.min(gridRows, Number(value)))
+                    setEditorState((prev) => (prev ? {
+                      ...prev,
+                      draftRows: rows,
+                      draftHeightBaselines: rows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
+                    } : prev))
                   }}
                 >
                   <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: gridRows }, (_, index) => index + 1).map((count) => (
+                    {Array.from({ length: gridRows + 1 }, (_, index) => index).map((count) => (
                       <SelectItem key={`image-row-${count}`} value={String(count)}>
                         {count} {count === 1 ? "row" : "rows"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>),
+              )}
+              {renderSettingRow(
+                <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Baselines",
+                withSubmenuTooltip("Add baseline units to this image placeholder height", <Select
+                  value={String(resolvedHeightBaselines)}
+                  onValueChange={(value) => {
+                    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+                    setEditorState((prev) => (prev ? {
+                      ...prev,
+                      draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
+                      draftHeightBaselines: nextBaselines,
+                    } : prev))
+                  }}
+                >
+                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={tone.selectContent}>
+                    <SelectItem value="0">0 baselines</SelectItem>
+                    {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
+                      <SelectItem key={`image-baselines-${count}`} value={String(count)}>
+                        {count} {count === 1 ? "baseline" : "baselines"}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,3 +1,4 @@
+import { resolveBlockHeight } from "@/lib/block-height"
 import { sumAxisSpan } from "@/lib/grid-rhythm"
 import type { WrappedTextLine } from "@/lib/text-layout"
 import type { TextAlignMode } from "@/lib/types/layout-primitives"
@@ -32,6 +33,7 @@ export type TypographyLayoutPlan<BlockId extends string, StyleKey extends string
   fontSize: number
   span: number
   rowSpan: number
+  heightBaselines: number
   columnReflow: boolean
   rect: BlockRect
   guideRects: BlockRect[]
@@ -69,6 +71,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   defaultCaptionStyleKey: StyleKey
   getBlockSpan: (key: BlockId) => number
   getBlockRows: (key: BlockId) => number
+  getBlockHeightBaselines?: (key: BlockId) => number
   getBlockFontSize?: (args: { key: BlockId; styleKey: StyleKey; defaultSize: number }) => number
   getBlockBaselineMultiplier?: (args: { key: BlockId; styleKey: StyleKey; defaultMultiplier: number }) => number
   getBlockRotation: (key: BlockId) => number
@@ -125,6 +128,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   defaultCaptionStyleKey,
   getBlockSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockFontSize,
   getBlockBaselineMultiplier,
   getBlockRotation,
@@ -186,11 +190,17 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
     return position
   }
-  const getRowSpanHeight = (rowStart: number, rowSpan: number) => {
-    if (rowStart < 0 || rowStart >= gridRows) {
-      return rowSpan * moduleHeight + Math.max(rowSpan - 1, 0) * gutterY
-    }
-    return sumAxisSpan(resolvedModuleHeights, rowStart, rowSpan, gutterY)
+  const getRowSpanHeight = (rowStart: number, rowSpan: number, heightBaselines: number) => {
+    return resolveBlockHeight({
+      rowStart,
+      rows: rowSpan,
+      baselines: heightBaselines,
+      gridRows,
+      moduleHeights: resolvedModuleHeights,
+      fallbackModuleHeight: moduleHeight,
+      gutterY,
+      baselineStep,
+    })
   }
   const getRowHeightAt = (rowIndex: number) => {
     if (rowIndex < 0 || rowIndex >= gridRows) return moduleHeight
@@ -203,16 +213,26 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
     return position
   }
-  const buildReflowRowLayouts = (rowStart: number, rowSpan: number, lineStep: number) => (
-    Array.from({ length: Math.max(1, rowSpan) }, (_, rowOffset) => {
-      const height = getRowHeightAt(rowStart + rowOffset)
-      return {
-        yOffset: getRowOffset(rowStart, rowOffset),
+  const buildReflowRowLayouts = (rowStart: number, rowSpan: number, heightBaselines: number, lineStep: number) => {
+    if (rowSpan <= 0) {
+      const height = Math.max(heightBaselines * baselineStep, lineStep)
+      return [{
+        yOffset: 0,
         height,
         lineCapacity: Math.max(1, Math.floor(height / Math.max(lineStep, 0.0001))),
+      }]
+    }
+
+    return Array.from({ length: Math.max(1, rowSpan) }, (_, rowOffset) => {
+      const height = getRowHeightAt(rowStart + rowOffset)
+      const extraHeight = rowOffset === rowSpan - 1 ? heightBaselines * baselineStep : 0
+      return {
+        yOffset: getRowOffset(rowStart, rowOffset),
+        height: height + extraHeight,
+        lineCapacity: Math.max(1, Math.floor((height + extraHeight) / Math.max(lineStep, 0.0001))),
       }
     })
-  )
+  }
 
   const useRowPlacement = gridRows >= 2
   const useParagraphRows = gridRows >= 5
@@ -254,6 +274,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const context = createTextContext({ key, styleKey, fontSize })
     const span = getBlockSpan(key)
     const rowSpan = getBlockRows(key)
+    const heightBaselines = getBlockHeightBaselines?.(key) ?? 0
     const startColRaw = getBlockColumnStart?.(key, span) ?? 0
     const startCol = Math.max(-Math.max(0, span - 1), Math.min(Math.max(0, gridCols - 1), startColRaw))
     const startRowRaw = getBlockRowStart?.(key, rowSpan) ?? 0
@@ -283,8 +304,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       ? Number.POSITIVE_INFINITY
       : pageHeight - marginsBottom
     const bottomLineLimit = pageBottomY + 0.0001
-    const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan)
-    const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, lineStep)
+    const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan, heightBaselines)
+    const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, heightBaselines, lineStep)
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / Math.max(lineStep, 0.0001)))
     let maxUsedRows = 0
     const commands: TextDrawCommand[] = []
@@ -310,7 +331,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         x: origin.x,
         y: origin.y + baselineStep,
         width: wrapWidth,
-        height: rect.height,
+        height: moduleHeightForBlock,
       }]
 
     if (!columnReflow) {
@@ -384,6 +405,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       fontSize,
       span,
       rowSpan,
+      heightBaselines,
       columnReflow,
       rect,
       guideRects,
@@ -432,6 +454,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionAlign = blockTextAlignments[captionKey] ?? "left"
   const captionSpan = getBlockSpan(captionKey)
   const captionRowSpan = getBlockRows(captionKey)
+  const captionHeightBaselines = getBlockHeightBaselines?.(captionKey) ?? 0
   const captionStartColRaw = getBlockColumnStart?.(captionKey, captionSpan) ?? 0
   const captionStartCol = Math.max(
     -Math.max(0, captionSpan - 1),
@@ -470,8 +493,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     ? Number.POSITIVE_INFINITY
     : pageHeight - marginsBottom
   const captionBottomLineLimit = captionPageBottomY + 0.0001
-  const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan)
-  const captionReflowRowLayouts = buildReflowRowLayouts(captionStartRow, captionRowSpan, captionLineStep)
+  const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan, captionHeightBaselines)
+  const captionReflowRowLayouts = buildReflowRowLayouts(captionStartRow, captionRowSpan, captionHeightBaselines, captionLineStep)
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / Math.max(captionLineStep, 0.0001)))
   let captionMaxUsedRows = 0
   const captionCommands: TextDrawCommand[] = []
@@ -576,6 +599,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     fontSize: captionFontSize,
     span: captionSpan,
     rowSpan: captionRowSpan,
+    heightBaselines: captionHeightBaselines,
     columnReflow: captionColumnReflow,
     rect: captionRect,
     guideRects: captionGuideRects,

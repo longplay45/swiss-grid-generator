@@ -23,6 +23,7 @@ type Args<
   setImageModulePositions: Dispatch<SetStateAction<Partial<Record<Key, ImagePosition>>>>
   setImageColumnSpans: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setImageRowSpans: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
+  setImageHeightBaselines: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setImageColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
   setLayerOrder: Dispatch<SetStateAction<Key[]>>
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
@@ -56,6 +57,7 @@ export function usePreviewLayerDelete<
   setImageModulePositions,
   setImageColumnSpans,
   setImageRowSpans,
+  setImageHeightBaselines,
   setImageColors,
   setLayerOrder,
   setImageEditorState,
@@ -71,6 +73,7 @@ export function usePreviewLayerDelete<
       setImageModulePositions((prev) => omitOptionalRecordKey(prev, key))
       setImageColumnSpans((prev) => omitOptionalRecordKey(prev, key))
       setImageRowSpans((prev) => omitOptionalRecordKey(prev, key))
+      setImageHeightBaselines((prev) => omitOptionalRecordKey(prev, key))
       setImageColors((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
       setImageEditorState((prev) => (prev?.target === key ? null : prev))
@@ -93,6 +96,7 @@ export function usePreviewLayerDelete<
     setImageColors,
     setImageColumnSpans,
     setImageEditorState,
+    setImageHeightBaselines,
     setImageModulePositions,
     setImageOrder,
     setImageRowSpans,

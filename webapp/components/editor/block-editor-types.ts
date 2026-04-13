@@ -15,6 +15,7 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftFontWeight: number
   draftColumns: number
   draftRows: number
+  draftHeightBaselines: number
   draftAlign: BlockEditorTextAlign
   draftColor: string
   draftReflow: boolean

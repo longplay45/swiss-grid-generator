@@ -36,6 +36,7 @@ type Args<Key extends string> = {
   result: GridResult
   getDefaultColumnSpan: (key: Key, gridCols: number) => number
   getBlockRows: (key: Key) => number
+  getBlockHeightBaselines: (key: Key) => number
   getBlockSpan: (key: Key) => number
   getImageRows: (key: Key) => number
   getImageSpan: (key: Key) => number
@@ -70,6 +71,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
   result,
   getDefaultColumnSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockSpan,
   getImageRows,
   getImageSpan,
@@ -191,6 +193,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
     typographyStyles: result.typography.styles,
     getDefaultColumnSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getImageRows,
     getImageSpan,

@@ -1,9 +1,10 @@
 import type { BlockRect, BlockRenderPlan, PagePoint } from "@/lib/preview-types"
 
 export function getPreviewTextGuideRect<Key extends string>(
-  plan: Pick<BlockRenderPlan<Key>, "rect" | "rotationOriginX" | "rotationOriginY">,
+  plan: Pick<BlockRenderPlan<Key>, "guideRects" | "rect" | "rotationOriginX" | "rotationOriginY">,
   baselineStep: number,
 ): BlockRect {
+  if (plan.guideRects.length > 0) return plan.guideRects[0]
   return {
     x: plan.rotationOriginX,
     y: plan.rotationOriginY + baselineStep,

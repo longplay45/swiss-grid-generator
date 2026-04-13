@@ -23,6 +23,7 @@ export type TextLayerCollections<
   blockTextFormatRuns: Partial<Record<Key, TextFormatRun<StyleKey, Family>[]>>
   blockColumnSpans: Partial<Record<Key, number>>
   blockRowSpans: Partial<Record<Key, number>>
+  blockHeightBaselines: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, Align>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
@@ -55,6 +56,7 @@ export function removeTextLayerFromCollections<
     blockTextFormatRuns: omitOptionalRecordKey(state.blockTextFormatRuns, key),
     blockColumnSpans: omitOptionalRecordKey(state.blockColumnSpans, key),
     blockRowSpans: omitOptionalRecordKey(state.blockRowSpans, key),
+    blockHeightBaselines: omitOptionalRecordKey(state.blockHeightBaselines, key),
     blockTextAlignments: omitOptionalRecordKey(state.blockTextAlignments, key),
     blockTextReflow: omitOptionalRecordKey(state.blockTextReflow, key),
     blockSyllableDivision: omitOptionalRecordKey(state.blockSyllableDivision, key),
@@ -81,6 +83,7 @@ export function removeLayerFromPreviewLayout<
       imageModulePositions: omitOptionalRecordKey(layout.imageModulePositions, key),
       imageColumnSpans: omitOptionalRecordKey(layout.imageColumnSpans, key),
       imageRowSpans: omitOptionalRecordKey(layout.imageRowSpans, key),
+      imageHeightBaselines: omitOptionalRecordKey(layout.imageHeightBaselines, key),
       imageColors: omitOptionalRecordKey(layout.imageColors, key),
       imageOpacities: omitOptionalRecordKey(layout.imageOpacities, key),
     }
@@ -111,6 +114,9 @@ export function removeLayerFromPreviewLayout<
     blockColumnSpans: omitRequiredRecordKey(layout.blockColumnSpans, key),
     blockRowSpans: layout.blockRowSpans
       ? omitRequiredRecordKey(layout.blockRowSpans, key)
+      : undefined,
+    blockHeightBaselines: layout.blockHeightBaselines
+      ? omitRequiredRecordKey(layout.blockHeightBaselines, key)
       : undefined,
     blockTextAlignments: omitRequiredRecordKey(layout.blockTextAlignments, key),
     blockTextReflow: layout.blockTextReflow

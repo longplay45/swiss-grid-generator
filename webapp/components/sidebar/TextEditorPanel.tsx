@@ -170,8 +170,28 @@ export function TextEditorPanel<StyleKey extends string>({
     setPreviewColorScheme(null)
   }, [controls.editorState.target, controls.selectedColorScheme])
 
+  const maxHeightBaselines = Math.max(1, controls.baselinesPerGridModule)
+  const setTextEditorState = controls.setEditorState
+
+  useEffect(() => {
+    if (controls.editorState.draftHeightBaselines <= maxHeightBaselines) return
+    setTextEditorState((prev) => (
+      prev
+        ? {
+          ...prev,
+          draftHeightBaselines: maxHeightBaselines,
+        }
+        : prev
+    ))
+  }, [
+    controls.editorState.draftHeightBaselines,
+    maxHeightBaselines,
+    setTextEditorState,
+  ])
+
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = controls.colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? controls.palette
+  const resolvedHeightBaselines = Math.max(0, Math.min(maxHeightBaselines, controls.editorState.draftHeightBaselines))
 
   const rebaseDraftTextFormatRuns = (
     state: typeof controls.editorState,
@@ -363,6 +383,7 @@ export function TextEditorPanel<StyleKey extends string>({
   }
   const infoRows = [
     { label: "Rows", value: String(controls.editorState.draftRows), icon: Rows3 },
+    { label: "Baselines", value: String(controls.editorState.draftHeightBaselines), icon: Baseline },
     { label: "Cols", value: String(controls.editorState.draftColumns), icon: Columns3 },
     { label: "Rotation", value: `${Math.round(controls.editorState.draftRotation)}deg`, icon: RotateCw },
     { label: "Align", value: controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1), icon: AlignCenter },
@@ -408,7 +429,7 @@ export function TextEditorPanel<StyleKey extends string>({
     <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
       <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
         {isHelpActive ? <HelpIndicatorLine /> : null}
-        {withRailTooltip("Rows, columns, paragraph flow, and rotation", <Button
+        {withRailTooltip("Rows, baselines, columns, paragraph flow, and rotation", <Button
           type="button"
           size="icon"
           variant="ghost"
@@ -467,9 +488,11 @@ export function TextEditorPanel<StyleKey extends string>({
                 withSubmenuTooltip("Set the row span of this paragraph", <Select
                   value={String(controls.editorState.draftRows)}
                   onValueChange={(value) => {
+                    const nextRows = Math.max(0, Math.min(controls.gridRows, Number(value)))
                     controls.setEditorState((prev) => prev ? {
                       ...prev,
-                      draftRows: Math.max(1, Math.min(controls.gridRows, Number(value))),
+                      draftRows: nextRows,
+                      draftHeightBaselines: nextRows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
                     } : prev)
                   }}
                 >
@@ -477,9 +500,36 @@ export function TextEditorPanel<StyleKey extends string>({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: controls.gridRows }, (_, index) => index + 1).map((count) => (
+                    {Array.from({ length: controls.gridRows + 1 }, (_, index) => index).map((count) => (
                       <SelectItem key={count} value={String(count)}>
                         {count} {count === 1 ? "row" : "rows"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>),
+              )}
+              {renderSettingRow(
+                <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
+                "Baselines",
+                withSubmenuTooltip("Add baseline units to this paragraph height", <Select
+                  value={String(resolvedHeightBaselines)}
+                  onValueChange={(value) => {
+                    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+                    controls.setEditorState((prev) => prev ? {
+                      ...prev,
+                      draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
+                      draftHeightBaselines: nextBaselines,
+                    } : prev)
+                  }}
+                >
+                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={tone.selectContent}>
+                    <SelectItem value="0">0 baselines</SelectItem>
+                    {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
+                      <SelectItem key={`paragraph-baselines-${count}`} value={String(count)}>
+                        {count} {count === 1 ? "baseline" : "baselines"}
                       </SelectItem>
                     ))}
                   </SelectContent>

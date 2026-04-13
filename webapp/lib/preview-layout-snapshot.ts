@@ -15,6 +15,7 @@ type ResolvedSnapshotState<
 > = SnapshotState<Key, StyleKey, FontFamily, TextAlignMode, Position> & {
   blockColumnSpans: Record<Key, number>
   blockRowSpans: Record<Key, number>
+  blockHeightBaselines: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>
   blockTextReflow: Record<Key, boolean>
   blockSyllableDivision: Record<Key, boolean>
@@ -39,6 +40,7 @@ export function buildResolvedSnapshotState<
     gridCols,
     getDefaultColumnSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     getBlockFontWeight,
@@ -51,6 +53,7 @@ export function buildResolvedSnapshotState<
     gridCols: number
     getDefaultColumnSpan: (key: Key, gridCols: number) => number
     getBlockRows: (key: Key) => number
+    getBlockHeightBaselines: (key: Key) => number
     isTextReflowEnabled: (key: Key) => boolean
     isSyllableDivisionEnabled: (key: Key) => boolean
     getBlockFontWeight: (key: Key) => number
@@ -72,6 +75,10 @@ export function buildResolvedSnapshotState<
   }, {} as Record<Key, TextAlignMode>)
   const resolvedRows = state.blockOrder.reduce((acc, key) => {
     acc[key] = getBlockRows(key)
+    return acc
+  }, {} as Record<Key, number>)
+  const resolvedHeightBaselines = state.blockOrder.reduce((acc, key) => {
+    acc[key] = getBlockHeightBaselines(key)
     return acc
   }, {} as Record<Key, number>)
   const resolvedReflow = state.blockOrder.reduce((acc, key) => {
@@ -126,6 +133,7 @@ export function buildResolvedSnapshotState<
     blockTextFormatRuns: { ...(state.blockTextFormatRuns ?? {}) },
     blockColumnSpans: resolvedSpans,
     blockRowSpans: resolvedRows,
+    blockHeightBaselines: resolvedHeightBaselines,
     blockTextAlignments: resolvedAlignments,
     blockTextReflow: resolvedReflow,
     blockSyllableDivision: resolvedSyllableDivision,
@@ -211,6 +219,7 @@ export function normalizeSnapshotStateForApply<
     blockRotations: nextRotations,
     blockColumnSpans: { ...state.blockColumnSpans },
     blockRowSpans: { ...(state.blockRowSpans ?? {}) },
+    blockHeightBaselines: { ...(state.blockHeightBaselines ?? {}) },
     blockTextAlignments: { ...state.blockTextAlignments },
     blockTextReflow: { ...state.blockTextReflow },
     blockSyllableDivision: { ...state.blockSyllableDivision },

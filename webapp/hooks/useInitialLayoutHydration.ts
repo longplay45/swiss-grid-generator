@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import type { MutableRefObject } from "react"
 
 import type { FontFamily } from "@/lib/config/fonts"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import { toTextBlockPosition } from "@/lib/text-block-position"
 import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
@@ -39,6 +40,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockTextFormatRuns: Partial<Record<BlockKey, TextFormatRun<StyleKey, FontFamily>[]>>
     blockColumnSpans: Partial<Record<BlockKey, number>>
     blockRowSpans: Partial<Record<BlockKey, number>>
+    blockHeightBaselines: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
     blockTextReflow: Partial<Record<BlockKey, boolean>>
     blockSyllableDivision: Partial<Record<BlockKey, boolean>>
@@ -97,6 +99,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
         blockTextFormatRuns: {},
         blockColumnSpans: {},
         blockRowSpans: {},
+        blockHeightBaselines: {},
         blockTextAlignments: {} as Record<BlockKey, TextAlignMode>,
         blockTextReflow: {},
         blockSyllableDivision: {},
@@ -162,9 +165,22 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
     }, {} as Record<BlockKey, TextAlignMode>)
 
     const nextRows = normalizedKeys.reduce((acc, key) => {
-      const raw = initialLayout.blockRowSpans?.[key]
-      const value = typeof raw === "number" ? raw : 1
-      acc[key] = Math.max(1, Math.min(gridRows, Math.round(value)))
+      const height = normalizeHeightMetrics({
+        rows: initialLayout.blockRowSpans?.[key],
+        baselines: initialLayout.blockHeightBaselines?.[key],
+        gridRows,
+      })
+      acc[key] = height.rows
+      return acc
+    }, {} as Record<BlockKey, number>)
+
+    const nextHeightBaselines = normalizedKeys.reduce((acc, key) => {
+      const height = normalizeHeightMetrics({
+        rows: initialLayout.blockRowSpans?.[key],
+        baselines: initialLayout.blockHeightBaselines?.[key],
+        gridRows,
+      })
+      acc[key] = height.baselines
       return acc
     }, {} as Record<BlockKey, number>)
 
@@ -274,6 +290,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockTextFormatRuns: nextTextFormatRuns,
       blockColumnSpans: nextSpans,
       blockRowSpans: nextRows,
+      blockHeightBaselines: nextHeightBaselines,
       blockTextAlignments: nextAlignments,
       blockTextReflow: nextReflow,
       blockSyllableDivision: nextSyllableDivision,

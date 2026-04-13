@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 
 import type { BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useStateCommands, type Updater } from "@/hooks/useStateCommands"
 import { clampRotation } from "@/lib/block-constraints"
@@ -54,6 +55,7 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockModulePositions: {},
     blockColumnSpans: {},
     blockRowSpans: {},
+    blockHeightBaselines: {},
     blockTextAlignments: {},
     blockTextReflow: {},
     blockSyllableDivision: {},
@@ -85,6 +87,7 @@ export function usePreviewTextBlockState({
     blockModulePositions,
     blockColumnSpans,
     blockRowSpans,
+    blockHeightBaselines,
     blockTextAlignments,
     blockTextReflow,
     blockSyllableDivision,
@@ -132,9 +135,20 @@ export function usePreviewTextBlockState({
   }, [blockColumnSpans, result.settings.gridCols])
 
   const getBlockRows = useCallback((key: BlockId) => {
-    const raw = blockRowSpans[key] ?? 1
-    return Math.max(1, Math.min(result.settings.gridRows, raw))
-  }, [blockRowSpans, result.settings.gridRows])
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows: result.settings.gridRows,
+    }).rows
+  }, [blockHeightBaselines, blockRowSpans, result.settings.gridRows])
+
+  const getBlockHeightBaselines = useCallback((key: BlockId) => {
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows: result.settings.gridRows,
+    }).baselines
+  }, [blockHeightBaselines, blockRowSpans, result.settings.gridRows])
 
   const getStyleKeyForBlock = useCallback((key: BlockId): TypographyStyleKey => {
     const assigned = styleAssignments[key]
@@ -254,6 +268,7 @@ export function usePreviewTextBlockState({
     baseFont,
     getDefaultColumnSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     getBlockFontWeight,
@@ -278,6 +293,7 @@ export function usePreviewTextBlockState({
       blockRotations: { ...(snapshot.blockRotations ?? {}) },
       blockColumnSpans: { ...snapshot.blockColumnSpans },
       blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
+      blockHeightBaselines: { ...(snapshot.blockHeightBaselines ?? {}) },
       blockTextAlignments: { ...snapshot.blockTextAlignments },
       blockTextReflow: { ...(snapshot.blockTextReflow ?? {}) },
       blockSyllableDivision: { ...(snapshot.blockSyllableDivision ?? {}) },
@@ -296,6 +312,7 @@ export function usePreviewTextBlockState({
     blockModulePositions,
     blockColumnSpans,
     blockRowSpans,
+    blockHeightBaselines,
     blockTextAlignments,
     blockTextReflow,
     blockSyllableDivision,
@@ -316,6 +333,7 @@ export function usePreviewTextBlockState({
     setBlockModulePositions,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getStyleKeyForBlock,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,

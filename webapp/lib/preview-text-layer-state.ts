@@ -1,4 +1,5 @@
 import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import { getPlacementRowCapacity, normalizeHeightMetrics } from "@/lib/block-height"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
@@ -49,6 +50,7 @@ type InsertTextLayerArgs<Key extends string, StyleKey extends string> = {
   gridRows: number
   columns: number
   rows: number
+  heightBaselines: number
   position: ModulePosition | TextBlockPosition
   rowStartBaselines: readonly number[]
   afterKey?: Key | null
@@ -66,6 +68,7 @@ type DuplicateTextLayerArgs<Key extends string, StyleKey extends string> = {
   gridRows: number
   columns: number
   rows: number
+  heightBaselines: number
   reflow: boolean
   syllableDivision: boolean
   position: ModulePosition | TextBlockPosition
@@ -108,12 +111,13 @@ function clampTextBlockAnchorPosition({
   gridRows,
   fitWithinGrid = false,
 }: ClampTextBlockAnchorPositionArgs): TextBlockPosition {
+  const occupiedRows = getPlacementRowCapacity(rows)
   const minCol = -Math.max(0, span - 1)
   const maxCol = fitWithinGrid
     ? Math.max(minCol, gridCols - span)
     : Math.max(0, gridCols - 1)
   const maxRow = fitWithinGrid
-    ? Math.max(0, gridRows - rows)
+    ? Math.max(0, gridRows - occupiedRows)
     : Math.max(0, gridRows - 1)
 
   return {
@@ -138,6 +142,11 @@ export function applyBlockEditorDraftToCollections<
     typographyStyles,
   }: ApplyDraftArgs<StyleKey>,
 ): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const height = normalizeHeightMetrics({
+    rows: draft.draftRows,
+    baselines: draft.draftHeightBaselines,
+    gridRows,
+  })
   const nextFonts = { ...current.blockFontFamilies }
   if (draft.draftFont === baseFont) {
     delete nextFonts[draft.target as Key]
@@ -222,7 +231,7 @@ export function applyBlockEditorDraftToCollections<
     const clampedPosition = clampTextBlockAnchorPosition({
       position: candidatePosition,
       span: draft.draftColumns,
-      rows: draft.draftRows,
+      rows: height.rows,
       gridCols,
       gridRows,
       fitWithinGrid: true,
@@ -263,7 +272,11 @@ export function applyBlockEditorDraftToCollections<
     },
     blockRowSpans: {
       ...current.blockRowSpans,
-      [draft.target as Key]: draft.draftRows,
+      [draft.target as Key]: height.rows,
+    },
+    blockHeightBaselines: {
+      ...current.blockHeightBaselines,
+      [draft.target as Key]: height.baselines,
     },
     blockTextAlignments: {
       ...current.blockTextAlignments,
@@ -296,6 +309,7 @@ export function insertTextLayerIntoCollections<
     gridRows,
     columns,
     rows,
+    heightBaselines,
     position,
     rowStartBaselines,
     afterKey = null,
@@ -305,6 +319,11 @@ export function insertTextLayerIntoCollections<
     syllableDivision = true,
   }: InsertTextLayerArgs<Key, StyleKey>,
 ): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const height = normalizeHeightMetrics({
+    rows,
+    baselines: heightBaselines,
+    gridRows,
+  })
   const nextOrder = [...current.blockOrder]
   if (afterKey) {
     const afterIndex = nextOrder.indexOf(afterKey)
@@ -335,7 +354,11 @@ export function insertTextLayerIntoCollections<
     },
     blockRowSpans: {
       ...current.blockRowSpans,
-      [newKey]: rows,
+      [newKey]: height.rows,
+    },
+    blockHeightBaselines: {
+      ...current.blockHeightBaselines,
+      [newKey]: height.baselines,
     },
     blockTextAlignments: {
       ...current.blockTextAlignments,
@@ -360,7 +383,7 @@ export function insertTextLayerIntoCollections<
       [newKey]: clampTextBlockAnchorPosition({
         position: toTextBlockPosition(position, rowStartBaselines),
         span: columns,
-        rows,
+        rows: height.rows,
         gridCols,
         gridRows,
       }),
@@ -381,6 +404,7 @@ export function duplicateTextLayerInCollections<
     gridRows,
     columns,
     rows,
+    heightBaselines,
     reflow,
     syllableDivision,
     position,
@@ -388,6 +412,11 @@ export function duplicateTextLayerInCollections<
     baseFont,
   }: DuplicateTextLayerArgs<Key, StyleKey>,
 ): PreviewTextLayerCollectionsState<Key, StyleKey> {
+  const height = normalizeHeightMetrics({
+    rows,
+    baselines: heightBaselines,
+    gridRows,
+  })
   const nextOrder = [...current.blockOrder]
   const sourceIndex = nextOrder.indexOf(sourceKey)
   if (sourceIndex >= 0) nextOrder.splice(sourceIndex + 1, 0, newKey)
@@ -481,7 +510,11 @@ export function duplicateTextLayerInCollections<
     },
     blockRowSpans: {
       ...current.blockRowSpans,
-      [newKey]: rows,
+      [newKey]: height.rows,
+    },
+    blockHeightBaselines: {
+      ...current.blockHeightBaselines,
+      [newKey]: height.baselines,
     },
     blockTextAlignments: {
       ...current.blockTextAlignments,
@@ -500,7 +533,7 @@ export function duplicateTextLayerInCollections<
       [newKey]: clampTextBlockAnchorPosition({
         position: toTextBlockPosition(position, rowStartBaselines),
         span: columns,
-        rows,
+        rows: height.rows,
         gridCols,
         gridRows,
       }),

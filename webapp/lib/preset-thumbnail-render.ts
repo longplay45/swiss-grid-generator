@@ -1,4 +1,5 @@
 import { clampFxLeading, clampFxSize, clampRotation } from "@/lib/block-constraints"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import {
   buildCanvasImagePlans,
   buildCanvasTypographyRenderPlans,
@@ -184,6 +185,7 @@ export function drawPresetThumbnailToCanvas(
   const textContent = layout?.textContent ?? {}
   const blockColumnSpans = layout?.blockColumnSpans ?? {}
   const blockRowSpans = layout?.blockRowSpans ?? {}
+  const blockHeightBaselines = layout?.blockHeightBaselines ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
@@ -198,6 +200,7 @@ export function drawPresetThumbnailToCanvas(
   const storedImageModulePositions = layout?.imageModulePositions ?? {}
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
+  const imageHeightBaselines = layout?.imageHeightBaselines ?? {}
   const imageColors = layout?.imageColors ?? {}
   const imageOpacities = layout?.imageOpacities ?? {}
 
@@ -237,8 +240,19 @@ export function drawPresetThumbnailToCanvas(
   }
 
   const getBlockRows = (key: BlockId) => {
-    const raw = blockRowSpans[key] ?? 1
-    return Math.max(1, Math.min(gridRows, Math.round(raw)))
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows,
+    }).rows
+  }
+
+  const getBlockHeightBaselines = (key: BlockId) => {
+    return normalizeHeightMetrics({
+      rows: blockRowSpans[key],
+      baselines: blockHeightBaselines[key],
+      gridRows,
+    }).baselines
   }
 
   const getBlockFont = (key: BlockId, styleKey: TypographyStyleKey): FontFamily => {
@@ -322,8 +336,19 @@ export function drawPresetThumbnailToCanvas(
   }
 
   const getImageRows = (key: BlockId): number => {
-    const raw = imageRowSpans[key] ?? 1
-    return Math.max(1, Math.min(gridRows, Math.round(raw)))
+    return normalizeHeightMetrics({
+      rows: imageRowSpans[key],
+      baselines: imageHeightBaselines[key],
+      gridRows,
+    }).rows
+  }
+
+  const getImageHeightBaselines = (key: BlockId): number => {
+    return normalizeHeightMetrics({
+      rows: imageRowSpans[key],
+      baselines: imageHeightBaselines[key],
+      gridRows,
+    }).baselines
   }
 
   const toColumnX = (col: number) => {
@@ -346,6 +371,7 @@ export function drawPresetThumbnailToCanvas(
     imageModulePositions,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColor: (key) => resolveImageSchemeColor(imageColors[key], page.imageColorScheme),
     getImageOpacity: (key) => normalizeImagePlaceholderOpacity(imageOpacities[key]),
     clampImageBaselinePosition,
@@ -413,6 +439,7 @@ export function drawPresetThumbnailToCanvas(
       defaultCaptionStyleKey: "caption",
       getBlockSpan,
       getBlockRows,
+      getBlockHeightBaselines,
       getBlockFontSize: (key, styleKey) => getBlockFontSize(key, styleKey, styleDefinitions[styleKey]?.size ?? 0),
       getBlockBaselineMultiplier: (key, styleKey) => (
         getBlockBaselineMultiplier(

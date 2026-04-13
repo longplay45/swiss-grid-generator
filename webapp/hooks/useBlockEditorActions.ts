@@ -2,6 +2,7 @@ import { useCallback } from "react"
 import type { Dispatch, RefObject, SetStateAction } from "react"
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import type { FontFamily } from "@/lib/config/fonts"
 import { clampFxLeading } from "@/lib/block-constraints"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
@@ -57,6 +58,7 @@ type Args = {
     text: string
     styleKey: string
     rowSpan: number
+    heightBaselines: number
     reflow: boolean
     syllableDivision: boolean
     fontFamily?: FontFamily
@@ -88,6 +90,7 @@ type Args = {
   getBlockTextFormatRuns: (key: string, color: string) => TextFormatRun<string, FontFamily>[]
   getBlockSpan: (key: string) => number
   getBlockRows: (key: string) => number
+  getBlockHeightBaselines: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
@@ -142,6 +145,7 @@ export function useBlockEditorActions({
   getBlockTextFormatRuns,
   getBlockSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isBlockItalic,
@@ -151,13 +155,19 @@ export function useBlockEditorActions({
   onRequestNotice,
 }: Args) {
   const applyEditorDraftLive = useCallback((draft: EditorState) => {
+    const height = normalizeHeightMetrics({
+      rows: draft.draftRows,
+      baselines: draft.draftHeightBaselines,
+      gridRows: resultGridRows,
+    })
     const effectiveReflow = draft.draftReflow && draft.draftColumns > 1
     const existingPosition = blockModulePositions[draft.target]
     const autoFit = getAutoFitForPlacement({
       key: draft.target,
       text: draft.draftText,
       styleKey: draft.draftStyle,
-      rowSpan: draft.draftRows,
+      rowSpan: height.rows,
+      heightBaselines: height.baselines,
       reflow: effectiveReflow,
       syllableDivision: draft.draftSyllableDivision,
       fontFamily: draft.draftFont,
@@ -278,6 +288,7 @@ export function useBlockEditorActions({
     getBlockTextFormatRuns,
     getBlockRotation,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getBlockTextColor,
     recordHistoryBeforeChange,

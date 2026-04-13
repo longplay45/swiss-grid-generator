@@ -22,6 +22,7 @@ export type PreviewLayoutState<
   blockTextFormatRuns?: Partial<Record<Key, TextFormatRun<StyleKey, FontFamily>[]>>
   blockColumnSpans: Record<Key, number>
   blockRowSpans?: Record<Key, number>
+  blockHeightBaselines?: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>
   blockTextReflow?: Record<Key, boolean>
   blockSyllableDivision?: Record<Key, boolean>
@@ -38,6 +39,7 @@ export type PreviewLayoutState<
   imageModulePositions?: Partial<Record<Key, TextBlockPosition | ModulePosition>>
   imageColumnSpans?: Partial<Record<Key, number>>
   imageRowSpans?: Partial<Record<Key, number>>
+  imageHeightBaselines?: Partial<Record<Key, number>>
   imageColors?: Partial<Record<Key, string>>
   imageOpacities?: Partial<Record<Key, number>>
 }

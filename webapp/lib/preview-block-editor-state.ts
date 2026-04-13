@@ -1,4 +1,5 @@
 import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
@@ -25,6 +26,7 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getBlockFont: (key: string) => FontFamily
   getBlockRotation: (key: string) => number
   getBlockRows: (key: string) => number
+  getBlockHeightBaselines: (key: string) => number
   getBlockSpan: (key: string) => number
   getBlockTextColor: (key: string) => string
   getBlockFontWeight: (key: string) => number
@@ -47,6 +49,7 @@ type NewBlockArgs<StyleKey extends string> = {
   text: string
   columns: number
   rows: number
+  heightBaselines?: number
   baseFont: FontFamily
   defaultTextColor: string
   getStyleLeading: (style: StyleKey) => number
@@ -76,6 +79,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getBlockFont,
   getBlockRotation,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockSpan,
   getBlockTextColor,
   getBlockFontWeight,
@@ -91,6 +95,12 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   fallbackStyle,
   fxStyle,
 }: ExistingBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
+  const height = normalizeHeightMetrics({
+    rows: getBlockRows(key),
+    baselines: getBlockHeightBaselines(key),
+    gridRows: Number.MAX_SAFE_INTEGER,
+    defaultRows: 1,
+  })
   const assignedStyleKey = styleAssignments[key] ?? fallbackStyle
   const normalizedText = normalizeInlineEditorText(textContent[key] ?? "")
   const initialBaseFormat: BaseTextFormat<StyleKey, FontFamily> = {
@@ -189,7 +199,8 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftFont: draftFont,
     draftFontWeight: draftFontWeight,
     draftColumns: getBlockSpan(key),
-    draftRows: getBlockRows(key),
+    draftRows: height.rows,
+    draftHeightBaselines: height.baselines,
     draftAlign: blockTextAlignments[key] ?? "left",
     draftColor: draftColor,
     draftReflow: isTextReflowEnabled(key),
@@ -216,6 +227,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   text,
   columns,
   rows,
+  heightBaselines = 0,
   baseFont,
   defaultTextColor,
   getStyleLeading,
@@ -234,6 +246,12 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   textEdited = false,
 }: NewBlockArgs<StyleKey>): BlockEditorState<StyleKey> {
   const normalizedText = normalizeInlineEditorText(text)
+  const height = normalizeHeightMetrics({
+    rows,
+    baselines: heightBaselines,
+    gridRows: Number.MAX_SAFE_INTEGER,
+    defaultRows: 1,
+  })
   return {
     target: key,
     draftText: normalizedText,
@@ -243,7 +261,8 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftFont: baseFont,
     draftFontWeight: fontWeight,
     draftColumns: columns,
-    draftRows: rows,
+    draftRows: height.rows,
+    draftHeightBaselines: height.baselines,
     draftAlign: align,
     draftColor: defaultTextColor,
     draftReflow: reflow,

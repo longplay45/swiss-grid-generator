@@ -14,6 +14,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "getGridMetrics"
   | "getImageSpan"
   | "getImageRows"
+  | "getImageHeightBaselines"
   | "getImageColorReference"
   | "gridCols"
   | "recordHistoryBeforeChange"
@@ -38,6 +39,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   getGridMetrics,
   getImageSpan,
   getImageRows,
+  getImageHeightBaselines,
   getImageColorReference,
   gridCols,
   recordHistoryBeforeChange,
@@ -52,6 +54,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   const handleImageDrop = useCallback((drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => {
     const sourceColumns = getImageSpan(drag.key)
     const sourceRows = getImageRows(drag.key)
+    const sourceHeightBaselines = getImageHeightBaselines(drag.key)
     const sourceColor = getImageColorReference(drag.key)
     const metrics = getGridMetrics()
     const minCol = -Math.max(0, sourceColumns - 1)
@@ -69,6 +72,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
         position: resolvedPosition,
         columns: sourceColumns,
         rows: sourceRows,
+        heightBaselines: sourceHeightBaselines,
         color: sourceColor,
         afterKey: drag.key,
       })
@@ -84,6 +88,7 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     }))
   }, [
     getGridMetrics,
+    getImageHeightBaselines,
     getImageColorReference,
     getImageRows,
     getImageSpan,

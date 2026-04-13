@@ -38,8 +38,10 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   isImagePlaceholderKey: (key: Key) => boolean
   getImageSpan: (key: Key) => number
   getImageRows: (key: Key) => number
+  getImageHeightBaselines: (key: Key) => number
   getImageColorReference: (key: Key) => string
   getBlockRows: (key: Key) => number
+  getBlockHeightBaselines: (key: Key) => number
   getBlockSpan: (key: Key) => number
   getStyleKeyForBlock: (key: Key) => StyleKey
   isTextReflowEnabled: (key: Key) => boolean
@@ -59,6 +61,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
       position: ModulePosition
       columns?: number
       rows?: number
+      heightBaselines?: number
       color?: string
       afterKey?: Key | null
     },

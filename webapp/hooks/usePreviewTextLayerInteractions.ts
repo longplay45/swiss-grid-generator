@@ -16,6 +16,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "blockOrder"
   | "textContent"
   | "getBlockRows"
+  | "getBlockHeightBaselines"
   | "getBlockSpan"
   | "getStyleKeyForBlock"
   | "isTextReflowEnabled"
@@ -45,6 +46,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
   blockOrder,
   textContent,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockSpan,
   getStyleKeyForBlock,
   isTextReflowEnabled,
@@ -84,6 +86,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
 
       const styleKey = getStyleKeyForBlock(drag.key)
       const sourceRows = getBlockRows(drag.key)
+      const sourceHeightBaselines = getBlockHeightBaselines(drag.key)
       const sourceReflow = isTextReflowEnabled(drag.key)
       const sourceSyllableDivision = isSyllableDivisionEnabled(drag.key)
       const sourceSpan = getBlockSpan(drag.key)
@@ -108,6 +111,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         gridRows,
         columns: sourceSpan,
         rows: sourceRows,
+        heightBaselines: sourceHeightBaselines,
         reflow: sourceReflow,
         syllableDivision: sourceSyllableDivision,
         position: resolvedPosition,
@@ -162,6 +166,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
     blockOrder,
     blockTextColors,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getGridMetrics,
     getNextCustomBlockId,

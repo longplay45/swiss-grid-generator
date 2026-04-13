@@ -10,6 +10,7 @@ type Args<StyleKey extends string> = {
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
   deleteEditorBlock: () => void
   maxCharsPerLine: number | null
+  baselinesPerGridModule: number
   gridRows: number
   gridCols: number
   hierarchyTriggerMinWidthCh: number
@@ -33,6 +34,7 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   setEditorState,
   deleteEditorBlock,
   maxCharsPerLine,
+  baselinesPerGridModule,
   gridRows,
   gridCols,
   hierarchyTriggerMinWidthCh,
@@ -57,6 +59,7 @@ export function usePreviewOverlayControls<StyleKey extends string>({
       setEditorState,
       deleteEditorBlock,
       maxCharsPerLine,
+      baselinesPerGridModule,
       gridRows,
       gridCols,
       hierarchyTriggerMinWidthCh,
@@ -77,6 +80,7 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   }, [
     colTriggerMinWidthCh,
     colorSchemes,
+    baselinesPerGridModule,
     deleteEditorBlock,
     editorState,
     maxCharsPerLine,

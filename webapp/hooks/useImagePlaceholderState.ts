@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
 import { type Updater } from "@/hooks/useStateCommands"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import {
   getImageSchemeColorReference,
   resolveImageSchemeColor,
@@ -25,7 +26,7 @@ type ImageGridMetrics = {
 
 type ImageSnapshotState<Key extends string> = Pick<
   PreviewLayoutState<string, string, Key>,
-  "imageOrder" | "imageModulePositions" | "imageColumnSpans" | "imageRowSpans" | "imageColors" | "imageOpacities"
+  "imageOrder" | "imageModulePositions" | "imageColumnSpans" | "imageRowSpans" | "imageHeightBaselines" | "imageColors" | "imageOpacities"
 >
 
 type Args<Key extends string> = {
@@ -42,6 +43,7 @@ type InsertImagePlaceholderOptions<Key extends string> = {
   position: ModulePosition
   columns?: number
   rows?: number
+  heightBaselines?: number
   color?: string
   opacity?: number
   afterKey?: Key | null
@@ -60,6 +62,7 @@ export function useImagePlaceholderState<Key extends string>({
   const [imageGridPositions, setImageGridPositions] = useState<Partial<Record<Key, TextBlockPosition>>>({})
   const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<Key, number>>>({})
+  const [imageHeightBaselines, setImageHeightBaselines] = useState<Partial<Record<Key, number>>>({})
   const [imageColors, setImageColors] = useState<Partial<Record<Key, string>>>({})
   const [imageOpacities, setImageOpacities] = useState<Partial<Record<Key, number>>>({})
   const [imageEditorState, setImageEditorState] = useState<ImageEditorState | null>(null)
@@ -87,9 +90,20 @@ export function useImagePlaceholderState<Key extends string>({
   }, [gridCols, imageColumnSpans])
 
   const getImageRows = useCallback((key: Key) => {
-    const raw = imageRowSpans[key] ?? 1
-    return Math.max(1, Math.min(gridRows, raw))
-  }, [gridRows, imageRowSpans])
+    return normalizeHeightMetrics({
+      rows: imageRowSpans[key],
+      baselines: imageHeightBaselines[key],
+      gridRows,
+    }).rows
+  }, [gridRows, imageHeightBaselines, imageRowSpans])
+
+  const getImageHeightBaselines = useCallback((key: Key) => {
+    return normalizeHeightMetrics({
+      rows: imageRowSpans[key],
+      baselines: imageHeightBaselines[key],
+      gridRows,
+    }).baselines
+  }, [gridRows, imageHeightBaselines, imageRowSpans])
 
   const getImageColorReference = useCallback((key: Key): string => {
     const raw = imageColors[key]
@@ -138,6 +152,10 @@ export function useImagePlaceholderState<Key extends string>({
       acc[key] = getImageRows(key)
       return acc
     }, {} as Partial<Record<Key, number>>),
+    imageHeightBaselines: imageOrder.reduce((acc, key) => {
+      acc[key] = getImageHeightBaselines(key)
+      return acc
+    }, {} as Partial<Record<Key, number>>),
     imageColors: imageOrder.reduce((acc, key) => {
       acc[key] = getImageColorReference(key)
       return acc
@@ -150,6 +168,7 @@ export function useImagePlaceholderState<Key extends string>({
     getImageColorReference,
     getImageOpacity,
     getImageRows,
+    getImageHeightBaselines,
     getImageSpan,
     imageGridPositions,
     imageOrder,
@@ -182,7 +201,21 @@ export function useImagePlaceholderState<Key extends string>({
       return acc
     }, {} as Partial<Record<Key, number>>)
     const nextRows = normalizedOrder.reduce((acc, key) => {
-      acc[key] = Math.max(1, Math.min(gridRows, snapshot.imageRowSpans?.[key] ?? 1))
+      const height = normalizeHeightMetrics({
+        rows: snapshot.imageRowSpans?.[key],
+        baselines: snapshot.imageHeightBaselines?.[key],
+        gridRows,
+      })
+      acc[key] = height.rows
+      return acc
+    }, {} as Partial<Record<Key, number>>)
+    const nextHeightBaselines = normalizedOrder.reduce((acc, key) => {
+      const height = normalizeHeightMetrics({
+        rows: snapshot.imageRowSpans?.[key],
+        baselines: snapshot.imageHeightBaselines?.[key],
+        gridRows,
+      })
+      acc[key] = height.baselines
       return acc
     }, {} as Partial<Record<Key, number>>)
     const nextColors = normalizedOrder.reduce((acc, key) => {
@@ -199,6 +232,7 @@ export function useImagePlaceholderState<Key extends string>({
     setImageGridPositions(nextPositions)
     setImageColumnSpans(nextSpans)
     setImageRowSpans(nextRows)
+    setImageHeightBaselines(nextHeightBaselines)
     setImageColors(nextColors)
     setImageOpacities(nextOpacities)
     setImageEditorState(null)
@@ -215,10 +249,11 @@ export function useImagePlaceholderState<Key extends string>({
       target: key,
       draftColumns: getImageSpan(key),
       draftRows: getImageRows(key),
+      draftHeightBaselines: getImageHeightBaselines(key),
       draftColor: getImageColor(key),
       draftOpacity: getImageOpacity(key),
     })
-  }, [getImageColor, getImageOpacity, getImageRows, getImageSpan])
+  }, [getImageColor, getImageHeightBaselines, getImageOpacity, getImageRows, getImageSpan])
 
   const closeImageEditor = useCallback(() => {
     setImageEditorState(null)
@@ -226,7 +261,11 @@ export function useImagePlaceholderState<Key extends string>({
 
   const insertImagePlaceholder = useCallback((key: Key, options: InsertImagePlaceholderOptions<Key>) => {
     const columns = Math.max(1, Math.min(gridCols, options.columns ?? 1))
-    const rows = Math.max(1, Math.min(gridRows, options.rows ?? 1))
+    const height = normalizeHeightMetrics({
+      rows: options.rows,
+      baselines: options.heightBaselines,
+      gridRows,
+    })
     const colorReference = getImageSchemeColorReference(options.color ?? defaultImageColor, imageColorScheme)
     const opacity = normalizeImagePlaceholderOpacity(options.opacity)
     const rowStartBaselines = getGridMetrics().rowStartBaselines
@@ -248,7 +287,8 @@ export function useImagePlaceholderState<Key extends string>({
       [key]: toTextBlockPosition(options.position, rowStartBaselines),
     }))
     setImageColumnSpans((current) => ({ ...current, [key]: columns }))
-    setImageRowSpans((current) => ({ ...current, [key]: rows }))
+    setImageRowSpans((current) => ({ ...current, [key]: height.rows }))
+    setImageHeightBaselines((current) => ({ ...current, [key]: height.baselines }))
     setImageColors((current) => ({ ...current, [key]: colorReference }))
     setImageOpacities((current) => ({ ...current, [key]: opacity }))
   }, [defaultImageColor, getGridMetrics, gridCols, gridRows, imageColorScheme])
@@ -266,6 +306,11 @@ export function useImagePlaceholderState<Key extends string>({
       return next
     })
     setImageRowSpans((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageHeightBaselines((prev) => {
       const next = { ...prev }
       delete next[key]
       return next
@@ -307,6 +352,7 @@ export function useImagePlaceholderState<Key extends string>({
       imageEditorState.target,
       imageEditorState.draftColumns,
       imageEditorState.draftRows,
+      imageEditorState.draftHeightBaselines,
       imageEditorState.draftColor,
       imageEditorState.draftOpacity.toFixed(3),
     ].join("|")
@@ -315,7 +361,11 @@ export function useImagePlaceholderState<Key extends string>({
 
     const key = imageEditorState.target as Key
     const columns = Math.max(1, Math.min(gridCols, imageEditorState.draftColumns))
-    const rows = Math.max(1, Math.min(gridRows, imageEditorState.draftRows))
+    const height = normalizeHeightMetrics({
+      rows: imageEditorState.draftRows,
+      baselines: imageEditorState.draftHeightBaselines,
+      gridRows,
+    })
     const color = getImageSchemeColorReference(imageEditorState.draftColor, imageColorScheme)
     const opacity = normalizeImagePlaceholderOpacity(imageEditorState.draftOpacity)
     const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
@@ -327,9 +377,14 @@ export function useImagePlaceholderState<Key extends string>({
         : { ...prev, [key]: columns }
     ))
     setImageRowSpans((prev) => (
-      prev[key] === rows
+      prev[key] === height.rows
         ? prev
-        : { ...prev, [key]: rows }
+        : { ...prev, [key]: height.rows }
+    ))
+    setImageHeightBaselines((prev) => (
+      prev[key] === height.baselines
+        ? prev
+        : { ...prev, [key]: height.baselines }
     ))
     setImageColors((prev) => (
       prev[key] === color
@@ -389,6 +444,8 @@ export function useImagePlaceholderState<Key extends string>({
     setImageColumnSpans,
     imageRowSpans,
     setImageRowSpans,
+    imageHeightBaselines,
+    setImageHeightBaselines,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -397,6 +454,7 @@ export function useImagePlaceholderState<Key extends string>({
     setImageEditorState,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColorReference,
     getImageColor,
     getImageOpacity,

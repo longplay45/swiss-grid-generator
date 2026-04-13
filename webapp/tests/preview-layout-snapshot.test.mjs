@@ -15,6 +15,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     blockModulePositions: {},
     blockColumnSpans: { body: 999 },
     blockRowSpans: {},
+    blockHeightBaselines: { body: 3 },
     blockTextAlignments: {},
     blockTextReflow: {},
     blockSyllableDivision: {},
@@ -30,6 +31,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
     gridCols: 6,
     getDefaultColumnSpan: (key) => (key === "caption" ? 1 : 3),
     getBlockRows: (key) => (key === "caption" ? 1 : 2),
+    getBlockHeightBaselines: (key) => (key === "body" ? 3 : 0),
     isTextReflowEnabled: (key) => key === "body",
     isSyllableDivisionEnabled: (key) => key === "body",
     getBlockFontWeight: (key) => (key === "caption" ? 500 : 400),
@@ -44,6 +46,7 @@ test("buildResolvedSnapshotState resolves spans, alignments, and row-derived fie
   assert.equal(resolved.blockColumnSpans.caption, 1)
   assert.equal(resolved.blockTextAlignments.body, "left")
   assert.equal(resolved.blockRowSpans.body, 2)
+  assert.equal(resolved.blockHeightBaselines.body, 3)
   assert.equal(resolved.blockTextReflow.body, true)
   assert.equal(resolved.blockSyllableDivision.body, true)
   assert.equal(resolved.blockFontWeights.caption, 500)
@@ -62,6 +65,7 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
     blockModulePositions: {},
     blockColumnSpans: { body: 2, caption: 1 },
     blockRowSpans: { body: 1, caption: 1 },
+    blockHeightBaselines: { body: 0, caption: 2 },
     blockTextAlignments: { body: "left", caption: "left" },
     blockTextReflow: { body: true, caption: false },
     blockSyllableDivision: { body: true, caption: false },
@@ -88,4 +92,5 @@ test("normalizeSnapshotStateForApply strips default font and tiny rotations", ()
   assert.equal(normalized.blockTrackingScales.caption, 125)
   assert.equal(normalized.blockRotations.body, undefined)
   assert.equal(normalized.blockRotations.caption, 12)
+  assert.equal(normalized.blockHeightBaselines.caption, 2)
 })

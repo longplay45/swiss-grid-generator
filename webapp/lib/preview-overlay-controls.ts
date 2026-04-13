@@ -14,6 +14,7 @@ export type TextEditorControls<StyleKey extends string> = {
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
   deleteEditorBlock: () => void
   maxCharsPerLine: number | null
+  baselinesPerGridModule: number
   gridRows: number
   gridCols: number
   hierarchyTriggerMinWidthCh: number

@@ -33,6 +33,7 @@ type Args<BlockId extends string> = {
   typographyStyles: Record<string, { size: number; baselineMultiplier: number; weight: string }>
   getDefaultColumnSpan: (key: BlockId, gridCols: number) => number
   getBlockRows: (key: BlockId) => number
+  getBlockHeightBaselines: (key: BlockId) => number
   getBlockSpan: (key: BlockId) => number
   getImageRows: (key: BlockId) => number
   getImageSpan: (key: BlockId) => number
@@ -90,6 +91,7 @@ export function useLayoutReflow<BlockId extends string>({
   typographyStyles,
   getDefaultColumnSpan,
   getBlockRows,
+  getBlockHeightBaselines,
   getBlockSpan,
   getImageRows,
   getImageSpan,
@@ -237,6 +239,7 @@ export function useLayoutReflow<BlockId extends string>({
           baselineMultiplier: getBlockBaselineMultiplier(key, styleKey),
         },
         rowSpan: getBlockRows(key),
+        heightBaselines: getBlockHeightBaselines(key),
         syllableDivision: isSyllableDivisionEnabled(key),
         position: currentPosition,
         currentSpan: getBlockSpan(key),
@@ -301,6 +304,7 @@ export function useLayoutReflow<BlockId extends string>({
     getBlockFont,
     getBlockFontSize,
     getBlockFontWeight,
+    getBlockHeightBaselines,
     getBlockRows,
     getBlockSpan,
     getBlockTrackingScale,

@@ -279,11 +279,13 @@ export const GridPreview = memo(function GridPreview({
     setImageModulePositions,
     setImageColumnSpans,
     setImageRowSpans,
+    setImageHeightBaselines,
     setImageColors,
     imageEditorState,
     setImageEditorState,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColorReference,
     getImageColor,
     getImageOpacity,
@@ -296,8 +298,10 @@ export const GridPreview = memo(function GridPreview({
     resetImageTransientState,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getPlacementSpan,
     getPlacementRows,
+    getPlacementHeightBaselines,
     getStyleKeyForBlock,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
@@ -448,6 +452,7 @@ export const GridPreview = memo(function GridPreview({
       getBlockTextFormatRuns,
       getBlockSpan,
       getBlockRows,
+      getBlockHeightBaselines,
       isTextReflowEnabled,
       isSyllableDivisionEnabled,
       isBlockItalic,
@@ -519,8 +524,10 @@ export const GridPreview = memo(function GridPreview({
     isImagePlaceholderKey,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColorReference,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getStyleKeyForBlock,
     isTextReflowEnabled,
@@ -690,6 +697,7 @@ export const GridPreview = memo(function GridPreview({
     setImageModulePositions,
     setImageColumnSpans,
     setImageRowSpans,
+    setImageHeightBaselines,
     setImageColors,
     setLayerOrder,
     setImageEditorState,
@@ -751,11 +759,13 @@ export const GridPreview = memo(function GridPreview({
     getBlockRotation,
     getBlockSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockFontSize,
     getBlockBaselineMultiplier,
     getBlockTextColor,
     getImageSpan,
     getImageRows,
+    getImageHeightBaselines,
     getImageColor,
     getImageOpacity,
     clampImageBaselinePosition,
@@ -815,8 +825,10 @@ export const GridPreview = memo(function GridPreview({
     editorTarget: editorState?.target ?? null,
     blockModulePositions,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getPlacementRows,
+    getPlacementHeightBaselines,
     getPlacementSpan,
     getGridMetrics,
   })
@@ -834,6 +846,7 @@ export const GridPreview = memo(function GridPreview({
     result,
     getDefaultColumnSpan,
     getBlockRows,
+    getBlockHeightBaselines,
     getBlockSpan,
     getImageRows,
     getImageSpan,
@@ -888,6 +901,10 @@ export const GridPreview = memo(function GridPreview({
   )
   const rowTriggerMinWidthCh = 12
   const colTriggerMinWidthCh = 12
+  const baselinesPerGridModule = useMemo(
+    () => Math.max(1, Math.round(result.module.height / Math.max(0.0001, result.grid.gridUnit))),
+    [result.grid.gridUnit, result.module.height],
+  )
   const inlineEditorLayout = usePreviewInlineEditorLayout({
     editorState,
     blockRectsRef,
@@ -909,6 +926,7 @@ export const GridPreview = memo(function GridPreview({
     setEditorState,
     deleteEditorBlock,
     maxCharsPerLine,
+    baselinesPerGridModule,
     gridRows: result.settings.gridRows,
     gridCols: result.settings.gridCols,
     hierarchyTriggerMinWidthCh,
@@ -998,6 +1016,7 @@ export const GridPreview = memo(function GridPreview({
         clearHover={clearHover}
         setImageEditorState={setImageEditorState}
         deleteImagePlaceholder={deleteImagePlaceholder}
+        baselinesPerGridModule={baselinesPerGridModule}
         gridRows={result.settings.gridRows}
         gridCols={result.settings.gridCols}
         imageColorScheme={imageColorScheme}
