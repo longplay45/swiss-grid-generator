@@ -270,6 +270,22 @@ test("leading T falls back to a stronger styled hang when no glyph measurement i
   assert.equal(offset, -(0.052 * 100))
 })
 
+test("leading T prefers the top-bar hang when the measured boundary only sees the vertical stem", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Type",
+    align: "left",
+    fontSize: 100,
+    styleKey: "body",
+    measureWidth: () => 80,
+    measureGlyphBounds: (char) => (
+      char === "T"
+        ? { advanceWidth: 80, leftBoundary: 1.5, rightBoundary: 70 }
+        : null
+    ),
+  })
+  assert.equal(offset, -(0.052 * 100))
+})
+
 test("terminal punctuation caret advance uses the visible glyph boundary", () => {
   const advance = getOpticalTerminalCaretAdvance({
     char: ".",

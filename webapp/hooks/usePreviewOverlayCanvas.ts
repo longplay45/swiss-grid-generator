@@ -3,7 +3,7 @@ import type { MutableRefObject, RefObject } from "react"
 
 import { resolveBlockHeight } from "@/lib/block-height"
 import type { GridResult } from "@/lib/grid-calculator"
-import { getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
+import { getPreviewTextGuideGeometry, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import type { BlockRect } from "@/lib/typography-layout-plan"
 import type { ModulePosition } from "@/lib/types/preview-layout"
@@ -25,6 +25,15 @@ type OverlayPlan<Key extends string> = {
   guideRects: BlockRect[]
   rotationOriginX: number
   rotationOriginY: number
+  textAlign: "left" | "center" | "right"
+  commands: { x: number; y: number }[]
+  renderedLines: {
+    left: number
+    top: number
+    width: number
+    height: number
+    baselineY: number
+  }[]
 }
 
 type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
@@ -40,6 +49,7 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   blockOrder: Key[]
   imageOrder: Key[]
   hoveredTextGuideRect: BlockRect | null
+  hoveredTextGuidePlan: Plan | null
   hoveredImageRect: BlockRect | null
   selectedLayerKey: Key | null
   overflowLinesByBlock: Partial<Record<Key, number>>
@@ -68,6 +78,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   blockOrder,
   imageOrder,
   hoveredTextGuideRect,
+  hoveredTextGuidePlan,
   hoveredImageRect,
   selectedLayerKey,
   overflowLinesByBlock,
@@ -121,16 +132,22 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       ctx.rotate((rotation * Math.PI) / 180)
       ctx.translate(-pageWidth / 2, -pageHeight / 2)
 
-      const drawPlacementGuide = (x: number, lineY: number, widthPx: number, heightPx: number) => {
+      const drawPlacementGuide = (
+        horizontalX: number,
+        verticalX: number,
+        lineY: number,
+        widthPx: number,
+        heightPx: number,
+      ) => {
         ctx.strokeStyle = "#f97316"
         ctx.lineWidth = 1
         ctx.beginPath()
-        ctx.moveTo(x, lineY)
-        ctx.lineTo(x + widthPx, lineY)
+        ctx.moveTo(horizontalX, lineY)
+        ctx.lineTo(horizontalX + widthPx, lineY)
         ctx.stroke()
         ctx.beginPath()
-        ctx.moveTo(x, lineY)
-        ctx.lineTo(x, lineY + heightPx)
+        ctx.moveTo(verticalX, lineY)
+        ctx.lineTo(verticalX, lineY + heightPx)
         ctx.stroke()
       }
 
@@ -157,16 +174,19 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           gutterY: gridMarginVertical,
           baselineStep: gridUnit,
         }) * scale
-        drawPlacementGuide(snapX, snapY + baselineStep, snapWidth, snapHeight)
-      } else if (hoveredTextGuideRect) {
+        drawPlacementGuide(snapX, snapX, snapY + baselineStep, snapWidth, snapHeight)
+      } else if (hoveredTextGuideRect && hoveredTextGuidePlan) {
+        const hoveredGuide = getPreviewTextGuideGeometry(hoveredTextGuidePlan, baselineStep, hoveredTextGuideRect)
         drawPlacementGuide(
-          hoveredTextGuideRect.x,
-          hoveredTextGuideRect.y,
-          hoveredTextGuideRect.width,
-          hoveredTextGuideRect.height,
+          hoveredGuide.horizontalX,
+          hoveredGuide.verticalX,
+          hoveredGuide.y,
+          hoveredGuide.width,
+          hoveredGuide.height,
         )
       } else if (hoveredImageRect) {
         drawPlacementGuide(
+          hoveredImageRect.x,
           hoveredImageRect.x,
           hoveredImageRect.y,
           hoveredImageRect.width,
@@ -175,17 +195,20 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       } else if (selectedImageRect) {
         drawPlacementGuide(
           selectedImageRect.x,
+          selectedImageRect.x,
           selectedImageRect.y,
           selectedImageRect.width,
           selectedImageRect.height,
         )
       } else if (selectedTextPlan) {
         const guideRect = getPreviewTextGuideRect(selectedTextPlan, baselineStep)
+        const guide = getPreviewTextGuideGeometry(selectedTextPlan, baselineStep, guideRect)
         drawPlacementGuide(
-          guideRect.x,
-          guideRect.y,
-          guideRect.width,
-          guideRect.height,
+          guide.horizontalX,
+          guide.verticalX,
+          guide.y,
+          guide.width,
+          guide.height,
         )
       }
 
@@ -219,12 +242,13 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         ctx.strokeStyle = "#ef4444"
         ctx.lineWidth = 1.1
         ctx.beginPath()
-        ctx.moveTo(activeEditorPlan.rotationOriginX, lineY)
-        ctx.lineTo(activeEditorPlan.rotationOriginX + editorWidth, lineY)
+        const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, baselineStep)
+        ctx.moveTo(activeGuide.horizontalX, lineY)
+        ctx.lineTo(activeGuide.horizontalX + activeGuide.width, lineY)
         ctx.stroke()
         ctx.beginPath()
-        ctx.moveTo(activeEditorPlan.rotationOriginX, lineY)
-        ctx.lineTo(activeEditorPlan.rotationOriginX, lineY + editorHeight)
+        ctx.moveTo(activeGuide.verticalX, lineY)
+        ctx.lineTo(activeGuide.verticalX, lineY + editorHeight)
         ctx.stroke()
       }
 
@@ -266,6 +290,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
     getPlacementHeightBaselines,
     getPlacementRows,
     getPlacementSpan,
+    hoveredTextGuidePlan,
     hoveredTextGuideRect,
     hoveredImageRect,
     imageOrder,

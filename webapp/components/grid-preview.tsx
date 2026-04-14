@@ -794,6 +794,7 @@ export const GridPreview = memo(function GridPreview({
     : linkedHoveredTextPlan
       ? getPreviewTextGuideRect(linkedHoveredTextPlan, result.grid.gridUnit * scale)
       : hoveredTextRect
+  const hoveredTextGuidePlan = hoveredTextPlan ?? linkedHoveredTextPlan
   const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
   const hoveredImageRect = hoverImageKey
     ? imageRectsRef.current[hoverImageKey] ?? null
@@ -818,6 +819,7 @@ export const GridPreview = memo(function GridPreview({
     blockOrder,
     imageOrder,
     hoveredTextGuideRect,
+    hoveredTextGuidePlan,
     hoveredImageRect,
     selectedLayerKey,
     overflowLinesByBlock,

@@ -240,6 +240,7 @@ function buildRenderedTextLines(
 
     let lineTop = Number.POSITIVE_INFINITY
     let lineBottom = Number.NEGATIVE_INFINITY
+    let visualLineLeft = Number.POSITIVE_INFINITY
     const caretStops: RenderedCaretStop[] = []
     const lineLeft = segments[0]?.x ?? command.x
 
@@ -255,11 +256,16 @@ function buildRenderedTextLines(
         font: segmentFont,
         opticalKerning,
       })
+      const segmentBounds = ctx.measureText(segment.text)
       const metrics = ctx.measureText("Hgyp")
       const ascent = metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : segment.fontSize * 0.8
       const descent = metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : segment.fontSize * 0.2
       lineTop = Math.min(lineTop, segment.y - ascent)
       lineBottom = Math.max(lineBottom, segment.y + descent)
+      visualLineLeft = Math.min(
+        visualLineLeft,
+        segment.x - Math.max(0, segmentBounds.actualBoundingBoxLeft),
+      )
 
       pushCaretStop(caretStops, Math.max(lineVisibleStart, segment.start), segment.x)
 
@@ -311,7 +317,7 @@ function buildRenderedTextLines(
     }
     pushCaretStop(caretStops, lineSourceEnd, caretStops[caretStops.length - 1]?.x ?? lineLeft)
 
-    const left = lineLeft
+    const left = Number.isFinite(visualLineLeft) ? visualLineLeft : lineLeft
     const right = caretStops[caretStops.length - 1]?.x ?? left
     return {
       sourceStart: lineSourceStart,

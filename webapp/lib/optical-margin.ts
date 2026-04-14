@@ -557,10 +557,14 @@ function measureOpticalGlyphBoundsFromCanvas(
     // Prefer a dominant outer stem when it is present; otherwise fall back to
     // coverage and edge-mass trimming, capped by a conservative row-profile
     // boundary so curved letters like "S" and diagonals like "X" do not overhang too far.
-    const leftBoundaryPx = leftStemBoundaryPx ?? Math.min(
-      minX + Math.max(leftCoverageBoundary ?? 0, leftMassBoundary ?? 0),
-      leftContourBoundaryPx ?? Number.POSITIVE_INFINITY,
-    )
+    const leftBoundaryPx = char === "T"
+      // For a leading capital T, the optical edge is the left end of the top
+      // bar, not the vertical stem that dominates most scanlines.
+      ? minX
+      : leftStemBoundaryPx ?? Math.min(
+        minX + Math.max(leftCoverageBoundary ?? 0, leftMassBoundary ?? 0),
+        leftContourBoundaryPx ?? Number.POSITIVE_INFINITY,
+      )
     const rightBoundaryPx = rightStemBoundaryPx ?? Math.max(
       minX + Math.min(rightCoverageBoundary ?? columnCount, rightMassBoundary ?? columnCount),
       rightContourBoundaryPx ?? Number.NEGATIVE_INFINITY,
@@ -605,10 +609,12 @@ function resolveMeasuredLeftHangingOffset(
   profile: OpticalMarginProfile,
 ): number {
   if (!(measuredOffset > 0)) return 0
-  if (char !== "T" || edgeOffset.kind !== "straight-letter") return measuredOffset
+  if (char !== "T") return measuredOffset
   const fallbackOffset = resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
   if (!(fallbackOffset > 0)) return measuredOffset
-  return Math.min(measuredOffset, fallbackOffset)
+  // The measured left boundary of a capital T can collapse to the vertical
+  // stem, but the optical edge must follow the left end of the top bar.
+  return Math.max(measuredOffset, fallbackOffset)
 }
 
 function resolveMeasuredRightHangingOffset(
