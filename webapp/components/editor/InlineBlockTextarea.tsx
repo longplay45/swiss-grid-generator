@@ -115,11 +115,13 @@ function InlineEditorOverlayCanvas({
   height,
   selectionRects,
   caret,
+  caretVisible,
 }: {
   width: number
   height: number
   selectionRects: InlineEditorOverlayRect[]
   caret: InlineEditorOverlayCaret | null
+  caretVisible: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -149,7 +151,7 @@ function InlineEditorOverlayCanvas({
       ctx.fillRect(left, top, rectWidth, rectHeight)
     }
 
-    if (!caret) return
+    if (!caret || !caretVisible) return
     const caretX = Math.round(caret.left * pixelRatio)
     const caretTop = Math.round(caret.top * pixelRatio)
     const caretHeightPx = Math.max(1, Math.round(caret.height * pixelRatio))
@@ -164,7 +166,7 @@ function InlineEditorOverlayCanvas({
     ctx.fillRect(caretHaloLeft, caretTop, haloWidth, caretHeightPx)
     ctx.fillStyle = "#f97316"
     ctx.fillRect(caretCoreLeft, caretTop, coreWidth, caretHeightPx)
-  }, [caret, height, selectionRects, width])
+  }, [caret, caretVisible, height, selectionRects, width])
 
   return (
     <canvas
@@ -209,6 +211,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const dragPointerIdRef = useRef<number | null>(null)
   const keyboardDesiredXRef = useRef<number | null>(null)
   const measureContextRef = useRef<CanvasRenderingContext2D | null>(null)
+  const [isCaretVisible, setIsCaretVisible] = useState(true)
 
   const buildSelectionState = useCallback((
     start: number,
@@ -303,6 +306,27 @@ export function InlineBlockTextarea<StyleKey extends string>({
     })
     return () => window.cancelAnimationFrame(frame)
   }, [commitSelectionState, editorState, readTextareaSelection, textareaRef])
+
+  useEffect(() => {
+    const shouldBlink = Boolean(editorState) && selection.focused && selection.start === selection.end
+    setIsCaretVisible(true)
+    if (!shouldBlink) return
+
+    let blinkInterval: number | null = null
+    const initialDelay = window.setTimeout(() => {
+      setIsCaretVisible(false)
+      blinkInterval = window.setInterval(() => {
+        setIsCaretVisible((current) => !current)
+      }, 530)
+    }, 530)
+
+    return () => {
+      window.clearTimeout(initialDelay)
+      if (blinkInterval !== null) {
+        window.clearInterval(blinkInterval)
+      }
+    }
+  }, [editorState, selection.end, selection.focused, selection.start])
 
   if (!editorState || !layout) return null
   const fallbackStyleSize = getStyleSizeValue(editorState.draftStyle)
@@ -572,6 +596,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             height={minHeight}
             selectionRects={localSelectionRects}
             caret={localCaret}
+            caretVisible={isCaretVisible}
           />
           <div
             className="pointer-events-auto absolute inset-0 cursor-text"
