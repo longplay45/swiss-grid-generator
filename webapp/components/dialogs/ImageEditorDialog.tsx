@@ -223,8 +223,10 @@ export function ImageEditorDialog({
           showRolloverInfo={showRolloverInfo}
           onHelpNavigate={() => onOpenHelpSection?.(IMAGE_EDITOR_HELP_SECTION_BY_KEY.geometry)}
         >
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <Label className={sectionLabelClassName}>Rows</Label>
+            <Label className={`${sectionLabelClassName} text-right`}>Cols</Label>
+
             <Select
               value={String(editorState.draftRows)}
               onValueChange={(value) => {
@@ -247,10 +249,29 @@ export function ImageEditorDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="space-y-2">
+            <Select
+              value={String(editorState.draftColumns)}
+              onValueChange={(value) => {
+                const columns = Math.max(1, Math.min(gridCols, Number(value)))
+                setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={`image-col-${count}`} value={String(count)}>
+                    {count} {count === 1 ? "col" : "cols"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Label className={sectionLabelClassName}>Baselines</Label>
+            <div aria-hidden="true" />
+
             <Select
               value={String(resolvedHeightBaselines)}
               onValueChange={(value) => {
@@ -270,28 +291,6 @@ export function ImageEditorDialog({
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
                   <SelectItem key={`image-baselines-${count}`} value={String(count)}>
                     {count} {count === 1 ? "baseline" : "baselines"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Columns</Label>
-            <Select
-              value={String(editorState.draftColumns)}
-              onValueChange={(value) => {
-                const columns = Math.max(1, Math.min(gridCols, Number(value)))
-                setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
-              }}
-            >
-              <SelectTrigger className={triggerClassName}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
-                {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={`image-col-${count}`} value={String(count)}>
-                    {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
               </SelectContent>

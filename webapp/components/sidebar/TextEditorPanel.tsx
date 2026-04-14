@@ -7,6 +7,7 @@ import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
 import { Button } from "@/components/ui/button"
 import { FontSelect } from "@/components/ui/font-select"
 import { Label } from "@/components/ui/label"
+import { DebouncedSlider } from "@/components/ui/slider"
 import {
   Select,
   SelectContent,
@@ -396,8 +397,10 @@ export function TextEditorPanel<StyleKey extends string>({
           showRolloverInfo={showRolloverInfo}
           onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.layout)}
         >
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <Label className={sectionLabelClassName}>Rows</Label>
+            <Label className={`${sectionLabelClassName} text-right`}>Cols</Label>
+
             <Select
               value={String(controls.editorState.draftRows)}
               onValueChange={(value) => {
@@ -420,10 +423,33 @@ export function TextEditorPanel<StyleKey extends string>({
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="space-y-2">
+            <Select
+              value={String(controls.editorState.draftColumns)}
+              onValueChange={(value) => {
+                const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftColumns: nextColumns,
+                  draftReflow: nextColumns > 1 ? prev.draftReflow : false,
+                } : prev)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={count} value={String(count)}>
+                    {count} {count === 1 ? "col" : "cols"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Label className={sectionLabelClassName}>Baselines</Label>
+            <div aria-hidden="true" />
+
             <Select
               value={String(resolvedHeightBaselines)}
               onValueChange={(value) => {
@@ -443,32 +469,6 @@ export function TextEditorPanel<StyleKey extends string>({
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
                   <SelectItem key={`paragraph-baselines-${count}`} value={String(count)}>
                     {count} {count === 1 ? "baseline" : "baselines"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Columns</Label>
-            <Select
-              value={String(controls.editorState.draftColumns)}
-              onValueChange={(value) => {
-                const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
-                controls.setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftColumns: nextColumns,
-                  draftReflow: nextColumns > 1 ? prev.draftReflow : false,
-                } : prev)
-              }}
-            >
-              <SelectTrigger className={triggerClassName}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
-                {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={count} value={String(count)}>
-                    {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -534,22 +534,29 @@ export function TextEditorPanel<StyleKey extends string>({
           </div>
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Rotation</Label>
-            <input
-              type="number"
+            <div className="flex items-center justify-between">
+              <Label className={sectionLabelClassName}>Rotation</Label>
+              <span className={`rounded px-1.5 py-0.5 text-xs font-mono ${isDarkMode ? "bg-gray-800 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+                {Math.round(controls.editorState.draftRotation)}°
+              </span>
+            </div>
+            <DebouncedSlider
+              value={[controls.editorState.draftRotation]}
               min={-180}
               max={180}
               step={1}
-              value={Math.round(controls.editorState.draftRotation)}
-              onChange={(event) => {
-                const parsed = Number(event.target.value)
-                const next = Number.isFinite(parsed) ? parsed : 0
+              onValueCommit={([value]) => {
                 controls.setEditorState((prev) => prev ? {
                   ...prev,
-                  draftRotation: clampRotation(next),
+                  draftRotation: clampRotation(value),
                 } : prev)
               }}
-              className={textInputClassName}
+              onThumbDoubleClick={() => {
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRotation: 0,
+                } : prev)
+              }}
             />
           </div>
         </EditorSidebarSection>
