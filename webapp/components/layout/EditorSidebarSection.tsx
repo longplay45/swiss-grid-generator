@@ -12,10 +12,12 @@ type Props = {
   tooltip: string
   collapsed: boolean
   collapsedSummary?: ReactNode
-  onToggle: () => void
+  onHeaderClick: (event: React.MouseEvent) => void
+  onHeaderDoubleClick?: (event: React.MouseEvent) => void
   isDarkMode: boolean
   showHelpIndicator?: boolean
   showRolloverInfo?: boolean
+  onHelpNavigate?: () => void
   children: ReactNode
 }
 
@@ -24,10 +26,12 @@ export function EditorSidebarSection({
   tooltip,
   collapsed,
   collapsedSummary,
-  onToggle,
+  onHeaderClick,
+  onHeaderDoubleClick,
   isDarkMode,
   showHelpIndicator = false,
   showRolloverInfo = true,
+  onHelpNavigate,
   children,
 }: Props) {
   return (
@@ -46,7 +50,9 @@ export function EditorSidebarSection({
       >
         <header
           className="cursor-pointer select-none pt-3"
-          onClick={onToggle}
+          onClick={onHeaderClick}
+          onDoubleClick={onHeaderDoubleClick}
+          onMouseEnter={showHelpIndicator ? onHelpNavigate : undefined}
         >
           <div className={`rounded-md py-2 ${showHelpIndicator ? "relative" : ""}`}>
             {showHelpIndicator ? <HelpIndicatorLine /> : null}

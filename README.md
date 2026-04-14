@@ -97,9 +97,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Shift + double-click → create image placeholder
 - Hover interactions and edit affordances
 - Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
-- Image placeholder editor matches the text editor rail pattern with geometry/info submenus
+- Text and image editors reuse the left-sidebar section pattern instead of a preview-docked rail
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
-- Placeholder editor includes scheme, swatch color, and transparency controls
+- Image placeholder editor uses `Geometry`, `Color`, and `Info` sections, including scheme, swatch color, and transparency controls
 
 ### Export
 - High-quality vector **PDF export**

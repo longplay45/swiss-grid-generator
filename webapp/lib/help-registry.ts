@@ -6,7 +6,7 @@ export const QUICK_START_INDEX_ITEMS = [
 
 export const GENERAL_INDEX_ITEMS = [
   { id: "help-preview-workspace", label: "Preview Workspace" },
-  { id: "help-editor", label: "Text Editor Popup" },
+  { id: "help-editor", label: "Text Editor" },
   { id: "help-image-editor", label: "Image Editor" },
   { id: "help-drag-placement", label: "Drag and Placement" },
   { id: "help-history-reflow", label: "History and Reflow" },
@@ -58,7 +58,21 @@ export const ALL_HELP_INDEX_ITEMS = [
   ...GRID_SETTINGS_INDEX_ITEMS,
 ] as const
 
-export type HelpSectionId = (typeof ALL_HELP_INDEX_ITEMS)[number]["id"]
+export const EDITOR_HELP_SUBSECTION_ITEMS = [
+  { id: "help-editor-paragraph", label: "Text Editor / Paragraph" },
+  { id: "help-editor-typo", label: "Text Editor / Typo" },
+  { id: "help-editor-info", label: "Text Editor / Info" },
+  { id: "help-image-editor-geometry", label: "Image Editor / Geometry" },
+  { id: "help-image-editor-color", label: "Image Editor / Color" },
+  { id: "help-image-editor-info", label: "Image Editor / Info" },
+] as const
+
+export const ALL_HELP_SECTION_ITEMS = [
+  ...ALL_HELP_INDEX_ITEMS,
+  ...EDITOR_HELP_SUBSECTION_ITEMS,
+] as const
+
+export type HelpSectionId = (typeof ALL_HELP_SECTION_ITEMS)[number]["id"]
 
 export const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
   format: "help-canvas-ratio",

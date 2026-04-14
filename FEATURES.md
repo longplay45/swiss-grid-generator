@@ -47,11 +47,12 @@ Current capability inventory for Swiss Grid Generator.
 ## Text Editing
 
 - Inline editor overlay on the page surface.
-- Geometry submenu: rows, baselines, cols, alignment, reflow, hyphenation, rotation.
+- Left-sidebar text editor with `Paragraph`, `Typo`, and `Info` sections.
+- Paragraph section: rows, baselines, cols, alignment, reflow, hyphenation, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
-- Type submenu: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
-- Info submenu: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
+- Typo section: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
+- Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
   - font family
   - font cut
@@ -88,11 +89,11 @@ Current capability inventory for Swiss Grid Generator.
 - Color-scheme aware placeholder fills.
 - Placeholder-specific transparency control.
 - Stable logical positioning across grid changes.
-- Separate editor with Geometry and Info rails.
-- Geometry submenu uses one parameter row per setting.
-- Scheme, swatch color, and transparency live in the geometry submenu.
+- Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
+- Geometry section uses one parameter row per setting.
+- Scheme, swatch color, and transparency live in the Color section.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
-- Info submenu summarizes rows, baselines, columns, scheme, color, and transparency.
+- Info section summarizes rows, baselines, columns, scheme, color, and transparency.
 
 ## Presets
 

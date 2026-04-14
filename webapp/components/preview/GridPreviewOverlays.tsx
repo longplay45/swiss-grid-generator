@@ -10,6 +10,7 @@ import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
+import type { HelpSectionId } from "@/lib/help-registry"
 
 type Props<StyleKey extends string> = {
   showEditorHelpIcon: boolean
@@ -37,7 +38,7 @@ type Props<StyleKey extends string> = {
   imageColorScheme: ImageColorSchemeId
   imagePalette: readonly string[]
   imageColorSchemes: readonly PreviewColorSchemeOption[]
-  onOpenHelpSection?: (sectionId: "help-editor" | "help-image-editor") => void
+  onOpenHelpSection?: (sectionId: HelpSectionId) => void
   isDarkMode?: boolean
 }
 
@@ -127,6 +128,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
           >
             <TextEditorPanel
               showRolloverInfo={showRolloverInfo}
+              showHelpIndicator={showEditorHelpIcon}
+              onOpenHelpSection={onOpenHelpSection}
               controls={textEditorControls}
               isDarkMode={isDarkMode}
             />
@@ -148,6 +151,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
               colorSchemes={imageColorSchemes}
               selectedColorScheme={imageColorScheme}
               palette={imagePalette}
+              showHelpIndicator={showEditorHelpIcon}
+              onOpenHelpSection={onOpenHelpSection}
               showRolloverInfo={showRolloverInfo}
               isDarkMode={isDarkMode}
             />

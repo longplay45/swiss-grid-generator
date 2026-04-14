@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Trash2 } from "lucide-react"
 
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
@@ -42,14 +42,19 @@ import {
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
+import type { HelpSectionId } from "@/lib/help-registry"
 
 type TextEditorPanelProps<StyleKey extends string> = {
   controls: SharedTextEditorControls<StyleKey>
+  showHelpIndicator?: boolean
+  onOpenHelpSection?: (sectionId: HelpSectionId) => void
   showRolloverInfo?: boolean
   isDarkMode?: boolean
 }
 
 type SectionKey = "layout" | "type" | "info"
+const SECTION_HEADER_CLICK_DELAY_MS = 180
+const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "info"]
 
 const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
   layout: false,
@@ -57,8 +62,16 @@ const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
   info: true,
 }
 
+const TEXT_EDITOR_HELP_SECTION_BY_KEY: Record<SectionKey, HelpSectionId> = {
+  layout: "help-editor-paragraph",
+  type: "help-editor-typo",
+  info: "help-editor-info",
+}
+
 export function TextEditorPanel<StyleKey extends string>({
   controls,
+  showHelpIndicator = false,
+  onOpenHelpSection,
   showRolloverInfo = true,
   isDarkMode = false,
 }: TextEditorPanelProps<StyleKey>) {
@@ -71,6 +84,7 @@ export function TextEditorPanel<StyleKey extends string>({
     "swiss-grid-generator:text-editor-sections",
     TEXT_EDITOR_COLLAPSED_DEFAULTS,
   )
+  const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 
   const editorText = controls.editorState.draftText ?? ""
@@ -149,6 +163,14 @@ export function TextEditorPanel<StyleKey extends string>({
     setEditorColorScheme(controls.selectedColorScheme)
     setPreviewColorScheme(null)
   }, [controls.editorState.target, controls.selectedColorScheme])
+
+  useEffect(() => {
+    return () => {
+      if (sectionHeaderClickTimeoutRef.current !== null) {
+        window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const maxHeightBaselines = Math.max(1, controls.baselinesPerGridModule)
   const setTextEditorState = controls.setEditorState
@@ -276,12 +298,34 @@ export function TextEditorPanel<StyleKey extends string>({
   const toggleSection = (key: SectionKey) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
   }
+  const handleSectionHeaderClick = (key: SectionKey) => (event: React.MouseEvent) => {
+    if (event.detail > 1) return
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+    }
+    sectionHeaderClickTimeoutRef.current = window.setTimeout(() => {
+      toggleSection(key)
+      sectionHeaderClickTimeoutRef.current = null
+    }, SECTION_HEADER_CLICK_DELAY_MS)
+  }
+  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      sectionHeaderClickTimeoutRef.current = null
+    }
+    setCollapsed((current) => {
+      const allClosed = TEXT_EDITOR_SECTION_KEYS.every((key) => current[key])
+      return TEXT_EDITOR_SECTION_KEYS.reduce((nextState, key) => {
+        nextState[key] = !allClosed
+        return nextState
+      }, {} as Record<SectionKey, boolean>)
+    })
+  }
 
   const tone = isDarkMode
     ? {
-      border: "border-gray-700",
       input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
-      body: "text-gray-300",
       muted: "text-gray-400",
       panel: "bg-gray-900",
       infoFrame: "border-gray-700 bg-gray-900/60",
@@ -295,9 +339,7 @@ export function TextEditorPanel<StyleKey extends string>({
       selectContent: "dark",
     }
     : {
-      border: "border-gray-200",
       input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-      body: "text-gray-700",
       muted: "text-gray-600",
       panel: "bg-white",
       infoFrame: "border-gray-200 bg-gray-50/80",
@@ -347,9 +389,12 @@ export function TextEditorPanel<StyleKey extends string>({
           tooltip="Rows, baselines, columns, alignment, flow, and rotation"
           collapsed={collapsed.layout}
           collapsedSummary={`${controls.editorState.draftRows} rows, ${controls.editorState.draftColumns} cols`}
-          onToggle={() => toggleSection("layout")}
+          onHeaderClick={handleSectionHeaderClick("layout")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.layout)}
         >
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Rows</Label>
@@ -514,9 +559,12 @@ export function TextEditorPanel<StyleKey extends string>({
           tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking"
           collapsed={collapsed.type}
           collapsedSummary={`${selectionFontFamily ?? "Mixed"}, ${selectedStyleLabelForSelection}`}
-          onToggle={() => toggleSection("type")}
+          onHeaderClick={handleSectionHeaderClick("type")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.type)}
         >
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Font</Label>
@@ -802,9 +850,12 @@ export function TextEditorPanel<StyleKey extends string>({
           tooltip="Paragraph summary and live metrics"
           collapsed={collapsed.info}
           collapsedSummary={`${characterCount} chars, ${wordCount} words`}
-          onToggle={() => toggleSection("info")}
+          onHeaderClick={handleSectionHeaderClick("info")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.info)}
         >
           <div className={`border ${tone.infoFrame}`}>
             {infoRows.map(([label, value], index) => (

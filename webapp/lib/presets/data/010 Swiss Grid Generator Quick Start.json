@@ -591,7 +591,7 @@
           "workflow-subhead": "The preview is canvas-rendered. The same calculated layout drives export, so screen and output stay aligned.",
           "workflow-a": "Double-click an empty module to add text. Shift + double-click adds an image placeholder.",
           "workflow-b": "Hover a block to edit it. Drag to reposition it. Alt/Option + drag duplicates it.",
-          "workflow-c": "Use the editor rail for geometry, type, color, reflow, rotation, and delete.",
+          "workflow-c": "Use the left sidebar editor for geometry, type, color, reflow, rotation, and delete.",
           "workflow-d": "Header toggles let you inspect baselines, margins, modules, typography, and placeholders.",
           "workflow-e": "Save Project JSON stores pages, settings, layers, and logical block positions.",
           "workflow-f": "Export creates vector PDF, SVG, or IDML from the same layout calculation.",

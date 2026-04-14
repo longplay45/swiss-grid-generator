@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
 import { Trash2 } from "lucide-react"
 
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
@@ -20,6 +20,7 @@ import {
   transparencyPercentToOpacity,
 } from "@/lib/image-placeholder-opacity"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
+import type { HelpSectionId } from "@/lib/help-registry"
 
 export type ImageEditorState = {
   target: string
@@ -31,6 +32,8 @@ export type ImageEditorState = {
 }
 
 type SectionKey = "geometry" | "color" | "info"
+const SECTION_HEADER_CLICK_DELAY_MS = 180
+const IMAGE_EDITOR_SECTION_KEYS: SectionKey[] = ["geometry", "color", "info"]
 
 const IMAGE_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
   geometry: false,
@@ -48,8 +51,16 @@ type ImageEditorDialogProps = {
   colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
   selectedColorScheme: ImageColorSchemeId
   palette: readonly string[]
+  showHelpIndicator?: boolean
+  onOpenHelpSection?: (sectionId: HelpSectionId) => void
   showRolloverInfo?: boolean
   isDarkMode?: boolean
+}
+
+const IMAGE_EDITOR_HELP_SECTION_BY_KEY: Record<SectionKey, HelpSectionId> = {
+  geometry: "help-image-editor-geometry",
+  color: "help-image-editor-color",
+  info: "help-image-editor-info",
 }
 
 export function ImageEditorDialog({
@@ -62,6 +73,8 @@ export function ImageEditorDialog({
   colorSchemes,
   selectedColorScheme,
   palette,
+  showHelpIndicator = false,
+  onOpenHelpSection,
   showRolloverInfo = true,
   isDarkMode = false,
 }: ImageEditorDialogProps) {
@@ -72,13 +85,13 @@ export function ImageEditorDialog({
     "swiss-grid-generator:image-editor-sections",
     IMAGE_EDITOR_COLLAPSED_DEFAULTS,
   )
-  const editorTarget = editorState?.target ?? null
+  const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!editorTarget) return
+    if (!editorState?.target) return
     setEditorColorScheme(selectedColorScheme)
     setPreviewColorScheme(null)
-  }, [editorTarget, selectedColorScheme])
+  }, [editorState?.target, selectedColorScheme])
 
   useEffect(() => {
     if (!editorState) return
@@ -98,6 +111,14 @@ export function ImageEditorDialog({
     ))
   }, [baselinesPerGridModule, editorState, setEditorState])
 
+  useEffect(() => {
+    return () => {
+      if (sectionHeaderClickTimeoutRef.current !== null) {
+        window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      }
+    }
+  }, [])
+
   if (!editorState) return null
 
   const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
@@ -108,12 +129,34 @@ export function ImageEditorDialog({
   const toggleSection = (key: SectionKey) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
   }
+  const handleSectionHeaderClick = (key: SectionKey) => (event: React.MouseEvent) => {
+    if (event.detail > 1) return
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+    }
+    sectionHeaderClickTimeoutRef.current = window.setTimeout(() => {
+      toggleSection(key)
+      sectionHeaderClickTimeoutRef.current = null
+    }, SECTION_HEADER_CLICK_DELAY_MS)
+  }
+  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    if (sectionHeaderClickTimeoutRef.current !== null) {
+      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
+      sectionHeaderClickTimeoutRef.current = null
+    }
+    setCollapsed((current) => {
+      const allClosed = IMAGE_EDITOR_SECTION_KEYS.every((key) => current[key])
+      return IMAGE_EDITOR_SECTION_KEYS.reduce((nextState, key) => {
+        nextState[key] = !allClosed
+        return nextState
+      }, {} as Record<SectionKey, boolean>)
+    })
+  }
 
   const tone = isDarkMode
     ? {
-      border: "border-gray-700",
       input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
-      body: "text-gray-300",
       muted: "text-gray-400",
       panel: "bg-gray-900",
       infoFrame: "border-gray-700 bg-gray-900/60",
@@ -126,9 +169,7 @@ export function ImageEditorDialog({
       selectContent: "dark",
     }
     : {
-      border: "border-gray-200",
       input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-      body: "text-gray-700",
       muted: "text-gray-600",
       panel: "bg-white",
       infoFrame: "border-gray-200 bg-gray-50/80",
@@ -175,9 +216,12 @@ export function ImageEditorDialog({
           tooltip="Rows, baselines, and column span"
           collapsed={collapsed.geometry}
           collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols`}
-          onToggle={() => toggleSection("geometry")}
+          onHeaderClick={handleSectionHeaderClick("geometry")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(IMAGE_EDITOR_HELP_SECTION_BY_KEY.geometry)}
         >
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Rows</Label>
@@ -260,9 +304,12 @@ export function ImageEditorDialog({
           tooltip="Scheme, swatch color, and transparency"
           collapsed={collapsed.color}
           collapsedSummary={`${colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme}, ${transparencyPercent}%`}
-          onToggle={() => toggleSection("color")}
+          onHeaderClick={handleSectionHeaderClick("color")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(IMAGE_EDITOR_HELP_SECTION_BY_KEY.color)}
         >
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Scheme</Label>
@@ -348,9 +395,12 @@ export function ImageEditorDialog({
           tooltip="Placeholder summary"
           collapsed={collapsed.info}
           collapsedSummary={`${editorState.draftColor}, ${transparencyPercent}%`}
-          onToggle={() => toggleSection("info")}
+          onHeaderClick={handleSectionHeaderClick("info")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
           showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(IMAGE_EDITOR_HELP_SECTION_BY_KEY.info)}
         >
           <div className={`border ${tone.infoFrame}`}>
             {infoRows.map(([label, value], index) => (

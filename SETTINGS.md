@@ -136,8 +136,8 @@ Default: `swiss`
   - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
   - `Fresh Contrast`: `#fef9f7`, `#1aa9bc`, `#457c39`, `#ffeb00`
-- The same selector appears in the image editor geometry submenu and defaults to the current global selection.
-- Image placeholders can also override swatch color and transparency directly in that geometry submenu.
+- The same selector appears in the image editor Color section and defaults to the current global selection.
+- Image placeholders can also override swatch color and transparency directly in that Color section.
 
 ## Preview Header
 
@@ -182,9 +182,8 @@ Default: `swiss`
 - Shortcuts: `Cmd/Ctrl+Shift+P` toggles the Project sidebar, `Cmd/Ctrl+Shift+I` toggles Information
 - `Help` (`?` icon): opens help/reference panel
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
-- Behavior: only one right sidebar panel can be open at a time; clicking the active project/help/settings icon closes that panel.
+- Behavior: only one right sidebar panel can be open at a time; clicking the active Project or Help control closes that panel.
 - Behavior: while presets are open, the left settings panel and header Project toggle are disabled.
-- Order of the right-side trio: `i`, `?`, `Settings`.
 
 ### Project Panel
 
@@ -199,6 +198,7 @@ Default: `swiss`
 - Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the active page and saved project JSON.
 - `Pages` and `Layers` section headers single-click to collapse; double-click on either header toggles both together.
+- Text and image editor section headers follow the same rule inside edit mode: single-click toggles one section, double-click opens or closes all sections.
 
 ### Left Footer (always visible)
 
@@ -291,8 +291,10 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
-- left icon rail with contextual submenus: `Geometry`, `Type`, `Info`, plus `Delete`
-- Geometry submenu:
+- left sidebar editor that replaces layout settings while edit mode is active
+- text editor sections: `Paragraph`, `Typo`, `Info`
+- image editor sections: `Geometry`, `Color`, `Info`
+- Paragraph section:
   - rows
   - baselines
   - cols
@@ -303,7 +305,7 @@ Editor controls:
 - paragraph and placeholder height resolve as `rows + baselines`
 - `rows` may be `0` when `baselines > 0`
 - `Baselines` is a dropdown from `0` to the current document's `baselines per grid module`
-- Type submenu:
+- Typo section:
   - font family
   - font cut
   - hierarchy (`Typo`)
@@ -312,8 +314,13 @@ Editor controls:
   - tracking numeric input (`-120..+300`, `1/1000 em`)
   - color scheme selector
   - color swatches
-- Info submenu: geometry, type, counts, and `Max/Line`
-- delete lives on the rail
+- image Color section:
+  - color scheme selector
+  - color swatches
+  - transparency
+- Info section: geometry, type/color summary, counts, and `Max/Line`
+- delete lives at the end of the editor page in the same row-button pattern as `Add Page`
+- section headers single-click to toggle one section; double-click opens or closes all editor sections
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns, exhausting the selected `rows + baselines` height before moving to the next column
 - font cut uses the available family-specific weight/style list
@@ -327,8 +334,9 @@ Editor controls:
   - tracking
 - paragraph-wide defaults are rebased when the current selection covers the full text or no range is selected
 - textarea preview mirrors font family, selected cut, and left/right alignment
-- live `Characters`, `Words`, and `Max/Line` counts in `Info` submenu
+- live `Characters`, `Words`, and `Max/Line` counts in the Info section
 - inline caret and selection are rendered from the current text geometry, not DOM line boxes
+- inline caret blinks while the text editor is focused with a collapsed selection
 - repeated spaces and blank lines are preserved in the source model
 - soft-wrap boundary spaces stay in the source text but do not render as visible indent at the start of the next visual line
 

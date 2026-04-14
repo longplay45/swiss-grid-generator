@@ -173,10 +173,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
           <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
-          <li>Click the hover edit affordance to open the matching text or image editor overlay without leaving the page.</li>
+          <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
           <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
-          <li>Delete blocks from the editor rail or from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
+          <li>Delete blocks from the left sidebar editor or from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
           <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
           <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
         </ul>
@@ -191,19 +191,40 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>When edit mode is active, the left sidebar switches from layout settings to text settings.</li>
-          <li>The editor uses the same section layout as the main settings sidebar: Layout, Type, Color, and Info.</li>
-          <li>Layout section: rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
-          <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
-          <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-          <li>Type section: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
-          <li>Color section: scheme preview and paragraph swatches.</li>
-          <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
-          <li>Info section includes geometry, type summary, character count, word count, and `Max/Line`.</li>
-          <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
-          <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
-          <li>Changes apply live while editing; delete removes custom blocks (base blocks are cleared).</li>
-          <li>`Esc`, outside click, or the close button exits edit mode.</li>
+          <li>The editor uses the same section layout rhythm as the main settings sidebar: `Paragraph`, `Typo`, and `Info`.</li>
+          <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
+          <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
+          <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
+          <li>`Esc` or outside click exits edit mode.</li>
         </ul>
+
+        <div id="help-editor-paragraph" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Paragraph Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+            <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
+            <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
+            <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
+            <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
+          </ul>
+        </div>
+
+        <div id="help-editor-typo" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Typo Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and FX size/leading when `FX` is selected.</li>
+            <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
+            <li>Scheme hover in the dropdown previews the active palette before you commit it.</li>
+          </ul>
+        </div>
+
+        <div id="help-editor-info" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Info includes geometry, type summary, character count, word count, and `Max/Line`.</li>
+            <li>Changes apply live while editing; delete removes custom blocks (base blocks are cleared).</li>
+          </ul>
+        </div>
       </section>
 
       <hr className={tone.divider} />
@@ -215,14 +236,37 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
           <li>When edit mode is active, the left sidebar switches from layout settings to image placeholder settings.</li>
-          <li>The editor uses the same section layout as the main settings sidebar: Geometry, Color, and Info.</li>
-          <li>Geometry section: rows, baselines, and columns. Color section: scheme, swatch color, and transparency.</li>
-          <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
-          <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-          <li>Info section summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
+          <li>The editor uses the same section layout as the main settings sidebar: `Geometry`, `Color`, and `Info`.</li>
+          <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
+          <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
+          <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
           <li>Delete removes the placeholder immediately.</li>
-          <li>`Esc`, outside click, or the close button exits edit mode.</li>
+          <li>`Esc` or outside click exits edit mode.</li>
         </ul>
+
+        <div id="help-image-editor-geometry" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Geometry Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Rows, baselines, and columns.</li>
+            <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
+            <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
+          </ul>
+        </div>
+
+        <div id="help-image-editor-color" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Color Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Scheme, swatch color, and transparency.</li>
+            <li>Scheme hover in the dropdown previews the active placeholder palette before you commit it.</li>
+          </ul>
+        </div>
+
+        <div id="help-image-editor-info" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Info summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
+          </ul>
+        </div>
       </section>
 
       <hr className={tone.divider} />
@@ -305,7 +349,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Use the header Help icon to open or close the help sidebar.</li>
-          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview page, presets, editor overlays, and settings sections.</li>
+          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview page, presets, editor sidebars, and settings sections.</li>
           <li>Hover a highlighted target to jump to the matching help topic without closing help.</li>
           <li>Use the small up-arrow beside each help title to jump back to the index at the top.</li>
         </ul>
