@@ -188,7 +188,7 @@ test("right-aligned terminal T uses a horizontal overhang profile rather than a 
         : null
     ),
   })
-  assert.ok(Math.abs(offset - 1.98) < 1e-9)
+  assert.ok(Math.abs(offset - 0.504) < 1e-9)
 })
 
 test("right-aligned terminal d uses the restrained body-text straight-letter profile", () => {
@@ -259,7 +259,7 @@ test("leading T uses the measured overhang when treated as an expressive letter"
   assert.equal(offset, -14)
 })
 
-test("leading T falls back to a stronger styled hang when no glyph measurement is available", () => {
+test("leading paragraph T keeps a restrained styled hang when no glyph measurement is available", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Type",
     align: "left",
@@ -267,10 +267,10 @@ test("leading T falls back to a stronger styled hang when no glyph measurement i
     styleKey: "body",
     measureWidth: () => 80,
   })
-  assert.equal(offset, -(0.052 * 100))
+  assert.equal(offset, -(0.028 * 100))
 })
 
-test("leading T prefers the top-bar hang when the measured boundary only sees the vertical stem", () => {
+test("leading paragraph T keeps the restrained top-bar hang when the measured boundary only sees the stem", () => {
   const offset = getOpticalMarginAnchorOffset({
     line: "Type",
     align: "left",
@@ -283,7 +283,23 @@ test("leading T prefers the top-bar hang when the measured boundary only sees th
         : null
     ),
   })
-  assert.equal(offset, -(0.052 * 100))
+  assert.equal(offset, -(0.028 * 100))
+})
+
+test("leading paragraph T restrains a strong measured overhang to a small optical hang", () => {
+  const offset = getOpticalMarginAnchorOffset({
+    line: "Type",
+    align: "left",
+    fontSize: 100,
+    styleKey: "body",
+    measureWidth: () => 80,
+    measureGlyphBounds: (char) => (
+      char === "T"
+        ? { advanceWidth: 80, leftBoundary: 14, rightBoundary: 66 }
+        : null
+    ),
+  })
+  assert.equal(offset, -(0.028 * 100))
 })
 
 test("terminal punctuation caret advance uses the visible glyph boundary", () => {

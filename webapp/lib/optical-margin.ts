@@ -72,6 +72,7 @@ const TRAILING_PUNCTUATION_OFFSETS_EM: Record<string, number> = {
 
 const TRAILING_DASH_PUNCTUATION = new Set(["-", "‐", "‑", "–", "—"])
 const DEFAULT_TRAILING_PUNCTUATION_SCALE = 0.2
+const DEFAULT_PROFILE_T_HANG_LIMIT_EM = 0.028
 
 const LEADING_EXPRESSIVE_LETTERS_EM: Record<string, number> = {
   A: 0.046,
@@ -186,6 +187,17 @@ function getEdgeCharacters(line: string): { first: string | null; last: string |
 function clampHangingOffset(desired: number, glyphWidth: number): number {
   if (desired <= 0 || glyphWidth <= 0) return 0
   return Math.min(desired, glyphWidth * 0.9)
+}
+
+function constrainProfileSpecificHangingOffset(
+  char: string,
+  offset: number,
+  fontSize: number,
+  profile: OpticalMarginProfile,
+): number {
+  if (!(offset > 0)) return 0
+  if (char !== "T" || profile !== "default") return offset
+  return Math.min(offset, DEFAULT_PROFILE_T_HANG_LIMIT_EM * fontSize)
 }
 
 function resolveOpticalMarginProfile(styleKey: string | undefined): OpticalMarginProfile {
@@ -780,22 +792,33 @@ export function getOpticalMarginAnchorOffset({
   // Left-aligned lines hang opening punctuation into the left margin.
   if (align === "left") {
     const edgeOffset = getLeadingOpticalOffsetEm(first)
+    const measured = !LEADING_PUNCTUATION_OFFSETS_EM[first]
+      ? measureGlyphBounds?.(first) ?? measureOpticalGlyphBoundsFromCanvas(first, font, fontSize, profile)
+      : null
+    const glyphWidth = measureWidth(first) || measured?.advanceWidth || 0
     if (!LEADING_PUNCTUATION_OFFSETS_EM[first]) {
-      const measured = measureGlyphBounds?.(first) ?? measureOpticalGlyphBoundsFromCanvas(first, font, fontSize, profile)
       if (measured) {
-        const glyphWidth = measureWidth(first)
-        return -resolveMeasuredLeftHangingOffset(
+        return -constrainProfileSpecificHangingOffset(
           first,
-          measured.leftBoundary,
-          edgeOffset,
-          glyphWidth,
+          resolveMeasuredLeftHangingOffset(
+            first,
+            measured.leftBoundary,
+            edgeOffset,
+            glyphWidth,
+            fontSize,
+            profile,
+          ),
           fontSize,
           profile,
         )
       }
     }
-    const glyphWidth = measureWidth(first)
-    return -resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile)
+    return -constrainProfileSpecificHangingOffset(
+      first,
+      resolveStyledHangingOffset(edgeOffset, glyphWidth, fontSize, profile),
+      fontSize,
+      profile,
+    )
   }
 
   const edgeOffset = getTrailingOpticalOffsetEm(last)
@@ -806,16 +829,31 @@ export function getOpticalMarginAnchorOffset({
   const measured = measureGlyphBounds?.(last) ?? measureOpticalGlyphBoundsFromCanvas(last, font, fontSize, profile)
   const resolvedGlyphWidth = glyphWidth || measured?.advanceWidth || 0
   if (shouldPreferStyledTrailingOffset(edgeOffset, profile, fontSize)) {
-    return resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile)
-  }
-  if (measured) {
-    return resolveMeasuredRightHangingOffset(
-      Math.max(0, measured.advanceWidth - measured.rightBoundary),
-      edgeOffset,
-      resolvedGlyphWidth,
+    return constrainProfileSpecificHangingOffset(
+      last,
+      resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile),
       fontSize,
       profile,
     )
   }
-  return resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile)
+  if (measured) {
+    return constrainProfileSpecificHangingOffset(
+      last,
+      resolveMeasuredRightHangingOffset(
+        Math.max(0, measured.advanceWidth - measured.rightBoundary),
+        edgeOffset,
+        resolvedGlyphWidth,
+        fontSize,
+        profile,
+      ),
+      fontSize,
+      profile,
+    )
+  }
+  return constrainProfileSpecificHangingOffset(
+    last,
+    resolveStyledHangingOffset(edgeOffset, resolvedGlyphWidth, fontSize, profile),
+    fontSize,
+    profile,
+  )
 }
