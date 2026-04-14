@@ -117,6 +117,8 @@ interface GridPreviewProps {
   imageColorScheme?: ImageColorSchemeId
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
   onShowImagePlaceholdersChange?: (value: boolean) => void
+  editorSidebarHost?: HTMLDivElement | null
+  onEditorModeChange?: (mode: "text" | "image" | null) => void
   isDarkMode?: boolean
 }
 
@@ -166,6 +168,8 @@ export const GridPreview = memo(function GridPreview({
   imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
   onImageColorSchemeChange,
   onShowImagePlaceholdersChange,
+  editorSidebarHost = null,
+  onEditorModeChange,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -205,7 +209,6 @@ export const GridPreview = memo(function GridPreview({
     scale,
     pixelRatio,
     isMobile,
-    containerWidthCss,
     pageWidthCss,
     pageHeightCss,
     pageWidthPx,
@@ -799,12 +802,6 @@ export const GridPreview = memo(function GridPreview({
   const hoveredImageRect = hoverImageKey
     ? imageRectsRef.current[hoverImageKey] ?? null
     : linkedHoveredImageRect
-  const activeTextEditorRect = editorState?.target
-    ? blockRectsRef.current[editorState.target] ?? null
-    : null
-  const activeImageEditorRect = imageEditorState?.target
-    ? imageRectsRef.current[imageEditorState.target] ?? null
-    : null
 
   usePreviewOverlayCanvas({
     overlayCanvasRef,
@@ -890,19 +887,6 @@ export const GridPreview = memo(function GridPreview({
     }
   }, [buildSnapshot, onSnapshotGetterChange])
 
-  const hierarchyOptionLabels = useMemo(
-    () =>
-      PREVIEW_STYLE_OPTIONS.map(
-        (option) => `${option.label} (${formatPtSize(result.typography.styles[option.value].size)})`,
-      ),
-    [result.typography.styles],
-  )
-  const hierarchyTriggerMinWidthCh = useMemo(
-    () => Math.max(12, hierarchyOptionLabels.reduce((max, label) => Math.max(max, label.length), 0) + 4),
-    [hierarchyOptionLabels],
-  )
-  const rowTriggerMinWidthCh = 12
-  const colTriggerMinWidthCh = 12
   const baselinesPerGridModule = useMemo(
     () => Math.max(1, Math.round(result.module.height / Math.max(0.0001, result.grid.gridUnit))),
     [result.grid.gridUnit, result.module.height],
@@ -931,9 +915,6 @@ export const GridPreview = memo(function GridPreview({
     baselinesPerGridModule,
     gridRows: result.settings.gridRows,
     gridCols: result.settings.gridCols,
-    hierarchyTriggerMinWidthCh,
-    rowTriggerMinWidthCh,
-    colTriggerMinWidthCh,
     styleOptions: PREVIEW_STYLE_OPTIONS as BlockEditorStyleOption<TypographyStyleKey>[],
     getStyleSizeLabel: (styleKey) => formatPtSize(getStyleSize(styleKey)),
     getStyleSizeValue: getStyleSize,
@@ -946,6 +927,19 @@ export const GridPreview = memo(function GridPreview({
     selectedColorScheme: imageColorScheme,
     palette: imagePalette,
   })
+
+  useEffect(() => {
+    onEditorModeChange?.(
+      editorState
+        ? "text"
+        : imageEditorState
+          ? "image"
+          : null,
+    )
+    return () => {
+      onEditorModeChange?.(null)
+    }
+  }, [editorState, imageEditorState, onEditorModeChange])
 
   return (
     <div
@@ -999,15 +993,13 @@ export const GridPreview = memo(function GridPreview({
       <GridPreviewOverlays
         showEditorHelpIcon={showEditorHelpIcon}
         showRolloverInfo={showRolloverInfo}
-        previewWidthCss={containerWidthCss}
+        editorSidebarHost={editorSidebarHost}
         pageWidthCss={pageWidthCss}
         pageHeightCss={pageHeightCss}
         pageRotation={rotation}
         editorState={editorState}
         imageEditorState={imageEditorState}
         textEditorControls={textEditorControls}
-        activeTextEditorRect={activeTextEditorRect}
-        activeImageEditorRect={activeImageEditorRect}
         hoveredTextKey={hoverState?.key ?? null}
         hoveredTextRect={hoveredTextGuideRect}
         hoveredTextAlign={hoveredTextAlign}
@@ -1023,8 +1015,6 @@ export const GridPreview = memo(function GridPreview({
         gridCols={result.settings.gridCols}
         imageColorScheme={imageColorScheme}
         imagePalette={imagePalette}
-        rowTriggerMinWidthCh={rowTriggerMinWidthCh}
-        colTriggerMinWidthCh={colTriggerMinWidthCh}
         imageColorSchemes={IMAGE_COLOR_SCHEMES}
         onOpenHelpSection={onOpenHelpSection}
         isDarkMode={isDarkMode}

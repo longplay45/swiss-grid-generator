@@ -1,8 +1,12 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { Trash2 } from "lucide-react"
+
+import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
 import { Button } from "@/components/ui/button"
-import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import { FontSelect } from "@/components/ui/font-select"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -10,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import {
   FONT_OPTIONS,
   getFontVariantById,
@@ -36,61 +41,36 @@ import {
   getUniformTrackingScaleForRange,
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
-import {
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Baseline,
-  CaseSensitive,
-  Columns3,
-  Droplets,
-  Info,
-  LetterText,
-  MoveHorizontal,
-  Palette,
-  Pilcrow,
-  RotateCw,
-  Rows3,
-  TextCursorInput,
-  Trash2,
-  Type,
-  TypeOutline,
-  WholeWord,
-} from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
+import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 
 type TextEditorPanelProps<StyleKey extends string> = {
   controls: SharedTextEditorControls<StyleKey>
-  isHelpActive?: boolean
   showRolloverInfo?: boolean
   isDarkMode?: boolean
-  dockSide?: "left" | "right"
 }
 
-type MainSubmenu = "geometry" | "type" | "info" | null
+type SectionKey = "layout" | "type" | "info"
 
-const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
-const SUBMENU_PANEL_WIDTH_PX = 304
-const SUBMENU_LABEL_WIDTH_PX = 76
-const SUBMENU_TOOLTIP_ANCHOR_SELECTOR = '[data-submenu-tooltip-anchor="text-editor"]'
-const PREVIEW_TOOLTIP_BOUNDARY_SELECTOR = '[data-tooltip-boundary="preview-workspace"]'
+const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
+  layout: false,
+  type: true,
+  info: true,
+}
 
 export function TextEditorPanel<StyleKey extends string>({
   controls,
-  isHelpActive = false,
   showRolloverInfo = true,
   isDarkMode = false,
-  dockSide = "left",
 }: TextEditorPanelProps<StyleKey>) {
-  const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
-  const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
   const [fxSizeInput, setFxSizeInput] = useState("")
   const [fxLeadingInput, setFxLeadingInput] = useState("")
   const [trackingInput, setTrackingInput] = useState("")
   const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(controls.selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
-  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [collapsed, setCollapsed] = usePersistedSectionState(
+    "swiss-grid-generator:text-editor-sections",
+    TEXT_EDITOR_COLLAPSED_DEFAULTS,
+  )
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 
   const editorText = controls.editorState.draftText ?? ""
@@ -251,98 +231,6 @@ export function TextEditorPanel<StyleKey extends string>({
     })
   }
 
-  const tone = isDarkMode
-    ? {
-      root: "dark",
-      rail: "border-gray-700 bg-gray-900 text-gray-100",
-      railButton: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
-      railButtonActive: "border-gray-600 bg-gray-800 text-gray-100",
-      disabledButton: "cursor-not-allowed border-gray-700 bg-gray-800 text-gray-600",
-      submenu: "border-gray-700 bg-gray-900 text-gray-100",
-      input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
-      iconMuted: "text-gray-400",
-      metaText: "text-gray-400",
-      ringOffset: "ring-offset-gray-900",
-      divider: "bg-gray-700",
-      railTooltip: "w-max whitespace-nowrap border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
-      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
-      selectContent: "dark",
-    }
-    : {
-      root: "",
-      rail: "border-gray-300 bg-white",
-      railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-      railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-      disabledButton: "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400",
-      submenu: "border-gray-300 bg-white text-gray-900",
-      input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-      iconMuted: "text-gray-500",
-      metaText: "text-gray-600",
-      ringOffset: "ring-offset-white",
-      divider: "bg-gray-200",
-      railTooltip: "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg",
-      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg",
-      selectContent: "",
-    }
-
-  const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = tone.railTooltip
-  const submenuTooltipClassName = tone.submenuTooltip
-  const tooltipHorizontalAlign = dockSide === "left" ? "start" : "end"
-  const submenuPositionClassName = dockSide === "left" ? "left-full ml-2" : "right-full mr-2"
-  const positionSubmenu = (anchor: HTMLElement) => {
-    const panelRect = panelRef.current?.getBoundingClientRect()
-    if (!panelRect) return
-    const anchorRect = anchor.getBoundingClientRect()
-    setActiveSubmenuTop(anchorRect.top - panelRect.top - SUBMENU_VERTICAL_ALIGN_OFFSET_PX)
-  }
-  const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
-    setActiveSubmenu((prev) => {
-      if (prev === next) return null
-      if (anchor) positionSubmenu(anchor)
-      return next
-    })
-  }
-  const withRailTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip
-      className="block"
-      label={label}
-      disabled={!showRolloverInfo}
-      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign={tooltipHorizontalAlign}
-      tooltipClassName={railTooltipClassName}
-    >
-      {child}
-    </HoverTooltip>
-  )
-  const withSubmenuTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip
-      className="block"
-      label={label}
-      disabled={!showRolloverInfo}
-      anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
-      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign={tooltipHorizontalAlign}
-      tooltipClassName={submenuTooltipClassName}
-    >
-      {child}
-    </HoverTooltip>
-  )
-  const getStyleOptionLabel = (styleKey: StyleKey, label: string) => (
-    controls.isFxStyle(styleKey) ? label : `${label} (${controls.getStyleSizeLabel(styleKey)})`
-  )
-  const settingRowLabelClassName = `text-[11px] leading-none ${tone.metaText}`
-  const fullWidthInputClassName = `h-8 w-full rounded-md border px-2 text-xs outline-none ${tone.input}`
-  const renderSettingRow = (icon: React.ReactNode, label: string, control: React.ReactNode) => (
-    <div
-      className="grid min-h-8 items-center gap-x-2"
-      style={{ gridTemplateColumns: `16px ${SUBMENU_LABEL_WIDTH_PX}px minmax(0, 1fr)` }}
-    >
-      <div className="flex items-center justify-center">{icon}</div>
-      <span className={settingRowLabelClassName}>{label}</span>
-      <div className="min-w-0">{control}</div>
-    </div>
-  )
   const commitTrackingInput = () => {
     const parsed = Number(trackingInput)
     if (!Number.isFinite(parsed)) {
@@ -381,395 +269,370 @@ export function TextEditorPanel<StyleKey extends string>({
     } : prev)
     setTrackingInput(String(nextScale))
   }
+
+  const getStyleOptionLabel = (styleKey: StyleKey, label: string) => (
+    controls.isFxStyle(styleKey) ? label : `${label} (${controls.getStyleSizeLabel(styleKey)})`
+  )
+  const toggleSection = (key: SectionKey) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const tone = isDarkMode
+    ? {
+      border: "border-gray-700",
+      input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
+      body: "text-gray-300",
+      muted: "text-gray-400",
+      panel: "bg-gray-900",
+      infoFrame: "border-gray-700 bg-gray-900/60",
+      infoRow: "border-gray-800",
+      infoLabel: "text-gray-400",
+      infoValue: "text-gray-100",
+      button: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
+      buttonActive: "border-gray-600 bg-gray-800 text-gray-100",
+      destructive: "border-red-700/70 text-red-200 hover:bg-red-950/40 hover:text-red-100",
+      ringOffset: "ring-offset-gray-900",
+      selectContent: "dark",
+    }
+    : {
+      border: "border-gray-200",
+      input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
+      body: "text-gray-700",
+      muted: "text-gray-600",
+      panel: "bg-white",
+      infoFrame: "border-gray-200 bg-gray-50/80",
+      infoRow: "border-gray-200",
+      infoLabel: "text-gray-500",
+      infoValue: "text-gray-900",
+      button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      buttonActive: "border-gray-400 bg-gray-100 text-gray-900",
+      destructive: "border-red-200 text-red-700 hover:bg-red-50 hover:text-red-900",
+      ringOffset: "ring-offset-white",
+      selectContent: "",
+    }
+
+  const triggerClassName = `h-9 ${tone.input}`
+  const textInputClassName = `h-9 w-full rounded-md border px-3 text-sm outline-none ${tone.input}`
+  const sectionLabelClassName = `text-sm ${tone.muted}`
+  const segmentButtonClassName = (active: boolean) => (
+    `h-8 rounded-sm border px-3 text-xs ${active ? tone.buttonActive : tone.button}`
+  )
+  const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
+  const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
   const infoRows = [
-    { label: "Rows", value: String(controls.editorState.draftRows), icon: Rows3 },
-    { label: "Baselines", value: String(controls.editorState.draftHeightBaselines), icon: Baseline },
-    { label: "Cols", value: String(controls.editorState.draftColumns), icon: Columns3 },
-    { label: "Rotation", value: `${Math.round(controls.editorState.draftRotation)}deg`, icon: RotateCw },
-    { label: "Align", value: controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1), icon: AlignCenter },
-    { label: "Reflow", value: controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off", icon: Pilcrow },
-    { label: "Hyphen", value: controls.editorState.draftSyllableDivision ? "On" : "Off", icon: WholeWord },
-    { label: "Font", value: selectionFontFamily ?? "Mixed", icon: CaseSensitive },
-    { label: "Cut", value: selectedFontVariantForSelection?.label ?? "Mixed", icon: TypeOutline },
-    { label: "Hierarchy", value: selectedStyleLabelForSelection, icon: Type },
-    {
-      label: "Size",
-      value: `${controls.isFxStyle(controls.editorState.draftStyle)
-        ? controls.editorState.draftFxSize
-        : controls.getStyleSizeValue(controls.editorState.draftStyle)}pt`,
-      icon: LetterText,
-    },
-    {
-      label: "Leading",
-      value: `${controls.isFxStyle(controls.editorState.draftStyle)
-        ? controls.editorState.draftFxLeading
-        : controls.getStyleLeadingValue(controls.editorState.draftStyle)}pt`,
-      icon: Baseline,
-    },
-    {
-      label: "Kerning",
-      value: controls.editorState.draftOpticalKerning ? "Optical" : "Metric",
-      icon: TextCursorInput,
-    },
-    {
-      label: "Tracking",
-      value: selectionTrackingScale !== null
-        ? formatTrackingScale(selectionTrackingScale)
-        : "Mixed",
-      icon: MoveHorizontal,
-    },
-    { label: "Scheme", value: selectedSchemeLabel, icon: Palette },
-    { label: "Color", value: selectionColor ?? "Mixed", icon: Droplets },
-    { label: "Chars", value: String(characterCount), icon: LetterText },
-    { label: "Words", value: String(wordCount), icon: WholeWord },
-    { label: "Max/Line", value: String(controls.maxCharsPerLine ?? 0), icon: MoveHorizontal },
+    ["Rows", String(controls.editorState.draftRows)],
+    ["Baselines", String(controls.editorState.draftHeightBaselines)],
+    ["Cols", String(controls.editorState.draftColumns)],
+    ["Rotation", `${Math.round(controls.editorState.draftRotation)}deg`],
+    ["Align", controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1)],
+    ["Reflow", controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off"],
+    ["Hyphen", controls.editorState.draftSyllableDivision ? "On" : "Off"],
+    ["Font", selectionFontFamily ?? "Mixed"],
+    ["Cut", selectedFontVariantForSelection?.label ?? "Mixed"],
+    ["Hierarchy", selectedStyleLabelForSelection],
+    ["Kerning", controls.editorState.draftOpticalKerning ? "Optical" : "Metric"],
+    ["Tracking", selectionTrackingScale !== null ? formatTrackingScale(selectionTrackingScale) : "Mixed"],
+    ["Scheme", selectedSchemeLabel],
+    ["Color", selectionColor ?? "Mixed"],
+    ["Chars", String(characterCount)],
+    ["Words", String(wordCount)],
+    ["Max/Line", String(controls.maxCharsPerLine ?? 0)],
   ]
 
   return (
-    <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
-      <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
-        {isHelpActive ? <HelpIndicatorLine /> : null}
-        {withRailTooltip("Rows, baselines, columns, paragraph flow, and rotation", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(activeSubmenu === "geometry")}
-          onClick={(event) => toggleSubmenu("geometry", event.currentTarget)}
-          aria-label="Rows, columns, and paragraph settings"
+    <div data-text-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6">
+        <EditorSidebarSection
+          title="I. Paragraph"
+          tooltip="Rows, baselines, columns, alignment, flow, and rotation"
+          collapsed={collapsed.layout}
+          collapsedSummary={`${controls.editorState.draftRows} rows, ${controls.editorState.draftColumns} cols`}
+          onToggle={() => toggleSection("layout")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
         >
-          <Rows3 className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip("Font family, cut, hierarchy, kerning, tracking, and color", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(activeSubmenu === "type")}
-          onClick={(event) => toggleSubmenu("type", event.currentTarget)}
-          aria-label="Type controls"
-        >
-          <Type className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip("Paragraph summary, words, and characters", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(activeSubmenu === "info")}
-          onClick={(event) => toggleSubmenu("info", event.currentTarget)}
-          aria-label="Word and character count"
-        >
-          <Info className="h-4 w-4" />
-        </Button>)}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Rows</Label>
+            <Select
+              value={String(controls.editorState.draftRows)}
+              onValueChange={(value) => {
+                const nextRows = Math.max(0, Math.min(controls.gridRows, Number(value)))
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRows: nextRows,
+                  draftHeightBaselines: nextRows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
+                } : prev)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: controls.gridRows + 1 }, (_, index) => index).map((count) => (
+                  <SelectItem key={count} value={String(count)}>
+                    {count} {count === 1 ? "row" : "rows"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className={`my-1 h-px w-full ${tone.divider}`} />
-        {withRailTooltip("Delete paragraph", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(false)}
-          onClick={controls.deleteEditorBlock}
-          aria-label="Delete paragraph"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>)}
-      </div>
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Baselines</Label>
+            <Select
+              value={String(resolvedHeightBaselines)}
+              onValueChange={(value) => {
+                const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
+                  draftHeightBaselines: nextBaselines,
+                } : prev)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                <SelectItem value="0">0 baselines</SelectItem>
+                {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={`paragraph-baselines-${count}`} value={String(count)}>
+                    {count} {count === 1 ? "baseline" : "baselines"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {activeSubmenu ? (
-        <div
-          data-submenu-tooltip-anchor="text-editor"
-          className={`absolute ${submenuPositionClassName} max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
-          style={{ top: activeSubmenuTop }}
-        >
-          {isHelpActive ? <HelpIndicatorLine /> : null}
-          {activeSubmenu === "geometry" ? (
-            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
-              {renderSettingRow(
-                <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Rows",
-                withSubmenuTooltip("Set the row span of this paragraph", <Select
-                  value={String(controls.editorState.draftRows)}
-                  onValueChange={(value) => {
-                    const nextRows = Math.max(0, Math.min(controls.gridRows, Number(value)))
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftRows: nextRows,
-                      draftHeightBaselines: nextRows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: controls.gridRows + 1 }, (_, index) => index).map((count) => (
-                      <SelectItem key={count} value={String(count)}>
-                        {count} {count === 1 ? "row" : "rows"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Baselines",
-                withSubmenuTooltip("Add baseline units to this paragraph height", <Select
-                  value={String(resolvedHeightBaselines)}
-                  onValueChange={(value) => {
-                    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
-                      draftHeightBaselines: nextBaselines,
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    <SelectItem value="0">0 baselines</SelectItem>
-                    {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
-                      <SelectItem key={`paragraph-baselines-${count}`} value={String(count)}>
-                        {count} {count === 1 ? "baseline" : "baselines"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Cols",
-                withSubmenuTooltip("Set the column span of this paragraph", <Select
-                  value={String(controls.editorState.draftColumns)}
-                  onValueChange={(value) => {
-                    const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftColumns: nextColumns,
-                      draftReflow: nextColumns > 1 ? prev.draftReflow : false,
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
-                      <SelectItem key={count} value={String(count)}>
-                        {count} {count === 1 ? "col" : "cols"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <AlignCenter className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Align",
-                <div className="flex items-center justify-end gap-1">
-                  {withSubmenuTooltip("Align text left", <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className={railBtn(controls.editorState.draftAlign === "left")}
-                    onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)}
-                    aria-label="Align left"
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </Button>)}
-                  {withSubmenuTooltip("Align text center", <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className={railBtn(controls.editorState.draftAlign === "center")}
-                    onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "center" } : prev)}
-                    aria-label="Align center"
-                  >
-                    <AlignCenter className="h-4 w-4" />
-                  </Button>)}
-                  {withSubmenuTooltip("Align text right", <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className={railBtn(controls.editorState.draftAlign === "right")}
-                    onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)}
-                    aria-label="Align right"
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </Button>)}
-                </div>,
-              )}
-              {renderSettingRow(
-                <Pilcrow className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Reflow",
-                withSubmenuTooltip(canUseNewspaperReflow ? "Toggle newspaper reflow across columns" : "Newspaper reflow needs at least 2 columns", <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={!canUseNewspaperReflow}
-                  className={`h-8 w-full rounded-sm border px-2 text-xs ${
-                    !canUseNewspaperReflow
-                      ? tone.disabledButton
-                      : (controls.editorState.draftReflow ? tone.railButtonActive : tone.railButton)
-                  }`}
-                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: !prev.draftReflow } : prev)}
-                  aria-label={controls.editorState.draftReflow ? "Disable newspaper reflow" : "Enable newspaper reflow"}
-                  title={canUseNewspaperReflow ? "Toggle newspaper reflow" : "Newspaper reflow needs at least 2 columns"}
-                >
-                  {controls.editorState.draftReflow ? "On" : "Off"}
-                </Button>),
-              )}
-              {renderSettingRow(
-                <WholeWord className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Hyphen",
-                withSubmenuTooltip(controls.editorState.draftSyllableDivision ? "Disable hyphenation" : "Enable hyphenation", <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className={`h-8 w-full rounded-sm border px-2 text-xs ${controls.editorState.draftSyllableDivision ? tone.railButtonActive : tone.railButton}`}
-                  onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: !prev.draftSyllableDivision } : prev)}
-                  aria-label={controls.editorState.draftSyllableDivision ? "Disable syllable division" : "Enable syllable division"}
-                >
-                  {controls.editorState.draftSyllableDivision ? "On" : "Off"}
-                </Button>),
-              )}
-              {renderSettingRow(
-                <RotateCw className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Rotate",
-                withSubmenuTooltip("Rotate the paragraph in degrees", <input
-                  type="number"
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={Math.round(controls.editorState.draftRotation)}
-                  onChange={(event) => {
-                    const parsed = Number(event.target.value)
-                    const next = Number.isFinite(parsed) ? parsed : 0
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftRotation: clampRotation(next),
-                    } : prev)
-                  }}
-                  className={fullWidthInputClassName}
-                />),
-              )}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Columns</Label>
+            <Select
+              value={String(controls.editorState.draftColumns)}
+              onValueChange={(value) => {
+                const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftColumns: nextColumns,
+                  draftReflow: nextColumns > 1 ? prev.draftReflow : false,
+                } : prev)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={count} value={String(count)}>
+                    {count} {count === 1 ? "col" : "cols"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Alignment</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftAlign === "left")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "left" } : prev)}
+              >
+                Left
+              </button>
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftAlign === "center")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "center" } : prev)}
+              >
+                Center
+              </button>
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftAlign === "right")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)}
+              >
+                Right
+              </button>
             </div>
-          ) : null}
+          </div>
 
-          {activeSubmenu === "type" ? (
-            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
-              {renderSettingRow(
-                <CaseSensitive className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Font",
-                withSubmenuTooltip("Choose a font family override for this paragraph", <FontSelect
-                  value={selectionFontFamily ?? undefined}
-                  onValueChange={(value) => {
-                    const nextFont = value as FontFamily
-                    const requestedWeight = selectionFontWeight ?? controls.editorState.draftFontWeight
-                    const requestedItalic = selectionItalic ?? controls.editorState.draftItalic
-                    const resolvedVariant = resolveFontVariant(nextFont, requestedWeight, requestedItalic)
-                    applySelectionTextFormat({
-                      fontFamily: nextFont,
-                      fontWeight: resolvedVariant.weight,
-                      italic: resolvedVariant.italic,
-                    })
-                  }}
-                  options={FONT_OPTIONS}
-                  triggerClassName={`h-8 w-full text-xs ${tone.input}`}
-                  triggerStyle={{ width: "100%" }}
-                  contentClassName={tone.selectContent}
-                  placeholder="Mixed"
-                />),
-              )}
-              {renderSettingRow(
-                <TypeOutline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Cut",
-                withSubmenuTooltip("Choose the available cut for this paragraph", <Select
-                  value={selectedFontVariantForSelection?.id}
-                  onValueChange={(value) => {
-                    const fontFamily = selectionFontFamily ?? controls.editorState.draftFont
-                    const nextVariant = getFontVariantById(fontFamily, value)
-                    if (!nextVariant) return
-                    applySelectionTextFormat({
-                      fontWeight: nextVariant.weight,
-                      italic: nextVariant.italic,
-                    })
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue placeholder="Mixed" />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
-                      <SelectItem key={variant.id} value={variant.id}>
-                        {variant.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Type className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Typo",
-                withSubmenuTooltip("Choose the typography hierarchy for this paragraph", <Select
-                  value={selectionStyleKey ?? undefined}
-                  onValueChange={(value) => {
-                    const nextStyle = value as StyleKey
-                    if (selectionUsesScopedRuns && selectionRange) {
-                      applySelectionTextFormat({ styleKey: nextStyle })
-                      return
-                    }
-                    controls.setEditorState((prev) => {
-                      if (!prev) return prev
-                      const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
-                      const currentDefaultItalic = controls.getStyleDefaultItalic(prev.draftStyle)
-                      const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
-                      const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
-                      const requestedWeight = prev.draftFontWeight === currentDefaultWeight
-                        ? nextDefaultWeight
-                        : prev.draftFontWeight
-                      const requestedItalic = prev.draftItalic === currentDefaultItalic
-                        ? nextDefaultItalic
-                        : prev.draftItalic
-                      const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
-                      const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
-                        fontFamily: prev.draftFont,
-                        fontWeight: resolvedVariant.weight,
-                        italic: resolvedVariant.italic,
-                        styleKey: nextStyle,
-                        color: prev.draftColor,
-                      }
-                      return {
-                        ...prev,
-                        draftStyle: nextStyle,
-                        draftFontWeight: resolvedVariant.weight,
-                        draftItalic: resolvedVariant.italic,
-                        draftTextFormatRuns: rebaseDraftTextFormatRuns(prev, nextBase),
-                        draftFxSize: controls.isFxStyle(nextStyle)
-                          ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
-                          : prev.draftFxSize,
-                        draftFxLeading: controls.isFxStyle(nextStyle)
-                          ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
-                          : prev.draftFxLeading,
-                        draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
-                      }
-                    })
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue placeholder="Mixed" />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {controls.styleOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {getStyleOptionLabel(option.value, option.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {fxSelected ? renderSettingRow(
-                <LetterText className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "FX Size",
-                withSubmenuTooltip("Set the FX font size in points", <input
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Newspaper Reflow</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>
+                  {canUseNewspaperReflow ? "Flow across configured columns." : "Requires at least two columns."}
+                </p>
+              </div>
+              <Switch
+                checked={controls.editorState.draftReflow && canUseNewspaperReflow}
+                disabled={!canUseNewspaperReflow}
+                onCheckedChange={(checked) => controls.setEditorState((prev) => prev ? { ...prev, draftReflow: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Hyphenation</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>Enable syllable division.</p>
+              </div>
+              <Switch
+                checked={controls.editorState.draftSyllableDivision}
+                onCheckedChange={(checked) => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Rotation</Label>
+            <input
+              type="number"
+              min={-180}
+              max={180}
+              step={1}
+              value={Math.round(controls.editorState.draftRotation)}
+              onChange={(event) => {
+                const parsed = Number(event.target.value)
+                const next = Number.isFinite(parsed) ? parsed : 0
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRotation: clampRotation(next),
+                } : prev)
+              }}
+              className={textInputClassName}
+            />
+          </div>
+        </EditorSidebarSection>
+
+        <EditorSidebarSection
+          title="II. Typo"
+          tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking"
+          collapsed={collapsed.type}
+          collapsedSummary={`${selectionFontFamily ?? "Mixed"}, ${selectedStyleLabelForSelection}`}
+          onToggle={() => toggleSection("type")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
+        >
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Font</Label>
+            <FontSelect
+              value={selectionFontFamily ?? undefined}
+              onValueChange={(value) => {
+                const nextFont = value as FontFamily
+                const requestedWeight = selectionFontWeight ?? controls.editorState.draftFontWeight
+                const requestedItalic = selectionItalic ?? controls.editorState.draftItalic
+                const resolvedVariant = resolveFontVariant(nextFont, requestedWeight, requestedItalic)
+                applySelectionTextFormat({
+                  fontFamily: nextFont,
+                  fontWeight: resolvedVariant.weight,
+                  italic: resolvedVariant.italic,
+                })
+              }}
+              options={FONT_OPTIONS}
+              triggerClassName={triggerClassName}
+              triggerStyle={{ width: "100%" }}
+              contentClassName={tone.selectContent}
+              placeholder="Mixed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Cut</Label>
+            <Select
+              value={selectedFontVariantForSelection?.id}
+              onValueChange={(value) => {
+                const fontFamily = selectionFontFamily ?? controls.editorState.draftFont
+                const nextVariant = getFontVariantById(fontFamily, value)
+                if (!nextVariant) return
+                applySelectionTextFormat({
+                  fontWeight: nextVariant.weight,
+                  italic: nextVariant.italic,
+                })
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue placeholder="Mixed" />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
+                  <SelectItem key={variant.id} value={variant.id}>
+                    {variant.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Hierarchy</Label>
+            <Select
+              value={selectionStyleKey ?? undefined}
+              onValueChange={(value) => {
+                const nextStyle = value as StyleKey
+                if (selectionUsesScopedRuns && selectionRange) {
+                  applySelectionTextFormat({ styleKey: nextStyle })
+                  return
+                }
+                controls.setEditorState((prev) => {
+                  if (!prev) return prev
+                  const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
+                  const currentDefaultItalic = controls.getStyleDefaultItalic(prev.draftStyle)
+                  const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
+                  const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
+                  const requestedWeight = prev.draftFontWeight === currentDefaultWeight
+                    ? nextDefaultWeight
+                    : prev.draftFontWeight
+                  const requestedItalic = prev.draftItalic === currentDefaultItalic
+                    ? nextDefaultItalic
+                    : prev.draftItalic
+                  const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
+                  const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
+                    fontFamily: prev.draftFont,
+                    fontWeight: resolvedVariant.weight,
+                    italic: resolvedVariant.italic,
+                    styleKey: nextStyle,
+                    color: prev.draftColor,
+                  }
+                  return {
+                    ...prev,
+                    draftStyle: nextStyle,
+                    draftFontWeight: resolvedVariant.weight,
+                    draftItalic: resolvedVariant.italic,
+                    draftTextFormatRuns: rebaseDraftTextFormatRuns(prev, nextBase),
+                    draftFxSize: controls.isFxStyle(nextStyle)
+                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
+                      : prev.draftFxSize,
+                    draftFxLeading: controls.isFxStyle(nextStyle)
+                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+                      : prev.draftFxLeading,
+                    draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
+                  }
+                })
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue placeholder="Mixed" />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {controls.styleOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {getStyleOptionLabel(option.value, option.label)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {fxSelected ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className={sectionLabelClassName}>FX Size</Label>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={fxSizeInput}
@@ -793,14 +656,13 @@ export function TextEditorPanel<StyleKey extends string>({
                     event.preventDefault()
                     ;(event.currentTarget as HTMLInputElement).blur()
                   }}
-                  className={fullWidthInputClassName}
-                  aria-label="FX font size"
-                />),
-              ) : null}
-              {fxSelected ? renderSettingRow(
-                <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "FX Lead",
-                withSubmenuTooltip("Set the FX leading in points", <input
+                  className={textInputClassName}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className={sectionLabelClassName}>FX Leading</Label>
+                <input
                   type="text"
                   inputMode="decimal"
                   value={fxLeadingInput}
@@ -824,143 +686,152 @@ export function TextEditorPanel<StyleKey extends string>({
                     event.preventDefault()
                     ;(event.currentTarget as HTMLInputElement).blur()
                   }}
-                  className={fullWidthInputClassName}
-                  aria-label="FX line leading"
-                />),
-              ) : null}
-              {renderSettingRow(
-                <TextCursorInput className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Kerning",
-                withSubmenuTooltip("Choose optical or metric kerning", <Select
-                  value={controls.editorState.draftOpticalKerning ? "on" : "off"}
-                  onValueChange={(value) => {
-                    controls.setEditorState((prev) => prev ? {
-                      ...prev,
-                      draftOpticalKerning: value !== "off",
-                    } : prev)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    <SelectItem value="on">Optical</SelectItem>
-                    <SelectItem value="off">Metric</SelectItem>
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <MoveHorizontal className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Tracking",
-                withSubmenuTooltip("Set paragraph tracking, or apply tracking to the current text selection (1/1000 em)", <input
-                  type="number"
-                  min={MIN_TRACKING_SCALE}
-                  max={MAX_TRACKING_SCALE}
-                  step={1}
-                  inputMode="numeric"
-                  value={trackingInput}
-                  placeholder={selectionTrackingScale === null ? "Mixed" : undefined}
-                  onChange={(event) => {
-                    setTrackingInput(event.target.value)
-                  }}
-                  onBlur={commitTrackingInput}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return
-                    event.preventDefault()
-                    commitTrackingInput()
-                    ;(event.currentTarget as HTMLInputElement).blur()
-                  }}
-                  className={fullWidthInputClassName}
-                  aria-label={`Tracking from ${MIN_TRACKING_SCALE} to ${MAX_TRACKING_SCALE}`}
-                />),
-              )}
-              {renderSettingRow(
-                <Palette className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Scheme",
-                withSubmenuTooltip("Choose the active color scheme", <Select
-                  value={editorColorScheme}
-                  onOpenChange={(open) => {
-                    if (!open) setPreviewColorScheme(null)
-                  }}
-                  onValueChange={(value) => {
-                    setEditorColorScheme(value as ImageColorSchemeId)
-                    setPreviewColorScheme(null)
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className={tone.selectContent}
-                    side="top"
-                    sideOffset={4}
-                    avoidCollisions={false}
-                    onPointerLeave={() => setPreviewColorScheme(null)}
-                  >
-                    {controls.colorSchemes.map((scheme) => (
-                      <SelectItem
-                        key={scheme.id}
-                        value={scheme.id}
-                        onFocus={() => setPreviewColorScheme(scheme.id)}
-                        onPointerMove={() => setPreviewColorScheme(scheme.id)}
-                      >
-                        {scheme.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Droplets className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Color",
-                <div className="flex flex-wrap items-center gap-1">
-                  {previewPalette.map((color, index) => {
-                    const selected = (selectionColor ?? controls.editorState.draftColor).toLowerCase() === color.toLowerCase()
-                    const swatchKey = `${activeColorScheme}-${index}-${color}`
-                    return (
-                      <HoverTooltip
-                        key={swatchKey}
-                        className="block"
-                        label={`Set the paragraph color to ${color}`}
-                        disabled={!showRolloverInfo}
-                        anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
-                        constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-                        horizontalAlign="start"
-                        tooltipClassName={submenuTooltipClassName}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            applySelectionTextFormat({ color })
-                          }}
-                          className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
-                          style={{ backgroundColor: color }}
-                          aria-label={`Select ${color}`}
-                          title={color}
-                        />
-                      </HoverTooltip>
-                    )
-                  })}
-                </div>,
-              )}
+                  className={textInputClassName}
+                />
+              </div>
             </div>
           ) : null}
 
-          {activeSubmenu === "info" ? (
-            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
-              {infoRows.map((row) => (
-                <div key={row.label}>
-                  {renderSettingRow(
-                    <row.icon className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                    row.label,
-                    <span className="block truncate text-right text-xs">{row.value}</span>,
-                  )}
-                </div>
-              ))}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Scheme</Label>
+            <Select
+              value={editorColorScheme}
+              onOpenChange={(open) => {
+                if (!open) setPreviewColorScheme(null)
+              }}
+              onValueChange={(value) => {
+                setEditorColorScheme(value as ImageColorSchemeId)
+                setPreviewColorScheme(null)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                className={tone.selectContent}
+                side="top"
+                sideOffset={4}
+                avoidCollisions={false}
+                onPointerLeave={() => setPreviewColorScheme(null)}
+              >
+                {controls.colorSchemes.map((scheme) => (
+                  <SelectItem
+                    key={scheme.id}
+                    value={scheme.id}
+                    onFocus={() => setPreviewColorScheme(scheme.id)}
+                    onPointerMove={() => setPreviewColorScheme(scheme.id)}
+                  >
+                    {scheme.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Color</Label>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {previewPalette.map((color, index) => {
+                const selected = (selectionColor ?? controls.editorState.draftColor).toLowerCase() === color.toLowerCase()
+                const swatchKey = `${activeColorScheme}-${index}-${color}`
+                return (
+                  <button
+                    key={swatchKey}
+                    type="button"
+                    onClick={() => {
+                      applySelectionTextFormat({ color })
+                    }}
+                    className={`h-7 w-7 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`Select ${color}`}
+                    title={color}
+                  />
+                )
+              })}
             </div>
-          ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Kerning</Label>
+            <Select
+              value={controls.editorState.draftOpticalKerning ? "on" : "off"}
+              onValueChange={(value) => {
+                controls.setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftOpticalKerning: value !== "off",
+                } : prev)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                <SelectItem value="on">Optical</SelectItem>
+                <SelectItem value="off">Metric</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Tracking</Label>
+            <input
+              type="number"
+              min={MIN_TRACKING_SCALE}
+              max={MAX_TRACKING_SCALE}
+              step={1}
+              inputMode="numeric"
+              value={trackingInput}
+              placeholder={selectionTrackingScale === null ? "Mixed" : undefined}
+              onChange={(event) => {
+                setTrackingInput(event.target.value)
+              }}
+              onBlur={commitTrackingInput}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return
+                event.preventDefault()
+                commitTrackingInput()
+                ;(event.currentTarget as HTMLInputElement).blur()
+              }}
+              className={textInputClassName}
+            />
+          </div>
+        </EditorSidebarSection>
+
+        <EditorSidebarSection
+          title="III. Info"
+          tooltip="Paragraph summary and live metrics"
+          collapsed={collapsed.info}
+          collapsedSummary={`${characterCount} chars, ${wordCount} words`}
+          onToggle={() => toggleSection("info")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
+        >
+          <div className={`border ${tone.infoFrame}`}>
+            {infoRows.map(([label, value], index) => (
+              <div
+                key={label}
+                className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 px-3 py-2 text-[11px] ${index > 0 ? `border-t ${tone.infoRow}` : ""}`}
+              >
+                <span className={tone.infoLabel}>{label}</span>
+                <span className={`truncate text-right ${tone.infoValue}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </EditorSidebarSection>
+
+        <div className="pt-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className={`h-auto w-full justify-between rounded-md px-3 py-2 text-left text-[12px] ${tone.destructive}`}
+            onClick={controls.deleteEditorBlock}
+          >
+            <span className="font-medium">Delete Paragraph</span>
+            <Trash2 className="h-4 w-4 shrink-0" />
+          </Button>
         </div>
-      ) : null}
+      </div>
     </div>
   )
 }

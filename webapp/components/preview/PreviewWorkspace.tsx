@@ -98,6 +98,8 @@ type Props = {
   onSelectedLayerKeyChange: (key: string | null) => void
   onImageColorSchemeChange: (value: ImageColorSchemeId) => void
   onShowImagePlaceholdersChange: (value: boolean) => void
+  editorSidebarHost: HTMLDivElement | null
+  onEditorModeChange: (mode: "text" | "image" | null) => void
   closeSidebarPanel: () => void
 }
 
@@ -196,6 +198,8 @@ export function PreviewWorkspace({
   onSelectedLayerKeyChange,
   onImageColorSchemeChange,
   onShowImagePlaceholdersChange,
+  editorSidebarHost,
+  onEditorModeChange,
   closeSidebarPanel,
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
@@ -332,6 +336,8 @@ export function PreviewWorkspace({
               hoveredLayerKey={layerPanelHoveredLayerKey}
               onHoverLayerChange={setPreviewHoveredLayerKey}
               onSelectLayer={onLayerSelect}
+              editorSidebarHost={editorSidebarHost}
+              onEditorModeChange={onEditorModeChange}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
               onSnapshotGetterChange={onSnapshotGetterChange}

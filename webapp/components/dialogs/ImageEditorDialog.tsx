@@ -1,7 +1,11 @@
 "use client"
 
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
+import { Trash2 } from "lucide-react"
+
+import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
 import { Button } from "@/components/ui/button"
-import { HoverTooltip } from "@/components/ui/hover-tooltip"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -9,15 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Baseline, Columns3, Droplets, Info, Palette, Percent, Rows3, Trash2 } from "lucide-react"
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import {
   clampTransparencyPercent,
   opacityToTransparencyPercent,
   transparencyPercentToOpacity,
 } from "@/lib/image-placeholder-opacity"
+import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 
 export type ImageEditorState = {
   target: string
@@ -28,13 +30,13 @@ export type ImageEditorState = {
   draftOpacity: number
 }
 
-type MainSubmenu = "geometry" | "info" | null
+type SectionKey = "geometry" | "color" | "info"
 
-const SUBMENU_VERTICAL_ALIGN_OFFSET_PX = 4
-const SUBMENU_PANEL_WIDTH_PX = 304
-const SUBMENU_LABEL_WIDTH_PX = 76
-const SUBMENU_TOOLTIP_ANCHOR_SELECTOR = '[data-submenu-tooltip-anchor="image-editor"]'
-const PREVIEW_TOOLTIP_BOUNDARY_SELECTOR = '[data-tooltip-boundary="preview-workspace"]'
+const IMAGE_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
+  geometry: false,
+  color: true,
+  info: true,
+}
 
 type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
@@ -46,12 +48,8 @@ type ImageEditorDialogProps = {
   colorSchemes: readonly { id: ImageColorSchemeId; label: string; colors: readonly string[] }[]
   selectedColorScheme: ImageColorSchemeId
   palette: readonly string[]
-  rowTriggerMinWidthCh?: number
-  colTriggerMinWidthCh?: number
-  isHelpActive?: boolean
   showRolloverInfo?: boolean
   isDarkMode?: boolean
-  dockSide?: "left" | "right"
 }
 
 export function ImageEditorDialog({
@@ -64,19 +62,16 @@ export function ImageEditorDialog({
   colorSchemes,
   selectedColorScheme,
   palette,
-  rowTriggerMinWidthCh = 12,
-  colTriggerMinWidthCh = 12,
-  isHelpActive = false,
   showRolloverInfo = true,
   isDarkMode = false,
-  dockSide = "left",
 }: ImageEditorDialogProps) {
-  const [activeSubmenu, setActiveSubmenu] = useState<MainSubmenu>(null)
-  const [activeSubmenuTop, setActiveSubmenuTop] = useState(0)
   const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const [transparencyInput, setTransparencyInput] = useState("")
-  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [collapsed, setCollapsed] = usePersistedSectionState(
+    "swiss-grid-generator:image-editor-sections",
+    IMAGE_EDITOR_COLLAPSED_DEFAULTS,
+  )
   const editorTarget = editorState?.target ?? null
 
   useEffect(() => {
@@ -106,101 +101,58 @@ export function ImageEditorDialog({
   if (!editorState) return null
 
   const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
-  const colorSchemeTriggerWidthCh = Math.max(
-    ...colorSchemes.map((scheme) => scheme.label.length),
-    12,
-  ) + 3
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
   const transparencyPercent = opacityToTransparencyPercent(editorState.draftOpacity)
   const resolvedHeightBaselines = Math.max(0, Math.min(maxHeightBaselines, editorState.draftHeightBaselines))
+  const toggleSection = (key: SectionKey) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const tone = isDarkMode
     ? {
-      root: "dark",
-      rail: "border-gray-700 bg-gray-900 text-gray-100",
-      railButton: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
-      railButtonActive: "border-gray-600 bg-gray-800 text-gray-100",
-      submenu: "border-gray-700 bg-gray-900 text-gray-100",
+      border: "border-gray-700",
       input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
-      iconMuted: "text-gray-400",
+      body: "text-gray-300",
+      muted: "text-gray-400",
+      panel: "bg-gray-900",
+      infoFrame: "border-gray-700 bg-gray-900/60",
+      infoRow: "border-gray-800",
+      infoLabel: "text-gray-400",
+      infoValue: "text-gray-100",
+      button: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
+      destructive: "border-red-700/70 text-red-200 hover:bg-red-950/40 hover:text-red-100",
       ringOffset: "ring-offset-gray-900",
-      divider: "bg-gray-700",
-      railTooltip: "w-max whitespace-nowrap border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
-      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-700 bg-gray-900/95 text-gray-200 shadow-lg",
       selectContent: "dark",
     }
     : {
-      root: "",
-      rail: "border-gray-300 bg-white",
-      railButton: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-      railButtonActive: "border-gray-400 bg-gray-100 text-gray-900",
-      submenu: "border-gray-300 bg-white text-gray-900",
+      border: "border-gray-200",
       input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
-      iconMuted: "text-gray-500",
+      body: "text-gray-700",
+      muted: "text-gray-600",
+      panel: "bg-white",
+      infoFrame: "border-gray-200 bg-gray-50/80",
+      infoRow: "border-gray-200",
+      infoLabel: "text-gray-500",
+      infoValue: "text-gray-900",
+      button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      destructive: "border-red-200 text-red-700 hover:bg-red-50 hover:text-red-900",
       ringOffset: "ring-offset-white",
-      divider: "bg-gray-200",
-      railTooltip: "w-max whitespace-nowrap border-gray-200 bg-white/95 text-gray-700 shadow-lg",
-      submenuTooltip: "w-max max-w-[24rem] whitespace-normal border-gray-200 bg-white/95 text-gray-700 shadow-lg",
       selectContent: "",
     }
 
-  const railBtn = (active = false) => `h-8 w-8 rounded-sm border ${active ? tone.railButtonActive : tone.railButton}`
-  const railTooltipClassName = tone.railTooltip
-  const submenuTooltipClassName = tone.submenuTooltip
-  const tooltipHorizontalAlign = dockSide === "left" ? "start" : "end"
-  const submenuPositionClassName = dockSide === "left" ? "left-full ml-2" : "right-full mr-2"
-  const positionSubmenu = (anchor: HTMLElement) => {
-    const panelRect = panelRef.current?.getBoundingClientRect()
-    if (!panelRect) return
-    const anchorRect = anchor.getBoundingClientRect()
-    setActiveSubmenuTop(anchorRect.top - panelRect.top - SUBMENU_VERTICAL_ALIGN_OFFSET_PX)
-  }
-  const toggleSubmenu = (next: Exclude<MainSubmenu, null>, anchor?: HTMLElement) => {
-    setActiveSubmenu((prev) => {
-      if (prev === next) return null
-      if (anchor) positionSubmenu(anchor)
-      return next
-    })
-  }
-  const withRailTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip
-      className="block"
-      label={label}
-      disabled={!showRolloverInfo}
-      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign={tooltipHorizontalAlign}
-      tooltipClassName={railTooltipClassName}
-    >
-      {child}
-    </HoverTooltip>
-  )
-  const withSubmenuTooltip = (label: string, child: React.ReactNode) => (
-    <HoverTooltip
-      className="block"
-      label={label}
-      disabled={!showRolloverInfo}
-      anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
-      constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-      horizontalAlign={tooltipHorizontalAlign}
-      tooltipClassName={submenuTooltipClassName}
-    >
-      {child}
-    </HoverTooltip>
-  )
-  const settingRowLabelClassName = `text-[11px] leading-none ${isDarkMode ? "text-gray-400" : "text-gray-600"}`
-  const settingValueClassName = `text-xs ${isDarkMode ? "text-gray-100" : "text-gray-900"}`
-  const fullWidthInputClassName = `h-8 w-full rounded-md border px-2 text-xs outline-none ${tone.input}`
-  const renderSettingRow = (icon: React.ReactNode, label: string, control: React.ReactNode) => (
-    <div
-      className="grid min-h-8 items-center gap-x-2"
-      style={{ gridTemplateColumns: `16px ${SUBMENU_LABEL_WIDTH_PX}px minmax(0, 1fr)` }}
-    >
-      <div className="flex items-center justify-center">{icon}</div>
-      <span className={settingRowLabelClassName}>{label}</span>
-      <div className="min-w-0">{control}</div>
-    </div>
-  )
+  const triggerClassName = `h-9 ${tone.input}`
+  const textInputClassName = `h-9 w-full rounded-md border px-3 text-sm outline-none ${tone.input}`
+  const sectionLabelClassName = `text-sm ${tone.muted}`
+  const infoRows = [
+    ["Rows", String(editorState.draftRows)],
+    ["Baselines", String(editorState.draftHeightBaselines)],
+    ["Cols", String(editorState.draftColumns)],
+    ["Scheme", colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme],
+    ["Color", editorState.draftColor],
+    ["Transparency", `${transparencyPercent}%`],
+  ]
+
   const commitTransparencyInput = () => {
     const parsed = Number(transparencyInput)
     if (!Number.isFinite(parsed)) {
@@ -214,248 +166,218 @@ export function ImageEditorDialog({
     } : prev))
     setTransparencyInput(String(nextTransparency))
   }
-  const infoRows = [
-    { label: "Rows", value: String(editorState.draftRows), icon: Rows3 },
-    { label: "Baselines", value: String(editorState.draftHeightBaselines), icon: Baseline },
-    { label: "Cols", value: String(editorState.draftColumns), icon: Columns3 },
-    { label: "Scheme", value: colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme, icon: Palette },
-    { label: "Color", value: editorState.draftColor, icon: Droplets },
-    { label: "Transparency", value: `${transparencyPercent}%`, icon: Percent },
-  ]
 
   return (
-    <div ref={panelRef} className={`relative ${tone.root}`.trim()}>
-      <div className={`relative flex w-10 shrink-0 flex-col items-center gap-1 rounded-md border p-1 ${tone.rail}`}>
-        {isHelpActive ? <HelpIndicatorLine /> : null}
-        {withRailTooltip("Rows, baselines, columns, color, and transparency", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(activeSubmenu === "geometry")}
-          onClick={(event) => toggleSubmenu("geometry", event.currentTarget)}
-          aria-label="Image placeholder geometry"
+    <div data-image-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6">
+        <EditorSidebarSection
+          title="I. Geometry"
+          tooltip="Rows, baselines, and column span"
+          collapsed={collapsed.geometry}
+          collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols`}
+          onToggle={() => toggleSection("geometry")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
         >
-          <Rows3 className="h-4 w-4" />
-        </Button>)}
-        {withRailTooltip("Image placeholder summary", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(activeSubmenu === "info")}
-          onClick={(event) => toggleSubmenu("info", event.currentTarget)}
-          aria-label="Image placeholder info"
-        >
-          <Info className="h-4 w-4" />
-        </Button>)}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Rows</Label>
+            <Select
+              value={String(editorState.draftRows)}
+              onValueChange={(value) => {
+                const rows = Math.max(0, Math.min(gridRows, Number(value)))
+                setEditorState((prev) => (prev ? {
+                  ...prev,
+                  draftRows: rows,
+                  draftHeightBaselines: rows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
+                } : prev))
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: gridRows + 1 }, (_, index) => index).map((count) => (
+                  <SelectItem key={`image-row-${count}`} value={String(count)}>
+                    {count} {count === 1 ? "row" : "rows"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className={`my-1 h-px w-full ${tone.divider}`} />
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Baselines</Label>
+            <Select
+              value={String(resolvedHeightBaselines)}
+              onValueChange={(value) => {
+                const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+                setEditorState((prev) => (prev ? {
+                  ...prev,
+                  draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
+                  draftHeightBaselines: nextBaselines,
+                } : prev))
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                <SelectItem value="0">0 baselines</SelectItem>
+                {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={`image-baselines-${count}`} value={String(count)}>
+                    {count} {count === 1 ? "baseline" : "baselines"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {withRailTooltip("Delete image placeholder", <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className={railBtn(false)}
-          onClick={deleteEditor}
-          aria-label="Delete image placeholder"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>)}
-      </div>
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Columns</Label>
+            <Select
+              value={String(editorState.draftColumns)}
+              onValueChange={(value) => {
+                const columns = Math.max(1, Math.min(gridCols, Number(value)))
+                setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent}>
+                {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
+                  <SelectItem key={`image-col-${count}`} value={String(count)}>
+                    {count} {count === 1 ? "col" : "cols"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </EditorSidebarSection>
 
-      {activeSubmenu ? (
-        <div
-          data-submenu-tooltip-anchor="image-editor"
-          className={`absolute ${submenuPositionClassName} max-w-[min(76vw,24rem)] overflow-x-auto rounded-md border px-2 py-2 ${tone.submenu}`}
-          style={{ top: activeSubmenuTop }}
+        <EditorSidebarSection
+          title="II. Color"
+          tooltip="Scheme, swatch color, and transparency"
+          collapsed={collapsed.color}
+          collapsedSummary={`${colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme}, ${transparencyPercent}%`}
+          onToggle={() => toggleSection("color")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
         >
-          {isHelpActive ? <HelpIndicatorLine /> : null}
-          {activeSubmenu === "geometry" ? (
-            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
-              {renderSettingRow(
-                <Rows3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Rows",
-                withSubmenuTooltip("Set the row span of this image placeholder", <Select
-                  value={String(editorState.draftRows)}
-                  onValueChange={(value) => {
-                    const rows = Math.max(0, Math.min(gridRows, Number(value)))
-                    setEditorState((prev) => (prev ? {
-                      ...prev,
-                      draftRows: rows,
-                      draftHeightBaselines: rows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
-                    } : prev))
-                  }}
-                >
-                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${rowTriggerMinWidthCh}ch` }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: gridRows + 1 }, (_, index) => index).map((count) => (
-                      <SelectItem key={`image-row-${count}`} value={String(count)}>
-                        {count} {count === 1 ? "row" : "rows"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Baseline className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Baselines",
-                withSubmenuTooltip("Add baseline units to this image placeholder height", <Select
-                  value={String(resolvedHeightBaselines)}
-                  onValueChange={(value) => {
-                    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
-                    setEditorState((prev) => (prev ? {
-                      ...prev,
-                      draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
-                      draftHeightBaselines: nextBaselines,
-                    } : prev))
-                  }}
-                >
-                  <SelectTrigger className={`h-8 w-full text-xs ${tone.input}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    <SelectItem value="0">0 baselines</SelectItem>
-                    {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
-                      <SelectItem key={`image-baselines-${count}`} value={String(count)}>
-                        {count} {count === 1 ? "baseline" : "baselines"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Columns3 className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Cols",
-                withSubmenuTooltip("Set the column span of this image placeholder", <Select
-                  value={String(editorState.draftColumns)}
-                  onValueChange={(value) => {
-                    const columns = Math.max(1, Math.min(gridCols, Number(value)))
-                    setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
-                  }}
-                >
-                  <SelectTrigger className={`h-8 text-xs ${tone.input}`} style={{ minWidth: `${colTriggerMinWidthCh}ch` }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={tone.selectContent}>
-                    {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
-                      <SelectItem key={`image-col-${count}`} value={String(count)}>
-                        {count} {count === 1 ? "col" : "cols"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Palette className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Scheme",
-                withSubmenuTooltip("Choose the active color scheme", <Select
-                  value={editorColorScheme}
-                  onOpenChange={(open) => {
-                    if (!open) setPreviewColorScheme(null)
-                  }}
-                  onValueChange={(value) => {
-                    setEditorColorScheme(value as ImageColorSchemeId)
-                    setPreviewColorScheme(null)
-                  }}
-                >
-                  <SelectTrigger
-                    className={`h-8 w-full text-xs ${tone.input}`}
-                    style={{ minWidth: `${colorSchemeTriggerWidthCh}ch` }}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Scheme</Label>
+            <Select
+              value={editorColorScheme}
+              onOpenChange={(open) => {
+                if (!open) setPreviewColorScheme(null)
+              }}
+              onValueChange={(value) => {
+                setEditorColorScheme(value as ImageColorSchemeId)
+                setPreviewColorScheme(null)
+              }}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                className={tone.selectContent}
+                side="top"
+                sideOffset={4}
+                avoidCollisions={false}
+                onPointerLeave={() => setPreviewColorScheme(null)}
+              >
+                {colorSchemes.map((scheme) => (
+                  <SelectItem
+                    key={scheme.id}
+                    value={scheme.id}
+                    onFocus={() => setPreviewColorScheme(scheme.id)}
+                    onPointerMove={() => setPreviewColorScheme(scheme.id)}
                   >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className={tone.selectContent}
-                    side="top"
-                    sideOffset={4}
-                    avoidCollisions={false}
-                    onPointerLeave={() => setPreviewColorScheme(null)}
-                  >
-                    {colorSchemes.map((scheme) => (
-                      <SelectItem
-                        key={scheme.id}
-                        value={scheme.id}
-                        onFocus={() => setPreviewColorScheme(scheme.id)}
-                        onPointerMove={() => setPreviewColorScheme(scheme.id)}
-                      >
-                        {scheme.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>),
-              )}
-              {renderSettingRow(
-                <Droplets className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Color",
-                <div className="flex flex-wrap items-center gap-1">
-                  {previewPalette.map((color, index) => {
-                    const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
-                    const swatchKey = `${activeColorScheme}-${index}-${color}`
-                    return (
-                      <HoverTooltip
-                        key={swatchKey}
-                        className="block"
-                        label={`Set the placeholder color to ${color}`}
-                        disabled={!showRolloverInfo}
-                        anchorToClosestSelector={SUBMENU_TOOLTIP_ANCHOR_SELECTOR}
-                        constrainToClosestSelector={PREVIEW_TOOLTIP_BOUNDARY_SELECTOR}
-                        horizontalAlign="start"
-                        tooltipClassName={submenuTooltipClassName}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
-                          className={`h-6 w-6 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
-                          style={{ backgroundColor: color }}
-                          aria-label={`Select ${color}`}
-                          title={color}
-                        />
-                      </HoverTooltip>
-                    )
-                  })}
-                </div>,
-              )}
-              {renderSettingRow(
-                <Percent className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                "Transparency",
-                withSubmenuTooltip("Set image placeholder transparency in percent", <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  inputMode="numeric"
-                  value={transparencyInput}
-                  onChange={(event) => setTransparencyInput(event.target.value)}
-                  onBlur={commitTransparencyInput}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return
-                    event.preventDefault()
-                    commitTransparencyInput()
-                    ;(event.currentTarget as HTMLInputElement).blur()
-                  }}
-                  className={fullWidthInputClassName}
-                  aria-label="Transparency from 0 to 100 percent"
-                />),
-              )}
-            </div>
-          ) : null}
+                    {scheme.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {activeSubmenu === "info" ? (
-            <div className="flex flex-col gap-0" style={{ width: `${SUBMENU_PANEL_WIDTH_PX}px` }}>
-              {infoRows.map((row) => (
-                <div key={row.label}>
-                  {renderSettingRow(
-                    <row.icon className={`h-4 w-4 shrink-0 ${tone.iconMuted}`} />,
-                    row.label,
-                    <span className={settingValueClassName}>{row.value}</span>,
-                  )}
-                </div>
-              ))}
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Color</Label>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {previewPalette.map((color, index) => {
+                const selected = editorState.draftColor.toLowerCase() === color.toLowerCase()
+                const swatchKey = `${activeColorScheme}-${index}-${color}`
+                return (
+                  <button
+                    key={swatchKey}
+                    type="button"
+                    onClick={() => setEditorState((prev) => (prev ? { ...prev, draftColor: color } : prev))}
+                    className={`h-7 w-7 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`Select ${color}`}
+                    title={color}
+                  />
+                )
+              })}
             </div>
-          ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Transparency</Label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              inputMode="numeric"
+              value={transparencyInput}
+              onChange={(event) => setTransparencyInput(event.target.value)}
+              onBlur={commitTransparencyInput}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return
+                event.preventDefault()
+                commitTransparencyInput()
+                ;(event.currentTarget as HTMLInputElement).blur()
+              }}
+              className={textInputClassName}
+            />
+          </div>
+        </EditorSidebarSection>
+
+        <EditorSidebarSection
+          title="III. Info"
+          tooltip="Placeholder summary"
+          collapsed={collapsed.info}
+          collapsedSummary={`${editorState.draftColor}, ${transparencyPercent}%`}
+          onToggle={() => toggleSection("info")}
+          isDarkMode={isDarkMode}
+          showRolloverInfo={showRolloverInfo}
+        >
+          <div className={`border ${tone.infoFrame}`}>
+            {infoRows.map(([label, value], index) => (
+              <div
+                key={label}
+                className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 px-3 py-2 text-[11px] ${index > 0 ? `border-t ${tone.infoRow}` : ""}`}
+              >
+                <span className={tone.infoLabel}>{label}</span>
+                <span className={`truncate text-right ${tone.infoValue}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </EditorSidebarSection>
+
+        <div className="pt-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className={`h-auto w-full justify-between rounded-md px-3 py-2 text-left text-[12px] ${tone.destructive}`}
+            onClick={deleteEditor}
+          >
+            <span className="font-medium">Delete Image Placeholder</span>
+            <Trash2 className="h-4 w-4 shrink-0" />
+          </Button>
         </div>
-      ) : null}
+      </div>
     </div>
   )
 }

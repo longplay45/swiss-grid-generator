@@ -1,6 +1,7 @@
 "use client"
 
 import { SquarePen } from "lucide-react"
+import { createPortal } from "react-dom"
 import type { Dispatch, SetStateAction } from "react"
 
 import { ImageEditorDialog, type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
@@ -13,15 +14,13 @@ import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
 type Props<StyleKey extends string> = {
   showEditorHelpIcon: boolean
   showRolloverInfo: boolean
-  previewWidthCss: number
+  editorSidebarHost: HTMLDivElement | null
   pageWidthCss: number
   pageHeightCss: number
   pageRotation: number
   editorState: BlockEditorState<StyleKey> | null
   imageEditorState: ImageEditorState | null
   textEditorControls: TextEditorControls<StyleKey> | null
-  activeTextEditorRect: BlockRect | null
-  activeImageEditorRect: BlockRect | null
   hoveredTextKey: string | null
   hoveredTextRect: BlockRect | null
   hoveredTextAlign: TextAlignMode | null
@@ -37,8 +36,6 @@ type Props<StyleKey extends string> = {
   gridCols: number
   imageColorScheme: ImageColorSchemeId
   imagePalette: readonly string[]
-  rowTriggerMinWidthCh: number
-  colTriggerMinWidthCh: number
   imageColorSchemes: readonly PreviewColorSchemeOption[]
   onOpenHelpSection?: (sectionId: "help-editor" | "help-image-editor") => void
   isDarkMode?: boolean
@@ -47,15 +44,13 @@ type Props<StyleKey extends string> = {
 export function GridPreviewOverlays<StyleKey extends string>({
   showEditorHelpIcon,
   showRolloverInfo,
-  previewWidthCss,
+  editorSidebarHost,
   pageWidthCss,
   pageHeightCss,
   pageRotation,
   editorState,
   imageEditorState,
   textEditorControls,
-  activeTextEditorRect,
-  activeImageEditorRect,
   hoveredTextKey,
   hoveredTextRect,
   hoveredTextAlign,
@@ -71,47 +66,15 @@ export function GridPreviewOverlays<StyleKey extends string>({
   gridCols,
   imageColorScheme,
   imagePalette,
-  rowTriggerMinWidthCh,
-  colTriggerMinWidthCh,
   imageColorSchemes,
   onOpenHelpSection,
   isDarkMode = false,
 }: Props<StyleKey>) {
-  const PREVIEW_EDITOR_INSET_PX = 12
-  const PREVIEW_EDITOR_RAIL_WIDTH_PX = 40
-  const PREVIEW_EDITOR_SUBMENU_GAP_PX = 8
-  const PREVIEW_EDITOR_SUBMENU_WIDTH_PX = 304
-  const PREVIEW_EDITOR_LEFT_DOCK_REQUIRED_WIDTH_PX = (
-    PREVIEW_EDITOR_INSET_PX
-    + PREVIEW_EDITOR_RAIL_WIDTH_PX
-    + PREVIEW_EDITOR_SUBMENU_GAP_PX
-    + PREVIEW_EDITOR_SUBMENU_WIDTH_PX
-  )
   const hoveredEditTarget = hoveredTextKey && hoveredTextRect
     ? { kind: "text" as const, key: hoveredTextKey, rect: hoveredTextRect }
-      : hoveredImageKey && hoveredImageRect
+    : hoveredImageKey && hoveredImageRect
       ? { kind: "image" as const, key: hoveredImageKey, rect: hoveredImageRect }
       : null
-  const resolveEditorDockSide = (rect: BlockRect | null): "left" | "right" => {
-    const leftDocumentGutterPx = Math.max(0, (previewWidthCss - pageWidthCss) / 2)
-    if (leftDocumentGutterPx >= PREVIEW_EDITOR_LEFT_DOCK_REQUIRED_WIDTH_PX) {
-      return "left"
-    }
-    if (!rect) return "left"
-    const rectCenterY = rect.y + rect.height / 2
-    if (rectCenterY >= pageHeightCss / 2) {
-      return "left"
-    }
-    const rectCenterX = rect.x + rect.width / 2
-    return rectCenterX < pageWidthCss / 2 ? "right" : "left"
-  }
-  const getDockStyle = (dockSide: "left" | "right") => (
-    dockSide === "left"
-      ? { left: PREVIEW_EDITOR_INSET_PX }
-      : { right: PREVIEW_EDITOR_INSET_PX }
-  )
-  const textEditorDockSide = resolveEditorDockSide(activeTextEditorRect)
-  const imageEditorDockSide = resolveEditorDockSide(activeImageEditorRect)
   const editButtonSize = 26
   const imageEditButtonInset = 6
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
@@ -153,6 +116,47 @@ export function GridPreviewOverlays<StyleKey extends string>({
         ),
       )
     : 0
+
+  const editorSidebar = editorSidebarHost
+    ? createPortal(
+      <>
+        {editorState && textEditorControls ? (
+          <div
+            className="h-full"
+            onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
+          >
+            <TextEditorPanel
+              showRolloverInfo={showRolloverInfo}
+              controls={textEditorControls}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+        ) : null}
+
+        {imageEditorState ? (
+          <div
+            className="h-full"
+            onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
+          >
+            <ImageEditorDialog
+              editorState={imageEditorState}
+              setEditorState={setImageEditorState}
+              deleteEditor={deleteImagePlaceholder}
+              baselinesPerGridModule={baselinesPerGridModule}
+              gridRows={gridRows}
+              gridCols={gridCols}
+              colorSchemes={imageColorSchemes}
+              selectedColorScheme={imageColorScheme}
+              palette={imagePalette}
+              showRolloverInfo={showRolloverInfo}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+        ) : null}
+      </>,
+      editorSidebarHost,
+    )
+    : null
 
   return (
     <>
@@ -204,49 +208,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
         </div>
       ) : null}
 
-      {editorState && textEditorControls ? (
-        <div
-          data-text-editor-panel="true"
-          className="absolute top-3 z-40"
-          style={getDockStyle(textEditorDockSide)}
-          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
-        >
-          <TextEditorPanel
-            isHelpActive={showEditorHelpIcon}
-            showRolloverInfo={showRolloverInfo}
-            controls={textEditorControls}
-            isDarkMode={isDarkMode}
-            dockSide={textEditorDockSide}
-          />
-        </div>
-      ) : null}
-
-      {imageEditorState ? (
-        <div
-          data-image-editor-panel="true"
-          className="absolute top-3 z-40"
-          style={getDockStyle(imageEditorDockSide)}
-          onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
-        >
-          <ImageEditorDialog
-            editorState={imageEditorState}
-            setEditorState={setImageEditorState}
-            deleteEditor={deleteImagePlaceholder}
-            baselinesPerGridModule={baselinesPerGridModule}
-            gridRows={gridRows}
-            gridCols={gridCols}
-            colorSchemes={imageColorSchemes}
-            selectedColorScheme={imageColorScheme}
-            palette={imagePalette}
-            rowTriggerMinWidthCh={rowTriggerMinWidthCh}
-            colTriggerMinWidthCh={colTriggerMinWidthCh}
-            isHelpActive={showEditorHelpIcon}
-            showRolloverInfo={showRolloverInfo}
-            isDarkMode={isDarkMode}
-            dockSide={imageEditorDockSide}
-          />
-        </div>
-      ) : null}
+      {editorSidebar}
     </>
   )
 }

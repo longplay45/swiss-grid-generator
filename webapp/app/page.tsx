@@ -75,6 +75,8 @@ export default function Home() {
   const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
   const preferCommittedPreviewLayoutRef = useRef(false)
   const headerClickTimeoutRef = useRef<number | null>(null)
+  const [editorSidebarMode, setEditorSidebarMode] = useState<"text" | "image" | null>(null)
+  const [editorSidebarHost, setEditorSidebarHost] = useState<HTMLDivElement | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
@@ -678,6 +680,8 @@ export default function Home() {
       onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
       onImageColorSchemeChange={setImageColorScheme}
       onShowImagePlaceholdersChange={setShowImagePlaceholders}
+      editorSidebarHost={editorSidebarHost}
+      onEditorModeChange={setEditorSidebarMode}
       closeSidebarPanel={closeSidebarPanel}
     />
   )
@@ -716,6 +720,8 @@ export default function Home() {
             bodyText: uiTheme.bodyText,
             link: uiTheme.link,
           }}
+          editorMode={editorSidebarMode}
+          onEditorHostChange={setEditorSidebarHost}
           settingsPanels={(
             <SettingsSidebarPanels
               collapsed={collapsed}

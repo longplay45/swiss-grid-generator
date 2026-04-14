@@ -186,21 +186,23 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
       <section id="help-editor" className="space-y-2">
         <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Text Editor Popup
+          Text Editor
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
-          <li>Layout uses a left icon rail with contextual submenus: Geometry, Type, and Info, plus Delete on the rail.</li>
-          <li>Geometry submenu: rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+          <li>When edit mode is active, the left sidebar switches from layout settings to text settings.</li>
+          <li>The editor uses the same section layout as the main settings sidebar: Layout, Type, Color, and Info.</li>
+          <li>Layout section: rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
           <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
           <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-          <li>Type submenu: font family, font cut, style hierarchy, kerning, tracking, scheme, color, and FX size/leading when `FX` is selected.</li>
-          <li>When a text range is selected, type controls apply font family, cut, hierarchy, color, and tracking to that selection instead of rebasing the whole paragraph.</li>
-          <li>Info submenu includes geometry, type summary, character count, word count, and `Max/Line`.</li>
+          <li>Type section: font family, font cut, style hierarchy, kerning, tracking, and FX size/leading when `FX` is selected.</li>
+          <li>Color section: scheme preview and paragraph swatches.</li>
+          <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
+          <li>Info section includes geometry, type summary, character count, word count, and `Max/Line`.</li>
           <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
           <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
-          <li>Save applies changes; delete removes custom blocks (base blocks are cleared).</li>
-          <li>`Esc` or click outside closes without saving; `Cmd/Ctrl+Enter` saves.</li>
+          <li>Changes apply live while editing; delete removes custom blocks (base blocks are cleared).</li>
+          <li>`Esc`, outside click, or the close button exits edit mode.</li>
         </ul>
       </section>
 
@@ -212,14 +214,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
-          <li>Layout uses a left icon rail with contextual submenus for Geometry and Info, plus Delete on the rail.</li>
-          <li>Geometry submenu: rows, baselines, columns, scheme, swatch color, and transparency.</li>
+          <li>When edit mode is active, the left sidebar switches from layout settings to image placeholder settings.</li>
+          <li>The editor uses the same section layout as the main settings sidebar: Geometry, Color, and Info.</li>
+          <li>Geometry section: rows, baselines, and columns. Color section: scheme, swatch color, and transparency.</li>
           <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
           <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-          <li>Each image setting sits on its own row with icon, label, and value/control, matching the text editor structure.</li>
-          <li>Info submenu summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
-          <li>Delete lives in the rail and removes the placeholder immediately.</li>
-          <li>`Esc` or click outside closes the editor.</li>
+          <li>Info section summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
+          <li>Delete removes the placeholder immediately.</li>
+          <li>`Esc`, outside click, or the close button exits edit mode.</li>
         </ul>
       </section>
 

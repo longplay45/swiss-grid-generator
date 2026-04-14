@@ -13,9 +13,6 @@ type Args<StyleKey extends string> = {
   baselinesPerGridModule: number
   gridRows: number
   gridCols: number
-  hierarchyTriggerMinWidthCh: number
-  rowTriggerMinWidthCh: number
-  colTriggerMinWidthCh: number
   styleOptions: Array<BlockEditorStyleOption<StyleKey>>
   getStyleSizeLabel: (styleKey: StyleKey) => string
   getStyleSizeValue: (styleKey: StyleKey) => number
@@ -37,9 +34,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
   baselinesPerGridModule,
   gridRows,
   gridCols,
-  hierarchyTriggerMinWidthCh,
-  rowTriggerMinWidthCh,
-  colTriggerMinWidthCh,
   styleOptions,
   getStyleSizeLabel,
   getStyleSizeValue,
@@ -62,9 +56,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
       baselinesPerGridModule,
       gridRows,
       gridCols,
-      hierarchyTriggerMinWidthCh,
-      rowTriggerMinWidthCh,
-      colTriggerMinWidthCh,
       styleOptions,
       getStyleSizeLabel,
       getStyleSizeValue,
@@ -78,7 +69,6 @@ export function usePreviewOverlayControls<StyleKey extends string>({
       palette,
     }
   }, [
-    colTriggerMinWidthCh,
     colorSchemes,
     baselinesPerGridModule,
     deleteEditorBlock,
@@ -92,10 +82,8 @@ export function usePreviewOverlayControls<StyleKey extends string>({
     getStyleSizeValue,
     gridCols,
     gridRows,
-    hierarchyTriggerMinWidthCh,
     isFxStyle,
     palette,
-    rowTriggerMinWidthCh,
     selectedColorScheme,
     setEditorState,
     styleOptions,

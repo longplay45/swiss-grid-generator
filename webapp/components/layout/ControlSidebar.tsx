@@ -15,6 +15,8 @@ type Props = {
   appVersion: string
   uiTheme: UiTheme
   settingsPanels: ReactNode
+  editorMode: "text" | "image" | null
+  onEditorHostChange: (node: HTMLDivElement | null) => void
   onToggleFeedbackPanel: () => void
   onToggleImprintPanel: () => void
 }
@@ -25,6 +27,8 @@ export function ControlSidebar({
   appVersion,
   uiTheme,
   settingsPanels,
+  editorMode,
+  onEditorHostChange,
   onToggleFeedbackPanel,
   onToggleImprintPanel,
 }: Props) {
@@ -48,7 +52,11 @@ export function ControlSidebar({
             />
           ) : null}
 
-          {settingsPanels}
+          {editorMode ? (
+            <div ref={onEditorHostChange} className="min-h-0 flex-1 overflow-hidden" />
+          ) : (
+            settingsPanels
+          )}
         </div>
 
         <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>

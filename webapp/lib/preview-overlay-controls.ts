@@ -17,9 +17,6 @@ export type TextEditorControls<StyleKey extends string> = {
   baselinesPerGridModule: number
   gridRows: number
   gridCols: number
-  hierarchyTriggerMinWidthCh: number
-  rowTriggerMinWidthCh: number
-  colTriggerMinWidthCh: number
   styleOptions: Array<BlockEditorStyleOption<StyleKey>>
   getStyleSizeLabel: (styleKey: StyleKey) => string
   getStyleSizeValue: (styleKey: StyleKey) => number
