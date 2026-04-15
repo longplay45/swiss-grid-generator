@@ -20,17 +20,17 @@ export type WorkspaceTheme = {
 }
 
 const DARK_THEME: WorkspaceTheme = {
-  root: "bg-gray-950",
+  root: "bg-gray-900",
   leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
-  leftPanelEdit: "bg-black",
+  leftPanelEdit: "bg-gray-900",
   subtleBorder: "border-gray-700",
   bodyText: "text-gray-300",
   headingText: "text-gray-300",
   link: "text-gray-100 underline",
-  previewShell: "bg-gray-950",
+  previewShell: "bg-gray-900",
   previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
-  previewContent: "bg-gray-950",
-  previewContentEdit: "bg-black",
+  previewContent: "bg-gray-900",
+  previewContentEdit: "bg-gray-900",
   divider: "bg-gray-700",
   sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
   sidebarHeading: "text-gray-100",
