@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 
 type UiTheme = {
   leftPanel: string
+  leftPanelEdit: string
   subtleBorder: string
   bodyText: string
   link: string
@@ -33,7 +34,11 @@ export function ControlSidebar({
   onToggleImprintPanel,
 }: Props) {
   return (
-    <div className={`w-full md:w-[280px] flex max-h-[50vh] flex-col overflow-hidden border-r border-b md:max-h-full md:border-b-0 ${uiTheme.leftPanel}`}>
+    <div
+      className={`w-full md:w-[280px] flex max-h-[50vh] flex-col overflow-hidden border-r border-b transition-colors md:max-h-full md:border-b-0 ${uiTheme.leftPanel} ${
+        editorMode ? uiTheme.leftPanelEdit : ""
+      }`}
+    >
       <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
         <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
         <p className={`text-sm ${uiTheme.bodyText}`}>

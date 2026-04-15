@@ -648,6 +648,7 @@ export default function Home() {
         previewHeader: uiTheme.previewHeader,
         previewShell: uiTheme.previewShell,
         previewContent: uiTheme.previewContent,
+        previewContentEdit: uiTheme.previewContentEdit,
         sidebar: uiTheme.sidebar,
         sidebarBody: uiTheme.sidebarBody,
         sidebarHeading: uiTheme.sidebarHeading,
@@ -681,6 +682,7 @@ export default function Home() {
       onImageColorSchemeChange={setImageColorScheme}
       onShowImagePlaceholdersChange={setShowImagePlaceholders}
       editorSidebarHost={editorSidebarHost}
+      editorMode={editorSidebarMode}
       onEditorModeChange={setEditorSidebarMode}
       closeSidebarPanel={closeSidebarPanel}
     />
@@ -716,6 +718,7 @@ export default function Home() {
           appVersion={APP_VERSION}
           uiTheme={{
             leftPanel: uiTheme.leftPanel,
+            leftPanelEdit: uiTheme.leftPanelEdit,
             subtleBorder: uiTheme.subtleBorder,
             bodyText: uiTheme.bodyText,
             link: uiTheme.link,

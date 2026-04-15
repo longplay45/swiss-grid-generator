@@ -123,7 +123,7 @@ export function PagesPanel({
         card: "border-gray-200 bg-gray-50 text-gray-900",
         cardMuted: "text-gray-500",
         close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
-        button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+        button: "border-gray-50 text-gray-700 hover:bg-gray-100 hover:text-gray-900",
         input: "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400",
       }
 

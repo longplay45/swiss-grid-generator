@@ -32,6 +32,7 @@ type UiTheme = {
   previewHeader: string
   previewShell: string
   previewContent: string
+  previewContentEdit: string
   sidebar: string
   sidebarBody: string
   sidebarHeading: string
@@ -99,6 +100,7 @@ type Props = {
   onImageColorSchemeChange: (value: ImageColorSchemeId) => void
   onShowImagePlaceholdersChange: (value: boolean) => void
   editorSidebarHost: HTMLDivElement | null
+  editorMode: "text" | "image" | null
   onEditorModeChange: (mode: "text" | "image" | null) => void
   closeSidebarPanel: () => void
 }
@@ -199,6 +201,7 @@ export function PreviewWorkspace({
   onImageColorSchemeChange,
   onShowImagePlaceholdersChange,
   editorSidebarHost,
+  editorMode,
   onEditorModeChange,
   closeSidebarPanel,
 }: Props) {
@@ -282,7 +285,13 @@ export function PreviewWorkspace({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className={`flex min-h-0 flex-1 flex-col overflow-auto ${showPresetsBrowser ? "p-4 md:p-6" : ""} ${uiTheme.previewContent}`}>
+        <div
+          className={`flex min-h-0 flex-1 flex-col overflow-auto transition-colors ${
+            showPresetsBrowser ? "p-4 md:p-6" : ""
+          } ${
+            editorMode ? uiTheme.previewContentEdit : uiTheme.previewContent
+          }`}
+        >
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel
@@ -347,7 +356,7 @@ export function PreviewWorkspace({
         {shouldRenderSidebarPanel && (
           <div
             data-help-scroll-root="true"
-            className={`min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
+            className={` min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "help"
                 ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
                 : "p-4 md:p-6"

@@ -4,6 +4,7 @@ import { getUiThemeColor } from "@/lib/theme-color"
 export type WorkspaceTheme = {
   root: string
   leftPanel: string
+  leftPanelEdit: string
   subtleBorder: string
   bodyText: string
   headingText: string
@@ -11,6 +12,7 @@ export type WorkspaceTheme = {
   previewShell: string
   previewHeader: string
   previewContent: string
+  previewContentEdit: string
   divider: string
   sidebar: string
   sidebarHeading: string
@@ -20,6 +22,7 @@ export type WorkspaceTheme = {
 const DARK_THEME: WorkspaceTheme = {
   root: "bg-gray-950",
   leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
+  leftPanelEdit: "bg-black",
   subtleBorder: "border-gray-700",
   bodyText: "text-gray-300",
   headingText: "text-gray-300",
@@ -27,6 +30,7 @@ const DARK_THEME: WorkspaceTheme = {
   previewShell: "bg-gray-950",
   previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
   previewContent: "bg-gray-950",
+  previewContentEdit: "bg-black",
   divider: "bg-gray-700",
   sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
   sidebarHeading: "text-gray-100",
@@ -36,6 +40,7 @@ const DARK_THEME: WorkspaceTheme = {
 const LIGHT_THEME: WorkspaceTheme = {
   root: "bg-gray-100",
   leftPanel: "border-gray-200 bg-white",
+  leftPanelEdit: "bg-gray-50",
   subtleBorder: "border-gray-200",
   bodyText: "text-gray-600",
   headingText: "text-gray-700",
@@ -43,6 +48,7 @@ const LIGHT_THEME: WorkspaceTheme = {
   previewShell: "bg-white",
   previewHeader: "border-gray-200 bg-white",
   previewContent: "bg-white",
+  previewContentEdit: "bg-gray-50",
   divider: "bg-gray-200",
   sidebar: "border-gray-200 bg-white text-gray-700",
   sidebarHeading: "text-gray-900",
