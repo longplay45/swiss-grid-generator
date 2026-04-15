@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-10T10:41:12.050Z",
+  "exportedAt": "2026-04-15T11:19:05.785Z",
   "title": "Poster A0 Version 002",
   "description": "Swiss-style A0 poster preset with a contrasting multi-block poster layout.",
   "author": "Swiss Grid Generator",
@@ -38,8 +38,8 @@
           "right": 4,
           "bottom": 2
         },
-        "showBaselines": false,
-        "showModules": false,
+        "showBaselines": true,
+        "showModules": true,
         "showMargins": false,
         "showImagePlaceholders": true,
         "showTypography": true,
@@ -162,6 +162,14 @@
           "paragraph-d04e77b0-f996-4a30-970b-7787824d1fe4": 1,
           "paragraph-0c299a91-6c16-4d7f-882b-405aafe1bd1b": 1
         },
+        "blockHeightBaselines": {
+          "display": 0,
+          "paragraph-1773671347303-6ze5tl": 0,
+          "paragraph-1773671949302-15nbra": 0,
+          "paragraph-d46a6bd5-22c4-4d99-8288-34491fda28fb": 0,
+          "paragraph-d04e77b0-f996-4a30-970b-7787824d1fe4": 0,
+          "paragraph-0c299a91-6c16-4d7f-882b-405aafe1bd1b": 0
+        },
         "blockTextAlignments": {
           "display": "left",
           "paragraph-1773671347303-6ze5tl": "left",
@@ -262,6 +270,7 @@
         "imageModulePositions": {},
         "imageColumnSpans": {},
         "imageRowSpans": {},
+        "imageHeightBaselines": {},
         "imageColors": {},
         "imageOpacities": {}
       }

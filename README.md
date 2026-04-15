@@ -24,10 +24,14 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ### Web Application
 ![Web App Screenshot 001](swiss-grid-generator-app-screenshot_001.png?001)
 
-![Web App Screenshot 002](swiss-grid-generator-webapp-screenshot_001.png)
+![Web App Screenshot 002](swiss-grid-generator-app-screenshot_002.png?001)
+
+![Web App Screenshot 003](swiss-grid-generator-webapp-screenshot_001.png)
 
 ### PDF Export
 ![PDF Screenshot 001](swiss-grid-generator-pdfexport-screenshot_001.png?001)
+
+![PDF Screenshot 002](swiss-grid-generator-pdfexport-screenshot_002.png?001)
 
 ---
 

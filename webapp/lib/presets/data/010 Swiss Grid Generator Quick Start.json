@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-07T15:35:34.938Z",
+  "exportedAt": "2026-04-15T11:25:25.344Z",
   "title": "Swiss Grid Generator Quick Start",
   "description": "Quick-start manual with specimen pages for every bundled font.",
   "author": "Swiss Grid Generator",
@@ -143,6 +143,15 @@
           "cover-step-3": 1,
           "cover-caption": 1
         },
+        "blockHeightBaselines": {
+          "cover-title": 0,
+          "cover-app": 0,
+          "cover-intro": 0,
+          "cover-step-1": 0,
+          "cover-step-2": 0,
+          "cover-step-3": 0,
+          "cover-caption": 0
+        },
         "blockTextAlignments": {
           "cover-title": "left",
           "cover-app": "left",
@@ -241,6 +250,7 @@
         "imageModulePositions": {},
         "imageColumnSpans": {},
         "imageRowSpans": {},
+        "imageHeightBaselines": {},
         "imageColors": {},
         "imageOpacities": {}
       }

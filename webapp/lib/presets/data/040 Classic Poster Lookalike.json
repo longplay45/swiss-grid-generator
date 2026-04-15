@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-10T10:56:04.244Z",
+  "exportedAt": "2026-04-15T11:19:25.495Z",
   "title": "Classic Poster Lookalike",
   "description": "Classic Swiss poster lookalike preset with strong typographic contrast and image framing.",
   "author": "Swiss Grid Generator",
@@ -38,8 +38,8 @@
           "right": 2,
           "bottom": 3
         },
-        "showBaselines": false,
-        "showModules": false,
+        "showBaselines": true,
+        "showModules": true,
         "showMargins": false,
         "showImagePlaceholders": true,
         "showTypography": true,
@@ -124,6 +124,12 @@
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 1,
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 1
         },
+        "blockHeightBaselines": {
+          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 0,
+          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 0,
+          "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 0,
+          "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 0
+        },
         "blockTextAlignments": {
           "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "right",
           "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "left",
@@ -200,6 +206,7 @@
         "imageModulePositions": {},
         "imageColumnSpans": {},
         "imageRowSpans": {},
+        "imageHeightBaselines": {},
         "imageColors": {},
         "imageOpacities": {}
       }
