@@ -1,10 +1,12 @@
 "use client"
 
-import { Pencil, Plus, Trash2 } from "lucide-react"
+import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
+import { ProjectPageLayersList } from "@/components/sidebar/ProjectPageLayersList"
 import { ProjectSidebarSection } from "@/components/sidebar/ProjectSidebarSection"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { ProjectPage } from "@/lib/document-session"
 import {
   clearWindowSelection,
@@ -26,6 +28,15 @@ type Props = {
   onRenamePage: (pageId: string, nextName: string) => void
   onDeletePage: (pageId: string) => void
   onPageOrderChange: (orderedIds: string[]) => void
+  baseFont: string
+  imageColorScheme: ImageColorSchemeId
+  selectedLayerKey: string | null
+  hoveredLayerKey: string | null
+  onLayerOrderChange: (nextLayerOrder: string[]) => void
+  onSelectedLayerKeyChange: (key: string | null) => void
+  onHoverLayerChange: (key: string | null) => void
+  onLayerEditorToggle: (target: string) => void
+  onLayerDelete: (target: string, kind: "text" | "image") => void
   pagesCollapsed: boolean
   onPagesHeaderClick: (event: React.MouseEvent) => void
   onPagesHeaderDoubleClick: (event: React.MouseEvent) => void
@@ -48,6 +59,15 @@ export function PagesPanel({
   onRenamePage,
   onDeletePage,
   onPageOrderChange,
+  baseFont,
+  imageColorScheme,
+  selectedLayerKey,
+  hoveredLayerKey,
+  onLayerOrderChange,
+  onSelectedLayerKeyChange,
+  onHoverLayerChange,
+  onLayerEditorToggle,
+  onLayerDelete,
   pagesCollapsed,
   onPagesHeaderClick,
   onPagesHeaderDoubleClick,
@@ -60,6 +80,9 @@ export function PagesPanel({
   const [projectTitleDraft, setProjectTitleDraft] = useState(projectTitle)
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
+  const [expandedPageId, setExpandedPageId] = useState<string | null>(activePageId)
+  const previousPageIdsRef = useRef<string[]>(pages.map((page) => page.id))
+  const scrollToPageHeaderRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -86,6 +109,44 @@ export function PagesPanel({
     if (isEditingProjectTitle) return
     setProjectTitleDraft(projectTitle)
   }, [isEditingProjectTitle, projectTitle])
+
+  useEffect(() => {
+    if (expandedPageId === null) return
+    if (pages.some((page) => page.id === expandedPageId)) return
+    setExpandedPageId(null)
+  }, [expandedPageId, pages])
+
+  useEffect(() => {
+    const previousPageIds = previousPageIdsRef.current
+    const currentPageIds = pages.map((page) => page.id)
+    const pageWasAdded = currentPageIds.length > previousPageIds.length
+    const activePageIsNew = !previousPageIds.includes(activePageId) && currentPageIds.includes(activePageId)
+
+    if (pageWasAdded && activePageIsNew) {
+      setExpandedPageId(activePageId)
+    }
+
+    previousPageIdsRef.current = currentPageIds
+  }, [activePageId, pages])
+
+  useEffect(() => {
+    if (pagesCollapsed) return
+    if (scrollToPageHeaderRef.current !== activePageId) return
+    const target = cardRefs.current[activePageId]
+    if (!target) return
+    const scrollRoot = target.closest("[data-help-scroll-root='true']") as HTMLElement | null
+    if (!scrollRoot) return
+
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const deltaToTop = targetRect.top - rootRect.top
+    const nextTop = scrollRoot.scrollTop + deltaToTop
+
+    window.requestAnimationFrame(() => {
+      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" })
+    })
+    scrollToPageHeaderRef.current = null
+  }, [activePageId, expandedPageId, pagesCollapsed])
 
   useEffect(() => {
     const releaseOnMouseUp = () => {
@@ -311,6 +372,7 @@ export function PagesPanel({
             const layerCount = getLayerCount(page)
             const isActive = page.id === activePageId
             const isEditing = page.id === editingPageId
+            const isExpanded = expandedPageId === page.id
             const deleteDisabled = pages.length <= 1
             const stationaryIndex = stationaryIndexByPageId.get(page.id) ?? null
 
@@ -323,15 +385,15 @@ export function PagesPanel({
                   ref={(node) => {
                     cardRefs.current[page.id] = node
                   }}
-                  draggable={!isEditing && !isEditingProjectTitle}
+                  draggable={!isEditing && !isEditingProjectTitle && !isExpanded}
                   onPointerDownCapture={(event) => {
-                    if (isEditing || isEditingProjectTitle) return
+                    if (isEditing || isEditingProjectTitle || isExpanded) return
                     if (event.button !== 0) return
                     if (isCardDragIgnoreTarget(event.target)) return
                     engageSelectionLock()
                   }}
                   onDragStart={(event) => {
-                    if (isEditing || isEditingProjectTitle) return
+                    if (isEditing || isEditingProjectTitle || isExpanded) return
                     event.dataTransfer.effectAllowed = "move"
                     event.dataTransfer.setData("text/plain", page.id)
                     clearWindowSelection()
@@ -344,6 +406,12 @@ export function PagesPanel({
                   onDrop={handleListDrop}
                   onClick={() => {
                     if (isEditing || isEditingProjectTitle) return
+                    if (isActive && isExpanded) {
+                      setExpandedPageId(null)
+                      return
+                    }
+                    scrollToPageHeaderRef.current = page.id
+                    setExpandedPageId(page.id)
                     onSelectPage(page.id)
                   }}
                   className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
@@ -351,7 +419,7 @@ export function PagesPanel({
                       ? `${tone.card} opacity-45`
                       : tone.card
                   } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""} ${
-                    isEditing || isEditingProjectTitle ? "" : "cursor-grab select-none"
+                    isEditing || isEditingProjectTitle || isExpanded ? "select-none" : "cursor-grab select-none"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -389,6 +457,22 @@ export function PagesPanel({
                       <button
                         type="button"
                         data-card-drag-ignore="true"
+                        aria-label={isExpanded ? `Collapse ${page.name}` : `Expand ${page.name}`}
+                        className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (isExpanded) {
+                            setExpandedPageId(null)
+                            return
+                          }
+                          setExpandedPageId(page.id)
+                        }}
+                      >
+                        <ChevronUp className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : "rotate-90"}`} />
+                      </button>
+                      <button
+                        type="button"
+                        data-card-drag-ignore="true"
                         aria-label={`Rename ${page.name}`}
                         className={`rounded-sm p-1 transition-colors ${tone.close}`}
                         onClick={(event) => {
@@ -420,6 +504,29 @@ export function PagesPanel({
                       </button>
                     </div>
                   </div>
+                  {isExpanded ? (
+                    <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                      <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
+                        Layers
+                      </div>
+                      <ProjectPageLayersList
+                        pageId={page.id}
+                        layout={page.previewLayout}
+                        baseFont={baseFont}
+                        imageColorScheme={imageColorScheme}
+                        selectedLayerKey={isActive ? selectedLayerKey : null}
+                        hoveredLayerKey={isActive ? hoveredLayerKey : null}
+                        isActivePage={isActive}
+                        onSelectPage={onSelectPage}
+                        onLayerOrderChange={onLayerOrderChange}
+                        onSelectLayer={onSelectedLayerKeyChange}
+                        onHoverLayerChange={onHoverLayerChange}
+                        onToggleEditor={onLayerEditorToggle}
+                        onDeleteLayer={onLayerDelete}
+                        isDarkMode={isDarkMode}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </Fragment>
             )

@@ -4,8 +4,8 @@ This document describes the mathematical calculations used in the Swiss Grid Gen
 
 Core grid formulas reference `webapp/lib/grid-calculator.ts`; preview reflow/autofit planning formulas are implemented in `webapp/lib/reflow-planner.ts` and `webapp/lib/autofit-planner.ts`.
 
-Recent UI updates (header dividers/tooltips, dark-mode shell styling, shortcut coverage) do not change these mathematical formulas.
-In the Project -> Pages -> Layers architecture, these calculations are evaluated independently per page.
+Recent UI updates (header dividers/tooltips, dark-mode shell styling, shortcut coverage, inline page-layer navigation) do not change these mathematical formulas.
+In the Project -> Pages -> inline Layers architecture, these calculations are evaluated independently per page.
 Supported dropdown rollover previews also use these same formulas; they apply transient preview state to the page or editor, then restore the committed state when the menu closes without a selection.
 
 ## Table of Contents

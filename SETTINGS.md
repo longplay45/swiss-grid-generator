@@ -196,15 +196,19 @@ Default: `swiss`
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
 - `Pages`: click to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- Clicking a page card selects that page, opens it, and aligns its header to the top of the panel.
+- Clicking the active open page card closes it again.
+- Each page card also has an open/close toggle that reveals that page's layers inline.
+- Newly added pages open automatically.
 - Every page stores its own settings payload plus preview layout state.
-- `Layers`: shows the mixed text/image stack for the active page using current `layerOrder`.
+- Expanded page cards show the mixed text/image stack for that page using current `layerOrder`.
 - Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
 - Image cards display `Image Placeholder` and a single color swatch.
-- Hovering a layer card mirrors the same active preview rollover/guides for that block.
-- Dragging cards changes z-index using a visible insertion marker between cards.
-- Selecting a card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
+- Hovering an active-page layer card mirrors the same active preview rollover/guides for that block.
+- Dragging active-page layer cards changes z-index using a visible insertion marker between cards.
+- Selecting a layer card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the active page and saved project JSON.
-- `Pages` and `Layers` section headers single-click to collapse; double-click on either header toggles both together.
+- `Pages` section header single-clicks to collapse.
 - Text and image editor section headers follow the same rule inside edit mode: single-click toggles one section, double-click opens or closes all sections.
 
 ### Left Footer (always visible)

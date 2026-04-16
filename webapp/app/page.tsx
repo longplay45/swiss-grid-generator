@@ -747,7 +747,6 @@ export default function Home() {
       projectTitle={projectMetadata.title}
       projectPages={projectPages}
       activePageId={activePageId}
-      previewLayout={previewLayout}
       loadedPreviewLayout={loadedPreviewLayout}
       requestedLayerOrderState={requestedLayerOrderState}
       requestedLayerDeleteState={requestedLayerDeleteState}

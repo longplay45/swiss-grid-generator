@@ -503,13 +503,15 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Project Panel
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Opens the right-side Project panel with an editable project name plus `Pages` and `Layers` sections.</li>
+          <li>Opens the right-side Project panel with an editable project name and a `Pages` section.</li>
           <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
-          <li>`Pages`: click a page card to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the current active page.</li>
-          <li>`Layers`: shows the mixed stack of text paragraphs and image placeholders for the active page only.</li>
-          <li>Layer cards mirror the same active preview rollover/guides, so layer inspection stays linked to the page surface.</li>
-          <li>Drag layer cards to reorder z-index; click selects, double-click opens the editor, and trash removes the layer from the active page.</li>
-          <li>Section headers single-click to collapse and double-click to toggle both `Pages` and `Layers` together.</li>
+          <li>`Pages`: click a page card to switch, open it, and align its header to the top of the panel; drag to reorder, rename/delete as needed, and `Add Page` duplicates the current active page.</li>
+          <li>Clicking the active open page card closes it again.</li>
+          <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
+          <li>Newly added pages open automatically.</li>
+          <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>
+          <li>For the active page, drag layer cards to reorder z-index; click selects, double-click opens the editor, and trash removes the layer.</li>
+          <li>The `Pages` section header single-clicks to collapse and double-clicks to toggle immediately.</li>
         </ul>
       </section>
 

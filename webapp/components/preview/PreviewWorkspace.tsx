@@ -7,7 +7,6 @@ import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
-import { LayersPanel } from "@/components/sidebar/LayersPanel"
 import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
@@ -64,7 +63,6 @@ type Props = {
   projectTitle: string
   projectPages: PreviewProjectPage[]
   activePageId: string
-  previewLayout: PreviewLayoutState | null
   loadedPreviewLayout: { token: number; layout: PreviewLayoutState } | null
   requestedLayerOrderState: { token: number; order: string[] } | null
   requestedLayerDeleteState: { token: number; target: string } | null
@@ -165,7 +163,6 @@ export function PreviewWorkspace({
   projectTitle,
   projectPages,
   activePageId,
-  previewLayout,
   loadedPreviewLayout,
   requestedLayerOrderState,
   requestedLayerDeleteState,
@@ -208,7 +205,6 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [pagesCollapsed, setPagesCollapsed] = useState(false)
-  const [layersCollapsed, setLayersCollapsed] = useState(false)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
@@ -235,27 +231,24 @@ export function PreviewWorkspace({
     }
   }, [])
 
-  const handleSectionHeaderClick = (section: "pages" | "layers") => (event: React.MouseEvent) => {
+  const handlePagesHeaderClick = (event: React.MouseEvent) => {
     if (event.detail > 1) return
     if (sectionHeaderClickTimeoutRef.current !== null) {
       window.clearTimeout(sectionHeaderClickTimeoutRef.current)
     }
     sectionHeaderClickTimeoutRef.current = window.setTimeout(() => {
-      if (section === "pages") setPagesCollapsed((current) => !current)
-      else setLayersCollapsed((current) => !current)
+      setPagesCollapsed((current) => !current)
       sectionHeaderClickTimeoutRef.current = null
     }, 180)
   }
 
-  const handleSectionHeaderDoubleClick = (event: React.MouseEvent) => {
+  const handlePagesHeaderDoubleClick = (event: React.MouseEvent) => {
     event.preventDefault()
     if (sectionHeaderClickTimeoutRef.current !== null) {
       window.clearTimeout(sectionHeaderClickTimeoutRef.current)
       sectionHeaderClickTimeoutRef.current = null
     }
-    const allClosed = pagesCollapsed && layersCollapsed
-    setPagesCollapsed(!allClosed)
-    setLayersCollapsed(!allClosed)
+    setPagesCollapsed((current) => !current)
   }
 
   return (
@@ -385,7 +378,7 @@ export function PreviewWorkspace({
                   </div>
                   {showRolloverInfo ? (
                     <p className={`mt-1 text-xs ${uiTheme.sidebarBody}`}>
-                      Edit the project name, manage pages and layers for the active page, and use single-click section headers to collapse. Double-click either section header toggles both; Add Page duplicates the active page, and layer hover or selection stays linked to the preview.
+                      Edit the project name, manage page order, and expand any page to inspect its layers inline. Add Page duplicates the active page, and active-page layer hover or selection stays linked to the preview.
                     </p>
                   ) : null}
                 </div>
@@ -399,25 +392,18 @@ export function PreviewWorkspace({
                   onRenamePage={onPageRename}
                   onDeletePage={onPageDelete}
                   onPageOrderChange={onPageOrderChange}
-                  pagesCollapsed={pagesCollapsed}
-                  onPagesHeaderClick={handleSectionHeaderClick("pages")}
-                  onPagesHeaderDoubleClick={handleSectionHeaderDoubleClick}
-                  isDarkMode={isDarkUi}
-                />
-                <LayersPanel
-                  layout={previewLayout}
                   baseFont={baseFont}
                   imageColorScheme={imageColorScheme}
                   selectedLayerKey={selectedLayerKey}
                   hoveredLayerKey={hoveredLayerKey}
                   onLayerOrderChange={onLayerOrderChange}
-                  onSelectLayer={onSelectedLayerKeyChange}
+                  onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                   onHoverLayerChange={setLayerPanelHoveredLayerKey}
-                  onToggleEditor={onLayerEditorToggle}
-                  onDeleteLayer={onLayerDelete}
-                  layersCollapsed={layersCollapsed}
-                  onLayersHeaderClick={handleSectionHeaderClick("layers")}
-                  onLayersHeaderDoubleClick={handleSectionHeaderDoubleClick}
+                  onLayerEditorToggle={onLayerEditorToggle}
+                  onLayerDelete={onLayerDelete}
+                  pagesCollapsed={pagesCollapsed}
+                  onPagesHeaderClick={handlePagesHeaderClick}
+                  onPagesHeaderDoubleClick={handlePagesHeaderDoubleClick}
                   isDarkMode={isDarkUi}
                 />
               </div>

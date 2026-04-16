@@ -87,8 +87,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Live character & word count
 
 ### Project & Layers
-- Full **Project → Pages → Layers** architecture
+- Full **Project → Pages → inline Layers** architecture
 - Multiple pages with independent settings
+- Project rail uses page cards with inline open/close layer stacks for faster long-document navigation
 - Text and image layers with stable grid-based positioning
 - Drag to move, Alt/Option+drag to duplicate
 - Logical anchoring (Column × Row + Baseline Offset)
