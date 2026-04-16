@@ -96,6 +96,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 
 ### Preview & Interaction
 - Live WYSIWYG canvas
+- Supported layout and editor dropdowns preview hovered items live in the page; closing a menu without selecting restores the committed state
 - Toggle visibility of baselines, margins, modules, and typography
 - Double-click empty module → create text
 - Shift + double-click → create image placeholder
@@ -103,6 +104,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
 - Text and image editors reuse the left-sidebar section pattern instead of a preview-docked rail
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
+- Text editor family, cut, hierarchy, and geometry dropdowns preview on rollover before commit; image editor geometry and scheme dropdowns do the same
 - Image placeholder editor uses `Geometry`, `Color`, and `Info` sections, including scheme, swatch color, and transparency controls
 
 ### Export

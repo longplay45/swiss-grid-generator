@@ -6,6 +6,7 @@ Core grid formulas reference `webapp/lib/grid-calculator.ts`; preview reflow/aut
 
 Recent UI updates (header dividers/tooltips, dark-mode shell styling, shortcut coverage) do not change these mathematical formulas.
 In the Project -> Pages -> Layers architecture, these calculations are evaluated independently per page.
+Supported dropdown rollover previews also use these same formulas; they apply transient preview state to the page or editor, then restore the committed state when the menu closes without a selection.
 
 ## Table of Contents
 
@@ -510,6 +511,29 @@ ctx.translate(-pageWidth / 2, -pageHeight / 2)
 ```
 
 All modules, baselines, margins, and typography are drawn in the rotated coordinate space.
+
+## Transient Dropdown Preview
+
+Supported layout dropdowns preview hovered items by merging a temporary UI patch onto the current page settings and recomputing the same `buildGridResultFromUiSettings()` output used for committed state.
+
+```
+previewUi = {
+  ...uiSettings,
+  ...previewPatch
+}
+
+previewResult = buildGridResultFromUiSettings(previewUi)
+```
+
+Supported text/image editor dropdowns preview hovered geometry or type values from an opening snapshot of the current draft state:
+
+```
+snapshot = editorDraftState_onOpen
+previewDraft = applyValue(hoveredOption, currentDraftState)
+restore(snapshot) on close/pointer-leave when no option was committed
+```
+
+This changes when preview recalculation runs, not the underlying grid, typography, or placement formulas.
 
 ## Preview Placement + Reflow
 

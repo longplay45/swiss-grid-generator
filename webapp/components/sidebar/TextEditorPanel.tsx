@@ -43,6 +43,7 @@ import {
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
+import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
 
 type TextEditorPanelProps<StyleKey extends string> = {
@@ -211,6 +212,231 @@ export function TextEditorPanel<StyleKey extends string>({
     },
     nextBase,
   )
+
+  const getSelectionRangeForState = (state: typeof controls.editorState | null) => (
+    state && state.draftSelectionStart !== state.draftSelectionEnd
+      ? {
+          start: state.draftSelectionStart,
+          end: state.draftSelectionEnd,
+        }
+      : null
+  )
+
+  const getBaseTextFormatForState = (state: typeof controls.editorState): BaseTextFormat<StyleKey, FontFamily> => ({
+    fontFamily: state.draftFont,
+    fontWeight: state.draftFontWeight,
+    italic: state.draftItalic,
+    styleKey: state.draftStyle,
+    color: state.draftColor,
+  })
+
+  const getSelectionFormatValueForState = <Prop extends keyof BaseTextFormat<StyleKey, FontFamily>>(
+    state: typeof controls.editorState | null,
+    prop: Prop,
+  ) => {
+    if (!state) return null
+    const nextSelectionRange = getSelectionRangeForState(state)
+    const baseTextFormat = getBaseTextFormatForState(state)
+    return nextSelectionRange
+      ? getUniformTextFormatValueForRange(
+          state.draftText,
+          nextSelectionRange,
+          baseTextFormat,
+          state.draftTextFormatRuns,
+          prop,
+        )
+      : baseTextFormat[prop]
+  }
+
+  const applyTextFormatPatchToState = (
+    state: typeof controls.editorState | null,
+    patch: Partial<BaseTextFormat<StyleKey, FontFamily>>,
+  ) => {
+    if (!state) return state
+    const nextSelectionRange = getSelectionRangeForState(state)
+    const selectionCoversWholeText = Boolean(
+      nextSelectionRange
+      && nextSelectionRange.start === 0
+      && nextSelectionRange.end === state.draftText.length,
+    )
+    const nextSelectionUsesScopedRuns = Boolean(nextSelectionRange && !selectionCoversWholeText)
+    if (nextSelectionUsesScopedRuns && nextSelectionRange) {
+      return {
+        ...state,
+        draftTextFormatRuns: applyTextFormatToRange(
+          state.draftText,
+          nextSelectionRange,
+          patch,
+          getBaseTextFormatForState(state),
+          state.draftTextFormatRuns,
+        ),
+      }
+    }
+
+    const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
+      fontFamily: patch.fontFamily ?? state.draftFont,
+      fontWeight: patch.fontWeight ?? state.draftFontWeight,
+      italic: patch.italic ?? state.draftItalic,
+      styleKey: patch.styleKey ?? state.draftStyle,
+      color: patch.color ?? state.draftColor,
+    }
+
+    return {
+      ...state,
+      draftFont: nextBase.fontFamily,
+      draftFontWeight: nextBase.fontWeight,
+      draftItalic: nextBase.italic,
+      draftStyle: nextBase.styleKey,
+      draftColor: nextBase.color,
+      draftTextFormatRuns: rebaseDraftTextFormatRuns(state, nextBase),
+    }
+  }
+
+  const applyDraftRowsValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const nextRows = Math.max(0, Math.min(controls.gridRows, Number(value)))
+    return {
+      ...state,
+      draftRows: nextRows,
+      draftHeightBaselines: nextRows === 0 && state.draftHeightBaselines === 0 ? 1 : state.draftHeightBaselines,
+    }
+  }
+
+  const applyDraftColumnsValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
+    return {
+      ...state,
+      draftColumns: nextColumns,
+      draftReflow: nextColumns > 1 ? state.draftReflow : false,
+    }
+  }
+
+  const applyDraftBaselinesValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+    return {
+      ...state,
+      draftRows: state.draftRows === 0 && nextBaselines === 0 ? 1 : state.draftRows,
+      draftHeightBaselines: nextBaselines,
+    }
+  }
+
+  const applyDraftFontValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const nextFont = value as FontFamily
+    const requestedWeight = getSelectionFormatValueForState(state, "fontWeight") ?? state.draftFontWeight
+    const requestedItalic = getSelectionFormatValueForState(state, "italic") ?? state.draftItalic
+    const resolvedVariant = resolveFontVariant(nextFont, requestedWeight, requestedItalic)
+    return applyTextFormatPatchToState(state, {
+      fontFamily: nextFont,
+      fontWeight: resolvedVariant.weight,
+      italic: resolvedVariant.italic,
+    })
+  }
+
+  const applyDraftFontCutValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const fontFamily = getSelectionFormatValueForState(state, "fontFamily") ?? state.draftFont
+    const nextVariant = getFontVariantById(fontFamily, value)
+    if (!nextVariant) return state
+    return applyTextFormatPatchToState(state, {
+      fontWeight: nextVariant.weight,
+      italic: nextVariant.italic,
+    })
+  }
+
+  const applyDraftHierarchyValue = (value: string, state: typeof controls.editorState | null) => {
+    if (!state) return state
+    const nextStyle = value as StyleKey
+    const nextSelectionRange = getSelectionRangeForState(state)
+    const selectionCoversWholeText = Boolean(
+      nextSelectionRange
+      && nextSelectionRange.start === 0
+      && nextSelectionRange.end === state.draftText.length,
+    )
+    const nextSelectionUsesScopedRuns = Boolean(nextSelectionRange && !selectionCoversWholeText)
+    if (nextSelectionUsesScopedRuns && nextSelectionRange) {
+      return applyTextFormatPatchToState(state, { styleKey: nextStyle })
+    }
+    const currentDefaultWeight = controls.getStyleDefaultFontWeight(state.draftStyle)
+    const currentDefaultItalic = controls.getStyleDefaultItalic(state.draftStyle)
+    const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
+    const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
+    const requestedWeight = state.draftFontWeight === currentDefaultWeight
+      ? nextDefaultWeight
+      : state.draftFontWeight
+    const requestedItalic = state.draftItalic === currentDefaultItalic
+      ? nextDefaultItalic
+      : state.draftItalic
+    const resolvedVariant = resolveFontVariant(state.draftFont, requestedWeight, requestedItalic)
+    const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
+      fontFamily: state.draftFont,
+      fontWeight: resolvedVariant.weight,
+      italic: resolvedVariant.italic,
+      styleKey: nextStyle,
+      color: state.draftColor,
+    }
+    return {
+      ...state,
+      draftStyle: nextStyle,
+      draftFontWeight: resolvedVariant.weight,
+      draftItalic: resolvedVariant.italic,
+      draftTextFormatRuns: rebaseDraftTextFormatRuns(state, nextBase),
+      draftFxSize: controls.isFxStyle(nextStyle)
+        ? (controls.isFxStyle(state.draftStyle) ? state.draftFxSize : controls.getStyleSizeValue(nextStyle))
+        : state.draftFxSize,
+      draftFxLeading: controls.isFxStyle(nextStyle)
+        ? (controls.isFxStyle(state.draftStyle) ? state.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+        : state.draftFxLeading,
+      draftText: state.draftTextEdited ? state.draftText : controls.getDummyTextForStyle(nextStyle),
+    }
+  }
+
+  const applyDraftKerningValue = (value: string, state: typeof controls.editorState | null) => (
+    state
+      ? {
+          ...state,
+          draftOpticalKerning: value !== "off",
+        }
+      : state
+  )
+
+  const rowsSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftRowsValue,
+  })
+  const columnsSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftColumnsValue,
+  })
+  const baselinesSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftBaselinesValue,
+  })
+  const fontSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftFontValue,
+  })
+  const cutSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftFontCutValue,
+  })
+  const hierarchySelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftHierarchyValue,
+  })
+  const kerningSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
+    state: controls.editorState,
+    setState: controls.setEditorState,
+    applyValue: applyDraftKerningValue,
+  })
 
   const applySelectionTextFormat = (
     patch: Partial<BaseTextFormat<StyleKey, FontFamily>>,
@@ -387,7 +613,7 @@ export function TextEditorPanel<StyleKey extends string>({
       <div className="bg-gray-50 min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6">
         <EditorSidebarSection
           title="I. Paragraph"
-          tooltip="Rows, baselines, columns, alignment, flow, and rotation"
+          tooltip="Rows, baselines, columns, alignment, flow, and rotation; geometry dropdowns preview on rollover"
           collapsed={collapsed.layout}
           collapsedSummary={`${controls.editorState.draftRows} rows, ${controls.editorState.draftColumns} cols`}
           onHeaderClick={handleSectionHeaderClick("layout")}
@@ -403,21 +629,15 @@ export function TextEditorPanel<StyleKey extends string>({
 
             <Select
               value={String(controls.editorState.draftRows)}
-              onValueChange={(value) => {
-                const nextRows = Math.max(0, Math.min(controls.gridRows, Number(value)))
-                controls.setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftRows: nextRows,
-                  draftHeightBaselines: nextRows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
-                } : prev)
-              }}
+              onOpenChange={rowsSelectPreview.handleOpenChange}
+              onValueChange={rowsSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: controls.gridRows + 1 }, (_, index) => index).map((count) => (
-                  <SelectItem key={count} value={String(count)}>
+                  <SelectItem key={count} value={String(count)} {...rowsSelectPreview.getItemPreviewProps(String(count))}>
                     {count} {count === 1 ? "row" : "rows"}
                   </SelectItem>
                 ))}
@@ -426,21 +646,15 @@ export function TextEditorPanel<StyleKey extends string>({
 
             <Select
               value={String(controls.editorState.draftColumns)}
-              onValueChange={(value) => {
-                const nextColumns = Math.max(1, Math.min(controls.gridCols, Number(value)))
-                controls.setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftColumns: nextColumns,
-                  draftReflow: nextColumns > 1 ? prev.draftReflow : false,
-                } : prev)
-              }}
+              onOpenChange={columnsSelectPreview.handleOpenChange}
+              onValueChange={columnsSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={count} value={String(count)}>
+                  <SelectItem key={count} value={String(count)} {...columnsSelectPreview.getItemPreviewProps(String(count))}>
                     {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
@@ -452,22 +666,20 @@ export function TextEditorPanel<StyleKey extends string>({
 
             <Select
               value={String(resolvedHeightBaselines)}
-              onValueChange={(value) => {
-                const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
-                controls.setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
-                  draftHeightBaselines: nextBaselines,
-                } : prev)
-              }}
+              onOpenChange={baselinesSelectPreview.handleOpenChange}
+              onValueChange={baselinesSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
-                <SelectItem value="0">0 baselines</SelectItem>
+              <SelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
+                <SelectItem value="0" {...baselinesSelectPreview.getItemPreviewProps("0")}>0 baselines</SelectItem>
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={`paragraph-baselines-${count}`} value={String(count)}>
+                  <SelectItem
+                    key={`paragraph-baselines-${count}`}
+                    value={String(count)}
+                    {...baselinesSelectPreview.getItemPreviewProps(String(count))}
+                  >
                     {count} {count === 1 ? "baseline" : "baselines"}
                   </SelectItem>
                 ))}
@@ -563,7 +775,7 @@ export function TextEditorPanel<StyleKey extends string>({
 
         <EditorSidebarSection
           title="II. Typo"
-          tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking"
+          tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking; supported dropdowns preview on rollover"
           collapsed={collapsed.type}
           collapsedSummary={`${selectionFontFamily ?? "Mixed"}, ${selectedStyleLabelForSelection}`}
           onHeaderClick={handleSectionHeaderClick("type")}
@@ -577,22 +789,15 @@ export function TextEditorPanel<StyleKey extends string>({
             <Label className={sectionLabelClassName}>Font</Label>
             <FontSelect
               value={selectionFontFamily ?? undefined}
-              onValueChange={(value) => {
-                const nextFont = value as FontFamily
-                const requestedWeight = selectionFontWeight ?? controls.editorState.draftFontWeight
-                const requestedItalic = selectionItalic ?? controls.editorState.draftItalic
-                const resolvedVariant = resolveFontVariant(nextFont, requestedWeight, requestedItalic)
-                applySelectionTextFormat({
-                  fontFamily: nextFont,
-                  fontWeight: resolvedVariant.weight,
-                  italic: resolvedVariant.italic,
-                })
-              }}
+              onValueChange={fontSelectPreview.handleValueChange}
               options={FONT_OPTIONS}
               triggerClassName={triggerClassName}
               triggerStyle={{ width: "100%" }}
               contentClassName={tone.selectContent}
               placeholder="Mixed"
+              onOpenChange={fontSelectPreview.handleOpenChange}
+              onContentPointerLeave={fontSelectPreview.handleContentPointerLeave}
+              getItemPreviewProps={fontSelectPreview.getItemPreviewProps}
             />
           </div>
 
@@ -600,22 +805,15 @@ export function TextEditorPanel<StyleKey extends string>({
             <Label className={sectionLabelClassName}>Cut</Label>
             <Select
               value={selectedFontVariantForSelection?.id}
-              onValueChange={(value) => {
-                const fontFamily = selectionFontFamily ?? controls.editorState.draftFont
-                const nextVariant = getFontVariantById(fontFamily, value)
-                if (!nextVariant) return
-                applySelectionTextFormat({
-                  fontWeight: nextVariant.weight,
-                  italic: nextVariant.italic,
-                })
-              }}
+              onOpenChange={cutSelectPreview.handleOpenChange}
+              onValueChange={cutSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue placeholder="Mixed" />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={cutSelectPreview.handleContentPointerLeave}>
                 {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
-                  <SelectItem key={variant.id} value={variant.id}>
+                  <SelectItem key={variant.id} value={variant.id} {...cutSelectPreview.getItemPreviewProps(variant.id)}>
                     {variant.label}
                   </SelectItem>
                 ))}
@@ -627,55 +825,19 @@ export function TextEditorPanel<StyleKey extends string>({
             <Label className={sectionLabelClassName}>Hierarchy</Label>
             <Select
               value={selectionStyleKey ?? undefined}
-              onValueChange={(value) => {
-                const nextStyle = value as StyleKey
-                if (selectionUsesScopedRuns && selectionRange) {
-                  applySelectionTextFormat({ styleKey: nextStyle })
-                  return
-                }
-                controls.setEditorState((prev) => {
-                  if (!prev) return prev
-                  const currentDefaultWeight = controls.getStyleDefaultFontWeight(prev.draftStyle)
-                  const currentDefaultItalic = controls.getStyleDefaultItalic(prev.draftStyle)
-                  const nextDefaultWeight = controls.getStyleDefaultFontWeight(nextStyle)
-                  const nextDefaultItalic = controls.getStyleDefaultItalic(nextStyle)
-                  const requestedWeight = prev.draftFontWeight === currentDefaultWeight
-                    ? nextDefaultWeight
-                    : prev.draftFontWeight
-                  const requestedItalic = prev.draftItalic === currentDefaultItalic
-                    ? nextDefaultItalic
-                    : prev.draftItalic
-                  const resolvedVariant = resolveFontVariant(prev.draftFont, requestedWeight, requestedItalic)
-                  const nextBase: BaseTextFormat<StyleKey, FontFamily> = {
-                    fontFamily: prev.draftFont,
-                    fontWeight: resolvedVariant.weight,
-                    italic: resolvedVariant.italic,
-                    styleKey: nextStyle,
-                    color: prev.draftColor,
-                  }
-                  return {
-                    ...prev,
-                    draftStyle: nextStyle,
-                    draftFontWeight: resolvedVariant.weight,
-                    draftItalic: resolvedVariant.italic,
-                    draftTextFormatRuns: rebaseDraftTextFormatRuns(prev, nextBase),
-                    draftFxSize: controls.isFxStyle(nextStyle)
-                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxSize : controls.getStyleSizeValue(nextStyle))
-                      : prev.draftFxSize,
-                    draftFxLeading: controls.isFxStyle(nextStyle)
-                      ? (controls.isFxStyle(prev.draftStyle) ? prev.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
-                      : prev.draftFxLeading,
-                    draftText: prev.draftTextEdited ? prev.draftText : controls.getDummyTextForStyle(nextStyle),
-                  }
-                })
-              }}
+              onOpenChange={hierarchySelectPreview.handleOpenChange}
+              onValueChange={hierarchySelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue placeholder="Mixed" />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={hierarchySelectPreview.handleContentPointerLeave}>
                 {controls.styleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    {...hierarchySelectPreview.getItemPreviewProps(option.value)}
+                  >
                     {getStyleOptionLabel(option.value, option.label)}
                   </SelectItem>
                 ))}
@@ -810,19 +972,15 @@ export function TextEditorPanel<StyleKey extends string>({
             <Label className={sectionLabelClassName}>Kerning</Label>
             <Select
               value={controls.editorState.draftOpticalKerning ? "on" : "off"}
-              onValueChange={(value) => {
-                controls.setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftOpticalKerning: value !== "off",
-                } : prev)
-              }}
+              onOpenChange={kerningSelectPreview.handleOpenChange}
+              onValueChange={kerningSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
-                <SelectItem value="on">Optical</SelectItem>
-                <SelectItem value="off">Metric</SelectItem>
+              <SelectContent className={tone.selectContent} onPointerLeave={kerningSelectPreview.handleContentPointerLeave}>
+                <SelectItem value="on" {...kerningSelectPreview.getItemPreviewProps("on")}>Optical</SelectItem>
+                <SelectItem value="off" {...kerningSelectPreview.getItemPreviewProps("off")}>Metric</SelectItem>
               </SelectContent>
             </Select>
           </div>

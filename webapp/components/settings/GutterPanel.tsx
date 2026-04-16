@@ -16,6 +16,7 @@ import {
   type GridRhythmColsDirection,
   type GridRhythmRowsDirection,
 } from "@/lib/config/defaults"
+import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
 
 const RHYTHM_OPTIONS: Array<{ value: GridRhythm; label: string }> = [
   { value: "fibonacci", label: "Fibonacci" },
@@ -37,14 +38,17 @@ type Props = {
   onGutterMultipleChange: (value: number) => void
   rhythm: GridRhythm
   onRhythmChange: (value: GridRhythm) => void
+  onRhythmPreviewChange?: (value: GridRhythm | null) => void
   rhythmRowsEnabled: boolean
   onRhythmRowsEnabledChange: (value: boolean) => void
   rhythmRowsDirection: GridRhythmRowsDirection
   onRhythmRowsDirectionChange: (value: GridRhythmRowsDirection) => void
+  onRhythmRowsDirectionPreviewChange?: (value: GridRhythmRowsDirection | null) => void
   rhythmColsEnabled: boolean
   onRhythmColsEnabledChange: (value: boolean) => void
   rhythmColsDirection: GridRhythmColsDirection
   onRhythmColsDirectionChange: (value: GridRhythmColsDirection) => void
+  onRhythmColsDirectionPreviewChange?: (value: GridRhythmColsDirection | null) => void
   isDarkMode: boolean
 }
 
@@ -60,20 +64,41 @@ export const GutterPanel = memo(function GutterPanel({
   onGutterMultipleChange,
   rhythm,
   onRhythmChange,
+  onRhythmPreviewChange,
   rhythmRowsEnabled,
   onRhythmRowsEnabledChange,
   rhythmRowsDirection,
   onRhythmRowsDirectionChange,
+  onRhythmRowsDirectionPreviewChange,
   rhythmColsEnabled,
   onRhythmColsEnabledChange,
   rhythmColsDirection,
   onRhythmColsDirectionChange,
+  onRhythmColsDirectionPreviewChange,
   isDarkMode,
 }: Props) {
+  const rhythmSelectPreview = useSelectRolloverPreview<GridRhythm>({
+    value: rhythm,
+    onCommitValue: onRhythmChange,
+    onPreviewValue: (value) => onRhythmPreviewChange?.(value),
+    onPreviewClear: () => onRhythmPreviewChange?.(null),
+  })
+  const rowsDirectionSelectPreview = useSelectRolloverPreview<GridRhythmRowsDirection>({
+    value: rhythmRowsDirection,
+    onCommitValue: onRhythmRowsDirectionChange,
+    onPreviewValue: (value) => onRhythmRowsDirectionPreviewChange?.(value),
+    onPreviewClear: () => onRhythmRowsDirectionPreviewChange?.(null),
+  })
+  const colsDirectionSelectPreview = useSelectRolloverPreview<GridRhythmColsDirection>({
+    value: rhythmColsDirection,
+    onCommitValue: onRhythmColsDirectionChange,
+    onPreviewValue: (value) => onRhythmColsDirectionPreviewChange?.(value),
+    onPreviewClear: () => onRhythmColsDirectionPreviewChange?.(null),
+  })
   return (
     <PanelCard
       title="IV. Grid & Rhythms"
-      tooltip="Grid columns, rows, and gutter multiple"
+      tooltip="Grid columns, rows, gutter multiple, and rhythm controls; rhythm lists preview on rollover"
       collapsed={collapsed}
       collapsedSummary={`${gridCols} cols, ${gridRows} rows, ${gutterMultiple.toFixed(1)}x`}
       onHeaderClick={onHeaderClick}
@@ -85,14 +110,19 @@ export const GutterPanel = memo(function GutterPanel({
         <Label className="text-sm text-gray-600">Rhythms</Label>
         <Select
           value={rhythm}
-          onValueChange={(value) => onRhythmChange(value as GridRhythm)}
+          onOpenChange={rhythmSelectPreview.handleOpenChange}
+          onValueChange={rhythmSelectPreview.handleValueChange}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onPointerLeave={rhythmSelectPreview.handleContentPointerLeave}>
             {RHYTHM_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                {...rhythmSelectPreview.getItemPreviewProps(option.value)}
+              >
                 {option.label}
               </SelectItem>
             ))}
@@ -113,15 +143,16 @@ export const GutterPanel = memo(function GutterPanel({
             </div>
             <Select
               value={rhythmRowsDirection}
-              onValueChange={(value) => onRhythmRowsDirectionChange(value as GridRhythmRowsDirection)}
+              onOpenChange={rowsDirectionSelectPreview.handleOpenChange}
+              onValueChange={rowsDirectionSelectPreview.handleValueChange}
               disabled={!rhythmRowsEnabled}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ltr">Left to right</SelectItem>
-                <SelectItem value="rtl">Right to left</SelectItem>
+              <SelectContent onPointerLeave={rowsDirectionSelectPreview.handleContentPointerLeave}>
+                <SelectItem value="ltr" {...rowsDirectionSelectPreview.getItemPreviewProps("ltr")}>Left to right</SelectItem>
+                <SelectItem value="rtl" {...rowsDirectionSelectPreview.getItemPreviewProps("rtl")}>Right to left</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -138,15 +169,16 @@ export const GutterPanel = memo(function GutterPanel({
             </div>
             <Select
               value={rhythmColsDirection}
-              onValueChange={(value) => onRhythmColsDirectionChange(value as GridRhythmColsDirection)}
+              onOpenChange={colsDirectionSelectPreview.handleOpenChange}
+              onValueChange={colsDirectionSelectPreview.handleValueChange}
               disabled={!rhythmColsEnabled}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ttb">Top to Bottom</SelectItem>
-                <SelectItem value="btt">Bottom to top</SelectItem>
+              <SelectContent onPointerLeave={colsDirectionSelectPreview.handleContentPointerLeave}>
+                <SelectItem value="ttb" {...colsDirectionSelectPreview.getItemPreviewProps("ttb")}>Top to Bottom</SelectItem>
+                <SelectItem value="btt" {...colsDirectionSelectPreview.getItemPreviewProps("btt")}>Bottom to top</SelectItem>
               </SelectContent>
             </Select>
           </div>

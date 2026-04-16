@@ -146,6 +146,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
           <li>Set type hierarchy and base font in `V. Typo`, then use `VI. Available Fonts` for the full family list and Google Fonts links.</li>
           <li>Set default placeholder palette in `VII. Color Scheme`.</li>
+          <li>Supported dropdown menus preview the hovered item live in the page; leaving or closing the menu restores the committed state until you select an option.</li>
           <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
         </ul>
       </section>
@@ -169,6 +170,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>The preview page is the live layout surface for the active project page, including placement, editing, duplication, and deletion.</li>
+          <li>Supported layout and editor dropdowns can temporarily redraw the page while open so you can judge a hovered option before committing it.</li>
           <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
           <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
           <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
@@ -204,6 +206,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>Rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
             <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
+            <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           </ul>
@@ -214,7 +217,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
             <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and FX size/leading when `FX` is selected.</li>
             <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
-            <li>Scheme hover in the dropdown previews the active palette before you commit it.</li>
+            <li>Font family, font cut, hierarchy, and scheme hover in their dropdowns preview the active result before you commit it.</li>
           </ul>
         </div>
 
@@ -250,6 +253,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>Rows, baselines, and columns.</li>
             <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
+            <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
           </ul>
         </div>
 
@@ -536,6 +540,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly.</li>
+          <li>`Ratio` and `Orientation` preview live on dropdown rollover before commit.</li>
           <li>Orientation changes between portrait and landscape at the layout level.</li>
           <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
           <li>Custom ratios generate page dimensions at A4-equivalent area before orientation is applied.</li>
@@ -565,6 +570,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>The `Margin Method` dropdown offers Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`), and `Custom Margins`.</li>
+          <li>The `Margin Method` list previews hovered options live before commit.</li>
           <li>`Baseline Multiple` scales both method ratios and custom margin ratios while staying baseline-aligned.</li>
           <li>Selecting `Custom Margins` reveals independent top/left/right/bottom sliders that still scale through the shared baseline multiple.</li>
           <li>Bottom margin is expected to align with the last baseline line.</li>
@@ -581,6 +587,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Grid range is `1..13` for both columns and rows.</li>
           <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
           <li>`Rhythms` options: `Fibonacci`, `Golden Ratio`, `Perfect Fifth`, `Perfect Fourth`, `Repetitive` (default).</li>
+          <li>`Rhythms` plus the non-repetitive direction lists preview hovered options live before commit.</li>
           <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>
           <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `Top to Bottom` or `Bottom to top` (default: on, `Top to Bottom`).</li>
           <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
@@ -599,6 +606,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The Typo panel shows the current hierarchy table with style, size, and leading for the active baseline.</li>
           <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and FX is `96pt / 96pt`.</li>
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
+          <li>`Font Hierarchy` and `Base Font` preview live on dropdown rollover before commit.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
           <li>The text editor can override the paragraph cut with any available family variant, while untouched weight/slant defaults still follow the selected hierarchy.</li>
         </ul>
@@ -612,6 +620,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Base-font and paragraph font-family pickers use the same grouped family list.</li>
+          <li>Supported font-family pickers preview hovered families live before commit.</li>
           <li>Every listed family links to its Google Fonts specimen/download page.</li>
         </ul>
         <div className="space-y-3">
@@ -646,6 +655,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Selects the base scheme used for new image placeholders.</li>
           <li>`Background` applies `None` or any color from the selected scheme to the page.</li>
+          <li>`Base Color Scheme` and `Background` preview live on dropdown rollover before commit.</li>
           <li>The same selector appears in the image editor.</li>
           <li>Image editor starts with the current global scheme selected.</li>
           <li>Each placeholder still stores its own final color value.</li>

@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { memo, type ReactNode } from "react"
 
 type UiTheme = {
   leftPanel: string
@@ -22,7 +22,7 @@ type Props = {
   onToggleImprintPanel: () => void
 }
 
-export function ControlSidebar({
+export const ControlSidebar = memo(function ControlSidebar({
   showPresetsBrowser,
   showBetaBadge,
   appVersion,
@@ -35,7 +35,7 @@ export function ControlSidebar({
 }: Props) {
   return (
     <div
-      className={`w-full md:w-[280px] flex max-h-[50vh] flex-col overflow-hidden border-r border-b transition-colors md:max-h-full md:border-b-0 ${uiTheme.leftPanel} ${
+      className={`w-full md:w-[280px] md:basis-[280px] md:shrink-0 flex max-h-[50vh] flex-col overflow-hidden border-r border-b transition-colors md:max-h-full md:border-b-0 ${uiTheme.leftPanel} ${
         editorMode ? uiTheme.leftPanelEdit : ""
       }`}
     >
@@ -93,4 +93,6 @@ export function ControlSidebar({
       </div>
     </div>
   )
-}
+})
+
+ControlSidebar.displayName = "ControlSidebar"

@@ -25,6 +25,12 @@ type Props = {
   contentClassName?: string
   fitToLongestOption?: boolean
   placeholder?: string
+  onOpenChange?: (open: boolean) => void
+  onContentPointerLeave?: () => void
+  getItemPreviewProps?: (value: string) => {
+    onFocus?: () => void
+    onPointerMove?: () => void
+  }
 }
 
 const FONT_GROUPS = [
@@ -42,6 +48,9 @@ export function FontSelect({
   contentClassName,
   fitToLongestOption = false,
   placeholder,
+  onOpenChange,
+  onContentPointerLeave,
+  getItemPreviewProps,
 }: Props) {
   const resolvedTriggerStyle: CSSProperties | undefined = fitToLongestOption
     ? {
@@ -51,11 +60,11 @@ export function FontSelect({
     : triggerStyle
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value} onOpenChange={onOpenChange} onValueChange={onValueChange}>
       <SelectTrigger className={triggerClassName} style={resolvedTriggerStyle}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className={contentClassName}>
+      <SelectContent className={contentClassName} onPointerLeave={onContentPointerLeave}>
         {FONT_GROUPS.map((group, index) => {
           const groupOptions = options.filter((option) => option.category === group.key)
           if (!groupOptions.length) return null
@@ -63,7 +72,7 @@ export function FontSelect({
             <SelectGroup key={group.key}>
               <SelectLabel>{group.label}</SelectLabel>
               {groupOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} {...getItemPreviewProps?.(option.value)}>
                   {option.label}
                 </SelectItem>
               ))}

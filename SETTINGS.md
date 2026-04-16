@@ -29,6 +29,8 @@ Default: `swiss`
 
 ## Settings Panel (Left)
 
+- Supported dropdown controls preview hovered items live in the page while the menu is open; leaving or closing the menu restores the committed value until you select an option.
+
 ### I. Canvas Ratio
 
 #### Ratio options
@@ -58,6 +60,7 @@ Default: `swiss`
 
 - `portrait` (default from `default_v001.json`)
 - `landscape`
+- `Ratio` and `Orientation` dropdown items preview live on rollover before commit
 
 #### Rotation
 
@@ -96,6 +99,7 @@ Default: `swiss`
 - per-side multipliers (`top,left,right,bottom`): min `1`, max `9`, step `1`
 - selecting `Custom Margins` reveals the four side sliders
 - actual custom margin = `sideMultiplier × baselineMultiple × gridUnit`
+- `Margin Method` dropdown items preview live on rollover before commit
 
 ### IV. Grid & Rhythms
 
@@ -103,6 +107,7 @@ Default: `swiss`
 - Rows (`gridRows`): min `1`, max `13`, step `1`, default `6` (from `default_v001.json`)
 - Gutter multiple: min `1.0`, max `4.0`, step `0.5`, default `1.0`
 - Rhythms (`rhythm`): `fibonacci`, `golden`, `fifth`, `fourth`, `repetitive` (default)
+- `Rhythms` and non-repetitive direction dropdown items preview live on rollover before commit
 - Non-repetitive rhythm rows:
   - enabled (`rhythmRowsEnabled`): `true|false` (default `true`)
   - direction (`rhythmRowsDirection`): `ltr` (`Left to right`) or `rtl` (`Right to left`) (default `ltr`)
@@ -122,6 +127,7 @@ Default: `swiss`
   - `Body`: `10pt / 12pt`
   - `Caption`: `7pt / 8pt`
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
+- `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
   - Sans-Serif: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
@@ -132,6 +138,7 @@ Default: `swiss`
 
 - Selects the global base scheme for image placeholders.
 - `Background`: applies a page background color using `None` or any color from the selected scheme; this setting is stored per page.
+- `Base Color Scheme` and `Background` dropdown items preview live on rollover before commit.
 - Available schemes:
   - `Swiss Modern`: `#0b3536`, `#e5e7de`, `#0098d8`, `#f54123`
   - `Stone Cyan`: `#35342f`, `#e1e0dd`, `#f1f2f0`, `#37bbe4`
@@ -305,6 +312,7 @@ Editor controls:
 - paragraph and placeholder height resolve as `rows + baselines`
 - `rows` may be `0` when `baselines > 0`
 - `Baselines` is a dropdown from `0` to the current document's `baselines per grid module`
+- text `Rows`, `Baselines`, and `Cols` dropdown items preview live on rollover before commit
 - Typo section:
   - font family
   - font cut
@@ -314,10 +322,12 @@ Editor controls:
   - tracking numeric input (`-120..+300`, `1/1000 em`)
   - color scheme selector
   - color swatches
+- text `font family`, `font cut`, `hierarchy`, and `color scheme` dropdown items preview live on rollover before commit
 - image Color section:
   - color scheme selector
   - color swatches
   - transparency
+- image `Rows`, `Baselines`, `Cols`, and `color scheme` dropdown items preview live on rollover before commit
 - Info section: geometry, type/color summary, counts, and `Max/Line`
 - delete lives at the end of the editor page in the same row-button pattern as `Add Page`
 - section headers single-click to toggle one section; double-click opens or closes all editor sections

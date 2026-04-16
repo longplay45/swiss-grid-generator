@@ -18,12 +18,14 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   canvasRatio: CanvasRatioKey
   onCanvasRatioChange: (value: CanvasRatioKey) => void
+  onCanvasRatioPreviewChange?: (value: CanvasRatioKey | null) => void
   customRatioWidth: number
   onCustomRatioWidthChange: (value: number) => void
   customRatioHeight: number
   onCustomRatioHeightChange: (value: number) => void
   orientation: "portrait" | "landscape"
   onOrientationChange: (value: "portrait" | "landscape") => void
+  onOrientationPreviewChange?: (value: "portrait" | "landscape" | null) => void
   rotation: number
   onRotationChange: (value: number) => void
   isDarkMode: boolean
@@ -35,12 +37,14 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
   onHeaderDoubleClick,
   canvasRatio,
   onCanvasRatioChange,
+  onCanvasRatioPreviewChange,
   customRatioWidth,
   onCustomRatioWidthChange,
   customRatioHeight,
   onCustomRatioHeightChange,
   orientation,
   onOrientationChange,
+  onOrientationPreviewChange,
   rotation,
   onRotationChange,
   isDarkMode,
@@ -78,7 +82,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
   return (
     <PanelCard
       title="I. Canvas Ratio & Rotation"
-      tooltip="Ratio preset or custom width:height, orientation, and preview rotation"
+      tooltip="Ratio preset or custom width:height, orientation, and preview rotation; ratio and orientation lists preview on rollover"
       collapsed={collapsed}
       collapsedSummary={`${ratioLabel}, ${orientation}, ${rotation}°`}
       onHeaderClick={onHeaderClick}
@@ -88,13 +92,24 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
     >
       <div className="space-y-2">
         <Label className="text-sm text-gray-600">Ratio</Label>
-        <Select value={canvasRatio} onValueChange={(v: CanvasRatioKey) => onCanvasRatioChange(v)}>
+        <Select
+          value={canvasRatio}
+          onOpenChange={(open) => {
+            if (!open) onCanvasRatioPreviewChange?.(null)
+          }}
+          onValueChange={(v: CanvasRatioKey) => onCanvasRatioChange(v)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onPointerLeave={() => onCanvasRatioPreviewChange?.(null)}>
             {CANVAS_RATIOS.map((opt) => (
-              <SelectItem key={opt.key} value={opt.key}>
+              <SelectItem
+                key={opt.key}
+                value={opt.key}
+                onFocus={() => onCanvasRatioPreviewChange?.(opt.key)}
+                onPointerMove={() => onCanvasRatioPreviewChange?.(opt.key)}
+              >
                 {opt.key === "custom"
                   ? `${opt.label} (${customRatioText} / 1:${customRatioDecimal.toFixed(3)})`
                   : `${opt.label} (${opt.ratioLabel} / 1:${opt.ratioDecimal.toFixed(3)})`}
@@ -162,14 +177,29 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
         <Label className="text-sm text-gray-600">Orientation</Label>
         <Select
           value={orientation}
+          onOpenChange={(open) => {
+            if (!open) onOrientationPreviewChange?.(null)
+          }}
           onValueChange={(v: "portrait" | "landscape") => onOrientationChange(v)}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="portrait">Portrait</SelectItem>
-            <SelectItem value="landscape">Landscape</SelectItem>
+          <SelectContent onPointerLeave={() => onOrientationPreviewChange?.(null)}>
+            <SelectItem
+              value="portrait"
+              onFocus={() => onOrientationPreviewChange?.("portrait")}
+              onPointerMove={() => onOrientationPreviewChange?.("portrait")}
+            >
+              Portrait
+            </SelectItem>
+            <SelectItem
+              value="landscape"
+              onFocus={() => onOrientationPreviewChange?.("landscape")}
+              onPointerMove={() => onOrientationPreviewChange?.("landscape")}
+            >
+              Landscape
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

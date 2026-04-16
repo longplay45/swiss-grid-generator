@@ -14,6 +14,7 @@ import {
   IMAGE_COLOR_SCHEMES,
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
+import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
 
 const COLOR_SLOT_LABELS = ["Paper", "Light", "Mid", "Dark"] as const
 
@@ -23,8 +24,10 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   colorScheme: ImageColorSchemeId
   onColorSchemeChange: (value: ImageColorSchemeId) => void
+  onColorSchemePreviewChange?: (value: ImageColorSchemeId | null) => void
   canvasBackground: string | null
   onCanvasBackgroundChange: (value: string | null) => void
+  onCanvasBackgroundPreviewChange?: (value: string | null) => void
   isDarkMode: boolean
 }
 
@@ -34,8 +37,10 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   onHeaderDoubleClick,
   colorScheme,
   onColorSchemeChange,
+  onColorSchemePreviewChange,
   canvasBackground,
   onCanvasBackgroundChange,
+  onCanvasBackgroundPreviewChange,
   isDarkMode,
 }: Props) {
   const selected = getImageColorScheme(colorScheme)
@@ -43,11 +48,29 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   const displayedScheme = previewColorScheme ? getImageColorScheme(previewColorScheme) : selected
   const paperBackgroundValue = getImageSchemeColorToken(0)
   const backgroundSelectValue = canvasBackground ?? "__none__"
+  const colorSchemeSelectPreview = useSelectRolloverPreview<ImageColorSchemeId>({
+    value: colorScheme,
+    onCommitValue: onColorSchemeChange,
+    onPreviewValue: (value) => {
+      setPreviewColorScheme(value)
+      onColorSchemePreviewChange?.(value)
+    },
+    onPreviewClear: () => {
+      setPreviewColorScheme(null)
+      onColorSchemePreviewChange?.(null)
+    },
+  })
+  const backgroundSelectPreview = useSelectRolloverPreview<string>({
+    value: backgroundSelectValue,
+    onCommitValue: (value) => onCanvasBackgroundChange(value === "__none__" ? null : value),
+    onPreviewValue: (value) => onCanvasBackgroundPreviewChange?.(value),
+    onPreviewClear: () => onCanvasBackgroundPreviewChange?.(null),
+  })
 
   return (
     <PanelCard
       title="VI. Color Scheme"
-      tooltip="Color scheme and page background for image placeholders"
+      tooltip="Color scheme and page background for image placeholders; scheme and background lists preview on rollover"
       collapsed={collapsed}
       collapsedSummary={(
         <div className="flex items-center gap-1.5">
@@ -70,21 +93,18 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
         <Label className="text-sm text-gray-600">Base Color Scheme</Label>
         <Select
           value={colorScheme}
-          onOpenChange={(open) => {
-            if (!open) setPreviewColorScheme(null)
-          }}
-          onValueChange={(value) => onColorSchemeChange(value as ImageColorSchemeId)}
+          onOpenChange={colorSchemeSelectPreview.handleOpenChange}
+          onValueChange={colorSchemeSelectPreview.handleValueChange}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={() => setPreviewColorScheme(null)}>
+          <SelectContent onPointerLeave={colorSchemeSelectPreview.handleContentPointerLeave}>
             {IMAGE_COLOR_SCHEMES.map((scheme) => (
               <SelectItem
                 key={scheme.id}
                 value={scheme.id}
-                onFocus={() => setPreviewColorScheme(scheme.id)}
-                onPointerMove={() => setPreviewColorScheme(scheme.id)}
+                {...colorSchemeSelectPreview.getItemPreviewProps(scheme.id)}
               >
                 {scheme.label}
               </SelectItem>
@@ -113,14 +133,15 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
         <Label className="text-sm text-gray-600">Background</Label>
         <Select
           value={backgroundSelectValue}
-          onValueChange={(value) => onCanvasBackgroundChange(value === "__none__" ? null : value)}
+          onOpenChange={backgroundSelectPreview.handleOpenChange}
+          onValueChange={backgroundSelectPreview.handleValueChange}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">None</SelectItem>
-            <SelectItem value={paperBackgroundValue}>
+          <SelectContent onPointerLeave={backgroundSelectPreview.handleContentPointerLeave}>
+            <SelectItem value="__none__" {...backgroundSelectPreview.getItemPreviewProps("__none__")}>None</SelectItem>
+            <SelectItem value={paperBackgroundValue} {...backgroundSelectPreview.getItemPreviewProps(paperBackgroundValue)}>
               <span className="flex items-center gap-2">
                 <span
                   className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
@@ -131,7 +152,11 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
               </span>
             </SelectItem>
             {selected.colors.slice(1).map((color, index) => (
-              <SelectItem key={`background-${selected.id}-${color}`} value={color}>
+              <SelectItem
+                key={`background-${selected.id}-${color}`}
+                value={color}
+                {...backgroundSelectPreview.getItemPreviewProps(color)}
+              >
                 <span className="flex items-center gap-2">
                   <span
                     className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}

@@ -945,7 +945,7 @@ export const GridPreview = memo(function GridPreview({
     <div
       ref={previewContainerRef}
       data-tooltip-boundary="preview-workspace"
-      className={`relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden ${
+      className={`relative h-full w-full min-w-0 flex items-center justify-center overflow-hidden rounded-lg ${
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       }`}
     >

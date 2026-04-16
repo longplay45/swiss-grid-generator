@@ -25,6 +25,7 @@ import { useSidebarPanels } from "@/hooks/useSidebarPanels"
 import { useWorkspaceChrome } from "@/hooks/useWorkspaceChrome"
 import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
+import { useUiSettingsPreview } from "@/hooks/useUiSettingsPreview"
 import { type LoadedProject, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
@@ -213,6 +214,106 @@ export default function Home() {
     () => buildGridResultFromUiSettings(ui),
     [ui],
   )
+  const {
+    previewUi,
+    previewResult,
+    setPreviewPatch,
+    clearPreviewKeys,
+  } = useUiSettingsPreview(ui)
+  const handleCanvasRatioPreviewChange = useCallback((value: UiSettingsSnapshot["canvasRatio"] | null) => {
+    if (value === null) {
+      clearPreviewKeys(["canvasRatio"])
+      return
+    }
+    setPreviewPatch({ canvasRatio: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleOrientationPreviewChange = useCallback((value: UiSettingsSnapshot["orientation"] | null) => {
+    if (value === null) {
+      clearPreviewKeys(["orientation"])
+      return
+    }
+    setPreviewPatch({ orientation: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleMarginMethodPreviewChange = useCallback((value: "1" | "2" | "3" | "custom" | null) => {
+    if (value === null) {
+      clearPreviewKeys(["marginMethod", "useCustomMargins", "customMarginMultipliers"])
+      return
+    }
+    if (value === "custom") {
+      const customMarginScale = gridUnit * baselineMultiple
+      const clampCustomMarginMultiplier = (multiplier: number) => Math.max(1, Math.min(9, Math.round(multiplier)))
+      setPreviewPatch({
+        useCustomMargins: true,
+        customMarginMultipliers: {
+          top: clampCustomMarginMultiplier(result.grid.margins.top / customMarginScale),
+          left: clampCustomMarginMultiplier(result.grid.margins.left / customMarginScale),
+          right: clampCustomMarginMultiplier(result.grid.margins.right / customMarginScale),
+          bottom: clampCustomMarginMultiplier(result.grid.margins.bottom / customMarginScale),
+        },
+      })
+      return
+    }
+    setPreviewPatch({
+      marginMethod: parseInt(value, 10) as 1 | 2 | 3,
+      useCustomMargins: false,
+    })
+  }, [baselineMultiple, clearPreviewKeys, gridUnit, result.grid.margins, setPreviewPatch])
+  const handleRhythmPreviewChange = useCallback((value: typeof rhythm | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythm"])
+      return
+    }
+    setPreviewPatch({ rhythm: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleRhythmRowsDirectionPreviewChange = useCallback((value: typeof rhythmRowsDirection | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythmRowsDirection"])
+      return
+    }
+    setPreviewPatch({ rhythmRowsDirection: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleRhythmColsDirectionPreviewChange = useCallback((value: typeof rhythmColsDirection | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythmColsDirection"])
+      return
+    }
+    setPreviewPatch({ rhythmColsDirection: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleTypographyScalePreviewChange = useCallback((value: typeof typographyScale | null) => {
+    if (value === null) {
+      clearPreviewKeys(["typographyScale"])
+      return
+    }
+    setPreviewPatch({ typographyScale: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleBaseFontPreviewChange = useCallback((value: FontFamily | null) => {
+    if (value === null) {
+      clearPreviewKeys(["baseFont"])
+      return
+    }
+    setPreviewPatch({ baseFont: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleColorSchemePreviewChange = useCallback((value: typeof imageColorScheme | null) => {
+    if (value === null) {
+      clearPreviewKeys(["imageColorScheme"])
+      return
+    }
+    setPreviewPatch({ imageColorScheme: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleCanvasBackgroundPreviewChange = useCallback((value: string | null) => {
+    if (value === null) {
+      clearPreviewKeys(["canvasBackground"])
+      return
+    }
+    setPreviewPatch({ canvasBackground: value === "__none__" ? null : value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const controlSidebarTheme = useMemo(() => ({
+    leftPanel: uiTheme.leftPanel,
+    leftPanelEdit: uiTheme.leftPanelEdit,
+    subtleBorder: uiTheme.subtleBorder,
+    bodyText: uiTheme.bodyText,
+    link: uiTheme.link,
+  }), [uiTheme.bodyText, uiTheme.leftPanel, uiTheme.leftPanelEdit, uiTheme.link, uiTheme.subtleBorder])
 
   const maxBaseline = useMemo(() => {
     const customMarginUnits = useCustomMargins
@@ -330,6 +431,12 @@ export default function Home() {
     setShowPresetsBrowser(false)
     markClean()
   }, [applyLoadedProject, markClean, setShowPresetsBrowser])
+  const handleToggleFeedbackPanel = useCallback(() => {
+    openSidebarPanel(activeSidebarPanel === "feedback" ? null : "feedback")
+  }, [activeSidebarPanel, openSidebarPanel])
+  const handleToggleImprintPanel = useCallback(() => {
+    openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
+  }, [activeSidebarPanel, openSidebarPanel])
 
   const {
     projectMetadata,
@@ -508,9 +615,13 @@ export default function Home() {
 
   // ─── Export / Save actions ────────────────────────────────────────────────
 
-  const resolvedCanvasBackground = useMemo(
-    () => (canvasBackground ? resolveImageSchemeColor(canvasBackground, imageColorScheme) : null),
-    [canvasBackground, imageColorScheme],
+  const previewResolvedCanvasBackground = useMemo(
+    () => (
+      previewUi.canvasBackground
+        ? resolveImageSchemeColor(previewUi.canvasBackground, previewUi.imageColorScheme)
+        : null
+    ),
+    [previewUi.canvasBackground, previewUi.imageColorScheme],
   )
 
   const exportActionsContext = useMemo(
@@ -625,9 +736,9 @@ export default function Home() {
       showMargins={showMargins}
       showImagePlaceholders={showImagePlaceholders}
       showTypography={showTypography}
-      baseFont={baseFont}
-      imageColorScheme={imageColorScheme}
-      resolvedCanvasBackground={resolvedCanvasBackground}
+      baseFont={previewUi.baseFont}
+      imageColorScheme={previewUi.imageColorScheme}
+      resolvedCanvasBackground={previewResolvedCanvasBackground}
       rotation={rotation}
       previewUndoNonce={previewUndoNonce}
       previewRedoNonce={previewRedoNonce}
@@ -653,7 +764,7 @@ export default function Home() {
         sidebarBody: uiTheme.sidebarBody,
         sidebarHeading: uiTheme.sidebarHeading,
       }}
-      result={result}
+      result={previewResult}
       onLoadPreset={handleLoadPresetProject}
       onHeaderHelpNavigate={handleHeaderHelpNavigate}
       onOpenHelpSection={openHelpSection}
@@ -688,6 +799,142 @@ export default function Home() {
     />
   )
 
+  const settingsPanels = useMemo(() => (
+    <SettingsSidebarPanels
+      collapsed={collapsed}
+      showSectionHelpIcons={showSectionHelpIcons}
+      showRolloverInfo={showRolloverInfo}
+      onHelpNavigate={handleSectionHelpNavigate}
+      onSectionHeaderClick={handleSectionHeaderClick}
+      onSectionHeaderDoubleClick={handleSectionHeaderDoubleClick}
+      canvasRatio={canvasRatio}
+      onCanvasRatioChange={setCanvasRatio}
+      onCanvasRatioPreviewChange={handleCanvasRatioPreviewChange}
+      customRatioWidth={customRatioWidth}
+      onCustomRatioWidthChange={setCustomRatioWidth}
+      customRatioHeight={customRatioHeight}
+      onCustomRatioHeightChange={setCustomRatioHeight}
+      orientation={orientation}
+      onOrientationChange={setOrientation}
+      onOrientationPreviewChange={handleOrientationPreviewChange}
+      rotation={rotation}
+      onRotationChange={setRotation}
+      customBaseline={customBaseline}
+      availableBaselineOptions={availableBaselineOptions}
+      onCustomBaselineChange={setCustomBaseline}
+      marginMethod={marginMethod}
+      onMarginMethodChange={setMarginMethod}
+      onMarginMethodPreviewChange={handleMarginMethodPreviewChange}
+      baselineMultiple={baselineMultiple}
+      onBaselineMultipleChange={setBaselineMultiple}
+      useCustomMargins={useCustomMargins}
+      onUseCustomMarginsChange={setUseCustomMargins}
+      customMarginMultipliers={customMarginMultipliers}
+      onCustomMarginMultipliersChange={setCustomMarginMultipliers}
+      currentMargins={result.grid.margins}
+      gridUnit={gridUnit}
+      gridCols={gridCols}
+      onGridColsChange={handleGridColsChange}
+      gridRows={gridRows}
+      onGridRowsChange={handleGridRowsChange}
+      gutterMultiple={gutterMultiple}
+      onGutterMultipleChange={setGutterMultiple}
+      rhythm={rhythm}
+      onRhythmChange={setRhythm}
+      onRhythmPreviewChange={handleRhythmPreviewChange}
+      rhythmRowsEnabled={rhythmRowsEnabled}
+      onRhythmRowsEnabledChange={setRhythmRowsEnabled}
+      rhythmRowsDirection={rhythmRowsDirection}
+      onRhythmRowsDirectionChange={setRhythmRowsDirection}
+      onRhythmRowsDirectionPreviewChange={handleRhythmRowsDirectionPreviewChange}
+      rhythmColsEnabled={rhythmColsEnabled}
+      onRhythmColsEnabledChange={setRhythmColsEnabled}
+      rhythmColsDirection={rhythmColsDirection}
+      onRhythmColsDirectionChange={setRhythmColsDirection}
+      onRhythmColsDirectionPreviewChange={handleRhythmColsDirectionPreviewChange}
+      typographyScale={typographyScale}
+      onTypographyScaleChange={setTypographyScale}
+      onTypographyScalePreviewChange={handleTypographyScalePreviewChange}
+      typographyStyles={result.typography.styles}
+      baseFont={baseFont}
+      onBaseFontChange={setBaseFont}
+      onBaseFontPreviewChange={handleBaseFontPreviewChange}
+      colorScheme={imageColorScheme}
+      onColorSchemeChange={setImageColorScheme}
+      onColorSchemePreviewChange={handleColorSchemePreviewChange}
+      canvasBackground={canvasBackground}
+      onCanvasBackgroundChange={setCanvasBackground}
+      onCanvasBackgroundPreviewChange={handleCanvasBackgroundPreviewChange}
+      isDarkMode={isDarkUi}
+    />
+  ), [
+    availableBaselineOptions,
+    baseFont,
+    canvasBackground,
+    canvasRatio,
+    collapsed,
+    customBaseline,
+    customMarginMultipliers,
+    customRatioHeight,
+    customRatioWidth,
+    gridCols,
+    gridRows,
+    gridUnit,
+    gutterMultiple,
+    handleBaseFontPreviewChange,
+    handleCanvasRatioPreviewChange,
+    handleCanvasBackgroundPreviewChange,
+    handleColorSchemePreviewChange,
+    handleGridColsChange,
+    handleGridRowsChange,
+    handleMarginMethodPreviewChange,
+    handleOrientationPreviewChange,
+    handleRhythmColsDirectionPreviewChange,
+    handleRhythmPreviewChange,
+    handleRhythmRowsDirectionPreviewChange,
+    handleSectionHeaderClick,
+    handleSectionHeaderDoubleClick,
+    handleSectionHelpNavigate,
+    handleTypographyScalePreviewChange,
+    imageColorScheme,
+    isDarkUi,
+    marginMethod,
+    orientation,
+    result.grid.margins,
+    result.typography.styles,
+    rhythm,
+    rhythmColsDirection,
+    rhythmColsEnabled,
+    rhythmRowsDirection,
+    rhythmRowsEnabled,
+    rotation,
+    setBaseFont,
+    setCanvasBackground,
+    setCanvasRatio,
+    setCustomBaseline,
+    setCustomMarginMultipliers,
+    setCustomRatioHeight,
+    setCustomRatioWidth,
+    setGutterMultiple,
+    setImageColorScheme,
+    setMarginMethod,
+    setOrientation,
+    setRhythm,
+    setRhythmColsDirection,
+    setRhythmColsEnabled,
+    setRhythmRowsDirection,
+    setRhythmRowsEnabled,
+    setRotation,
+    setTypographyScale,
+    setUseCustomMargins,
+    showRolloverInfo,
+    showSectionHelpIcons,
+    typographyScale,
+    useCustomMargins,
+    baselineMultiple,
+    setBaselineMultiple,
+  ])
+
   if (isSmartphone) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-6 text-white">
@@ -716,76 +963,12 @@ export default function Home() {
           showPresetsBrowser={showPresetsBrowser}
           showBetaBadge={SHOW_BETA_BADGE}
           appVersion={APP_VERSION}
-          uiTheme={{
-            leftPanel: uiTheme.leftPanel,
-            leftPanelEdit: uiTheme.leftPanelEdit,
-            subtleBorder: uiTheme.subtleBorder,
-            bodyText: uiTheme.bodyText,
-            link: uiTheme.link,
-          }}
+          uiTheme={controlSidebarTheme}
           editorMode={editorSidebarMode}
           onEditorHostChange={setEditorSidebarHost}
-          settingsPanels={(
-            <SettingsSidebarPanels
-              collapsed={collapsed}
-              showSectionHelpIcons={showSectionHelpIcons}
-              showRolloverInfo={showRolloverInfo}
-              onHelpNavigate={handleSectionHelpNavigate}
-              onSectionHeaderClick={handleSectionHeaderClick}
-              onSectionHeaderDoubleClick={handleSectionHeaderDoubleClick}
-              canvasRatio={canvasRatio}
-              onCanvasRatioChange={setCanvasRatio}
-              customRatioWidth={customRatioWidth}
-              onCustomRatioWidthChange={setCustomRatioWidth}
-              customRatioHeight={customRatioHeight}
-              onCustomRatioHeightChange={setCustomRatioHeight}
-              orientation={orientation}
-              onOrientationChange={setOrientation}
-              rotation={rotation}
-              onRotationChange={setRotation}
-              customBaseline={customBaseline}
-              availableBaselineOptions={availableBaselineOptions}
-              onCustomBaselineChange={setCustomBaseline}
-              marginMethod={marginMethod}
-              onMarginMethodChange={setMarginMethod}
-              baselineMultiple={baselineMultiple}
-              onBaselineMultipleChange={setBaselineMultiple}
-              useCustomMargins={useCustomMargins}
-              onUseCustomMarginsChange={setUseCustomMargins}
-              customMarginMultipliers={customMarginMultipliers}
-              onCustomMarginMultipliersChange={setCustomMarginMultipliers}
-              currentMargins={result.grid.margins}
-              gridUnit={gridUnit}
-              gridCols={gridCols}
-              onGridColsChange={handleGridColsChange}
-              gridRows={gridRows}
-              onGridRowsChange={handleGridRowsChange}
-              gutterMultiple={gutterMultiple}
-              onGutterMultipleChange={setGutterMultiple}
-              rhythm={rhythm}
-              onRhythmChange={setRhythm}
-              rhythmRowsEnabled={rhythmRowsEnabled}
-              onRhythmRowsEnabledChange={setRhythmRowsEnabled}
-              rhythmRowsDirection={rhythmRowsDirection}
-              onRhythmRowsDirectionChange={setRhythmRowsDirection}
-              rhythmColsEnabled={rhythmColsEnabled}
-              onRhythmColsEnabledChange={setRhythmColsEnabled}
-              rhythmColsDirection={rhythmColsDirection}
-              onRhythmColsDirectionChange={setRhythmColsDirection}
-              typographyScale={typographyScale}
-              onTypographyScaleChange={setTypographyScale}
-              typographyStyles={result.typography.styles}
-              baseFont={baseFont}
-              onBaseFontChange={setBaseFont}
-              colorScheme={imageColorScheme}
-              onColorSchemeChange={setImageColorScheme}
-              canvasBackground={canvasBackground}
-              onCanvasBackgroundChange={setCanvasBackground}
-              isDarkMode={isDarkUi}
-            />
-          )}
-          onToggleFeedbackPanel={() => openSidebarPanel(activeSidebarPanel === "feedback" ? null : "feedback")}
-          onToggleImprintPanel={() => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")}
+          settingsPanels={settingsPanels}
+          onToggleFeedbackPanel={handleToggleFeedbackPanel}
+          onToggleImprintPanel={handleToggleImprintPanel}
         />
 
         {previewWorkspace}

@@ -20,6 +20,7 @@ import {
   transparencyPercentToOpacity,
 } from "@/lib/image-placeholder-opacity"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
+import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
 
 export type ImageEditorState = {
@@ -119,9 +120,51 @@ export function ImageEditorDialog({
     }
   }, [])
 
+  const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
+  const applyDraftRowsValue = (value: string, state: ImageEditorState | null) => {
+    if (!state) return state
+    const rows = Math.max(0, Math.min(gridRows, Number(value)))
+    return {
+      ...state,
+      draftRows: rows,
+      draftHeightBaselines: rows === 0 && state.draftHeightBaselines === 0 ? 1 : state.draftHeightBaselines,
+    }
+  }
+
+  const applyDraftColumnsValue = (value: string, state: ImageEditorState | null) => {
+    if (!state) return state
+    const columns = Math.max(1, Math.min(gridCols, Number(value)))
+    return { ...state, draftColumns: columns }
+  }
+
+  const applyDraftBaselinesValue = (value: string, state: ImageEditorState | null) => {
+    if (!state) return state
+    const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
+    return {
+      ...state,
+      draftRows: state.draftRows === 0 && nextBaselines === 0 ? 1 : state.draftRows,
+      draftHeightBaselines: nextBaselines,
+    }
+  }
+
+  const rowsSelectPreview = useStateSnapshotSelectPreview({
+    state: editorState,
+    setState: setEditorState,
+    applyValue: applyDraftRowsValue,
+  })
+  const columnsSelectPreview = useStateSnapshotSelectPreview({
+    state: editorState,
+    setState: setEditorState,
+    applyValue: applyDraftColumnsValue,
+  })
+  const baselinesSelectPreview = useStateSnapshotSelectPreview({
+    state: editorState,
+    setState: setEditorState,
+    applyValue: applyDraftBaselinesValue,
+  })
+
   if (!editorState) return null
 
-  const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
   const transparencyPercent = opacityToTransparencyPercent(editorState.draftOpacity)
@@ -213,7 +256,7 @@ export function ImageEditorDialog({
       <div className="bg-gray-50 min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6">
         <EditorSidebarSection
           title="I. Geometry"
-          tooltip="Rows, baselines, and column span"
+          tooltip="Rows, baselines, and column span; geometry dropdowns preview on rollover"
           collapsed={collapsed.geometry}
           collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols`}
           onHeaderClick={handleSectionHeaderClick("geometry")}
@@ -229,21 +272,19 @@ export function ImageEditorDialog({
 
             <Select
               value={String(editorState.draftRows)}
-              onValueChange={(value) => {
-                const rows = Math.max(0, Math.min(gridRows, Number(value)))
-                setEditorState((prev) => (prev ? {
-                  ...prev,
-                  draftRows: rows,
-                  draftHeightBaselines: rows === 0 && prev.draftHeightBaselines === 0 ? 1 : prev.draftHeightBaselines,
-                } : prev))
-              }}
+              onOpenChange={rowsSelectPreview.handleOpenChange}
+              onValueChange={rowsSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: gridRows + 1 }, (_, index) => index).map((count) => (
-                  <SelectItem key={`image-row-${count}`} value={String(count)}>
+                  <SelectItem
+                    key={`image-row-${count}`}
+                    value={String(count)}
+                    {...rowsSelectPreview.getItemPreviewProps(String(count))}
+                  >
                     {count} {count === 1 ? "row" : "rows"}
                   </SelectItem>
                 ))}
@@ -252,17 +293,19 @@ export function ImageEditorDialog({
 
             <Select
               value={String(editorState.draftColumns)}
-              onValueChange={(value) => {
-                const columns = Math.max(1, Math.min(gridCols, Number(value)))
-                setEditorState((prev) => (prev ? { ...prev, draftColumns: columns } : prev))
-              }}
+              onOpenChange={columnsSelectPreview.handleOpenChange}
+              onValueChange={columnsSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
+              <SelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={`image-col-${count}`} value={String(count)}>
+                  <SelectItem
+                    key={`image-col-${count}`}
+                    value={String(count)}
+                    {...columnsSelectPreview.getItemPreviewProps(String(count))}
+                  >
                     {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
@@ -274,22 +317,20 @@ export function ImageEditorDialog({
 
             <Select
               value={String(resolvedHeightBaselines)}
-              onValueChange={(value) => {
-                const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
-                setEditorState((prev) => (prev ? {
-                  ...prev,
-                  draftRows: prev.draftRows === 0 && nextBaselines === 0 ? 1 : prev.draftRows,
-                  draftHeightBaselines: nextBaselines,
-                } : prev))
-              }}
+              onOpenChange={baselinesSelectPreview.handleOpenChange}
+              onValueChange={baselinesSelectPreview.handleValueChange}
             >
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent}>
-                <SelectItem value="0">0 baselines</SelectItem>
+              <SelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
+                <SelectItem value="0" {...baselinesSelectPreview.getItemPreviewProps("0")}>0 baselines</SelectItem>
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
-                  <SelectItem key={`image-baselines-${count}`} value={String(count)}>
+                  <SelectItem
+                    key={`image-baselines-${count}`}
+                    value={String(count)}
+                    {...baselinesSelectPreview.getItemPreviewProps(String(count))}
+                  >
                     {count} {count === 1 ? "baseline" : "baselines"}
                   </SelectItem>
                 ))}
@@ -300,7 +341,7 @@ export function ImageEditorDialog({
 
         <EditorSidebarSection
           title="II. Color"
-          tooltip="Scheme, swatch color, and transparency"
+          tooltip="Scheme, swatch color, and transparency; scheme dropdown previews on rollover"
           collapsed={collapsed.color}
           collapsedSummary={`${colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme}, ${transparencyPercent}%`}
           onHeaderClick={handleSectionHeaderClick("color")}

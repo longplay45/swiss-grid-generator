@@ -259,7 +259,7 @@ export function PreviewWorkspace({
   }
 
   return (
-    <div className={`min-h-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
+    <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
       <div className={`px-4 py-3 md:px-6 border-b ${uiTheme.previewHeader}`}>
         <div className="flex flex-col gap-2 landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-3">
           <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
@@ -284,9 +284,9 @@ export function PreviewWorkspace({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
         <div
-          className={`flex min-h-0 flex-1 flex-col overflow-auto transition-colors ${
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-auto transition-colors ${
             showPresetsBrowser ? "p-4 md:p-6" : ""
           } ${
             editorMode ? uiTheme.previewContentEdit : uiTheme.previewContent
@@ -356,7 +356,7 @@ export function PreviewWorkspace({
         {shouldRenderSidebarPanel && (
           <div
             data-help-scroll-root="true"
-            className={` min-h-0 w-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
+            className={` min-h-0 w-[280px] basis-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "help"
                 ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
                 : "p-4 md:p-6"

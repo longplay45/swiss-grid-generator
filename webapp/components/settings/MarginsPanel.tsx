@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DebouncedSlider } from "@/components/ui/slider"
 import { PanelCard } from "@/components/settings/PanelCard"
 import { BASELINE_MULTIPLE_RANGE } from "@/lib/config/defaults"
+import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
 
 type CustomMarginMultipliers = { top: number; left: number; right: number; bottom: number }
 
@@ -13,6 +14,7 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   marginMethod: 1 | 2 | 3
   onMarginMethodChange: (value: 1 | 2 | 3) => void
+  onMarginMethodPreviewChange?: (value: "1" | "2" | "3" | "custom" | null) => void
   baselineMultiple: number
   onBaselineMultipleChange: (value: number) => void
   useCustomMargins: boolean
@@ -31,6 +33,7 @@ export const MarginsPanel = memo(function MarginsPanel({
   onHeaderDoubleClick,
   marginMethod,
   onMarginMethodChange,
+  onMarginMethodPreviewChange,
   baselineMultiple,
   onBaselineMultipleChange,
   useCustomMargins,
@@ -59,6 +62,12 @@ export const MarginsPanel = memo(function MarginsPanel({
     onMarginMethodChange(parseInt(value, 10) as 1 | 2 | 3)
     onUseCustomMarginsChange(false)
   }
+  const marginMethodSelectPreview = useSelectRolloverPreview<"1" | "2" | "3" | "custom">({
+    value: useCustomMargins ? "custom" : marginMethod.toString() as "1" | "2" | "3",
+    onCommitValue: handleMarginModeChange,
+    onPreviewValue: (value) => onMarginMethodPreviewChange?.(value),
+    onPreviewClear: () => onMarginMethodPreviewChange?.(null),
+  })
 
   const collapsedSummary = useCustomMargins
     ? `Custom ${baselineMultiple.toFixed(1)}x: T${customMarginMultipliers.top}x L${customMarginMultipliers.left}x R${customMarginMultipliers.right}x B${customMarginMultipliers.bottom}x`
@@ -87,7 +96,7 @@ export const MarginsPanel = memo(function MarginsPanel({
   return (
     <PanelCard
       title="III. Margins"
-      tooltip="Margin method dropdown, baseline multiple, and custom per-side controls"
+      tooltip="Margin method dropdown, baseline multiple, and custom per-side controls; margin method previews on rollover"
       collapsed={collapsed}
       collapsedSummary={collapsedSummary}
       onHeaderClick={onHeaderClick}
@@ -99,16 +108,17 @@ export const MarginsPanel = memo(function MarginsPanel({
         <Label className="text-sm text-gray-600">Margin Method</Label>
         <Select
           value={useCustomMargins ? "custom" : marginMethod.toString()}
-          onValueChange={(value) => handleMarginModeChange(value as "1" | "2" | "3" | "custom")}
+          onOpenChange={marginMethodSelectPreview.handleOpenChange}
+          onValueChange={marginMethodSelectPreview.handleValueChange}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Progressive (1:2:2:3)</SelectItem>
-            <SelectItem value="2">Van de Graaf (2:3:4:6)</SelectItem>
-            <SelectItem value="3">Baseline (1:1:1:1)</SelectItem>
-            <SelectItem value="custom">Custom Margins</SelectItem>
+          <SelectContent onPointerLeave={marginMethodSelectPreview.handleContentPointerLeave}>
+            <SelectItem value="1" {...marginMethodSelectPreview.getItemPreviewProps("1")}>Progressive (1:2:2:3)</SelectItem>
+            <SelectItem value="2" {...marginMethodSelectPreview.getItemPreviewProps("2")}>Van de Graaf (2:3:4:6)</SelectItem>
+            <SelectItem value="3" {...marginMethodSelectPreview.getItemPreviewProps("3")}>Baseline (1:1:1:1)</SelectItem>
+            <SelectItem value="custom" {...marginMethodSelectPreview.getItemPreviewProps("custom")}>Custom Margins</SelectItem>
           </SelectContent>
         </Select>
       </div>

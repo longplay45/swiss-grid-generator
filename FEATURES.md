@@ -13,6 +13,7 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Grid System
 
+- Supported layout dropdowns render hovered options live in the preview and revert on close unless the option is committed.
 - Ratio families: `DIN`, `ANSI`, `Balanced`, `Photo`, `Screen`, `Square`, `Editorial`, `Wide Impact`, `Custom Ratio`.
 - Custom ratio width:height input resolved to A4-equivalent page area.
 - Portrait and landscape orientation.
@@ -51,7 +52,9 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph section: rows, baselines, cols, alignment, reflow, hyphenation, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
+- Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Typo section: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
+- Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
   - font family
@@ -91,7 +94,9 @@ Current capability inventory for Swiss Grid Generator.
 - Stable logical positioning across grid changes.
 - Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
 - Geometry section uses one parameter row per setting.
+- Geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Scheme, swatch color, and transparency live in the Color section.
+- Scheme dropdown previews the hovered placeholder palette before commit.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Info section summarizes rows, baselines, columns, scheme, color, and transparency.
 

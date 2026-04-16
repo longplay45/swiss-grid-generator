@@ -14,6 +14,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
 import type { TypographyScale } from "@/lib/config/defaults"
 import { PanelCard } from "@/components/settings/PanelCard"
+import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
 
 const TYPOGRAPHY_SCALE_OPTIONS: Array<{ value: TypographyScale; label: string }> = Object
   .entries(TYPOGRAPHY_SCALE_LABELS)
@@ -26,9 +27,11 @@ type Props = {
   onHeaderDoubleClick: (event: React.MouseEvent) => void
   typographyScale: TypographyScale
   onTypographyScaleChange: (value: TypographyScale) => void
+  onTypographyScalePreviewChange?: (value: TypographyScale | null) => void
   typographyStyles: GridResult["typography"]["styles"]
   baseFont: FontFamily
   onBaseFontChange: (value: FontFamily) => void
+  onBaseFontPreviewChange?: (value: FontFamily | null) => void
   isDarkMode: boolean
 }
 
@@ -38,11 +41,25 @@ export const TypographyPanel = memo(function TypographyPanel({
   onHeaderDoubleClick,
   typographyScale,
   onTypographyScaleChange,
+  onTypographyScalePreviewChange,
   typographyStyles,
   baseFont,
   onBaseFontChange,
+  onBaseFontPreviewChange,
   isDarkMode,
 }: Props) {
+  const typographyScaleSelectPreview = useSelectRolloverPreview<TypographyScale>({
+    value: typographyScale,
+    onCommitValue: onTypographyScaleChange,
+    onPreviewValue: (value) => onTypographyScalePreviewChange?.(value),
+    onPreviewClear: () => onTypographyScalePreviewChange?.(null),
+  })
+  const baseFontSelectPreview = useSelectRolloverPreview<FontFamily>({
+    value: baseFont,
+    onCommitValue: onBaseFontChange,
+    onPreviewValue: (value) => onBaseFontPreviewChange?.(value),
+    onPreviewClear: () => onBaseFontPreviewChange?.(null),
+  })
   const tableTone = isDarkMode
     ? {
         frame: "border-gray-700 bg-gray-900/60",
@@ -73,7 +90,7 @@ export const TypographyPanel = memo(function TypographyPanel({
   return (
     <PanelCard
       title="V. Typo"
-      tooltip="Typography scale and hierarchy preset"
+      tooltip="Typography scale, hierarchy table, and base font; hierarchy and font lists preview on rollover"
       collapsed={collapsed}
       collapsedSummary={`${TYPOGRAPHY_SCALE_LABELS[typographyScale]}, ${baseFont}`}
       onHeaderClick={onHeaderClick}
@@ -85,16 +102,19 @@ export const TypographyPanel = memo(function TypographyPanel({
         <Label className="text-sm text-gray-600">Font Hierarchy</Label>
         <Select
           value={typographyScale}
-          onValueChange={(v: TypographyScale) =>
-            onTypographyScaleChange(v)
-          }
+          onOpenChange={typographyScaleSelectPreview.handleOpenChange}
+          onValueChange={typographyScaleSelectPreview.handleValueChange}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onPointerLeave={typographyScaleSelectPreview.handleContentPointerLeave}>
             {TYPOGRAPHY_SCALE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                {...typographyScaleSelectPreview.getItemPreviewProps(option.value)}
+              >
                 {option.label}
               </SelectItem>
             ))}
@@ -125,8 +145,11 @@ export const TypographyPanel = memo(function TypographyPanel({
         <Label className="text-sm text-gray-600">Base Font</Label>
         <FontSelect
           value={baseFont}
-          onValueChange={(value) => onBaseFontChange(value as FontFamily)}
+          onValueChange={(value) => baseFontSelectPreview.handleValueChange(value as FontFamily)}
           options={FONT_OPTIONS}
+          onOpenChange={baseFontSelectPreview.handleOpenChange}
+          onContentPointerLeave={baseFontSelectPreview.handleContentPointerLeave}
+          getItemPreviewProps={(value) => baseFontSelectPreview.getItemPreviewProps(value as FontFamily)}
         />
       </div>
     </PanelCard>
