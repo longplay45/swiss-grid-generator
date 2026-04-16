@@ -17,10 +17,10 @@ export function useCloseEditorsOnOutsidePointer({
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target
       if (!(target instanceof Element)) {
-        onCloseEditors()
         return
       }
       if (textareaRef.current?.contains(target)) return
+      if (target.closest('[data-editor-sidebar-host="true"]')) return
       if (target.closest('[data-inline-editor-layer="true"]')) return
       if (target.closest('[data-text-editor-panel="true"]')) return
       if (target.closest('[data-image-editor-panel="true"]')) return

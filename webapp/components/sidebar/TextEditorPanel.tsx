@@ -614,7 +614,7 @@ export function TextEditorPanel<StyleKey extends string>({
     <div data-text-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
-          title="I. Paragraph"
+          title="I. Geometry / Paragraph"
           tooltip="Rows, baselines, columns, alignment, flow, and rotation; geometry dropdowns preview on rollover"
           collapsed={collapsed.layout}
           collapsedSummary={`${controls.editorState.draftRows} rows, ${controls.editorState.draftColumns} cols`}

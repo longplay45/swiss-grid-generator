@@ -257,7 +257,7 @@ export function ImageEditorDialog({
     <div data-image-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
-          title="I. Geometry"
+          title="I. Geometry / Paragraph"
           tooltip="Rows, baselines, and column span; geometry dropdowns preview on rollover"
           collapsed={collapsed.geometry}
           collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols`}
