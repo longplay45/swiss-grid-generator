@@ -4,13 +4,21 @@ import { buildSwissGridIdmlPackage } from "@/lib/idml/builder"
 import type { SwissGridIdmlDocument } from "@/lib/idml/types"
 import { buildResolvedProjectPageExportSource } from "@/lib/project-page-export-source"
 
+type IdmlExportProgress = {
+  completedSteps: number
+  totalSteps: number
+  pageNumber: number
+  pageName: string
+}
+
 export async function renderSwissGridIdmlProject(
   project: LoadedProject<Record<string, unknown>>,
+  onProgress?: (progress: IdmlExportProgress) => void,
 ): Promise<Uint8Array> {
   const pages = project.pages.map((page, index) => {
     const sourcePath = `${page.name || `Page ${index + 1}`} (${page.id})`
     const resolved = buildResolvedProjectPageExportSource(page, sourcePath)
-    return {
+    const plannedPage = {
       ...resolved,
       exportPlan: buildPageExportPlan({
         result: resolved.result,
@@ -26,6 +34,20 @@ export async function renderSwissGridIdmlProject(
         showTypography: resolved.uiSettings.showTypography,
       }),
     }
+    onProgress?.({
+      completedSteps: index + 1,
+      totalSteps: project.pages.length + 1,
+      pageNumber: index + 1,
+      pageName: page.name || `Page ${index + 1}`,
+    })
+    return plannedPage
+  })
+
+  onProgress?.({
+    completedSteps: project.pages.length,
+    totalSteps: project.pages.length + 1,
+    pageNumber: project.pages.length,
+    pageName: "Packaging IDML",
   })
 
   return buildSwissGridIdmlPackage({

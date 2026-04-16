@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 type Props = {
   isOpen: boolean
   onClose: () => void
+  isDarkUi: boolean
   filename: string
   onFilenameChange: (value: string) => void
   title: string
@@ -22,6 +23,7 @@ type Props = {
 export function SaveJsonDialog({
   isOpen,
   onClose,
+  isDarkUi,
   filename,
   onFilenameChange,
   title,
@@ -40,9 +42,9 @@ export function SaveJsonDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-lg border bg-white p-4 shadow-xl space-y-4">
+      <div className={`${isDarkUi ? "dark" : ""} w-full max-w-md rounded-lg border border-border bg-card p-4 text-card-foreground shadow-xl space-y-4`}>
         <h3 className="text-base font-semibold">Save Project JSON</h3>
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-muted-foreground">
           Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
         </p>
         <div className="space-y-2">
@@ -51,7 +53,7 @@ export function SaveJsonDialog({
             type="text"
             value={filename}
             onChange={(event) => onFilenameChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             placeholder={defaultFilename}
           />
         </div>
@@ -61,7 +63,7 @@ export function SaveJsonDialog({
             type="text"
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             placeholder="Project title"
           />
         </div>
@@ -70,7 +72,7 @@ export function SaveJsonDialog({
           <textarea
             value={description}
             onChange={(event) => onDescriptionChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm min-h-20"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-20"
             placeholder="Short description"
           />
         </div>
@@ -80,7 +82,7 @@ export function SaveJsonDialog({
             type="text"
             value={author}
             onChange={(event) => onAuthorChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             placeholder="Author name"
           />
         </div>

@@ -999,6 +999,7 @@ export default function Home() {
             registrationMarks: exportActions.exportRegistrationMarksDraft,
             onRegistrationMarksChange: exportActions.setExportRegistrationMarksDraft,
             onConfirm: exportActions.confirmExport,
+            progress: exportActions.exportProgress,
           }}
           saveDialog={{
             isOpen: exportActions.isSaveDialogOpen,

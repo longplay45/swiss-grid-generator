@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 
 type Props = {
   isOpen: boolean
+  isDarkUi: boolean
   title: string
   message: string
   onClose: () => void
@@ -9,6 +10,7 @@ type Props = {
 
 export function NoticeDialog({
   isOpen,
+  isDarkUi,
   title,
   message,
   onClose,
@@ -22,12 +24,12 @@ export function NoticeDialog({
         aria-modal="true"
         aria-labelledby="notice-dialog-title"
         aria-describedby="notice-dialog-message"
-        className="w-full max-w-sm rounded-lg border bg-white p-4 shadow-xl"
+        className={`${isDarkUi ? "dark" : ""} w-full max-w-sm rounded-lg border border-border bg-card p-4 text-card-foreground shadow-xl`}
       >
-        <h3 id="notice-dialog-title" className="text-base font-semibold text-gray-900">
+        <h3 id="notice-dialog-title" className="text-base font-semibold text-card-foreground">
           {title}
         </h3>
-        <p id="notice-dialog-message" className="mt-2 text-sm text-gray-600">
+        <p id="notice-dialog-message" className="mt-2 text-sm text-muted-foreground">
           {message}
         </p>
         <div className="mt-4 flex items-center justify-end">

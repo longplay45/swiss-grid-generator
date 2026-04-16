@@ -3,7 +3,7 @@
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
-import type { ExportFormat, PrintPresetKey } from "@/hooks/useExportActions"
+import type { ExportFormat, ExportProgressState, PrintPresetKey } from "@/hooks/useExportActions"
 
 type NoticeState = {
   title: string
@@ -42,6 +42,7 @@ type Props = {
     registrationMarks: boolean
     onRegistrationMarksChange: (value: boolean) => void
     onConfirm: () => void
+    progress: ExportProgressState | null
   }
   saveDialog: {
     isOpen: boolean
@@ -96,11 +97,13 @@ export function WorkspaceDialogs({
         exportRegistrationMarksDraft={exportDialog.registrationMarks}
         onExportRegistrationMarksChange={exportDialog.onRegistrationMarksChange}
         onConfirm={exportDialog.onConfirm}
+        exportProgress={exportDialog.progress}
       />
 
       <SaveJsonDialog
         isOpen={saveDialog.isOpen}
         onClose={saveDialog.onClose}
+        isDarkUi={isDarkUi}
         filename={saveDialog.filename}
         onFilenameChange={saveDialog.onFilenameChange}
         title={saveDialog.title}
@@ -118,6 +121,7 @@ export function WorkspaceDialogs({
 
       <NoticeDialog
         isOpen={noticeState !== null}
+        isDarkUi={isDarkUi}
         title={noticeState?.title ?? ""}
         message={noticeState?.message ?? ""}
         onClose={onCloseNotice}

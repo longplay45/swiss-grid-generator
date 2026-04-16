@@ -29,7 +29,7 @@ export function HeaderIconButton({
     <HoverTooltip
       label={tooltip}
       disabled={!showTooltip}
-      tooltipClassName="w-max whitespace-pre-line text-center border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
+      tooltipClassName="w-max whitespace-pre-line text-center border-gray-200 bg-gray-100/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
     >
       <Button
         size="icon"
