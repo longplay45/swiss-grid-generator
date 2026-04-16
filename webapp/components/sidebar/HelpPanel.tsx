@@ -197,7 +197,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>`Esc` or outside click exits edit mode.</li>
+          <li>`Esc` or outside click exits edit mode; clicking another active-page layer card retargets the editor instead.</li>
         </ul>
 
         <div id="help-editor-paragraph" className="space-y-1 pt-1">
@@ -244,7 +244,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
           <li>Delete removes the placeholder immediately.</li>
-          <li>`Esc` or outside click exits edit mode.</li>
+          <li>`Esc` or outside click exits edit mode; clicking another active-page layer card retargets the editor instead.</li>
         </ul>
 
         <div id="help-image-editor-geometry" className="space-y-1 pt-1">
@@ -510,7 +510,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
           <li>Newly added pages open automatically.</li>
           <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>
-          <li>For the active page, drag layer cards to reorder z-index; click selects, double-click opens the editor, and trash removes the layer.</li>
+          <li>For the active page, drag layer cards to reorder z-index; click selects and opens or retargets the editor, while clicks elsewhere in the Project panel exit edit mode.</li>
           <li>The `Pages` section header single-clicks to collapse and double-clicks to toggle immediately.</li>
         </ul>
       </section>

@@ -936,10 +936,13 @@ export const GridPreview = memo(function GridPreview({
           ? "image"
           : null,
     )
-    return () => {
+  }, [editorState, imageEditorState, onEditorModeChange])
+
+  useEffect(() => (
+    () => {
       onEditorModeChange?.(null)
     }
-  }, [editorState, imageEditorState, onEditorModeChange])
+  ), [onEditorModeChange])
 
   return (
     <div

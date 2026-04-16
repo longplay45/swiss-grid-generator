@@ -347,6 +347,7 @@ export function ProjectPageLayersList({
               ref={(node) => {
                 cardRefs.current[thumb.key] = node
               }}
+              data-project-layer-card="true"
               data-card-drag-ignore="true"
               draggable={allowLayerInteractions}
               onPointerDownCapture={(event) => {
@@ -373,8 +374,10 @@ export function ProjectPageLayersList({
               onClick={() => {
                 onSelectPage(pageId)
                 onSelectLayer(thumb.key)
+                if (allowLayerInteractions) {
+                  onToggleEditor(thumb.key)
+                }
               }}
-              onDoubleClick={allowLayerInteractions ? () => onToggleEditor(thumb.key) : undefined}
               className={`${index > 0 ? "mt-2" : ""} relative rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                 draggingKey === thumb.key
                   ? `${tone.card} cursor-grabbing opacity-45`

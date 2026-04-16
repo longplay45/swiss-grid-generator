@@ -25,6 +25,7 @@ export function useCloseEditorsOnOutsidePointer({
       if (target.closest('[data-text-editor-panel="true"]')) return
       if (target.closest('[data-image-editor-panel="true"]')) return
       if (target.closest('[data-text-editor-select-content="true"]')) return
+      if (target.closest('[data-project-layer-card="true"]')) return
       if (target.closest('[data-preview-header-action="help"]')) return
       onCloseEditors()
     }
