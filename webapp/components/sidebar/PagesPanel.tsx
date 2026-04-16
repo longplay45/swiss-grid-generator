@@ -137,9 +137,10 @@ export function PagesPanel({
     const scrollRoot = target.closest("[data-help-scroll-root='true']") as HTMLElement | null
     if (!scrollRoot) return
 
+    const topGapPx = 10
     const rootRect = scrollRoot.getBoundingClientRect()
     const targetRect = target.getBoundingClientRect()
-    const deltaToTop = targetRect.top - rootRect.top
+    const deltaToTop = targetRect.top - rootRect.top - topGapPx
     const nextTop = scrollRoot.scrollTop + deltaToTop
 
     window.requestAnimationFrame(() => {
@@ -173,7 +174,7 @@ export function PagesPanel({
   const tone = isDarkMode
     ? {
         body: "text-gray-400",
-        card: "border-gray-700 bg-gray-800 text-gray-100",
+        card: "border-gray-700 bg-[#1f232b] text-gray-100",
         cardMuted: "text-gray-400",
         close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
         button: "border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100",
@@ -181,7 +182,7 @@ export function PagesPanel({
       }
     : {
         body: "text-gray-600",
-        card: "border-gray-200 bg-gray-50 text-gray-900",
+        card: "border-gray-200 bg-gray-100 text-gray-900",
         cardMuted: "text-gray-500",
         close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
         button: "border-gray-50 text-gray-700 hover:bg-gray-100 hover:text-gray-900",

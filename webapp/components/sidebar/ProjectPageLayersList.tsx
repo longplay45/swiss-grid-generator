@@ -220,13 +220,13 @@ export function ProjectPageLayersList({
 
   const tone = isDarkMode
     ? {
-        card: "border-gray-700 bg-[#1f232b] text-gray-100",
+        card: "border-gray-700 bg-gray-800 text-gray-100",
         cardMuted: "text-gray-400",
         stripeBg: "bg-gray-900",
         empty: "text-gray-500",
       }
     : {
-        card: "border-gray-200 bg-gray-100 text-gray-900",
+        card: "border-gray-200 bg-gray-50 text-gray-900",
         cardMuted: "text-gray-500",
         stripeBg: "bg-white",
         empty: "text-gray-500",
