@@ -307,7 +307,7 @@ export function PreviewWorkspace({
           }`}
         >
           {showPresetsBrowser ? (
-            <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-gray-700 bg-gray-900/40" : "border-gray-200 bg-gray-100/60"}`}>
+            <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-[#313A47] bg-[#1D232D]" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
@@ -392,7 +392,7 @@ export function PreviewWorkspace({
                       type="button"
                       aria-label="Close project panel"
                       onClick={closeSidebarPanel}
-                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
                     >
                       <X className="h-4 w-4" />
                     </button>

@@ -220,10 +220,10 @@ export function ProjectPageLayersList({
 
   const tone = isDarkMode
     ? {
-        card: "border-gray-700 bg-gray-800 text-gray-100",
-        cardMuted: "text-gray-400",
-        stripeBg: "bg-gray-900",
-        empty: "text-gray-500",
+        card: "border-[#313A47] bg-[#232A35] text-[#F4F6F8]",
+        cardMuted: "text-[#8D98AA]",
+        stripeBg: "bg-[#161A22]",
+        empty: "text-[#8D98AA]",
       }
     : {
         card: "border-gray-200 bg-gray-50 text-gray-900",
@@ -310,7 +310,7 @@ export function ProjectPageLayersList({
         data-card-drag-ignore="true"
         onClick={(event) => event.stopPropagation()}
         onDoubleClick={(event) => event.stopPropagation()}
-        className={`rounded-md border border-dashed px-3 py-2 text-[11px] ${tone.empty} ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+        className={`rounded-md border border-dashed px-3 py-2 text-[11px] ${tone.empty} ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}
       >
         No layers on this page yet.
       </div>
@@ -399,7 +399,7 @@ export function ProjectPageLayersList({
                         aria-hidden="true"
                       />
                       <div
-                        className="truncate text-[12px] text-gray-900 dark:text-gray-100"
+                        className={`truncate text-[12px] ${isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}`}
                         style={{
                           fontFamily: getFontFamilyCss(isFontFamily(thumb.font) ? thumb.font : DEFAULT_BASE_FONT),
                         }}

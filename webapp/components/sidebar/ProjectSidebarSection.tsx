@@ -26,7 +26,7 @@ export function ProjectSidebarSection({
     <section
       className={`mb-3 border-b pb-3 ${
         isDarkMode
-          ? "border-gray-700 text-gray-100"
+          ? "border-[#313A47] text-[#F4F6F8]"
           : "border-gray-200 text-gray-900"
       }`}
     >
@@ -49,7 +49,7 @@ export function ProjectSidebarSection({
               <span
                 className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                   isDarkMode
-                    ? "border-gray-600 bg-gray-800 text-gray-300"
+                    ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF]"
                     : "border-gray-300 bg-gray-100 text-gray-700"
                 }`}
               >

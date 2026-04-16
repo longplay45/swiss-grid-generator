@@ -20,21 +20,21 @@ export type WorkspaceTheme = {
 }
 
 const DARK_THEME: WorkspaceTheme = {
-  root: "bg-gray-900",
-  leftPanel: "dark border-gray-700 bg-gray-900 text-gray-100",
-  leftPanelEdit: "bg-gray-900",
-  subtleBorder: "border-gray-700",
-  bodyText: "text-gray-300",
-  headingText: "text-gray-300",
-  link: "text-gray-100 underline",
-  previewShell: "bg-gray-900",
-  previewHeader: "dark border-gray-700 bg-gray-900 text-gray-100",
-  previewContent: "bg-gray-900",
-  previewContentEdit: "bg-gray-900",
-  divider: "bg-gray-700",
-  sidebar: "dark border-gray-700 bg-gray-900 text-gray-300",
-  sidebarHeading: "text-gray-100",
-  sidebarBody: "text-gray-400",
+  root: "bg-[#161A22]",
+  leftPanel: "dark border-[#313A47] bg-[#1D232D] text-[#F4F6F8]",
+  leftPanelEdit: "bg-[#1D232D]",
+  subtleBorder: "border-[#313A47]",
+  bodyText: "text-[#A8B1BF]",
+  headingText: "text-[#F4F6F8]",
+  link: "text-[#F4F6F8] underline",
+  previewShell: "bg-[#161A22]",
+  previewHeader: "dark border-[#313A47] bg-[#1D232D] text-[#F4F6F8]",
+  previewContent: "bg-[#161A22]",
+  previewContentEdit: "bg-[#161A22]",
+  divider: "bg-[#313A47]",
+  sidebar: "dark border-[#313A47] bg-[#1D232D] text-[#A8B1BF]",
+  sidebarHeading: "text-[#F4F6F8]",
+  sidebarBody: "text-[#8D98AA]",
 }
 
 const LIGHT_THEME: WorkspaceTheme = {

@@ -173,12 +173,12 @@ export function PagesPanel({
 
   const tone = isDarkMode
     ? {
-        body: "text-gray-400",
-        card: "border-gray-700 bg-[#1f232b] text-gray-100",
-        cardMuted: "text-gray-400",
-        close: "text-gray-300 hover:bg-gray-700 hover:text-gray-100",
-        button: "border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-gray-100",
-        input: "border-gray-600 bg-gray-900 text-gray-100 placeholder:text-gray-500",
+        body: "text-[#8D98AA]",
+        card: "border-[#313A47] bg-[#1D232D] text-[#F4F6F8]",
+        cardMuted: "text-[#8D98AA]",
+        close: "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]",
+        button: "border-[#313A47] bg-[#1D232D] text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]",
+        input: "border-[#313A47] bg-[#232A35] text-[#F4F6F8] placeholder:text-[#8D98AA]",
       }
     : {
         body: "text-gray-600",
@@ -506,7 +506,7 @@ export function PagesPanel({
                     </div>
                   </div>
                   {isExpanded ? (
-                    <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                    <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
                       <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
                         Layers
                       </div>

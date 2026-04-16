@@ -83,13 +83,13 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
   const tone = isDarkMode
     ? {
-        heading: "text-gray-100",
-        body: "text-gray-300",
-        divider: "border-gray-700",
-        emphasis: "text-gray-200 font-medium",
-        caption: "text-gray-500",
+        heading: "text-[#F4F6F8]",
+        body: "text-[#A8B1BF]",
+        divider: "border-[#313A47]",
+        emphasis: "text-[#F4F6F8] font-medium",
+        caption: "text-[#8D98AA]",
         indexLink: "text-blue-400 hover:underline",
-        jumpButton: "border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-gray-100",
+        jumpButton: "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:bg-[#1D232D] hover:text-[#F4F6F8]",
       }
     : {
         heading: "text-gray-900",
@@ -109,7 +109,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           type="button"
           aria-label="Close help panel"
           onClick={onClose}
-          className={`rounded-sm p-1 transition-colors ${isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-gray-100" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
+          className={`rounded-sm p-1 transition-colors ${isDarkMode ? "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
         >
           <X className="h-4 w-4" />
         </button>

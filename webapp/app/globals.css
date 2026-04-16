@@ -70,8 +70,16 @@
   html,
   body {
     @apply bg-background text-foreground;
+    background-color: #f3f4f6;
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html,
+    body {
+      background-color: #161A22;
+    }
   }
 }

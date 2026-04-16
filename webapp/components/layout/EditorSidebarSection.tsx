@@ -38,7 +38,7 @@ export function EditorSidebarSection({
     <section
       className={`mb-3 border-b pb-3 ${
         isDarkMode
-          ? "border-gray-700 text-gray-100"
+          ? "border-[#313A47] text-[#F4F6F8]"
           : "border-gray-200 text-gray-900"
       }`}
     >
@@ -46,7 +46,7 @@ export function EditorSidebarSection({
         label={tooltip}
         disabled={!showRolloverInfo}
         className="block"
-        tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
+        tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
       >
         <header
           className="cursor-pointer select-none pt-3"
@@ -69,9 +69,9 @@ export function EditorSidebarSection({
                 <span
                   className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isDarkMode
-                      ? "border-gray-600 bg-gray-800 text-gray-300"
+                      ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF]"
                       : "border-gray-300 bg-gray-100 text-gray-700"
-                  }`}
+                }`}
                 >
                   <ChevronUp
                     className={`h-2 w-2 transition-transform ${collapsed ? "rotate-90" : "rotate-180"}`}
