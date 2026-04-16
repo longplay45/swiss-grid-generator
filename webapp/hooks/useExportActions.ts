@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { flushSync } from "react-dom"
 import jsPDF from "jspdf"
 import type { FontFamily } from "@/lib/config/fonts"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
@@ -339,6 +340,14 @@ export function useExportActions(ctx: ExportActionsContext) {
   const waitForNextPaint = useCallback(async () => {
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => resolve())
+    })
+  }, [])
+
+  const waitForUiCommit = useCallback(async () => {
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => resolve())
+      })
     })
   }, [])
 
@@ -696,6 +705,18 @@ export function useExportActions(ctx: ExportActionsContext) {
     if (!trimmedName) return
     if (selectedPageCount === 0) return
 
+    flushSync(() => {
+      setExportProgress({
+        format: exportFormatDraft,
+        completedSteps: 0,
+        totalSteps: exportFormatDraft === "idml" ? selectedPageCount + 1 : selectedPageCount,
+        currentPageNumber: normalizedRange.fromPage,
+        currentLabel: "Preparing export",
+        phase: "rendering",
+      })
+    })
+    await waitForUiCommit()
+
     const filename = updateFilenameForExport(
       trimmedName,
       exportFormatDraft,
@@ -718,14 +739,12 @@ export function useExportActions(ctx: ExportActionsContext) {
 
     try {
       if (exportFormatDraft === "idml") {
-        setExportProgress({
-          format: "idml",
-          completedSteps: 0,
+        setExportProgress((current) => current ? {
+          ...current,
           totalSteps: selectedProject.pages.length + 1,
-          currentPageNumber: 1,
+          currentPageNumber: normalizedRange.fromPage,
           currentLabel: selectedProject.pages[0]?.name || "Preparing IDML",
-          phase: "rendering",
-        })
+        } : current)
         await exportIDML(selectedProject, filename)
         setIsExportDialogOpen(false)
         return
@@ -769,7 +788,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     setExportBleedMm,
     setPersistedPrintPresetEnabled,
     setExportRegistrationMarks,
-    selectedProjectPages.length,
+    waitForUiCommit,
   ])
 
   const parsedDraftBleed = Number(exportBleedMmDraft)
