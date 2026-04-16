@@ -202,6 +202,7 @@ export function ImageEditorDialog({
       input: "border-gray-700 bg-gray-900 text-gray-100 focus:border-gray-500",
       muted: "text-gray-400",
       panel: "bg-transparent",
+      surface: "bg-transparent",
       infoFrame: "border-gray-700 bg-gray-900/60",
       infoRow: "border-gray-800",
       infoLabel: "text-gray-400",
@@ -215,6 +216,7 @@ export function ImageEditorDialog({
       input: "border-gray-200 bg-white text-gray-900 focus:border-gray-400",
       muted: "text-gray-600",
       panel: "bg-transparent",
+      surface: "bg-transparent",
       infoFrame: "border-gray-200 bg-gray-50/80",
       infoRow: "border-gray-200",
       infoLabel: "text-gray-500",
@@ -253,7 +255,7 @@ export function ImageEditorDialog({
 
   return (
     <div data-image-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
-      <div className="bg-gray-50 min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6">
+      <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
           title="I. Geometry"
           tooltip="Rows, baselines, and column span; geometry dropdowns preview on rollover"
