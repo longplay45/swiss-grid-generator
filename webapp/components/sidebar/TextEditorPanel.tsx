@@ -599,8 +599,8 @@ export function TextEditorPanel<StyleKey extends string>({
   const segmentButtonClassName = (active: boolean) => (
     `h-8 rounded-sm border px-3 text-xs ${active ? tone.buttonActive : tone.button}`
   )
-  const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-white data-[state=checked]:bg-white data-[state=unchecked]:bg-white"
-  const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-gray-300 shadow-none data-[state=checked]:translate-x-3"
+  const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-gray-300 data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+  const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-white shadow-none data-[state=checked]:translate-x-3"
   const infoRows = [
     ["Rows", String(controls.editorState.draftRows)],
     ["Baselines", String(controls.editorState.draftHeightBaselines)],
