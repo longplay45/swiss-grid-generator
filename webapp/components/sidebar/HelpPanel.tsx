@@ -203,10 +203,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-editor-paragraph" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Paragraph Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Rows, baselines, columns, alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+            <li>Rows, baselines, columns, horizontal alignment, vertical alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
             <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
             <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
+            <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           </ul>

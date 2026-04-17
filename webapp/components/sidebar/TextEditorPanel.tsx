@@ -607,6 +607,7 @@ export function TextEditorPanel<StyleKey extends string>({
     ["Cols", String(controls.editorState.draftColumns)],
     ["Rotation", `${Math.round(controls.editorState.draftRotation)}deg`],
     ["Align", controls.editorState.draftAlign.charAt(0).toUpperCase() + controls.editorState.draftAlign.slice(1)],
+    ["V Align", controls.editorState.draftVerticalAlign.charAt(0).toUpperCase() + controls.editorState.draftVerticalAlign.slice(1)],
     ["Reflow", controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off"],
     ["Hyphen", controls.editorState.draftSyllableDivision ? "On" : "Off"],
     ["Font", selectionFontFamily ?? "Mixed"],
@@ -727,6 +728,33 @@ export function TextEditorPanel<StyleKey extends string>({
                 onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftAlign: "right" } : prev)}
               >
                 Right
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Vertical Alignment</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftVerticalAlign === "top")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftVerticalAlign: "top" } : prev)}
+              >
+                Top
+              </button>
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftVerticalAlign === "center")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftVerticalAlign: "center" } : prev)}
+              >
+                Center
+              </button>
+              <button
+                type="button"
+                className={segmentButtonClassName(controls.editorState.draftVerticalAlign === "bottom")}
+                onClick={() => controls.setEditorState((prev) => prev ? { ...prev, draftVerticalAlign: "bottom" } : prev)}
+              >
+                Bottom
               </button>
             </div>
           </div>

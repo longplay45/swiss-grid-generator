@@ -80,8 +80,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
   - **Sans-Serif**: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
   - **Serif**: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
   - **Poster**: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display)
-- Paragraph-level geometry and alignment plus selection-level font family, cut, hierarchy, color, and tracking
+- Paragraph-level geometry plus horizontal/vertical alignment and selection-level font family, cut, hierarchy, color, and tracking
 - Paragraph and image-placeholder height can be composed as `rows + baselines`, including shallow frames such as `0 rows + 1 baseline`
+- Paragraph vertical alignment (`Top`, `Center`, `Bottom`) stays baseline-aligned inside the configured frame height
 - Optical/metric kerning toggle with shared render/export behavior
 - Inline editor caret and selection follow rendered text geometry
 - Live character & word count
@@ -106,6 +107,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Text and image editors reuse the left-sidebar section pattern instead of a preview-docked rail
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
 - Text editor family, cut, hierarchy, and geometry dropdowns preview on rollover before commit; image editor geometry and scheme dropdowns do the same
+- Text paragraphs support horizontal (`Left`, `Center`, `Right`) and vertical (`Top`, `Center`, `Bottom`) frame alignment in the editor
 - Image placeholder editor uses `Geometry`, `Color`, and `Info` sections, including scheme, swatch color, and transparency controls
 
 ### Export

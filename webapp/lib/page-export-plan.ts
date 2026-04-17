@@ -380,6 +380,7 @@ export function buildPageExportPlan({
   const blockRowSpans = layout?.blockRowSpans ?? {}
   const blockHeightBaselines = layout?.blockHeightBaselines ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
+  const blockVerticalAlignments = layout?.blockVerticalAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
   const blockFontWeights = layout?.blockFontWeights ?? {}
@@ -544,6 +545,7 @@ export function buildPageExportPlan({
       styleAssignments,
       styles: styleDefinitions,
       blockTextAlignments,
+      blockVerticalAlignments,
       contentTop,
       contentLeft,
       pageHeight: sourceHeight,

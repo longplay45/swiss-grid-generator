@@ -1,9 +1,9 @@
 import type { TextFormatRun } from "@/lib/text-format-runs"
-import type { ModulePosition, TextAlignMode, TextBlockPosition } from "@/lib/types/layout-primitives"
+import type { ModulePosition, TextAlignMode, TextBlockPosition, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 
 export type BlockId = string
-export type { ModulePosition, TextAlignMode, TextBlockPosition }
+export type { ModulePosition, TextAlignMode, TextBlockPosition, TextVerticalAlignMode }
 
 export type PreviewLayoutState<
   StyleKey extends string = string,
@@ -24,6 +24,7 @@ export type PreviewLayoutState<
   blockRowSpans?: Record<Key, number>
   blockHeightBaselines?: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>
+  blockVerticalAlignments?: Record<Key, TextVerticalAlignMode>
   blockTextReflow?: Record<Key, boolean>
   blockSyllableDivision?: Record<Key, boolean>
   // Legacy compatibility for older saved layouts.

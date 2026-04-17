@@ -338,6 +338,7 @@ The typography system uses **baseline-derived leading values**. Most styles stay
 | Caption  | 7pt       | 8pt     | 0.667×            | 1.0        | Regular Italic |
 
 Default text alignment is left.
+Default vertical text alignment is top.
 
 ### Font Hierarchy Methods
 
@@ -589,6 +590,16 @@ blockHeight = rows + baselines
 ```
 
 `rows = 0` is valid when `heightBaselines > 0`.
+
+For text paragraphs, vertical alignment offsets the line stack inside that frame while preserving baseline rhythm:
+
+```
+freeBaselineRows = floor((blockHeightPx - occupiedTextHeightPx) / baselineStepPx)
+verticalOffsetPx =
+  top    -> 0
+  center -> floor(freeBaselineRows / 2) × baselineStepPx
+  bottom -> freeBaselineRows × baselineStepPx
+```
 
 ### Reflow Modes
 

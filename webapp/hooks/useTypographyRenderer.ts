@@ -13,7 +13,7 @@ import {
   drawCanvasTextPlan,
   drawCanvasLayerStack,
 } from "@/lib/canvas-page-renderer"
-import type { BlockRect, BlockRenderPlan, TextAlignMode } from "@/lib/preview-types"
+import type { BlockRect, BlockRenderPlan, TextAlignMode, TextVerticalAlignMode } from "@/lib/preview-types"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import type { WrappedTextLine } from "@/lib/text-layout"
@@ -44,6 +44,7 @@ type Args<BlockId extends string> = {
   textContent: Record<BlockId, string>
   styleAssignments: Record<BlockId, keyof GridResult["typography"]["styles"]>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<BlockId, TextVerticalAlignMode>>
   blockModulePositions: Partial<Record<BlockId, ModulePosition>>
   imageModulePositions: Partial<Record<BlockId, ModulePosition>>
   dragState: DragState<BlockId> | null
@@ -115,6 +116,7 @@ export function useTypographyRenderer<BlockId extends string>({
   textContent,
   styleAssignments,
   blockTextAlignments,
+  blockVerticalAlignments,
   blockModulePositions,
   imageModulePositions,
   dragState,
@@ -281,6 +283,7 @@ export function useTypographyRenderer<BlockId extends string>({
           styleAssignments,
           styles,
           blockTextAlignments,
+          blockVerticalAlignments,
           contentTop,
           contentLeft,
           pageHeight,
@@ -436,6 +439,7 @@ export function useTypographyRenderer<BlockId extends string>({
     blockOrder,
     blockRectsRef,
     blockTextAlignments,
+    blockVerticalAlignments,
     canvasRef,
     clampImageBaselinePosition,
     dragState,

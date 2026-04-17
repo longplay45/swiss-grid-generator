@@ -1,9 +1,9 @@
 import { resolveBlockHeight } from "@/lib/block-height"
 import { sumAxisSpan } from "@/lib/grid-rhythm"
 import type { WrappedTextLine } from "@/lib/text-layout"
-import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import type { TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
-export type { TextAlignMode }
+export type { TextAlignMode, TextVerticalAlignMode }
 
 export type BlockRect = {
   x: number
@@ -38,6 +38,7 @@ export type TypographyLayoutPlan<BlockId extends string, StyleKey extends string
   rect: BlockRect
   guideRects: BlockRect[]
   textAlign: TextAlignMode
+  textVerticalAlign: TextVerticalAlignMode
   blockRotation: number
   rotationOriginX: number
   rotationOriginY: number
@@ -50,6 +51,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   styleAssignments: Record<BlockId, StyleKey>
   styles: Record<StyleKey, TypographyStyleDefinition>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<BlockId, TextVerticalAlignMode>>
   contentTop: number
   contentLeft: number
   pageHeight: number
@@ -107,6 +109,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   styleAssignments,
   styles,
   blockTextAlignments,
+  blockVerticalAlignments,
   contentTop,
   contentLeft,
   pageHeight,
@@ -234,6 +237,34 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     })
   }
 
+  const getAnchorX = (left: number, width: number, align: TextAlignMode) => (
+    align === "right"
+      ? left + width
+      : align === "center"
+        ? left + width / 2
+        : left
+  )
+
+  const getVerticalStartOffset = ({
+    lineCount,
+    lineStep,
+    availableHeight,
+    verticalAlign,
+  }: {
+    lineCount: number
+    lineStep: number
+    availableHeight: number
+    verticalAlign: TextVerticalAlignMode
+  }) => {
+    if (verticalAlign === "top" || lineCount <= 0) return 0
+    const occupiedHeight = Math.max(0, lineCount * lineStep)
+    const freeHeight = Math.max(0, availableHeight - occupiedHeight)
+    const freeBaselineRows = Math.floor(freeHeight / Math.max(baselineStep, 0.0001))
+    if (freeBaselineRows <= 0) return 0
+    if (verticalAlign === "bottom") return freeBaselineRows * baselineStep
+    return Math.floor(freeBaselineRows / 2) * baselineStep
+  }
+
   const useRowPlacement = gridRows >= 2
   const useParagraphRows = gridRows >= 5
   const rowHeightBaselines = moduleHeight / baselineStep
@@ -297,6 +328,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const autoY = contentTop + (blockStartOffset - 1) * baselineStep
     const origin = getOriginForBlock(key, autoX, autoY)
     const textAlign = blockTextAlignments[key] ?? "left"
+    const textVerticalAlign = blockVerticalAlignments[key] ?? "top"
     const ascent = textAscent({ context, key, styleKey, fontSize })
     const hitTopPadding = Math.max(baselineStep, ascent)
     const lineStep = baselineMult * baselineStep
@@ -307,6 +339,12 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan, heightBaselines)
     const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, heightBaselines, lineStep)
     const maxLinesPerColumn = Math.max(1, Math.floor(moduleHeightForBlock / Math.max(lineStep, 0.0001)))
+    const verticalStartOffset = getVerticalStartOffset({
+      lineCount: columnReflow ? Math.min(lines.length, maxLinesPerColumn) : lines.length,
+      lineStep,
+      availableHeight: moduleHeightForBlock,
+      verticalAlign: textVerticalAlign,
+    })
     let maxUsedRows = 0
     const commands: TextDrawCommand[] = []
 
@@ -314,9 +352,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       x: origin.x,
       y: origin.y - hitTopPadding,
       width: wrapWidth,
-      height: columnReflow
-        ? moduleHeightForBlock + hitTopPadding
-        : (Math.max(lines.length, 1) * baselineMult + 1) * baselineStep + hitTopPadding,
+      height: moduleHeightForBlock + hitTopPadding,
     }
     const guideRects: BlockRect[] = columnReflow
       ? Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
@@ -335,14 +371,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       }]
 
     if (!columnReflow) {
-      const anchorX = textAlign === "right"
-        ? origin.x + wrapWidth
-        : textAlign === "center"
-          ? origin.x + wrapWidth / 2
-          : origin.x
+      const anchorX = getAnchorX(origin.x, wrapWidth, textAlign)
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
         const line = lines[lineIndex]
-        const lineTopY = origin.y + baselineStep + lineIndex * baselineMult * baselineStep
+        const lineTopY = origin.y + baselineStep + verticalStartOffset + lineIndex * lineStep
         const y = lineTopY + ascent
         if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
@@ -364,13 +396,9 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const lineIndexWithinColumn = lineIndex % maxLinesPerColumn
         const columnX = origin.x + getColumnOffset(startCol, columnIndex)
         const columnWidth = getColumnWidthAt(startCol + columnIndex)
-        const anchorX = textAlign === "right"
-          ? columnX + columnWidth
-          : textAlign === "center"
-            ? columnX + columnWidth / 2
-            : columnX
+        const anchorX = getAnchorX(columnX, columnWidth, textAlign)
         const line = lines[lineIndex]
-        const lineTopY = origin.y + baselineStep + lineIndexWithinColumn * lineStep
+        const lineTopY = origin.y + baselineStep + verticalStartOffset + lineIndexWithinColumn * lineStep
         const y = lineTopY + ascent
         if (lineTopY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndexWithinColumn + 1)
@@ -395,9 +423,6 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         last.text = `${last.text}\u00AD`
       }
     }
-    if (!columnReflow && maxUsedRows > 0) {
-      rect.height = (maxUsedRows * baselineMult + 1) * baselineStep + hitTopPadding
-    }
     rects[key] = rect
     plans.push({
       key,
@@ -410,6 +435,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       rect,
       guideRects,
       textAlign,
+      textVerticalAlign,
       blockRotation: getBlockRotation(key),
       rotationOriginX: origin.x,
       rotationOriginY: origin.y,
@@ -452,6 +478,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   }) ?? captionStyle.baselineMultiplier
   const captionContext = createTextContext({ key: captionKey, styleKey: captionStyleKey, fontSize: captionFontSize })
   const captionAlign = blockTextAlignments[captionKey] ?? "left"
+  const captionVerticalAlign = blockVerticalAlignments[captionKey] ?? "top"
   const captionSpan = getBlockSpan(captionKey)
   const captionRowSpan = getBlockRows(captionKey)
   const captionHeightBaselines = getBlockHeightBaselines?.(captionKey) ?? 0
@@ -496,17 +523,21 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan, captionHeightBaselines)
   const captionReflowRowLayouts = buildReflowRowLayouts(captionStartRow, captionRowSpan, captionHeightBaselines, captionLineStep)
   const captionMaxLinesPerColumn = Math.max(1, Math.floor(captionModuleHeight / Math.max(captionLineStep, 0.0001)))
-  let captionMaxUsedRows = 0
+  const captionVerticalStartOffset = getVerticalStartOffset({
+    lineCount: captionColumnReflow ? Math.min(captionLines.length, captionMaxLinesPerColumn) : captionLines.length,
+    lineStep: captionLineStep,
+    availableHeight: captionModuleHeight,
+    verticalAlign: captionVerticalAlign,
+  })
   const captionCommands: TextDrawCommand[] = []
 
   if (!captionReflowEnabled) {
-    const captionAnchorX = captionAlign === "right" ? captionOrigin.x + captionWidth : captionOrigin.x
+    const captionAnchorX = getAnchorX(captionOrigin.x, captionWidth, captionAlign)
     for (let lineIndex = 0; lineIndex < captionLines.length; lineIndex += 1) {
       const line = captionLines[lineIndex]
-      const lineTopY = captionOrigin.y + baselineStep + lineIndex * captionBaselineMult * baselineStep
+      const lineTopY = captionOrigin.y + baselineStep + captionVerticalStartOffset + lineIndex * captionLineStep
       const y = lineTopY + captionAscent
       if (lineTopY > captionBottomLineLimit) continue
-      captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndex + 1)
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -532,12 +563,11 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const lineIndexWithinColumn = lineIndex % captionMaxLinesPerColumn
       const columnX = captionOrigin.x + getColumnOffset(captionStartCol, columnIndex)
       const columnWidth = getColumnWidthAt(captionStartCol + columnIndex)
-      const captionAnchorX = captionAlign === "right" ? columnX + columnWidth : columnX
+      const captionAnchorX = getAnchorX(columnX, columnWidth, captionAlign)
       const line = captionLines[lineIndex]
-      const lineTopY = captionOrigin.y + baselineStep + lineIndexWithinColumn * captionLineStep
+      const lineTopY = captionOrigin.y + baselineStep + captionVerticalStartOffset + lineIndexWithinColumn * captionLineStep
       const y = lineTopY + captionAscent
       if (lineTopY > captionBottomLineLimit) continue
-      captionMaxUsedRows = Math.max(captionMaxUsedRows, lineIndexWithinColumn + 1)
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -573,9 +603,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     x: captionOrigin.x,
     y: captionOrigin.y - captionHitTopPadding,
     width: captionWidth,
-    height: captionColumnReflow
-      ? captionModuleHeight + captionHitTopPadding
-      : ((Math.max(captionMaxUsedRows, captionLineCount) || 1) * captionBaselineMult + 1) * baselineStep + captionHitTopPadding,
+    height: captionModuleHeight + captionHitTopPadding,
   }
   const captionGuideRects: BlockRect[] = captionColumnReflow
     ? Array.from({ length: Math.max(1, captionSpan) }, (_, columnIndex) => (
@@ -590,7 +618,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       x: captionOrigin.x,
       y: captionOrigin.y + baselineStep,
       width: captionWidth,
-      height: captionRect.height,
+      height: captionModuleHeight,
     }]
   rects[captionKey] = captionRect
   plans.push({
@@ -604,6 +632,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     rect: captionRect,
     guideRects: captionGuideRects,
     textAlign: captionAlign,
+    textVerticalAlign: captionVerticalAlign,
     blockRotation: getBlockRotation(captionKey),
     rotationOriginX: captionOrigin.x,
     rotationOriginY: captionOrigin.y,

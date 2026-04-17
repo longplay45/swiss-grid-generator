@@ -1,9 +1,9 @@
-import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import type { TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { PositionedTextFormatTrackingSegment } from "@/lib/text-format-runs"
 import type { BlockRect, TextDrawCommand } from "@/lib/typography-layout-plan"
 
-export type { BlockRect, TextAlignMode, TextDrawCommand }
+export type { BlockRect, TextAlignMode, TextDrawCommand, TextVerticalAlignMode }
 
 export type PagePoint = {
   x: number
@@ -41,6 +41,7 @@ export type BlockRenderPlan<Key extends string> = {
   font: string
   textColor: string
   textAlign: TextAlignMode
+  textVerticalAlign: TextVerticalAlignMode
   blockRotation: number
   rotationOriginX: number
   rotationOriginY: number

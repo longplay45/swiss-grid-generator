@@ -9,6 +9,7 @@ import type {
   RenderedCaretStop,
   RenderedTextLine,
   TextAlignMode,
+  TextVerticalAlignMode,
   TextDrawCommand,
 } from "@/lib/preview-types"
 import {
@@ -77,6 +78,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   styleAssignments: Record<BlockId, StyleKey>
   styles: Record<StyleKey, TypographyStyleDefinition>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<BlockId, TextVerticalAlignMode>>
   contentTop: number
   contentLeft: number
   pageHeight: number
@@ -425,6 +427,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   styleAssignments,
   styles,
   blockTextAlignments,
+  blockVerticalAlignments,
   contentTop,
   contentLeft,
   pageHeight,
@@ -477,6 +480,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     styleAssignments,
     styles,
     blockTextAlignments,
+    blockVerticalAlignments,
     contentTop,
     contentLeft,
     pageHeight,
@@ -619,6 +623,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         opticalKerning ? "kerning-on" : "kerning-off",
         trackingScale,
         plan.textAlign,
+        plan.textVerticalAlign,
         plan.blockRotation.toFixed(2),
         plan.span,
         plan.rowSpan,
@@ -645,6 +650,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       font: planFont,
       textColor: getBlockTextColor(plan.key),
       textAlign: plan.textAlign,
+      textVerticalAlign: plan.textVerticalAlign,
       blockRotation: plan.blockRotation,
       rotationOriginX: plan.rotationOriginX,
       rotationOriginY: plan.rotationOriginY,

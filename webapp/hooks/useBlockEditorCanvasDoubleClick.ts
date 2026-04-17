@@ -13,7 +13,7 @@ import {
 } from "@/lib/text-rendering"
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
-import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
+import type { ModulePosition, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
 type Args = {
   showTypography: boolean
@@ -30,6 +30,7 @@ type Args = {
   blockCustomSizes: Partial<Record<string, number>>
   blockCustomLeadings: Partial<Record<string, number>>
   blockTextAlignments: Partial<Record<string, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<string, TextVerticalAlignMode>>
   recordHistoryBeforeChange: () => void
   setBlockCollections: (
     updater: (prev: PreviewTextLayerCollectionsState) => PreviewTextLayerCollectionsState,
@@ -77,6 +78,7 @@ export function useBlockEditorCanvasDoubleClick({
   blockCustomSizes,
   blockCustomLeadings,
   blockTextAlignments,
+  blockVerticalAlignments,
   recordHistoryBeforeChange,
   setBlockCollections,
   getNextCustomBlockId,
@@ -126,6 +128,7 @@ export function useBlockEditorCanvasDoubleClick({
         blockCustomSizes,
         blockCustomLeadings,
         blockTextAlignments,
+        blockVerticalAlignments,
         blockTextEdited,
         getBlockFont,
         getBlockRotation,
@@ -200,6 +203,7 @@ export function useBlockEditorCanvasDoubleClick({
     blockCustomSizes,
     blockOrder,
     blockTextAlignments,
+    blockVerticalAlignments,
     blockTextEdited,
     canvasRef,
     defaultTextColor,

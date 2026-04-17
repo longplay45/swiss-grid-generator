@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 
-import type { BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import type { BlockEditorTextAlign, BlockEditorVerticalAlign } from "@/components/editor/block-editor-types"
 import { normalizeHeightMetrics } from "@/lib/block-height"
 import { useLayoutSnapshot } from "@/hooks/useLayoutSnapshot"
 import { useStateCommands, type Updater } from "@/hooks/useStateCommands"
@@ -34,6 +34,7 @@ import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type TextAlignMode = BlockEditorTextAlign
+type TextVerticalAlignMode = BlockEditorVerticalAlign
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily, BlockId>
 
 export type PreviewTextBlockCollectionsState = PreviewTextLayerCollectionsState<BlockId, TypographyStyleKey>
@@ -57,6 +58,7 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockRowSpans: {},
     blockHeightBaselines: {},
     blockTextAlignments: {},
+    blockVerticalAlignments: {},
     blockTextReflow: {},
     blockSyllableDivision: {},
     blockFontFamilies: {},
@@ -89,6 +91,7 @@ export function usePreviewTextBlockState({
     blockRowSpans,
     blockHeightBaselines,
     blockTextAlignments,
+    blockVerticalAlignments,
     blockTextReflow,
     blockSyllableDivision,
     blockFontFamilies,
@@ -123,6 +126,10 @@ export function usePreviewTextBlockState({
 
   const setBlockTextAlignments = useCallback((next: Updater<Partial<Record<BlockId, TextAlignMode>>>) => {
     setBlockCollectionField("blockTextAlignments", next)
+  }, [setBlockCollectionField])
+
+  const setBlockVerticalAlignments = useCallback((next: Updater<Partial<Record<BlockId, TextVerticalAlignMode>>>) => {
+    setBlockCollectionField("blockVerticalAlignments", next)
   }, [setBlockCollectionField])
 
   const setBlockModulePositions = useCallback((next: Updater<Partial<Record<BlockId, TextBlockPosition>>>) => {
@@ -295,6 +302,7 @@ export function usePreviewTextBlockState({
       blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
       blockHeightBaselines: { ...(snapshot.blockHeightBaselines ?? {}) },
       blockTextAlignments: { ...snapshot.blockTextAlignments },
+      blockVerticalAlignments: { ...(snapshot.blockVerticalAlignments ?? {}) },
       blockTextReflow: { ...(snapshot.blockTextReflow ?? {}) },
       blockSyllableDivision: { ...(snapshot.blockSyllableDivision ?? {}) },
       blockModulePositions: { ...snapshot.blockModulePositions },
@@ -314,6 +322,7 @@ export function usePreviewTextBlockState({
     blockRowSpans,
     blockHeightBaselines,
     blockTextAlignments,
+    blockVerticalAlignments,
     blockTextReflow,
     blockSyllableDivision,
     blockFontFamilies,
@@ -330,6 +339,7 @@ export function usePreviewTextBlockState({
     setStyleAssignments,
     setBlockColumnSpans,
     setBlockTextAlignments,
+    setBlockVerticalAlignments,
     setBlockModulePositions,
     getBlockSpan,
     getBlockRows,

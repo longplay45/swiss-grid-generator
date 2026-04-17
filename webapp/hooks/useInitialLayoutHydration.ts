@@ -8,7 +8,7 @@ import { toTextBlockPosition } from "@/lib/text-block-position"
 import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
 import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
 import { normalizeTextTrackingRuns, type TextTrackingRun } from "@/lib/text-tracking-runs"
-import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
+import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextBlockPosition, TextVerticalAlignMode } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, BlockKey extends string> = {
   initialLayout: PreviewLayoutState<StyleKey, FontFamily, BlockKey> | null
@@ -42,6 +42,7 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockRowSpans: Partial<Record<BlockKey, number>>
     blockHeightBaselines: Partial<Record<BlockKey, number>>
     blockTextAlignments: Partial<Record<BlockKey, TextAlignMode>>
+    blockVerticalAlignments: Partial<Record<BlockKey, TextVerticalAlignMode>>
     blockTextReflow: Partial<Record<BlockKey, boolean>>
     blockSyllableDivision: Partial<Record<BlockKey, boolean>>
     blockItalic: Partial<Record<BlockKey, boolean>>
@@ -101,6 +102,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
         blockRowSpans: {},
         blockHeightBaselines: {},
         blockTextAlignments: {} as Record<BlockKey, TextAlignMode>,
+        blockVerticalAlignments: {} as Record<BlockKey, TextVerticalAlignMode>,
         blockTextReflow: {},
         blockSyllableDivision: {},
         blockItalic: {},
@@ -160,9 +162,15 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
 
     const nextAlignments = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockTextAlignments?.[key]
-      acc[key] = raw === "right" ? "right" : "left"
+      acc[key] = raw === "right" || raw === "center" ? raw : "left"
       return acc
     }, {} as Record<BlockKey, TextAlignMode>)
+
+    const nextVerticalAlignments = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockVerticalAlignments?.[key]
+      acc[key] = raw === "bottom" || raw === "center" ? raw : "top"
+      return acc
+    }, {} as Record<BlockKey, TextVerticalAlignMode>)
 
     const nextRows = normalizedKeys.reduce((acc, key) => {
       const height = normalizeHeightMetrics({
@@ -292,6 +300,7 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockRowSpans: nextRows,
       blockHeightBaselines: nextHeightBaselines,
       blockTextAlignments: nextAlignments,
+      blockVerticalAlignments: nextVerticalAlignments,
       blockTextReflow: nextReflow,
       blockSyllableDivision: nextSyllableDivision,
       blockItalic: nextItalic,

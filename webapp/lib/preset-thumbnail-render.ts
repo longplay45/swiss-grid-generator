@@ -38,7 +38,7 @@ import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
-import type { ModulePosition, PreviewLayoutState, TextAlignMode } from "@/lib/types/preview-layout"
+import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/preview-layout"
 import { createTextMetricsService } from "@/lib/text-metrics-service"
 
 type BlockId = string
@@ -67,6 +67,10 @@ function getThumbnailLayout(page: LayoutPresetBrowserPage): ThumbnailLayout | nu
 
 function toTextAlign(value: unknown): TextAlignMode {
   return value === "right" || value === "center" ? value : "left"
+}
+
+function toTextVerticalAlign(value: unknown): TextVerticalAlignMode {
+  return value === "bottom" || value === "center" ? value : "top"
 }
 
 function getStyleDefinitions(page: LayoutPresetBrowserPage): Record<TypographyStyleKey, TypographyStyleDefinition> {
@@ -187,6 +191,7 @@ export function drawPresetThumbnailToCanvas(
   const blockRowSpans = layout?.blockRowSpans ?? {}
   const blockHeightBaselines = layout?.blockHeightBaselines ?? {}
   const blockTextAlignments = layout?.blockTextAlignments ?? {}
+  const blockVerticalAlignments = layout?.blockVerticalAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
@@ -418,6 +423,9 @@ export function drawPresetThumbnailToCanvas(
       blockTextAlignments: Object.fromEntries(
         blockOrder.map((key) => [key, toTextAlign(blockTextAlignments[key])]),
       ) as Partial<Record<BlockId, TextAlignMode>>,
+      blockVerticalAlignments: Object.fromEntries(
+        blockOrder.map((key) => [key, toTextVerticalAlign(blockVerticalAlignments[key])]),
+      ) as Partial<Record<BlockId, TextVerticalAlignMode>>,
       contentTop,
       contentLeft,
       pageHeight,

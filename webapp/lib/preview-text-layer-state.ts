@@ -12,7 +12,7 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import { normalizeTextTrackingRuns } from "@/lib/text-tracking-runs"
-import type { ModulePosition, TextBlockPosition } from "@/lib/types/layout-primitives"
+import type { ModulePosition, TextBlockPosition, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
 export type PreviewTextLayerCollectionsState<
   Key extends string = string,
@@ -56,6 +56,7 @@ type InsertTextLayerArgs<Key extends string, StyleKey extends string> = {
   afterKey?: Key | null
   textEdited?: boolean
   textAlign?: BlockEditorTextAlign
+  verticalAlign?: TextVerticalAlignMode
   reflow?: boolean
   syllableDivision?: boolean
 }
@@ -282,6 +283,10 @@ export function applyBlockEditorDraftToCollections<
       ...current.blockTextAlignments,
       [draft.target as Key]: draft.draftAlign,
     },
+    blockVerticalAlignments: {
+      ...current.blockVerticalAlignments,
+      [draft.target as Key]: draft.draftVerticalAlign,
+    },
     blockTextReflow: {
       ...current.blockTextReflow,
       [draft.target as Key]: draft.draftReflow && draft.draftColumns > 1,
@@ -315,6 +320,7 @@ export function insertTextLayerIntoCollections<
     afterKey = null,
     textEdited = false,
     textAlign = "left",
+    verticalAlign = "top",
     reflow = false,
     syllableDivision = true,
   }: InsertTextLayerArgs<Key, StyleKey>,
@@ -363,6 +369,10 @@ export function insertTextLayerIntoCollections<
     blockTextAlignments: {
       ...current.blockTextAlignments,
       [newKey]: textAlign,
+    },
+    blockVerticalAlignments: {
+      ...current.blockVerticalAlignments,
+      [newKey]: verticalAlign,
     },
     blockTextReflow: {
       ...current.blockTextReflow,
@@ -519,6 +529,10 @@ export function duplicateTextLayerInCollections<
     blockTextAlignments: {
       ...current.blockTextAlignments,
       [newKey]: current.blockTextAlignments[sourceKey] ?? "left",
+    },
+    blockVerticalAlignments: {
+      ...current.blockVerticalAlignments,
+      [newKey]: current.blockVerticalAlignments[sourceKey] ?? "top",
     },
     blockTextReflow: {
       ...current.blockTextReflow,

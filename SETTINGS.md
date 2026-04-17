@@ -309,7 +309,8 @@ Editor controls:
   - rows
   - baselines
   - cols
-  - alignment (`left`, `center`, `right`)
+  - horizontal alignment (`left`, `center`, `right`)
+  - vertical alignment (`top`, `center`, `bottom`)
   - reflow (`On` / `Off`, available only when cols > 1)
   - hyphenation (`On` / `Off`)
   - rotation (`-180..180`, integer degrees)
@@ -317,6 +318,7 @@ Editor controls:
 - `rows` may be `0` when `baselines > 0`
 - `Baselines` is a dropdown from `0` to the current document's `baselines per grid module`
 - text `Rows`, `Baselines`, and `Cols` dropdown items preview live on rollover before commit
+- vertical alignment offsets the line stack inside the selected paragraph frame in baseline increments
 - Typo section:
   - font family
   - font cut
@@ -347,7 +349,7 @@ Editor controls:
   - color
   - tracking
 - paragraph-wide defaults are rebased when the current selection covers the full text or no range is selected
-- textarea preview mirrors font family, selected cut, and left/right alignment
+- textarea preview mirrors font family, selected cut, paragraph alignment, and the current frame-relative text position
 - live `Characters`, `Words`, and `Max/Line` counts in the Info section
 - inline caret and selection are rendered from the current text geometry, not DOM line boxes
 - inline caret blinks while the text editor is focused with a collapsed selection

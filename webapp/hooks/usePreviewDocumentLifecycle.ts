@@ -5,7 +5,7 @@ import type { FontFamily } from "@/lib/config/fonts"
 import { areLayerOrdersEqual, reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
-import type { PreviewLayoutState, TextAlignMode, TextBlockPosition } from "@/lib/types/preview-layout"
+import type { PreviewLayoutState, TextAlignMode, TextBlockPosition, TextVerticalAlignMode } from "@/lib/types/preview-layout"
 import { useInitialLayoutHydration } from "@/hooks/useInitialLayoutHydration"
 
 type BlockCollectionsState<StyleKey extends string, Key extends string> = {
@@ -23,6 +23,7 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockRowSpans: Partial<Record<Key, number>>
   blockHeightBaselines: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>

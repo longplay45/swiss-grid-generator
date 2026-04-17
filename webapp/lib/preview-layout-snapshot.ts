@@ -1,4 +1,5 @@
 import type { SnapshotState } from "@/hooks/useLayoutSnapshot"
+import type { TextVerticalAlignMode } from "./types/layout-primitives.ts"
 import { clampRotation, hasSignificantRotation } from "./block-constraints.ts"
 import {
   normalizeOpticalKerning,
@@ -17,6 +18,7 @@ type ResolvedSnapshotState<
   blockRowSpans: Record<Key, number>
   blockHeightBaselines: Record<Key, number>
   blockTextAlignments: Record<Key, TextAlignMode>
+  blockVerticalAlignments: Record<Key, TextVerticalAlignMode>
   blockTextReflow: Record<Key, boolean>
   blockSyllableDivision: Record<Key, boolean>
   blockFontWeights: Record<Key, number>
@@ -73,6 +75,10 @@ export function buildResolvedSnapshotState<
     acc[key] = state.blockTextAlignments[key] ?? defaultTextAlign
     return acc
   }, {} as Record<Key, TextAlignMode>)
+  const resolvedVerticalAlignments = state.blockOrder.reduce((acc, key) => {
+    acc[key] = state.blockVerticalAlignments[key] ?? "top"
+    return acc
+  }, {} as Record<Key, TextVerticalAlignMode>)
   const resolvedRows = state.blockOrder.reduce((acc, key) => {
     acc[key] = getBlockRows(key)
     return acc
@@ -135,6 +141,7 @@ export function buildResolvedSnapshotState<
     blockRowSpans: resolvedRows,
     blockHeightBaselines: resolvedHeightBaselines,
     blockTextAlignments: resolvedAlignments,
+    blockVerticalAlignments: resolvedVerticalAlignments,
     blockTextReflow: resolvedReflow,
     blockSyllableDivision: resolvedSyllableDivision,
     blockItalic: resolvedItalic,
@@ -221,6 +228,7 @@ export function normalizeSnapshotStateForApply<
     blockRowSpans: { ...(state.blockRowSpans ?? {}) },
     blockHeightBaselines: { ...(state.blockHeightBaselines ?? {}) },
     blockTextAlignments: { ...state.blockTextAlignments },
+    blockVerticalAlignments: { ...(state.blockVerticalAlignments ?? {}) },
     blockTextReflow: { ...state.blockTextReflow },
     blockSyllableDivision: { ...state.blockSyllableDivision },
     blockModulePositions: { ...state.blockModulePositions },

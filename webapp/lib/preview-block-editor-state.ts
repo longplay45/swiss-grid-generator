@@ -1,4 +1,4 @@
-import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
+import type { BlockEditorState, BlockEditorTextAlign, BlockEditorVerticalAlign } from "@/components/editor/block-editor-types"
 import { normalizeHeightMetrics } from "@/lib/block-height"
 import { clampFxLeading, clampFxSize } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
@@ -22,6 +22,7 @@ type ExistingBlockArgs<StyleKey extends string> = {
   blockCustomSizes: Partial<Record<string, number>>
   blockCustomLeadings: Partial<Record<string, number>>
   blockTextAlignments: Partial<Record<string, BlockEditorTextAlign>>
+  blockVerticalAlignments: Partial<Record<string, BlockEditorVerticalAlign>>
   blockTextEdited: Record<string, boolean>
   getBlockFont: (key: string) => FontFamily
   getBlockRotation: (key: string) => number
@@ -56,6 +57,7 @@ type NewBlockArgs<StyleKey extends string> = {
   getStyleSize: (style: StyleKey) => number
   fxStyle: StyleKey
   align?: BlockEditorTextAlign
+  verticalAlign?: BlockEditorVerticalAlign
   reflow?: boolean
   syllableDivision?: boolean
   fontWeight?: number
@@ -75,6 +77,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   blockCustomSizes,
   blockCustomLeadings,
   blockTextAlignments,
+  blockVerticalAlignments,
   blockTextEdited,
   getBlockFont,
   getBlockRotation,
@@ -201,6 +204,7 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftRows: height.rows,
     draftHeightBaselines: height.baselines,
     draftAlign: blockTextAlignments[key] ?? "left",
+    draftVerticalAlign: blockVerticalAlignments[key] ?? "top",
     draftColor: draftColor,
     draftReflow: isTextReflowEnabled(key),
     draftSyllableDivision: isSyllableDivisionEnabled(key),
@@ -233,6 +237,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   getStyleSize,
   fxStyle,
   align = "left",
+  verticalAlign = "top",
   reflow = false,
   syllableDivision = true,
   fontWeight = 400,
@@ -262,6 +267,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftRows: height.rows,
     draftHeightBaselines: height.baselines,
     draftAlign: align,
+    draftVerticalAlign: verticalAlign,
     draftColor: defaultTextColor,
     draftReflow: reflow,
     draftSyllableDivision: syllableDivision,

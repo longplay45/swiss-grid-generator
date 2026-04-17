@@ -18,7 +18,7 @@ import {
 } from "@/lib/preview-text-layer-state"
 import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { TextFormatRun } from "@/lib/text-format-runs"
-import type { ModulePosition, TextAlignMode } from "@/lib/types/layout-primitives"
+import type { ModulePosition, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 import { useBlockEditorCanvasDoubleClick } from "@/hooks/useBlockEditorCanvasDoubleClick"
 import type { Updater } from "@/hooks/useStateCommands"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
@@ -65,6 +65,7 @@ type Args = {
   blockCustomSizes: Partial<Record<string, number>>
   blockCustomLeadings: Partial<Record<string, number>>
   blockTextAlignments: Partial<Record<string, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<string, TextVerticalAlignMode>>
   blockModulePositions: Partial<Record<string, ModulePosition>>
   recordHistoryBeforeChange: () => void
   setBlockCollections: (
@@ -138,6 +139,7 @@ export function useBlockEditorActions({
   blockCustomSizes,
   blockCustomLeadings,
   blockTextAlignments,
+  blockVerticalAlignments,
   blockModulePositions,
   recordHistoryBeforeChange,
   setBlockCollections,
@@ -308,6 +310,7 @@ export function useBlockEditorActions({
     blockCustomLeadings,
     blockCustomSizes,
     blockTextAlignments,
+    blockVerticalAlignments,
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,

@@ -40,7 +40,8 @@ Current capability inventory for Swiss Grid Generator.
 - Optical or metric kerning.
 - Tracking input from `-120` to `+300` (`1/1000 em`).
 - FX-specific size and leading overrides.
-- Paragraph alignment: left, center, right.
+- Paragraph horizontal alignment: left, center, right.
+- Paragraph vertical alignment: top, center, bottom.
 - Hyphenation toggle per paragraph.
 - Newspaper reflow across paragraph columns.
 - Optical margin alignment engine for preview/export.
@@ -49,10 +50,11 @@ Current capability inventory for Swiss Grid Generator.
 
 - Inline editor overlay on the page surface.
 - Left-sidebar text editor with `Paragraph`, `Typo`, and `Info` sections.
-- Paragraph section: rows, baselines, cols, alignment, reflow, hyphenation, rotation.
+- Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
+- Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
 - Typo section: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.

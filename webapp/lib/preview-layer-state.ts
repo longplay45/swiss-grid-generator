@@ -1,6 +1,7 @@
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { PreviewLayoutState } from "@/lib/types/preview-layout"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
+import type { TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
 import { omitOptionalRecordKey, omitRequiredRecordKey } from "@/lib/record-helpers"
 
@@ -25,6 +26,7 @@ export type TextLayerCollections<
   blockRowSpans: Partial<Record<Key, number>>
   blockHeightBaselines: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, Align>>
+  blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
@@ -58,6 +60,7 @@ export function removeTextLayerFromCollections<
     blockRowSpans: omitOptionalRecordKey(state.blockRowSpans, key),
     blockHeightBaselines: omitOptionalRecordKey(state.blockHeightBaselines, key),
     blockTextAlignments: omitOptionalRecordKey(state.blockTextAlignments, key),
+    blockVerticalAlignments: omitOptionalRecordKey(state.blockVerticalAlignments, key),
     blockTextReflow: omitOptionalRecordKey(state.blockTextReflow, key),
     blockSyllableDivision: omitOptionalRecordKey(state.blockSyllableDivision, key),
     blockItalic: omitOptionalRecordKey(state.blockItalic, key),
@@ -119,6 +122,9 @@ export function removeLayerFromPreviewLayout<
       ? omitRequiredRecordKey(layout.blockHeightBaselines, key)
       : undefined,
     blockTextAlignments: omitRequiredRecordKey(layout.blockTextAlignments, key),
+    blockVerticalAlignments: layout.blockVerticalAlignments
+      ? omitRequiredRecordKey(layout.blockVerticalAlignments, key)
+      : undefined,
     blockTextReflow: layout.blockTextReflow
       ? omitRequiredRecordKey(layout.blockTextReflow, key)
       : undefined,

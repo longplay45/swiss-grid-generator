@@ -1,9 +1,10 @@
 import type { FontFamily } from "@/lib/config/fonts"
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
-import type { TextAlignMode } from "@/lib/types/layout-primitives"
+import type { TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
 export type BlockEditorTextAlign = TextAlignMode
+export type BlockEditorVerticalAlign = TextVerticalAlignMode
 
 export type BlockEditorState<StyleKey extends string = string> = {
   target: string
@@ -17,6 +18,7 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftRows: number
   draftHeightBaselines: number
   draftAlign: BlockEditorTextAlign
+  draftVerticalAlign: BlockEditorVerticalAlign
   draftColor: string
   draftReflow: boolean
   draftSyllableDivision: boolean

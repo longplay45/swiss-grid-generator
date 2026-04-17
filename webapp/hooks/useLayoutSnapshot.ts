@@ -5,6 +5,7 @@ import {
   normalizeSnapshotStateForApply,
 } from "@/lib/preview-layout-snapshot"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
+import type { TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
 export type SnapshotState<
   Key extends string,
@@ -22,6 +23,7 @@ export type SnapshotState<
   blockRowSpans: Partial<Record<Key, number>>
   blockHeightBaselines: Partial<Record<Key, number>>
   blockTextAlignments: Partial<Record<Key, TextAlignMode>>
+  blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
