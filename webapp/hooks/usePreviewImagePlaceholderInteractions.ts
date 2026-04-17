@@ -102,12 +102,14 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   ])
 
   const handleImageDoubleClick = useCallback(({ event, pagePoint }: DoubleClickArgs): boolean => {
-    if (!(event.shiftKey || event.ctrlKey)) {
-      return false
+    const targetKey = findTopmostImageAtPoint(pagePoint.x, pagePoint.y)
+    if (targetKey) {
+      openImageEditor(targetKey)
+      return true
     }
 
-    if (findTopmostImageAtPoint(pagePoint.x, pagePoint.y)) {
-      return true
+    if (!(event.shiftKey || event.ctrlKey)) {
+      return false
     }
 
     const rawPosition = resolveModulePositionAtPagePoint(pagePoint.x, pagePoint.y)

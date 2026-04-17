@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react"
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
 import { Button } from "@/components/ui/button"
 import { FontSelect } from "@/components/ui/font-select"
+import { EditorColorSchemeControls } from "@/components/ui/editor-color-scheme-controls"
 import { Label } from "@/components/ui/label"
 import { DebouncedSlider } from "@/components/ui/slider"
 import {
@@ -925,64 +926,32 @@ export function TextEditorPanel<StyleKey extends string>({
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Scheme</Label>
-            <Select
-              value={editorColorScheme}
-              onOpenChange={(open) => {
-                if (!open) setPreviewColorScheme(null)
-              }}
-              onValueChange={(value) => {
-                setEditorColorScheme(value as ImageColorSchemeId)
-                setPreviewColorScheme(null)
-              }}
-            >
-              <SelectTrigger className={triggerClassName}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent
-                className={tone.selectContent}
-                side="top"
-                sideOffset={4}
-                avoidCollisions={false}
-                onPointerLeave={() => setPreviewColorScheme(null)}
-              >
-                {controls.colorSchemes.map((scheme) => (
-                  <SelectItem
-                    key={scheme.id}
-                    value={scheme.id}
-                    onFocus={() => setPreviewColorScheme(scheme.id)}
-                    onPointerMove={() => setPreviewColorScheme(scheme.id)}
-                  >
-                    {scheme.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Color</Label>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {previewPalette.map((color, index) => {
-                const selected = (selectionColor ?? controls.editorState.draftColor).toLowerCase() === color.toLowerCase()
-                const swatchKey = `${activeColorScheme}-${index}-${color}`
-                return (
-                  <button
-                    key={swatchKey}
-                    type="button"
-                    onClick={() => {
-                      applySelectionTextFormat({ color })
-                    }}
-                    className={`h-7 w-7 rounded border ${selected ? `ring-2 ring-gray-500 ring-offset-1 ${tone.ringOffset}` : ""}`}
-                    style={{ backgroundColor: color }}
-                    aria-label={`Select ${color}`}
-                    title={color}
-                  />
-                )
-              })}
-            </div>
-          </div>
+          <EditorColorSchemeControls
+            schemes={controls.colorSchemes}
+            schemeValue={editorColorScheme}
+            onSchemeOpenChange={(open) => {
+              if (!open) setPreviewColorScheme(null)
+            }}
+            onSchemeValueChange={(value) => {
+              setEditorColorScheme(value as ImageColorSchemeId)
+              setPreviewColorScheme(null)
+            }}
+            onSchemeContentPointerLeave={() => setPreviewColorScheme(null)}
+            getSchemeItemPreviewProps={(value) => ({
+              onFocus: () => setPreviewColorScheme(value as ImageColorSchemeId),
+              onPointerMove: () => setPreviewColorScheme(value as ImageColorSchemeId),
+            })}
+            displayedColors={previewPalette}
+            selectedColor={selectionColor ?? controls.editorState.draftColor}
+            onColorSelect={(color) => {
+              applySelectionTextFormat({ color })
+            }}
+            isDarkMode={isDarkMode}
+            labelClassName={sectionLabelClassName}
+            triggerClassName={triggerClassName}
+            selectContentClassName={tone.selectContent}
+            ringOffsetClassName={tone.ringOffset}
+          />
 
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Kerning</Label>
