@@ -201,6 +201,7 @@ export const GridPreview = memo(function GridPreview({
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [hoverCopyIntent, setHoverCopyIntent] = useState(false)
   const [layoutEmissionEnabled, setLayoutEmissionEnabled] = useState(initialLayoutToken === 0)
+  const [pendingLayerEditorMode, setPendingLayerEditorMode] = useState<"text" | "image" | null>(null)
   const HISTORY_LIMIT = 50
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
@@ -938,14 +939,44 @@ export const GridPreview = memo(function GridPreview({
   })
 
   useEffect(() => {
+    if (!requestedLayerEditorTarget || requestedLayerEditorToken === 0) {
+      setPendingLayerEditorMode(null)
+      return
+    }
+    if (imageOrder.includes(requestedLayerEditorTarget)) {
+      setPendingLayerEditorMode("image")
+      return
+    }
+    if (blockOrder.includes(requestedLayerEditorTarget)) {
+      setPendingLayerEditorMode("text")
+      return
+    }
+    setPendingLayerEditorMode(null)
+  }, [blockOrder, imageOrder, requestedLayerEditorTarget, requestedLayerEditorToken])
+
+  useEffect(() => {
+    if (!pendingLayerEditorMode || !requestedLayerEditorTarget) return
+    const isRequestedTargetOpen = editorState?.target === requestedLayerEditorTarget
+      || imageEditorState?.target === requestedLayerEditorTarget
+    if (!isRequestedTargetOpen) return
+    setPendingLayerEditorMode(null)
+  }, [
+    editorState?.target,
+    imageEditorState?.target,
+    pendingLayerEditorMode,
+    requestedLayerEditorTarget,
+  ])
+
+  useEffect(() => {
+    const resolvedEditorMode = editorState
+      ? "text"
+      : imageEditorState
+        ? "image"
+        : pendingLayerEditorMode
     onEditorModeChange?.(
-      editorState
-        ? "text"
-        : imageEditorState
-          ? "image"
-          : null,
+      resolvedEditorMode,
     )
-  }, [editorState, imageEditorState, onEditorModeChange])
+  }, [editorState, imageEditorState, onEditorModeChange, pendingLayerEditorMode])
 
   useEffect(() => (
     () => {

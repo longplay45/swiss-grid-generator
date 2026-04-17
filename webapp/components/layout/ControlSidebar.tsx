@@ -62,7 +62,7 @@ export const ControlSidebar = memo(function ControlSidebar({
               ref={onEditorHostChange}
               data-editor-sidebar-host="true"
               data-editor-interactive-root="true"
-              className="min-h-0 flex-1 overflow-hidden"
+              className="min-h-0 flex-1 overflow-hidden shadow-[inset_2px_0_0_0_#f97316,inset_0_2px_0_0_0_#f97316]"
             />
           ) : (
             settingsPanels

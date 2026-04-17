@@ -28,6 +28,7 @@ type Props = {
   imageColorScheme: ImageColorSchemeId
   selectedLayerKey: string | null
   hoveredLayerKey: string | null
+  editingLayerKey: string | null
   isActivePage: boolean
   onSelectPage: (pageId: string) => void
   onLayerOrderChange: (nextLayerOrder: string[]) => void
@@ -104,6 +105,7 @@ export function ProjectPageLayersList({
   imageColorScheme,
   selectedLayerKey,
   hoveredLayerKey,
+  editingLayerKey,
   isActivePage,
   onSelectPage,
   onLayerOrderChange,
@@ -336,6 +338,7 @@ export function ProjectPageLayersList({
       {visibleThumbs.map((thumb, index) => {
         const isSelected = selectedLayerKey === thumb.key
         const isHovered = isActivePage && hoveredLayerKey === thumb.key
+        const isEditing = editingLayerKey === thumb.key && thumb.kind === "text"
         const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
         const allowLayerInteractions = isActivePage
         return (
@@ -348,6 +351,7 @@ export function ProjectPageLayersList({
                 cardRefs.current[thumb.key] = node
               }}
               data-project-layer-card="true"
+              data-editor-retarget-root="true"
               data-card-drag-ignore="true"
               draggable={allowLayerInteractions}
               onPointerDownCapture={(event) => {
@@ -383,6 +387,8 @@ export function ProjectPageLayersList({
                   ? `${tone.card} cursor-grabbing opacity-45`
                   : tone.card
               } ${isSelected || isHovered ? "border-l-orange-500 border-t-orange-500" : ""} ${
+                isEditing ? "shadow-[inset_2px_0_0_0_#f97316,inset_0_2px_0_0_0_#f97316]" : ""
+              } ${
                 allowLayerInteractions ? "cursor-grab select-none" : "cursor-pointer"
               }`}
             >

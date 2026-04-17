@@ -32,6 +32,7 @@ type Props = {
   imageColorScheme: ImageColorSchemeId
   selectedLayerKey: string | null
   hoveredLayerKey: string | null
+  editingLayerKey: string | null
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
@@ -63,6 +64,7 @@ export function PagesPanel({
   imageColorScheme,
   selectedLayerKey,
   hoveredLayerKey,
+  editingLayerKey,
   onLayerOrderChange,
   onSelectedLayerKeyChange,
   onHoverLayerChange,
@@ -517,6 +519,7 @@ export function PagesPanel({
                         imageColorScheme={imageColorScheme}
                         selectedLayerKey={isActive ? selectedLayerKey : null}
                         hoveredLayerKey={isActive ? hoveredLayerKey : null}
+                        editingLayerKey={isActive ? editingLayerKey : null}
                         isActivePage={isActive}
                         onSelectPage={onSelectPage}
                         onLayerOrderChange={onLayerOrderChange}

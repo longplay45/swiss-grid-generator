@@ -1,7 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
@@ -206,7 +206,6 @@ export function PreviewWorkspace({
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [pagesCollapsed, setPagesCollapsed] = useState(false)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
-  const pendingEditorModeRef = useRef<"text" | "image" | null>(null)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
     !showPresetsBrowser
@@ -251,26 +250,6 @@ export function PreviewWorkspace({
     }
     setPagesCollapsed((current) => !current)
   }
-
-  const handlePanelLayerEditorToggle = useCallback((target: string) => {
-    pendingEditorModeRef.current = editorMode && selectedLayerKey !== target
-      ? editorMode
-      : null
-    onLayerEditorToggle(target)
-  }, [editorMode, onLayerEditorToggle, selectedLayerKey])
-
-  const handlePreviewEditorModeChange = useCallback((mode: "text" | "image" | null) => {
-    if (mode !== null) {
-      pendingEditorModeRef.current = null
-      onEditorModeChange(mode)
-      return
-    }
-    if (pendingEditorModeRef.current) {
-      onEditorModeChange(pendingEditorModeRef.current)
-      return
-    }
-    onEditorModeChange(null)
-  }, [onEditorModeChange])
 
   return (
     <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
@@ -360,7 +339,7 @@ export function PreviewWorkspace({
               onHoverLayerChange={setPreviewHoveredLayerKey}
               onSelectLayer={onLayerSelect}
               editorSidebarHost={editorSidebarHost}
-              onEditorModeChange={handlePreviewEditorModeChange}
+              onEditorModeChange={onEditorModeChange}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
               onSnapshotGetterChange={onSnapshotGetterChange}
@@ -417,10 +396,11 @@ export function PreviewWorkspace({
                   imageColorScheme={imageColorScheme}
                   selectedLayerKey={selectedLayerKey}
                   hoveredLayerKey={hoveredLayerKey}
+                  editingLayerKey={editorMode === "text" ? selectedLayerKey : null}
                   onLayerOrderChange={onLayerOrderChange}
                   onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                   onHoverLayerChange={setLayerPanelHoveredLayerKey}
-                  onLayerEditorToggle={handlePanelLayerEditorToggle}
+                  onLayerEditorToggle={onLayerEditorToggle}
                   onLayerDelete={onLayerDelete}
                   pagesCollapsed={pagesCollapsed}
                   onPagesHeaderClick={handlePagesHeaderClick}

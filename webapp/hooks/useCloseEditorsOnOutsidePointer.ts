@@ -24,6 +24,7 @@ export function useCloseEditorsOnOutsidePointer({
       if (!(target instanceof Element)) return false
       return Boolean(
         target.closest('[data-editor-interactive-root="true"]')
+        || target.closest('[data-editor-retarget-root="true"]')
       )
     }
 

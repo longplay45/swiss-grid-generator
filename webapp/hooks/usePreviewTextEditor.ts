@@ -224,24 +224,18 @@ export function usePreviewTextEditor({
     lastAppliedLayerEditorRequestKeyRef.current = requestedLayerEditorToken
 
     if (imageOrder.includes(requestedLayerEditorTarget)) {
-      if (imageEditorState?.target === requestedLayerEditorTarget) {
-        closeImageEditor()
-      } else {
-        openImageEditor(requestedLayerEditorTarget)
-      }
+      if (imageEditorState?.target === requestedLayerEditorTarget && !editorState) return
+      openImageEditor(requestedLayerEditorTarget)
       return
     }
 
     if (!blockOrder.includes(requestedLayerEditorTarget)) return
-    if (editorState?.target === requestedLayerEditorTarget) {
-      closeEditor()
-    } else {
-      openTextEditor(requestedLayerEditorTarget)
-    }
+    if (editorState?.target === requestedLayerEditorTarget && !imageEditorState) return
+    openTextEditor(requestedLayerEditorTarget)
   }, [
     blockOrder,
-    closeEditor,
-    closeImageEditor,
+    editorState,
+    imageEditorState,
     editorState?.target,
     imageEditorState?.target,
     imageOrder,
