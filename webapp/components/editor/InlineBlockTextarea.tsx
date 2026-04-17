@@ -2,6 +2,10 @@
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { getFontFamilyCss } from "@/lib/config/fonts"
+import {
+  resolveTextSchemeColor,
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
 import type { RenderedTextLine } from "@/lib/preview-types"
 import {
   buildInlineEditorTransform,
@@ -24,6 +28,7 @@ import {
 import {
   measureFormattedTextRangeWidth,
   rebaseTextFormatRunsForTextEdit,
+  resolveTextFormatAtIndex,
   type PositionedTextFormatTrackingSegment,
 } from "@/lib/text-format-runs"
 import {
@@ -103,11 +108,138 @@ type InlineBlockTextareaProps<StyleKey extends string> = {
   pageRotation: number
   scale: number
   baselineStep: number
+  imageColorScheme: ImageColorSchemeId
+  pageBackgroundColor: string | null
   closeEditor: () => void
   saveEditor: () => void
   getStyleSizeValue: (styleKey: StyleKey) => number
   getStyleLeadingValue: (styleKey: StyleKey) => number
   isFxStyle: (styleKey: StyleKey) => boolean
+}
+
+type RgbColor = {
+  r: number
+  g: number
+  b: number
+}
+
+const FALLBACK_DARK_COLOR = "#111111"
+const FALLBACK_LIGHT_COLOR = "#ffffff"
+
+function parseCanvasColor(value: string): RgbColor | null {
+  if (typeof document === "undefined") return null
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return null
+  ctx.fillStyle = "#000000"
+  ctx.fillStyle = value
+  const normalized = ctx.fillStyle.trim().toLowerCase()
+
+  if (normalized.startsWith("#")) {
+    const hex = normalized.slice(1)
+    if (hex.length === 3) {
+      const r = Number.parseInt(hex[0] + hex[0], 16)
+      const g = Number.parseInt(hex[1] + hex[1], 16)
+      const b = Number.parseInt(hex[2] + hex[2], 16)
+      return Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) ? null : { r, g, b }
+    }
+    if (hex.length === 6) {
+      const r = Number.parseInt(hex.slice(0, 2), 16)
+      const g = Number.parseInt(hex.slice(2, 4), 16)
+      const b = Number.parseInt(hex.slice(4, 6), 16)
+      return Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) ? null : { r, g, b }
+    }
+    return null
+  }
+
+  const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/)
+  if (!rgbMatch) return null
+  const [rString = "", gString = "", bString = ""] = rgbMatch[1].split(",")
+  const r = Number.parseFloat(rString)
+  const g = Number.parseFloat(gString)
+  const b = Number.parseFloat(bString)
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null
+  return {
+    r: Math.max(0, Math.min(255, r)),
+    g: Math.max(0, Math.min(255, g)),
+    b: Math.max(0, Math.min(255, b)),
+  }
+}
+
+function toRelativeLuminance({ r, g, b }: RgbColor): number {
+  const transformChannel = (channel: number) => {
+    const normalized = channel / 255
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4
+  }
+
+  return (
+    0.2126 * transformChannel(r)
+    + 0.7152 * transformChannel(g)
+    + 0.0722 * transformChannel(b)
+  )
+}
+
+function getContrastRatio(left: RgbColor, right: RgbColor): number {
+  const leftLuminance = toRelativeLuminance(left)
+  const rightLuminance = toRelativeLuminance(right)
+  const lighter = Math.max(leftLuminance, rightLuminance)
+  const darker = Math.min(leftLuminance, rightLuminance)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function formatRgba(color: RgbColor, alpha: number): string {
+  return `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${alpha})`
+}
+
+function resolveInlineCaretColors(
+  textColor: string,
+  backgroundColor: string,
+): {
+  core: string
+  halo: string
+} {
+  const resolvedTextColor = parseCanvasColor(textColor) ?? parseCanvasColor(FALLBACK_DARK_COLOR)
+  const resolvedBackgroundColor = parseCanvasColor(backgroundColor) ?? parseCanvasColor(FALLBACK_LIGHT_COLOR)
+  const fallbackDark = parseCanvasColor(FALLBACK_DARK_COLOR)
+  const fallbackLight = parseCanvasColor(FALLBACK_LIGHT_COLOR)
+
+  if (!resolvedTextColor || !resolvedBackgroundColor || !fallbackDark || !fallbackLight) {
+    return {
+      core: textColor,
+      halo: "rgba(255, 255, 255, 0.82)",
+    }
+  }
+
+  const textContrast = getContrastRatio(resolvedTextColor, resolvedBackgroundColor)
+  const darkContrast = getContrastRatio(fallbackDark, resolvedBackgroundColor)
+  const lightContrast = getContrastRatio(fallbackLight, resolvedBackgroundColor)
+  const coreColor = textContrast >= 2.5
+    ? resolvedTextColor
+    : darkContrast >= lightContrast
+      ? fallbackDark
+      : fallbackLight
+
+  const haloCandidate = getContrastRatio(fallbackLight, coreColor) >= getContrastRatio(fallbackDark, coreColor)
+    ? fallbackLight
+    : fallbackDark
+
+  const haloScore = Math.min(
+    getContrastRatio(haloCandidate, resolvedBackgroundColor),
+    getContrastRatio(haloCandidate, coreColor),
+  )
+  const alternateHaloCandidate = haloCandidate === fallbackLight ? fallbackDark : fallbackLight
+  const alternateHaloScore = Math.min(
+    getContrastRatio(alternateHaloCandidate, resolvedBackgroundColor),
+    getContrastRatio(alternateHaloCandidate, coreColor),
+  )
+  const haloColor = alternateHaloScore > haloScore ? alternateHaloCandidate : haloCandidate
+
+  return {
+    core: `rgb(${Math.round(coreColor.r)}, ${Math.round(coreColor.g)}, ${Math.round(coreColor.b)})`,
+    halo: formatRgba(haloColor, 0.82),
+  }
 }
 
 function InlineEditorOverlayCanvas({
@@ -116,12 +248,16 @@ function InlineEditorOverlayCanvas({
   selectionRects,
   caret,
   caretVisible,
+  caretCoreColor,
+  caretHaloColor,
 }: {
   width: number
   height: number
   selectionRects: InlineEditorOverlayRect[]
   caret: InlineEditorOverlayCaret | null
   caretVisible: boolean
+  caretCoreColor: string
+  caretHaloColor: string
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -162,11 +298,11 @@ function InlineEditorOverlayCanvas({
     const haloWidth = Math.max(1, Math.min(caretHaloWidthPx, widthPx - caretHaloLeft))
     const coreWidth = Math.max(1, Math.min(caretCoreWidthPx, widthPx - caretCoreLeft))
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.75)"
+    ctx.fillStyle = caretHaloColor
     ctx.fillRect(caretHaloLeft, caretTop, haloWidth, caretHeightPx)
-    ctx.fillStyle = "#fe9f97"
+    ctx.fillStyle = caretCoreColor
     ctx.fillRect(caretCoreLeft, caretTop, coreWidth, caretHeightPx)
-  }, [caret, caretVisible, height, selectionRects, width])
+  }, [caret, caretCoreColor, caretHaloColor, caretVisible, height, selectionRects, width])
 
   return (
     <canvas
@@ -193,6 +329,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
   pageRotation,
   scale,
   baselineStep,
+  imageColorScheme,
+  pageBackgroundColor,
   closeEditor,
   saveEditor,
   getStyleSizeValue,
@@ -484,6 +622,21 @@ export function InlineBlockTextarea<StyleKey extends string>({
       height: caret.height,
     }
     : null
+  const caretFormat = resolveTextFormatAtIndex(
+    editorState.draftText,
+    selection.focusIndex,
+    {
+      fontFamily: editorState.draftFont,
+      fontWeight,
+      italic: editorState.draftItalic,
+      styleKey: editorState.draftStyle,
+      color: editorState.draftColor,
+    },
+    editorState.draftTextFormatRuns,
+  )
+  const caretTextColor = resolveTextSchemeColor(caretFormat.color, imageColorScheme)
+  const effectiveBackgroundColor = pageBackgroundColor ?? FALLBACK_LIGHT_COLOR
+  const caretColors = resolveInlineCaretColors(caretTextColor, effectiveBackgroundColor)
 
   const setTextareaSelection = (
     anchor: number,
@@ -595,6 +748,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
             selectionRects={localSelectionRects}
             caret={localCaret}
             caretVisible={isCaretVisible}
+            caretCoreColor={caretColors.core}
+            caretHaloColor={caretColors.halo}
           />
           <div
             className="pointer-events-auto absolute inset-0 cursor-text"

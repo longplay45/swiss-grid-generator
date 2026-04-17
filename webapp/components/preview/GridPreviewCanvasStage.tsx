@@ -6,6 +6,7 @@ import type { Dispatch, SetStateAction } from "react"
 import { InlineBlockTextarea, type InlineEditorLayout } from "@/components/editor/InlineBlockTextarea"
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
+import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 
 type Props<StyleKey extends string> = {
   staticCanvasRef: RefObject<HTMLCanvasElement | null>
@@ -33,6 +34,8 @@ type Props<StyleKey extends string> = {
   rotation: number
   scale: number
   baselineStep: number
+  imageColorScheme: ImageColorSchemeId
+  pageBackgroundColor: string | null
   closeEditor: () => void
   saveEditor: () => void
   getStyleSizeValue: (styleKey: StyleKey) => number
@@ -68,6 +71,8 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
   rotation,
   scale,
   baselineStep,
+  imageColorScheme,
+  pageBackgroundColor,
   closeEditor,
   saveEditor,
   getStyleSizeValue,
@@ -130,6 +135,8 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
         pageRotation={rotation}
         scale={scale}
         baselineStep={baselineStep}
+        imageColorScheme={imageColorScheme}
+        pageBackgroundColor={pageBackgroundColor}
         closeEditor={closeEditor}
         saveEditor={saveEditor}
         getStyleSizeValue={getStyleSizeValue}

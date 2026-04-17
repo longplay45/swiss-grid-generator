@@ -632,7 +632,11 @@ export function TextEditorPanel<StyleKey extends string>({
     >
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
-          title="I. Geometry / Paragraph"
+          title={(
+            <>
+              I. Paragraph <span className="text-[#fe9f97]">{controls.editorState.target}</span>
+            </>
+          )}
           tooltip="Rows, baselines, columns, alignment, flow, and rotation; geometry dropdowns preview on rollover"
           collapsed={collapsed.layout}
           collapsedSummary={`${controls.editorState.draftRows} rows, ${controls.editorState.draftColumns} cols`}
