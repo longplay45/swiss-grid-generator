@@ -78,6 +78,7 @@ export function GridPreviewCanvasStage<StyleKey extends string>({
 }: Props<StyleKey>) {
   return (
     <div
+      data-preview-document-root="true"
       className="relative"
       style={{ width: pageWidthCss, height: pageHeightCss }}
       onMouseEnter={showDocumentHelpIndicator ? onDocumentHelpHover : undefined}

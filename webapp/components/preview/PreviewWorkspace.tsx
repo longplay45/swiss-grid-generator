@@ -407,7 +407,7 @@ export function PreviewWorkspace({
                     imageColorScheme={imageColorScheme}
                     selectedLayerKey={selectedLayerKey}
                     hoveredLayerKey={hoveredLayerKey}
-                    editingLayerKey={editorMode === "text" ? selectedLayerKey : null}
+                    editingLayerKey={editorMode ? selectedLayerKey : null}
                     onLayerOrderChange={onLayerOrderChange}
                     onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                     onHoverLayerChange={setLayerPanelHoveredLayerKey}

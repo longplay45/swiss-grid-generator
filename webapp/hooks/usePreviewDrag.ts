@@ -16,6 +16,7 @@ export type DragState<Key extends string = string> = {
   preview: DragModulePosition
   moved: boolean
   copyOnDrop: boolean
+  detached?: boolean
 }
 
 type Args<Key extends string> = {
@@ -108,6 +109,22 @@ export function usePreviewDrag<Key extends string>({
   }, [clearPendingTouchLongPress])
 
   const handleCanvasPointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (dragState?.detached) {
+      if (event.pointerType === "mouse" && event.button !== 0) return
+      event.preventDefault()
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
+      if (!point) return
+      const useBaselineSnap = event.pointerType !== "touch" && (event.shiftKey || event.ctrlKey)
+      const preview = useBaselineSnap
+        ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+        : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+      pendingDragPreviewRef.current = { preview, moved: true, copyOnDrop: true }
+      finishDrag()
+      return
+    }
     if (!showTypography || isEditorOpen) return
     if (event.pointerType === "mouse" && event.button !== 0) return
 
@@ -177,11 +194,14 @@ export function usePreviewDrag<Key extends string>({
     blockRectsRef,
     canvasRef,
     clearPendingTouchLongPress,
+    dragState,
     findTopmostBlockAtPoint,
+    finishDrag,
     getBlockRect,
     isEditorOpen,
     onClearHover,
     showTypography,
+    snapToBaseline,
     snapToModule,
     toPagePoint,
     touchLongPressMs,
@@ -198,7 +218,8 @@ export function usePreviewDrag<Key extends string>({
       return
     }
 
-    if (!dragState || activeDragPointerIdRef.current !== event.pointerId) return
+    if (!dragState) return
+    if (!dragState.detached && activeDragPointerIdRef.current !== event.pointerId) return
     event.preventDefault()
     const canvas = canvasRef.current
     if (!canvas) return
@@ -213,7 +234,7 @@ export function usePreviewDrag<Key extends string>({
     const moved = dragState.moved
       || Math.abs(point.x - dragState.startPageX) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
       || Math.abs(point.y - dragState.startPageY) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
-    const copyOnDrop = event.pointerType !== "touch" && event.altKey
+    const copyOnDrop = dragState.detached ? true : event.pointerType !== "touch" && event.altKey
     pendingDragPreviewRef.current = { preview: snap, moved, copyOnDrop }
     if (dragRafRef.current !== null) return
     dragRafRef.current = window.requestAnimationFrame(() => {
@@ -261,13 +282,38 @@ export function usePreviewDrag<Key extends string>({
 
   const handleCanvasLostPointerCapture = useCallback(() => {
     if (!dragState) return
+    if (dragState.detached) return
     finishDrag()
   }, [dragState, finishDrag])
+
+  const beginDetachedCopyDrag = useCallback((key: Key, clientX: number, clientY: number) => {
+    const canvas = canvasRef.current
+    const block = getBlockRect ? getBlockRect(key) : blockRectsRef.current[key]
+    if (!canvas || !block) return
+    const rect = canvas.getBoundingClientRect()
+    const pagePoint = toPagePoint(clientX - rect.left, clientY - rect.top)
+    if (!pagePoint) return
+    const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
+    setDragState({
+      key,
+      startPageX: pagePoint.x,
+      startPageY: pagePoint.y,
+      pointerOffsetX: pagePoint.x - block.x,
+      pointerOffsetY: pagePoint.y - block.y,
+      preview: snapped,
+      moved: true,
+      copyOnDrop: true,
+      detached: true,
+    })
+    activeDragPointerIdRef.current = null
+    onClearHover()
+  }, [blockModulePositions, blockRectsRef, canvasRef, getBlockRect, onClearHover, snapToModule, toPagePoint])
 
   return {
     dragState,
     setDragState,
     dragEndedAtRef,
+    beginDetachedCopyDrag,
     handleCanvasPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,

@@ -1,6 +1,6 @@
 "use client"
 
-import { SquarePen } from "lucide-react"
+import { Plus, SquarePen } from "lucide-react"
 import { createPortal } from "react-dom"
 import type { Dispatch, SetStateAction } from "react"
 
@@ -29,6 +29,7 @@ type Props<StyleKey extends string> = {
   hoveredImageRect: BlockRect | null
   openTextEditor: (key: string) => void
   openImageEditor: (key: string) => void
+  beginDetachedCopyDrag: (key: string, clientX: number, clientY: number) => void
   clearHover: () => void
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
   deleteImagePlaceholder: () => void
@@ -59,6 +60,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   hoveredImageRect,
   openTextEditor,
   openImageEditor,
+  beginDetachedCopyDrag,
   clearHover,
   setImageEditorState,
   deleteImagePlaceholder,
@@ -80,27 +82,29 @@ export function GridPreviewOverlays<StyleKey extends string>({
   const showHoveredEditTarget = Boolean(
     hoveredEditTarget && hoveredEditTarget.key !== activeEditorTarget,
   )
-  const editButtonSize = 26
+  const actionButtonSize = 22
+  const actionButtonGap = 4
   const editButtonInset = 6
+  const actionGroupWidth = actionButtonSize * 2 + actionButtonGap
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
-  const editButtonLeft = hoveredEditTarget
+  const actionGroupLeft = hoveredEditTarget
     ? Math.max(
       editButtonInset,
       Math.min(
-        pageWidthCss - editButtonInset - editButtonSize,
+        pageWidthCss - editButtonInset - actionGroupWidth,
         textButtonAlign === "right"
-          ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - editButtonSize - editButtonInset
+          ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - actionGroupWidth - editButtonInset
           : textButtonAlign === "center"
-            ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width / 2 - editButtonSize / 2
+            ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width / 2 - actionGroupWidth / 2
             : hoveredEditTarget.rect.x + editButtonInset,
       ),
     )
     : 0
-  const editButtonTop = hoveredEditTarget
+  const actionGroupTop = hoveredEditTarget
     ? Math.max(
       editButtonInset,
       Math.min(
-        pageHeightCss - editButtonInset - editButtonSize,
+        pageHeightCss - editButtonInset - actionButtonSize,
         hoveredEditTarget.rect.y + editButtonInset,
       ),
     )
@@ -167,39 +171,75 @@ export function GridPreviewOverlays<StyleKey extends string>({
             transformOrigin: `${pageWidthCss / 2}px ${pageHeightCss / 2}px`,
           }}
         >
-          <button
-            type="button"
-            data-preview-edit-affordance="true"
-            className={`pointer-events-auto absolute flex h-[26px] w-[26px] items-center justify-center rounded-sm border shadow-md transition-colors ${
-              isDarkMode
-                ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-gray-600 hover:bg-gray-800 hover:text-gray-50"
-                : "border-gray-200 bg-white/95 text-gray-700 hover:border-gray-300 hover:bg-white hover:text-gray-900"
-            }`}
+          <div
+            className="pointer-events-auto absolute flex items-center"
             style={{
-              left: editButtonLeft,
-              top: editButtonTop,
+              left: actionGroupLeft,
+              top: actionGroupTop,
               transform: pageRotation !== 0 ? `rotate(${-pageRotation}deg)` : undefined,
             }}
-            onMouseLeave={() => clearHover()}
-            onMouseDown={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
-            }}
-            onClick={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              clearHover()
-              if (hoveredEditTarget.kind === "text") {
-                openTextEditor(hoveredEditTarget.key)
-                return
-              }
-              openImageEditor(hoveredEditTarget.key)
-            }}
-            aria-label={`Edit ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
-            title={hoveredEditTarget.kind === "text" ? "Edit paragraph" : "Edit image placeholder"}
           >
-            <SquarePen className="h-3.5 w-3.5" />
-          </button>
+            <button
+              type="button"
+              data-preview-edit-affordance="true"
+              className={`flex items-center justify-center rounded-sm border shadow-md transition-colors ${
+                isDarkMode
+                  ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-gray-600 hover:bg-gray-800 hover:text-gray-50"
+                  : "border-gray-200 bg-white/95 text-gray-700 hover:border-gray-300 hover:bg-white hover:text-gray-900"
+              }`}
+              style={{
+                width: actionButtonSize,
+                height: actionButtonSize,
+              }}
+              onMouseLeave={() => clearHover()}
+              onMouseDown={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                clearHover()
+                if (hoveredEditTarget.kind === "text") {
+                  openTextEditor(hoveredEditTarget.key)
+                  return
+                }
+                openImageEditor(hoveredEditTarget.key)
+              }}
+              aria-label={`Edit ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
+              title={hoveredEditTarget.kind === "text" ? "Edit paragraph" : "Edit image placeholder"}
+            >
+              <SquarePen className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              data-preview-edit-affordance="true"
+              className={`ml-1 flex items-center justify-center rounded-sm border shadow-md transition-colors ${
+                isDarkMode
+                  ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-gray-600 hover:bg-gray-800 hover:text-gray-50"
+                  : "border-gray-200 bg-white/95 text-gray-700 hover:border-gray-300 hover:bg-white hover:text-gray-900"
+              }`}
+              style={{
+                width: actionButtonSize,
+                height: actionButtonSize,
+                marginLeft: actionButtonGap,
+              }}
+              onMouseLeave={() => clearHover()}
+              onMouseDown={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                beginDetachedCopyDrag(hoveredEditTarget.key, event.clientX, event.clientY)
+              }}
+              aria-label={`Duplicate ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
+              title={hoveredEditTarget.kind === "text" ? "Duplicate paragraph" : "Duplicate image placeholder"}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       ) : null}
 

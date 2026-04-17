@@ -27,6 +27,7 @@ export function useCloseEditorsOnOutsidePointer({
       return Boolean(
         target.closest('[data-editor-interactive-root="true"]')
         || target.closest('[data-editor-retarget-root="true"]')
+        || target.closest('[data-preview-edit-affordance="true"]')
       )
     }
 

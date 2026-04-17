@@ -13,6 +13,9 @@ import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
 const OVERFLOW_BADGE_RADIUS = 11
 const OVERFLOW_BADGE_PADDING = 6
 const OVERFLOW_BADGE_FILL = "rgba(255, 80, 80, 0.85)"
+const GUIDE_STROKE_COLOR = "#f97316"
+const GUIDE_STROKE_WIDTH = 1
+const ACTIVE_GUIDE_STROKE_WIDTH = 2
 
 type DragState<Key extends string> = {
   key: Key
@@ -102,6 +105,9 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
 
       const hasOverflow = blockOrder.some((key) => (overflowLinesByBlock[key] ?? 0) > 0)
       const activeEditorPlan = editorTarget ? previousPlansRef.current.get(editorTarget) ?? null : null
+      const activeEditorImageRect = editorTarget && imageOrder.includes(editorTarget)
+        ? imageRectsRef.current[editorTarget] ?? null
+        : null
       const selectedImageRect = selectedLayerKey && imageOrder.includes(selectedLayerKey)
         ? imageRectsRef.current[selectedLayerKey]
         : null
@@ -132,9 +138,10 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         lineY: number,
         widthPx: number,
         heightPx: number,
+        lineWidth: number = GUIDE_STROKE_WIDTH,
       ) => {
-        ctx.strokeStyle = "#f97316"
-        ctx.lineWidth = 1
+        ctx.strokeStyle = GUIDE_STROKE_COLOR
+        ctx.lineWidth = lineWidth
         ctx.beginPath()
         ctx.moveTo(horizontalX, lineY)
         ctx.lineTo(horizontalX + widthPx, lineY)
@@ -209,17 +216,23 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       if (activeEditorPlan) {
         const guideRect = getPreviewTextGuideRect(activeEditorPlan, baselineStep)
         const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, baselineStep, guideRect)
-
-        ctx.strokeStyle = "#ef4444"
-        ctx.lineWidth = 1.1
-        ctx.beginPath()
-        ctx.moveTo(activeGuide.horizontalX, activeGuide.y)
-        ctx.lineTo(activeGuide.horizontalX + activeGuide.width, activeGuide.y)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(activeGuide.verticalX, activeGuide.y)
-        ctx.lineTo(activeGuide.verticalX, activeGuide.y + activeGuide.height)
-        ctx.stroke()
+        drawPlacementGuide(
+          activeGuide.horizontalX,
+          activeGuide.verticalX,
+          activeGuide.y,
+          activeGuide.width,
+          activeGuide.height,
+          ACTIVE_GUIDE_STROKE_WIDTH,
+        )
+      } else if (activeEditorImageRect) {
+        drawPlacementGuide(
+          activeEditorImageRect.x,
+          activeEditorImageRect.x,
+          activeEditorImageRect.y,
+          activeEditorImageRect.width,
+          activeEditorImageRect.height,
+          ACTIVE_GUIDE_STROKE_WIDTH,
+        )
       }
 
       if (hasOverflow) {

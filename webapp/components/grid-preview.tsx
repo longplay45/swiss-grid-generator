@@ -58,7 +58,16 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react"
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react"
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -507,9 +516,23 @@ export const GridPreview = memo(function GridPreview({
     clearHover()
   }, [clearHover])
 
+  const handlePreviewWorkspacePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target
+    if (!(target instanceof Element)) return
+    if (
+      target.closest("[data-preview-document-root='true']")
+      || target.closest("[data-preview-edit-affordance='true']")
+    ) {
+      return
+    }
+    clearHover()
+    onSelectLayer?.(null)
+  }, [clearHover, onSelectLayer])
+
   const {
     dragState,
     setDragState,
+    beginDetachedCopyDrag,
     handlePreviewPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,
@@ -843,7 +866,7 @@ export const GridPreview = memo(function GridPreview({
     selectedLayerKey,
     overflowLinesByBlock,
     dragState,
-    editorTarget: editorState?.target ?? null,
+    editorTarget: editorState?.target ?? imageEditorState?.target ?? null,
     getPlacementRows,
     getPlacementHeightBaselines,
     getPlacementSpan,
@@ -1000,6 +1023,7 @@ export const GridPreview = memo(function GridPreview({
       className={`relative h-full w-full min-w-0 flex items-center justify-center overflow-hidden rounded-lg ${
         isDarkMode ? "bg-[#161A22]" : "bg-gray-100"
       }`}
+      onPointerDown={handlePreviewWorkspacePointerDown}
     >
       <GridPreviewCanvasStage
         staticCanvasRef={staticCanvasRef}
@@ -1059,6 +1083,7 @@ export const GridPreview = memo(function GridPreview({
         hoveredImageRect={hoveredImageRect}
         openTextEditor={openTextEditor}
         openImageEditor={openImageEditor}
+        beginDetachedCopyDrag={beginDetachedCopyDrag}
         clearHover={clearHover}
         setImageEditorState={setImageEditorState}
         deleteImagePlaceholder={deleteImagePlaceholder}

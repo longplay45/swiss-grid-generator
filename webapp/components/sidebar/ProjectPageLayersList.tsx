@@ -338,7 +338,7 @@ export function ProjectPageLayersList({
       {visibleThumbs.map((thumb, index) => {
         const isSelected = selectedLayerKey === thumb.key
         const isHovered = isActivePage && hoveredLayerKey === thumb.key
-        const isEditing = editingLayerKey === thumb.key && thumb.kind === "text"
+        const isEditing = editingLayerKey === thumb.key
         const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
         const allowLayerInteractions = isActivePage
         return (
@@ -387,7 +387,7 @@ export function ProjectPageLayersList({
                   ? `${tone.card} cursor-grabbing opacity-45`
                   : tone.card
               } ${isSelected || isHovered ? "border-l-orange-500 border-t-orange-500" : ""} ${
-                isEditing ? "shadow-[inset_2px_0_0_0_#f97316,inset_0_2px_0_0_0_#f97316]" : ""
+                isEditing ? "shadow-[inset_2px_0_0_0_#f97316,inset_0_2px_0_0_#f97316]" : ""
               } ${
                 allowLayerInteractions ? "cursor-grab select-none" : "cursor-pointer"
               }`}

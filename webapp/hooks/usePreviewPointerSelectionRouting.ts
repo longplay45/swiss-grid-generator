@@ -87,6 +87,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   const {
     dragState,
     setDragState,
+    beginDetachedCopyDrag: beginDetachedCopyDragInternal,
     handleCanvasPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,
@@ -111,6 +112,10 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   })
 
   const handlePreviewPointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (dragState?.detached) {
+      handleCanvasPointerDown(event)
+      return
+    }
     const target = resolveSelectedLayerAtClientPoint(event.clientX, event.clientY)
     onSelectLayer?.(target)
     if (editorOpen && target && target !== activeEditorTarget) {
@@ -155,6 +160,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   return {
     dragState,
     setDragState,
+    beginDetachedCopyDrag: beginDetachedCopyDragInternal,
     handlePreviewPointerDown,
     handleCanvasPointerMove,
     handleCanvasPointerUp,
