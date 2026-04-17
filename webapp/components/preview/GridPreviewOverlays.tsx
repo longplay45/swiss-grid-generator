@@ -9,7 +9,7 @@ import { TextEditorPanel } from "@/components/sidebar/TextEditorPanel"
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
 import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import type { BlockRect, TextAlignMode } from "@/lib/preview-types"
+import type { BlockRect } from "@/lib/preview-types"
 import type { HelpSectionId } from "@/lib/help-registry"
 
 type Props<StyleKey extends string> = {
@@ -24,7 +24,6 @@ type Props<StyleKey extends string> = {
   textEditorControls: TextEditorControls<StyleKey> | null
   hoveredTextKey: string | null
   hoveredTextRect: BlockRect | null
-  hoveredTextAlign: TextAlignMode | null
   hoveredImageKey: string | null
   hoveredImageRect: BlockRect | null
   openTextEditor: (key: string) => void
@@ -56,7 +55,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
   textEditorControls,
   hoveredTextKey,
   hoveredTextRect,
-  hoveredTextAlign,
   hoveredImageKey,
   hoveredImageRect,
   openTextEditor,
@@ -87,18 +85,25 @@ export function GridPreviewOverlays<StyleKey extends string>({
   const actionButtonSize = 22
   const actionButtonGap = 4
   const editButtonInset = 6
-  const actionGroupWidth = actionButtonSize * 3 + actionButtonGap * 2
-  const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
-  const actionGroupLeft = hoveredEditTarget
+  const leftActionGroupWidth = actionButtonSize * 2 + actionButtonGap
+  const leftActionGroupLeft = hoveredEditTarget
     ? Math.max(
       editButtonInset,
       Math.min(
-        pageWidthCss - editButtonInset - actionGroupWidth,
-        textButtonAlign === "right"
-          ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - actionGroupWidth - editButtonInset
-          : textButtonAlign === "center"
-            ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width / 2 - actionGroupWidth / 2
-            : hoveredEditTarget.rect.x + editButtonInset,
+        pageWidthCss - editButtonInset - leftActionGroupWidth,
+        hoveredEditTarget.rect.x + editButtonInset,
+      ),
+    )
+    : 0
+  const deleteButtonLeft = hoveredEditTarget
+    ? Math.max(
+      leftActionGroupLeft + leftActionGroupWidth + actionButtonGap,
+      Math.max(
+        editButtonInset,
+        Math.min(
+          pageWidthCss - editButtonInset - actionButtonSize,
+          hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - actionButtonSize - editButtonInset,
+        ),
       ),
     )
     : 0
@@ -176,10 +181,11 @@ export function GridPreviewOverlays<StyleKey extends string>({
           <div
             className="pointer-events-auto absolute flex items-center"
             style={{
-              left: actionGroupLeft,
+              left: leftActionGroupLeft,
               top: actionGroupTop,
               transform: pageRotation !== 0 ? `rotate(${-pageRotation}deg)` : undefined,
             }}
+            onMouseLeave={() => clearHover()}
           >
             <button
               type="button"
@@ -193,7 +199,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
                 width: actionButtonSize,
                 height: actionButtonSize,
               }}
-              onMouseLeave={() => clearHover()}
               onMouseDown={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
@@ -226,7 +231,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
                 height: actionButtonSize,
                 marginLeft: actionButtonGap,
               }}
-              onMouseLeave={() => clearHover()}
               onMouseDown={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
@@ -241,35 +245,36 @@ export function GridPreviewOverlays<StyleKey extends string>({
             >
               <Plus className="h-3 w-3" />
             </button>
-            <button
-              type="button"
-              data-preview-edit-affordance="true"
-              className={`flex items-center justify-center rounded-sm border shadow-md transition-colors ${
-                isDarkMode
-                  ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-red-500/70 hover:bg-gray-800 hover:text-red-300"
-                  : "border-gray-200 bg-white/95 text-gray-700 hover:border-red-300 hover:bg-white hover:text-red-600"
-              }`}
-              style={{
-                width: actionButtonSize,
-                height: actionButtonSize,
-                marginLeft: actionButtonGap,
-              }}
-              onMouseLeave={() => clearHover()}
-              onMouseDown={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-              }}
-              onClick={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-                deletePreviewTarget(hoveredEditTarget.key)
-              }}
-              aria-label={`Delete ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
-              title={hoveredEditTarget.kind === "text" ? "Delete paragraph" : "Delete image placeholder"}
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
           </div>
+          <button
+            type="button"
+            data-preview-edit-affordance="true"
+            className={`pointer-events-auto absolute flex items-center justify-center rounded-sm border shadow-md transition-colors ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-red-500/70 hover:bg-gray-800 hover:text-red-300"
+                : "border-gray-200 bg-white/95 text-gray-700 hover:border-red-300 hover:bg-white hover:text-red-600"
+            }`}
+            style={{
+              left: deleteButtonLeft,
+              top: actionGroupTop,
+              width: actionButtonSize,
+              height: actionButtonSize,
+              transform: pageRotation !== 0 ? `rotate(${-pageRotation}deg)` : undefined,
+            }}
+            onMouseDown={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              deletePreviewTarget(hoveredEditTarget.key)
+            }}
+            aria-label={`Delete ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
+            title={hoveredEditTarget.kind === "text" ? "Delete paragraph" : "Delete image placeholder"}
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
         </div>
       ) : null}
 

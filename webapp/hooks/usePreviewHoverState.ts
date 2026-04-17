@@ -25,6 +25,7 @@ type Args<Key extends string> = {
   setHoverCopyIntent: Dispatch<SetStateAction<boolean>>
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => Key | null
   findTopmostImageAtPoint: (pageX: number, pageY: number) => Key | null
+  isPointWithinHoverTarget: (key: Key, pageX: number, pageY: number) => boolean
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
 }
 
@@ -40,6 +41,7 @@ export function usePreviewHoverState<Key extends string>({
   setHoverCopyIntent,
   findTopmostBlockAtPoint,
   findTopmostImageAtPoint,
+  isPointWithinHoverTarget,
   toPagePointFromClient,
 }: Args<Key>) {
   const mouseMoveRafRef = useRef<number | null>(null)
@@ -63,6 +65,24 @@ export function usePreviewHoverState<Key extends string>({
     const pagePoint = toPagePointFromClient(clientX, clientY)
     if (!pagePoint) {
       clearHover()
+      return
+    }
+
+    if (hoverState?.key && isPointWithinHoverTarget(hoverState.key, pagePoint.x, pagePoint.y)) {
+      setHoverImageKey(null)
+      setHoverCopyIntent(editorOpen ? false : altKey)
+      setHoverState((prev) => (
+        prev?.key === hoverState.key
+          ? { key: hoverState.key, point: pagePoint }
+          : prev
+      ))
+      return
+    }
+
+    if (hoverImageKey && isPointWithinHoverTarget(hoverImageKey, pagePoint.x, pagePoint.y)) {
+      setHoverState(null)
+      setHoverCopyIntent(false)
+      setHoverImageKey((prev) => (prev === hoverImageKey ? prev : hoverImageKey))
       return
     }
 
@@ -95,6 +115,9 @@ export function usePreviewHoverState<Key extends string>({
     editorOpen,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,
+    hoverImageKey,
+    hoverState,
+    isPointWithinHoverTarget,
     setHoverCopyIntent,
     showTypography,
     toPagePointFromClient,

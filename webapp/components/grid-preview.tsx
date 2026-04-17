@@ -73,6 +73,17 @@ import {
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+
+function isPointWithinRect(pageX: number, pageY: number, rect: BlockRect | null | undefined): boolean {
+  if (!rect || rect.width <= 0 || rect.height <= 0) return false
+  return (
+    pageX >= rect.x
+    && pageX <= rect.x + rect.width
+    && pageY >= rect.y
+    && pageY <= rect.y + rect.height
+  )
+}
+
 let runtimeIdCounter = 0
 function createRuntimeId(prefix: "paragraph" | "image"): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -622,6 +633,16 @@ export const GridPreview = memo(function GridPreview({
     setHoverCopyIntent,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,
+    isPointWithinHoverTarget: (key, pageX, pageY) => {
+      if (isImagePlaceholderKey(key)) {
+        return isPointWithinRect(pageX, pageY, imageRectsRef.current[key] ?? null)
+      }
+      const plan = previousPlansRef.current.get(key)
+      if (plan?.guideRects.some((guideRect) => isPointWithinRect(pageX, pageY, guideRect))) {
+        return true
+      }
+      return isPointWithinRect(pageX, pageY, blockRectsRef.current[key] ?? null)
+    },
     toPagePointFromClient,
   })
 
@@ -846,7 +867,6 @@ export const GridPreview = memo(function GridPreview({
       ? getPreviewTextGuideRect(linkedHoveredTextPlan, result.grid.gridUnit * scale)
       : hoveredTextRect
   const hoveredTextGuidePlan = hoveredTextPlan ?? linkedHoveredTextPlan
-  const hoveredTextAlign = hoveredTextPlan?.textAlign ?? (hoverState?.key ? (blockTextAlignments[hoverState.key] ?? "left") : null)
   const hoveredImageRect = hoverImageKey
     ? imageRectsRef.current[hoverImageKey] ?? null
     : linkedHoveredImageRect
@@ -1142,7 +1162,6 @@ export const GridPreview = memo(function GridPreview({
         textEditorControls={textEditorControls}
         hoveredTextKey={hoverState?.key ?? null}
         hoveredTextRect={hoveredTextGuideRect}
-        hoveredTextAlign={hoveredTextAlign}
         hoveredImageKey={hoverImageKey}
         hoveredImageRect={hoveredImageRect}
         openTextEditor={openTextEditor}
