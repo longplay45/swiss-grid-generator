@@ -31,6 +31,8 @@ import {
   PREVIEW_TOUCH_LONG_PRESS_MS,
 } from "@/lib/preview-interaction-constants"
 import { getHoveredPreviewTextGuideRect, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
+import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
+import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import {
   type BlockRect,
   type BlockRenderPlan,
@@ -295,6 +297,7 @@ export const GridPreview = memo(function GridPreview({
     setImageRowSpans,
     setImageHeightBaselines,
     setImageColors,
+    setImageOpacities,
     imageEditorState,
     setImageEditorState,
     getImageSpan,
@@ -915,6 +918,67 @@ export const GridPreview = memo(function GridPreview({
     deleteImagePlaceholderState()
   }, [deleteImagePlaceholderState, imageEditorState, recordHistoryBeforeChange])
 
+  const deletePreviewTarget = useCallback((key: BlockId) => {
+    clearHover()
+    onSelectLayer?.(null)
+    recordHistoryBeforeChange()
+
+    if (isImagePlaceholderKey(key)) {
+      setImageOrder((prev) => prev.filter((item) => item !== key))
+      setImageModulePositions((prev) => omitOptionalRecordKey(prev, key))
+      setImageColumnSpans((prev) => omitOptionalRecordKey(prev, key))
+      setImageRowSpans((prev) => omitOptionalRecordKey(prev, key))
+      setImageHeightBaselines((prev) => omitOptionalRecordKey(prev, key))
+      setImageColors((prev) => omitOptionalRecordKey(prev, key))
+      setImageOpacities((prev) => omitOptionalRecordKey(prev, key))
+      setLayerOrder((prev) => prev.filter((item) => item !== key))
+      setImageEditorState((prev) => (prev?.target === key ? null : prev))
+      return
+    }
+
+    setBlockCollections((prev) => {
+      if (isBaseBlockId(key)) {
+        return {
+          ...prev,
+          textContent: {
+            ...prev.textContent,
+            [key]: "",
+          },
+          blockModulePositions: omitOptionalRecordKey(prev.blockModulePositions, key),
+        }
+      }
+      return removeTextLayerFromCollections(prev, key)
+    })
+
+    if (!isBaseBlockId(key)) {
+      setBlockCustomSizes((prev) => omitOptionalRecordKey(prev, key))
+      setBlockCustomLeadings((prev) => omitOptionalRecordKey(prev, key))
+      setBlockTextColors((prev) => omitOptionalRecordKey(prev, key))
+      setLayerOrder((prev) => prev.filter((item) => item !== key))
+    }
+
+    setEditorState((prev) => (prev?.target === key ? null : prev))
+  }, [
+    clearHover,
+    isImagePlaceholderKey,
+    onSelectLayer,
+    recordHistoryBeforeChange,
+    setBlockCollections,
+    setBlockCustomLeadings,
+    setBlockCustomSizes,
+    setBlockTextColors,
+    setEditorState,
+    setImageColors,
+    setImageColumnSpans,
+    setImageEditorState,
+    setImageHeightBaselines,
+    setImageModulePositions,
+    setImageOpacities,
+    setImageOrder,
+    setImageRowSpans,
+    setLayerOrder,
+  ])
+
   usePreviewLayoutEmission({
     buildSnapshot,
     debounceMs: PREVIEW_LAYOUT_CHANGE_DEBOUNCE_MS,
@@ -1084,6 +1148,7 @@ export const GridPreview = memo(function GridPreview({
         openTextEditor={openTextEditor}
         openImageEditor={openImageEditor}
         beginDetachedCopyDrag={beginDetachedCopyDrag}
+        deletePreviewTarget={deletePreviewTarget}
         clearHover={clearHover}
         setImageEditorState={setImageEditorState}
         deleteImagePlaceholder={deleteImagePlaceholder}

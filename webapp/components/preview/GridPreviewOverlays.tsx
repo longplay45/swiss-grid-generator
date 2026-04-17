@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, SquarePen } from "lucide-react"
+import { Plus, SquarePen, Trash2 } from "lucide-react"
 import { createPortal } from "react-dom"
 import type { Dispatch, SetStateAction } from "react"
 
@@ -30,6 +30,7 @@ type Props<StyleKey extends string> = {
   openTextEditor: (key: string) => void
   openImageEditor: (key: string) => void
   beginDetachedCopyDrag: (key: string, clientX: number, clientY: number) => void
+  deletePreviewTarget: (key: string) => void
   clearHover: () => void
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
   deleteImagePlaceholder: () => void
@@ -61,6 +62,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   openTextEditor,
   openImageEditor,
   beginDetachedCopyDrag,
+  deletePreviewTarget,
   clearHover,
   setImageEditorState,
   deleteImagePlaceholder,
@@ -85,7 +87,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   const actionButtonSize = 22
   const actionButtonGap = 4
   const editButtonInset = 6
-  const actionGroupWidth = actionButtonSize * 2 + actionButtonGap
+  const actionGroupWidth = actionButtonSize * 3 + actionButtonGap * 2
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
   const actionGroupLeft = hoveredEditTarget
     ? Math.max(
@@ -214,7 +216,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
             <button
               type="button"
               data-preview-edit-affordance="true"
-              className={`ml-1 flex items-center justify-center rounded-sm border shadow-md transition-colors ${
+              className={`flex items-center justify-center rounded-sm border shadow-md transition-colors ${
                 isDarkMode
                   ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-gray-600 hover:bg-gray-800 hover:text-gray-50"
                   : "border-gray-200 bg-white/95 text-gray-700 hover:border-gray-300 hover:bg-white hover:text-gray-900"
@@ -238,6 +240,34 @@ export function GridPreviewOverlays<StyleKey extends string>({
               title={hoveredEditTarget.kind === "text" ? "Duplicate paragraph" : "Duplicate image placeholder"}
             >
               <Plus className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              data-preview-edit-affordance="true"
+              className={`flex items-center justify-center rounded-sm border shadow-md transition-colors ${
+                isDarkMode
+                  ? "border-gray-700 bg-gray-900/95 text-gray-200 hover:border-red-500/70 hover:bg-gray-800 hover:text-red-300"
+                  : "border-gray-200 bg-white/95 text-gray-700 hover:border-red-300 hover:bg-white hover:text-red-600"
+              }`}
+              style={{
+                width: actionButtonSize,
+                height: actionButtonSize,
+                marginLeft: actionButtonGap,
+              }}
+              onMouseLeave={() => clearHover()}
+              onMouseDown={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                deletePreviewTarget(hoveredEditTarget.key)
+              }}
+              aria-label={`Delete ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
+              title={hoveredEditTarget.kind === "text" ? "Delete paragraph" : "Delete image placeholder"}
+            >
+              <Trash2 className="h-3 w-3" />
             </button>
           </div>
         </div>
