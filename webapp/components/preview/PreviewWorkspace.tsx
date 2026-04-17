@@ -133,7 +133,7 @@ function renderHeaderAction(
         showTooltip={showRolloverInfo}
         buttonClassName={showSectionHelpIcons ? "relative" : undefined}
       >
-        {showSectionHelpIcons ? <HelpIndicatorLine inset="icon" /> : null}
+        {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
         {action.icon}
       </HeaderIconButton>
     </div>
