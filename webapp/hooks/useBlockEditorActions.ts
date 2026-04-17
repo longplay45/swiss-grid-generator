@@ -27,6 +27,26 @@ type EditorState = BlockEditorState<string>
 
 type AutoFitResult = { span: number; position: ModulePosition | null } | null
 
+function resolveSpanAnchoredPosition({
+  position,
+  previousSpan,
+  nextSpan,
+  align,
+}: {
+  position: ModulePosition | undefined
+  previousSpan: number
+  nextSpan: number
+  align: TextAlignMode
+}): ModulePosition | undefined {
+  if (!position) return position
+  if (previousSpan === nextSpan) return position
+  if (align !== "right") return position
+  return {
+    ...position,
+    col: position.col + previousSpan - nextSpan,
+  }
+}
+
 type Args = {
   showTypography: boolean
   dragEndedAtRef: RefObject<number>
@@ -161,7 +181,13 @@ export function useBlockEditorActions({
       gridRows: resultGridRows,
     })
     const effectiveReflow = draft.draftReflow && draft.draftColumns > 1
-    const existingPosition = blockModulePositions[draft.target]
+    const persistedSpan = getBlockSpan(draft.target)
+    const existingPosition = resolveSpanAnchoredPosition({
+      position: blockModulePositions[draft.target],
+      previousSpan: persistedSpan,
+      nextSpan: draft.draftColumns,
+      align: draft.draftAlign,
+    })
     const autoFit = getAutoFitForPlacement({
       key: draft.target,
       text: draft.draftText,
@@ -192,7 +218,7 @@ export function useBlockEditorActions({
         gridCols: resultGridCols,
         gridRows: resultGridRows,
         rowStartBaselines: metrics.rowStartBaselines,
-        desiredPosition: autoFit?.position ?? null,
+        desiredPosition: autoFit?.position ?? existingPosition ?? null,
         typographyStyles: resultTypographyStyles,
       })
     })
@@ -208,6 +234,7 @@ export function useBlockEditorActions({
   }, [
     baseFont,
     blockModulePositions,
+    getBlockSpan,
     getAutoFitForPlacement,
     getGridMetrics,
     resultGridCols,

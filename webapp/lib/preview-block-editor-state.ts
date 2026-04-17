@@ -99,7 +99,6 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     rows: getBlockRows(key),
     baselines: getBlockHeightBaselines(key),
     gridRows: Number.MAX_SAFE_INTEGER,
-    defaultRows: 1,
   })
   const assignedStyleKey = styleAssignments[key] ?? fallbackStyle
   const normalizedText = normalizeInlineEditorText(textContent[key] ?? "")
@@ -250,7 +249,6 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     rows,
     baselines: heightBaselines,
     gridRows: Number.MAX_SAFE_INTEGER,
-    defaultRows: 1,
   })
   return {
     target: key,

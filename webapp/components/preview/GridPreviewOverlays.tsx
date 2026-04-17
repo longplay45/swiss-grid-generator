@@ -123,6 +123,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
       <>
         {editorState && textEditorControls ? (
           <div
+            data-editor-interactive-root="true"
             className="h-full"
             onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-editor") : undefined}
           >
@@ -138,6 +139,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
 
         {imageEditorState ? (
           <div
+            data-editor-interactive-root="true"
             className="h-full"
             onMouseEnter={showEditorHelpIcon ? () => onOpenHelpSection?.("help-image-editor") : undefined}
           >

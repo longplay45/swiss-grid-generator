@@ -63,6 +63,7 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   getPlacementHeightBaselines: (key: Key) => number
   getPlacementSpan: (key: Key) => number
   getGridMetrics: () => PreviewGridMetrics
+  editorPlanVersion?: number
 }
 
 export function usePreviewOverlayCanvas<Key extends string, Plan extends OverlayPlan<Key>>({
@@ -92,6 +93,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   getPlacementHeightBaselines,
   getPlacementSpan,
   getGridMetrics,
+  editorPlanVersion = 0,
 }: Args<Key, Plan>) {
   useEffect(() => {
     const canvas = overlayCanvasRef.current
@@ -305,5 +307,6 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
     selectedLayerKey,
     showTypography,
     blockRectsRef,
+    editorPlanVersion,
   ])
 }

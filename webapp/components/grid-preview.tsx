@@ -473,6 +473,7 @@ export const GridPreview = memo(function GridPreview({
     requestedLayerEditorTarget,
     requestedLayerEditorToken,
     lastAppliedLayerEditorRequestKeyRef,
+    editorSidebarHost,
     onSelectLayer,
     textareaRef,
     onUndoRequest,
@@ -830,6 +831,7 @@ export const GridPreview = memo(function GridPreview({
     getPlacementHeightBaselines,
     getPlacementSpan,
     getGridMetrics,
+    editorPlanVersion: inlineEditorPlanVersion,
   })
 
   usePreviewLayoutReflowController<BlockId>({

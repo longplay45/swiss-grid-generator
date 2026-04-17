@@ -174,7 +174,7 @@ export function TextEditorPanel<StyleKey extends string>({
     }
   }, [])
 
-  const maxHeightBaselines = Math.max(1, controls.baselinesPerGridModule)
+  const maxHeightBaselines = Math.max(0, controls.baselinesPerGridModule - 1)
   const setTextEditorState = controls.setEditorState
 
   useEffect(() => {
@@ -298,7 +298,6 @@ export function TextEditorPanel<StyleKey extends string>({
     return {
       ...state,
       draftRows: nextRows,
-      draftHeightBaselines: nextRows === 0 && state.draftHeightBaselines === 0 ? 1 : state.draftHeightBaselines,
     }
   }
 
@@ -317,7 +316,6 @@ export function TextEditorPanel<StyleKey extends string>({
     const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
     return {
       ...state,
-      draftRows: state.draftRows === 0 && nextBaselines === 0 ? 1 : state.draftRows,
       draftHeightBaselines: nextBaselines,
     }
   }
@@ -406,36 +404,48 @@ export function TextEditorPanel<StyleKey extends string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftRowsValue,
+    committedValue: String(controls.editorState.draftRows),
   })
   const columnsSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftColumnsValue,
+    committedValue: String(controls.editorState.draftColumns),
   })
   const baselinesSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftBaselinesValue,
+    committedValue: String(resolvedHeightBaselines),
   })
   const fontSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftFontValue,
+    committedValue: selectionFontFamily ?? controls.editorState.draftFont,
   })
   const cutSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftFontCutValue,
+    committedValue: selectedFontVariantForSelection?.id
+      ?? resolveFontVariant(
+        selectionFontFamily ?? controls.editorState.draftFont,
+        selectionFontWeight ?? controls.editorState.draftFontWeight,
+        selectionItalic ?? controls.editorState.draftItalic,
+      ).id,
   })
   const hierarchySelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftHierarchyValue,
+    committedValue: selectionStyleKey ?? controls.editorState.draftStyle,
   })
   const kerningSelectPreview = useStateSnapshotSelectPreview<typeof controls.editorState | null, string>({
     state: controls.editorState,
     setState: controls.setEditorState,
     applyValue: applyDraftKerningValue,
+    committedValue: controls.editorState.draftOpticalKerning ? "on" : "off",
   })
 
   const applySelectionTextFormat = (
@@ -611,7 +621,11 @@ export function TextEditorPanel<StyleKey extends string>({
   ]
 
   return (
-    <div data-text-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
+    <div
+      data-text-editor-panel="true"
+      data-editor-interactive-root="true"
+      className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}
+    >
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
           title="I. Geometry / Paragraph"
@@ -630,7 +644,7 @@ export function TextEditorPanel<StyleKey extends string>({
             <Label className={`${sectionLabelClassName} text-right`}>Cols</Label>
 
             <Select
-              value={String(controls.editorState.draftRows)}
+              value={rowsSelectPreview.value}
               onOpenChange={rowsSelectPreview.handleOpenChange}
               onValueChange={rowsSelectPreview.handleValueChange}
             >
@@ -647,7 +661,7 @@ export function TextEditorPanel<StyleKey extends string>({
             </Select>
 
             <Select
-              value={String(controls.editorState.draftColumns)}
+              value={columnsSelectPreview.value}
               onOpenChange={columnsSelectPreview.handleOpenChange}
               onValueChange={columnsSelectPreview.handleValueChange}
             >
@@ -667,7 +681,7 @@ export function TextEditorPanel<StyleKey extends string>({
             <div aria-hidden="true" />
 
             <Select
-              value={String(resolvedHeightBaselines)}
+              value={baselinesSelectPreview.value}
               onOpenChange={baselinesSelectPreview.handleOpenChange}
               onValueChange={baselinesSelectPreview.handleValueChange}
             >
@@ -790,7 +804,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Font</Label>
             <FontSelect
-              value={selectionFontFamily ?? undefined}
+              value={fontSelectPreview.value}
               onValueChange={fontSelectPreview.handleValueChange}
               options={FONT_OPTIONS}
               triggerClassName={triggerClassName}
@@ -806,7 +820,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Cut</Label>
             <Select
-              value={selectedFontVariantForSelection?.id}
+              value={cutSelectPreview.value}
               onOpenChange={cutSelectPreview.handleOpenChange}
               onValueChange={cutSelectPreview.handleValueChange}
             >
@@ -826,7 +840,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Hierarchy</Label>
             <Select
-              value={selectionStyleKey ?? undefined}
+              value={hierarchySelectPreview.value}
               onOpenChange={hierarchySelectPreview.handleOpenChange}
               onValueChange={hierarchySelectPreview.handleValueChange}
             >
@@ -973,7 +987,7 @@ export function TextEditorPanel<StyleKey extends string>({
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Kerning</Label>
             <Select
-              value={controls.editorState.draftOpticalKerning ? "on" : "off"}
+              value={kerningSelectPreview.value}
               onOpenChange={kerningSelectPreview.handleOpenChange}
               onValueChange={kerningSelectPreview.handleValueChange}
             >

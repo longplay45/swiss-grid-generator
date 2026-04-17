@@ -27,6 +27,7 @@ type Args = {
   requestedLayerEditorTarget: string | null
   requestedLayerEditorToken: number
   lastAppliedLayerEditorRequestKeyRef: MutableRefObject<number>
+  editorSidebarHost: HTMLDivElement | null
   onSelectLayer?: (key: string | null) => void
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>
   onUndoRequest?: () => void
@@ -46,6 +47,7 @@ export function usePreviewTextEditor({
   requestedLayerEditorTarget,
   requestedLayerEditorToken,
   lastAppliedLayerEditorRequestKeyRef,
+  editorSidebarHost,
   onSelectLayer,
   textareaRef,
   onUndoRequest,
@@ -277,6 +279,7 @@ export function usePreviewTextEditor({
 
   useCloseEditorsOnOutsidePointer({
     isEditorOpen: Boolean(editorState || imageEditorState),
+    editorSidebarHost,
     textareaRef,
     onCloseEditors: closeAnyEditor,
   })

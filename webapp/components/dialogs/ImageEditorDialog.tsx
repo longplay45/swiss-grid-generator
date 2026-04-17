@@ -120,14 +120,13 @@ export function ImageEditorDialog({
     }
   }, [])
 
-  const maxHeightBaselines = Math.max(1, baselinesPerGridModule)
+  const maxHeightBaselines = Math.max(0, baselinesPerGridModule - 1)
   const applyDraftRowsValue = (value: string, state: ImageEditorState | null) => {
     if (!state) return state
     const rows = Math.max(0, Math.min(gridRows, Number(value)))
     return {
       ...state,
       draftRows: rows,
-      draftHeightBaselines: rows === 0 && state.draftHeightBaselines === 0 ? 1 : state.draftHeightBaselines,
     }
   }
 
@@ -142,7 +141,6 @@ export function ImageEditorDialog({
     const nextBaselines = Math.max(0, Math.min(maxHeightBaselines, Number(value)))
     return {
       ...state,
-      draftRows: state.draftRows === 0 && nextBaselines === 0 ? 1 : state.draftRows,
       draftHeightBaselines: nextBaselines,
     }
   }
@@ -151,16 +149,19 @@ export function ImageEditorDialog({
     state: editorState,
     setState: setEditorState,
     applyValue: applyDraftRowsValue,
+    committedValue: String(editorState?.draftRows ?? 0),
   })
   const columnsSelectPreview = useStateSnapshotSelectPreview({
     state: editorState,
     setState: setEditorState,
     applyValue: applyDraftColumnsValue,
+    committedValue: String(editorState?.draftColumns ?? 1),
   })
   const baselinesSelectPreview = useStateSnapshotSelectPreview({
     state: editorState,
     setState: setEditorState,
     applyValue: applyDraftBaselinesValue,
+    committedValue: String(editorState?.draftHeightBaselines ?? 0),
   })
 
   if (!editorState) return null
@@ -168,7 +169,6 @@ export function ImageEditorDialog({
   const activeColorScheme = previewColorScheme ?? editorColorScheme
   const previewPalette = colorSchemes.find((scheme) => scheme.id === activeColorScheme)?.colors ?? palette
   const transparencyPercent = opacityToTransparencyPercent(editorState.draftOpacity)
-  const resolvedHeightBaselines = Math.max(0, Math.min(maxHeightBaselines, editorState.draftHeightBaselines))
   const toggleSection = (key: SectionKey) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
   }
@@ -254,7 +254,11 @@ export function ImageEditorDialog({
   }
 
   return (
-    <div data-image-editor-panel="true" className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}>
+    <div
+      data-image-editor-panel="true"
+      data-editor-interactive-root="true"
+      className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}
+    >
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
           title="I. Geometry / Paragraph"
@@ -273,7 +277,7 @@ export function ImageEditorDialog({
             <Label className={`${sectionLabelClassName} text-right`}>Cols</Label>
 
             <Select
-              value={String(editorState.draftRows)}
+              value={rowsSelectPreview.value}
               onOpenChange={rowsSelectPreview.handleOpenChange}
               onValueChange={rowsSelectPreview.handleValueChange}
             >
@@ -294,7 +298,7 @@ export function ImageEditorDialog({
             </Select>
 
             <Select
-              value={String(editorState.draftColumns)}
+              value={columnsSelectPreview.value}
               onOpenChange={columnsSelectPreview.handleOpenChange}
               onValueChange={columnsSelectPreview.handleValueChange}
             >
@@ -318,7 +322,7 @@ export function ImageEditorDialog({
             <div aria-hidden="true" />
 
             <Select
-              value={String(resolvedHeightBaselines)}
+              value={baselinesSelectPreview.value}
               onOpenChange={baselinesSelectPreview.handleOpenChange}
               onValueChange={baselinesSelectPreview.handleValueChange}
             >

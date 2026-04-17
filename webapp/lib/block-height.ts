@@ -17,6 +17,10 @@ function toRoundedNonNegativeInteger(value: number | undefined, fallback: number
   return Math.max(0, Math.round(value))
 }
 
+function isFiniteNumber(value: number | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value)
+}
+
 export function normalizeHeightMetrics({
   rows,
   baselines,
@@ -27,8 +31,18 @@ export function normalizeHeightMetrics({
   const fallbackRows = Math.max(0, Math.min(maxRows, Math.round(defaultRows)))
   const nextRows = Math.max(0, Math.min(maxRows, toRoundedNonNegativeInteger(rows, fallbackRows)))
   const nextBaselines = toRoundedNonNegativeInteger(baselines, 0)
+  const hasExplicitRows = isFiniteNumber(rows)
+  const hasExplicitBaselines = isFiniteNumber(baselines)
 
   if (nextRows === 0 && nextBaselines === 0) {
+    // Preserve explicit `0 rows + 0 baselines` compositions. Only fall back when
+    // height is missing or invalid, not when the user intentionally set zeros.
+    if (hasExplicitRows && hasExplicitBaselines) {
+      return {
+        rows: 0,
+        baselines: 0,
+      }
+    }
     return {
       rows: fallbackRows > 0 ? fallbackRows : Math.min(1, maxRows),
       baselines: 0,

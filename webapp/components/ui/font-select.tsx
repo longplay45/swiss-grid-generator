@@ -29,6 +29,9 @@ type Props = {
   onContentPointerLeave?: () => void
   getItemPreviewProps?: (value: string) => {
     onFocus?: () => void
+    onMouseEnter?: () => void
+    onMouseMove?: () => void
+    onPointerEnter?: () => void
     onPointerMove?: () => void
   }
 }

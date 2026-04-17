@@ -61,6 +61,7 @@ export const ControlSidebar = memo(function ControlSidebar({
             <div
               ref={onEditorHostChange}
               data-editor-sidebar-host="true"
+              data-editor-interactive-root="true"
               className="min-h-0 flex-1 overflow-hidden"
             />
           ) : (
