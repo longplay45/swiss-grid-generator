@@ -1,6 +1,6 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useEffect, useRef } from "react"
 
 import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { CanvasRatioPanel } from "@/components/settings/CanvasRatioPanel"
@@ -162,110 +162,162 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   onCanvasBackgroundPreviewChange,
   isDarkMode,
 }: Props) {
+  const scrollRootRef = useRef<HTMLDivElement | null>(null)
+  const sectionRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({})
+  const previousCollapsedRef = useRef(collapsed)
+
+  useEffect(() => {
+    const openedSection = (Object.keys(collapsed) as SectionKey[]).find((key) => (
+      previousCollapsedRef.current[key] && !collapsed[key]
+    ))
+    previousCollapsedRef.current = collapsed
+    if (!openedSection) return
+
+    const scrollRoot = scrollRootRef.current
+    const sectionNode = sectionRefs.current[openedSection]
+    if (!scrollRoot || !sectionNode) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const rootRect = scrollRoot.getBoundingClientRect()
+      const sectionRect = sectionNode.getBoundingClientRect()
+      const topOverflow = sectionRect.top - rootRect.top
+      const bottomOverflow = sectionRect.bottom - rootRect.bottom
+
+      if (topOverflow < 0) {
+        scrollRoot.scrollTo({
+          top: scrollRoot.scrollTop + topOverflow - 12,
+          behavior: "smooth",
+        })
+        return
+      }
+
+      if (bottomOverflow > 0) {
+        scrollRoot.scrollTo({
+          top: scrollRoot.scrollTop + bottomOverflow + 12,
+          behavior: "smooth",
+        })
+      }
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [collapsed])
+
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+    <div ref={scrollRootRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
         value={{ showHelpIcons: showSectionHelpIcons, showRolloverInfo, onNavigate: onHelpNavigate }}
       >
-        <CanvasRatioPanel
-          collapsed={collapsed.format}
-          onHeaderClick={onSectionHeaderClick("format")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          canvasRatio={canvasRatio}
-          onCanvasRatioChange={onCanvasRatioChange}
-          onCanvasRatioPreviewChange={onCanvasRatioPreviewChange}
-          customRatioWidth={customRatioWidth}
-          onCustomRatioWidthChange={onCustomRatioWidthChange}
-          customRatioHeight={customRatioHeight}
-          onCustomRatioHeightChange={onCustomRatioHeightChange}
-          orientation={orientation}
-          onOrientationChange={onOrientationChange}
-          onOrientationPreviewChange={onOrientationPreviewChange}
-          rotation={rotation}
-          onRotationChange={onRotationChange}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.format = node }}>
+          <CanvasRatioPanel
+            collapsed={collapsed.format}
+            onHeaderClick={onSectionHeaderClick("format")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            canvasRatio={canvasRatio}
+            onCanvasRatioChange={onCanvasRatioChange}
+            onCanvasRatioPreviewChange={onCanvasRatioPreviewChange}
+            customRatioWidth={customRatioWidth}
+            onCustomRatioWidthChange={onCustomRatioWidthChange}
+            customRatioHeight={customRatioHeight}
+            onCustomRatioHeightChange={onCustomRatioHeightChange}
+            orientation={orientation}
+            onOrientationChange={onOrientationChange}
+            onOrientationPreviewChange={onOrientationPreviewChange}
+            rotation={rotation}
+            onRotationChange={onRotationChange}
+            isDarkMode={isDarkMode}
+          />
+        </div>
 
-        <BaselineGridPanel
-          collapsed={collapsed.baseline}
-          onHeaderClick={onSectionHeaderClick("baseline")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          customBaseline={customBaseline}
-          availableBaselineOptions={availableBaselineOptions}
-          onCustomBaselineChange={onCustomBaselineChange}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.baseline = node }}>
+          <BaselineGridPanel
+            collapsed={collapsed.baseline}
+            onHeaderClick={onSectionHeaderClick("baseline")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            customBaseline={customBaseline}
+            availableBaselineOptions={availableBaselineOptions}
+            onCustomBaselineChange={onCustomBaselineChange}
+            isDarkMode={isDarkMode}
+          />
+        </div>
 
-        <MarginsPanel
-          collapsed={collapsed.margins}
-          onHeaderClick={onSectionHeaderClick("margins")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          marginMethod={marginMethod}
-          onMarginMethodChange={onMarginMethodChange}
-          onMarginMethodPreviewChange={onMarginMethodPreviewChange}
-          baselineMultiple={baselineMultiple}
-          onBaselineMultipleChange={onBaselineMultipleChange}
-          useCustomMargins={useCustomMargins}
-          onUseCustomMarginsChange={onUseCustomMarginsChange}
-          customMarginMultipliers={customMarginMultipliers}
-          onCustomMarginMultipliersChange={onCustomMarginMultipliersChange}
-          currentMargins={currentMargins}
-          gridUnit={gridUnit}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.margins = node }}>
+          <MarginsPanel
+            collapsed={collapsed.margins}
+            onHeaderClick={onSectionHeaderClick("margins")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            marginMethod={marginMethod}
+            onMarginMethodChange={onMarginMethodChange}
+            onMarginMethodPreviewChange={onMarginMethodPreviewChange}
+            baselineMultiple={baselineMultiple}
+            onBaselineMultipleChange={onBaselineMultipleChange}
+            useCustomMargins={useCustomMargins}
+            onUseCustomMarginsChange={onUseCustomMarginsChange}
+            customMarginMultipliers={customMarginMultipliers}
+            onCustomMarginMultipliersChange={onCustomMarginMultipliersChange}
+            currentMargins={currentMargins}
+            gridUnit={gridUnit}
+            isDarkMode={isDarkMode}
+          />
+        </div>
 
-        <GutterPanel
-          collapsed={collapsed.gutter}
-          onHeaderClick={onSectionHeaderClick("gutter")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          gridCols={gridCols}
-          onGridColsChange={onGridColsChange}
-          gridRows={gridRows}
-          onGridRowsChange={onGridRowsChange}
-          gutterMultiple={gutterMultiple}
-          onGutterMultipleChange={onGutterMultipleChange}
-          rhythm={rhythm}
-          onRhythmChange={onRhythmChange}
-          onRhythmPreviewChange={onRhythmPreviewChange}
-          rhythmRowsEnabled={rhythmRowsEnabled}
-          onRhythmRowsEnabledChange={onRhythmRowsEnabledChange}
-          rhythmRowsDirection={rhythmRowsDirection}
-          onRhythmRowsDirectionChange={onRhythmRowsDirectionChange}
-          onRhythmRowsDirectionPreviewChange={onRhythmRowsDirectionPreviewChange}
-          rhythmColsEnabled={rhythmColsEnabled}
-          onRhythmColsEnabledChange={onRhythmColsEnabledChange}
-          rhythmColsDirection={rhythmColsDirection}
-          onRhythmColsDirectionChange={onRhythmColsDirectionChange}
-          onRhythmColsDirectionPreviewChange={onRhythmColsDirectionPreviewChange}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.gutter = node }}>
+          <GutterPanel
+            collapsed={collapsed.gutter}
+            onHeaderClick={onSectionHeaderClick("gutter")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            gridCols={gridCols}
+            onGridColsChange={onGridColsChange}
+            gridRows={gridRows}
+            onGridRowsChange={onGridRowsChange}
+            gutterMultiple={gutterMultiple}
+            onGutterMultipleChange={onGutterMultipleChange}
+            rhythm={rhythm}
+            onRhythmChange={onRhythmChange}
+            onRhythmPreviewChange={onRhythmPreviewChange}
+            rhythmRowsEnabled={rhythmRowsEnabled}
+            onRhythmRowsEnabledChange={onRhythmRowsEnabledChange}
+            rhythmRowsDirection={rhythmRowsDirection}
+            onRhythmRowsDirectionChange={onRhythmRowsDirectionChange}
+            onRhythmRowsDirectionPreviewChange={onRhythmRowsDirectionPreviewChange}
+            rhythmColsEnabled={rhythmColsEnabled}
+            onRhythmColsEnabledChange={onRhythmColsEnabledChange}
+            rhythmColsDirection={rhythmColsDirection}
+            onRhythmColsDirectionChange={onRhythmColsDirectionChange}
+            onRhythmColsDirectionPreviewChange={onRhythmColsDirectionPreviewChange}
+            isDarkMode={isDarkMode}
+          />
+        </div>
 
-        <TypographyPanel
-          collapsed={collapsed.typo}
-          onHeaderClick={onSectionHeaderClick("typo")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          typographyScale={typographyScale}
-          onTypographyScaleChange={onTypographyScaleChange}
-          onTypographyScalePreviewChange={onTypographyScalePreviewChange}
-          typographyStyles={typographyStyles}
-          baseFont={baseFont}
-          onBaseFontChange={onBaseFontChange}
-          onBaseFontPreviewChange={onBaseFontPreviewChange}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.typo = node }}>
+          <TypographyPanel
+            collapsed={collapsed.typo}
+            onHeaderClick={onSectionHeaderClick("typo")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            typographyScale={typographyScale}
+            onTypographyScaleChange={onTypographyScaleChange}
+            onTypographyScalePreviewChange={onTypographyScalePreviewChange}
+            typographyStyles={typographyStyles}
+            baseFont={baseFont}
+            onBaseFontChange={onBaseFontChange}
+            onBaseFontPreviewChange={onBaseFontPreviewChange}
+            isDarkMode={isDarkMode}
+          />
+        </div>
 
-        <ColorSchemePanel
-          collapsed={collapsed.color}
-          onHeaderClick={onSectionHeaderClick("color")}
-          onHeaderDoubleClick={onSectionHeaderDoubleClick}
-          colorScheme={colorScheme}
-          onColorSchemeChange={onColorSchemeChange}
-          onColorSchemePreviewChange={onColorSchemePreviewChange}
-          canvasBackground={canvasBackground}
-          onCanvasBackgroundChange={onCanvasBackgroundChange}
-          onCanvasBackgroundPreviewChange={onCanvasBackgroundPreviewChange}
-          isDarkMode={isDarkMode}
-        />
+        <div ref={(node) => { sectionRefs.current.color = node }}>
+          <ColorSchemePanel
+            collapsed={collapsed.color}
+            onHeaderClick={onSectionHeaderClick("color")}
+            onHeaderDoubleClick={onSectionHeaderDoubleClick}
+            colorScheme={colorScheme}
+            onColorSchemeChange={onColorSchemeChange}
+            onColorSchemePreviewChange={onColorSchemePreviewChange}
+            canvasBackground={canvasBackground}
+            onCanvasBackgroundChange={onCanvasBackgroundChange}
+            onCanvasBackgroundPreviewChange={onCanvasBackgroundPreviewChange}
+            isDarkMode={isDarkMode}
+          />
+        </div>
       </SettingsHelpNavigationProvider>
     </div>
   )
