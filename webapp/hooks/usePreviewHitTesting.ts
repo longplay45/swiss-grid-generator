@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react"
 import type { RefObject } from "react"
 
-import type { BlockRect, PagePoint } from "@/lib/preview-types"
+import type { BlockRect, BlockRenderPlan, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
@@ -9,6 +9,7 @@ import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
 type Args<Key extends string> = {
   blockRectsRef: RefObject<Record<Key, BlockRect>>
   imageRectsRef: RefObject<Record<Key, BlockRect>>
+  previousPlansRef: RefObject<Map<Key, BlockRenderPlan<Key>>>
   resolvedLayerOrder: readonly Key[]
   imageOrder: readonly Key[]
   showImagePlaceholders: boolean
@@ -16,6 +17,9 @@ type Args<Key extends string> = {
   getPlacementSpan: (key: Key) => number
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
 }
+
+const TEXT_LINE_HIT_PADDING_X = 6
+const TEXT_LINE_HIT_PADDING_Y = 4
 
 function isPointWithinRect(pageX: number, pageY: number, rect: BlockRect | undefined): boolean {
   if (!rect || rect.width <= 0 || rect.height <= 0) return false
@@ -27,9 +31,23 @@ function isPointWithinRect(pageX: number, pageY: number, rect: BlockRect | undef
   )
 }
 
+function isPointWithinRenderedLine(
+  pageX: number,
+  pageY: number,
+  line: { left: number; top: number; width: number; height: number },
+): boolean {
+  return (
+    pageX >= line.left - TEXT_LINE_HIT_PADDING_X
+    && pageX <= line.left + line.width + TEXT_LINE_HIT_PADDING_X
+    && pageY >= line.top - TEXT_LINE_HIT_PADDING_Y
+    && pageY <= line.top + line.height + TEXT_LINE_HIT_PADDING_Y
+  )
+}
+
 export function usePreviewHitTesting<Key extends string>({
   blockRectsRef,
   imageRectsRef,
+  previousPlansRef,
   resolvedLayerOrder,
   imageOrder,
   showImagePlaceholders,
@@ -81,13 +99,34 @@ export function usePreviewHitTesting<Key extends string>({
       const key = resolvedLayerOrder[index]
       const isImage = imageKeySet.has(key)
       if (isImage && !showImagePlaceholders) continue
-      const rect = isImage ? imageRectsRef.current[key] : blockRectsRef.current[key]
-      if (isPointWithinRect(pageX, pageY, rect)) {
+
+      if (isImage) {
+        const rect = imageRectsRef.current[key]
+        if (isPointWithinRect(pageX, pageY, rect)) return key
+        continue
+      }
+
+      const plan = previousPlansRef.current.get(key)
+      const lineHit = plan?.renderedLines.some((line) => isPointWithinRenderedLine(pageX, pageY, line)) ?? false
+      if (lineHit) {
         return key
+      }
+
+      const guideHit = plan?.guideRects.some((guideRect) => isPointWithinRect(pageX, pageY, guideRect)) ?? false
+      if (guideHit) {
+        return key
+      }
+
+      const hasPlan = Boolean(plan)
+      if (!hasPlan) {
+        const rect = blockRectsRef.current[key]
+        if (isPointWithinRect(pageX, pageY, rect)) {
+          return key
+        }
       }
     }
     return null
-  }, [blockRectsRef, imageKeySet, imageRectsRef, resolvedLayerOrder, showImagePlaceholders])
+  }, [blockRectsRef, imageKeySet, imageRectsRef, previousPlansRef, resolvedLayerOrder, showImagePlaceholders])
 
   const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): Key | null => {
     const key = findTopmostLayerAtPoint(pageX, pageY)

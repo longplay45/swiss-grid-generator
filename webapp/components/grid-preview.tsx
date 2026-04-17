@@ -344,6 +344,7 @@ export const GridPreview = memo(function GridPreview({
   } = usePreviewHitTesting({
     blockRectsRef,
     imageRectsRef,
+    previousPlansRef,
     resolvedLayerOrder,
     imageOrder,
     showImagePlaceholders,
@@ -645,6 +646,14 @@ export const GridPreview = memo(function GridPreview({
       }
     }
   ), [])
+
+  useEffect(() => {
+    if (initialLayoutToken === 0) return
+    blockRectsRef.current = {} as Record<BlockId, BlockRect>
+    imageRectsRef.current = {} as Record<BlockId, BlockRect>
+    previousPlansRef.current.clear()
+    clearHover()
+  }, [clearHover, imageRectsRef, initialLayoutToken, previousPlansRef])
 
   usePreviewDocumentLifecycle<TypographyStyleKey, BlockId, typeof dragState, NonNullable<typeof editorState>, typeof imageEditorState>({
     historyResetToken,
