@@ -735,9 +735,9 @@ export const GridPreview = memo(function GridPreview({
     isMobile,
   })
 
-  const [inlineEditorPlanVersion, setInlineEditorPlanVersion] = useState(0)
-  const handleInlineEditorPlanCommit = useCallback(() => {
-    setInlineEditorPlanVersion((version) => version + 1)
+  const [typographyPlanVersion, setTypographyPlanVersion] = useState(0)
+  const handleTypographyPlanCommit = useCallback(() => {
+    setTypographyPlanVersion((version) => version + 1)
   }, [])
 
   useTypographyRenderer<BlockId>({
@@ -788,8 +788,7 @@ export const GridPreview = memo(function GridPreview({
     getOpticalOffset,
     onOverflowLinesChange: handleOverflowLinesChange,
     onCanvasReady,
-    editorTarget: editorState?.target ?? null,
-    onEditorPlanCommit: handleInlineEditorPlanCommit,
+    onPlansCommit: handleTypographyPlanCommit,
     recordPerfMetric,
     pixelRatio,
   })
@@ -832,15 +831,11 @@ export const GridPreview = memo(function GridPreview({
     overflowLinesByBlock,
     dragState,
     editorTarget: editorState?.target ?? null,
-    blockModulePositions,
-    getBlockRows,
-    getBlockHeightBaselines,
-    getBlockSpan,
     getPlacementRows,
     getPlacementHeightBaselines,
     getPlacementSpan,
     getGridMetrics,
-    editorPlanVersion: inlineEditorPlanVersion,
+    editorPlanVersion: typographyPlanVersion,
   })
 
   usePreviewLayoutReflowController<BlockId>({
@@ -908,7 +903,7 @@ export const GridPreview = memo(function GridPreview({
     previousPlansRef,
     gridUnit: result.grid.gridUnit,
     scale,
-    planVersion: inlineEditorPlanVersion,
+    planVersion: typographyPlanVersion,
   })
   const maxCharsPerLine = useMemo(() => {
     if (!inlineEditorLayout) return null

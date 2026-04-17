@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
@@ -91,73 +91,8 @@ type Args<BlockId extends string> = {
   ) => number
   onOverflowLinesChange?: (overflowByBlock: Partial<Record<BlockId, number>>) => void
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
-  editorTarget?: BlockId | null
-  onEditorPlanCommit?: () => void
+  onPlansCommit?: () => void
   recordPerfMetric: (metric: "drawMs", valueMs: number) => void
-}
-
-function getEditorPlanSignature<BlockId extends string>(
-  target: BlockId,
-  rects: Record<BlockId, BlockRect>,
-  plans: Map<BlockId, BlockRenderPlan<BlockId>>,
-): string {
-  const rect = rects[target]
-  const plan = plans.get(target)
-  const rectSignature = rect
-    ? `${rect.x.toFixed(3)}:${rect.y.toFixed(3)}:${rect.width.toFixed(3)}:${rect.height.toFixed(3)}`
-    : "missing-rect"
-  if (!plan) {
-    return `${target}|${rectSignature}|missing-plan`
-  }
-  const commandsSignature = plan.commands
-    .map(({ text, x, y, sourceStart, sourceEnd, leadingBoundaryWhitespace, trailingBoundaryWhitespace }) => (
-      `${x.toFixed(3)}:${y.toFixed(3)}:${sourceStart ?? ""}:${sourceEnd ?? ""}:${leadingBoundaryWhitespace ?? ""}:${trailingBoundaryWhitespace ?? ""}:${text}`
-    ))
-    .join("|")
-  const renderedLinesSignature = plan.renderedLines
-    .map((line) => [
-      line.sourceStart,
-      line.sourceEnd,
-      line.left.toFixed(3),
-      line.top.toFixed(3),
-      line.width.toFixed(3),
-      line.height.toFixed(3),
-      line.baselineY.toFixed(3),
-      line.caretStops
-        .map((stop) => `${stop.index}:${stop.x.toFixed(3)}`)
-        .join(","),
-    ].join(":"))
-    .join("|")
-  const segmentGeometrySignature = plan.segmentLines
-    .map((segments) => segments
-      .map((segment) => [
-        segment.start,
-        segment.end,
-        segment.x.toFixed(3),
-        segment.y.toFixed(3),
-        segment.fontFamily,
-        segment.fontWeight,
-        segment.italic ? 1 : 0,
-        segment.styleKey,
-        segment.fontSize.toFixed(3),
-        segment.trackingScale,
-        segment.text,
-      ].join(":"))
-      .join("|"))
-    .join("||")
-  return [
-    target,
-    rectSignature,
-    plan.blockRotation.toFixed(3),
-    plan.rotationOriginX.toFixed(3),
-    plan.rotationOriginY.toFixed(3),
-    plan.textAlign,
-    plan.font,
-    plan.textColor,
-    commandsSignature,
-    renderedLinesSignature,
-    segmentGeometrySignature,
-  ].join("|")
 }
 
 export function useTypographyRenderer<BlockId extends string>({
@@ -209,12 +144,9 @@ export function useTypographyRenderer<BlockId extends string>({
   getOpticalOffset,
   onOverflowLinesChange,
   onCanvasReady,
-  editorTarget = null,
-  onEditorPlanCommit,
+  onPlansCommit,
   recordPerfMetric,
 }: Args<BlockId>) {
-  const lastEditorPlanSignatureRef = useRef<string | null>(null)
-
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -493,15 +425,7 @@ export function useTypographyRenderer<BlockId extends string>({
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(typographyBuffer, 0, 0)
       previousPlansRef.current = draftPlans
-      if (!editorTarget || !onEditorPlanCommit) {
-        lastEditorPlanSignatureRef.current = null
-      } else {
-        const nextEditorPlanSignature = getEditorPlanSignature(editorTarget, blockRectsRef.current, draftPlans)
-        if (nextEditorPlanSignature !== lastEditorPlanSignatureRef.current) {
-          lastEditorPlanSignatureRef.current = nextEditorPlanSignature
-          onEditorPlanCommit()
-        }
-      }
+      onPlansCommit?.()
       endDrawMark()
       recordPerfMetric("drawMs", performance.now() - drawStartedAt)
     })
@@ -540,12 +464,11 @@ export function useTypographyRenderer<BlockId extends string>({
     isTextReflowEnabled,
     layerOrder,
     onCanvasReady,
-    onEditorPlanCommit,
+    onPlansCommit,
     onOverflowLinesChange,
     previousPlansRef,
     recordPerfMetric,
     result,
-    editorTarget,
     fontRenderEpoch,
     rotation,
     scale,

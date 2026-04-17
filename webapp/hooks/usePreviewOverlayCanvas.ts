@@ -55,10 +55,6 @@ type Args<Key extends string, Plan extends OverlayPlan<Key>> = {
   overflowLinesByBlock: Partial<Record<Key, number>>
   dragState: DragState<Key> | null
   editorTarget: Key | null
-  blockModulePositions: Partial<Record<Key, ModulePosition>>
-  getBlockRows: (key: Key) => number
-  getBlockHeightBaselines: (key: Key) => number
-  getBlockSpan: (key: Key) => number
   getPlacementRows: (key: Key) => number
   getPlacementHeightBaselines: (key: Key) => number
   getPlacementSpan: (key: Key) => number
@@ -85,10 +81,6 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
   overflowLinesByBlock,
   dragState,
   editorTarget,
-  blockModulePositions,
-  getBlockRows,
-  getBlockHeightBaselines,
-  getBlockSpan,
   getPlacementRows,
   getPlacementHeightBaselines,
   getPlacementSpan,
@@ -215,42 +207,18 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       }
 
       if (activeEditorPlan) {
-        const editorSpan = getBlockSpan(activeEditorPlan.key)
-        const editorRows = getBlockRows(activeEditorPlan.key)
-        const editorHeightBaselines = getBlockHeightBaselines(activeEditorPlan.key)
-        const manual = blockModulePositions[activeEditorPlan.key]
-        const startCol = manual
-          ? Math.max(-Math.max(0, editorSpan - 1), Math.min(result.settings.gridCols - 1, manual.col))
-          : 0
-        const startRow = manual
-          ? Math.max(
-              0,
-              Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, manual.row)),
-            )
-          : 0
-        const editorWidth = sumAxisSpan(metrics.moduleWidths, startCol, editorSpan, gridMarginHorizontal) * scale
-        const editorHeight = resolveBlockHeight({
-          rowStart: startRow,
-          rows: editorRows,
-          baselines: editorHeightBaselines,
-          gridRows: result.settings.gridRows,
-          moduleHeights: metrics.moduleHeights,
-          fallbackModuleHeight: result.module.height,
-          gutterY: gridMarginVertical,
-          baselineStep: gridUnit,
-        }) * scale
-        const lineY = activeEditorPlan.rotationOriginY + baselineStep
+        const guideRect = getPreviewTextGuideRect(activeEditorPlan, baselineStep)
+        const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, baselineStep, guideRect)
 
         ctx.strokeStyle = "#ef4444"
         ctx.lineWidth = 1.1
         ctx.beginPath()
-        const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, baselineStep)
-        ctx.moveTo(activeGuide.horizontalX, lineY)
-        ctx.lineTo(activeGuide.horizontalX + activeGuide.width, lineY)
+        ctx.moveTo(activeGuide.horizontalX, activeGuide.y)
+        ctx.lineTo(activeGuide.horizontalX + activeGuide.width, activeGuide.y)
         ctx.stroke()
         ctx.beginPath()
-        ctx.moveTo(activeGuide.verticalX, lineY)
-        ctx.lineTo(activeGuide.verticalX, lineY + editorHeight)
+        ctx.moveTo(activeGuide.verticalX, activeGuide.y)
+        ctx.lineTo(activeGuide.verticalX, activeGuide.y + activeGuide.height)
         ctx.stroke()
       }
 
@@ -281,13 +249,9 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
 
     return () => window.cancelAnimationFrame(frame)
   }, [
-    blockModulePositions,
     blockOrder,
     dragState,
     editorTarget,
-    getBlockHeightBaselines,
-    getBlockRows,
-    getBlockSpan,
     getGridMetrics,
     getPlacementHeightBaselines,
     getPlacementRows,
