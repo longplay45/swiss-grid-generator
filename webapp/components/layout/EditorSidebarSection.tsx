@@ -8,7 +8,7 @@ import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 
 type Props = {
-  title: string
+  title: ReactNode
   tooltip: string
   collapsed: boolean
   collapsedSummary?: ReactNode

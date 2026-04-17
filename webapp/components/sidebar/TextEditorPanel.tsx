@@ -147,6 +147,8 @@ export function TextEditorPanel<StyleKey extends string>({
       controls.editorState.draftTrackingRuns,
     )
     : controls.editorState.draftTrackingScale
+  const hasMixedTypeSettings = controls.editorState.draftTextFormatRuns.length > 0
+    || controls.editorState.draftTrackingRuns.length > 0
   const selectedSchemeLabel = controls.colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label
     ?? editorColorScheme
   const selectedStyleLabelForSelection = selectionStyleKey
@@ -819,7 +821,11 @@ export function TextEditorPanel<StyleKey extends string>({
         </EditorSidebarSection>
 
         <EditorSidebarSection
-          title="II. Typo"
+          title={hasMixedTypeSettings ? (
+            <>
+              II. Typo <span className="text-orange-500">Mixed Type Settings</span>
+            </>
+          ) : "II. Typo"}
           tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking; supported dropdowns preview on rollover"
           collapsed={collapsed.type}
           collapsedSummary={`${selectionFontFamily ?? "Mixed"}, ${selectedStyleLabelForSelection}`}
@@ -830,6 +836,30 @@ export function TextEditorPanel<StyleKey extends string>({
           showRolloverInfo={showRolloverInfo}
           onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.type)}
         >
+          <div className="space-y-2">
+            <Label className={sectionLabelClassName}>Hierarchy</Label>
+            <Select
+              value={hierarchySelectPreview.value}
+              onOpenChange={hierarchySelectPreview.handleOpenChange}
+              onValueChange={hierarchySelectPreview.handleValueChange}
+            >
+              <SelectTrigger className={triggerClassName}>
+                <SelectValue placeholder="Mixed" />
+              </SelectTrigger>
+              <SelectContent className={tone.selectContent} onPointerLeave={hierarchySelectPreview.handleContentPointerLeave}>
+                {controls.styleOptions.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    {...hierarchySelectPreview.getItemPreviewProps(option.value)}
+                  >
+                    {getStyleOptionLabel(option.value, option.label)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Font</Label>
             <FontSelect
@@ -860,30 +890,6 @@ export function TextEditorPanel<StyleKey extends string>({
                 {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
                   <SelectItem key={variant.id} value={variant.id} {...cutSelectPreview.getItemPreviewProps(variant.id)}>
                     {variant.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Hierarchy</Label>
-            <Select
-              value={hierarchySelectPreview.value}
-              onOpenChange={hierarchySelectPreview.handleOpenChange}
-              onValueChange={hierarchySelectPreview.handleValueChange}
-            >
-              <SelectTrigger className={triggerClassName}>
-                <SelectValue placeholder="Mixed" />
-              </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={hierarchySelectPreview.handleContentPointerLeave}>
-                {controls.styleOptions.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    {...hierarchySelectPreview.getItemPreviewProps(option.value)}
-                  >
-                    {getStyleOptionLabel(option.value, option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
