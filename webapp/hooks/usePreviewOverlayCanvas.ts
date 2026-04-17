@@ -13,7 +13,7 @@ import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
 const OVERFLOW_BADGE_RADIUS = 11
 const OVERFLOW_BADGE_PADDING = 6
 const OVERFLOW_BADGE_FILL = "rgba(255, 80, 80, 0.85)"
-const GUIDE_STROKE_COLOR = "#f97316"
+const GUIDE_STROKE_COLOR = "#fe9f97"
 const GUIDE_STROKE_WIDTH = 1
 const ACTIVE_GUIDE_STROKE_WIDTH = 2
 

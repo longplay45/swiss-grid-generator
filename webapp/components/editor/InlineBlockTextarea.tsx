@@ -164,7 +164,7 @@ function InlineEditorOverlayCanvas({
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.75)"
     ctx.fillRect(caretHaloLeft, caretTop, haloWidth, caretHeightPx)
-    ctx.fillStyle = "#f97316"
+    ctx.fillStyle = "#fe9f97"
     ctx.fillRect(caretCoreLeft, caretTop, coreWidth, caretHeightPx)
   }, [caret, caretVisible, height, selectionRects, width])
 

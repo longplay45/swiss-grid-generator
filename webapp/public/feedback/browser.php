@@ -190,7 +190,7 @@ if ($page > $totalPages) {
         --line-strong: #b7aea0;
         --text: #161514;
         --muted: #5f5a53;
-        --accent: #f97316;
+        --accent: #fe9f97;
         --accent-soft: rgba(249, 115, 22, 0.14);
         --code: #efe9df;
       }

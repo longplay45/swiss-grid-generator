@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 
 import { getPreviewTextGuideGeometry } from "../lib/preview-guide-rect.ts"
 
-test("left-aligned text guides extend the top rule to the optical text edge", () => {
+test("left-aligned text guides keep horizontal and vertical anchors matched", () => {
   const guide = getPreviewTextGuideGeometry({
     guideRects: [{ x: 100, y: 200, width: 240, height: 120 }],
     rect: { x: 100, y: 176, width: 240, height: 144 },
@@ -24,8 +24,8 @@ test("left-aligned text guides extend the top rule to the optical text edge", ()
   }, 12)
 
   assert.equal(guide.verticalX, 100)
-  assert.equal(guide.horizontalX, 92)
-  assert.equal(guide.width, 248)
+  assert.equal(guide.horizontalX, 100)
+  assert.equal(guide.width, 240)
 })
 
 test("right-aligned text guides keep horizontal and vertical anchors matched", () => {

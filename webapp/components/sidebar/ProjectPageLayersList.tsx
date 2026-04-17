@@ -386,8 +386,8 @@ export function ProjectPageLayersList({
                 draggingKey === thumb.key
                   ? `${tone.card} cursor-grabbing opacity-45`
                   : tone.card
-              } ${isSelected || isHovered ? "border-l-orange-500 border-t-orange-500" : ""} ${
-                isEditing ? "shadow-[inset_2px_0_0_0_#f97316,inset_0_2px_0_0_#f97316]" : ""
+              } ${isSelected || isHovered ? "border-l-[#fe9f97] border-t-[#fe9f97]" : ""} ${
+                isEditing ? "shadow-[inset_1px_0_0_0_#fe9f97,inset_0_1px_0_0_#fe9f97]" : ""
               } ${
                 allowLayerInteractions ? "cursor-grab select-none" : "cursor-pointer"
               }`}

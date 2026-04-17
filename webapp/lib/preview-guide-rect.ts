@@ -44,24 +44,6 @@ export function getHoveredPreviewTextGuideRect<Key extends string>(
   return bestRect
 }
 
-function lineBelongsToGuideRect(
-  guideRect: BlockRect,
-  line: { left: number; top: number; width: number; baselineY: number },
-): boolean {
-  const lineRight = line.left + line.width
-  const guideRight = guideRect.x + guideRect.width
-  const overlapsY = line.baselineY >= guideRect.y && line.top <= guideRect.y + guideRect.height
-  const overlapsX = lineRight >= guideRect.x - 1 && line.left <= guideRight + 1
-  return overlapsY && overlapsX
-}
-
-function commandBelongsToGuideRect(
-  guideRect: BlockRect,
-  command: { x: number; y: number },
-): boolean {
-  return command.y >= guideRect.y && command.y <= guideRect.y + guideRect.height
-}
-
 export function getPreviewTextGuideGeometry<Key extends string>(
   plan: Pick<BlockRenderPlan<Key>, "guideRects" | "rect" | "rotationOriginX" | "rotationOriginY" | "textAlign"> & {
     renderedLines: { left: number; top: number; width: number; baselineY: number }[]
@@ -71,35 +53,12 @@ export function getPreviewTextGuideGeometry<Key extends string>(
   targetGuideRect?: BlockRect | null,
 ): PreviewTextGuideGeometry {
   const guideRect = targetGuideRect ?? getPreviewTextGuideRect(plan, baselineStep)
-  const verticalX = guideRect.x
-  if (plan.textAlign !== "left") {
-    return {
-      horizontalX: guideRect.x,
-      verticalX,
-      y: guideRect.y,
-      width: guideRect.width,
-      height: guideRect.height,
-    }
-  }
-
-  const matchingLineLefts = plan.renderedLines
-    .filter((line) => lineBelongsToGuideRect(guideRect, line))
-    .map((line) => line.left)
-  const matchingCommandXs = plan.commands
-    .filter((command) => commandBelongsToGuideRect(guideRect, command))
-    .map((command) => command.x)
-  const horizontalX = Math.min(
-    guideRect.x,
-    ...(matchingLineLefts.length > 0 ? matchingLineLefts : []),
-    ...(matchingCommandXs.length > 0 ? matchingCommandXs : []),
-  )
-  const right = guideRect.x + guideRect.width
 
   return {
-    horizontalX,
-    verticalX,
+    horizontalX: guideRect.x,
+    verticalX: guideRect.x,
     y: guideRect.y,
-    width: right - horizontalX,
+    width: guideRect.width,
     height: guideRect.height,
   }
 }

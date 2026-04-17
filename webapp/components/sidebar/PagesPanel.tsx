@@ -339,7 +339,7 @@ export function PagesPanel({
                     draggingPageId === page.id
                       ? `${tone.card} opacity-45`
                       : tone.card
-                  } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""} ${
+                  } ${isActive ? "border-l-[#fe9f97] border-t-[#fe9f97]" : ""} ${
                     isEditing || isExpanded ? "select-none" : "cursor-grab select-none"
                   }`}
                 >
@@ -370,7 +370,7 @@ export function PagesPanel({
                       )}
                       <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${tone.cardMuted}`}>
                         <span>{layerCount} {layerCount === 1 ? "layer" : "layers"}</span>
-                        {isActive ? <span className="text-orange-500">Active page</span> : null}
+                        {isActive ? <span className="text-[#fe9f97]">Active page</span> : null}
                       </div>
                     </div>
 

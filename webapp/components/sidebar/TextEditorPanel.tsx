@@ -823,7 +823,7 @@ export function TextEditorPanel<StyleKey extends string>({
         <EditorSidebarSection
           title={hasMixedTypeSettings ? (
             <>
-              II. Typo <span className="text-orange-500">Mixed Type Settings</span>
+              II. Typo <span className="text-[#fe9f97]">Mixed Type Settings</span>
             </>
           ) : "II. Typo"}
           tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking; supported dropdowns preview on rollover"
