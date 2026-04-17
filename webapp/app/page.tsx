@@ -78,6 +78,7 @@ export default function Home() {
   const headerClickTimeoutRef = useRef<number | null>(null)
   const [editorSidebarMode, setEditorSidebarMode] = useState<"text" | "image" | null>(null)
   const [editorSidebarHost, setEditorSidebarHost] = useState<HTMLDivElement | null>(null)
+  const [smartTextZoomEnabled, setSmartTextZoomEnabled] = useState(true)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
@@ -701,6 +702,7 @@ export default function Home() {
     showTypography,
     showLayers,
     showRolloverInfo,
+    smartTextZoomEnabled,
     canUndo,
     canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),
@@ -710,6 +712,7 @@ export default function Home() {
     onUndo: undoAny,
     onRedo: redoAny,
     onToggleDarkMode: toggleDarkUi,
+    onToggleSmartTextZoom: () => setSmartTextZoomEnabled((current) => !current),
     onToggleBaselines: toggleShowBaselines,
     onToggleMargins: toggleShowMargins,
     onToggleModules: toggleShowModules,
@@ -731,6 +734,7 @@ export default function Home() {
       isDarkUi={isDarkUi}
       showSectionHelpIcons={showSectionHelpIcons}
       showRolloverInfo={showRolloverInfo}
+      smartTextZoomEnabled={smartTextZoomEnabled}
       showBaselines={showBaselines}
       showModules={showModules}
       showMargins={showMargins}

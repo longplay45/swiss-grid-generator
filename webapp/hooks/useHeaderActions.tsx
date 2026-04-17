@@ -16,6 +16,7 @@ import {
   Sun,
   Type,
   Undo2,
+  ZoomIn,
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
@@ -47,6 +48,7 @@ type Args = {
   showTypography: boolean
   showLayers: boolean
   showRolloverInfo: boolean
+  smartTextZoomEnabled: boolean
   canUndo: boolean
   canRedo: boolean
   onOpenPresets: () => void
@@ -56,6 +58,7 @@ type Args = {
   onUndo: () => void
   onRedo: () => void
   onToggleDarkMode: () => void
+  onToggleSmartTextZoom: () => void
   onToggleBaselines: () => void
   onToggleMargins: () => void
   onToggleModules: () => void
@@ -157,6 +160,19 @@ export function useHeaderActions(args: Args) {
         pressed: args.isDarkUi,
         onClick: args.onToggleDarkMode,
         icon: args.isDarkUi ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
+      },
+    },
+    {
+      type: "action",
+      action: {
+        key: "smart-text-zoom",
+        ariaLabel: args.smartTextZoomEnabled ? "Disable smart text zoom" : "Enable smart text zoom",
+        tooltip: "Smart text edit zoom",
+        variant: args.smartTextZoomEnabled ? "default" : "outline",
+        pressed: args.smartTextZoomEnabled,
+        disabled: !args.hasPreviewLayout,
+        onClick: args.onToggleSmartTextZoom,
+        icon: <ZoomIn className="h-4 w-4" />,
       },
     },
     { type: "divider", key: "divider-darkmode-baselines" },

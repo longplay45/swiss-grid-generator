@@ -332,7 +332,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Header and Sidebars
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, and display toggles.</li>
+          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, smart text zoom, and display toggles.</li>
           <li>Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.</li>
           <li>`Save`, `Export`, and the display toggles stay disabled until a preview layout is available.</li>
           <li>The Project toggle sits directly after the image-placeholder toggle, separated by a divider.</li>
@@ -440,6 +440,17 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
           Toggles light and dark UI themes. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+D</span>.
+        </p>
+      </section>
+
+      <hr className={tone.divider} />
+
+      <section id="help-header-smart-text-zoom" className="space-y-2">
+        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+          Smart Text Zoom
+        </SectionHeading>
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Toggles the preview&apos;s text-edit zoom mode. It is enabled by default, zooms to the active text paragraph while editing, and returns to full-page fit when text edit mode closes.
         </p>
       </section>
 

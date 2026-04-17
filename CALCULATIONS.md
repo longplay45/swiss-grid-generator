@@ -501,6 +501,19 @@ scale  = min(scaleX, scaleY)
 
 All drawing coordinates are multiplied by `scale`.
 
+When `Smart Text Zoom` is enabled (default), text edit mode temporarily replaces pure full-page fit with a paragraph-focused viewport:
+
+```
+focusScale = min(
+  (containerWidth  * 0.75) / targetWidth,
+  (containerHeight * 0.75) / targetHeight
+)
+
+scale = clamp(focusScale, fitScale, fitScale * 8)
+```
+
+The focus target is resolved in stable page space from the active paragraph frame. If rendered type clearly exceeds the allocated column width, the target widens by whole-module steps rather than chasing transient glyph-width changes, so the zoom view stays stable while editing.
+
 ## Canvas Preview Rotation
 
 The preview applies a centered rotation transform before drawing all page elements:

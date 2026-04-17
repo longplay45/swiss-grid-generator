@@ -137,6 +137,8 @@ Current capability inventory for Swiss Grid Generator.
 ## UI and Workflow
 
 - Dark mode.
+- Smart text-edit zoom toggle in the header, enabled by default.
+- While smart text zoom is enabled, entering text edit mode focuses the active paragraph and leaving text edit returns to full-page fit.
 - Visibility toggles for baselines, margins, modules, image placeholders, and typography.
 - Undo/redo across settings, layout, and editor operations.
 - Help sidebar with hover-jump references.

@@ -49,6 +49,7 @@ type Props = {
   isDarkUi: boolean
   showSectionHelpIcons: boolean
   showRolloverInfo: boolean
+  smartTextZoomEnabled: boolean
   showBaselines: boolean
   showModules: boolean
   showMargins: boolean
@@ -149,6 +150,7 @@ export function PreviewWorkspace({
   isDarkUi,
   showSectionHelpIcons,
   showRolloverInfo,
+  smartTextZoomEnabled,
   showBaselines,
   showModules,
   showMargins,
@@ -307,6 +309,7 @@ export function PreviewWorkspace({
               showImagePlaceholders={showImagePlaceholders}
               showTypography={showTypography}
               showRolloverInfo={showRolloverInfo}
+              smartTextEditZoomEnabled={smartTextZoomEnabled}
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
               canvasBackground={resolvedCanvasBackground}

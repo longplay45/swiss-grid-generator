@@ -16,6 +16,8 @@ type Props<StyleKey extends string> = {
   showEditorHelpIcon: boolean
   showRolloverInfo: boolean
   editorSidebarHost: HTMLDivElement | null
+  stageLeftCss: number
+  stageTopCss: number
   pageWidthCss: number
   pageHeightCss: number
   pageRotation: number
@@ -47,6 +49,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
   showEditorHelpIcon,
   showRolloverInfo,
   editorSidebarHost,
+  stageLeftCss,
+  stageTopCss,
   pageWidthCss,
   pageHeightCss,
   pageRotation,
@@ -170,8 +174,8 @@ export function GridPreviewOverlays<StyleKey extends string>({
         <div
           className="pointer-events-none absolute z-40"
           style={{
-            left: "50%",
-            top: "50%",
+            left: stageLeftCss + pageWidthCss / 2,
+            top: stageTopCss + pageHeightCss / 2,
             width: pageWidthCss,
             height: pageHeightCss,
             transform: `translate(-50%, -50%) rotate(${pageRotation}deg)`,

@@ -1,24 +1,40 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { RefObject } from "react"
+
+type Rect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 type Args = {
   previewContainerRef: RefObject<HTMLDivElement | null>
   pageWidthPt: number
   pageHeightPt: number
+  smartTextZoomEnabled?: boolean
+  smartTextZoomTargetKey?: string | null
+  smartTextZoomTargetVersion?: number
+  getSmartTextZoomTargetRect?: () => Rect | null
 }
 
 export function usePreviewViewport({
   previewContainerRef,
   pageWidthPt,
   pageHeightPt,
+  smartTextZoomEnabled = false,
+  smartTextZoomTargetKey = null,
+  smartTextZoomTargetVersion = 0,
+  getSmartTextZoomTargetRect,
 }: Args) {
   const [scale, setScale] = useState(1)
   const [pixelRatio, setPixelRatio] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   const [containerWidthCss, setContainerWidthCss] = useState(0)
   const [containerHeightCss, setContainerHeightCss] = useState(0)
-
-  useEffect(() => {
+  const [stageLeftCss, setStageLeftCss] = useState(0)
+  const [stageTopCss, setStageTopCss] = useState(0)
+  useLayoutEffect(() => {
     const calculateScale = () => {
       const container = previewContainerRef.current
       if (!container) return
@@ -26,11 +42,34 @@ export function usePreviewViewport({
       setContainerWidthCss((prev) => (Math.abs(prev - container.clientWidth) < 0.5 ? prev : container.clientWidth))
       setContainerHeightCss((prev) => (Math.abs(prev - container.clientHeight) < 0.5 ? prev : container.clientHeight))
 
-      const containerWidth = container.clientWidth - 40
-      const containerHeight = container.clientHeight - 40
-      const nextScale = Math.min(containerWidth / pageWidthPt, containerHeight / pageHeightPt)
+      const viewportPadding = 40
+      const zoomFillRatio = 0.75
+      const maxZoomMultiplier = 8
+      const containerWidth = Math.max(1, container.clientWidth - viewportPadding)
+      const containerHeight = Math.max(1, container.clientHeight - viewportPadding)
+      const fitScale = Math.min(containerWidth / pageWidthPt, containerHeight / pageHeightPt)
+      let nextScale = fitScale
+      let nextStageLeft = (container.clientWidth - pageWidthPt * fitScale) / 2
+      let nextStageTop = (container.clientHeight - pageHeightPt * fitScale) / 2
+
+      if (smartTextZoomEnabled && smartTextZoomTargetKey && getSmartTextZoomTargetRect) {
+        const targetRect = getSmartTextZoomTargetRect()
+        if (targetRect && targetRect.width > 0 && targetRect.height > 0) {
+          const focusScale = Math.min(
+            (containerWidth * zoomFillRatio) / targetRect.width,
+            (containerHeight * zoomFillRatio) / targetRect.height,
+          )
+          nextScale = Math.max(fitScale, Math.min(fitScale * maxZoomMultiplier, focusScale))
+          const focusCenterX = (targetRect.x + targetRect.width / 2) * nextScale
+          const focusCenterY = (targetRect.y + targetRect.height / 2) * nextScale
+          nextStageLeft = container.clientWidth / 2 - focusCenterX
+          nextStageTop = container.clientHeight / 2 - focusCenterY
+        }
+      }
 
       setScale((prev) => (Math.abs(prev - nextScale) < 0.0001 ? prev : nextScale))
+      setStageLeftCss((prev) => (Math.abs(prev - nextStageLeft) < 0.5 ? prev : nextStageLeft))
+      setStageTopCss((prev) => (Math.abs(prev - nextStageTop) < 0.5 ? prev : nextStageTop))
     }
 
     calculateScale()
@@ -44,7 +83,15 @@ export function usePreviewViewport({
       observer?.disconnect()
       window.removeEventListener("resize", calculateScale)
     }
-  }, [pageHeightPt, pageWidthPt, previewContainerRef])
+  }, [
+    getSmartTextZoomTargetRect,
+    pageHeightPt,
+    pageWidthPt,
+    previewContainerRef,
+    smartTextZoomEnabled,
+    smartTextZoomTargetKey,
+    smartTextZoomTargetVersion,
+  ])
 
   useEffect(() => {
     const readDevicePixelRatio = () => Math.max(1, window.devicePixelRatio || 1)
@@ -94,6 +141,8 @@ export function usePreviewViewport({
     isMobile,
     containerWidthCss,
     containerHeightCss,
+    stageLeftCss,
+    stageTopCss,
     pageWidthCss,
     pageHeightCss,
     pageWidthPx,

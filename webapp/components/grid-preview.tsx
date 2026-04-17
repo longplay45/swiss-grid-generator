@@ -74,6 +74,20 @@ import {
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 
+function unionRects(rects: BlockRect[]): BlockRect | null {
+  if (rects.length === 0) return null
+  const left = Math.min(...rects.map((rect) => rect.x))
+  const top = Math.min(...rects.map((rect) => rect.y))
+  const right = Math.max(...rects.map((rect) => rect.x + rect.width))
+  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height))
+  return {
+    x: left,
+    y: top,
+    width: Math.max(1, right - left),
+    height: Math.max(1, bottom - top),
+  }
+}
+
 function isPointWithinRect(pageX: number, pageY: number, rect: BlockRect | null | undefined): boolean {
   if (!rect || rect.width <= 0 || rect.height <= 0) return false
   return (
@@ -95,6 +109,16 @@ function createRuntimeId(prefix: "paragraph" | "image"): string {
 const getNextCustomBlockId = () => createRuntimeId("paragraph")
 const getNextImagePlaceholderId = () => createRuntimeId("image")
 
+function toPageSpaceRect(rect: BlockRect, scale: number): BlockRect {
+  const safeScale = Math.max(scale, 0.0001)
+  return {
+    x: rect.x / safeScale,
+    y: rect.y / safeScale,
+    width: rect.width / safeScale,
+    height: rect.height / safeScale,
+  }
+}
+
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -103,6 +127,7 @@ interface GridPreviewProps {
   showImagePlaceholders?: boolean
   showTypography: boolean
   showRolloverInfo?: boolean
+  smartTextEditZoomEnabled?: boolean
   initialLayout?: PreviewLayoutState | null
   initialLayoutToken?: number
   rotation?: number
@@ -154,6 +179,7 @@ export const GridPreview = memo(function GridPreview({
   showImagePlaceholders = true,
   showTypography,
   showRolloverInfo = true,
+  smartTextEditZoomEnabled = false,
   initialLayout = null,
   initialLayoutToken = 0,
   rotation = 0,
@@ -195,6 +221,7 @@ export const GridPreview = memo(function GridPreview({
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const previewScaleRef = useRef(1)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const imageCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -224,14 +251,57 @@ export const GridPreview = memo(function GridPreview({
   const [hoverCopyIntent, setHoverCopyIntent] = useState(false)
   const [layoutEmissionEnabled, setLayoutEmissionEnabled] = useState(initialLayoutToken === 0)
   const [pendingLayerEditorMode, setPendingLayerEditorMode] = useState<"text" | "image" | null>(null)
+  const [activeTextZoomTarget, setActiveTextZoomTarget] = useState<BlockId | null>(null)
+  const [smartTextZoomTargetVersion, setSmartTextZoomTargetVersion] = useState(0)
   const HISTORY_LIMIT = 50
   const PERF_SAMPLE_LIMIT = 160
   const PERF_LOG_INTERVAL_MS = 10000
+
+  const getSmartTextZoomTargetRect = useCallback(() => {
+    if (!activeTextZoomTarget) return null
+    const plan = previousPlansRef.current.get(activeTextZoomTarget)
+    const currentScale = Math.max(previewScaleRef.current, 0.0001)
+    const guideBoundsScaled = plan?.guideRects.length
+      ? unionRects(plan.guideRects)
+      : blockRectsRef.current[activeTextZoomTarget] ?? plan?.rect ?? null
+    if (!guideBoundsScaled) return null
+
+    const zoomBounds = toPageSpaceRect(guideBoundsScaled, currentScale)
+    const renderedBoundsScaled = plan?.renderedLines.length
+      ? unionRects(plan.renderedLines.map((line) => ({
+          x: line.left,
+          y: line.top,
+          width: line.width,
+          height: line.height,
+        })))
+      : null
+
+    if (renderedBoundsScaled) {
+      const guideRight = guideBoundsScaled.x + guideBoundsScaled.width
+      const renderedRight = renderedBoundsScaled.x + renderedBoundsScaled.width
+      const overflowLeft = guideBoundsScaled.x - renderedBoundsScaled.x
+      const overflowRight = renderedRight - guideRight
+      const overflowThreshold = Math.max(4, guideBoundsScaled.width * 0.01)
+      const extraModuleWidth = result.module.width
+
+      if (overflowLeft > overflowThreshold) {
+        zoomBounds.x -= extraModuleWidth
+        zoomBounds.width += extraModuleWidth
+      }
+      if (overflowRight > overflowThreshold) {
+        zoomBounds.width += extraModuleWidth
+      }
+    }
+
+    return zoomBounds
+  }, [activeTextZoomTarget, result.module.width])
 
   const {
     scale,
     pixelRatio,
     isMobile,
+    stageLeftCss,
+    stageTopCss,
     pageWidthCss,
     pageHeightCss,
     pageWidthPx,
@@ -240,7 +310,15 @@ export const GridPreview = memo(function GridPreview({
     previewContainerRef,
     pageWidthPt: result.pageSizePt.width,
     pageHeightPt: result.pageSizePt.height,
+    smartTextZoomEnabled: smartTextEditZoomEnabled && activeTextZoomTarget !== null,
+    smartTextZoomTargetKey: activeTextZoomTarget,
+    smartTextZoomTargetVersion,
+    getSmartTextZoomTargetRect,
   })
+
+  useEffect(() => {
+    previewScaleRef.current = scale
+  }, [scale])
 
   const { recordPerfMetric } = usePreviewPerf({
     enabled: PERF_ENABLED,
@@ -799,6 +877,19 @@ export const GridPreview = memo(function GridPreview({
     setTypographyPlanVersion((version) => version + 1)
   }, [])
 
+  useEffect(() => {
+    if (!smartTextEditZoomEnabled || !editorState?.target) {
+      setActiveTextZoomTarget(null)
+      return
+    }
+    setActiveTextZoomTarget((current) => (current === editorState.target ? current : editorState.target))
+  }, [editorState?.target, smartTextEditZoomEnabled])
+
+  useEffect(() => {
+    if (!smartTextEditZoomEnabled || !activeTextZoomTarget) return
+    setSmartTextZoomTargetVersion((version) => version + 1)
+  }, [activeTextZoomTarget, smartTextEditZoomEnabled, typographyPlanVersion])
+
   useTypographyRenderer<BlockId>({
     canvasRef,
     blockRectsRef,
@@ -1104,47 +1195,57 @@ export const GridPreview = memo(function GridPreview({
     <div
       ref={previewContainerRef}
       data-tooltip-boundary="preview-workspace"
-      className={`relative h-full w-full min-w-0 flex items-center justify-center overflow-hidden rounded-lg ${
+      className={`relative h-full w-full min-w-0 overflow-hidden rounded-lg ${
         isDarkMode ? "bg-[#161A22]" : "bg-gray-100"
       }`}
       onPointerDown={handlePreviewWorkspacePointerDown}
     >
-      <GridPreviewCanvasStage
-        staticCanvasRef={staticCanvasRef}
-        imageCanvasRef={imageCanvasRef}
-        canvasRef={canvasRef}
-        overlayCanvasRef={overlayCanvasRef}
-        textareaRef={textareaRef}
-        pageWidthCss={pageWidthCss}
-        pageHeightCss={pageHeightCss}
-        pageWidthPx={pageWidthPx}
-        pageHeightPx={pageHeightPx}
-        canvasCursorClass={canvasCursorClass}
-        canvasCursorStyle={canvasCursorStyle}
-        handlePreviewPointerDown={handlePreviewPointerDown}
-        handleCanvasPointerMove={handleCanvasPointerMove}
-        handleCanvasPointerUp={handleCanvasPointerUp}
-        handleCanvasPointerCancel={handleCanvasPointerCancel}
-        handleCanvasLostPointerCapture={handleCanvasLostPointerCapture}
-        handleCanvasMouseMove={handleCanvasMouseMove}
-        handleCanvasMouseLeave={handleCanvasMouseLeave}
-        handleCanvasDoubleClick={handleCanvasDoubleClick}
-        editorState={editorState}
-        setEditorState={setEditorState}
-        inlineEditorLayout={inlineEditorLayout}
-        rotation={rotation}
-        scale={scale}
-        baselineStep={result.grid.gridUnit * scale}
-        imageColorScheme={imageColorScheme}
-        pageBackgroundColor={canvasBackground}
-        closeEditor={closeEditor}
-        saveEditor={saveEditor}
-        getStyleSizeValue={getStyleSize}
-        getStyleLeadingValue={getStyleLeading}
-        isFxStyle={(styleKey) => styleKey === "fx"}
-        showDocumentHelpIndicator={showPreviewHelpIndicator}
-        onDocumentHelpHover={showPreviewHelpIndicator ? () => onOpenHelpSection?.("help-preview-workspace") : undefined}
-      />
+      <div
+        className="absolute"
+        style={{
+          left: stageLeftCss,
+          top: stageTopCss,
+          width: pageWidthCss,
+          height: pageHeightCss,
+        }}
+      >
+        <GridPreviewCanvasStage
+          staticCanvasRef={staticCanvasRef}
+          imageCanvasRef={imageCanvasRef}
+          canvasRef={canvasRef}
+          overlayCanvasRef={overlayCanvasRef}
+          textareaRef={textareaRef}
+          pageWidthCss={pageWidthCss}
+          pageHeightCss={pageHeightCss}
+          pageWidthPx={pageWidthPx}
+          pageHeightPx={pageHeightPx}
+          canvasCursorClass={canvasCursorClass}
+          canvasCursorStyle={canvasCursorStyle}
+          handlePreviewPointerDown={handlePreviewPointerDown}
+          handleCanvasPointerMove={handleCanvasPointerMove}
+          handleCanvasPointerUp={handleCanvasPointerUp}
+          handleCanvasPointerCancel={handleCanvasPointerCancel}
+          handleCanvasLostPointerCapture={handleCanvasLostPointerCapture}
+          handleCanvasMouseMove={handleCanvasMouseMove}
+          handleCanvasMouseLeave={handleCanvasMouseLeave}
+          handleCanvasDoubleClick={handleCanvasDoubleClick}
+          editorState={editorState}
+          setEditorState={setEditorState}
+          inlineEditorLayout={inlineEditorLayout}
+          rotation={rotation}
+          scale={scale}
+          baselineStep={result.grid.gridUnit * scale}
+          imageColorScheme={imageColorScheme}
+          pageBackgroundColor={canvasBackground}
+          closeEditor={closeEditor}
+          saveEditor={saveEditor}
+          getStyleSizeValue={getStyleSize}
+          getStyleLeadingValue={getStyleLeading}
+          isFxStyle={(styleKey) => styleKey === "fx"}
+          showDocumentHelpIndicator={showPreviewHelpIndicator}
+          onDocumentHelpHover={showPreviewHelpIndicator ? () => onOpenHelpSection?.("help-preview-workspace") : undefined}
+        />
+      </div>
 
       <GridPreviewFeedback
         warningToast={gridReductionWarningToast}
@@ -1156,6 +1257,8 @@ export const GridPreview = memo(function GridPreview({
         showEditorHelpIcon={showEditorHelpIcon}
         showRolloverInfo={showRolloverInfo}
         editorSidebarHost={editorSidebarHost}
+        stageLeftCss={stageLeftCss}
+        stageTopCss={stageTopCss}
         pageWidthCss={pageWidthCss}
         pageHeightCss={pageHeightCss}
         pageRotation={rotation}

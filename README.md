@@ -98,6 +98,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 
 ### Preview & Interaction
 - Live WYSIWYG canvas
+- Smart text-edit zoom is enabled by default and can be toggled from the header; entering text edit mode focuses the active paragraph and leaving text edit restores full-page fit
 - Supported layout and editor dropdowns preview hovered items live in the page; closing a menu without selecting restores the committed state
 - Toggle visibility of baselines, margins, modules, and typography
 - Double-click empty module → create text

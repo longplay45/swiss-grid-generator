@@ -168,7 +168,8 @@ Default: `swiss`
 ### UI + Preview Controls (icon toggles)
 
 - `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars, preview shell background, and popup editor
-- Order: dark mode icon appears to the left of the display toggles
+- `Smart Text Zoom` (zoom icon): enabled by default; when active, entering text edit mode zooms to the active paragraph and leaving text edit restores full-page fit
+- Order: dark mode icon appears to the left of Smart Text Zoom, which appears to the left of the display toggles
 
 ### Display Options (icon toggles)
 
@@ -178,7 +179,7 @@ Default: `swiss`
 - Typo
 - Image placeholders
 - Project panel toggle (layers icon)
-- Divider placement: dark mode and baselines are separated by a divider
+- Divider placement: Smart Text Zoom and baselines are separated by a divider
 - Divider placement: image placeholders and the Project toggle are separated by a divider
 - Baselines, margins, gutter/modules, typo, and image placeholders stay disabled until a preview layout is available.
 
