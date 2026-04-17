@@ -77,45 +77,29 @@ export function GridPreviewOverlays<StyleKey extends string>({
       ? { kind: "image" as const, key: hoveredImageKey, rect: hoveredImageRect }
       : null
   const editButtonSize = 26
-  const imageEditButtonInset = 6
+  const editButtonInset = 6
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
   const editButtonLeft = hoveredEditTarget
-    ? hoveredEditTarget.kind === "text"
-      ? Math.max(
-        0,
-        Math.min(
-          pageWidthCss - editButtonSize,
-          hoveredEditTarget.rect.x,
-        ),
-      )
-      : Math.max(
-        imageEditButtonInset,
-        Math.min(
-          pageWidthCss - imageEditButtonInset - editButtonSize,
-          textButtonAlign === "right"
-            ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - editButtonSize - imageEditButtonInset
-            : textButtonAlign === "center"
-              ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width / 2 - editButtonSize / 2
-              : hoveredEditTarget.rect.x + imageEditButtonInset,
-        ),
-      )
+    ? Math.max(
+      editButtonInset,
+      Math.min(
+        pageWidthCss - editButtonInset - editButtonSize,
+        textButtonAlign === "right"
+          ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width - editButtonSize - editButtonInset
+          : textButtonAlign === "center"
+            ? hoveredEditTarget.rect.x + hoveredEditTarget.rect.width / 2 - editButtonSize / 2
+            : hoveredEditTarget.rect.x + editButtonInset,
+      ),
+    )
     : 0
   const editButtonTop = hoveredEditTarget
-    ? hoveredEditTarget.kind === "text"
-      ? Math.max(
-        0,
-        Math.min(
-          pageHeightCss - editButtonSize,
-          hoveredEditTarget.rect.y,
-        ),
-      )
-      : Math.max(
-        imageEditButtonInset,
-        Math.min(
-          pageHeightCss - imageEditButtonInset - editButtonSize,
-          hoveredEditTarget.rect.y + imageEditButtonInset,
-        ),
-      )
+    ? Math.max(
+      editButtonInset,
+      Math.min(
+        pageHeightCss - editButtonInset - editButtonSize,
+        hoveredEditTarget.rect.y + editButtonInset,
+      ),
+    )
     : 0
 
   const editorSidebar = editorSidebarHost

@@ -116,10 +116,6 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     const pagePoint = toPagePointFromClient(event.clientX, event.clientY)
     if (!pagePoint) return
 
-    if (findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)) {
-      return
-    }
-
     const existingLayerKey = findTopmostDraggableAtPoint(pagePoint.x, pagePoint.y)
     if (existingLayerKey && isImagePlaceholderKey(existingLayerKey)) {
       return
@@ -133,7 +129,6 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   }, [
     dragEndedAtRef,
     findTopmostDraggableAtPoint,
-    findTopmostBlockAtPoint,
     handleImageDoubleClick,
     isImagePlaceholderKey,
     openTextEditorFromCanvas,
