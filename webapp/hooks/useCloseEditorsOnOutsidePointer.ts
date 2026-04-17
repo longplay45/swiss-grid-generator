@@ -6,6 +6,7 @@ type Args = {
   editorSidebarHost: HTMLDivElement | null
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>
   onCloseEditors: () => void
+  shouldKeepEditorsOpenForPointerDown?: (event: PointerEvent) => boolean
 }
 
 export function useCloseEditorsOnOutsidePointer({
@@ -13,6 +14,7 @@ export function useCloseEditorsOnOutsidePointer({
   editorSidebarHost,
   textareaRef,
   onCloseEditors,
+  shouldKeepEditorsOpenForPointerDown,
 }: Args) {
   useEffect(() => {
     if (!isEditorOpen) return
@@ -30,6 +32,7 @@ export function useCloseEditorsOnOutsidePointer({
 
     const handlePointerDown = (event: PointerEvent) => {
       if (isEditorOwnedTarget(event.target)) return
+      if (shouldKeepEditorsOpenForPointerDown?.(event)) return
 
       const composedPath = typeof event.composedPath === "function"
         ? event.composedPath()
@@ -42,5 +45,5 @@ export function useCloseEditorsOnOutsidePointer({
     }
     window.addEventListener("pointerdown", handlePointerDown, true)
     return () => window.removeEventListener("pointerdown", handlePointerDown, true)
-  }, [editorSidebarHost, isEditorOpen, onCloseEditors, textareaRef])
+  }, [editorSidebarHost, isEditorOpen, onCloseEditors, shouldKeepEditorsOpenForPointerDown, textareaRef])
 }

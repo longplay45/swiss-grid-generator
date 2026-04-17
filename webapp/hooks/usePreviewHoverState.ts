@@ -55,7 +55,7 @@ export function usePreviewHoverState<Key extends string>({
   const handleCanvasMouseMoveInner = useCallback((clientX: number, clientY: number, altKey: boolean) => {
     mouseMoveRafRef.current = null
 
-    if (!showTypography || editorOpen || dragState) {
+    if (!showTypography || dragState) {
       clearHover()
       return
     }
@@ -69,7 +69,7 @@ export function usePreviewHoverState<Key extends string>({
     const textKey = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (textKey) {
       setHoverImageKey(null)
-      setHoverCopyIntent(altKey)
+      setHoverCopyIntent(editorOpen ? false : altKey)
       setHoverState((prev) => (
         prev?.key === textKey
         && prev.point.x === pagePoint.x

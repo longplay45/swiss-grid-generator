@@ -706,7 +706,7 @@ export function TextEditorPanel<StyleKey extends string>({
           </div>
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Alignment</Label>
+            <Label className={sectionLabelClassName}>Horizontal Alignment</Label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"

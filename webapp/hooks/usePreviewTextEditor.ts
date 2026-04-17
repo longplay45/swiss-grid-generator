@@ -30,6 +30,7 @@ type Args = {
   editorSidebarHost: HTMLDivElement | null
   onSelectLayer?: (key: string | null) => void
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>
+  shouldKeepEditorsOpenForPointerDown?: (event: PointerEvent) => boolean
   onUndoRequest?: () => void
   onRedoRequest?: () => void
   undo: () => void
@@ -50,6 +51,7 @@ export function usePreviewTextEditor({
   editorSidebarHost,
   onSelectLayer,
   textareaRef,
+  shouldKeepEditorsOpenForPointerDown,
   onUndoRequest,
   onRedoRequest,
   undo,
@@ -280,6 +282,7 @@ export function usePreviewTextEditor({
     editorSidebarHost,
     textareaRef,
     onCloseEditors: closeAnyEditor,
+    shouldKeepEditorsOpenForPointerDown,
   })
 
   return {

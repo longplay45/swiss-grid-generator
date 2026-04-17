@@ -480,6 +480,13 @@ export const GridPreview = memo(function GridPreview({
     editorSidebarHost,
     onSelectLayer,
     textareaRef,
+    shouldKeepEditorsOpenForPointerDown: (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof HTMLCanvasElement) && !(target instanceof HTMLElement && target.closest("canvas"))) {
+        return false
+      }
+      return resolveSelectedLayerAtClientPoint(event.clientX, event.clientY) !== null
+    },
     onUndoRequest,
     onRedoRequest,
     undo,
@@ -513,6 +520,7 @@ export const GridPreview = memo(function GridPreview({
     showTypography,
     showImagePlaceholders,
     editorOpen: Boolean(editorState || imageEditorState),
+    activeEditorTarget: editorState?.target ?? imageEditorState?.target ?? null,
     canvasRef,
     blockRectsRef,
     imageRectsRef,
@@ -563,6 +571,7 @@ export const GridPreview = memo(function GridPreview({
     getNextImagePlaceholderId,
     ensureImagePlaceholdersVisible: () => onShowImagePlaceholdersChange?.(true),
     handleTextCanvasDoubleClick,
+    openTextEditor,
     openImageEditor,
     closeImageEditorPanel: closeImageEditorState,
     clearHover,

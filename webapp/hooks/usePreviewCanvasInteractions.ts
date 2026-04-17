@@ -22,5 +22,6 @@ export function usePreviewCanvasInteractions<Key extends string, StyleKey extend
     handleImageDrop,
     openTextEditorFromCanvas,
     handleImageDoubleClick,
+    activeEditorTarget: args.activeEditorTarget,
   })
 }

@@ -78,6 +78,7 @@ Current capability inventory for Swiss Grid Generator.
 - `Shift` + drag switches to baseline/overset placement (`Ctrl` fallback).
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
+- Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
 - Clicking a page card selects it, opens it, and aligns its header to the top of the panel; clicking the active open page card closes it.
 - Newly added pages open automatically.

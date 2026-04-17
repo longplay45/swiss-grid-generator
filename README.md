@@ -104,6 +104,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Shift + double-click → create image placeholder
 - Hover interactions and edit affordances
 - Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
+- When a text or image editor is open, preview hover stays active on other blocks and a single click retargets the already open editor
 - Text and image editors reuse the left-sidebar section pattern instead of a preview-docked rail
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
 - Text editor family, cut, hierarchy, and geometry dropdowns preview on rollover before commit; image editor geometry and scheme dropdowns do the same

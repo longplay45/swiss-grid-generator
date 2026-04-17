@@ -305,6 +305,7 @@ Editor controls:
 - left sidebar editor that replaces layout settings while edit mode is active
 - text editor sections: `Paragraph`, `Typo`, `Info`
 - image editor sections: `Geometry`, `Color`, `Info`
+- while edit mode is active, preview hover stays visible on other existing blocks and clicking one retargets the already open editor
 - Paragraph section:
   - rows
   - baselines

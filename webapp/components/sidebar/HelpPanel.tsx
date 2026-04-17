@@ -176,6 +176,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
           <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
+          <li>When a text or image editor is already open, preview rollover stays active on other blocks so you can see the next target before switching.</li>
           <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
           <li>Delete blocks from the left sidebar editor or from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
@@ -197,7 +198,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>`Esc` or outside click exits edit mode; clicking another active-page layer card retargets the editor instead.</li>
+          <li>`Esc` or outside click exits edit mode; clicking another active-page layer card or another existing preview block retargets the already open editor instead.</li>
         </ul>
 
         <div id="help-editor-paragraph" className="space-y-1 pt-1">

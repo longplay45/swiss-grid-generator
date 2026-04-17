@@ -10,6 +10,10 @@ export type OpenImageEditorOptions = {
   recordHistory?: boolean
 }
 
+export type OpenTextEditorOptions = {
+  recordHistory?: boolean
+}
+
 export type PreviewGridMetrics = {
   maxBaselineRow: number
   rowStartBaselines: number[]
@@ -19,6 +23,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   showTypography: boolean
   showImagePlaceholders: boolean
   editorOpen: boolean
+  activeEditorTarget: Key | null
   canvasRef: RefObject<HTMLCanvasElement | null>
   blockRectsRef: RefObject<Record<Key, BlockRect>>
   imageRectsRef: RefObject<Record<Key, BlockRect>>
@@ -83,6 +88,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   getNextImagePlaceholderId: () => Key
   ensureImagePlaceholdersVisible?: () => void
   handleTextCanvasDoubleClick: (event: ReactMouseEvent<HTMLCanvasElement>) => void
+  openTextEditor: (key: Key, options?: OpenTextEditorOptions) => void
   openImageEditor: (key: Key, options?: OpenImageEditorOptions) => void
   closeImageEditorPanel: () => void
   clearHover: () => void

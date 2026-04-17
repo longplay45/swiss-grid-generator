@@ -20,7 +20,6 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "snapToModule"
   | "snapToBaseline"
   | "findTopmostDraggableAtPoint"
-  | "findTopmostBlockAtPoint"
   | "resolveSelectedLayerAtClientPoint"
   | "isImagePlaceholderKey"
   | "onSelectLayer"
@@ -28,6 +27,8 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "dragEndedAtRef"
   | "touchLongPressMs"
   | "touchCancelDistancePx"
+  | "openTextEditor"
+  | "openImageEditor"
 > & {
   handleTextDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
   handleImageDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
@@ -36,6 +37,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
     event: ReactMouseEvent<HTMLCanvasElement>
     pagePoint: { x: number; y: number }
   }) => boolean
+  activeEditorTarget: Key | null
 }
 
 export function usePreviewPointerSelectionRouting<Key extends string, StyleKey extends string>({
@@ -51,7 +53,6 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   snapToModule,
   snapToBaseline,
   findTopmostDraggableAtPoint,
-  findTopmostBlockAtPoint,
   resolveSelectedLayerAtClientPoint,
   isImagePlaceholderKey,
   onSelectLayer,
@@ -59,10 +60,13 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   dragEndedAtRef,
   touchLongPressMs,
   touchCancelDistancePx,
+  openTextEditor,
+  openImageEditor,
   handleTextDrop,
   handleImageDrop,
   openTextEditorFromCanvas,
   handleImageDoubleClick,
+  activeEditorTarget,
 }: Args<Key, StyleKey>) {
   const draggableModulePositions = useMemo(
     () => ({
@@ -107,9 +111,28 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   })
 
   const handlePreviewPointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
-    onSelectLayer?.(resolveSelectedLayerAtClientPoint(event.clientX, event.clientY))
+    const target = resolveSelectedLayerAtClientPoint(event.clientX, event.clientY)
+    onSelectLayer?.(target)
+    if (editorOpen && target && target !== activeEditorTarget) {
+      clearHover()
+      if (isImagePlaceholderKey(target)) {
+        openImageEditor(target, { recordHistory: false })
+      } else {
+        openTextEditor(target, { recordHistory: false })
+      }
+    }
     handleCanvasPointerDown(event)
-  }, [handleCanvasPointerDown, onSelectLayer, resolveSelectedLayerAtClientPoint])
+  }, [
+    activeEditorTarget,
+    clearHover,
+    editorOpen,
+    handleCanvasPointerDown,
+    isImagePlaceholderKey,
+    onSelectLayer,
+    openImageEditor,
+    openTextEditor,
+    resolveSelectedLayerAtClientPoint,
+  ])
 
   const handleCanvasDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < PREVIEW_DRAG_CLICK_GUARD_MS) return

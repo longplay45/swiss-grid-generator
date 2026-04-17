@@ -536,6 +536,8 @@ restore(snapshot) on close/pointer-leave when no option was committed
 
 This changes when preview recalculation runs, not the underlying grid, typography, or placement formulas.
 
+When an editor is already open, preview hit-testing and rollover remain active for other existing blocks; clicking one retargets the current editor to that block instead of tearing edit mode down first.
+
 ## Preview Placement + Reflow
 
 Interactive placement is orchestrated in `webapp/components/grid-preview.tsx`, mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`), and uses worker-backed planning (`webapp/workers/reflowPlanner.worker.ts`, `webapp/workers/autoFit.worker.ts`) with synchronous fallback to pure planner modules in `webapp/lib/`.

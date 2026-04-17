@@ -567,10 +567,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   return (
     <div
       ref={rootRef}
-      className="absolute inset-0 z-20"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) closeEditor()
-      }}
+      className="pointer-events-none absolute inset-0 z-20"
     >
       <div
         className="pointer-events-none absolute inset-0"
@@ -581,6 +578,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
       >
         <div
           className="pointer-events-auto absolute"
+          data-editor-interactive-root="true"
           data-inline-editor-layer="true"
           style={{
             left: textBox.left,

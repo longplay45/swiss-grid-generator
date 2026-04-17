@@ -71,11 +71,15 @@ export function GridPreviewOverlays<StyleKey extends string>({
   onOpenHelpSection,
   isDarkMode = false,
 }: Props<StyleKey>) {
+  const activeEditorTarget = editorState?.target ?? imageEditorState?.target ?? null
   const hoveredEditTarget = hoveredTextKey && hoveredTextRect
     ? { kind: "text" as const, key: hoveredTextKey, rect: hoveredTextRect }
     : hoveredImageKey && hoveredImageRect
       ? { kind: "image" as const, key: hoveredImageKey, rect: hoveredImageRect }
       : null
+  const showHoveredEditTarget = Boolean(
+    hoveredEditTarget && hoveredEditTarget.key !== activeEditorTarget,
+  )
   const editButtonSize = 26
   const editButtonInset = 6
   const textButtonAlign = hoveredEditTarget?.kind === "text" ? (hoveredTextAlign ?? "left") : "left"
@@ -151,7 +155,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
 
   return (
     <>
-      {hoveredEditTarget && !editorState && !imageEditorState ? (
+      {showHoveredEditTarget && hoveredEditTarget ? (
         <div
           className="pointer-events-none absolute z-40"
           style={{
