@@ -1,6 +1,6 @@
 "use client"
 
-import { X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
@@ -9,6 +9,7 @@ import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
 import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
+import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
@@ -20,6 +21,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { LayoutPreset } from "@/lib/presets"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
+import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -348,11 +350,13 @@ export function PreviewWorkspace({
         </div>
         {shouldRenderSidebarPanel && (
           <div
-            data-help-scroll-root="true"
-            className={` min-h-0 w-[280px] basis-[280px] shrink-0 border-l overflow-x-hidden overflow-y-auto overscroll-contain text-sm ${uiTheme.sidebar} ${
-              activeSidebarPanel === "help"
-                ? "px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
-                : "p-4 md:p-6"
+            data-help-scroll-root={activeSidebarPanel === "layers" ? undefined : "true"}
+            className={` min-h-0 w-[280px] basis-[280px] shrink-0 border-l overflow-x-hidden text-sm ${uiTheme.sidebar} ${
+              activeSidebarPanel === "layers"
+                ? "overflow-hidden"
+                : activeSidebarPanel === "help"
+                  ? "overflow-y-auto overscroll-contain px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
+                  : "overflow-y-auto overscroll-contain p-4 md:p-6"
             }`}
           >
             {activeSidebarPanel === "help" && (
@@ -363,10 +367,10 @@ export function PreviewWorkspace({
               />
             )}
             {activeSidebarPanel === "layers" && (
-              <div>
-                <div className="mb-3">
+              <div className="flex h-full min-h-0 flex-col">
+                <div className="mb-3 shrink-0 px-4 pt-4 md:px-6 md:pt-6">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className={`text-sm font-semibold ${uiTheme.sidebarHeading}`}>Project</h3>
+                    <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>Project Structure</h3>
                     <button
                       type="button"
                       aria-label="Close project panel"
@@ -381,32 +385,53 @@ export function PreviewWorkspace({
                       Edit the project name, manage page order, and expand any page to inspect its layers inline. Add Page duplicates the active page, and active-page layer hover or selection stays linked to the preview.
                     </p>
                   ) : null}
+                  <ProjectTitleSection
+                    projectTitle={projectTitle}
+                    pageCount={projectPages.length}
+                    onProjectTitleChange={onProjectTitleChange}
+                    isDarkMode={isDarkUi}
+                  />
                 </div>
-                <PagesPanel
-                  projectTitle={projectTitle}
-                  pages={projectPages}
-                  activePageId={activePageId}
-                  onProjectTitleChange={onProjectTitleChange}
-                  onSelectPage={onPageSelect}
-                  onAddPage={onPageAdd}
-                  onRenamePage={onPageRename}
-                  onDeletePage={onPageDelete}
-                  onPageOrderChange={onPageOrderChange}
-                  baseFont={baseFont}
-                  imageColorScheme={imageColorScheme}
-                  selectedLayerKey={selectedLayerKey}
-                  hoveredLayerKey={hoveredLayerKey}
-                  editingLayerKey={editorMode === "text" ? selectedLayerKey : null}
-                  onLayerOrderChange={onLayerOrderChange}
-                  onSelectedLayerKeyChange={onSelectedLayerKeyChange}
-                  onHoverLayerChange={setLayerPanelHoveredLayerKey}
-                  onLayerEditorToggle={onLayerEditorToggle}
-                  onLayerDelete={onLayerDelete}
-                  pagesCollapsed={pagesCollapsed}
-                  onPagesHeaderClick={handlePagesHeaderClick}
-                  onPagesHeaderDoubleClick={handlePagesHeaderDoubleClick}
-                  isDarkMode={isDarkUi}
-                />
+                <div
+                  data-help-scroll-root="true"
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 md:px-6"
+                >
+                  <PagesPanel
+                    pages={projectPages}
+                    activePageId={activePageId}
+                    onSelectPage={onPageSelect}
+                    onRenamePage={onPageRename}
+                    onDeletePage={onPageDelete}
+                    onPageOrderChange={onPageOrderChange}
+                    baseFont={baseFont}
+                    imageColorScheme={imageColorScheme}
+                    selectedLayerKey={selectedLayerKey}
+                    hoveredLayerKey={hoveredLayerKey}
+                    editingLayerKey={editorMode === "text" ? selectedLayerKey : null}
+                    onLayerOrderChange={onLayerOrderChange}
+                    onSelectedLayerKeyChange={onSelectedLayerKeyChange}
+                    onHoverLayerChange={setLayerPanelHoveredLayerKey}
+                    onLayerEditorToggle={onLayerEditorToggle}
+                    onLayerDelete={onLayerDelete}
+                    pagesCollapsed={pagesCollapsed}
+                    onPagesHeaderClick={handlePagesHeaderClick}
+                    onPagesHeaderDoubleClick={handlePagesHeaderDoubleClick}
+                    isDarkMode={isDarkUi}
+                  />
+                </div>
+                <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${isDarkUi ? "border-[#313A47]" : "border-gray-200"}`}>
+                  <div className="flex items-center justify-between gap-3 leading-none">
+                    <div className={`font-semibold uppercase tracking-[0.08em] ${uiTheme.sidebarHeading}`}>Add Page</div>
+                    <button
+                      type="button"
+                      aria-label="Add page"
+                      onClick={onPageAdd}
+                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             {activeSidebarPanel === "imprint" && (

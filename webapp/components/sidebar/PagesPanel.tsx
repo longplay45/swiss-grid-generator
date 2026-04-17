@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react"
+import { ChevronUp, Pencil, Trash2 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
@@ -13,18 +13,14 @@ import {
   isCardDragIgnoreTarget,
   lockDocumentUserSelect,
 } from "@/lib/sidebar-card-drag"
-import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
 
 type Props = {
-  projectTitle: string
   pages: ProjectPage<PreviewLayoutState>[]
   activePageId: string
-  onProjectTitleChange: (nextTitle: string) => void
   onSelectPage: (pageId: string) => void
-  onAddPage: () => void
   onRenamePage: (pageId: string, nextName: string) => void
   onDeletePage: (pageId: string) => void
   onPageOrderChange: (orderedIds: string[]) => void
@@ -51,12 +47,9 @@ function getLayerCount(page: ProjectPage<PreviewLayoutState>): number {
 }
 
 export function PagesPanel({
-  projectTitle,
   pages,
   activePageId,
-  onProjectTitleChange,
   onSelectPage,
-  onAddPage,
   onRenamePage,
   onDeletePage,
   onPageOrderChange,
@@ -78,15 +71,12 @@ export function PagesPanel({
   const PROJECT_CARD_MIN_HEIGHT_CLASS = "min-h-[50px]"
   const [editingPageId, setEditingPageId] = useState<string | null>(null)
   const [pageNameDraft, setPageNameDraft] = useState("")
-  const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false)
-  const [projectTitleDraft, setProjectTitleDraft] = useState(projectTitle)
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
   const [expandedPageId, setExpandedPageId] = useState<string | null>(activePageId)
   const previousPageIdsRef = useRef<string[]>(pages.map((page) => page.id))
   const scrollToPageHeaderRef = useRef<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const titleInputRef = useRef<HTMLInputElement | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
   const selectionLockCleanupRef = useRef<(() => void) | null>(null)
@@ -98,19 +88,6 @@ export function PagesPanel({
       inputRef.current?.select()
     })
   }, [editingPageId])
-
-  useEffect(() => {
-    if (!isEditingProjectTitle) return
-    window.requestAnimationFrame(() => {
-      titleInputRef.current?.focus()
-      titleInputRef.current?.select()
-    })
-  }, [isEditingProjectTitle])
-
-  useEffect(() => {
-    if (isEditingProjectTitle) return
-    setProjectTitleDraft(projectTitle)
-  }, [isEditingProjectTitle, projectTitle])
 
   useEffect(() => {
     if (expandedPageId === null) return
@@ -125,6 +102,7 @@ export function PagesPanel({
     const activePageIsNew = !previousPageIds.includes(activePageId) && currentPageIds.includes(activePageId)
 
     if (pageWasAdded && activePageIsNew) {
+      scrollToPageHeaderRef.current = activePageId
       setExpandedPageId(activePageId)
     }
 
@@ -175,23 +153,18 @@ export function PagesPanel({
 
   const tone = isDarkMode
     ? {
-        body: "text-[#8D98AA]",
         card: "border-[#313A47] bg-[#1D232D] text-[#F4F6F8]",
         cardMuted: "text-[#8D98AA]",
         close: "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]",
-        button: "border-[#313A47] bg-[#1D232D] text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]",
         input: "border-[#313A47] bg-[#232A35] text-[#F4F6F8] placeholder:text-[#8D98AA]",
       }
     : {
-        body: "text-gray-600",
         card: "border-gray-200 bg-gray-100 text-gray-900",
         cardMuted: "text-gray-500",
         close: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
-        button: "border-gray-50 text-gray-700 hover:bg-gray-100 hover:text-gray-900",
         input: "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400",
       }
 
-  const visibleProjectTitle = projectTitle.trim() || "Untitled Project"
   const stationaryPages = useMemo(
     () => pages.filter((page) => page.id !== draggingPageId),
     [draggingPageId, pages],
@@ -218,24 +191,6 @@ export function PagesPanel({
       onRenamePage(editingPageId, trimmedName)
     }
     cancelRename()
-  }
-
-  const beginProjectTitleEdit = () => {
-    setProjectTitleDraft(projectTitle)
-    setIsEditingProjectTitle(true)
-  }
-
-  const cancelProjectTitleEdit = () => {
-    setIsEditingProjectTitle(false)
-    setProjectTitleDraft(projectTitle)
-  }
-
-  const commitProjectTitle = () => {
-    const trimmedTitle = projectTitleDraft.trim()
-    if (trimmedTitle.length > 0 && trimmedTitle !== projectTitle.trim()) {
-      onProjectTitleChange(trimmedTitle)
-    }
-    setIsEditingProjectTitle(false)
   }
 
   const renderDropMarker = (index: number | null) => {
@@ -314,43 +269,6 @@ export function PagesPanel({
 
   return (
     <div>
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className={SECTION_HEADLINE_CLASSNAME}>Name</div>
-          {isEditingProjectTitle ? (
-            <input
-              ref={titleInputRef}
-              value={projectTitleDraft}
-              onChange={(event) => setProjectTitleDraft(event.target.value)}
-              onBlur={commitProjectTitle}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault()
-                  commitProjectTitle()
-                }
-                if (event.key === "Escape") {
-                  event.preventDefault()
-                  cancelProjectTitleEdit()
-                }
-              }}
-              className={`w-full rounded-sm border px-2 py-1 text-[12px] outline-none ${tone.input}`}
-            />
-          ) : (
-            <div className={`truncate text-xs ${tone.body}`}>
-              {visibleProjectTitle} | {pages.length} {pages.length === 1 ? "page" : "pages"}
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          aria-label="Rename project"
-          className={`rounded-sm p-1 transition-colors ${tone.close}`}
-          onClick={beginProjectTitleEdit}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
       <ProjectSidebarSection
         title="Pages"
         collapsed={pagesCollapsed}
@@ -388,15 +306,15 @@ export function PagesPanel({
                   ref={(node) => {
                     cardRefs.current[page.id] = node
                   }}
-                  draggable={!isEditing && !isEditingProjectTitle && !isExpanded}
+                  draggable={!isEditing && !isExpanded}
                   onPointerDownCapture={(event) => {
-                    if (isEditing || isEditingProjectTitle || isExpanded) return
+                    if (isEditing || isExpanded) return
                     if (event.button !== 0) return
                     if (isCardDragIgnoreTarget(event.target)) return
                     engageSelectionLock()
                   }}
                   onDragStart={(event) => {
-                    if (isEditing || isEditingProjectTitle || isExpanded) return
+                    if (isEditing || isExpanded) return
                     event.dataTransfer.effectAllowed = "move"
                     event.dataTransfer.setData("text/plain", page.id)
                     clearWindowSelection()
@@ -408,7 +326,7 @@ export function PagesPanel({
                   onDragOver={handleListDragOver}
                   onDrop={handleListDrop}
                   onClick={() => {
-                    if (isEditing || isEditingProjectTitle) return
+                    if (isEditing) return
                     if (isActive && isExpanded) {
                       setExpandedPageId(null)
                       return
@@ -422,7 +340,7 @@ export function PagesPanel({
                       ? `${tone.card} opacity-45`
                       : tone.card
                   } ${isActive ? "border-l-orange-500 border-t-orange-500" : ""} ${
-                    isEditing || isEditingProjectTitle || isExpanded ? "select-none" : "cursor-grab select-none"
+                    isEditing || isExpanded ? "select-none" : "cursor-grab select-none"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -542,15 +460,6 @@ export function PagesPanel({
           >
             {renderDropMarker(stationaryPages.length)}
           </div>
-          <button
-            type="button"
-            aria-label="Add page"
-            onClick={onAddPage}
-            className={`mt-2 flex items-center justify-between rounded-md border px-3 py-2 text-left text-[12px] transition-colors ${tone.button}`}
-          >
-            <span className="font-medium">Add Page</span>
-            <Plus className="h-4 w-4 shrink-0" />
-          </button>
         </div>
       </ProjectSidebarSection>
     </div>

@@ -43,8 +43,6 @@ export const ControlSidebar = memo(function ControlSidebar({
         <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
         <p className={`text-sm ${uiTheme.bodyText}`}>
           Based on Müller-Brockmann&apos;s <em><a href="https://amzn.to/40kfiUL">Grid Systems in Graphic Design</a></em> (1981).
-          Copyleft &amp; -right 2026 by{" "}
-          <a href="https://lp45.net" className={uiTheme.link}>lp45.net</a>.
         </p>
       </div>
 
