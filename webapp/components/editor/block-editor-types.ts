@@ -31,6 +31,8 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftTextEdited: boolean
   draftSelectionStart: number
   draftSelectionEnd: number
+  draftSelectionAnchor: number
+  draftSelectionFocusIndex: number
 }
 
 export type BlockEditorStyleOption<StyleKey extends string = string> = {

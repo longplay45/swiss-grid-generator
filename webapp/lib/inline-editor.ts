@@ -753,7 +753,7 @@ export function hitTestInlineEditorIndex({
   for (let index = activeLine.sourceStart; index <= activeLine.sourceEnd; index += 1) {
     const caretX = getCaretXForIndex(text, activeLine, index, measureText)
     const distance = Math.abs(x - caretX)
-    if (distance <= bestDistance) {
+    if (distance < bestDistance) {
       bestDistance = distance
       bestIndex = index
     }

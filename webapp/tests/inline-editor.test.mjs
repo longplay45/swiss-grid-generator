@@ -483,3 +483,59 @@ test("resolveInlineEditorLineNavigation clamps upward movement to the nearest ca
     desiredX: 100,
   })
 })
+
+test("hitTestInlineEditorIndex prefers the visible line-end caret over hidden wrap whitespace", () => {
+  const index = hitTestInlineEditorIndex({
+    text: "Swiss Style",
+    textAlign: "left",
+    commands: [
+      { text: "Swiss ", x: 40, y: 120, sourceStart: 0, sourceEnd: 6, trailingBoundaryWhitespace: 1 },
+      { text: "Style", x: 40, y: 144, sourceStart: 5, sourceEnd: 11, leadingBoundaryWhitespace: 1 },
+    ],
+    renderedLines: [
+      {
+        sourceStart: 0,
+        sourceEnd: 6,
+        left: 40,
+        top: 96,
+        width: 100,
+        height: 24,
+        baselineY: 120,
+        caretStops: [
+          { index: 0, x: 40 },
+          { index: 1, x: 60 },
+          { index: 2, x: 80 },
+          { index: 3, x: 100 },
+          { index: 4, x: 120 },
+          { index: 5, x: 140 },
+          { index: 6, x: 140 },
+        ],
+      },
+      {
+        sourceStart: 5,
+        sourceEnd: 11,
+        left: 40,
+        top: 120,
+        width: 100,
+        height: 24,
+        baselineY: 144,
+        caretStops: [
+          { index: 5, x: 40 },
+          { index: 6, x: 40 },
+          { index: 7, x: 60 },
+          { index: 8, x: 80 },
+          { index: 9, x: 100 },
+          { index: 10, x: 120 },
+          { index: 11, x: 140 },
+        ],
+      },
+    ],
+    x: 140,
+    y: 108,
+    textAscent: 10,
+    lineHeight: 24,
+    measureText: (text) => text.length * 10,
+  })
+
+  assert.equal(index, 5)
+})

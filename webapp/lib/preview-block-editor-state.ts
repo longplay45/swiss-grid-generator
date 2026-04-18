@@ -221,6 +221,8 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftTextEdited: blockTextEdited[key] ?? true,
     draftSelectionStart: 0,
     draftSelectionEnd: 0,
+    draftSelectionAnchor: 0,
+    draftSelectionFocusIndex: 0,
   }
 }
 
@@ -290,5 +292,7 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftTextEdited: textEdited,
     draftSelectionStart: 0,
     draftSelectionEnd: 0,
+    draftSelectionAnchor: 0,
+    draftSelectionFocusIndex: 0,
   }
 }
