@@ -113,7 +113,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
 - Text editor family, cut, hierarchy, and geometry dropdowns preview on rollover before commit; image editor geometry and scheme dropdowns do the same
 - Text paragraphs support horizontal (`Left`, `Center`, `Right`) and vertical (`Top`, `Center`, `Bottom`) frame alignment in the editor
-- In text edit mode, double-click selects the clicked word, triple-click selects the containing sentence, and `Alt+A` / `Cmd/Ctrl+A` select the whole paragraph
+- In text edit mode, double-click selects the clicked word, triple-click selects the containing sentence, `Alt+A` / `Cmd/Ctrl+A` select the whole paragraph, and `Arrow` / `Home` / `End` navigation follows the rendered line geometry
 - Image placeholder editor uses `Geometry`, `Color`, and `Info` sections, including scheme, swatch color, and transparency controls
 
 ### Export

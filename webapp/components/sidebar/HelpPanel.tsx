@@ -201,7 +201,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
           <li>`Esc` or outside click exits edit mode; clicking another active-page layer card or another existing preview block retargets the already open editor instead.</li>
-          <li>Inside inline text edit, double-click selects the clicked word, triple-click selects the containing sentence, and `Alt+A` or `Cmd/Ctrl+A` select the whole paragraph.</li>
+          <li>Inside inline text edit, double-click selects the clicked word, triple-click selects the containing sentence, `Alt+A` or `Cmd/Ctrl+A` select the whole paragraph, and `Arrow` / `Home` / `End` navigation follows the rendered line geometry.</li>
         </ul>
 
         <div id="help-editor-paragraph" className="space-y-1 pt-1">

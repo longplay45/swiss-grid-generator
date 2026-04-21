@@ -363,6 +363,7 @@ Editor controls:
 - double-click inside inline text edit selects the clicked word
 - triple-click inside inline text edit selects the containing sentence
 - `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active
+- `Arrow Left` / `Arrow Right` move the caret by the editor's own selection model, and `Arrow Up` / `Arrow Down` / `Home` / `End` follow the rendered line geometry
 - repeated spaces and blank lines are preserved in the source model
 - soft-wrap boundary spaces stay in the source text but do not render as visible indent at the start of the next visual line
 

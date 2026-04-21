@@ -125,6 +125,7 @@ export type InlineEditorHitTestInput = InlineEditorLineLayoutInput & {
 }
 
 export type InlineEditorLineNavigationDirection = "home" | "end" | "up" | "down"
+export type InlineEditorHorizontalNavigationDirection = "left" | "right"
 
 export type InlineEditorLineNavigationInput = InlineEditorLineLayoutInput & {
   selectionIndex: number
@@ -137,9 +138,49 @@ export type InlineEditorLineNavigationResult = {
   desiredX: number
 }
 
+export type InlineEditorHorizontalNavigationInput = {
+  text: string
+  anchor: number
+  focusIndex: number
+  direction: InlineEditorHorizontalNavigationDirection
+  extendSelection: boolean
+}
+
+export type InlineEditorHorizontalNavigationResult = {
+  anchor: number
+  focusIndex: number
+}
+
 export type InlineEditorSelectionRange = {
   start: number
   end: number
+}
+
+export type InlineEditorSelectionDirection = "forward" | "backward" | "none"
+
+export type InlineEditorSelectionState = {
+  start: number
+  end: number
+  anchor: number
+  focusIndex: number
+  focused: boolean
+}
+
+export type InlineEditorKeyboardSelectionTransitionInput = InlineEditorLineLayoutInput & {
+  selection: Pick<InlineEditorSelectionState, "anchor" | "focusIndex">
+  key: string
+  shiftKey: boolean
+  altKey: boolean
+  ctrlKey: boolean
+  metaKey: boolean
+  isAltGraph?: boolean
+  desiredX?: number | null
+}
+
+export type InlineEditorKeyboardSelectionTransitionResult = {
+  handled: boolean
+  selection: Pick<InlineEditorSelectionState, "anchor" | "focusIndex"> | null
+  desiredX: number | null
 }
 
 export type InlineEditorTransformInput = {
@@ -171,6 +212,61 @@ export function buildInlineEditorTransform(input: InlineEditorTransformInput): I
     blockTransform: `rotate(${input.blockRotation}deg)`,
     blockTransformOrigin: `${relativeOriginX}px ${relativeOriginY}px`,
   }
+}
+
+export function buildInlineEditorSelectionStateFromRange(
+  start: number,
+  end: number,
+  focused: boolean,
+  direction: InlineEditorSelectionDirection = "none",
+): InlineEditorSelectionState {
+  const nextStart = Math.min(start, end)
+  const nextEnd = Math.max(start, end)
+  if (nextStart === nextEnd) {
+    return {
+      start: nextStart,
+      end: nextEnd,
+      anchor: nextStart,
+      focusIndex: nextEnd,
+      focused,
+    }
+  }
+  if (direction === "backward") {
+    return {
+      start: nextStart,
+      end: nextEnd,
+      anchor: nextEnd,
+      focusIndex: nextStart,
+      focused,
+    }
+  }
+  return {
+    start: nextStart,
+    end: nextEnd,
+    anchor: nextStart,
+    focusIndex: nextEnd,
+    focused,
+  }
+}
+
+export function buildInlineEditorSelectionStateFromAnchorFocus(
+  anchor: number,
+  focusIndex: number,
+  focused: boolean,
+): InlineEditorSelectionState {
+  return buildInlineEditorSelectionStateFromRange(
+    anchor,
+    focusIndex,
+    focused,
+    focusIndex < anchor ? "backward" : "forward",
+  )
+}
+
+export function getInlineEditorSelectionDirection(
+  selection: Pick<InlineEditorSelectionState, "start" | "end" | "anchor" | "focusIndex">,
+): InlineEditorSelectionDirection {
+  if (selection.start === selection.end) return "none"
+  return selection.focusIndex < selection.anchor ? "backward" : "forward"
 }
 
 function stripInvisibleTextArtifacts(text: string): string {
@@ -960,6 +1056,137 @@ export function resolveInlineEditorLineNavigation({
   return {
     index: bestIndex,
     desiredX: targetCaretX,
+  }
+}
+
+export function resolveInlineEditorHorizontalNavigation({
+  text,
+  anchor,
+  focusIndex,
+  direction,
+  extendSelection,
+}: InlineEditorHorizontalNavigationInput): InlineEditorHorizontalNavigationResult {
+  const textLength = normalizeVisibleText(text).length
+  const clampedAnchor = Math.max(0, Math.min(textLength, anchor))
+  const clampedFocusIndex = Math.max(0, Math.min(textLength, focusIndex))
+  const selectionStart = Math.min(clampedAnchor, clampedFocusIndex)
+  const selectionEnd = Math.max(clampedAnchor, clampedFocusIndex)
+
+  if (extendSelection) {
+    return {
+      anchor: clampedAnchor,
+      focusIndex: direction === "left"
+        ? Math.max(0, clampedFocusIndex - 1)
+        : Math.min(textLength, clampedFocusIndex + 1),
+    }
+  }
+
+  const collapsedIndex = selectionStart !== selectionEnd
+    ? (direction === "left" ? selectionStart : selectionEnd)
+    : (direction === "left"
+      ? Math.max(0, clampedFocusIndex - 1)
+      : Math.min(textLength, clampedFocusIndex + 1))
+
+  return {
+    anchor: collapsedIndex,
+    focusIndex: collapsedIndex,
+  }
+}
+
+export function resolveInlineEditorKeyboardSelectionTransition({
+  text,
+  textAlign,
+  commands,
+  renderedLines,
+  segmentLines,
+  selection,
+  key,
+  shiftKey,
+  altKey,
+  ctrlKey,
+  metaKey,
+  isAltGraph = false,
+  desiredX = null,
+  textAscent,
+  lineHeight,
+  measureText,
+}: InlineEditorKeyboardSelectionTransitionInput): InlineEditorKeyboardSelectionTransitionResult {
+  const normalizedText = normalizeVisibleText(text)
+  const lowerKey = key.toLowerCase()
+  const isSelectAllShortcut = lowerKey === "a"
+    && !shiftKey
+    && !isAltGraph
+    && (
+      metaKey
+      || ctrlKey
+      || (altKey && !metaKey && !ctrlKey)
+    )
+  if (isSelectAllShortcut) {
+    return {
+      handled: true,
+      selection: {
+        anchor: 0,
+        focusIndex: normalizedText.length,
+      },
+      desiredX: null,
+    }
+  }
+
+  if (altKey || metaKey || ctrlKey) {
+    return {
+      handled: false,
+      selection: null,
+      desiredX,
+    }
+  }
+
+  if (key === "ArrowLeft" || key === "ArrowRight") {
+    return {
+      handled: true,
+      selection: resolveInlineEditorHorizontalNavigation({
+        text,
+        anchor: selection.anchor,
+        focusIndex: selection.focusIndex,
+        direction: key === "ArrowLeft" ? "left" : "right",
+        extendSelection: shiftKey,
+      }),
+      desiredX: null,
+    }
+  }
+
+  if (key === "Home" || key === "End" || key === "ArrowUp" || key === "ArrowDown") {
+    const result = resolveInlineEditorLineNavigation({
+      text,
+      textAlign,
+      commands,
+      renderedLines,
+      segmentLines,
+      selectionIndex: selection.focusIndex,
+      direction: key === "Home"
+        ? "home"
+        : key === "End"
+          ? "end"
+          : key === "ArrowUp"
+            ? "up"
+            : "down",
+      desiredX,
+      textAscent,
+      lineHeight,
+      measureText,
+    })
+    return {
+      handled: true,
+      selection: shiftKey
+        ? { anchor: selection.anchor, focusIndex: result.index }
+        : { anchor: result.index, focusIndex: result.index },
+      desiredX: result.desiredX,
+    }
+  }
+
+  return {
+    handled: false,
+    selection: null,
+    desiredX,
   }
 }
 

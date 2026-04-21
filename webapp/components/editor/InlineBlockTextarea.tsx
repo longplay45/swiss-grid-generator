@@ -8,14 +8,19 @@ import {
 } from "@/lib/config/color-schemes"
 import type { RenderedTextLine } from "@/lib/preview-types"
 import {
+  buildInlineEditorSelectionStateFromAnchorFocus,
+  buildInlineEditorSelectionStateFromRange,
   buildInlineEditorTransform,
   computeInlineEditorSpecialCharMarkers,
   computeInlineEditorCaret,
   computeInlineEditorSelectionRects,
   computeInlineEditorTextBox,
+  getInlineEditorSelectionDirection,
+  resolveInlineEditorKeyboardSelectionTransition,
   hitTestInlineEditorIndex,
+  type InlineEditorSelectionDirection,
+  type InlineEditorSelectionState,
   resolveInlineEditorSentenceSelection,
-  resolveInlineEditorLineNavigation,
   resolveInlineEditorWordSelection,
 } from "@/lib/inline-editor"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
@@ -42,16 +47,6 @@ import {
   useState,
 } from "react"
 import type { Dispatch, RefObject, SetStateAction } from "react"
-
-type SelectionDirection = "forward" | "backward" | "none"
-
-type InlineEditorSelectionState = {
-  start: number
-  end: number
-  anchor: number
-  focusIndex: number
-  focused: boolean
-}
 
 type InlineEditorOverlayRect = {
   left: number
@@ -398,54 +393,14 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const measureContextRef = useRef<CanvasRenderingContext2D | null>(null)
   const [isCaretVisible, setIsCaretVisible] = useState(true)
 
-  const buildSelectionState = useCallback((
-    start: number,
-    end: number,
-    focused: boolean,
-    direction: SelectionDirection = "none",
-  ): InlineEditorSelectionState => {
-    const nextStart = Math.min(start, end)
-    const nextEnd = Math.max(start, end)
-    if (nextStart === nextEnd) {
-      return {
-        start: nextStart,
-        end: nextEnd,
-        anchor: nextStart,
-        focusIndex: nextEnd,
-        focused,
-      }
-    }
-    if (direction === "backward") {
-      return {
-        start: nextStart,
-        end: nextEnd,
-        anchor: nextEnd,
-        focusIndex: nextStart,
-        focused,
-      }
-    }
-    return {
-      start: nextStart,
-      end: nextEnd,
-      anchor: nextStart,
-      focusIndex: nextEnd,
-      focused,
-    }
-  }, [])
-
   const readTextareaSelection = useCallback((
     element: HTMLTextAreaElement,
     focused: boolean,
   ): InlineEditorSelectionState => {
     const selectionStart = element.selectionStart ?? 0
     const selectionEnd = element.selectionEnd ?? selectionStart
-    const selectionDirection = (element.selectionDirection ?? "none") as SelectionDirection
-    return buildSelectionState(selectionStart, selectionEnd, focused, selectionDirection)
-  }, [buildSelectionState])
-
-  const getSelectionDirection = useCallback((selection: InlineEditorSelectionState): SelectionDirection => {
-    if (selection.start === selection.end) return "none"
-    return selection.focusIndex < selection.anchor ? "backward" : "forward"
+    const selectionDirection = (element.selectionDirection ?? "none") as InlineEditorSelectionDirection
+    return buildInlineEditorSelectionStateFromRange(selectionStart, selectionEnd, focused, selectionDirection)
   }, [])
 
   const getEditorSelectionState = useCallback((
@@ -461,13 +416,12 @@ export function InlineBlockTextarea<StyleKey extends string>({
         focused,
       }
     }
-    return buildSelectionState(
+    return buildInlineEditorSelectionStateFromAnchorFocus(
       state.draftSelectionAnchor,
       state.draftSelectionFocusIndex,
       focused,
-      state.draftSelectionFocusIndex < state.draftSelectionAnchor ? "backward" : "forward",
     )
-  }, [buildSelectionState])
+  }, [])
 
   const updateEditorSelection = useCallback((next: InlineEditorSelectionState) => {
     setSelectionFocused(next.focused)
@@ -512,14 +466,13 @@ export function InlineBlockTextarea<StyleKey extends string>({
     element.setSelectionRange(
       nextSelection.start,
       nextSelection.end,
-      getSelectionDirection(nextSelection),
+      getInlineEditorSelectionDirection(nextSelection),
     )
     setSelectionFocused(focused)
     return true
   }, [
     editorState,
     getEditorSelectionState,
-    getSelectionDirection,
     textareaRef,
   ])
 
@@ -538,7 +491,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   useLayoutEffect(() => {
     const element = textareaRef.current
     if (!element || document.activeElement !== element) return
-    const direction = getSelectionDirection(selection)
+    const direction = getInlineEditorSelectionDirection(selection)
     if (
       (element.selectionStart ?? 0) === selection.start
       && (element.selectionEnd ?? 0) === selection.end
@@ -547,7 +500,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
       return
     }
     element.setSelectionRange(selection.start, selection.end, direction)
-  }, [getSelectionDirection, selection, textareaRef])
+  }, [selection, textareaRef])
 
   useEffect(() => {
     const shouldBlink = Boolean(editorState) && selection.focused && selection.start === selection.end
@@ -769,19 +722,16 @@ export function InlineBlockTextarea<StyleKey extends string>({
   ) => {
     const element = textareaRef.current
     if (!element) return
-    const direction: SelectionDirection = anchor === focusIndex
-      ? "none"
-      : focusIndex < anchor
-        ? "backward"
-        : "forward"
-    const start = Math.min(anchor, focusIndex)
-    const end = Math.max(anchor, focusIndex)
+    const nextSelection = buildInlineEditorSelectionStateFromAnchorFocus(anchor, focusIndex, focused)
     shouldRestoreSelectionOnFocusRef.current = !focused
-    element.setSelectionRange(start, end, direction)
+    element.setSelectionRange(
+      nextSelection.start,
+      nextSelection.end,
+      getInlineEditorSelectionDirection(nextSelection),
+    )
     if (focused) {
       element.focus({ preventScroll: true })
     }
-    const nextSelection = buildSelectionState(start, end, focused, direction)
     updateEditorSelection(nextSelection)
   }
 
@@ -1006,52 +956,31 @@ export function InlineBlockTextarea<StyleKey extends string>({
               keyboardDesiredXRef.current = null
             }}
             onKeyDown={(event) => {
-              const key = event.key.toLowerCase()
-              const isAltGraph = typeof event.getModifierState === "function" && event.getModifierState("AltGraph")
-              const isSelectAllShortcut = key === "a"
-                && !event.shiftKey
-                && !isAltGraph
-                && (
-                  event.metaKey
-                  || event.ctrlKey
-                  || (event.altKey && !event.metaKey && !event.ctrlKey)
-                )
-              if (isSelectAllShortcut) {
+              const transition = resolveInlineEditorKeyboardSelectionTransition({
+                text: editorState.draftText,
+                textAlign: layout.textAlign,
+                commands: visualCommands,
+                renderedLines: layout.renderedLines,
+                segmentLines: layout.segmentLines,
+                selection: {
+                  anchor: selection.anchor,
+                  focusIndex: selection.focusIndex,
+                },
+                key: event.key,
+                shiftKey: event.shiftKey,
+                altKey: event.altKey,
+                ctrlKey: event.ctrlKey,
+                metaKey: event.metaKey,
+                isAltGraph: typeof event.getModifierState === "function" && event.getModifierState("AltGraph"),
+                desiredX: keyboardDesiredXRef.current,
+                textAscent: editorTextAscent,
+                lineHeight: scaledLeading,
+                measureText,
+              })
+              if (transition.handled && transition.selection) {
                 event.preventDefault()
-                setTextareaSelection(0, editorState.draftText.length, true)
-                return
-              }
-              const isVisualNavigationKey = event.key === "Home"
-                || event.key === "End"
-                || event.key === "ArrowUp"
-                || event.key === "ArrowDown"
-              if (isVisualNavigationKey && !event.altKey && !event.metaKey && !event.ctrlKey) {
-                event.preventDefault()
-                const result = resolveInlineEditorLineNavigation({
-                  text: editorState.draftText,
-                  textAlign: layout.textAlign,
-                  commands: visualCommands,
-                  renderedLines: layout.renderedLines,
-                  segmentLines: layout.segmentLines,
-                  selectionIndex: selection.focusIndex,
-                  direction: event.key === "Home"
-                    ? "home"
-                    : event.key === "End"
-                      ? "end"
-                      : event.key === "ArrowUp"
-                        ? "up"
-                        : "down",
-                  desiredX: keyboardDesiredXRef.current,
-                  textAscent: editorTextAscent,
-                  lineHeight: scaledLeading,
-                  measureText,
-                })
-                keyboardDesiredXRef.current = result.desiredX
-                if (event.shiftKey) {
-                  setTextareaSelection(selection.anchor, result.index, true)
-                } else {
-                  setTextareaSelection(result.index, result.index, true)
-                }
+                keyboardDesiredXRef.current = transition.desiredX
+                setTextareaSelection(transition.selection.anchor, transition.selection.focusIndex, true)
                 return
               }
               if (event.key !== "Shift") {

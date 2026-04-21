@@ -259,9 +259,11 @@ export function usePreviewTextEditor({
   }, [editorState?.target, imageEditorState?.target, onSelectLayer])
 
   const focusEditor = useCallback(() => {
-    if (!editorState) return
-    textareaRef.current?.focus({ preventScroll: true })
-  }, [editorState, textareaRef])
+    if (!editorStateRef.current) return
+    const element = textareaRef.current
+    if (!element || document.activeElement === element) return
+    element.focus({ preventScroll: true })
+  }, [textareaRef])
 
   const closeAnyEditor = useCallback(() => {
     closeEditor()

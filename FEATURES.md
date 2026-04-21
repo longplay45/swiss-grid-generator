@@ -71,6 +71,7 @@ Current capability inventory for Swiss Grid Generator.
 - Double-click selects the clicked word in inline text edit mode.
 - Triple-click selects the containing sentence in inline text edit mode.
 - `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active.
+- `Arrow`, `Home`, and `End` navigation in inline text edit follows the rendered line geometry rather than DOM textarea line boxes.
 - Preserves repeated spaces and blank lines in the source model.
 - Soft-wrap boundary spaces remain in the source text but do not render as visible indent on the next visual line.
 

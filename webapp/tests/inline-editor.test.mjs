@@ -2,13 +2,18 @@ import test from "node:test"
 import assert from "node:assert/strict"
 
 import {
+  buildInlineEditorSelectionStateFromAnchorFocus,
+  buildInlineEditorSelectionStateFromRange,
   computeInlineEditorSelectionRects,
   computeInlineEditorSpecialCharMarkers,
   buildInlineEditorTransform,
   computeInlineEditorCaret,
   computeInlineEditorTextBox,
   computeSidebarWithEditorSession,
+  getInlineEditorSelectionDirection,
   hitTestInlineEditorIndex,
+  resolveInlineEditorHorizontalNavigation,
+  resolveInlineEditorKeyboardSelectionTransition,
   resolveInlineEditorSentenceSelection,
   resolveInlineEditorLineNavigation,
   resolveInlineEditorLineMatches,
@@ -41,6 +46,28 @@ test("computeSidebarWithEditorSession restores prior sidebar after text-editor c
   const closed = computeSidebarWithEditorSession(opened.nextPanel, opened.nextPreviousPanelBeforeEditor, false)
   assert.equal(closed.nextPanel, "help")
   assert.equal(closed.nextPreviousPanelBeforeEditor, "help")
+})
+
+test("inline editor selection helpers preserve anchor, focus, and direction", () => {
+  const backward = buildInlineEditorSelectionStateFromRange(8, 3, true, "backward")
+  assert.deepEqual(backward, {
+    start: 3,
+    end: 8,
+    anchor: 8,
+    focusIndex: 3,
+    focused: true,
+  })
+  assert.equal(getInlineEditorSelectionDirection(backward), "backward")
+
+  const forward = buildInlineEditorSelectionStateFromAnchorFocus(2, 5, false)
+  assert.deepEqual(forward, {
+    start: 2,
+    end: 5,
+    anchor: 2,
+    focusIndex: 5,
+    focused: false,
+  })
+  assert.equal(getInlineEditorSelectionDirection(forward), "forward")
 })
 
 test("computeInlineEditorTextBox preserves right-aligned editor width and adds optical hang room", () => {
@@ -195,6 +222,159 @@ test("hitTestInlineEditorIndex returns the nearest character index on a right-al
   })
 
   assert.equal(index, 6)
+})
+
+test("resolveInlineEditorHorizontalNavigation moves a collapsed caret left and right", () => {
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss",
+      anchor: 2,
+      focusIndex: 2,
+      direction: "left",
+      extendSelection: false,
+    }),
+    { anchor: 1, focusIndex: 1 },
+  )
+
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss",
+      anchor: 2,
+      focusIndex: 2,
+      direction: "right",
+      extendSelection: false,
+    }),
+    { anchor: 3, focusIndex: 3 },
+  )
+})
+
+test("resolveInlineEditorHorizontalNavigation collapses ranges toward the travel direction", () => {
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss Grid",
+      anchor: 8,
+      focusIndex: 3,
+      direction: "left",
+      extendSelection: false,
+    }),
+    { anchor: 3, focusIndex: 3 },
+  )
+
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss Grid",
+      anchor: 8,
+      focusIndex: 3,
+      direction: "right",
+      extendSelection: false,
+    }),
+    { anchor: 8, focusIndex: 8 },
+  )
+})
+
+test("resolveInlineEditorHorizontalNavigation extends selection from the current anchor", () => {
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss Grid",
+      anchor: 4,
+      focusIndex: 6,
+      direction: "left",
+      extendSelection: true,
+    }),
+    { anchor: 4, focusIndex: 5 },
+  )
+
+  assert.deepEqual(
+    resolveInlineEditorHorizontalNavigation({
+      text: "Swiss Grid",
+      anchor: 4,
+      focusIndex: 2,
+      direction: "right",
+      extendSelection: true,
+    }),
+    { anchor: 4, focusIndex: 3 },
+  )
+})
+
+test("resolveInlineEditorKeyboardSelectionTransition handles select-all and horizontal keys", () => {
+  assert.deepEqual(
+    resolveInlineEditorKeyboardSelectionTransition({
+      text: "Swiss Grid",
+      textAlign: "left",
+      commands: [
+        { text: "Swiss Grid", x: 40, y: 136 },
+      ],
+      selection: { anchor: 2, focusIndex: 2 },
+      key: "a",
+      shiftKey: false,
+      altKey: true,
+      ctrlKey: false,
+      metaKey: false,
+      isAltGraph: false,
+      desiredX: 120,
+      textAscent: 10,
+      lineHeight: 24,
+      measureText: (text) => text.length * 10,
+    }),
+    {
+      handled: true,
+      selection: { anchor: 0, focusIndex: 10 },
+      desiredX: null,
+    },
+  )
+
+  assert.deepEqual(
+    resolveInlineEditorKeyboardSelectionTransition({
+      text: "Swiss Grid",
+      textAlign: "left",
+      commands: [
+        { text: "Swiss Grid", x: 40, y: 136 },
+      ],
+      selection: { anchor: 5, focusIndex: 5 },
+      key: "ArrowLeft",
+      shiftKey: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      desiredX: 120,
+      textAscent: 10,
+      lineHeight: 24,
+      measureText: (text) => text.length * 10,
+    }),
+    {
+      handled: true,
+      selection: { anchor: 4, focusIndex: 4 },
+      desiredX: null,
+    },
+  )
+})
+
+test("resolveInlineEditorKeyboardSelectionTransition handles vertical line navigation", () => {
+  assert.deepEqual(
+    resolveInlineEditorKeyboardSelectionTransition({
+      text: "Hello world\nSecond line",
+      textAlign: "left",
+      commands: [
+        { text: "Hello world", x: 40, y: 136 },
+        { text: "Second line", x: 40, y: 160 },
+      ],
+      selection: { anchor: 7, focusIndex: 7 },
+      key: "ArrowDown",
+      shiftKey: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      desiredX: null,
+      textAscent: 10,
+      lineHeight: 24,
+      measureText: (text) => text.length * 10,
+    }),
+    {
+      handled: true,
+      selection: { anchor: 19, focusIndex: 19 },
+      desiredX: 110,
+    },
+  )
 })
 
 test("computeInlineEditorCaret returns the visual caret at the centered line midpoint", () => {
