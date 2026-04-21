@@ -29,7 +29,7 @@ type Props = {
   hoveredLayerKey: string | null
   editingLayerKey: string | null
   editorMode: "text" | "image" | null
-  previewTextEditorOpenToken: number
+  previewEditorOpenToken: number
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
@@ -57,7 +57,7 @@ export function PagesPanel({
   hoveredLayerKey,
   editingLayerKey,
   editorMode,
-  previewTextEditorOpenToken,
+  previewEditorOpenToken,
   onLayerOrderChange,
   onSelectedLayerKeyChange,
   onHoverLayerChange,
@@ -74,7 +74,7 @@ export function PagesPanel({
   const previousPageIdsRef = useRef<string[]>(pages.map((page) => page.id))
   const scrollToPageHeaderRef = useRef<string | null>(null)
   const restoreExpandedPageIdRef = useRef<string | null | undefined>(undefined)
-  const lastPreviewTextEditorOpenTokenRef = useRef(0)
+  const lastPreviewEditorOpenTokenRef = useRef(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
@@ -109,9 +109,9 @@ export function PagesPanel({
   }, [activePageId, pages])
 
   useEffect(() => {
-    if (previewTextEditorOpenToken === 0) return
-    if (lastPreviewTextEditorOpenTokenRef.current === previewTextEditorOpenToken) return
-    lastPreviewTextEditorOpenTokenRef.current = previewTextEditorOpenToken
+    if (previewEditorOpenToken === 0) return
+    if (lastPreviewEditorOpenTokenRef.current === previewEditorOpenToken) return
+    lastPreviewEditorOpenTokenRef.current = previewEditorOpenToken
 
     if (restoreExpandedPageIdRef.current === undefined) {
       restoreExpandedPageIdRef.current = expandedPageId
@@ -119,7 +119,7 @@ export function PagesPanel({
     if (expandedPageId === activePageId) return
     scrollToPageHeaderRef.current = activePageId
     setExpandedPageId(activePageId)
-  }, [activePageId, expandedPageId, previewTextEditorOpenToken])
+  }, [activePageId, expandedPageId, previewEditorOpenToken])
 
   useEffect(() => {
     if (editorMode !== null) return

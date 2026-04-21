@@ -209,7 +209,7 @@ export function PreviewWorkspace({
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
-  const [previewTextEditorOpenToken, setPreviewTextEditorOpenToken] = useState(0)
+  const [previewEditorOpenToken, setPreviewEditorOpenToken] = useState(0)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
     !showPresetsBrowser
@@ -317,7 +317,7 @@ export function PreviewWorkspace({
               onSelectLayer={onLayerSelect}
               editorSidebarHost={editorSidebarHost}
               onEditorModeChange={onEditorModeChange}
-              onPreviewTextEditorOpen={() => setPreviewTextEditorOpenToken((current) => current + 1)}
+              onPreviewEditorOpen={() => setPreviewEditorOpenToken((current) => current + 1)}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
               onSnapshotGetterChange={onSnapshotGetterChange}
@@ -406,7 +406,7 @@ export function PreviewWorkspace({
                     hoveredLayerKey={hoveredLayerKey}
                     editingLayerKey={editorMode ? selectedLayerKey : null}
                     editorMode={editorMode}
-                    previewTextEditorOpenToken={previewTextEditorOpenToken}
+                    previewEditorOpenToken={previewEditorOpenToken}
                     onLayerOrderChange={onLayerOrderChange}
                     onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                     onHoverLayerChange={setLayerPanelHoveredLayerKey}
