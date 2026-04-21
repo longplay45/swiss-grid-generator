@@ -196,9 +196,9 @@ Default: `swiss`
 ### Project Panel
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
-- `Pages`: click to switch, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
-- Clicking a page card selects that page, opens it, and aligns its header to the top of the panel.
-- Clicking the active open page card closes it again.
+- `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- Single-clicking a page card selects that page.
+- Double-clicking a page card toggles its inline layer list and aligns opened pages to the top of the panel.
 - Each page card also has an open/close toggle that reveals that page's layers inline.
 - Newly added pages open automatically.
 - Every page stores its own settings payload plus preview layout state.

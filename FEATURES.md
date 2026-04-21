@@ -82,7 +82,7 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
-- Clicking a page card selects it, opens it, and aligns its header to the top of the panel; clicking the active open page card closes it.
+- Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
 - Layer cards support selection, reordering, deletion, and editor opening.
 - Text paragraphs and image placeholders use logical grid anchors:

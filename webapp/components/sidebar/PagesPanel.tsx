@@ -327,13 +327,17 @@ export function PagesPanel({
                   onDrop={handleListDrop}
                   onClick={() => {
                     if (isEditing) return
-                    if (isActive && isExpanded) {
+                    onSelectPage(page.id)
+                  }}
+                  onDoubleClick={() => {
+                    if (isEditing) return
+                    onSelectPage(page.id)
+                    if (isExpanded) {
                       setExpandedPageId(null)
                       return
                     }
                     scrollToPageHeaderRef.current = page.id
                     setExpandedPageId(page.id)
-                    onSelectPage(page.id)
                   }}
                   className={`${index > 0 ? "mt-2" : ""} ${PROJECT_CARD_MIN_HEIGHT_CLASS} rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                     draggingPageId === page.id
