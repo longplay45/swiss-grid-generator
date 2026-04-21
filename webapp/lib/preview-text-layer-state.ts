@@ -1,11 +1,12 @@
 import type { BlockEditorState, BlockEditorTextAlign } from "@/components/editor/block-editor-types"
-import { getPlacementRowCapacity, normalizeHeightMetrics } from "@/lib/block-height"
+import { normalizeHeightMetrics } from "@/lib/block-height"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getStyleDefaultFontWeight, resolveFontVariant } from "@/lib/config/fonts"
 import type { TextLayerCollections } from "@/lib/preview-layer-state"
 import { normalizeTextFormatRuns } from "@/lib/text-format-runs"
 import { toTextBlockPosition } from "@/lib/text-block-position"
+import { clampTextBlockAnchorPosition } from "./text-block-anchor-clamp.ts"
 import {
   DEFAULT_OPTICAL_KERNING,
   DEFAULT_TRACKING_SCALE,
@@ -92,39 +93,6 @@ export function clampTextBlockPosition({
   return {
     col: Math.max(minCol, Math.min(maxCol, position.col)),
     row: Math.max(minRow, Math.min(maxBaselineRow, position.row)),
-  }
-}
-
-type ClampTextBlockAnchorPositionArgs = {
-  position: TextBlockPosition
-  span: number
-  rows: number
-  gridCols: number
-  gridRows: number
-  fitWithinGrid?: boolean
-}
-
-function clampTextBlockAnchorPosition({
-  position,
-  span,
-  rows,
-  gridCols,
-  gridRows,
-  fitWithinGrid = false,
-}: ClampTextBlockAnchorPositionArgs): TextBlockPosition {
-  const occupiedRows = getPlacementRowCapacity(rows)
-  const minCol = -Math.max(0, span - 1)
-  const maxCol = fitWithinGrid
-    ? Math.max(minCol, gridCols - span)
-    : Math.max(0, gridCols - 1)
-  const maxRow = fitWithinGrid
-    ? Math.max(0, gridRows - occupiedRows)
-    : Math.max(0, gridRows - 1)
-
-  return {
-    column: Math.max(minCol, Math.min(maxCol, Math.round(position.column))),
-    row: Math.max(0, Math.min(maxRow, Math.round(position.row))),
-    baselineOffset: Math.round(position.baselineOffset),
   }
 }
 
@@ -235,7 +203,8 @@ export function applyBlockEditorDraftToCollections<
       rows: height.rows,
       gridCols,
       gridRows,
-      fitWithinGrid: true,
+      fitColsWithinGrid: false,
+      fitRowsWithinGrid: true,
     })
     const originalPosition = existingPosition ?? candidatePosition
     if (
