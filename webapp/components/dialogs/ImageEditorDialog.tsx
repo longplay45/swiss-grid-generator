@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
-import { Trash2 } from "lucide-react"
 
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
-import { Button } from "@/components/ui/button"
 import { EditorColorSchemeControls } from "@/components/ui/editor-color-scheme-controls"
 import { Label } from "@/components/ui/label"
 import {
@@ -20,6 +18,7 @@ import {
   opacityToTransparencyPercent,
   transparencyPercentToOpacity,
 } from "@/lib/image-placeholder-opacity"
+import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
@@ -46,7 +45,6 @@ const IMAGE_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
 type ImageEditorDialogProps = {
   editorState: ImageEditorState | null
   setEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
-  deleteEditor: () => void
   baselinesPerGridModule: number
   gridRows: number
   gridCols: number
@@ -68,7 +66,6 @@ const IMAGE_EDITOR_HELP_SECTION_BY_KEY: Record<SectionKey, HelpSectionId> = {
 export function ImageEditorDialog({
   editorState,
   setEditorState,
-  deleteEditor,
   baselinesPerGridModule,
   gridRows,
   gridCols,
@@ -87,6 +84,7 @@ export function ImageEditorDialog({
     "swiss-grid-generator:image-editor-sections",
     IMAGE_EDITOR_COLLAPSED_DEFAULTS,
   )
+  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -209,7 +207,6 @@ export function ImageEditorDialog({
       infoLabel: "text-gray-400",
       infoValue: "text-gray-100",
       button: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
-      destructive: "border-red-700/70 text-red-200 hover:bg-red-950/40 hover:text-red-100",
       ringOffset: "ring-offset-gray-900",
       selectContent: "dark",
     }
@@ -223,7 +220,6 @@ export function ImageEditorDialog({
       infoLabel: "text-gray-500",
       infoValue: "text-gray-900",
       button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-      destructive: "border-red-200 text-red-700 hover:bg-red-50 hover:text-red-900",
       ringOffset: "ring-offset-white",
       selectContent: "",
     }
@@ -260,7 +256,8 @@ export function ImageEditorDialog({
       data-editor-interactive-root="true"
       className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}
     >
-      <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
+      <div ref={scrollRootRef} className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
+        <div ref={registerSectionRef("geometry")}>
         <EditorSidebarSection
           title={(
             <span className="inline-flex items-center gap-2">
@@ -357,7 +354,9 @@ export function ImageEditorDialog({
             </Select>
           </div>
         </EditorSidebarSection>
+        </div>
 
+        <div ref={registerSectionRef("color")}>
         <EditorSidebarSection
           title="II. Color"
           tooltip="Scheme, swatch color, and transparency; scheme dropdown previews on rollover"
@@ -416,7 +415,9 @@ export function ImageEditorDialog({
             />
           </div>
         </EditorSidebarSection>
+        </div>
 
+        <div ref={registerSectionRef("info")}>
         <EditorSidebarSection
           title="III. Info"
           tooltip="Placeholder summary"
@@ -441,18 +442,6 @@ export function ImageEditorDialog({
             ))}
           </div>
         </EditorSidebarSection>
-
-        <div className="pt-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className={`h-auto w-full justify-between rounded-md px-3 py-2 text-left text-[12px] ${tone.destructive}`}
-            onClick={deleteEditor}
-          >
-            <span className="font-medium">Delete Image Placeholder</span>
-            <Trash2 className="h-4 w-4 shrink-0" />
-          </Button>
         </div>
       </div>
     </div>

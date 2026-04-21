@@ -403,7 +403,6 @@ export const GridPreview = memo(function GridPreview({
     openImageEditorState,
     closeImageEditorState,
     insertImagePlaceholder,
-    deleteImagePlaceholderState,
     resetImageTransientState,
     getBlockSpan,
     getBlockRows,
@@ -1056,12 +1055,6 @@ export const GridPreview = memo(function GridPreview({
     recordPerfMetric,
   })
 
-  const deleteImagePlaceholder = useCallback(() => {
-    if (!imageEditorState) return
-    recordHistoryBeforeChange()
-    deleteImagePlaceholderState()
-  }, [deleteImagePlaceholderState, imageEditorState, recordHistoryBeforeChange])
-
   const deletePreviewTarget = useCallback((key: BlockId) => {
     clearHover()
     onSelectLayer?.(null)
@@ -1308,7 +1301,6 @@ export const GridPreview = memo(function GridPreview({
         deletePreviewTarget={deletePreviewTarget}
         clearHover={clearHover}
         setImageEditorState={setImageEditorState}
-        deleteImagePlaceholder={deleteImagePlaceholder}
         baselinesPerGridModule={baselinesPerGridModule}
         gridRows={result.settings.gridRows}
         gridCols={result.settings.gridCols}

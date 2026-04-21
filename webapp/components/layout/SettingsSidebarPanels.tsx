@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useEffect, useRef } from "react"
+import { memo } from "react"
 
 import { BaselineGridPanel } from "@/components/settings/BaselineGridPanel"
 import { CanvasRatioPanel } from "@/components/settings/CanvasRatioPanel"
@@ -9,6 +9,7 @@ import { GutterPanel } from "@/components/settings/GutterPanel"
 import { MarginsPanel } from "@/components/settings/MarginsPanel"
 import { SettingsHelpNavigationProvider } from "@/components/settings/help-navigation-context"
 import { TypographyPanel } from "@/components/settings/TypographyPanel"
+import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import type {
   GridRhythm,
   GridRhythmColsDirection,
@@ -162,52 +163,14 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   onCanvasBackgroundPreviewChange,
   isDarkMode,
 }: Props) {
-  const scrollRootRef = useRef<HTMLDivElement | null>(null)
-  const sectionRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({})
-  const previousCollapsedRef = useRef(collapsed)
-
-  useEffect(() => {
-    const openedSection = (Object.keys(collapsed) as SectionKey[]).find((key) => (
-      previousCollapsedRef.current[key] && !collapsed[key]
-    ))
-    previousCollapsedRef.current = collapsed
-    if (!openedSection) return
-
-    const scrollRoot = scrollRootRef.current
-    const sectionNode = sectionRefs.current[openedSection]
-    if (!scrollRoot || !sectionNode) return
-
-    const frame = window.requestAnimationFrame(() => {
-      const rootRect = scrollRoot.getBoundingClientRect()
-      const sectionRect = sectionNode.getBoundingClientRect()
-      const topOverflow = sectionRect.top - rootRect.top
-      const bottomOverflow = sectionRect.bottom - rootRect.bottom
-
-      if (topOverflow < 0) {
-        scrollRoot.scrollTo({
-          top: scrollRoot.scrollTop + topOverflow - 12,
-          behavior: "smooth",
-        })
-        return
-      }
-
-      if (bottomOverflow > 0) {
-        scrollRoot.scrollTo({
-          top: scrollRoot.scrollTop + bottomOverflow + 12,
-          behavior: "smooth",
-        })
-      }
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [collapsed])
+  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
 
   return (
     <div ref={scrollRootRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
         value={{ showHelpIcons: showSectionHelpIcons, showRolloverInfo, onNavigate: onHelpNavigate }}
       >
-        <div ref={(node) => { sectionRefs.current.format = node }}>
+        <div ref={registerSectionRef("format")}>
           <CanvasRatioPanel
             collapsed={collapsed.format}
             onHeaderClick={onSectionHeaderClick("format")}
@@ -228,7 +191,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           />
         </div>
 
-        <div ref={(node) => { sectionRefs.current.baseline = node }}>
+        <div ref={registerSectionRef("baseline")}>
           <BaselineGridPanel
             collapsed={collapsed.baseline}
             onHeaderClick={onSectionHeaderClick("baseline")}
@@ -240,7 +203,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           />
         </div>
 
-        <div ref={(node) => { sectionRefs.current.margins = node }}>
+        <div ref={registerSectionRef("margins")}>
           <MarginsPanel
             collapsed={collapsed.margins}
             onHeaderClick={onSectionHeaderClick("margins")}
@@ -260,7 +223,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           />
         </div>
 
-        <div ref={(node) => { sectionRefs.current.gutter = node }}>
+        <div ref={registerSectionRef("gutter")}>
           <GutterPanel
             collapsed={collapsed.gutter}
             onHeaderClick={onSectionHeaderClick("gutter")}
@@ -288,7 +251,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           />
         </div>
 
-        <div ref={(node) => { sectionRefs.current.typo = node }}>
+        <div ref={registerSectionRef("typo")}>
           <TypographyPanel
             collapsed={collapsed.typo}
             onHeaderClick={onSectionHeaderClick("typo")}
@@ -304,7 +267,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
           />
         </div>
 
-        <div ref={(node) => { sectionRefs.current.color = node }}>
+        <div ref={registerSectionRef("color")}>
           <ColorSchemePanel
             collapsed={collapsed.color}
             onHeaderClick={onSectionHeaderClick("color")}

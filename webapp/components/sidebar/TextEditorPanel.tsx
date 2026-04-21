@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Trash2 } from "lucide-react"
 
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
-import { Button } from "@/components/ui/button"
 import { FontSelect } from "@/components/ui/font-select"
 import { EditorColorSchemeControls } from "@/components/ui/editor-color-scheme-controls"
 import { Label } from "@/components/ui/label"
@@ -45,6 +43,7 @@ import {
 } from "@/lib/text-tracking-runs"
 import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
+import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
@@ -89,6 +88,7 @@ export function TextEditorPanel<StyleKey extends string>({
     "swiss-grid-generator:text-editor-sections",
     TEXT_EDITOR_COLLAPSED_DEFAULTS,
   )
+  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 
@@ -157,6 +157,9 @@ export function TextEditorPanel<StyleKey extends string>({
     ? controls.styleOptions.find((option) => option.value === selectionStyleKey)?.label ?? selectionStyleKey
     : "Mixed"
   const paragraphDisplayName = getTextLayerDisplayName(controls.editorState.draftText)
+  const paragraphHeadingDisplayName = paragraphDisplayName.length > 10
+    ? `${paragraphDisplayName.slice(0, 10)}...`
+    : paragraphDisplayName
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
@@ -595,7 +598,6 @@ export function TextEditorPanel<StyleKey extends string>({
       infoValue: "text-gray-100",
       button: "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-gray-100",
       buttonActive: "border-gray-600 bg-gray-800 text-gray-100",
-      destructive: "border-red-700/70 text-red-200 hover:bg-red-950/40 hover:text-red-100",
       ringOffset: "ring-offset-gray-900",
       selectContent: "dark",
     }
@@ -610,7 +612,6 @@ export function TextEditorPanel<StyleKey extends string>({
       infoValue: "text-gray-900",
       button: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
       buttonActive: "border-gray-400 bg-gray-100 text-gray-900",
-      destructive: "border-red-200 text-red-700 hover:bg-red-50 hover:text-red-900",
       ringOffset: "ring-offset-white",
       selectContent: "",
     }
@@ -650,13 +651,14 @@ export function TextEditorPanel<StyleKey extends string>({
       data-editor-interactive-root="true"
       className={`min-h-0 flex h-full flex-col overflow-hidden ${tone.panel}`}
     >
-      <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
+      <div ref={scrollRootRef} className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
+        <div ref={registerSectionRef("layout")}>
         <EditorSidebarSection
           title={(
             <>
               I. Paragraph{" "}
               <span className={isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}>
-                {paragraphDisplayName}
+                {paragraphHeadingDisplayName}
               </span>
             </>
           )}
@@ -846,7 +848,9 @@ export function TextEditorPanel<StyleKey extends string>({
             />
           </div>
         </EditorSidebarSection>
+        </div>
 
+        <div ref={registerSectionRef("type")}>
         <EditorSidebarSection
           title={hasMixedTypeSettings ? (
             <>
@@ -1058,7 +1062,9 @@ export function TextEditorPanel<StyleKey extends string>({
             />
           </div>
         </EditorSidebarSection>
+        </div>
 
+        <div ref={registerSectionRef("info")}>
         <EditorSidebarSection
           title="III. Info"
           tooltip="Paragraph summary and live metrics"
@@ -1083,18 +1089,6 @@ export function TextEditorPanel<StyleKey extends string>({
             ))}
           </div>
         </EditorSidebarSection>
-
-        <div className="pt-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className={`h-auto w-full justify-between rounded-md px-3 py-2 text-left text-[12px] ${tone.destructive}`}
-            onClick={controls.deleteEditorBlock}
-          >
-            <span className="font-medium">Delete Paragraph</span>
-            <Trash2 className="h-4 w-4 shrink-0" />
-          </Button>
         </div>
       </div>
     </div>

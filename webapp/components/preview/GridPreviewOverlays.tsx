@@ -34,7 +34,6 @@ type Props<StyleKey extends string> = {
   deletePreviewTarget: (key: string) => void
   clearHover: () => void
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
-  deleteImagePlaceholder: () => void
   baselinesPerGridModule: number
   gridRows: number
   gridCols: number
@@ -67,7 +66,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
   deletePreviewTarget,
   clearHover,
   setImageEditorState,
-  deleteImagePlaceholder,
   baselinesPerGridModule,
   gridRows,
   gridCols,
@@ -149,7 +147,6 @@ export function GridPreviewOverlays<StyleKey extends string>({
             <ImageEditorDialog
               editorState={imageEditorState}
               setEditorState={setImageEditorState}
-              deleteEditor={deleteImagePlaceholder}
               baselinesPerGridModule={baselinesPerGridModule}
               gridRows={gridRows}
               gridCols={gridCols}

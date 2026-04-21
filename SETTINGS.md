@@ -340,7 +340,6 @@ Editor controls:
 - the image editor header shows `IMAGE` plus the current placeholder swatch color
 - image `Rows`, `Baselines`, `Cols`, and `color scheme` dropdown items preview live on rollover before commit
 - Info section: geometry, type/color summary, counts, and `Max/Line`
-- delete lives at the end of the editor page in the same row-button pattern as `Add Page`
 - section headers single-click to toggle one section; double-click opens or closes all editor sections
 - newspaper reflow is available only with cols > 1
 - reflow with cols > 1: newspaper flow across configured columns, exhausting the selected `rows + baselines` height before moving to the next column

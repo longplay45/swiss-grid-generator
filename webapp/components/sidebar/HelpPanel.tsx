@@ -179,7 +179,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>When a text or image editor is already open, preview rollover stays active on other blocks so you can see the next target before switching.</li>
           <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
-          <li>Delete blocks from the left sidebar editor or from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
+          <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
           <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
           <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
         </ul>
@@ -229,7 +229,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
             <li>Info includes geometry, type summary, character count, word count, and `Max/Line`.</li>
-            <li>Changes apply live while editing; delete removes custom blocks (base blocks are cleared).</li>
+            <li>Changes apply live while editing.</li>
           </ul>
         </div>
       </section>
@@ -248,7 +248,6 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>Delete removes the placeholder immediately.</li>
           <li>`Esc` or outside click exits edit mode; clicking another active-page layer card retargets the editor instead.</li>
         </ul>
 
