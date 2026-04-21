@@ -14,7 +14,9 @@ import {
   computeInlineEditorSelectionRects,
   computeInlineEditorTextBox,
   hitTestInlineEditorIndex,
+  resolveInlineEditorSentenceSelection,
   resolveInlineEditorLineNavigation,
+  resolveInlineEditorWordSelection,
 } from "@/lib/inline-editor"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
 import {
@@ -858,6 +860,34 @@ export function InlineBlockTextarea<StyleKey extends string>({
     setTextareaSelection(anchor, nextIndex, true)
   }
 
+  const selectRangeForMultiClick = (
+    clientX: number,
+    clientY: number,
+    mode: "word" | "sentence",
+  ) => {
+    const localPoint = toEditorLocalPoint(clientX, clientY)
+    if (!localPoint) return
+    const nextIndex = hitTestInlineEditorIndex({
+      text: editorState.draftText,
+      textAlign: layout.textAlign,
+      commands: visualCommands,
+      renderedLines: layout.renderedLines,
+      segmentLines: layout.segmentLines,
+      x: localPoint.x + textBox.left,
+      y: localPoint.y + textBoxTop,
+      textAscent: editorTextAscent,
+      lineHeight: scaledLeading,
+      measureText,
+    })
+    const range = mode === "sentence"
+      ? resolveInlineEditorSentenceSelection(editorState.draftText, nextIndex)
+      : resolveInlineEditorWordSelection(editorState.draftText, nextIndex)
+    keyboardDesiredXRef.current = null
+    dragPointerIdRef.current = null
+    dragAnchorRef.current = null
+    setTextareaSelection(range.start, range.end, true)
+  }
+
   return (
     <div
       ref={rootRef}
@@ -900,6 +930,15 @@ export function InlineBlockTextarea<StyleKey extends string>({
             onPointerDown={(event) => {
               event.preventDefault()
               event.stopPropagation()
+              const clickCount = event.pointerType === "mouse" ? event.detail : 1
+              if (clickCount >= 3) {
+                selectRangeForMultiClick(event.clientX, event.clientY, "sentence")
+                return
+              }
+              if (clickCount === 2) {
+                selectRangeForMultiClick(event.clientX, event.clientY, "word")
+                return
+              }
               dragPointerIdRef.current = event.pointerId
               event.currentTarget.setPointerCapture(event.pointerId)
               updateSelectionFromPointer(event.clientX, event.clientY, false)

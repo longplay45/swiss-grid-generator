@@ -9,8 +9,10 @@ import {
   computeInlineEditorTextBox,
   computeSidebarWithEditorSession,
   hitTestInlineEditorIndex,
+  resolveInlineEditorSentenceSelection,
   resolveInlineEditorLineNavigation,
   resolveInlineEditorLineMatches,
+  resolveInlineEditorWordSelection,
 } from "../lib/inline-editor.ts"
 
 test("buildInlineEditorTransform composes page and block rotations with explicit origins", () => {
@@ -646,4 +648,20 @@ test("hitTestInlineEditorIndex prefers the visible line-end caret over hidden wr
   })
 
   assert.equal(index, 5)
+})
+
+test("resolveInlineEditorWordSelection expands a click index to the containing word", () => {
+  const text = "Swiss grid system"
+  const range = resolveInlineEditorWordSelection(text, 8)
+
+  assert.deepEqual(range, { start: 6, end: 10 })
+  assert.equal(text.slice(range.start, range.end), "grid")
+})
+
+test("resolveInlineEditorSentenceSelection expands a click index to the containing sentence", () => {
+  const text = "Swiss grids are precise. Editorial rhythm matters."
+  const range = resolveInlineEditorSentenceSelection(text, 32)
+
+  assert.deepEqual(range, { start: 25, end: 50 })
+  assert.equal(text.slice(range.start, range.end), "Editorial rhythm matters.")
 })

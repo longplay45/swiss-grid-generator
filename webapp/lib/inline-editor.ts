@@ -137,6 +137,11 @@ export type InlineEditorLineNavigationResult = {
   desiredX: number
 }
 
+export type InlineEditorSelectionRange = {
+  start: number
+  end: number
+}
+
 export type InlineEditorTransformInput = {
   pageWidth: number
   pageHeight: number
@@ -186,6 +191,187 @@ function normalizePrefixText(text: string): string {
 
 function clampSelectionIndex(text: string, index: number): number {
   return Math.max(0, Math.min(normalizeVisibleText(text).length, index))
+}
+
+function clampSelectionRange(
+  text: string,
+  start: number,
+  end: number,
+): InlineEditorSelectionRange {
+  const clampedStart = clampSelectionIndex(text, Math.min(start, end))
+  const clampedEnd = clampSelectionIndex(text, Math.max(start, end))
+  return {
+    start: clampedStart,
+    end: clampedEnd,
+  }
+}
+
+function trimWhitespaceFromRange(
+  text: string,
+  start: number,
+  end: number,
+): InlineEditorSelectionRange {
+  let nextStart = start
+  let nextEnd = end
+  while (nextStart < nextEnd && /\s/u.test(text[nextStart] ?? "")) nextStart += 1
+  while (nextEnd > nextStart && /\s/u.test(text[nextEnd - 1] ?? "")) nextEnd -= 1
+  return clampSelectionRange(text, nextStart, nextEnd)
+}
+
+function isWordCharacter(value: string): boolean {
+  return /[\p{L}\p{N}\p{M}'’_-]/u.test(value)
+}
+
+function isSentenceTerminal(value: string): boolean {
+  return /[.!?…]/u.test(value)
+}
+
+function isSentenceClosingMark(value: string): boolean {
+  return /["'”’)\]]/u.test(value)
+}
+
+type SegmenterLike = {
+  segment: (input: string) => Iterable<{
+    segment: string
+    index: number
+    isWordLike?: boolean
+  }>
+}
+
+function getIntlSegmenter(granularity: "word" | "sentence"): SegmenterLike | null {
+  if (typeof Intl === "undefined" || typeof Intl.Segmenter !== "function") return null
+  try {
+    return new Intl.Segmenter(undefined, { granularity })
+  } catch {
+    return null
+  }
+}
+
+function findSegmentContainingIndex(
+  segments: Array<{ index: number; segment: string; isWordLike?: boolean }>,
+  index: number,
+  textLength: number,
+): { index: number; segment: string; isWordLike?: boolean } | null {
+  if (!segments.length) return null
+  const clampedIndex = Math.max(0, Math.min(textLength, index))
+  for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+    const segment = segments[segmentIndex]!
+    const nextSegment = segments[segmentIndex + 1]
+    const end = nextSegment?.index ?? textLength
+    if (clampedIndex < end || (clampedIndex === textLength && end === textLength)) {
+      return segment
+    }
+  }
+  return segments[segments.length - 1] ?? null
+}
+
+function resolveWordRangeWithoutSegmenter(text: string, index: number): InlineEditorSelectionRange {
+  if (!text.length) return { start: 0, end: 0 }
+  let probe = clampSelectionIndex(text, index)
+  if (probe === text.length) probe = Math.max(0, text.length - 1)
+  const probeChar = text[probe] ?? ""
+
+  if (isWordCharacter(probeChar)) {
+    let start = probe
+    let end = probe + 1
+    while (start > 0 && isWordCharacter(text[start - 1] ?? "")) start -= 1
+    while (end < text.length && isWordCharacter(text[end] ?? "")) end += 1
+    return { start, end }
+  }
+
+  if (/\s/u.test(probeChar)) {
+    let start = probe
+    let end = probe + 1
+    while (start > 0 && /\s/u.test(text[start - 1] ?? "")) start -= 1
+    while (end < text.length && /\s/u.test(text[end] ?? "")) end += 1
+    return { start, end }
+  }
+
+  let start = probe
+  let end = probe + 1
+  while (start > 0) {
+    const value = text[start - 1] ?? ""
+    if (isWordCharacter(value) || /\s/u.test(value)) break
+    start -= 1
+  }
+  while (end < text.length) {
+    const value = text[end] ?? ""
+    if (isWordCharacter(value) || /\s/u.test(value)) break
+    end += 1
+  }
+  return { start, end }
+}
+
+function resolveSentenceRangeWithoutSegmenter(text: string, index: number): InlineEditorSelectionRange {
+  if (!text.length) return { start: 0, end: 0 }
+  let probe = clampSelectionIndex(text, index)
+  if (probe === text.length) probe = Math.max(0, text.length - 1)
+  while (probe > 0 && /\s/u.test(text[probe] ?? "") && !/\s/u.test(text[probe - 1] ?? "")) {
+    probe -= 1
+  }
+
+  let start = probe
+  while (start > 0) {
+    const previous = text[start - 1] ?? ""
+    if (previous === "\n") break
+    if (isSentenceTerminal(previous)) break
+    start -= 1
+  }
+  while (start < text.length && /\s/u.test(text[start] ?? "")) start += 1
+
+  let end = probe
+  while (end < text.length) {
+    const value = text[end] ?? ""
+    if (value === "\n") break
+    end += 1
+    if (isSentenceTerminal(value)) {
+      while (end < text.length && isSentenceClosingMark(text[end] ?? "")) end += 1
+      break
+    }
+  }
+
+  return trimWhitespaceFromRange(text, start, end)
+}
+
+export function resolveInlineEditorWordSelection(
+  text: string,
+  index: number,
+): InlineEditorSelectionRange {
+  const normalizedText = normalizeVisibleText(text)
+  if (!normalizedText.length) return { start: 0, end: 0 }
+  const segmenter = getIntlSegmenter("word")
+  if (!segmenter) {
+    return resolveWordRangeWithoutSegmenter(normalizedText, index)
+  }
+  const segments = Array.from(segmenter.segment(normalizedText))
+  const segment = findSegmentContainingIndex(segments, index, normalizedText.length)
+  if (!segment) return { start: 0, end: 0 }
+  const start = segment.index
+  const end = Math.min(normalizedText.length, start + segment.segment.length)
+  if (segment.isWordLike === false) {
+    return clampSelectionRange(normalizedText, start, end)
+  }
+  return clampSelectionRange(normalizedText, start, end)
+}
+
+export function resolveInlineEditorSentenceSelection(
+  text: string,
+  index: number,
+): InlineEditorSelectionRange {
+  const normalizedText = normalizeVisibleText(text)
+  if (!normalizedText.length) return { start: 0, end: 0 }
+  const segmenter = getIntlSegmenter("sentence")
+  if (!segmenter) {
+    return resolveSentenceRangeWithoutSegmenter(normalizedText, index)
+  }
+  const segments = Array.from(segmenter.segment(normalizedText))
+  const segment = findSegmentContainingIndex(segments, index, normalizedText.length)
+  if (!segment) return { start: 0, end: normalizedText.length }
+  return trimWhitespaceFromRange(
+    normalizedText,
+    segment.index,
+    Math.min(normalizedText.length, segment.index + segment.segment.length),
+  )
 }
 
 function getInlineEditorSpecialCharGlyph(value: string): string | null {
