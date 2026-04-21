@@ -79,6 +79,7 @@ export const TypographyPanel = memo(function TypographyPanel({
       }
 
   const hierarchyRows = PREVIEW_STYLE_OPTIONS
+    .filter((option) => option.value !== "fx")
     .filter((option) => typographyStyles[option.value])
     .map((option) => ({
       key: option.value,
@@ -100,6 +101,9 @@ export const TypographyPanel = memo(function TypographyPanel({
     >
       <div className="space-y-2">
         <Label className="text-sm text-gray-600">Font Hierarchy</Label>
+        <p className={`text-[10px] leading-relaxed ${tableTone.note}`}>
+          Current size and leading for the active hierarchy and baseline.
+        </p>
         <Select
           value={typographyScale}
           onOpenChange={typographyScaleSelectPreview.handleOpenChange}
@@ -137,9 +141,6 @@ export const TypographyPanel = memo(function TypographyPanel({
             </div>
           ))}
         </div>
-        <p className={`text-[10px] leading-relaxed ${tableTone.note}`}>
-          Current size and leading for the active hierarchy and baseline. In Swiss on a 12pt baseline, Display is 64pt / 72pt and Custom is 96pt / 96pt.
-        </p>
       </div>
       <div className="space-y-2">
         <Label className="text-sm text-gray-600">Base Font</Label>
