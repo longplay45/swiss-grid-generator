@@ -43,6 +43,7 @@ import {
   getUniformTrackingScaleForRange,
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
+import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
@@ -350,6 +351,17 @@ export function TextEditorPanel<StyleKey extends string>({
   const applyDraftHierarchyValue = (value: string, state: typeof controls.editorState | null) => {
     if (!state) return state
     const nextStyle = value as StyleKey
+    const currentStyleForCustomSeed = getSelectionFormatValueForState(state, "styleKey") ?? state.draftStyle
+    const nextCustomMetrics = controls.isFxStyle(nextStyle)
+      ? resolveCustomStyleSeedMetrics({
+          currentStyle: currentStyleForCustomSeed,
+          currentCustomSize: state.draftFxSize,
+          currentCustomLeading: state.draftFxLeading,
+          isCustomStyle: controls.isFxStyle,
+          getStyleSize: controls.getStyleSizeValue,
+          getStyleLeading: controls.getStyleLeadingValue,
+        })
+      : null
     const nextSelectionRange = getSelectionRangeForState(state)
     const selectionCoversWholeText = Boolean(
       nextSelectionRange
@@ -358,7 +370,13 @@ export function TextEditorPanel<StyleKey extends string>({
     )
     const nextSelectionUsesScopedRuns = Boolean(nextSelectionRange && !selectionCoversWholeText)
     if (nextSelectionUsesScopedRuns && nextSelectionRange) {
-      return applyTextFormatPatchToState(state, { styleKey: nextStyle })
+      const nextState = applyTextFormatPatchToState(state, { styleKey: nextStyle })
+      if (!nextState || !nextCustomMetrics) return nextState
+      return {
+        ...nextState,
+        draftFxSize: nextCustomMetrics.size,
+        draftFxLeading: nextCustomMetrics.leading,
+      }
     }
     const currentDefaultWeight = controls.getStyleDefaultFontWeight(state.draftStyle)
     const currentDefaultItalic = controls.getStyleDefaultItalic(state.draftStyle)
@@ -384,11 +402,11 @@ export function TextEditorPanel<StyleKey extends string>({
       draftFontWeight: resolvedVariant.weight,
       draftItalic: resolvedVariant.italic,
       draftTextFormatRuns: rebaseDraftTextFormatRuns(state, nextBase),
-      draftFxSize: controls.isFxStyle(nextStyle)
-        ? (controls.isFxStyle(state.draftStyle) ? state.draftFxSize : controls.getStyleSizeValue(nextStyle))
+      draftFxSize: nextCustomMetrics
+        ? nextCustomMetrics.size
         : state.draftFxSize,
-      draftFxLeading: controls.isFxStyle(nextStyle)
-        ? (controls.isFxStyle(state.draftStyle) ? state.draftFxLeading : controls.getStyleLeadingValue(nextStyle))
+      draftFxLeading: nextCustomMetrics
+        ? nextCustomMetrics.leading
         : state.draftFxLeading,
       draftText: state.draftTextEdited ? state.draftText : controls.getDummyTextForStyle(nextStyle),
     }
@@ -830,7 +848,7 @@ export function TextEditorPanel<StyleKey extends string>({
               II. Typo <span className="text-[#fe9f97]">Mixed Type Settings</span>
             </>
           ) : "II. Typo"}
-          tooltip="Font family, cut, hierarchy, color, FX size, kerning, and tracking; supported dropdowns preview on rollover"
+          tooltip="Font family, cut, hierarchy, color, Custom size, kerning, and tracking; supported dropdowns preview on rollover"
           collapsed={collapsed.type}
           collapsedSummary={`${selectionFontFamily ?? "Mixed"}, ${selectedStyleLabelForSelection}`}
           onHeaderClick={handleSectionHeaderClick("type")}
@@ -863,6 +881,70 @@ export function TextEditorPanel<StyleKey extends string>({
               </SelectContent>
             </Select>
           </div>
+
+          {fxSelected ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className={sectionLabelClassName}>Custom Size</Label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={fxSizeInput}
+                  onChange={(event) => {
+                    const normalized = event.target.value.replace(",", ".")
+                    if (!/^\d*\.?\d*$/.test(normalized)) return
+                    setFxSizeInput(normalized)
+                  }}
+                  onBlur={() => {
+                    const parsed = Number(fxSizeInput)
+                    if (!Number.isFinite(parsed) || parsed <= 0) {
+                      setFxSizeInput(String(controls.editorState.draftFxSize))
+                      return
+                    }
+                    const clamped = clampFxSize(Math.round(parsed * 10) / 10)
+                    controls.setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
+                    setFxSizeInput(String(clamped))
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return
+                    event.preventDefault()
+                    ;(event.currentTarget as HTMLInputElement).blur()
+                  }}
+                  className={textInputClassName}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className={sectionLabelClassName}>Custom Leading</Label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={fxLeadingInput}
+                  onChange={(event) => {
+                    const normalized = event.target.value.replace(",", ".")
+                    if (!/^\d*\.?\d*$/.test(normalized)) return
+                    setFxLeadingInput(normalized)
+                  }}
+                  onBlur={() => {
+                    const parsed = Number(fxLeadingInput)
+                    if (!Number.isFinite(parsed) || parsed <= 0) {
+                      setFxLeadingInput(String(controls.editorState.draftFxLeading))
+                      return
+                    }
+                    const clamped = clampFxLeading(Math.round(parsed * 10) / 10)
+                    controls.setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
+                    setFxLeadingInput(String(clamped))
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return
+                    event.preventDefault()
+                    ;(event.currentTarget as HTMLInputElement).blur()
+                  }}
+                  className={textInputClassName}
+                />
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label className={sectionLabelClassName}>Font</Label>
@@ -899,70 +981,6 @@ export function TextEditorPanel<StyleKey extends string>({
               </SelectContent>
             </Select>
           </div>
-
-          {fxSelected ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className={sectionLabelClassName}>FX Size</Label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={fxSizeInput}
-                  onChange={(event) => {
-                    const normalized = event.target.value.replace(",", ".")
-                    if (!/^\d*\.?\d*$/.test(normalized)) return
-                    setFxSizeInput(normalized)
-                  }}
-                  onBlur={() => {
-                    const parsed = Number(fxSizeInput)
-                    if (!Number.isFinite(parsed) || parsed <= 0) {
-                      setFxSizeInput(String(controls.editorState.draftFxSize))
-                      return
-                    }
-                    const clamped = clampFxSize(Math.round(parsed * 10) / 10)
-                    controls.setEditorState((prev) => prev ? { ...prev, draftFxSize: clamped } : prev)
-                    setFxSizeInput(String(clamped))
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return
-                    event.preventDefault()
-                    ;(event.currentTarget as HTMLInputElement).blur()
-                  }}
-                  className={textInputClassName}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className={sectionLabelClassName}>FX Leading</Label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={fxLeadingInput}
-                  onChange={(event) => {
-                    const normalized = event.target.value.replace(",", ".")
-                    if (!/^\d*\.?\d*$/.test(normalized)) return
-                    setFxLeadingInput(normalized)
-                  }}
-                  onBlur={() => {
-                    const parsed = Number(fxLeadingInput)
-                    if (!Number.isFinite(parsed) || parsed <= 0) {
-                      setFxLeadingInput(String(controls.editorState.draftFxLeading))
-                      return
-                    }
-                    const clamped = clampFxLeading(Math.round(parsed * 10) / 10)
-                    controls.setEditorState((prev) => prev ? { ...prev, draftFxLeading: clamped } : prev)
-                    setFxLeadingInput(String(clamped))
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return
-                    event.preventDefault()
-                    ;(event.currentTarget as HTMLInputElement).blur()
-                  }}
-                  className={textInputClassName}
-                />
-              </div>
-            </div>
-          ) : null}
 
           <EditorColorSchemeControls
             schemes={controls.colorSchemes}

@@ -50,7 +50,7 @@ type LayerThumb = {
 }
 
 const STYLE_LABELS: Record<string, string> = {
-  fx: "FX",
+  fx: "Custom",
   display: "Display",
   headline: "Headline",
   subhead: "Subhead",

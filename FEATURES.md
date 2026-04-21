@@ -28,7 +28,7 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Typography
 
-- Hierarchy levels: `FX`, `Display`, `Headline`, `Subhead`, `Body`, `Caption`.
+- Hierarchy levels: `Display`, `Headline`, `Subhead`, `Body`, `Caption`, `Custom`.
 - Scale systems: `Swiss`, `Golden Ratio`, `Fibonacci`, `Perfect Fourth`, `Perfect Fifth`.
 - Base font inheritance plus block-level override support.
 - Font family groups: `Sans-Serif`, `Serif`, `Poster`.
@@ -39,7 +39,7 @@ Current capability inventory for Swiss Grid Generator.
 - Family cut selection from available local variants.
 - Optical or metric kerning.
 - Tracking input from `-120` to `+300` (`1/1000 em`).
-- FX-specific size and leading overrides.
+- Custom-specific size and leading overrides.
 - Paragraph horizontal alignment: left, center, right.
 - Paragraph vertical alignment: top, center, bottom.
 - Hyphenation toggle per paragraph.
@@ -55,7 +55,7 @@ Current capability inventory for Swiss Grid Generator.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
-- Typo section: font, cut, hierarchy, FX size/leading, kerning, tracking, scheme, color.
+- Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:

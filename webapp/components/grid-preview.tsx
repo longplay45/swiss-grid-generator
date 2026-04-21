@@ -30,6 +30,7 @@ import {
   PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
   PREVIEW_TOUCH_LONG_PRESS_MS,
 } from "@/lib/preview-interaction-constants"
+import { buildSmartTextZoomGeometrySignature } from "@/lib/preview-smart-text-zoom"
 import { getHoveredPreviewTextGuideRect, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
@@ -243,6 +244,8 @@ export const GridPreview = memo(function GridPreview({
   const previousPlansRef = useRef<Map<BlockId, BlockRenderPlan<BlockId>>>(new Map())
   const typographyBufferTransformRef = useRef("")
   const lastHistoryResetTokenRef = useRef(historyResetToken)
+  const smartTextZoomGeometrySignatureRef = useRef<string | null>(null)
+  const lastAppliedSmartTextZoomGeometrySignatureRef = useRef<string | null>(null)
   const PERF_ENABLED = process.env.NODE_ENV !== "production"
 
   const [overflowLinesByBlock, setOverflowLinesByBlock] = useState<OverflowLinesByBlock<BlockId>>({})
@@ -593,6 +596,21 @@ export const GridPreview = memo(function GridPreview({
     undo,
     redo,
   })
+  const smartTextZoomGeometrySignature = useMemo(() => {
+    if (!smartTextEditZoomEnabled || !editorState?.target) return null
+    return buildSmartTextZoomGeometrySignature({
+      target: editorState.target,
+      columns: editorState.draftColumns,
+      rows: editorState.draftRows,
+      heightBaselines: editorState.draftHeightBaselines,
+    })
+  }, [
+    editorState?.draftColumns,
+    editorState?.draftHeightBaselines,
+    editorState?.draftRows,
+    editorState?.target,
+    smartTextEditZoomEnabled,
+  ])
 
   const clearHover = useCallback(() => {
     setHoverState(null)
@@ -886,7 +904,22 @@ export const GridPreview = memo(function GridPreview({
   }, [editorState?.target, smartTextEditZoomEnabled])
 
   useEffect(() => {
+    smartTextZoomGeometrySignatureRef.current = smartTextZoomGeometrySignature
+  }, [smartTextZoomGeometrySignature])
+
+  useEffect(() => {
+    if (!smartTextEditZoomEnabled || !activeTextZoomTarget) {
+      lastAppliedSmartTextZoomGeometrySignatureRef.current = null
+      return
+    }
+    lastAppliedSmartTextZoomGeometrySignatureRef.current = smartTextZoomGeometrySignatureRef.current
+  }, [activeTextZoomTarget, smartTextEditZoomEnabled])
+
+  useEffect(() => {
     if (!smartTextEditZoomEnabled || !activeTextZoomTarget) return
+    const nextSignature = smartTextZoomGeometrySignatureRef.current
+    if (!nextSignature || lastAppliedSmartTextZoomGeometrySignatureRef.current === nextSignature) return
+    lastAppliedSmartTextZoomGeometrySignatureRef.current = nextSignature
     setSmartTextZoomTargetVersion((version) => version + 1)
   }, [activeTextZoomTarget, smartTextEditZoomEnabled, typographyPlanVersion])
 

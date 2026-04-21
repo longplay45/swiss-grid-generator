@@ -8,12 +8,12 @@ Current, implementation-accurate reference for all user-facing options and defau
 
 | Level | A4 Size | A4 Leading | Baseline Multiple | Weight |
 |---|---:|---:|---:|---|
-| `fx` | 96pt | 96pt | 8x | Bold |
 | `display` | 64pt | 72pt | 6x | Bold |
 | `headline` | 30pt | 36pt | 3x | Bold |
 | `subhead` | 20pt | 24pt | 2x | Regular |
 | `body` | 10pt | 12pt | 1x | Regular |
 | `caption` | 7pt | 8pt | 0.667x | Regular Italic |
+| `fx` | 96pt | 96pt | 8x | Bold |
 
 ### Typography Scale Presets
 
@@ -120,12 +120,12 @@ Default: `swiss`
 - `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
 - Hierarchy table: shows current style, size, and leading for the active baseline/scale.
 - Swiss on the A4 12pt reference baseline:
-  - `FX`: `96pt / 96pt`
   - `Display`: `64pt / 72pt`
   - `Headline`: `30pt / 36pt`
   - `Subhead`: `20pt / 24pt`
   - `Body`: `10pt / 12pt`
   - `Caption`: `7pt / 8pt`
+  - `Custom`: `96pt / 96pt`
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
@@ -325,7 +325,7 @@ Editor controls:
   - font family
   - font cut
   - hierarchy (`Typo`)
-  - FX size / FX leading when `FX` is selected
+  - Custom size / Custom leading when `Custom` is selected
   - kerning (`Optical` / `Metric`, default `Optical`)
   - tracking numeric input (`-120..+300`, `1/1000 em`)
   - color scheme selector

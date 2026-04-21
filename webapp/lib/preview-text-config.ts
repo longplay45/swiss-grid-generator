@@ -4,12 +4,12 @@ import type { GridResult } from "@/lib/grid-calculator"
 export type PreviewTypographyStyleKey = keyof GridResult["typography"]["styles"]
 
 export const PREVIEW_STYLE_OPTIONS: BlockEditorStyleOption<PreviewTypographyStyleKey>[] = [
-  { value: "fx", label: "FX" },
   { value: "display", label: "Display" },
   { value: "headline", label: "Headline" },
   { value: "subhead", label: "Subhead" },
   { value: "body", label: "Body" },
   { value: "caption", label: "Caption" },
+  { value: "fx", label: "Custom" },
 ]
 
 const PREVIEW_DUMMY_TEXT_BY_STYLE: Record<PreviewTypographyStyleKey, string> = {
@@ -23,6 +23,33 @@ const PREVIEW_DUMMY_TEXT_BY_STYLE: Record<PreviewTypographyStyleKey, string> = {
 
 export function formatPtSize(size: number): string {
   return Number.isInteger(size) ? `${size}pt` : `${size.toFixed(1)}pt`
+}
+
+export function resolveCustomStyleSeedMetrics<StyleKey extends string>({
+  currentStyle,
+  currentCustomSize,
+  currentCustomLeading,
+  isCustomStyle,
+  getStyleSize,
+  getStyleLeading,
+}: {
+  currentStyle: StyleKey
+  currentCustomSize: number
+  currentCustomLeading: number
+  isCustomStyle: (styleKey: StyleKey) => boolean
+  getStyleSize: (styleKey: StyleKey) => number
+  getStyleLeading: (styleKey: StyleKey) => number
+}): { size: number; leading: number } {
+  if (isCustomStyle(currentStyle)) {
+    return {
+      size: currentCustomSize,
+      leading: currentCustomLeading,
+    }
+  }
+  return {
+    size: getStyleSize(currentStyle),
+    leading: getStyleLeading(currentStyle),
+  }
 }
 
 export function getDummyTextForStyle(style: string): string {

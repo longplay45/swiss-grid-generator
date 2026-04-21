@@ -217,7 +217,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-editor-typo" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Typo Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and FX size/leading when `FX` is selected.</li>
+            <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and Custom size/leading when `Custom` is selected.</li>
             <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
             <li>Font family, font cut, hierarchy, and scheme hover in their dropdowns preview the active result before you commit it.</li>
           </ul>
@@ -619,7 +619,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
           <li>The Typo panel shows the current hierarchy table with style, size, and leading for the active baseline.</li>
-          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and FX is `96pt / 96pt`.</li>
+          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and Custom is `96pt / 96pt`.</li>
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Font Hierarchy` and `Base Font` preview live on dropdown rollover before commit.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
