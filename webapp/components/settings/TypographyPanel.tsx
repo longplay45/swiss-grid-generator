@@ -14,6 +14,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import { FONT_OPTIONS, type FontFamily } from "@/lib/config/fonts"
 import type { TypographyScale } from "@/lib/config/defaults"
 import { PanelCard } from "@/components/settings/PanelCard"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
 
 const TYPOGRAPHY_SCALE_OPTIONS: Array<{ value: TypographyScale; label: string }> = Object
@@ -100,10 +101,7 @@ export const TypographyPanel = memo(function TypographyPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Font Hierarchy</Label>
-        <p className={`text-[10px] leading-relaxed ${tableTone.note}`}>
-          Current size and leading for the active hierarchy and baseline.
-        </p>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Hierarchy</Label>}>
         <Select
           value={typographyScale}
           onOpenChange={typographyScaleSelectPreview.handleOpenChange}
@@ -124,6 +122,10 @@ export const TypographyPanel = memo(function TypographyPanel({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
+        <p className={`text-[10px] leading-relaxed ${tableTone.note}`}>
+          Current size and leading for the active hierarchy and baseline.
+        </p>
         <div className={`border ${tableTone.frame}`}>
           <div className={`grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 px-3 py-2 text-[10px] uppercase tracking-[0.08em] ${tableTone.header}`}>
             <span>Style</span>
@@ -143,7 +145,7 @@ export const TypographyPanel = memo(function TypographyPanel({
         </div>
       </div>
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Base Font</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Base</Label>}>
         <FontSelect
           value={baseFont}
           onValueChange={(value) => baseFontSelectPreview.handleValueChange(value as FontFamily)}
@@ -152,6 +154,7 @@ export const TypographyPanel = memo(function TypographyPanel({
           onContentPointerLeave={baseFontSelectPreview.handleContentPointerLeave}
           getItemPreviewProps={(value) => baseFontSelectPreview.getItemPreviewProps(value as FontFamily)}
         />
+        </LabeledControlRow>
       </div>
     </PanelCard>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { Label } from "@/components/ui/label"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
   Select,
   SelectContent,
@@ -59,7 +60,7 @@ export function EditorColorSchemeControls({
   return (
     <>
       <div className="space-y-2">
-        <Label className={labelClassName}>Color Scheme</Label>
+        <LabeledControlRow label={<Label className={labelClassName}>Color Scheme</Label>}>
         <Select
           value={schemeValue}
           onOpenChange={onSchemeOpenChange}
@@ -86,6 +87,7 @@ export function EditorColorSchemeControls({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
 
       <div className="grid grid-cols-4 gap-2">

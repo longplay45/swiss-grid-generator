@@ -47,6 +47,7 @@ import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 
 type TextEditorPanelProps<StyleKey extends string> = {
   controls: SharedTextEditorControls<StyleKey>
@@ -871,7 +872,7 @@ export function TextEditorPanel<StyleKey extends string>({
           onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.type)}
         >
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Hierarchy</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Hierarchy</Label>}>
             <Select
               value={hierarchySelectPreview.value}
               onOpenChange={hierarchySelectPreview.handleOpenChange}
@@ -892,6 +893,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 ))}
               </SelectContent>
             </Select>
+            </LabeledControlRow>
           </div>
 
           {fxSelected ? (
@@ -959,7 +961,7 @@ export function TextEditorPanel<StyleKey extends string>({
           ) : null}
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Font</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Font</Label>}>
             <FontSelect
               value={fontSelectPreview.value}
               onValueChange={fontSelectPreview.handleValueChange}
@@ -972,10 +974,11 @@ export function TextEditorPanel<StyleKey extends string>({
               onContentPointerLeave={fontSelectPreview.handleContentPointerLeave}
               getItemPreviewProps={fontSelectPreview.getItemPreviewProps}
             />
+            </LabeledControlRow>
           </div>
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Cut</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Cut</Label>}>
             <Select
               value={cutSelectPreview.value}
               onOpenChange={cutSelectPreview.handleOpenChange}
@@ -992,6 +995,7 @@ export function TextEditorPanel<StyleKey extends string>({
                 ))}
               </SelectContent>
             </Select>
+            </LabeledControlRow>
           </div>
 
           <EditorColorSchemeControls
@@ -1022,7 +1026,7 @@ export function TextEditorPanel<StyleKey extends string>({
           />
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Kerning</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Kerning</Label>}>
             <Select
               value={kerningSelectPreview.value}
               onOpenChange={kerningSelectPreview.handleOpenChange}
@@ -1036,10 +1040,11 @@ export function TextEditorPanel<StyleKey extends string>({
                 <SelectItem value="off" {...kerningSelectPreview.getItemPreviewProps("off")}>Metric</SelectItem>
               </SelectContent>
             </Select>
+            </LabeledControlRow>
           </div>
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Tracking</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Tracking</Label>}>
             <input
               type="number"
               min={MIN_TRACKING_SCALE}
@@ -1060,6 +1065,7 @@ export function TextEditorPanel<StyleKey extends string>({
               }}
               className={textInputClassName}
             />
+            </LabeledControlRow>
           </div>
         </EditorSidebarSection>
         </div>

@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { PanelCard } from "@/components/settings/PanelCard"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
   getImageSchemeColorToken,
   getImageColorScheme,
@@ -90,7 +91,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Base Color Scheme</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Base</Label>}>
         <Select
           value={colorScheme}
           onOpenChange={colorSchemeSelectPreview.handleOpenChange}
@@ -111,6 +112,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {displayedScheme.colors.map((color, index) => (
@@ -130,7 +132,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
         ))}
       </div>
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Background</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Background</Label>}>
         <Select
           value={backgroundSelectValue}
           onOpenChange={backgroundSelectPreview.handleOpenChange}
@@ -169,6 +171,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
     </PanelCard>
   )

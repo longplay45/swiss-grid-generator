@@ -22,6 +22,7 @@ import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
 import type { HelpSectionId } from "@/lib/help-registry"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 
 export type ImageEditorState = {
   target: string
@@ -395,7 +396,7 @@ export function ImageEditorDialog({
           />
 
           <div className="space-y-2">
-            <Label className={sectionLabelClassName}>Transparency</Label>
+            <LabeledControlRow label={<Label className={sectionLabelClassName}>Transparency</Label>}>
             <input
               type="number"
               min={0}
@@ -413,6 +414,7 @@ export function ImageEditorDialog({
               }}
               className={textInputClassName}
             />
+            </LabeledControlRow>
           </div>
         </EditorSidebarSection>
         </div>

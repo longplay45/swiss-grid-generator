@@ -5,7 +5,6 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
 import { ProjectPageLayersList } from "@/components/sidebar/ProjectPageLayersList"
-import { ProjectSidebarSection } from "@/components/sidebar/ProjectSidebarSection"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { ProjectPage } from "@/lib/document-session"
 import {
@@ -29,14 +28,13 @@ type Props = {
   selectedLayerKey: string | null
   hoveredLayerKey: string | null
   editingLayerKey: string | null
+  editorMode: "text" | "image" | null
+  previewTextEditorOpenToken: number
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
   onLayerEditorToggle: (target: string) => void
   onLayerDelete: (target: string, kind: "text" | "image") => void
-  pagesCollapsed: boolean
-  onPagesHeaderClick: (event: React.MouseEvent) => void
-  onPagesHeaderDoubleClick: (event: React.MouseEvent) => void
   isDarkMode?: boolean
 }
 
@@ -58,14 +56,13 @@ export function PagesPanel({
   selectedLayerKey,
   hoveredLayerKey,
   editingLayerKey,
+  editorMode,
+  previewTextEditorOpenToken,
   onLayerOrderChange,
   onSelectedLayerKeyChange,
   onHoverLayerChange,
   onLayerEditorToggle,
   onLayerDelete,
-  pagesCollapsed,
-  onPagesHeaderClick,
-  onPagesHeaderDoubleClick,
   isDarkMode = false,
 }: Props) {
   const PROJECT_CARD_MIN_HEIGHT_CLASS = "min-h-[50px]"
@@ -76,6 +73,8 @@ export function PagesPanel({
   const [expandedPageId, setExpandedPageId] = useState<string | null>(activePageId)
   const previousPageIdsRef = useRef<string[]>(pages.map((page) => page.id))
   const scrollToPageHeaderRef = useRef<string | null>(null)
+  const restoreExpandedPageIdRef = useRef<string | null | undefined>(undefined)
+  const lastPreviewTextEditorOpenTokenRef = useRef(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
@@ -110,7 +109,26 @@ export function PagesPanel({
   }, [activePageId, pages])
 
   useEffect(() => {
-    if (pagesCollapsed) return
+    if (previewTextEditorOpenToken === 0) return
+    if (lastPreviewTextEditorOpenTokenRef.current === previewTextEditorOpenToken) return
+    lastPreviewTextEditorOpenTokenRef.current = previewTextEditorOpenToken
+
+    if (restoreExpandedPageIdRef.current === undefined) {
+      restoreExpandedPageIdRef.current = expandedPageId
+    }
+    if (expandedPageId === activePageId) return
+    scrollToPageHeaderRef.current = activePageId
+    setExpandedPageId(activePageId)
+  }, [activePageId, expandedPageId, previewTextEditorOpenToken])
+
+  useEffect(() => {
+    if (editorMode !== null) return
+    if (restoreExpandedPageIdRef.current === undefined) return
+    setExpandedPageId(restoreExpandedPageIdRef.current)
+    restoreExpandedPageIdRef.current = undefined
+  }, [editorMode])
+
+  useEffect(() => {
     if (scrollToPageHeaderRef.current !== activePageId) return
     const target = cardRefs.current[activePageId]
     if (!target) return
@@ -127,7 +145,7 @@ export function PagesPanel({
       scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" })
     })
     scrollToPageHeaderRef.current = null
-  }, [activePageId, expandedPageId, pagesCollapsed])
+  }, [activePageId, expandedPageId])
 
   useEffect(() => {
     const releaseOnMouseUp = () => {
@@ -268,20 +286,11 @@ export function PagesPanel({
   }
 
   return (
-    <div>
-      <ProjectSidebarSection
-        title="Pages"
-        collapsed={pagesCollapsed}
-        collapsedSummary={`${pages.length} ${pages.length === 1 ? "page" : "pages"}`}
-        onHeaderClick={onPagesHeaderClick}
-        onHeaderDoubleClick={onPagesHeaderDoubleClick}
-        isDarkMode={isDarkMode}
-      >
-        <div
-          className="flex flex-col"
-          onDragOver={handleListDragOver}
-          onDrop={handleListDrop}
-        >
+    <div
+      className="flex flex-col pb-4 md:pb-6"
+      onDragOver={handleListDragOver}
+      onDrop={handleListDrop}
+    >
           <div
             className={draggingPageId ? "relative h-5 shrink-0" : "hidden"}
             onDragOver={handleListDragOver}
@@ -464,8 +473,6 @@ export function PagesPanel({
           >
             {renderDropMarker(stationaryPages.length)}
           </div>
-        </div>
-      </ProjectSidebarSection>
     </div>
   )
 }

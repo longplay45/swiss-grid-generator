@@ -167,6 +167,7 @@ interface GridPreviewProps {
   onShowImagePlaceholdersChange?: (value: boolean) => void
   editorSidebarHost?: HTMLDivElement | null
   onEditorModeChange?: (mode: "text" | "image" | null) => void
+  onPreviewTextEditorOpen?: () => void
   isDarkMode?: boolean
 }
 
@@ -219,6 +220,7 @@ export const GridPreview = memo(function GridPreview({
   onShowImagePlaceholdersChange,
   editorSidebarHost = null,
   onEditorModeChange,
+  onPreviewTextEditorOpen,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -1307,6 +1309,7 @@ export const GridPreview = memo(function GridPreview({
         imageColorScheme={imageColorScheme}
         imagePalette={imagePalette}
         imageColorSchemes={IMAGE_COLOR_SCHEMES}
+        onPreviewTextEditorOpen={onPreviewTextEditorOpen}
         onOpenHelpSection={onOpenHelpSection}
         isDarkMode={isDarkMode}
       />

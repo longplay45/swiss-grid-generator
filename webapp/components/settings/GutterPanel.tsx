@@ -17,6 +17,7 @@ import {
   type GridRhythmRowsDirection,
 } from "@/lib/config/defaults"
 import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 
 const RHYTHM_OPTIONS: Array<{ value: GridRhythm; label: string }> = [
   { value: "fibonacci", label: "Fibonacci" },
@@ -107,7 +108,7 @@ export const GutterPanel = memo(function GutterPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Rhythms</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Rhythms</Label>}>
         <Select
           value={rhythm}
           onOpenChange={rhythmSelectPreview.handleOpenChange}
@@ -128,6 +129,7 @@ export const GutterPanel = memo(function GutterPanel({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
       {rhythm !== "repetitive" ? (
         <div className="space-y-3">

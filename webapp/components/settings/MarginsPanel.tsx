@@ -2,6 +2,7 @@ import { memo } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import { PanelCard } from "@/components/settings/PanelCard"
 import { BASELINE_MULTIPLE_RANGE } from "@/lib/config/defaults"
 import { useSelectRolloverPreview } from "@/hooks/useSelectRolloverPreview"
@@ -105,7 +106,7 @@ export const MarginsPanel = memo(function MarginsPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Margin Method</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Method</Label>}>
         <Select
           value={useCustomMargins ? "custom" : marginMethod.toString()}
           onOpenChange={marginMethodSelectPreview.handleOpenChange}
@@ -121,6 +122,7 @@ export const MarginsPanel = memo(function MarginsPanel({
             <SelectItem value="custom" {...marginMethodSelectPreview.getItemPreviewProps("custom")}>Custom Margins</SelectItem>
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
 
       {useCustomMargins ? (

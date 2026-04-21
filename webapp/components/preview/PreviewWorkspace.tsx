@@ -1,7 +1,7 @@
 "use client"
 
 import { Plus, X } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
@@ -11,6 +11,7 @@ import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
+import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import type { FontFamily } from "@/lib/config/fonts"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import type { ProjectPage } from "@/lib/document-session"
@@ -208,8 +209,7 @@ export function PreviewWorkspace({
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
-  const [pagesCollapsed, setPagesCollapsed] = useState(false)
-  const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
+  const [previewTextEditorOpenToken, setPreviewTextEditorOpenToken] = useState(0)
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
     !showPresetsBrowser
@@ -226,34 +226,6 @@ export function PreviewWorkspace({
     if (!showPresetsBrowser) return
     setPreviewHoveredLayerKey(null)
   }, [showPresetsBrowser])
-
-  useEffect(() => {
-    return () => {
-      if (sectionHeaderClickTimeoutRef.current !== null) {
-        window.clearTimeout(sectionHeaderClickTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  const handlePagesHeaderClick = (event: React.MouseEvent) => {
-    if (event.detail > 1) return
-    if (sectionHeaderClickTimeoutRef.current !== null) {
-      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
-    }
-    sectionHeaderClickTimeoutRef.current = window.setTimeout(() => {
-      setPagesCollapsed((current) => !current)
-      sectionHeaderClickTimeoutRef.current = null
-    }, 180)
-  }
-
-  const handlePagesHeaderDoubleClick = (event: React.MouseEvent) => {
-    event.preventDefault()
-    if (sectionHeaderClickTimeoutRef.current !== null) {
-      window.clearTimeout(sectionHeaderClickTimeoutRef.current)
-      sectionHeaderClickTimeoutRef.current = null
-    }
-    setPagesCollapsed((current) => !current)
-  }
 
   return (
     <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
@@ -345,6 +317,7 @@ export function PreviewWorkspace({
               onSelectLayer={onLayerSelect}
               editorSidebarHost={editorSidebarHost}
               onEditorModeChange={onEditorModeChange}
+              onPreviewTextEditorOpen={() => setPreviewTextEditorOpenToken((current) => current + 1)}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
               onSnapshotGetterChange={onSnapshotGetterChange}
@@ -394,6 +367,27 @@ export function PreviewWorkspace({
                     onProjectTitleChange={onProjectTitleChange}
                     isDarkMode={isDarkUi}
                   />
+                  <div className="mt-4 flex items-center justify-between gap-3 leading-none">
+                    <div className={`${SECTION_HEADLINE_CLASSNAME} ${uiTheme.sidebarHeading}`}>Pages</div>
+                    <HoverTooltip
+                      label="Duplicate the active page."
+                      disabled={!showRolloverInfo}
+                      tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
+                    >
+                      <button
+                        type="button"
+                        aria-label="Add page"
+                        onClick={onPageAdd}
+                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          isDarkUi
+                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                        }`}
+                      >
+                        <Plus className="h-2 w-2" />
+                      </button>
+                    </HoverTooltip>
+                  </div>
                 </div>
                 <div
                   data-help-scroll-root="true"
@@ -411,28 +405,33 @@ export function PreviewWorkspace({
                     selectedLayerKey={selectedLayerKey}
                     hoveredLayerKey={hoveredLayerKey}
                     editingLayerKey={editorMode ? selectedLayerKey : null}
+                    editorMode={editorMode}
+                    previewTextEditorOpenToken={previewTextEditorOpenToken}
                     onLayerOrderChange={onLayerOrderChange}
                     onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                     onHoverLayerChange={setLayerPanelHoveredLayerKey}
                     onLayerEditorToggle={onLayerEditorToggle}
                     onLayerDelete={onLayerDelete}
-                    pagesCollapsed={pagesCollapsed}
-                    onPagesHeaderClick={handlePagesHeaderClick}
-                    onPagesHeaderDoubleClick={handlePagesHeaderDoubleClick}
                     isDarkMode={isDarkUi}
                   />
                 </div>
                 <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${isDarkUi ? "border-[#313A47]" : "border-gray-200"}`}>
                   <div className="flex items-center justify-between gap-3 leading-none">
                     <div className={`font-semibold uppercase tracking-[0.08em] ${uiTheme.sidebarHeading}`}>Add Page</div>
-                    <button
-                      type="button"
-                      aria-label="Add page"
-                      onClick={onPageAdd}
-                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
+                    <HoverTooltip
+                      label="Duplicate the active page."
+                      disabled={!showRolloverInfo}
+                      tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
                     >
-                      <Plus className="h-4 w-4" />
-                    </button>
+                      <button
+                        type="button"
+                        aria-label="Add page"
+                        onClick={onPageAdd}
+                        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </HoverTooltip>
                   </div>
                 </div>
               </div>

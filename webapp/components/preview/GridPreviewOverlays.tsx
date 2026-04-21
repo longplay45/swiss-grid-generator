@@ -40,6 +40,7 @@ type Props<StyleKey extends string> = {
   imageColorScheme: ImageColorSchemeId
   imagePalette: readonly string[]
   imageColorSchemes: readonly PreviewColorSchemeOption[]
+  onPreviewTextEditorOpen?: () => void
   onOpenHelpSection?: (sectionId: HelpSectionId) => void
   isDarkMode?: boolean
 }
@@ -72,6 +73,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   imageColorScheme,
   imagePalette,
   imageColorSchemes,
+  onPreviewTextEditorOpen,
   onOpenHelpSection,
   isDarkMode = false,
 }: Props<StyleKey>) {
@@ -209,6 +211,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
                 event.stopPropagation()
                 clearHover()
                 if (hoveredEditTarget.kind === "text") {
+                  onPreviewTextEditorOpen?.()
                   openTextEditor(hoveredEditTarget.key)
                   return
                 }

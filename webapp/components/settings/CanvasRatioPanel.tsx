@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
+import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
   CANVAS_RATIOS,
   clampCustomCanvasRatioUnit,
@@ -91,7 +92,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
       isDarkMode={isDarkMode}
     >
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Ratio</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Ratio</Label>}>
         <Select
           value={canvasRatio}
           onOpenChange={(open) => {
@@ -117,6 +118,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
             ))}
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
       {canvasRatio === "custom" ? (
         <div className="space-y-2">
@@ -174,7 +176,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
         </div>
       ) : null}
       <div className="space-y-2">
-        <Label className="text-sm text-gray-600">Orientation</Label>
+        <LabeledControlRow label={<Label className="text-sm text-gray-600">Orientation</Label>}>
         <Select
           value={orientation}
           onOpenChange={(open) => {
@@ -202,6 +204,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
             </SelectItem>
           </SelectContent>
         </Select>
+        </LabeledControlRow>
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">

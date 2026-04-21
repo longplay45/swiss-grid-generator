@@ -520,12 +520,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Opens the right-side Project panel with an editable project name and a `Pages` section.</li>
           <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
-          <li>`Pages`: single-click a page card to activate it; double-click the card to open or close its inline layer list and align the opened header to the top of the panel.</li>
+          <li>`Pages` stays visible in the fixed project-panel header while the page list scrolls; single-click a page card to activate it and double-click the card to open or close its inline layer list.</li>
           <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
           <li>Newly added pages open automatically.</li>
           <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>
           <li>For the active page, drag layer cards to reorder z-index; click selects and opens or retargets the editor, while clicks elsewhere in the Project panel exit edit mode.</li>
-          <li>The `Pages` section header single-clicks to collapse and double-clicks to toggle immediately.</li>
         </ul>
       </section>
 
