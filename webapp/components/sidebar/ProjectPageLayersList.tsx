@@ -17,6 +17,7 @@ import {
   isCardDragIgnoreTarget,
   lockDocumentUserSelect,
 } from "@/lib/sidebar-card-drag"
+import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
@@ -92,12 +93,6 @@ function reconcileLayerOrder(
   return next
 }
 
-function getTextPreview(value: string): string {
-  const normalized = value.replace(/\s+/g, " ").trim()
-  if (!normalized) return "Empty"
-  return normalized.length > 75 ? `${normalized.slice(0, 75)}...` : normalized
-}
-
 export function ProjectPageLayersList({
   pageId,
   layout,
@@ -139,7 +134,7 @@ export function ProjectPageLayersList({
         kind: "text",
         hierarchy: toLabel(layout?.styleAssignments?.[key] ?? "body"),
         font: layout?.blockFontFamilies?.[key] ?? baseFont,
-        textPreview: getTextPreview(rawText),
+        textPreview: getTextLayerDisplayName(rawText),
         color: typeof rawColor === "string" && isImagePlaceholderColor(rawColor)
           ? rawColor.toLowerCase()
           : defaultTextColor,

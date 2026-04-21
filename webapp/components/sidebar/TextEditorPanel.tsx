@@ -43,6 +43,7 @@ import {
   getUniformTrackingScaleForRange,
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
+import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
@@ -155,6 +156,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const selectedStyleLabelForSelection = selectionStyleKey
     ? controls.styleOptions.find((option) => option.value === selectionStyleKey)?.label ?? selectionStyleKey
     : "Mixed"
+  const paragraphDisplayName = getTextLayerDisplayName(controls.editorState.draftText)
 
   useEffect(() => {
     setFxSizeInput(String(controls.editorState.draftFxSize))
@@ -652,7 +654,10 @@ export function TextEditorPanel<StyleKey extends string>({
         <EditorSidebarSection
           title={(
             <>
-              I. Paragraph <span className="text-[#fe9f97]">{controls.editorState.target}</span>
+              I. Paragraph{" "}
+              <span className={isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}>
+                {paragraphDisplayName}
+              </span>
             </>
           )}
           tooltip="Rows, baselines, columns, alignment, flow, and rotation; geometry dropdowns preview on rollover"
@@ -845,7 +850,10 @@ export function TextEditorPanel<StyleKey extends string>({
         <EditorSidebarSection
           title={hasMixedTypeSettings ? (
             <>
-              II. Typo <span className="text-[#fe9f97]">Mixed Type Settings</span>
+              II. Typo{" "}
+              <span className={isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}>
+                Mixed Type Settings
+              </span>
             </>
           ) : "II. Typo"}
           tooltip="Font family, cut, hierarchy, color, Custom size, kerning, and tracking; supported dropdowns preview on rollover"

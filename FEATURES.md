@@ -50,12 +50,14 @@ Current capability inventory for Swiss Grid Generator.
 
 - Inline editor overlay on the page surface.
 - Left-sidebar text editor with `Paragraph`, `Typo`, and `Info` sections.
+- The text editor header uses the same user-facing layer label shown in the Project panel instead of the internal block id.
 - Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
+- Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
@@ -88,6 +90,7 @@ Current capability inventory for Swiss Grid Generator.
   - `row`
   - `baselineOffset`
 - Increasing columns/rows preserves existing anchors.
+- Increasing a paragraph's column span preserves its anchored column even when the wider frame intentionally overhangs the page edge.
 - Decreasing columns/rows is blocked when any paragraph or image placeholder would fall outside the new grid.
 - Invalid grid reductions show a temporary warning instead of auto-repositioning content.
 
@@ -98,6 +101,7 @@ Current capability inventory for Swiss Grid Generator.
 - Placeholder-specific transparency control.
 - Stable logical positioning across grid changes.
 - Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
+- The image editor header shows `IMAGE` plus the current placeholder swatch color.
 - Geometry section uses one parameter row per setting.
 - Geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Scheme, swatch color, and transparency live in the Color section.
@@ -138,7 +142,7 @@ Current capability inventory for Swiss Grid Generator.
 
 - Dark mode.
 - Smart text-edit zoom toggle in the header, enabled by default.
-- While smart text zoom is enabled, entering text edit mode focuses the active paragraph and leaving text edit returns to full-page fit.
+- While smart text zoom is enabled, entering text edit mode focuses the active paragraph, ordinary text/style edits keep the current zoom, frame-geometry changes (`Rows`, `Baselines`, `Cols`) refit it, and leaving text edit returns to full-page fit.
 - Visibility toggles for baselines, margins, modules, image placeholders, and typography.
 - Undo/redo across settings, layout, and editor operations.
 - Help sidebar with hover-jump references.

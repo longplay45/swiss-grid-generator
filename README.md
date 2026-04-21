@@ -76,6 +76,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ### Typography System
 - Five harmonious type scales (Swiss, Golden Ratio, Fibonacci, Perfect Fourth, Perfect Fifth)
 - Six hierarchy levels: **Display · Headline · Subhead · Body · Caption · Custom**
+- The left `Font Hierarchy` table shows **Display · Headline · Subhead · Body · Caption**; `Custom` is paragraph-level and seeds from the paragraph's current size/leading when first selected
 - Available Fonts:
   - **Sans-Serif**: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
   - **Serif**: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
@@ -94,11 +95,12 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Text and image layers with stable grid-based positioning
 - Drag to move, Alt/Option+drag to duplicate
 - Logical anchoring (Column × Row + Baseline Offset)
+- Increasing a paragraph's column span preserves its anchored column, even when the wider frame intentionally overhangs the page edge
 - Bundled presets now use the same project JSON schema as saved documents
 
 ### Preview & Interaction
 - Live WYSIWYG canvas
-- Smart text-edit zoom is enabled by default and can be toggled from the header; entering text edit mode focuses the active paragraph and leaving text edit restores full-page fit
+- Smart text-edit zoom is enabled by default and can be toggled from the header; entering text edit mode focuses the active paragraph, stays stable through ordinary text/style edits, and refits only when the paragraph frame geometry changes (`Rows`, `Baselines`, `Cols`)
 - Supported layout and editor dropdowns preview hovered items live in the page; closing a menu without selecting restores the committed state
 - Toggle visibility of baselines, margins, modules, and typography
 - Double-click empty module → create text

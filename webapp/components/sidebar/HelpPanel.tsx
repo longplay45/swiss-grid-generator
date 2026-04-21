@@ -195,6 +195,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>When edit mode is active, the left sidebar switches from layout settings to text settings.</li>
           <li>The editor uses the same section layout rhythm as the main settings sidebar: `Paragraph`, `Typo`, and `Info`.</li>
+          <li>The paragraph header uses the same user-facing layer label shown in the Project panel instead of the internal block id.</li>
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
@@ -208,6 +209,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
             <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
+            <li>Increasing paragraph `Cols` preserves the anchored column even when the wider frame intentionally overhangs the page edge.</li>
             <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
@@ -242,6 +244,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
           <li>When edit mode is active, the left sidebar switches from layout settings to image placeholder settings.</li>
           <li>The editor uses the same section layout as the main settings sidebar: `Geometry`, `Color`, and `Info`.</li>
+          <li>The image header shows `IMAGE` plus the current placeholder swatch color.</li>
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
@@ -450,7 +453,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Smart Text Zoom
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Toggles the preview&apos;s text-edit zoom mode. It is enabled by default, zooms to the active text paragraph while editing, and returns to full-page fit when text edit mode closes.
+          Toggles the preview&apos;s text-edit zoom mode. It is enabled by default, zooms to the active text paragraph on entry, stays stable through ordinary text and style edits, refits when paragraph frame geometry changes (`Rows`, `Baselines`, `Cols`), and returns to full-page fit when text edit mode closes.
         </p>
       </section>
 
@@ -618,8 +621,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
-          <li>The Typo panel shows the current hierarchy table with style, size, and leading for the active baseline.</li>
-          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt` and Custom is `96pt / 96pt`.</li>
+          <li>The Typo panel shows current size and leading for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline.</li>
+          <li>`Custom` is paragraph-level only and is seeded from the paragraph&apos;s current size and leading when first selected in the text editor.</li>
+          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt`.</li>
           <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
           <li>`Font Hierarchy` and `Base Font` preview live on dropdown rollover before commit.</li>
           <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>

@@ -33,7 +33,7 @@ const DARK_THEME: WorkspaceTheme = {
   previewContentEdit: "bg-[#161A22]",
   divider: "bg-[#313A47]",
   sidebar: "dark border-[#313A47] bg-[#1D232D] text-[#A8B1BF]",
-  sidebarHeading: "text-[#F4F6F8]",
+  sidebarHeading: "text-[#fe9f97]",
   sidebarBody: "text-[#8D98AA]",
 }
 
@@ -51,7 +51,7 @@ const LIGHT_THEME: WorkspaceTheme = {
   previewContentEdit: "bg-gray-100",
   divider: "bg-gray-200",
   sidebar: "border-gray-200 bg-gray-100 text-gray-700",
-  sidebarHeading: "text-gray-900",
+  sidebarHeading: "text-[#fe9f97]",
   sidebarBody: "text-gray-600",
 }
 

@@ -118,14 +118,14 @@ Default: `swiss`
 ### V. Typo
 
 - `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
-- Hierarchy table: shows current style, size, and leading for the active baseline/scale.
+- Hierarchy table: shows current size and leading for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline/scale.
 - Swiss on the A4 12pt reference baseline:
   - `Display`: `64pt / 72pt`
   - `Headline`: `30pt / 36pt`
   - `Subhead`: `20pt / 24pt`
   - `Body`: `10pt / 12pt`
   - `Caption`: `7pt / 8pt`
-  - `Custom`: `96pt / 96pt`
+- `Custom` is paragraph-level only; when first selected in the text editor it copies the paragraph's currently resolved size and leading into `Custom Size` and `Custom Leading`.
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
@@ -168,7 +168,7 @@ Default: `swiss`
 ### UI + Preview Controls (icon toggles)
 
 - `Dark mode` (moon/sun icon): toggles dark UI for headers/panels/sidebars, preview shell background, and popup editor
-- `Smart Text Zoom` (zoom icon): enabled by default; when active, entering text edit mode zooms to the active paragraph and leaving text edit restores full-page fit
+- `Smart Text Zoom` (zoom icon): enabled by default; when active, entering text edit mode zooms to the active paragraph, ordinary text/style edits keep the current zoom, frame-geometry changes (`Rows`, `Baselines`, `Cols`) refit it, and leaving text edit restores full-page fit
 - Order: dark mode icon appears to the left of Smart Text Zoom, which appears to the left of the display toggles
 
 ### Display Options (icon toggles)
@@ -307,6 +307,7 @@ Editor controls:
 - text editor sections: `Paragraph`, `Typo`, `Info`
 - image editor sections: `Geometry`, `Color`, `Info`
 - while edit mode is active, preview hover stays visible on other existing blocks and clicking one retargets the already open editor
+- the text editor header uses the same user-facing layer label shown in the Project panel instead of the internal paragraph id
 - Paragraph section:
   - rows
   - baselines
@@ -320,6 +321,7 @@ Editor controls:
 - `rows` may be `0` when `baselines > 0`
 - `Baselines` is a dropdown from `0` to the current document's `baselines per grid module`
 - text `Rows`, `Baselines`, and `Cols` dropdown items preview live on rollover before commit
+- increasing paragraph `Cols` preserves the current anchored column even when the wider frame intentionally overhangs the page edge
 - vertical alignment offsets the line stack inside the selected paragraph frame in baseline increments
 - Typo section:
   - font family
@@ -335,6 +337,7 @@ Editor controls:
   - color scheme selector
   - color swatches
   - transparency
+- the image editor header shows `IMAGE` plus the current placeholder swatch color
 - image `Rows`, `Baselines`, `Cols`, and `color scheme` dropdown items preview live on rollover before commit
 - Info section: geometry, type/color summary, counts, and `Max/Line`
 - delete lives at the end of the editor page in the same row-button pattern as `Add Page`

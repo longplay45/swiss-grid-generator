@@ -263,9 +263,17 @@ export function ImageEditorDialog({
       <div className={`min-h-0 flex-1 overflow-y-auto p-4 pt-4 md:p-6 md:pt-6 ${tone.surface}`}>
         <EditorSidebarSection
           title={(
-            <>
-              I. Paragraph <span className="text-[#fe9f97]">{editorState.target}</span>
-            </>
+            <span className="inline-flex items-center gap-2">
+              <span>I. Paragraph</span>
+              <span className={`inline-flex items-center gap-2 ${isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}`}>
+                <span>IMAGE</span>
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm border border-black/10"
+                  style={{ backgroundColor: editorState.draftColor }}
+                  aria-hidden="true"
+                />
+              </span>
+            </span>
           )}
           tooltip="Rows, baselines, and column span; geometry dropdowns preview on rollover"
           collapsed={collapsed.geometry}
