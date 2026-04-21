@@ -392,6 +392,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const dragAnchorRef = useRef<number | null>(null)
   const dragPointerIdRef = useRef<number | null>(null)
   const keyboardDesiredXRef = useRef<number | null>(null)
+  const shouldRestoreSelectionOnFocusRef = useRef(true)
   const measureContextRef = useRef<CanvasRenderingContext2D | null>(null)
   const [isCaretVisible, setIsCaretVisible] = useState(true)
 
@@ -525,9 +526,11 @@ export function InlineBlockTextarea<StyleKey extends string>({
   useEffect(() => {
     if (!editorState) {
       keyboardDesiredXRef.current = null
+      shouldRestoreSelectionOnFocusRef.current = true
       setSelectionFocused(false)
       return
     }
+    shouldRestoreSelectionOnFocusRef.current = true
   }, [editorState])
 
   useLayoutEffect(() => {
@@ -771,16 +774,32 @@ export function InlineBlockTextarea<StyleKey extends string>({
         : "forward"
     const start = Math.min(anchor, focusIndex)
     const end = Math.max(anchor, focusIndex)
+    shouldRestoreSelectionOnFocusRef.current = !focused
+    element.setSelectionRange(start, end, direction)
     if (focused) {
       element.focus({ preventScroll: true })
     }
-    element.setSelectionRange(start, end, direction)
     const nextSelection = buildSelectionState(start, end, focused, direction)
     updateEditorSelection(nextSelection)
   }
 
   const handleTextareaBlur = () => {
+    shouldRestoreSelectionOnFocusRef.current = true
     setSelectionFocused(false)
+  }
+
+  const handleTextareaFocus = () => {
+    if (!shouldRestoreSelectionOnFocusRef.current) {
+      shouldRestoreSelectionOnFocusRef.current = true
+      syncSelectionFromTextarea(true)
+      return
+    }
+    if (restoreSelectionFromEditorState(true)) {
+      shouldRestoreSelectionOnFocusRef.current = true
+      return
+    }
+    shouldRestoreSelectionOnFocusRef.current = true
+    setSelectionFocused(true)
   }
 
   const rotatePoint = (x: number, y: number, originX: number, originY: number, angleDeg: number) => {
@@ -911,10 +930,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             spellCheck={false}
             wrap="off"
             onSelect={() => syncSelectionFromTextarea(true)}
-            onFocus={() => {
-              if (restoreSelectionFromEditorState(true)) return
-              setSelectionFocused(true)
-            }}
+            onFocus={handleTextareaFocus}
             onBlur={handleTextareaBlur}
             onKeyUp={() => syncSelectionFromTextarea(true)}
             onChange={(event) => {
@@ -951,6 +967,21 @@ export function InlineBlockTextarea<StyleKey extends string>({
               keyboardDesiredXRef.current = null
             }}
             onKeyDown={(event) => {
+              const key = event.key.toLowerCase()
+              const isAltGraph = typeof event.getModifierState === "function" && event.getModifierState("AltGraph")
+              const isSelectAllShortcut = key === "a"
+                && !event.shiftKey
+                && !isAltGraph
+                && (
+                  event.metaKey
+                  || event.ctrlKey
+                  || (event.altKey && !event.metaKey && !event.ctrlKey)
+                )
+              if (isSelectAllShortcut) {
+                event.preventDefault()
+                setTextareaSelection(0, editorState.draftText.length, true)
+                return
+              }
               const isVisualNavigationKey = event.key === "Home"
                 || event.key === "End"
                 || event.key === "ArrowUp"
