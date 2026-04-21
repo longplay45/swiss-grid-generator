@@ -172,6 +172,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The preview page is the live layout surface for the active project page, including placement, editing, duplication, and deletion.</li>
           <li>Supported layout and editor dropdowns can temporarily redraw the page while open so you can judge a hovered option before committing it.</li>
           <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
+          <li>When a project has multiple pages, `Page Up` activates the previous page and `Page Down` activates the next one.</li>
           <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
           <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
@@ -200,6 +201,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
           <li>`Esc` or outside click exits edit mode; clicking another active-page layer card or another existing preview block retargets the already open editor instead.</li>
+          <li>Inside inline text edit, double-click selects the clicked word, triple-click selects the containing sentence, and `Alt+A` or `Cmd/Ctrl+A` select the whole paragraph.</li>
         </ul>
 
         <div id="help-editor-paragraph" className="space-y-1 pt-1">
@@ -521,6 +523,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Opens the right-side Project panel with an editable project name and a `Pages` section.</li>
           <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
           <li>`Pages` stays visible in the fixed project-panel header while the page list scrolls; single-click a page card to activate it and double-click the card to open or close its inline layer list.</li>
+          <li>`Page Up` and `Page Down` also step through project pages when multiple pages are available.</li>
           <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
           <li>Newly added pages open automatically.</li>
           <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>

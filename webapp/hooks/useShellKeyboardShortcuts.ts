@@ -7,6 +7,7 @@ type Args = {
   canRedo: boolean
   showPresetsBrowser: boolean
   hasPreviewLayout: boolean
+  hasMultipleProjectPages: boolean
   onLoadJson: () => void
   onSaveJson: () => void
   onExportPdf: () => void
@@ -24,6 +25,8 @@ type Args = {
   onToggleImprintPanel: () => void
   onOpenPresets: () => void
   onClosePresets: () => void
+  onSelectPreviousPage: () => void
+  onSelectNextPage: () => void
 }
 
 export function useShellKeyboardShortcuts({
@@ -31,6 +34,7 @@ export function useShellKeyboardShortcuts({
   canRedo,
   showPresetsBrowser,
   hasPreviewLayout,
+  hasMultipleProjectPages,
   onLoadJson,
   onSaveJson,
   onExportPdf,
@@ -48,6 +52,8 @@ export function useShellKeyboardShortcuts({
   onToggleImprintPanel,
   onOpenPresets,
   onClosePresets,
+  onSelectPreviousPage,
+  onSelectNextPage,
 }: Args) {
   useEffect(() => {
     const isEditableTarget = (target: EventTarget | null): boolean => {
@@ -57,11 +63,25 @@ export function useShellKeyboardShortcuts({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) return
+
+      if (!showPresetsBrowser && hasMultipleProjectPages && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        if (event.key === "PageUp") {
+          event.preventDefault()
+          onSelectPreviousPage()
+          return
+        }
+        if (event.key === "PageDown") {
+          event.preventDefault()
+          onSelectNextPage()
+          return
+        }
+      }
+
       if (!(event.metaKey || event.ctrlKey)) return
       const key = event.key.toLowerCase()
       const shifted = event.shiftKey
       const alted = event.altKey
-      if (isEditableTarget(event.target)) return
 
       const shortcut = PREVIEW_HEADER_SHORTCUTS.find((item) =>
         item.bindings.some(
@@ -131,8 +151,11 @@ export function useShellKeyboardShortcuts({
     canRedo,
     canUndo,
     hasPreviewLayout,
+    hasMultipleProjectPages,
     onExportPdf,
     onLoadJson,
+    onSelectNextPage,
+    onSelectPreviousPage,
     onOpenPresets,
     onRedo,
     onSaveJson,

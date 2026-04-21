@@ -197,6 +197,7 @@ Default: `swiss`
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
 - `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- `Page Up` selects the previous project page and `Page Down` selects the next one when multiple pages exist.
 - Single-clicking a page card selects that page.
 - Double-clicking a page card toggles its inline layer list and aligns opened pages to the top of the panel.
 - Each page card also has an open/close toggle that reveals that page's layers inline.
@@ -239,6 +240,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+H`: Toggle help sidebar
 - `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
 - `Cmd/Ctrl+Shift+4`: Toggle presets browser
+- `Page Up`: Select previous project page
+- `Page Down`: Select next project page
 - `Esc`: Close presets browser without loading a preset
 
 ## Popups
@@ -357,6 +360,9 @@ Editor controls:
 - live `Characters`, `Words`, and `Max/Line` counts in the Info section
 - inline caret and selection are rendered from the current text geometry, not DOM line boxes
 - inline caret blinks while the text editor is focused with a collapsed selection
+- double-click inside inline text edit selects the clicked word
+- triple-click inside inline text edit selects the containing sentence
+- `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active
 - repeated spaces and blank lines are preserved in the source model
 - soft-wrap boundary spaces stay in the source text but do not render as visible indent at the start of the next visual line
 

@@ -53,6 +53,7 @@ import {
 } from "@/lib/grid-reduction-validation"
 import { toProjectJsonFilename } from "@/lib/project-file-naming"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
+import { resolveAdjacentProjectPageId } from "@/lib/project-page-navigation"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -547,6 +548,26 @@ export default function Home() {
     ))
   }, [setProjectMetadata])
 
+  const handleSelectPreviousProjectPage = useCallback(() => {
+    const nextPageId = resolveAdjacentProjectPageId(
+      projectPages.map((page) => page.id),
+      activePageId,
+      "previous",
+    )
+    if (!nextPageId) return
+    selectPage(nextPageId)
+  }, [activePageId, projectPages, selectPage])
+
+  const handleSelectNextProjectPage = useCallback(() => {
+    const nextPageId = resolveAdjacentProjectPageId(
+      projectPages.map((page) => page.id),
+      activePageId,
+      "next",
+    )
+    if (!nextPageId) return
+    selectPage(nextPageId)
+  }, [activePageId, projectPages, selectPage])
+
   const handleCommittedLayerOrderChange = useCallback((nextLayerOrder: string[]) => {
     preferCommittedPreviewLayoutRef.current = true
     handleLayerOrderChange(nextLayerOrder)
@@ -666,6 +687,7 @@ export default function Home() {
     canRedo,
     showPresetsBrowser,
     hasPreviewLayout,
+    hasMultipleProjectPages: projectPages.length > 1,
     onLoadJson: () => loadFileInputRef.current?.click(),
     onSaveJson: exportActions.openSaveDialog,
     onExportPdf: exportActions.openExportDialog,
@@ -683,6 +705,8 @@ export default function Home() {
     onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
     onOpenPresets: () => setShowPresetsBrowser(true),
     onClosePresets: () => setShowPresetsBrowser(false),
+    onSelectPreviousPage: handleSelectPreviousProjectPage,
+    onSelectNextPage: handleSelectNextProjectPage,
   })
 
   const handleConfirmSaveJSON = useCallback(() => {

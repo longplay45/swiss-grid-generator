@@ -68,6 +68,9 @@ Current capability inventory for Swiss Grid Generator.
   - tracking
 - Paragraph defaults are rebased when edits are applied without a scoped selection.
 - Caret and selection rendering follow rendered text geometry.
+- Double-click selects the clicked word in inline text edit mode.
+- Triple-click selects the containing sentence in inline text edit mode.
+- `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active.
 - Preserves repeated spaces and blank lines in the source model.
 - Soft-wrap boundary spaces remain in the source text but do not render as visible indent on the next visual line.
 
@@ -82,6 +85,7 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
+- `Page Up` and `Page Down` step through project pages when multiple pages are present.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
 - Layer cards support selection, reordering, deletion, and editor opening.
