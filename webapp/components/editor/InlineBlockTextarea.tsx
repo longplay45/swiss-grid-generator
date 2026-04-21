@@ -9,6 +9,7 @@ import {
 import type { RenderedTextLine } from "@/lib/preview-types"
 import {
   buildInlineEditorTransform,
+  computeInlineEditorSpecialCharMarkers,
   computeInlineEditorCaret,
   computeInlineEditorSelectionRects,
   computeInlineEditorTextBox,
@@ -61,6 +62,13 @@ type InlineEditorOverlayCaret = {
   left: number
   top: number
   height: number
+}
+
+type InlineEditorSpecialCharMarker = {
+  glyph: string
+  x: number
+  baselineY: number
+  fontSize: number
 }
 
 export type InlineEditorLayout = {
@@ -231,10 +239,35 @@ function resolveInlineCaretColors(
   }
 }
 
+function resolveInlineSpecialCharacterColor(textColor: string, backgroundColor: string): string {
+  const resolvedTextColor = parseCanvasColor(textColor) ?? parseCanvasColor(FALLBACK_DARK_COLOR)
+  const resolvedBackgroundColor = parseCanvasColor(backgroundColor) ?? parseCanvasColor(FALLBACK_LIGHT_COLOR)
+  const fallbackDark = parseCanvasColor(FALLBACK_DARK_COLOR)
+  const fallbackLight = parseCanvasColor(FALLBACK_LIGHT_COLOR)
+
+  if (!resolvedTextColor || !resolvedBackgroundColor || !fallbackDark || !fallbackLight) {
+    return "rgba(17, 17, 17, 0.55)"
+  }
+
+  const textContrast = getContrastRatio(resolvedTextColor, resolvedBackgroundColor)
+  const darkContrast = getContrastRatio(fallbackDark, resolvedBackgroundColor)
+  const lightContrast = getContrastRatio(fallbackLight, resolvedBackgroundColor)
+  const markerColor = textContrast >= 2.2
+    ? resolvedTextColor
+    : darkContrast >= lightContrast
+      ? fallbackDark
+      : fallbackLight
+
+  return formatRgba(markerColor, 0.55)
+}
+
 function InlineEditorOverlayCanvas({
   width,
   height,
   selectionRects,
+  specialCharMarkers,
+  specialCharColor,
+  specialCharFontFamily,
   caret,
   caretVisible,
   caretCoreColor,
@@ -243,6 +276,9 @@ function InlineEditorOverlayCanvas({
   width: number
   height: number
   selectionRects: InlineEditorOverlayRect[]
+  specialCharMarkers: InlineEditorSpecialCharMarker[]
+  specialCharColor: string
+  specialCharFontFamily: string
   caret: InlineEditorOverlayCaret | null
   caretVisible: boolean
   caretCoreColor: string
@@ -276,6 +312,20 @@ function InlineEditorOverlayCanvas({
       ctx.fillRect(left, top, rectWidth, rectHeight)
     }
 
+    if (specialCharMarkers.length > 0) {
+      ctx.fillStyle = specialCharColor
+      ctx.textAlign = "center"
+      ctx.textBaseline = "alphabetic"
+      for (const marker of specialCharMarkers) {
+        ctx.font = `${Math.max(1, marker.fontSize * pixelRatio)}px ${specialCharFontFamily}`
+        ctx.fillText(
+          marker.glyph,
+          marker.x * pixelRatio,
+          marker.baselineY * pixelRatio,
+        )
+      }
+    }
+
     if (!caret || !caretVisible) return
     const caretX = Math.round(caret.left * pixelRatio)
     const caretTop = Math.round(caret.top * pixelRatio)
@@ -291,7 +341,18 @@ function InlineEditorOverlayCanvas({
     ctx.fillRect(caretHaloLeft, caretTop, haloWidth, caretHeightPx)
     ctx.fillStyle = caretCoreColor
     ctx.fillRect(caretCoreLeft, caretTop, coreWidth, caretHeightPx)
-  }, [caret, caretCoreColor, caretHaloColor, caretVisible, height, selectionRects, width])
+  }, [
+    caret,
+    caretCoreColor,
+    caretHaloColor,
+    caretVisible,
+    height,
+    selectionRects,
+    specialCharColor,
+    specialCharFontFamily,
+    specialCharMarkers,
+    width,
+  ])
 
   return (
     <canvas
@@ -675,6 +736,26 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const caretTextColor = resolveTextSchemeColor(caretFormat.color, imageColorScheme)
   const effectiveBackgroundColor = pageBackgroundColor ?? FALLBACK_LIGHT_COLOR
   const caretColors = resolveInlineCaretColors(caretTextColor, effectiveBackgroundColor)
+  const specialCharacterColor = resolveInlineSpecialCharacterColor(caretTextColor, effectiveBackgroundColor)
+  const specialCharacterFontFamily = `${getFontFamilyCss(editorState.draftFont)}, system-ui, sans-serif`
+  const specialCharacterFontSize = Math.max(8, Math.min(scaledFontSize * 0.62, scaledLeading * 0.72, 18))
+  const specialCharMarkers = computeInlineEditorSpecialCharMarkers({
+    text: editorState.draftText,
+    textAlign: layout.textAlign,
+    commands: visualCommands,
+    renderedLines: layout.renderedLines,
+    segmentLines: layout.segmentLines,
+    textAscent: editorTextAscent,
+    lineHeight: scaledLeading,
+    measureText,
+    markerFontSize: specialCharacterFontSize,
+    newlineMarkerOffset: Math.min(Math.max(3, specialCharacterFontSize * 0.4), 8),
+  })
+  const localSpecialCharMarkers = specialCharMarkers.map((marker) => ({
+    ...marker,
+    x: marker.x - textBox.left,
+    baselineY: marker.baselineY - textBoxTop,
+  }))
 
   const setTextareaSelection = (
     anchor: number,
@@ -787,6 +868,9 @@ export function InlineBlockTextarea<StyleKey extends string>({
             width={textBox.width}
             height={minHeight}
             selectionRects={localSelectionRects}
+            specialCharMarkers={localSpecialCharMarkers}
+            specialCharColor={specialCharacterColor}
+            specialCharFontFamily={specialCharacterFontFamily}
             caret={localCaret}
             caretVisible={isCaretVisible}
             caretCoreColor={caretColors.core}

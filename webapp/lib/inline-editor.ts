@@ -96,6 +96,13 @@ export type InlineEditorSelectionRect = {
   height: number
 }
 
+export type InlineEditorSpecialCharMarker = {
+  glyph: string
+  x: number
+  baselineY: number
+  fontSize: number
+}
+
 export type InlineEditorLineLayoutInput = {
   text: string
   textAlign: InlineEditorTextAlign
@@ -179,6 +186,13 @@ function normalizePrefixText(text: string): string {
 
 function clampSelectionIndex(text: string, index: number): number {
   return Math.max(0, Math.min(normalizeVisibleText(text).length, index))
+}
+
+function getInlineEditorSpecialCharGlyph(value: string): string | null {
+  if (value === "\n") return "¶"
+  if (value === "\t") return "⇥"
+  if (value === " " || value === "\u00A0" || value === "\u202F" || value === "\u2009") return "·"
+  return null
 }
 
 function getVisibleSourceRange(
@@ -629,6 +643,66 @@ export function computeInlineEditorSelectionRects({
   }
 
   return rects
+}
+
+export function computeInlineEditorSpecialCharMarkers({
+  text,
+  textAlign,
+  commands,
+  renderedLines,
+  segmentLines,
+  textAscent,
+  lineHeight,
+  measureText,
+  markerFontSize,
+  newlineMarkerOffset = 6,
+}: InlineEditorLineLayoutInput & {
+  markerFontSize: number
+  newlineMarkerOffset?: number
+}): InlineEditorSpecialCharMarker[] {
+  if (!commands.length) return []
+
+  const lines = buildInlineEditorLineLayouts({
+    text,
+    textAlign,
+    commands,
+    renderedLines,
+    segmentLines,
+    textAscent,
+    lineHeight,
+    measureText,
+  })
+  const markers: InlineEditorSpecialCharMarker[] = []
+  const markedSourceIndices = new Set<number>()
+
+  for (const line of lines) {
+    const baselineY = line.baselineY ?? (line.top + textAscent)
+    for (let index = line.sourceStart; index < line.sourceEnd; index += 1) {
+      if (markedSourceIndices.has(index)) continue
+      const glyph = getInlineEditorSpecialCharGlyph(text[index] ?? "")
+      if (!glyph || glyph === "¶") continue
+      const startX = getCaretXForIndex(text, line, index, measureText)
+      const endX = getCaretXForIndex(text, line, index + 1, measureText)
+      markers.push({
+        glyph,
+        x: startX + (endX - startX) / 2,
+        baselineY,
+        fontSize: markerFontSize,
+      })
+      markedSourceIndices.add(index)
+    }
+
+    if (getInlineEditorSpecialCharGlyph(text[line.sourceEnd] ?? "") !== "¶") continue
+    const lineEndX = getCaretXForIndex(text, line, line.sourceEnd, measureText)
+    markers.push({
+      glyph: "¶",
+      x: lineEndX + Math.max(2, newlineMarkerOffset),
+      baselineY,
+      fontSize: markerFontSize,
+    })
+  }
+
+  return markers
 }
 
 export function resolveInlineEditorLineNavigation({
