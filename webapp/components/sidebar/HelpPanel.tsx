@@ -178,7 +178,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
           <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
           <li>When a text or image editor is already open, preview rollover stays active on other blocks so you can see the next target before switching.</li>
-          <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` and `Snap to Baseline (Y)` settings, while image placeholders stay grid-snapped unless you invoke baseline/overset placement.</li>
+          <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` setting and, when `Snap to Baseline (Y)` is on, default to module-top Y snapping with baseline drag available on `Shift`/`Ctrl`.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
           <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
           <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
@@ -214,7 +214,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>Increasing paragraph `Cols` preserves the anchored column even when the wider frame intentionally overhangs the page edge.</li>
             <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
             <li>`Snap to Columns (X)` locks paragraph placement to logical column anchors; turning it off allows free horizontal placement inside the page bounds.</li>
-            <li>`Snap to Baseline (Y)` locks paragraph placement to baseline rows; turning it off allows free vertical placement while the paragraph still resolves through the same stored anchor model.</li>
+            <li>`Snap to Baseline (Y)` keeps paragraph placement on editorial Y anchors; normal drag snaps to module tops, `Shift`/`Ctrl` drag snaps to baseline rows, and turning it off allows free vertical placement.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           </ul>
@@ -288,12 +288,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Drag and Placement
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Default drag respects each paragraph&apos;s current X/Y snap settings; image placeholders stay snapped to module anchors.</li>
+          <li>Default paragraph drag respects each paragraph&apos;s current `Snap to Columns (X)` state; when `Snap to Baseline (Y)` is on, the default Y target is the nearest module top. Image placeholders drag on baseline anchors.</li>
           <li>`Alt/Option` + drag duplicates a block and drops the copy.</li>
           <li>`Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).</li>
-          <li>`Shift` + drag snaps to baseline rows and baseline columns for overset placement (`Ctrl` fallback).</li>
-          <li>`Shift` + drag allows overset placement for “angeschnitten” layouts (left/right/top/bottom, `Ctrl` fallback).</li>
-          <li>Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.</li>
+          <li>Holding `Shift` during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row (`Ctrl` fallback).</li>
+          <li>Paragraph drag stays within the current paragraph placement bounds; image-placeholder drag keeps the extended baseline/overset range.</li>
         </ul>
       </section>
 

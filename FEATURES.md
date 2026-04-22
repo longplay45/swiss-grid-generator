@@ -57,7 +57,7 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
 - `Snap to Columns (X)` keeps paragraphs on logical column anchors; turning it off allows free horizontal placement.
-- `Snap to Baseline (Y)` keeps paragraphs on baseline rows; turning it off allows free vertical placement.
+- `Snap to Baseline (Y)` keeps paragraphs on editorial Y anchors; normal drag uses module tops, `Shift`/`Ctrl` drag uses baseline rows, and turning it off allows free vertical placement.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
@@ -83,8 +83,9 @@ Current capability inventory for Swiss Grid Generator.
 - `Shift` + double-click empty module to create an image placeholder (`Ctrl` fallback).
 - Drag paragraphs and placeholders to move them.
 - `Alt/Option` + drag duplicates the hovered layer.
-- `Shift` + drag switches to baseline/overset placement (`Ctrl` fallback).
-- Default paragraph drag respects each paragraph's current X/Y snap settings.
+- Default paragraph drag respects each paragraph's current `Snap to Columns (X)` state and, when `Snap to Baseline (Y)` is on, snaps Y to the nearest module top.
+- Holding `Shift` during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row (`Ctrl` fallback).
+- Image placeholders drag on baseline anchors and keep the extended overset range.
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.

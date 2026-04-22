@@ -6,6 +6,12 @@ import type { BlockRect, NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 
+export type TextBlockDragYMode = "moduleTop" | "baseline" | "free"
+
+export type TextBlockPlacementOptions = {
+  dragYMode?: TextBlockDragYMode
+}
+
 export type OpenImageEditorOptions = {
   recordHistory?: boolean
 }
@@ -33,7 +39,12 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
   snapToModule: (x: number, y: number, key: Key) => ModulePosition
   snapToBaseline: (x: number, y: number, key: Key) => ModulePosition
-  resolveTextBlockPlacement: (x: number, y: number, key: Key) => ModulePosition
+  resolveTextBlockPlacement: (
+    x: number,
+    y: number,
+    key: Key,
+    options?: TextBlockPlacementOptions,
+  ) => ModulePosition
   getGridMetrics: () => PreviewGridMetrics
   findTopmostDraggableAtPoint: (x: number, y: number) => Key | null
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null

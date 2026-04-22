@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from "react"
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react"
 
-import type { PreviewCanvasInteractionArgs } from "@/hooks/preview-canvas-interaction-types"
+import type {
+  PreviewCanvasInteractionArgs,
+  TextBlockPlacementOptions,
+} from "@/hooks/preview-canvas-interaction-types"
 import { usePreviewDrag, type DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
@@ -17,7 +20,6 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "imageModulePositions"
   | "toPagePoint"
   | "toPagePointFromClient"
-  | "snapToModule"
   | "snapToBaseline"
   | "resolveTextBlockPlacement"
   | "findTopmostDraggableAtPoint"
@@ -30,6 +32,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "touchCancelDistancePx"
   | "openTextEditor"
   | "openImageEditor"
+  | "isSnapToBaselineEnabled"
 > & {
   handleTextDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
   handleImageDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
@@ -51,7 +54,6 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   imageModulePositions,
   toPagePoint,
   toPagePointFromClient,
-  snapToModule,
   snapToBaseline,
   resolveTextBlockPlacement,
   findTopmostDraggableAtPoint,
@@ -59,6 +61,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   isImagePlaceholderKey,
   onSelectLayer,
   clearHover,
+  isSnapToBaselineEnabled,
   dragEndedAtRef,
   touchLongPressMs,
   touchCancelDistancePx,
@@ -95,7 +98,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     handleCanvasPointerUp,
     handleCanvasPointerCancel,
     handleCanvasLostPointerCapture,
-  } = usePreviewDrag<Key>({
+  } = usePreviewDrag<Key, TextBlockPlacementOptions | undefined>({
     showTypography,
     isEditorOpen: editorOpen,
     canvasRef,
@@ -104,11 +107,20 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     blockModulePositions: draggableModulePositions,
     findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
     toPagePoint,
-    resolveDragPreviewPosition: (pageX, pageY, key) => (
+    resolveDragPreviewPosition: (pageX, pageY, key, context) => (
       isImagePlaceholderKey(key)
         ? snapToBaseline(pageX, pageY, key)
-        : resolveTextBlockPlacement(pageX, pageY, key)
+        : resolveTextBlockPlacement(pageX, pageY, key, context)
     ),
+    getDragPreviewContext: (event, key) => {
+      if (isImagePlaceholderKey(key)) return undefined
+      if (event.shiftKey || event.ctrlKey) {
+        return { dragYMode: "baseline" }
+      }
+      return {
+        dragYMode: isSnapToBaselineEnabled(key) ? "moduleTop" : "free",
+      }
+    },
     onDrop: applyDragDrop,
     onClearHover: clearHover,
     touchLongPressMs,

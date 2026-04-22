@@ -5,6 +5,7 @@ import type { BlockRect, BlockRenderPlan, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
+import type { TextBlockDragYMode, TextBlockPlacementOptions } from "@/hooks/preview-canvas-interaction-types"
 
 type Args<Key extends string> = {
   blockRectsRef: RefObject<Record<Key, BlockRect>>
@@ -98,20 +99,28 @@ export function usePreviewHitTesting<Key extends string>({
     return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
 
-  const resolveTextBlockPlacement = useCallback((pageX: number, pageY: number, key: Key): ModulePosition => {
+  const resolveTextBlockPlacement = useCallback((
+    pageX: number,
+    pageY: number,
+    key: Key,
+    options: TextBlockPlacementOptions = {},
+  ): ModulePosition => {
     const metrics = getGridMetrics()
     const span = getPlacementSpan(key)
     const snapToColumns = isSnapToColumnsEnabled(key)
     const snapToBaseline = isSnapToBaselineEnabled(key)
+    const dragYMode: TextBlockDragYMode = options.dragYMode ?? (snapToBaseline ? "moduleTop" : "free")
     const minCol = -Math.max(0, span - 1)
     const maxCol = Math.max(0, metrics.gridCols - (snapToColumns ? 1 : 0))
     const minRow = -Math.max(0, metrics.maxBaselineRow)
     const rawCol = snapToColumns
       ? metrics.getNearestCol(pageX)
       : metrics.getInterpolatedCol(pageX)
-    const rawRow = snapToBaseline
+    const rawRow = dragYMode === "baseline"
       ? Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
-      : (pageY - metrics.baselineOriginTop) / Math.max(metrics.baselineStep, 0.0001)
+      : dragYMode === "moduleTop"
+        ? metrics.getRowStartBaseline(metrics.getNearestRowIndex(pageY))
+        : (pageY - metrics.baselineOriginTop) / Math.max(metrics.baselineStep, 0.0001)
     return {
       col: Math.max(minCol, Math.min(maxCol, rawCol)),
       row: Math.max(minRow, Math.min(metrics.maxBaselineRow, rawRow)),

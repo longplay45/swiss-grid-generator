@@ -592,12 +592,19 @@ The flags affect drag/editor placement resolution only. The underlying anchor mo
 
 Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same anchor math; only the state mutation differs (new layer key is created instead of moving the original).
 
-Shift-drag behavior (Ctrl fallback) switches snapping to baseline rows and baseline columns at the drop point and allows overset anchors for clipped ("angeschnitten") placements:
+During paragraph drag, a paragraph with `Snap to Baseline (Y)` enabled resolves Y to the nearest module-top row start by default while leaving X placement under the paragraph's current `Snap to Columns (X)` setting:
 
 ```
-col range (shift-drag): [-(span - 1), gridCols - 1]
-row range (shift-drag): [-maxBaselineRow, +maxBaselineRow]
+rawRow = rowStartBaselines[nearestRowIndex(pageY)]
 ```
+
+Holding `Shift` (Ctrl fallback) temporarily switches the Y resolution to the nearest baseline row:
+
+```
+rawRow = round((pageY - baselineOriginTop) / baselineStep)
+```
+
+Image placeholders keep their baseline-anchor drag path and extended overset range.
 
 ### Per-Paragraph Span
 

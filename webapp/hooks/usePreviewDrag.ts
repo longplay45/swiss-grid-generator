@@ -19,7 +19,7 @@ export type DragState<Key extends string = string> = {
   detached?: boolean
 }
 
-type Args<Key extends string> = {
+type Args<Key extends string, DragPreviewContext = void> = {
   showTypography: boolean
   isEditorOpen: boolean
   canvasRef: RefObject<HTMLCanvasElement | null>
@@ -28,7 +28,16 @@ type Args<Key extends string> = {
   blockModulePositions: Partial<Record<Key, DragModulePosition>>
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null
   toPagePoint: (x: number, y: number) => PagePoint | null
-  resolveDragPreviewPosition: (x: number, y: number, key: Key) => DragModulePosition
+  resolveDragPreviewPosition: (
+    x: number,
+    y: number,
+    key: Key,
+    context?: DragPreviewContext,
+  ) => DragModulePosition
+  getDragPreviewContext?: (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+    key: Key,
+  ) => DragPreviewContext
   onDrop: (drag: DragState<Key>, nextPreview: DragModulePosition, copyOnDrop: boolean) => void
   onClearHover: () => void
   touchLongPressMs: number
@@ -36,7 +45,7 @@ type Args<Key extends string> = {
   dragEndedAtRef?: MutableRefObject<number>
 }
 
-export function usePreviewDrag<Key extends string>({
+export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
   showTypography,
   isEditorOpen,
   canvasRef,
@@ -46,12 +55,13 @@ export function usePreviewDrag<Key extends string>({
   findTopmostBlockAtPoint,
   toPagePoint,
   resolveDragPreviewPosition,
+  getDragPreviewContext,
   onDrop,
   onClearHover,
   touchLongPressMs,
   touchCancelDistancePx,
   dragEndedAtRef: externalDragEndedAtRef,
-}: Args<Key>) {
+}: Args<Key, DragPreviewContext>) {
   const [dragState, setDragState] = useState<DragState<Key> | null>(null)
   const internalDragEndedAtRef = useRef<number>(0)
   const dragEndedAtRef = externalDragEndedAtRef ?? internalDragEndedAtRef
@@ -115,10 +125,12 @@ export function usePreviewDrag<Key extends string>({
       const rect = canvas.getBoundingClientRect()
       const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
       if (!point) return
+      const dragPreviewContext = getDragPreviewContext?.(event, dragState.key)
       const preview = resolveDragPreviewPosition(
         point.x - dragState.pointerOffsetX,
         point.y - dragState.pointerOffsetY,
         dragState.key,
+        dragPreviewContext,
       )
       pendingDragPreviewRef.current = { preview, moved: true, copyOnDrop: true }
       finishDrag()
@@ -197,6 +209,7 @@ export function usePreviewDrag<Key extends string>({
     findTopmostBlockAtPoint,
     finishDrag,
     getBlockRect,
+    getDragPreviewContext,
     isEditorOpen,
     onClearHover,
     showTypography,
@@ -225,10 +238,12 @@ export function usePreviewDrag<Key extends string>({
     const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!point) return
 
+    const dragPreviewContext = getDragPreviewContext?.(event, dragState.key)
     const snap = resolveDragPreviewPosition(
       point.x - dragState.pointerOffsetX,
       point.y - dragState.pointerOffsetY,
       dragState.key,
+      dragPreviewContext,
     )
     const moved = dragState.moved
       || Math.abs(point.x - dragState.startPageX) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
@@ -252,7 +267,15 @@ export function usePreviewDrag<Key extends string>({
           : prev
       ))
     })
-  }, [touchCancelDistancePx, clearPendingTouchLongPress, dragState, resolveDragPreviewPosition, toPagePoint, canvasRef])
+  }, [
+    touchCancelDistancePx,
+    clearPendingTouchLongPress,
+    dragState,
+    getDragPreviewContext,
+    resolveDragPreviewPosition,
+    toPagePoint,
+    canvasRef,
+  ])
 
   const handleCanvasPointerUp = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
     const pendingTouchDrag = touchPendingDragRef.current

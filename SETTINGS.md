@@ -302,7 +302,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Drag to move; paragraphs respect their current X/Y snap settings
+- Drag to move; paragraphs respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
 - Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
@@ -392,7 +392,9 @@ Drag behavior:
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
 - Paragraphs and image placeholders are stored as logical anchors: `{ column, row, baselineOffset }`.
 - Paragraphs also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags. When either axis snap is off, the corresponding `column` and/or `baselineOffset` value may remain fractional while the logical row anchor stays stable.
-- `Shift` (or `Ctrl`) + drag snaps to nearest baseline row/column at drop point and allows overset placement.
+- With `Snap to Baseline (Y)` on, default paragraph drag snaps Y to the nearest module top.
+- Holding `Shift` (or `Ctrl`) during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row.
+- Image placeholders drag on baseline anchors and keep the extended overset range.
 - Hovering a paragraph reveals the edit affordance at the paragraph's exact top-left origin so very shallow frames remain reachable.
 
 ## Grid Change Reflow Logic
