@@ -14,6 +14,7 @@ import {
 } from "@/lib/text-rendering"
 import { normalizeTextTrackingRuns } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextBlockPosition, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
+import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
 
 export type PreviewTextLayerCollectionsState<
   Key extends string = string,
@@ -91,14 +92,9 @@ export function clampTextBlockPosition({
   fitWithinGrid = false,
   snapToColumns = true,
 }: ClampTextBlockPositionArgs): ModulePosition {
-  const minCol = -Math.max(0, span - 1)
-  const maxCol = fitWithinGrid
-    ? Math.max(0, gridCols - span + (snapToColumns ? 0 : 1))
-    : Math.max(0, gridCols - (snapToColumns ? 1 : 0))
-  const minRow = -Math.max(0, maxBaselineRow)
   return {
-    col: Math.max(minCol, Math.min(maxCol, position.col)),
-    row: Math.max(minRow, Math.min(maxBaselineRow, position.row)),
+    col: clampLayerColumn(position.col, { span, gridCols, snapToColumns, fitWithinGrid }),
+    row: clampFreePlacementRow(position.row, maxBaselineRow),
   }
 }
 

@@ -71,6 +71,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Independent rhythm control for rows and columns
 - 90° rhythm rotation
 - Stable logical positioning — paragraphs and image placeholders stay where you placed them
+- Paragraphs and image placeholders both support independent X/Y snap control plus per-layer rotation
 - Grid reductions are blocked with a calm warning instead of auto-repositioning conflicting content
 
 ### Typography System
@@ -106,6 +107,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Toggle visibility of baselines, margins, modules, and typography
 - Double-click empty module → create text
 - Shift + double-click → create image placeholder
+- Image placeholders use the same `Snap to Columns (X)` / `Snap to Baseline (Y)` placement model as paragraphs
+- With `Snap to Columns (X)` off, paragraphs and image placeholders can overhang one column into either side margin
 - Hover interactions and edit affordances
 - Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
 - When a text or image editor is open, preview hover stays active on other blocks and a single click retargets the already open editor

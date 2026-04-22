@@ -20,6 +20,7 @@ import { DEFAULT_STYLE_ASSIGNMENTS, DEFAULT_TEXT_CONTENT, isBaseBlockId } from "
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
+import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { LayoutPresetBrowserPage } from "@/lib/presets/types"
 import {
   normalizeTextFormatRuns,
@@ -39,7 +40,7 @@ import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
-import type { ModulePosition, PreviewLayoutState, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/preview-layout"
+import type { PreviewLayoutState, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/preview-layout"
 import { createTextMetricsService } from "@/lib/text-metrics-service"
 
 type BlockId = string
@@ -208,6 +209,9 @@ export function drawPresetThumbnailToCanvas(
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageHeightBaselines = layout?.imageHeightBaselines ?? {}
+  const imageSnapToColumns = layout?.imageSnapToColumns ?? {}
+  const imageSnapToBaseline = layout?.imageSnapToBaseline ?? {}
+  const imageRotations = layout?.imageRotations ?? {}
   const imageColors = layout?.imageColors ?? {}
   const imageOpacities = layout?.imageOpacities ?? {}
 
@@ -358,17 +362,16 @@ export function drawPresetThumbnailToCanvas(
     }).baselines
   }
 
-  const toColumnX = (col: number) => {
-    return contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
+  const isImageSnapToColumnsEnabled = (key: BlockId): boolean => imageSnapToColumns[key] !== false
+  const isImageSnapToBaselineEnabled = (key: BlockId): boolean => imageSnapToBaseline[key] !== false
+  const getImageRotation = (key: BlockId): number => {
+    const raw = imageRotations[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
+    return clampRotation(raw)
   }
 
-  const clampImageBaselinePosition = (position: ModulePosition, columns: number): ModulePosition => {
-    const safeCols = Math.max(1, Math.min(gridCols, columns))
-    const minCol = -Math.max(0, safeCols - 1)
-    return {
-      col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), position.col)),
-      row: Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, position.row)),
-    }
+  const toColumnX = (col: number) => {
+    return contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
   }
 
   const imageRenderState = buildCanvasImagePlans({
@@ -379,10 +382,14 @@ export function drawPresetThumbnailToCanvas(
     getImageHeightBaselines,
     getImageColor: (key) => resolveImageSchemeColor(imageColors[key], page.imageColorScheme),
     getImageOpacity: (key) => normalizeImagePlaceholderOpacity(imageOpacities[key]),
-    clampImageBaselinePosition,
+    getImageRotation,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
     toColumnX,
     baselineOriginTop,
     baselineStep,
+    maxBaselineRow,
+    gridCols,
     rowStartsInBaselines,
     gridRows,
     moduleWidths,
@@ -467,7 +474,11 @@ export function drawPresetThumbnailToCanvas(
       getBlockColumnStart: (key, span) => {
         const manual = blockModulePositions[key]
         if (!manual) return 0
-        const minCol = -Math.max(0, span - 1)
+        const { minCol } = resolveLayerColumnBounds({
+          span,
+          gridCols,
+          snapToColumns: blockSnapToColumns[key] !== false,
+        })
         const rawCol = blockSnapToColumns[key] !== false ? manual.col : Math.round(manual.col)
         return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
       },
@@ -483,9 +494,12 @@ export function drawPresetThumbnailToCanvas(
         const manual = blockModulePositions[key]
         if (!manual) return { x: fallbackX, y: fallbackY }
         const span = getBlockSpan(key)
-        const minCol = -Math.max(0, span - 1)
-        const col = Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col))
-        const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
+        const col = clampLayerColumn(manual.col, {
+          span,
+          gridCols,
+          snapToColumns: blockSnapToColumns[key] !== false,
+        })
+        const row = clampFreePlacementRow(manual.row, maxBaselineRow)
         return {
           x: toColumnX(col),
           y: baselineOriginTop + row * baselineStep,

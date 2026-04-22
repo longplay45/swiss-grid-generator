@@ -13,6 +13,7 @@ import {
   resolveNearestPreviewColumn,
   resolvePreviewColumnX,
 } from "@/lib/preview-column-snap"
+import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
 import type { PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
@@ -149,12 +150,9 @@ export function usePreviewGeometry({
   ): ModulePosition => {
     const metrics = getGridMetrics()
     const safeCols = Math.max(1, Math.min(result.settings.gridCols, columns))
-    const minCol = -Math.max(0, safeCols - 1)
-    const maxCol = Math.max(0, metrics.gridCols - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
     return {
-      col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
+      col: clampLayerColumn(position.col, { span: safeCols, gridCols: metrics.gridCols }),
+      row: clampFreePlacementRow(position.row, metrics.maxBaselineRow),
     }
   }, [getGridMetrics, result.settings.gridCols])
 

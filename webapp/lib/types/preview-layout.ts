@@ -43,6 +43,9 @@ export type PreviewLayoutState<
   imageColumnSpans?: Partial<Record<Key, number>>
   imageRowSpans?: Partial<Record<Key, number>>
   imageHeightBaselines?: Partial<Record<Key, number>>
+  imageSnapToColumns?: Partial<Record<Key, boolean>>
+  imageSnapToBaseline?: Partial<Record<Key, boolean>>
+  imageRotations?: Partial<Record<Key, number>>
   imageColors?: Partial<Record<Key, string>>
   imageOpacities?: Partial<Record<Key, number>>
 }

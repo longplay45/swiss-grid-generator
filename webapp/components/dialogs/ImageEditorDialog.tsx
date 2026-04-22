@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { EditorSidebarSection } from "@/components/layout/EditorSidebarSection"
 import { EditorColorSchemeControls } from "@/components/ui/editor-color-scheme-controls"
 import { Label } from "@/components/ui/label"
+import { DebouncedSlider } from "@/components/ui/slider"
 import {
   Select,
   SelectContent,
@@ -12,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { clampRotation } from "@/lib/block-constraints"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import {
   clampTransparencyPercent,
@@ -29,6 +32,9 @@ export type ImageEditorState = {
   draftColumns: number
   draftRows: number
   draftHeightBaselines: number
+  draftSnapToColumns: boolean
+  draftSnapToBaseline: boolean
+  draftRotation: number
   draftColor: string
   draftOpacity: number
 }
@@ -228,10 +234,15 @@ export function ImageEditorDialog({
   const triggerClassName = `h-9 ${tone.input}`
   const textInputClassName = `h-9 w-full rounded-md border px-3 text-sm outline-none ${tone.input}`
   const sectionLabelClassName = `text-sm ${tone.muted}`
+  const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-gray-300 data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+  const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-white shadow-none data-[state=checked]:translate-x-3"
   const infoRows = [
     ["Rows", String(editorState.draftRows)],
     ["Baselines", String(editorState.draftHeightBaselines)],
     ["Cols", String(editorState.draftColumns)],
+    ["Snap X", editorState.draftSnapToColumns ? "On" : "Off"],
+    ["Snap Y", editorState.draftSnapToBaseline ? "On" : "Off"],
+    ["Rotation", `${Math.round(editorState.draftRotation)}deg`],
     ["Scheme", colorSchemes.find((scheme) => scheme.id === editorColorScheme)?.label ?? editorColorScheme],
     ["Color", editorState.draftColor],
     ["Transparency", `${transparencyPercent}%`],
@@ -273,9 +284,9 @@ export function ImageEditorDialog({
               </span>
             </span>
           )}
-          tooltip="Rows, baselines, and column span; geometry dropdowns preview on rollover"
+          tooltip="Rows, baselines, columns, axis snap, and rotation; geometry dropdowns preview on rollover"
           collapsed={collapsed.geometry}
-          collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols`}
+          collapsedSummary={`${editorState.draftRows} rows, ${editorState.draftColumns} cols, ${Math.round(editorState.draftRotation)}deg`}
           onHeaderClick={handleSectionHeaderClick("geometry")}
           onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}
@@ -353,6 +364,61 @@ export function ImageEditorDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Snap to Columns (X)</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>Lock horizontal placement to column anchors.</p>
+              </div>
+              <Switch
+                checked={editorState.draftSnapToColumns}
+                onCheckedChange={(checked) => setEditorState((prev) => prev ? { ...prev, draftSnapToColumns: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Snap to Baseline (Y)</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>Lock vertical placement to baseline steps.</p>
+              </div>
+              <Switch
+                checked={editorState.draftSnapToBaseline}
+                onCheckedChange={(checked) => setEditorState((prev) => prev ? { ...prev, draftSnapToBaseline: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className={sectionLabelClassName}>Rotation</Label>
+              <span className={`rounded px-1.5 py-0.5 text-xs font-mono ${isDarkMode ? "bg-gray-800 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+                {Math.round(editorState.draftRotation)}°
+              </span>
+            </div>
+            <DebouncedSlider
+              value={[editorState.draftRotation]}
+              min={-180}
+              max={180}
+              step={1}
+              onValueCommit={([value]) => {
+                setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRotation: clampRotation(value),
+                } : prev)
+              }}
+              onThumbDoubleClick={() => {
+                setEditorState((prev) => prev ? {
+                  ...prev,
+                  draftRotation: 0,
+                } : prev)
+              }}
+            />
           </div>
         </EditorSidebarSection>
         </div>

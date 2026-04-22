@@ -21,7 +21,7 @@ test("left-aligned text guides keep horizontal and vertical anchors matched", ()
       baselineY: 212,
       caretStops: [],
     }],
-  }, 12)
+  })
 
   assert.equal(guide.verticalX, 100)
   assert.equal(guide.horizontalX, 100)
@@ -46,7 +46,7 @@ test("right-aligned text guides keep horizontal and vertical anchors matched", (
       baselineY: 272,
       caretStops: [],
     }],
-  }, 12)
+  })
 
   assert.equal(guide.verticalX, 160)
   assert.equal(guide.horizontalX, 160)

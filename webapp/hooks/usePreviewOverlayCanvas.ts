@@ -3,6 +3,7 @@ import type { MutableRefObject, RefObject } from "react"
 
 import { resolveBlockHeight } from "@/lib/block-height"
 import type { GridResult } from "@/lib/grid-calculator"
+import { resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { getPreviewTextGuideGeometry, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
@@ -157,8 +158,9 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         const dragSpan = getPlacementSpan(dragState.key)
         const dragRows = getPlacementRows(dragState.key)
         const dragHeightBaselines = getPlacementHeightBaselines(dragState.key)
+        const { minCol } = resolveLayerColumnBounds({ span: dragSpan, gridCols: result.settings.gridCols })
         const snappedStartCol = Math.max(
-          -Math.max(0, dragSpan - 1),
+          minCol,
           Math.min(Math.max(0, result.settings.gridCols - 1), Math.round(dragState.preview.col)),
         )
         const snapX = contentLeft + resolvePreviewColumnX(dragState.preview.col, metrics.colStarts, firstColumnStepPt) * scale
@@ -180,7 +182,7 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
         }) * scale
         drawPlacementGuide(snapX, snapX, snapY + baselineStep, snapWidth, snapHeight)
       } else if (hoveredTextGuideRect && hoveredTextGuidePlan) {
-        const hoveredGuide = getPreviewTextGuideGeometry(hoveredTextGuidePlan, baselineStep, hoveredTextGuideRect)
+        const hoveredGuide = getPreviewTextGuideGeometry(hoveredTextGuidePlan, hoveredTextGuideRect)
         drawPlacementGuide(
           hoveredGuide.horizontalX,
           hoveredGuide.verticalX,
@@ -205,8 +207,8 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           selectedImageRect.height,
         )
       } else if (selectedTextPlan) {
-        const guideRect = getPreviewTextGuideRect(selectedTextPlan, baselineStep)
-        const guide = getPreviewTextGuideGeometry(selectedTextPlan, baselineStep, guideRect)
+        const guideRect = getPreviewTextGuideRect(selectedTextPlan)
+        const guide = getPreviewTextGuideGeometry(selectedTextPlan, guideRect)
         drawPlacementGuide(
           guide.horizontalX,
           guide.verticalX,
@@ -217,8 +219,8 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       }
 
       if (activeEditorPlan) {
-        const guideRect = getPreviewTextGuideRect(activeEditorPlan, baselineStep)
-        const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, baselineStep, guideRect)
+        const guideRect = getPreviewTextGuideRect(activeEditorPlan)
+        const activeGuide = getPreviewTextGuideGeometry(activeEditorPlan, guideRect)
         drawPlacementGuide(
           activeGuide.horizontalX,
           activeGuide.verticalX,

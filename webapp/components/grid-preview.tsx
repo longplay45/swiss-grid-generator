@@ -347,7 +347,6 @@ export const GridPreview = memo(function GridPreview({
     getGridMetrics,
     toPagePoint,
     toPagePointFromClient,
-    clampImageBaselinePosition,
     clampImageModulePosition,
     resolveModulePositionAtPagePoint,
   } = usePreviewGeometry({
@@ -390,6 +389,9 @@ export const GridPreview = memo(function GridPreview({
     setImageColumnSpans,
     setImageRowSpans,
     setImageHeightBaselines,
+    setImageSnapToColumns,
+    setImageSnapToBaseline,
+    setImageRotations,
     setImageColors,
     setImageOpacities,
     imageEditorState,
@@ -397,6 +399,9 @@ export const GridPreview = memo(function GridPreview({
     getImageSpan,
     getImageRows,
     getImageHeightBaselines,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
+    getImageRotation,
     getImageColorReference,
     getImageColor,
     getImageOpacity,
@@ -439,14 +444,13 @@ export const GridPreview = memo(function GridPreview({
     baseFont,
     imageColorScheme,
     getGridMetrics,
-    clampImageBaselinePosition,
     onImageColorSchemeChange,
   })
 
   const {
     snapToModule,
     snapToBaseline,
-    resolveTextBlockPlacement,
+    resolveLayerPlacement,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,
     findTopmostDraggableAtPoint,
@@ -462,6 +466,8 @@ export const GridPreview = memo(function GridPreview({
     getPlacementSpan,
     isSnapToColumnsEnabled,
     isSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
     toPagePointFromClient,
   })
 
@@ -671,7 +677,7 @@ export const GridPreview = memo(function GridPreview({
     toPagePointFromClient,
     snapToModule,
     snapToBaseline,
-    resolveTextBlockPlacement,
+    resolveLayerPlacement,
     getGridMetrics,
     findTopmostDraggableAtPoint,
     findTopmostBlockAtPoint,
@@ -684,6 +690,8 @@ export const GridPreview = memo(function GridPreview({
     getImageRows,
     getImageHeightBaselines,
     getImageColorReference,
+    getImageOpacity,
+    getImageRotation,
     getBlockRows,
     getBlockHeightBaselines,
     getBlockSpan,
@@ -692,6 +700,8 @@ export const GridPreview = memo(function GridPreview({
     isSyllableDivisionEnabled,
     isSnapToColumnsEnabled,
     isSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
     blockOrder,
     textContent,
     blockCustomSizes,
@@ -976,7 +986,9 @@ export const GridPreview = memo(function GridPreview({
     getImageHeightBaselines,
     getImageColor,
     getImageOpacity,
-    clampImageBaselinePosition,
+    getImageRotation,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
     isSnapToColumnsEnabled,
@@ -999,9 +1011,9 @@ export const GridPreview = memo(function GridPreview({
     ? imageRectsRef.current[hoveredLayerKey] ?? null
     : null
   const hoveredTextGuideRect = hoveredTextPlan
-    ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null, result.grid.gridUnit * scale)
+    ? getHoveredPreviewTextGuideRect(hoveredTextPlan, hoverState?.point ?? null)
     : linkedHoveredTextPlan
-      ? getPreviewTextGuideRect(linkedHoveredTextPlan, result.grid.gridUnit * scale)
+      ? getPreviewTextGuideRect(linkedHoveredTextPlan)
       : hoveredTextRect
   const hoveredTextGuidePlan = hoveredTextPlan ?? linkedHoveredTextPlan
   const hoveredImageRect = hoverImageKey
@@ -1080,6 +1092,9 @@ export const GridPreview = memo(function GridPreview({
       setImageColumnSpans((prev) => omitOptionalRecordKey(prev, key))
       setImageRowSpans((prev) => omitOptionalRecordKey(prev, key))
       setImageHeightBaselines((prev) => omitOptionalRecordKey(prev, key))
+      setImageSnapToColumns((prev) => omitOptionalRecordKey(prev, key))
+      setImageSnapToBaseline((prev) => omitOptionalRecordKey(prev, key))
+      setImageRotations((prev) => omitOptionalRecordKey(prev, key))
       setImageColors((prev) => omitOptionalRecordKey(prev, key))
       setImageOpacities((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
@@ -1127,6 +1142,9 @@ export const GridPreview = memo(function GridPreview({
     setImageOpacities,
     setImageOrder,
     setImageRowSpans,
+    setImageRotations,
+    setImageSnapToBaseline,
+    setImageSnapToColumns,
     setLayerOrder,
   ])
 

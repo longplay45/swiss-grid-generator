@@ -514,6 +514,10 @@ async function buildSpreadAndStories(
       localItemSequence += 1
       const signature = `${imagePlan.fillColor.r},${imagePlan.fillColor.g},${imagePlan.fillColor.b}`
       const fillTint = Math.max(0, Math.min(100, Math.round(imagePlan.opacity * 100)))
+      const imageTransform = multiplyMatrices(
+        pageTransformMatrix,
+        buildRotationMatrix(imagePlan.rotation, imagePlan.rotationOriginX, imagePlan.rotationOriginY),
+      )
       placeholderItems.push(
         renderIdmlElement(
           "Rectangle",
@@ -521,7 +525,7 @@ async function buildSpreadAndStories(
             Self: `sggPlaceholder_${pageIndex + 1}_${localItemSequence}`,
             Name: `Placeholder ${imagePlan.key}`,
             ItemLayer: LAYER_PLACEHOLDERS_ID,
-            ItemTransform: isIdentityMatrix(pageTransformMatrix) ? undefined : formatMatrix(pageTransformMatrix),
+            ItemTransform: isIdentityMatrix(imageTransform) ? undefined : formatMatrix(imageTransform),
             Visible: true,
             FillColor: colorIdBySignature.get(signature) ?? COLOR_BLACK_ID,
             FillTint: fillTint,

@@ -43,7 +43,7 @@ export function usePreviewInlineEditorLayout<StyleKey extends string, Key extend
     const textAscent = plan?.renderedLines[0]
       ? Math.max(0, plan.renderedLines[0].baselineY - plan.renderedLines[0].top)
       : plan?.commands[0]
-        ? Math.max(0, plan.commands[0].y - ((plan.rotationOriginY ?? rect.y) + gridUnit * scale))
+        ? Math.max(0, plan.commands[0].y - (plan.rotationOriginY ?? rect.y))
       : gridUnit * scale
 
     return {

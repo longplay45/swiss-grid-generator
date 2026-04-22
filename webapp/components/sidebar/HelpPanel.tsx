@@ -213,7 +213,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
             <li>Increasing paragraph `Cols` preserves the anchored column even when the wider frame intentionally overhangs the page edge.</li>
             <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
-            <li>`Snap to Columns (X)` locks paragraph placement to logical column anchors; turning it off allows free horizontal placement inside the page bounds.</li>
+            <li>`Snap to Columns (X)` locks paragraph placement to logical column anchors; turning it off allows free horizontal placement with symmetric one-column overhang into the side margins.</li>
             <li>`Snap to Baseline (Y)` keeps paragraph placement on editorial Y anchors; normal drag snaps to module tops, `Shift`/`Ctrl` drag snaps to baseline rows, and turning it off allows free vertical placement.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
@@ -258,10 +258,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-image-editor-geometry" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Geometry Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Rows, baselines, and columns.</li>
+            <li>Rows, baselines, columns, `Snap to Columns (X)`, `Snap to Baseline (Y)`, and placeholder rotation (`-180..180`).</li>
             <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
             <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
+            <li>`Snap to Columns (X)` locks horizontal placement to logical column anchors; turning it off allows free horizontal placement with symmetric one-column overhang into the side margins.</li>
+            <li>`Snap to Baseline (Y)` keeps placeholder placement on editorial Y anchors; normal drag snaps to module tops, `Shift`/`Ctrl` drag snaps to baseline rows, and turning it off allows free vertical placement.</li>
           </ul>
         </div>
 
@@ -276,7 +278,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-image-editor-info" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Info summarizes the current rows, baselines, columns, scheme, color, and transparency for the active placeholder.</li>
+            <li>Info summarizes the current rows, baselines, columns, X/Y snap state, rotation, scheme, color, and transparency for the active placeholder.</li>
           </ul>
         </div>
       </section>
@@ -288,11 +290,11 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Drag and Placement
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Default paragraph drag respects each paragraph&apos;s current `Snap to Columns (X)` state; when `Snap to Baseline (Y)` is on, the default Y target is the nearest module top. Image placeholders drag on baseline anchors.</li>
+          <li>Default paragraph and image-placeholder drag respect each layer&apos;s current `Snap to Columns (X)` state; when `Snap to Baseline (Y)` is on, the default Y target is the nearest module top.</li>
           <li>`Alt/Option` + drag duplicates a block and drops the copy.</li>
           <li>`Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).</li>
-          <li>Holding `Shift` during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row (`Ctrl` fallback).</li>
-          <li>Paragraph drag stays within the current paragraph placement bounds; image-placeholder drag keeps the extended baseline/overset range.</li>
+          <li>Holding `Shift` during paragraph or image-placeholder drag temporarily snaps the Y position to the nearest baseline row (`Ctrl` fallback).</li>
+          <li>Paragraph and image-placeholder drag stay within their current placement bounds, including the extended overset range used by unsnapped and overhanging placements.</li>
         </ul>
       </section>
 
@@ -691,7 +693,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
           <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
-          <li>Paragraphs and image placeholders are saved with logical anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes; paragraphs also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags.</li>
+          <li>Paragraphs and image placeholders are saved with logical anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes; both layer types also persist independent `Snap to Columns (X)`, `Snap to Baseline (Y)`, and rotation values.</li>
           <li>Load Project JSON restores the full project structure and the active page where valid.</li>
           <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
           <li>Unknown font overrides are dropped during load normalization.</li>

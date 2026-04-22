@@ -10,12 +10,11 @@ export type PreviewTextGuideGeometry = {
 
 export function getPreviewTextGuideRect<Key extends string>(
   plan: Pick<BlockRenderPlan<Key>, "guideRects" | "rect" | "rotationOriginX" | "rotationOriginY">,
-  baselineStep: number,
 ): BlockRect {
   if (plan.guideRects.length > 0) return plan.guideRects[0]
   return {
     x: plan.rotationOriginX,
-    y: plan.rotationOriginY + baselineStep,
+    y: plan.rotationOriginY,
     width: plan.rect.width,
     height: plan.rect.height,
   }
@@ -24,11 +23,10 @@ export function getPreviewTextGuideRect<Key extends string>(
 export function getHoveredPreviewTextGuideRect<Key extends string>(
   plan: Pick<BlockRenderPlan<Key>, "guideRects" | "rect" | "rotationOriginX" | "rotationOriginY">,
   hoverPoint: PagePoint | null,
-  baselineStep: number,
 ): BlockRect {
   const guideRects = plan.guideRects.length > 0
     ? plan.guideRects
-    : [getPreviewTextGuideRect(plan, baselineStep)]
+    : [getPreviewTextGuideRect(plan)]
   if (!hoverPoint) return guideRects[0]
 
   let bestRect = guideRects[0]
@@ -49,10 +47,9 @@ export function getPreviewTextGuideGeometry<Key extends string>(
     renderedLines: { left: number; top: number; width: number; baselineY: number }[]
     commands: { x: number; y: number }[]
   },
-  baselineStep: number,
   targetGuideRect?: BlockRect | null,
 ): PreviewTextGuideGeometry {
-  const guideRect = targetGuideRect ?? getPreviewTextGuideRect(plan, baselineStep)
+  const guideRect = targetGuideRect ?? getPreviewTextGuideRect(plan)
 
   return {
     horizontalX: guideRect.x,

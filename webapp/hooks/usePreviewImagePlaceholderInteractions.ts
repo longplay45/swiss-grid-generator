@@ -3,6 +3,7 @@ import type { MouseEvent as ReactMouseEvent } from "react"
 
 import type { PreviewCanvasInteractionArgs } from "@/hooks/preview-canvas-interaction-types"
 import type { DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
+import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
 import type { PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
@@ -16,6 +17,10 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "getImageRows"
   | "getImageHeightBaselines"
   | "getImageColorReference"
+  | "getImageOpacity"
+  | "getImageRotation"
+  | "isImageSnapToColumnsEnabled"
+  | "isImageSnapToBaselineEnabled"
   | "gridCols"
   | "recordHistoryBeforeChange"
   | "insertImagePlaceholder"
@@ -41,6 +46,10 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
   getImageRows,
   getImageHeightBaselines,
   getImageColorReference,
+  getImageOpacity,
+  getImageRotation,
+  isImageSnapToColumnsEnabled,
+  isImageSnapToBaselineEnabled,
   gridCols,
   recordHistoryBeforeChange,
   insertImagePlaceholder,
@@ -56,12 +65,14 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     const sourceRows = getImageRows(drag.key)
     const sourceHeightBaselines = getImageHeightBaselines(drag.key)
     const sourceColor = getImageColorReference(drag.key)
+    const sourceOpacity = getImageOpacity(drag.key)
+    const sourceRotation = getImageRotation(drag.key)
+    const sourceSnapToColumns = isImageSnapToColumnsEnabled(drag.key)
+    const sourceSnapToBaseline = isImageSnapToBaselineEnabled(drag.key)
     const metrics = getGridMetrics()
-    const minCol = -Math.max(0, sourceColumns - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
     const resolvedPosition = {
-      col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), nextPreview.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, nextPreview.row)),
+      col: clampLayerColumn(nextPreview.col, { span: sourceColumns, gridCols, snapToColumns: sourceSnapToColumns }),
+      row: clampFreePlacementRow(nextPreview.row, metrics.maxBaselineRow),
     }
 
     if (copyOnDrop) {
@@ -74,6 +85,10 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
         rows: sourceRows,
         heightBaselines: sourceHeightBaselines,
         color: sourceColor,
+        opacity: sourceOpacity,
+        snapToColumns: sourceSnapToColumns,
+        snapToBaseline: sourceSnapToBaseline,
+        rotation: sourceRotation,
         afterKey: drag.key,
       })
       promoteLayerToTop(newKey)
@@ -90,7 +105,11 @@ export function usePreviewImagePlaceholderInteractions<Key extends string, Style
     getGridMetrics,
     getImageHeightBaselines,
     getImageColorReference,
+    getImageOpacity,
+    getImageRotation,
     getImageRows,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
     getImageSpan,
     getNextImagePlaceholderId,
     gridCols,

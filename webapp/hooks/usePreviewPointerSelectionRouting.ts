@@ -3,7 +3,7 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 
 import type {
   PreviewCanvasInteractionArgs,
-  TextBlockPlacementOptions,
+  LayerPlacementOptions,
 } from "@/hooks/preview-canvas-interaction-types"
 import { usePreviewDrag, type DragState as PreviewDragState } from "@/hooks/usePreviewDrag"
 import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants"
@@ -20,8 +20,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "imageModulePositions"
   | "toPagePoint"
   | "toPagePointFromClient"
-  | "snapToBaseline"
-  | "resolveTextBlockPlacement"
+  | "resolveLayerPlacement"
   | "findTopmostDraggableAtPoint"
   | "resolveSelectedLayerAtClientPoint"
   | "isImagePlaceholderKey"
@@ -33,6 +32,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "openTextEditor"
   | "openImageEditor"
   | "isSnapToBaselineEnabled"
+  | "isImageSnapToBaselineEnabled"
 > & {
   handleTextDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
   handleImageDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
@@ -54,14 +54,14 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   imageModulePositions,
   toPagePoint,
   toPagePointFromClient,
-  snapToBaseline,
-  resolveTextBlockPlacement,
+  resolveLayerPlacement,
   findTopmostDraggableAtPoint,
   resolveSelectedLayerAtClientPoint,
   isImagePlaceholderKey,
   onSelectLayer,
   clearHover,
   isSnapToBaselineEnabled,
+  isImageSnapToBaselineEnabled,
   dragEndedAtRef,
   touchLongPressMs,
   touchCancelDistancePx,
@@ -98,7 +98,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     handleCanvasPointerUp,
     handleCanvasPointerCancel,
     handleCanvasLostPointerCapture,
-  } = usePreviewDrag<Key, TextBlockPlacementOptions | undefined>({
+  } = usePreviewDrag<Key, LayerPlacementOptions | undefined>({
     showTypography,
     isEditorOpen: editorOpen,
     canvasRef,
@@ -107,18 +107,15 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     blockModulePositions: draggableModulePositions,
     findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
     toPagePoint,
-    resolveDragPreviewPosition: (pageX, pageY, key, context) => (
-      isImagePlaceholderKey(key)
-        ? snapToBaseline(pageX, pageY, key)
-        : resolveTextBlockPlacement(pageX, pageY, key, context)
-    ),
+    resolveDragPreviewPosition: (pageX, pageY, key, context) => resolveLayerPlacement(pageX, pageY, key, context),
     getDragPreviewContext: (event, key) => {
-      if (isImagePlaceholderKey(key)) return undefined
       if (event.shiftKey || event.ctrlKey) {
         return { dragYMode: "baseline" }
       }
       return {
-        dragYMode: isSnapToBaselineEnabled(key) ? "moduleTop" : "free",
+        dragYMode: isImagePlaceholderKey(key)
+          ? (isImageSnapToBaselineEnabled(key) ? "moduleTop" : "free")
+          : (isSnapToBaselineEnabled(key) ? "moduleTop" : "free"),
       }
     },
     onDrop: applyDragDrop,
@@ -149,6 +146,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     clearHover,
     editorOpen,
     handleCanvasPointerDown,
+    isImageSnapToBaselineEnabled,
     isImagePlaceholderKey,
     onSelectLayer,
     openImageEditor,
@@ -170,6 +168,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     dragEndedAtRef,
     handleImageDoubleClick,
     openTextEditorFromCanvas,
+    resolveLayerPlacement,
     showTypography,
     toPagePointFromClient,
   ])

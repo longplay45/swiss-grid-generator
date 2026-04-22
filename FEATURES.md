@@ -56,7 +56,7 @@ Current capability inventory for Swiss Grid Generator.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
-- `Snap to Columns (X)` keeps paragraphs on logical column anchors; turning it off allows free horizontal placement.
+- `Snap to Columns (X)` keeps paragraphs on logical column anchors; turning it off allows free horizontal placement with symmetric one-column overhang into the side margins.
 - `Snap to Baseline (Y)` keeps paragraphs on editorial Y anchors; normal drag uses module tops, `Shift`/`Ctrl` drag uses baseline rows, and turning it off allows free vertical placement.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
@@ -84,8 +84,8 @@ Current capability inventory for Swiss Grid Generator.
 - Drag paragraphs and placeholders to move them.
 - `Alt/Option` + drag duplicates the hovered layer.
 - Default paragraph drag respects each paragraph's current `Snap to Columns (X)` state and, when `Snap to Baseline (Y)` is on, snaps Y to the nearest module top.
-- Holding `Shift` during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row (`Ctrl` fallback).
-- Image placeholders drag on baseline anchors and keep the extended overset range.
+- Holding `Shift` during paragraph or image-placeholder drag temporarily snaps the Y position to the nearest baseline row (`Ctrl` fallback).
+- Image placeholders now use the same X/Y snap model as paragraphs, including free-axis placement and per-layer rotation.
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
@@ -98,7 +98,7 @@ Current capability inventory for Swiss Grid Generator.
   - `column`
   - `row`
   - `baselineOffset`
-- Paragraphs also persist independent X/Y snap flags; unsnapped paragraph anchors may carry fractional `column` and/or `baselineOffset` values.
+- Paragraphs and image placeholders both persist independent X/Y snap flags; unsnapped anchors may carry fractional `column` and/or `baselineOffset` values.
 - Increasing columns/rows preserves existing anchors.
 - Increasing a paragraph's column span preserves its anchored column even when the wider frame intentionally overhangs the page edge.
 - Decreasing columns/rows is blocked when any paragraph or image placeholder would fall outside the new grid.
@@ -109,15 +109,17 @@ Current capability inventory for Swiss Grid Generator.
 - Independent row/column spans plus additional baseline height.
 - Color-scheme aware placeholder fills.
 - Placeholder-specific transparency control.
+- Placeholder-specific `Snap to Columns (X)`, `Snap to Baseline (Y)`, and rotation controls.
+- With X snapping off, image placeholders use the same symmetric one-column side-margin overhang as paragraphs.
 - Stable logical positioning across grid changes.
 - Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
 - The image editor header shows `IMAGE` plus the current placeholder swatch color.
-- Geometry section uses one parameter row per setting.
+- Geometry section includes rows, baselines, columns, X/Y snapping, and rotation.
 - Geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Scheme, swatch color, and transparency live in the Color section.
 - Scheme dropdown previews the hovered placeholder palette before commit.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
-- Info section summarizes rows, baselines, columns, scheme, color, and transparency.
+- Info section summarizes rows, baselines, columns, X/Y snap state, rotation, scheme, color, and transparency.
 
 ## Presets
 

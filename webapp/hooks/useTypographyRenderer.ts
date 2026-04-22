@@ -5,6 +5,7 @@ import type { GridResult } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
+import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { TextFormatRun, BaseTextFormat } from "@/lib/text-format-runs"
 import {
   buildCanvasImagePlans,
@@ -13,6 +14,7 @@ import {
   drawCanvasImagePlan,
   drawCanvasTextPlan,
   drawCanvasLayerStack,
+  type CanvasImageRenderPlan,
 } from "@/lib/canvas-page-renderer"
 import type { BlockRect, BlockRenderPlan, TextAlignMode, TextVerticalAlignMode } from "@/lib/preview-types"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
@@ -68,7 +70,9 @@ type Args<BlockId extends string> = {
   getImageHeightBaselines: (key: BlockId) => number
   getImageColor: (key: BlockId) => string
   getImageOpacity: (key: BlockId) => number
-  clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
+  getImageRotation: (key: BlockId) => number
+  isImageSnapToColumnsEnabled: (key: BlockId) => boolean
+  isImageSnapToBaselineEnabled: (key: BlockId) => boolean
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
   isSnapToColumnsEnabled: (key: BlockId) => boolean
@@ -142,7 +146,9 @@ export function useTypographyRenderer<BlockId extends string>({
   getImageHeightBaselines,
   getImageColor,
   getImageOpacity,
-  clampImageBaselinePosition,
+  getImageRotation,
+  isImageSnapToColumnsEnabled,
+  isImageSnapToBaselineEnabled,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
   isSnapToColumnsEnabled,
@@ -220,8 +226,8 @@ export function useTypographyRenderer<BlockId extends string>({
       const minBaselineRow = -maxBaselineRow
       const gutterX = gridMarginHorizontal * scale
       let draftPlans = new Map<BlockId, BlockRenderPlan<BlockId>>()
-      let imagePlans = new Map<BlockId, { rect: BlockRect; color: string; opacity: number }>()
-      let dragPreviewImagePlan: { rect: BlockRect; color: string; opacity: number } | null = null
+      let imagePlans = new Map<BlockId, CanvasImageRenderPlan>()
+      let dragPreviewImagePlan: CanvasImageRenderPlan | null = null
       let dragPreviewTextPlan: BlockRenderPlan<BlockId> | null = null
       const textDuplicatePreviewKey = dragState?.copyOnDrop && blockOrder.includes(dragState.key)
         ? dragState.key
@@ -237,10 +243,13 @@ export function useTypographyRenderer<BlockId extends string>({
         const manual = resolveTextManualPosition(key)
         if (!manual) return { x: fallbackX, y: fallbackY }
         const span = getBlockSpan(key)
-        const minCol = -Math.max(0, span - 1)
         const clamped = {
-          col: Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col)),
-          row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
+          col: clampLayerColumn(manual.col, {
+            span,
+            gridCols,
+            snapToColumns: isSnapToColumnsEnabled(key),
+          }),
+          row: clampFreePlacementRow(manual.row, maxBaselineRow),
         }
         return {
           x: toColumnX(clamped.col),
@@ -258,10 +267,14 @@ export function useTypographyRenderer<BlockId extends string>({
           getImageHeightBaselines,
           getImageColor,
           getImageOpacity,
-          clampImageBaselinePosition,
+          getImageRotation,
+          isImageSnapToColumnsEnabled,
+          isImageSnapToBaselineEnabled,
           toColumnX,
           baselineOriginTop,
           baselineStep,
+          maxBaselineRow,
+          gridCols,
           rowStartsInBaselines,
           gridRows,
           moduleWidths,
@@ -322,7 +335,11 @@ export function useTypographyRenderer<BlockId extends string>({
           getBlockColumnStart: (key, span) => {
             const manual = resolveTextManualPosition(key, dragPreviewOverride)
             if (!manual) return 0
-            const minCol = -Math.max(0, span - 1)
+            const { minCol } = resolveLayerColumnBounds({
+              span,
+              gridCols,
+              snapToColumns: isSnapToColumnsEnabled(key),
+            })
             const rawCol = isSnapToColumnsEnabled(key) ? manual.col : Math.round(manual.col)
             return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
           },
@@ -335,10 +352,13 @@ export function useTypographyRenderer<BlockId extends string>({
             const manual = resolveTextManualPosition(key, dragPreviewOverride)
             if (!manual) return getOriginForBlock(key, fallbackX, fallbackY)
             const span = getBlockSpan(key)
-            const minCol = -Math.max(0, span - 1)
             const clamped = {
-              col: Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col)),
-              row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
+              col: clampLayerColumn(manual.col, {
+                span,
+                gridCols,
+                snapToColumns: isSnapToColumnsEnabled(key),
+              }),
+              row: clampFreePlacementRow(manual.row, maxBaselineRow),
             }
             return {
               x: toColumnX(clamped.col),
@@ -445,7 +465,6 @@ export function useTypographyRenderer<BlockId extends string>({
     blockTextAlignments,
     blockVerticalAlignments,
     canvasRef,
-    clampImageBaselinePosition,
     dragState,
     getBlockFont,
     getBlockFontWeight,
@@ -460,7 +479,10 @@ export function useTypographyRenderer<BlockId extends string>({
     getBlockSpan,
     getImageColor,
     getImageRows,
+    getImageRotation,
     getImageSpan,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
     getOpticalOffset,
     getWrappedText,
     imageModulePositions,

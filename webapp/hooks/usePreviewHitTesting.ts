@@ -5,7 +5,8 @@ import type { BlockRect, BlockRenderPlan, PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
 import type { PreviewGridMetrics } from "@/hooks/usePreviewGeometry"
-import type { TextBlockDragYMode, TextBlockPlacementOptions } from "@/hooks/preview-canvas-interaction-types"
+import type { LayerDragYMode, LayerPlacementOptions } from "@/hooks/preview-canvas-interaction-types"
+import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
 
 type Args<Key extends string> = {
   blockRectsRef: RefObject<Record<Key, BlockRect>>
@@ -18,6 +19,8 @@ type Args<Key extends string> = {
   getPlacementSpan: (key: Key) => number
   isSnapToColumnsEnabled: (key: Key) => boolean
   isSnapToBaselineEnabled: (key: Key) => boolean
+  isImageSnapToColumnsEnabled: (key: Key) => boolean
+  isImageSnapToBaselineEnabled: (key: Key) => boolean
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
 }
 
@@ -58,6 +61,8 @@ export function usePreviewHitTesting<Key extends string>({
   getPlacementSpan,
   isSnapToColumnsEnabled,
   isSnapToBaselineEnabled,
+  isImageSnapToColumnsEnabled,
+  isImageSnapToBaselineEnabled,
   toPagePointFromClient,
 }: Args<Key>) {
   const imageKeySet = useMemo(() => new Set(imageOrder), [imageOrder])
@@ -75,12 +80,9 @@ export function usePreviewHitTesting<Key extends string>({
   const clampBaselinePosition = useCallback((position: ModulePosition, key: Key): ModulePosition => {
     const metrics = getGridMetrics()
     const span = getPlacementSpan(key)
-    const minCol = -Math.max(0, span - 1)
-    const maxCol = Math.max(0, metrics.gridCols - 1)
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
     return {
-      col: Math.max(minCol, Math.min(maxCol, position.col)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, position.row)),
+      col: clampLayerColumn(position.col, { span, gridCols: metrics.gridCols }),
+      row: clampFreePlacementRow(position.row, metrics.maxBaselineRow),
     }
   }, [getGridMetrics, getPlacementSpan])
 
@@ -99,20 +101,18 @@ export function usePreviewHitTesting<Key extends string>({
     return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
 
-  const resolveTextBlockPlacement = useCallback((
+  const resolveLayerPlacement = useCallback((
     pageX: number,
     pageY: number,
     key: Key,
-    options: TextBlockPlacementOptions = {},
+    options: LayerPlacementOptions = {},
   ): ModulePosition => {
     const metrics = getGridMetrics()
     const span = getPlacementSpan(key)
-    const snapToColumns = isSnapToColumnsEnabled(key)
-    const snapToBaseline = isSnapToBaselineEnabled(key)
-    const dragYMode: TextBlockDragYMode = options.dragYMode ?? (snapToBaseline ? "moduleTop" : "free")
-    const minCol = -Math.max(0, span - 1)
-    const maxCol = Math.max(0, metrics.gridCols - (snapToColumns ? 1 : 0))
-    const minRow = -Math.max(0, metrics.maxBaselineRow)
+    const isImage = imageKeySet.has(key)
+    const snapToColumns = isImage ? isImageSnapToColumnsEnabled(key) : isSnapToColumnsEnabled(key)
+    const snapToBaseline = isImage ? isImageSnapToBaselineEnabled(key) : isSnapToBaselineEnabled(key)
+    const dragYMode: LayerDragYMode = options.dragYMode ?? (snapToBaseline ? "moduleTop" : "free")
     const rawCol = snapToColumns
       ? metrics.getNearestCol(pageX)
       : metrics.getInterpolatedCol(pageX)
@@ -122,10 +122,18 @@ export function usePreviewHitTesting<Key extends string>({
         ? metrics.getRowStartBaseline(metrics.getNearestRowIndex(pageY))
         : (pageY - metrics.baselineOriginTop) / Math.max(metrics.baselineStep, 0.0001)
     return {
-      col: Math.max(minCol, Math.min(maxCol, rawCol)),
-      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, rawRow)),
+      col: clampLayerColumn(rawCol, { span, gridCols: metrics.gridCols, snapToColumns }),
+      row: clampFreePlacementRow(rawRow, metrics.maxBaselineRow),
     }
-  }, [getGridMetrics, getPlacementSpan, isSnapToBaselineEnabled, isSnapToColumnsEnabled])
+  }, [
+    getGridMetrics,
+    getPlacementSpan,
+    imageKeySet,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
+    isSnapToColumnsEnabled,
+  ])
 
   const findTopmostLayerAtPoint = useCallback((pageX: number, pageY: number): Key | null => {
     for (let index = resolvedLayerOrder.length - 1; index >= 0; index -= 1) {
@@ -188,7 +196,7 @@ export function usePreviewHitTesting<Key extends string>({
     clampBaselinePosition,
     snapToModule,
     snapToBaseline,
-    resolveTextBlockPlacement,
+    resolveLayerPlacement,
     findTopmostLayerAtPoint,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,

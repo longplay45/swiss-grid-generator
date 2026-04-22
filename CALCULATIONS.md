@@ -581,18 +581,27 @@ absoluteCol = column
 
 This is the anchor model used for preview placement, export resolution, and save/load normalization.
 
-Paragraphs also persist two independent snap flags:
+Paragraphs and image placeholders also persist two independent snap flags:
 
 ```
 snapToColumnsX: boolean
 snapToBaselineY: boolean
 ```
 
-The flags affect drag/editor placement resolution only. The underlying anchor model remains the same for preview, export, and save/load.
+The flags affect drag/editor placement resolution only. The underlying anchor model remains the same for preview, export, and save/load. Both layer types also persist an independent rotation angle around the visible frame's top-left origin.
+
+With `Snap to Columns (X)` off, the horizontal clamp keeps the free-placement envelope symmetric, including the `span = 1` case:
+
+```
+minCol = -max(1, span - 1)
+maxCol = gridCols
+```
+
+So a free-X layer may overhang one column into either side margin while still staying inside the page field.
 
 Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same anchor math; only the state mutation differs (new layer key is created instead of moving the original).
 
-During paragraph drag, a paragraph with `Snap to Baseline (Y)` enabled resolves Y to the nearest module-top row start by default while leaving X placement under the paragraph's current `Snap to Columns (X)` setting:
+During paragraph or image-placeholder drag, a layer with `Snap to Baseline (Y)` enabled resolves Y to the nearest module-top row start by default while leaving X placement under the layer's current `Snap to Columns (X)` setting:
 
 ```
 rawRow = rowStartBaselines[nearestRowIndex(pageY)]
@@ -604,7 +613,7 @@ Holding `Shift` (Ctrl fallback) temporarily switches the Y resolution to the nea
 rawRow = round((pageY - baselineOriginTop) / baselineStep)
 ```
 
-Image placeholders keep their baseline-anchor drag path and extended overset range.
+Image placeholders now use the same X/Y drag resolution model as paragraphs. Their width and height still resolve from image spans and `rows + baselines`, and rotation pivots around the placeholder frame's visible top-left origin.
 
 ### Per-Paragraph Span
 

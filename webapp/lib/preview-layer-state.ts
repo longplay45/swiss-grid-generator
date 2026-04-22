@@ -91,6 +91,9 @@ export function removeLayerFromPreviewLayout<
       imageColumnSpans: omitOptionalRecordKey(layout.imageColumnSpans, key),
       imageRowSpans: omitOptionalRecordKey(layout.imageRowSpans, key),
       imageHeightBaselines: omitOptionalRecordKey(layout.imageHeightBaselines, key),
+      imageSnapToColumns: omitOptionalRecordKey(layout.imageSnapToColumns, key),
+      imageSnapToBaseline: omitOptionalRecordKey(layout.imageSnapToBaseline, key),
+      imageRotations: omitOptionalRecordKey(layout.imageRotations, key),
       imageColors: omitOptionalRecordKey(layout.imageColors, key),
       imageOpacities: omitOptionalRecordKey(layout.imageOpacities, key),
     }

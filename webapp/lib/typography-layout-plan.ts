@@ -1,5 +1,6 @@
 import { resolveBlockHeight } from "@/lib/block-height"
 import { sumAxisSpan } from "@/lib/grid-rhythm"
+import { resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { WrappedTextLine } from "@/lib/text-layout"
 import type { TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
 
@@ -307,7 +308,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const rowSpan = getBlockRows(key)
     const heightBaselines = getBlockHeightBaselines?.(key) ?? 0
     const startColRaw = getBlockColumnStart?.(key, span) ?? 0
-    const startCol = Math.max(-Math.max(0, span - 1), Math.min(Math.max(0, gridCols - 1), startColRaw))
+    const { minCol } = resolveLayerColumnBounds({ span, gridCols })
+    const startCol = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), startColRaw))
     const startRowRaw = getBlockRowStart?.(key, rowSpan) ?? 0
     const startRow = Math.max(0, Math.min(Math.max(0, gridRows - 1), startRowRaw))
     const wrapWidth = getSpanWidth(startCol, span)
@@ -438,7 +440,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       textVerticalAlign,
       blockRotation: getBlockRotation(key),
       rotationOriginX: origin.x,
-      rotationOriginY: origin.y,
+      rotationOriginY: origin.y + baselineStep,
       commands,
     })
 
@@ -483,10 +485,8 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionRowSpan = getBlockRows(captionKey)
   const captionHeightBaselines = getBlockHeightBaselines?.(captionKey) ?? 0
   const captionStartColRaw = getBlockColumnStart?.(captionKey, captionSpan) ?? 0
-  const captionStartCol = Math.max(
-    -Math.max(0, captionSpan - 1),
-    Math.min(Math.max(0, gridCols - 1), captionStartColRaw),
-  )
+  const { minCol: captionMinCol } = resolveLayerColumnBounds({ span: captionSpan, gridCols })
+  const captionStartCol = Math.max(captionMinCol, Math.min(Math.max(0, gridCols - 1), captionStartColRaw))
   const captionStartRowRaw = getBlockRowStart?.(captionKey, captionRowSpan) ?? 0
   const captionStartRow = Math.max(0, Math.min(Math.max(0, gridRows - 1), captionStartRowRaw))
   const captionWidth = getSpanWidth(captionStartCol, captionSpan)
@@ -635,7 +635,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     textVerticalAlign: captionVerticalAlign,
     blockRotation: getBlockRotation(captionKey),
     rotationOriginX: captionOrigin.x,
-    rotationOriginY: captionOrigin.y,
+    rotationOriginY: captionOrigin.y + baselineStep,
     commands: captionCommands,
   })
 

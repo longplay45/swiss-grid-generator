@@ -36,7 +36,6 @@ type Args = {
   baseFont: FontFamily
   imageColorScheme: ImageColorSchemeId
   getGridMetrics: () => GridMetrics
-  clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
 }
 
@@ -45,7 +44,6 @@ export function useGridPreviewDocumentState({
   baseFont,
   imageColorScheme,
   getGridMetrics,
-  clampImageBaselinePosition,
   onImageColorSchemeChange,
 }: Args) {
   const [layerOrder, setLayerOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
@@ -166,6 +164,12 @@ export function useGridPreviewDocumentState({
     setImageColumnSpans,
     setImageRowSpans,
     setImageHeightBaselines,
+    imageSnapToColumns,
+    setImageSnapToColumns,
+    imageSnapToBaseline,
+    setImageSnapToBaseline,
+    imageRotations,
+    setImageRotations,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -175,6 +179,9 @@ export function useGridPreviewDocumentState({
     getImageSpan,
     getImageRows,
     getImageHeightBaselines,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
+    getImageRotation,
     getImageColorReference,
     getImageColor,
     getImageOpacity,
@@ -193,7 +200,6 @@ export function useGridPreviewDocumentState({
     gridCols: result.settings.gridCols,
     gridRows: result.settings.gridRows,
     getGridMetrics,
-    clampImageBaselinePosition,
     onImageColorSchemeChange,
   })
 
@@ -299,6 +305,12 @@ export function useGridPreviewDocumentState({
     setImageColumnSpans,
     setImageRowSpans,
     setImageHeightBaselines,
+    imageSnapToColumns,
+    setImageSnapToColumns,
+    imageSnapToBaseline,
+    setImageSnapToBaseline,
+    imageRotations,
+    setImageRotations,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -308,6 +320,9 @@ export function useGridPreviewDocumentState({
     getImageSpan,
     getImageRows,
     getImageHeightBaselines,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
+    getImageRotation,
     getImageColorReference,
     getImageColor,
     getImageOpacity,

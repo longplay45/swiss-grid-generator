@@ -27,6 +27,7 @@ import {
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
+import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
@@ -90,6 +91,9 @@ export type PageExportImagePlan = PageExportRect & {
   key: BlockId
   fillColor: RgbColor
   opacity: number
+  rotation: number
+  rotationOriginX: number
+  rotationOriginY: number
 }
 
 export type PageExportTextPlan = TypographyLayoutPlan<BlockId, TypographyStyleKey> & {
@@ -319,6 +323,9 @@ export function buildPageExportPlan({
   const imageColumnSpans = layout?.imageColumnSpans ?? {}
   const imageRowSpans = layout?.imageRowSpans ?? {}
   const imageHeightBaselines = layout?.imageHeightBaselines ?? {}
+  const imageSnapToColumns = layout?.imageSnapToColumns ?? {}
+  const imageSnapToBaseline = layout?.imageSnapToBaseline ?? {}
+  const imageRotations = layout?.imageRotations ?? {}
   const imageColors = layout?.imageColors ?? {}
   const imageOpacities = layout?.imageOpacities ?? {}
   const fallbackImageColor = parseHexColor(resolveImageSchemeColor(undefined, imageColorScheme)) ?? { r: 11, g: 53, b: 54 }
@@ -338,20 +345,35 @@ export function buildPageExportPlan({
         baselines: imageHeightBaselines[key],
         gridRows,
       })
+      const snapToColumns = imageSnapToColumns[key] !== false
+      const snapToBaseline = imageSnapToBaseline[key] !== false
       const rows = height.rows
       const heightBaselines = height.baselines
-      const minCol = -Math.max(0, span - 1)
-      const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
-      const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
+      const col = clampLayerColumn(snapToColumns ? Math.round(manual.col) : manual.col, {
+        span,
+        gridCols,
+        snapToColumns,
+      })
+      const row = clampFreePlacementRow(
+        snapToBaseline ? Math.round(manual.row) : manual.row,
+        maxBaselineRow,
+      )
       const rowStartIndex = Math.max(
         0,
         Math.min(Math.max(0, gridRows - 1), findNearestAxisIndex(rowStartsInBaselines, row)),
       )
+      const { minCol } = resolveLayerColumnBounds({ span, gridCols, snapToColumns })
       const snappedStartCol = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), Math.round(col)))
+      const rawRotation = imageRotations[key]
+      const rotation = typeof rawRotation === "number" && Number.isFinite(rawRotation)
+        ? clampRotation(rawRotation)
+        : 0
+      const x = contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep)
+      const y = baselineOriginTop + row * baselineStep + baselineStep
       imagePlans.push({
         key,
-        x: contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep),
-        y: baselineOriginTop + row * baselineStep + baselineStep,
+        x,
+        y,
         width: sumAxisSpan(moduleWidths, snappedStartCol, span, gridMarginHorizontal),
         height: resolveBlockHeight({
           rowStart: rowStartIndex,
@@ -365,6 +387,9 @@ export function buildPageExportPlan({
         }),
         fillColor: parseHexColor(resolveImageSchemeColor(imageColors[key], imageColorScheme)) ?? fallbackImageColor,
         opacity: normalizeImagePlaceholderOpacity(imageOpacities[key]),
+        rotation,
+        rotationOriginX: x,
+        rotationOriginY: y,
       })
     }
   }
@@ -532,10 +557,12 @@ export function buildPageExportPlan({
       return { x: fallbackX, y: fallbackY }
     }
     const span = getBlockSpan(key)
-    const minCol = -Math.max(0, span - 1)
-    const minRow = -Math.max(0, maxBaselineRow)
-    const col = Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col))
-    const row = Math.max(minRow, Math.min(maxBaselineRow, manual.row))
+    const col = clampLayerColumn(manual.col, {
+      span,
+      gridCols,
+      snapToColumns: isSnapToColumnsEnabled(key),
+    })
+    const row = clampFreePlacementRow(manual.row, maxBaselineRow)
     return {
       x: contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep),
       y: baselineOriginTop + row * baselineStep,
@@ -586,7 +613,11 @@ export function buildPageExportPlan({
       getBlockColumnStart: (key, span) => {
         const manual = blockModulePositions[key]
         if (!manual || typeof manual.col !== "number") return 0
-        const minCol = -Math.max(0, span - 1)
+        const { minCol } = resolveLayerColumnBounds({
+          span,
+          gridCols,
+          snapToColumns: isSnapToColumnsEnabled(key),
+        })
         const rawCol = isSnapToColumnsEnabled(key) ? manual.col : Math.round(manual.col)
         return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
       },

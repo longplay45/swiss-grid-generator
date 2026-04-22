@@ -4,6 +4,7 @@ import type { MutableRefObject } from "react"
 import type { FontFamily } from "@/lib/config/fonts"
 import { normalizeHeightMetrics } from "@/lib/block-height"
 import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
+import { resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { toTextBlockPosition } from "@/lib/text-block-position"
 import { normalizeTextFormatRuns, type TextFormatRun } from "@/lib/text-format-runs"
 import { normalizeOpticalKerning, normalizeTrackingScale } from "@/lib/text-rendering"
@@ -291,10 +292,10 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       if (!raw) return acc
       const logical = toTextBlockPosition(raw, metrics.rowStartBaselines)
       const span = nextSpans[key]
-      const minCol = -Math.max(0, span - 1)
-      const maxCol = Math.max(0, gridCols - 1)
+      const snapToColumns = nextSnapToColumns[key] !== false
+      const { minCol, maxCol } = resolveLayerColumnBounds({ span, gridCols, snapToColumns })
       acc[key] = {
-        column: Math.max(minCol, Math.min(maxCol + 1, logical.column)),
+        column: Math.max(minCol, Math.min(maxCol + (snapToColumns ? 1 : 0), logical.column)),
         row: Math.max(0, Math.min(Math.max(0, gridRows - 1), Math.round(logical.row))),
         baselineOffset: logical.baselineOffset,
       }

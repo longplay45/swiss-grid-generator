@@ -160,7 +160,12 @@ export async function renderSwissGridVectorSvg({
     const imagePlan = imagePlans.get(key)
     if (imagePlan) {
       const opacityAttr = imagePlan.opacity < 0.999 ? ` fill-opacity="${formatNumber(imagePlan.opacity)}"` : ""
-      return `<rect id="image-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" x="${formatNumber(imagePlan.x)}" y="${formatNumber(imagePlan.y)}" width="${formatNumber(imagePlan.width)}" height="${formatNumber(imagePlan.height)}" fill="${formatSvgColor(imagePlan.fillColor)}"${opacityAttr} />`
+      const rotationTransform = renderRotationTransform(
+        imagePlan.rotation,
+        imagePlan.rotationOriginX,
+        imagePlan.rotationOriginY,
+      )
+      return `<rect id="image-${quoteAttr(key)}" data-block-key="${quoteAttr(key)}" x="${formatNumber(imagePlan.x)}" y="${formatNumber(imagePlan.y)}" width="${formatNumber(imagePlan.width)}" height="${formatNumber(imagePlan.height)}" fill="${formatSvgColor(imagePlan.fillColor)}"${opacityAttr}${rotationTransform} />`
     }
 
     const textPlan = textPlans.get(key)

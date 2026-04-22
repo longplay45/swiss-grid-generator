@@ -302,7 +302,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Drag to move; paragraphs respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
+- Drag to move; paragraphs and image placeholders respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
+- With `Snap to Columns (X)` off, free horizontal placement may overhang one column into either side margin.
 - Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
@@ -342,6 +343,13 @@ Editor controls:
   - color scheme selector
   - color swatches
   - transparency
+- image Geometry section:
+  - rows
+  - baselines
+  - cols
+  - `Snap to Columns (X)` (`On` / `Off`)
+  - `Snap to Baseline (Y)` (`On` / `Off`)
+  - rotation (`-180..180`, integer degrees)
 - the image editor header shows `IMAGE` plus the current placeholder swatch color
 - image `Rows`, `Baselines`, `Cols`, and `color scheme` dropdown items preview live on rollover before commit
 - Info section: geometry, type/color summary, counts, and `Max/Line`
@@ -391,10 +399,12 @@ Drag behavior:
 - Default drag moves a paragraph.
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
 - Paragraphs and image placeholders are stored as logical anchors: `{ column, row, baselineOffset }`.
-- Paragraphs also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags. When either axis snap is off, the corresponding `column` and/or `baselineOffset` value may remain fractional while the logical row anchor stays stable.
-- With `Snap to Baseline (Y)` on, default paragraph drag snaps Y to the nearest module top.
-- Holding `Shift` (or `Ctrl`) during paragraph drag temporarily snaps the paragraph Y position to the nearest baseline row.
-- Image placeholders drag on baseline anchors and keep the extended overset range.
+- Paragraphs and image placeholders also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags. When either axis snap is off, the corresponding `column` and/or `baselineOffset` value may remain fractional while the logical row anchor stays stable.
+- With `Snap to Columns (X)` off, horizontal placement clamps symmetrically: one-column side-margin overhang remains available on both left and right.
+- Paragraph and image-placeholder rotation is stored independently per layer.
+- With `Snap to Baseline (Y)` on, default paragraph and image-placeholder drag snap Y to the nearest module top.
+- Holding `Shift` (or `Ctrl`) during paragraph or image-placeholder drag temporarily snaps the Y position to the nearest baseline row.
+- Image placeholders now use the same X/Y drag resolution model as paragraphs, while keeping their own span, height, color, opacity, and rotation controls.
 - Hovering a paragraph reveals the edit affordance at the paragraph's exact top-left origin so very shallow frames remain reachable.
 
 ## Grid Change Reflow Logic

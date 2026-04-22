@@ -14,7 +14,9 @@ import {
   toAbsoluteTextBlockPosition,
   toTextBlockPosition,
 } from "@/lib/text-block-position"
+import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
+import { clampRotation, hasSignificantRotation } from "@/lib/block-constraints"
 import type { ModulePosition, PreviewLayoutState, TextBlockPosition } from "@/lib/types/preview-layout"
 
 type ImageGridMetrics = {
@@ -26,7 +28,16 @@ type ImageGridMetrics = {
 
 type ImageSnapshotState<Key extends string> = Pick<
   PreviewLayoutState<string, string, Key>,
-  "imageOrder" | "imageModulePositions" | "imageColumnSpans" | "imageRowSpans" | "imageHeightBaselines" | "imageColors" | "imageOpacities"
+  | "imageOrder"
+  | "imageModulePositions"
+  | "imageColumnSpans"
+  | "imageRowSpans"
+  | "imageHeightBaselines"
+  | "imageSnapToColumns"
+  | "imageSnapToBaseline"
+  | "imageRotations"
+  | "imageColors"
+  | "imageOpacities"
 >
 
 type Args<Key extends string> = {
@@ -35,7 +46,6 @@ type Args<Key extends string> = {
   gridCols: number
   gridRows: number
   getGridMetrics: () => ImageGridMetrics
-  clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
 }
 
@@ -46,6 +56,9 @@ type InsertImagePlaceholderOptions<Key extends string> = {
   heightBaselines?: number
   color?: string
   opacity?: number
+  snapToColumns?: boolean
+  snapToBaseline?: boolean
+  rotation?: number
   afterKey?: Key | null
 }
 
@@ -55,7 +68,6 @@ export function useImagePlaceholderState<Key extends string>({
   gridCols,
   gridRows,
   getGridMetrics,
-  clampImageBaselinePosition,
   onImageColorSchemeChange,
 }: Args<Key>) {
   const [imageOrder, setImageOrder] = useState<Key[]>([])
@@ -63,6 +75,9 @@ export function useImagePlaceholderState<Key extends string>({
   const [imageColumnSpans, setImageColumnSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageRowSpans, setImageRowSpans] = useState<Partial<Record<Key, number>>>({})
   const [imageHeightBaselines, setImageHeightBaselines] = useState<Partial<Record<Key, number>>>({})
+  const [imageSnapToColumns, setImageSnapToColumns] = useState<Partial<Record<Key, boolean>>>({})
+  const [imageSnapToBaseline, setImageSnapToBaseline] = useState<Partial<Record<Key, boolean>>>({})
+  const [imageRotations, setImageRotations] = useState<Partial<Record<Key, number>>>({})
   const [imageColors, setImageColors] = useState<Partial<Record<Key, string>>>({})
   const [imageOpacities, setImageOpacities] = useState<Partial<Record<Key, number>>>({})
   const [imageEditorState, setImageEditorState] = useState<ImageEditorState | null>(null)
@@ -104,6 +119,20 @@ export function useImagePlaceholderState<Key extends string>({
       gridRows,
     }).baselines
   }, [gridRows, imageHeightBaselines, imageRowSpans])
+
+  const isImageSnapToColumnsEnabled = useCallback((key: Key): boolean => (
+    imageSnapToColumns[key] !== false
+  ), [imageSnapToColumns])
+
+  const isImageSnapToBaselineEnabled = useCallback((key: Key): boolean => (
+    imageSnapToBaseline[key] !== false
+  ), [imageSnapToBaseline])
+
+  const getImageRotation = useCallback((key: Key): number => {
+    const raw = imageRotations[key]
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
+    return clampRotation(raw)
+  }, [imageRotations])
 
   const getImageColorReference = useCallback((key: Key): string => {
     const raw = imageColors[key]
@@ -156,6 +185,21 @@ export function useImagePlaceholderState<Key extends string>({
       acc[key] = getImageHeightBaselines(key)
       return acc
     }, {} as Partial<Record<Key, number>>),
+    imageSnapToColumns: imageOrder.reduce((acc, key) => {
+      acc[key] = isImageSnapToColumnsEnabled(key)
+      return acc
+    }, {} as Partial<Record<Key, boolean>>),
+    imageSnapToBaseline: imageOrder.reduce((acc, key) => {
+      acc[key] = isImageSnapToBaselineEnabled(key)
+      return acc
+    }, {} as Partial<Record<Key, boolean>>),
+    imageRotations: imageOrder.reduce((acc, key) => {
+      const rotation = getImageRotation(key)
+      if (hasSignificantRotation(rotation)) {
+        acc[key] = rotation
+      }
+      return acc
+    }, {} as Partial<Record<Key, number>>),
     imageColors: imageOrder.reduce((acc, key) => {
       acc[key] = getImageColorReference(key)
       return acc
@@ -166,10 +210,13 @@ export function useImagePlaceholderState<Key extends string>({
     }, {} as Partial<Record<Key, number>>),
   }), [
     getImageColorReference,
+    getImageRotation,
     getImageOpacity,
     getImageRows,
     getImageHeightBaselines,
     getImageSpan,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
     imageGridPositions,
     imageOrder,
   ])
@@ -186,12 +233,11 @@ export function useImagePlaceholderState<Key extends string>({
       if (!raw) return acc
       const span = Math.max(1, Math.min(gridCols, snapshot.imageColumnSpans?.[key] ?? 1))
       const resolvedPosition = toAbsoluteTextBlockPosition(toTextBlockPosition(raw, rowStartBaselines), rowStartBaselines)
-      const minCol = -Math.max(0, span - 1)
-      const maxCol = Math.max(0, gridCols - 1)
-      const minRow = -Math.max(0, metrics.maxBaselineRow)
+      const snapToColumns = snapshot.imageSnapToColumns?.[key] !== false
+      const { minCol, maxCol } = resolveLayerColumnBounds({ span, gridCols, snapToColumns })
       acc[key] = toTextBlockPosition({
-        col: Math.max(minCol, Math.min(maxCol, Math.round(resolvedPosition.col))),
-        row: Math.max(minRow, Math.min(metrics.maxBaselineRow, resolvedPosition.row)),
+        col: Math.max(minCol, Math.min(maxCol, snapToColumns ? Math.round(resolvedPosition.col) : resolvedPosition.col)),
+        row: clampFreePlacementRow(resolvedPosition.row, metrics.maxBaselineRow),
       }, rowStartBaselines)
       return acc
     }, {} as Partial<Record<Key, TextBlockPosition>>)
@@ -218,6 +264,21 @@ export function useImagePlaceholderState<Key extends string>({
       acc[key] = height.baselines
       return acc
     }, {} as Partial<Record<Key, number>>)
+    const nextSnapToColumns = normalizedOrder.reduce((acc, key) => {
+      acc[key] = snapshot.imageSnapToColumns?.[key] !== false
+      return acc
+    }, {} as Partial<Record<Key, boolean>>)
+    const nextSnapToBaseline = normalizedOrder.reduce((acc, key) => {
+      acc[key] = snapshot.imageSnapToBaseline?.[key] !== false
+      return acc
+    }, {} as Partial<Record<Key, boolean>>)
+    const nextRotations = normalizedOrder.reduce((acc, key) => {
+      const raw = snapshot.imageRotations?.[key]
+      if (typeof raw === "number" && Number.isFinite(raw) && hasSignificantRotation(raw)) {
+        acc[key] = clampRotation(raw)
+      }
+      return acc
+    }, {} as Partial<Record<Key, number>>)
     const nextColors = normalizedOrder.reduce((acc, key) => {
       const raw = snapshot.imageColors?.[key]
       acc[key] = getImageSchemeColorReference(raw ?? defaultImageColor, imageColorScheme)
@@ -233,6 +294,9 @@ export function useImagePlaceholderState<Key extends string>({
     setImageColumnSpans(nextSpans)
     setImageRowSpans(nextRows)
     setImageHeightBaselines(nextHeightBaselines)
+    setImageSnapToColumns(nextSnapToColumns)
+    setImageSnapToBaseline(nextSnapToBaseline)
+    setImageRotations(nextRotations)
     setImageColors(nextColors)
     setImageOpacities(nextOpacities)
     setImageEditorState(null)
@@ -250,10 +314,22 @@ export function useImagePlaceholderState<Key extends string>({
       draftColumns: getImageSpan(key),
       draftRows: getImageRows(key),
       draftHeightBaselines: getImageHeightBaselines(key),
+      draftSnapToColumns: isImageSnapToColumnsEnabled(key),
+      draftSnapToBaseline: isImageSnapToBaselineEnabled(key),
+      draftRotation: getImageRotation(key),
       draftColor: getImageColor(key),
       draftOpacity: getImageOpacity(key),
     })
-  }, [getImageColor, getImageHeightBaselines, getImageOpacity, getImageRows, getImageSpan])
+  }, [
+    getImageColor,
+    getImageHeightBaselines,
+    getImageOpacity,
+    getImageRotation,
+    getImageRows,
+    getImageSpan,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
+  ])
 
   const closeImageEditor = useCallback(() => {
     setImageEditorState(null)
@@ -289,6 +365,18 @@ export function useImagePlaceholderState<Key extends string>({
     setImageColumnSpans((current) => ({ ...current, [key]: columns }))
     setImageRowSpans((current) => ({ ...current, [key]: height.rows }))
     setImageHeightBaselines((current) => ({ ...current, [key]: height.baselines }))
+    setImageSnapToColumns((current) => ({ ...current, [key]: options.snapToColumns !== false }))
+    setImageSnapToBaseline((current) => ({ ...current, [key]: options.snapToBaseline !== false }))
+    setImageRotations((current) => {
+      const next = { ...current }
+      const rotation = clampRotation(options.rotation ?? 0)
+      if (hasSignificantRotation(rotation)) {
+        next[key] = rotation
+      } else {
+        delete next[key]
+      }
+      return next
+    })
     setImageColors((current) => ({ ...current, [key]: colorReference }))
     setImageOpacities((current) => ({ ...current, [key]: opacity }))
   }, [defaultImageColor, getGridMetrics, gridCols, gridRows, imageColorScheme])
@@ -311,6 +399,21 @@ export function useImagePlaceholderState<Key extends string>({
       return next
     })
     setImageHeightBaselines((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageSnapToColumns((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageSnapToBaseline((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setImageRotations((prev) => {
       const next = { ...prev }
       delete next[key]
       return next
@@ -353,6 +456,9 @@ export function useImagePlaceholderState<Key extends string>({
       imageEditorState.draftColumns,
       imageEditorState.draftRows,
       imageEditorState.draftHeightBaselines,
+      imageEditorState.draftSnapToColumns ? "1" : "0",
+      imageEditorState.draftSnapToBaseline ? "1" : "0",
+      imageEditorState.draftRotation.toFixed(3),
       imageEditorState.draftColor,
       imageEditorState.draftOpacity.toFixed(3),
     ].join("|")
@@ -366,10 +472,24 @@ export function useImagePlaceholderState<Key extends string>({
       baselines: imageEditorState.draftHeightBaselines,
       gridRows,
     })
+    const snapToColumns = imageEditorState.draftSnapToColumns
+    const snapToBaseline = imageEditorState.draftSnapToBaseline
+    const rotation = clampRotation(imageEditorState.draftRotation)
     const color = getImageSchemeColorReference(imageEditorState.draftColor, imageColorScheme)
     const opacity = normalizeImagePlaceholderOpacity(imageEditorState.draftOpacity)
     const existingPosition = imageModulePositions[key] ?? { col: 0, row: 0 }
-    const clampedPosition = clampImageBaselinePosition(existingPosition, columns)
+    const metrics = getGridMetrics()
+    const clampedPosition = {
+      col: clampLayerColumn(snapToColumns ? Math.round(existingPosition.col) : existingPosition.col, {
+        span: columns,
+        gridCols: metrics.gridCols,
+        snapToColumns,
+      }),
+      row: clampFreePlacementRow(
+        snapToBaseline ? Math.round(existingPosition.row) : existingPosition.row,
+        metrics.maxBaselineRow,
+      ),
+    }
 
     setImageColumnSpans((prev) => (
       prev[key] === columns
@@ -386,6 +506,27 @@ export function useImagePlaceholderState<Key extends string>({
         ? prev
         : { ...prev, [key]: height.baselines }
     ))
+    setImageSnapToColumns((prev) => (
+      prev[key] === snapToColumns
+        ? prev
+        : { ...prev, [key]: snapToColumns }
+    ))
+    setImageSnapToBaseline((prev) => (
+      prev[key] === snapToBaseline
+        ? prev
+        : { ...prev, [key]: snapToBaseline }
+    ))
+    setImageRotations((prev) => {
+      const next = { ...prev }
+      if (hasSignificantRotation(rotation)) {
+        if (next[key] === rotation) return prev
+        next[key] = rotation
+        return next
+      }
+      if (next[key] === undefined) return prev
+      delete next[key]
+      return next
+    })
     setImageColors((prev) => (
       prev[key] === color
         ? prev
@@ -404,8 +545,7 @@ export function useImagePlaceholderState<Key extends string>({
       return { ...prev, [key]: clampedPosition }
     })
   }, [
-    clampImageBaselinePosition,
-    gridCols,
+    getGridMetrics,
     gridRows,
     imageColorScheme,
     imageEditorState,
@@ -446,6 +586,12 @@ export function useImagePlaceholderState<Key extends string>({
     setImageRowSpans,
     imageHeightBaselines,
     setImageHeightBaselines,
+    imageSnapToColumns,
+    setImageSnapToColumns,
+    imageSnapToBaseline,
+    setImageSnapToBaseline,
+    imageRotations,
+    setImageRotations,
     imageColors,
     setImageColors,
     imageOpacities,
@@ -455,6 +601,9 @@ export function useImagePlaceholderState<Key extends string>({
     getImageSpan,
     getImageRows,
     getImageHeightBaselines,
+    isImageSnapToColumnsEnabled,
+    isImageSnapToBaselineEnabled,
+    getImageRotation,
     getImageColorReference,
     getImageColor,
     getImageOpacity,

@@ -6,10 +6,10 @@ import type { BlockRect, NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 
-export type TextBlockDragYMode = "moduleTop" | "baseline" | "free"
+export type LayerDragYMode = "moduleTop" | "baseline" | "free"
 
-export type TextBlockPlacementOptions = {
-  dragYMode?: TextBlockDragYMode
+export type LayerPlacementOptions = {
+  dragYMode?: LayerDragYMode
 }
 
 export type OpenImageEditorOptions = {
@@ -39,11 +39,11 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
   snapToModule: (x: number, y: number, key: Key) => ModulePosition
   snapToBaseline: (x: number, y: number, key: Key) => ModulePosition
-  resolveTextBlockPlacement: (
+  resolveLayerPlacement: (
     x: number,
     y: number,
     key: Key,
-    options?: TextBlockPlacementOptions,
+    options?: LayerPlacementOptions,
   ) => ModulePosition
   getGridMetrics: () => PreviewGridMetrics
   findTopmostDraggableAtPoint: (x: number, y: number) => Key | null
@@ -57,6 +57,8 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   getImageRows: (key: Key) => number
   getImageHeightBaselines: (key: Key) => number
   getImageColorReference: (key: Key) => string
+  getImageOpacity: (key: Key) => number
+  getImageRotation: (key: Key) => number
   getBlockRows: (key: Key) => number
   getBlockHeightBaselines: (key: Key) => number
   getBlockSpan: (key: Key) => number
@@ -65,6 +67,8 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   isSyllableDivisionEnabled: (key: Key) => boolean
   isSnapToColumnsEnabled: (key: Key) => boolean
   isSnapToBaselineEnabled: (key: Key) => boolean
+  isImageSnapToColumnsEnabled: (key: Key) => boolean
+  isImageSnapToBaselineEnabled: (key: Key) => boolean
   blockOrder: Key[]
   textContent: Record<Key, string>
   blockCustomSizes: Partial<Record<Key, number>>
@@ -82,6 +86,10 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
       rows?: number
       heightBaselines?: number
       color?: string
+      opacity?: number
+      snapToColumns?: boolean
+      snapToBaseline?: boolean
+      rotation?: number
       afterKey?: Key | null
     },
   ) => void

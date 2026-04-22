@@ -383,10 +383,66 @@ export function renderSwissGridVectorPdf({
     drawCropMarks(markOffset, markLength)
   }
 
-  const drawImagePlan = (imagePlan: { x: number; y: number; width: number; height: number; fillColor: RgbColor; opacity: number }) => {
+  const drawImagePlan = (imagePlan: {
+    x: number
+    y: number
+    width: number
+    height: number
+    fillColor: RgbColor
+    opacity: number
+    rotation: number
+    rotationOriginX: number
+    rotationOriginY: number
+  }) => {
     setFillColor(pdf, imagePlan.fillColor, colorMode)
     setPdfOpacity(imagePlan.opacity)
-    drawFilledRect(imagePlan.x, imagePlan.y, imagePlan.width, imagePlan.height)
+    if (Math.abs(imagePlan.rotation) <= 0.0001) {
+      drawFilledRect(imagePlan.x, imagePlan.y, imagePlan.width, imagePlan.height)
+      setPdfOpacity(1)
+      return
+    }
+    const topLeft = rotatePointAround(
+      imagePlan.x,
+      imagePlan.y,
+      imagePlan.rotationOriginX,
+      imagePlan.rotationOriginY,
+      imagePlan.rotation,
+    )
+    const topRight = rotatePointAround(
+      imagePlan.x + imagePlan.width,
+      imagePlan.y,
+      imagePlan.rotationOriginX,
+      imagePlan.rotationOriginY,
+      imagePlan.rotation,
+    )
+    const bottomRight = rotatePointAround(
+      imagePlan.x + imagePlan.width,
+      imagePlan.y + imagePlan.height,
+      imagePlan.rotationOriginX,
+      imagePlan.rotationOriginY,
+      imagePlan.rotation,
+    )
+    const bottomLeft = rotatePointAround(
+      imagePlan.x,
+      imagePlan.y + imagePlan.height,
+      imagePlan.rotationOriginX,
+      imagePlan.rotationOriginY,
+      imagePlan.rotation,
+    )
+    const transformed = [topLeft, topRight, bottomRight, bottomLeft].map((point) => transformPoint(point.x, point.y))
+    pdf.lines(
+      [
+        [transformed[1]!.x - transformed[0]!.x, transformed[1]!.y - transformed[0]!.y],
+        [transformed[2]!.x - transformed[1]!.x, transformed[2]!.y - transformed[1]!.y],
+        [transformed[3]!.x - transformed[2]!.x, transformed[3]!.y - transformed[2]!.y],
+        [transformed[0]!.x - transformed[3]!.x, transformed[0]!.y - transformed[3]!.y],
+      ],
+      transformed[0]!.x,
+      transformed[0]!.y,
+      [1, 1],
+      "F",
+      true,
+    )
     setPdfOpacity(1)
   }
   for (const guideGroup of exportPlan.guideGroups) {

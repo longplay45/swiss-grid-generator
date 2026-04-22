@@ -28,6 +28,7 @@ import {
 } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
+import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { resolveScaledCanvasFontSize } from "./canvas-render-math.ts"
 import type { WrappedTextLine } from "./text-layout.ts"
@@ -36,6 +37,9 @@ export type CanvasImageRenderPlan = {
   rect: BlockRect
   color: string
   opacity: number
+  rotation: number
+  rotationOriginX: number
+  rotationOriginY: number
 }
 
 type ImageDragState<Key extends string> = {
@@ -58,10 +62,14 @@ type BuildCanvasImagePlansArgs<Key extends string> = {
   getImageHeightBaselines: (key: Key) => number
   getImageColor: (key: Key) => string
   getImageOpacity: (key: Key) => number
-  clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
+  getImageRotation: (key: Key) => number
+  isImageSnapToColumnsEnabled: (key: Key) => boolean
+  isImageSnapToBaselineEnabled: (key: Key) => boolean
   toColumnX: (col: number) => number
   baselineOriginTop: number
   baselineStep: number
+  maxBaselineRow: number
+  gridCols: number
   rowStartsInBaselines: number[]
   gridRows: number
   moduleWidths: number[]
@@ -346,10 +354,14 @@ export function buildCanvasImagePlans<Key extends string>({
   getImageHeightBaselines,
   getImageColor,
   getImageOpacity,
-  clampImageBaselinePosition,
+  getImageRotation,
+  isImageSnapToColumnsEnabled,
+  isImageSnapToBaselineEnabled,
   toColumnX,
   baselineOriginTop,
   baselineStep,
+  maxBaselineRow,
+  gridCols,
   rowStartsInBaselines,
   gridRows,
   moduleWidths,
@@ -372,7 +384,21 @@ export function buildCanvasImagePlans<Key extends string>({
     const columns = getImageSpan(key)
     const rows = getImageRows(key)
     const heightBaselines = getImageHeightBaselines(key)
-    const clamped = clampImageBaselinePosition(position, columns)
+    const snapToColumns = isImageSnapToColumnsEnabled(key)
+    const snapToBaseline = isImageSnapToBaselineEnabled(key)
+    const clamped = {
+      col: clampLayerColumn(snapToColumns ? Math.round(position.col) : position.col, {
+        span: columns,
+        gridCols,
+        snapToColumns,
+      }),
+      row: clampFreePlacementRow(
+        snapToBaseline ? Math.round(position.row) : position.row,
+        maxBaselineRow,
+      ),
+    }
+    const { minCol } = resolveLayerColumnBounds({ span: columns, gridCols, snapToColumns })
+    const snappedStartCol = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), Math.round(clamped.col)))
     const x = toColumnX(clamped.col)
     const y = baselineOriginTop + clamped.row * baselineStep + baselineStep
     const rowStartIndex = Math.max(
@@ -383,7 +409,7 @@ export function buildCanvasImagePlans<Key extends string>({
       rect: {
         x,
         y,
-        width: sumAxisSpan(moduleWidths, clamped.col, columns, gridMarginHorizontal) * scale,
+        width: sumAxisSpan(moduleWidths, snappedStartCol, columns, gridMarginHorizontal) * scale,
         height: resolveBlockHeight({
           rowStart: rowStartIndex,
           rows,
@@ -397,6 +423,9 @@ export function buildCanvasImagePlans<Key extends string>({
       },
       color: getImageColor(key),
       opacity: getImageOpacity(key),
+      rotation: getImageRotation(key),
+      rotationOriginX: x,
+      rotationOriginY: y,
     }
   }
 
@@ -714,7 +743,16 @@ export function drawCanvasImagePlan(
 ): void {
   ctx.fillStyle = imagePlan.color
   ctx.globalAlpha = imagePlan.opacity
-  ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
+  if (Math.abs(imagePlan.rotation) > 0.0001) {
+    ctx.save()
+    ctx.translate(imagePlan.rotationOriginX, imagePlan.rotationOriginY)
+    ctx.rotate((imagePlan.rotation * Math.PI) / 180)
+    ctx.translate(-imagePlan.rotationOriginX, -imagePlan.rotationOriginY)
+    ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
+    ctx.restore()
+  } else {
+    ctx.fillRect(imagePlan.rect.x, imagePlan.rect.y, imagePlan.rect.width, imagePlan.rect.height)
+  }
   ctx.globalAlpha = 1
 }
 

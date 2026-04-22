@@ -1,6 +1,6 @@
 {
   "name": "webapp",
-  "version": "0.21.19",
+  "version": "0.25.1",
   "private": true,
   "type": "module",
   "config": {
