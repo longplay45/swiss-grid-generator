@@ -114,6 +114,8 @@ type Args = {
   getBlockHeightBaselines: (key: string) => number
   isTextReflowEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
+  isSnapToColumnsEnabled: (key: string) => boolean
+  isSnapToBaselineEnabled: (key: string) => boolean
   isBlockItalic: (key: string) => boolean
   isBlockOpticalKerningEnabled: (key: string) => boolean
   getBlockRotation: (key: string) => number
@@ -170,6 +172,8 @@ export function useBlockEditorActions({
   getBlockHeightBaselines,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   isBlockItalic,
   isBlockOpticalKerningEnabled,
   getBlockRotation,
@@ -335,6 +339,8 @@ export function useBlockEditorActions({
     snapToModule,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
+    isSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
     isBlockItalic,
     isBlockOpticalKerningEnabled,
     promoteLayerToTop,

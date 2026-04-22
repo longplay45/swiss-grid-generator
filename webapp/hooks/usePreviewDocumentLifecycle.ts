@@ -26,6 +26,8 @@ type BlockCollectionsState<StyleKey extends string, Key extends string> = {
   blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
+  blockSnapToColumns: Partial<Record<Key, boolean>>
+  blockSnapToBaseline: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
   blockModulePositions: Partial<Record<Key, TextBlockPosition>>

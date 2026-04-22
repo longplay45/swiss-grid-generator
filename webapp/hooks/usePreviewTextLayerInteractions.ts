@@ -21,6 +21,8 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "getStyleKeyForBlock"
   | "isTextReflowEnabled"
   | "isSyllableDivisionEnabled"
+  | "isSnapToColumnsEnabled"
+  | "isSnapToBaselineEnabled"
   | "blockCustomSizes"
   | "blockCustomLeadings"
   | "blockTextColors"
@@ -51,6 +53,8 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
   getStyleKeyForBlock,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   blockCustomSizes,
   blockCustomLeadings,
   blockTextColors,
@@ -89,6 +93,8 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
       const sourceHeightBaselines = getBlockHeightBaselines(drag.key)
       const sourceReflow = isTextReflowEnabled(drag.key)
       const sourceSyllableDivision = isSyllableDivisionEnabled(drag.key)
+      const sourceSnapToColumns = isSnapToColumnsEnabled(drag.key)
+      const sourceSnapToBaseline = isSnapToBaselineEnabled(drag.key)
       const sourceSpan = getBlockSpan(drag.key)
       const sourceCustomSize = blockCustomSizes[drag.key]
       const sourceCustomLeading = blockCustomLeadings[drag.key]
@@ -99,6 +105,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         span: sourceSpan,
         gridCols,
         maxBaselineRow: metrics.maxBaselineRow,
+        snapToColumns: sourceSnapToColumns,
       })
       const newKey = getNextCustomBlockId()
 
@@ -114,6 +121,8 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         heightBaselines: sourceHeightBaselines,
         reflow: sourceReflow,
         syllableDivision: sourceSyllableDivision,
+        snapToColumns: sourceSnapToColumns,
+        snapToBaseline: sourceSnapToBaseline,
         position: resolvedPosition,
         rowStartBaselines: metrics.rowStartBaselines,
         baseFont,
@@ -150,6 +159,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
     recordHistoryBeforeChange()
     const span = getBlockSpan(drag.key)
     const metrics = getGridMetrics()
+    const snapToColumns = isSnapToColumnsEnabled(drag.key)
     setBlockModulePositions((current) => ({
       ...current,
       [drag.key]: clampTextBlockPosition({
@@ -157,6 +167,7 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
         span,
         gridCols,
         maxBaselineRow: metrics.maxBaselineRow,
+        snapToColumns,
       }),
     }))
   }, [
@@ -173,6 +184,8 @@ export function usePreviewTextLayerInteractions<Key extends string, StyleKey ext
     getStyleKeyForBlock,
     gridCols,
     gridRows,
+    isSnapToBaselineEnabled,
+    isSnapToColumnsEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onRequestNotice,

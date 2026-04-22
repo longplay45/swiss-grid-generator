@@ -302,7 +302,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Drag to move with grid snapping
+- Drag to move; paragraphs respect their current X/Y snap settings
 - Hover shows style/span/alignment tooltip when `i` is active
 
 Editor controls:
@@ -319,6 +319,8 @@ Editor controls:
   - vertical alignment (`top`, `center`, `bottom`)
   - reflow (`On` / `Off`, available only when cols > 1)
   - hyphenation (`On` / `Off`)
+  - `Snap to Columns (X)` (`On` / `Off`)
+  - `Snap to Baseline (Y)` (`On` / `Off`)
   - rotation (`-180..180`, integer degrees)
 - paragraph and placeholder height resolve as `rows + baselines`
 - `rows` may be `0` when `baselines > 0`
@@ -388,7 +390,8 @@ Syllable division behavior:
 Drag behavior:
 - Default drag moves a paragraph.
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
-- Paragraphs and image placeholders are stored as logical grid anchors: `{ column, row, baselineOffset }`.
+- Paragraphs and image placeholders are stored as logical anchors: `{ column, row, baselineOffset }`.
+- Paragraphs also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags. When either axis snap is off, the corresponding `column` and/or `baselineOffset` value may remain fractional while the logical row anchor stays stable.
 - `Shift` (or `Ctrl`) + drag snaps to nearest baseline row/column at drop point and allows overset placement.
 - Hovering a paragraph reveals the edit affordance at the paragraph's exact top-left origin so very shallow frames remain reachable.
 
@@ -420,9 +423,10 @@ Notes:
 
 ## JSON Preview Layout Fields (current)
 
-`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockHeightBaselines`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageHeightBaselines`, `imageColors`, `imageOpacities`
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockHeightBaselines`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `blockSnapToColumns`, `blockSnapToBaseline`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageHeightBaselines`, `imageColors`, `imageOpacities`
 
 Notes:
 - `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.
-- `blockModulePositions` and `imageModulePositions` are stored as logical anchors `{ column, row, baselineOffset }`; legacy absolute `{ col, row }` values are normalized on load.
+- `blockModulePositions` and `imageModulePositions` are stored as logical anchors `{ column, row, baselineOffset }`; paragraph anchors may carry fractional `column` and/or `baselineOffset` values when X or Y snapping is disabled; legacy absolute `{ col, row }` values are normalized on load.
+- `blockSnapToColumns` and `blockSnapToBaseline` store the paragraph-level X/Y snap state. Omitted values default to `true`.
 - `blockRowSpans` / `imageRowSpans` store the module-row component of block height, while `blockHeightBaselines` / `imageHeightBaselines` store the additional baseline component.

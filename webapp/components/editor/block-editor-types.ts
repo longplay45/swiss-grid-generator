@@ -22,6 +22,8 @@ export type BlockEditorState<StyleKey extends string = string> = {
   draftColor: string
   draftReflow: boolean
   draftSyllableDivision: boolean
+  draftSnapToColumns: boolean
+  draftSnapToBaseline: boolean
   draftItalic: boolean
   draftOpticalKerning: boolean
   draftTrackingScale: number

@@ -31,6 +31,7 @@ type ClampTextBlockPositionArgs = {
   gridCols: number
   maxBaselineRow: number
   fitWithinGrid?: boolean
+  snapToColumns?: boolean
 }
 
 type ApplyDraftArgs<StyleKey extends string> = {
@@ -60,6 +61,8 @@ type InsertTextLayerArgs<Key extends string, StyleKey extends string> = {
   verticalAlign?: TextVerticalAlignMode
   reflow?: boolean
   syllableDivision?: boolean
+  snapToColumns?: boolean
+  snapToBaseline?: boolean
 }
 
 type DuplicateTextLayerArgs<Key extends string, StyleKey extends string> = {
@@ -73,6 +76,8 @@ type DuplicateTextLayerArgs<Key extends string, StyleKey extends string> = {
   heightBaselines: number
   reflow: boolean
   syllableDivision: boolean
+  snapToColumns: boolean
+  snapToBaseline: boolean
   position: ModulePosition | TextBlockPosition
   rowStartBaselines: readonly number[]
   baseFont: FontFamily
@@ -84,11 +89,12 @@ export function clampTextBlockPosition({
   gridCols,
   maxBaselineRow,
   fitWithinGrid = false,
+  snapToColumns = true,
 }: ClampTextBlockPositionArgs): ModulePosition {
   const minCol = -Math.max(0, span - 1)
   const maxCol = fitWithinGrid
-    ? Math.max(0, gridCols - span)
-    : Math.max(0, gridCols - 1)
+    ? Math.max(0, gridCols - span + (snapToColumns ? 0 : 1))
+    : Math.max(0, gridCols - (snapToColumns ? 1 : 0))
   const minRow = -Math.max(0, maxBaselineRow)
   return {
     col: Math.max(minCol, Math.min(maxCol, position.col)),
@@ -205,6 +211,8 @@ export function applyBlockEditorDraftToCollections<
       gridRows,
       fitColsWithinGrid: false,
       fitRowsWithinGrid: true,
+      snapToColumns: draft.draftSnapToColumns,
+      snapToBaseline: draft.draftSnapToBaseline,
     })
     const originalPosition = existingPosition ?? candidatePosition
     if (
@@ -264,6 +272,14 @@ export function applyBlockEditorDraftToCollections<
       ...current.blockSyllableDivision,
       [draft.target as Key]: draft.draftSyllableDivision,
     },
+    blockSnapToColumns: {
+      ...current.blockSnapToColumns,
+      [draft.target as Key]: draft.draftSnapToColumns,
+    },
+    blockSnapToBaseline: {
+      ...current.blockSnapToBaseline,
+      [draft.target as Key]: draft.draftSnapToBaseline,
+    },
     blockItalic: nextItalic,
     blockRotations: nextRotations,
     blockModulePositions: nextPositions,
@@ -292,6 +308,8 @@ export function insertTextLayerIntoCollections<
     verticalAlign = "top",
     reflow = false,
     syllableDivision = true,
+    snapToColumns = true,
+    snapToBaseline = true,
   }: InsertTextLayerArgs<Key, StyleKey>,
 ): PreviewTextLayerCollectionsState<Key, StyleKey> {
   const height = normalizeHeightMetrics({
@@ -351,6 +369,14 @@ export function insertTextLayerIntoCollections<
       ...current.blockSyllableDivision,
       [newKey]: syllableDivision,
     },
+    blockSnapToColumns: {
+      ...current.blockSnapToColumns,
+      [newKey]: snapToColumns,
+    },
+    blockSnapToBaseline: {
+      ...current.blockSnapToBaseline,
+      [newKey]: snapToBaseline,
+    },
     blockTrackingRuns: {
       ...current.blockTrackingRuns,
     },
@@ -365,6 +391,8 @@ export function insertTextLayerIntoCollections<
         rows: height.rows,
         gridCols,
         gridRows,
+        snapToColumns,
+        snapToBaseline,
       }),
     },
   }
@@ -386,6 +414,8 @@ export function duplicateTextLayerInCollections<
     heightBaselines,
     reflow,
     syllableDivision,
+    snapToColumns,
+    snapToBaseline,
     position,
     rowStartBaselines,
     baseFont,
@@ -511,6 +541,14 @@ export function duplicateTextLayerInCollections<
       ...current.blockSyllableDivision,
       [newKey]: syllableDivision,
     },
+    blockSnapToColumns: {
+      ...current.blockSnapToColumns,
+      [newKey]: snapToColumns,
+    },
+    blockSnapToBaseline: {
+      ...current.blockSnapToBaseline,
+      [newKey]: snapToBaseline,
+    },
     blockModulePositions: {
       ...current.blockModulePositions,
       [newKey]: clampTextBlockAnchorPosition({
@@ -519,6 +557,8 @@ export function duplicateTextLayerInCollections<
         rows: height.rows,
         gridCols,
         gridRows,
+        snapToColumns,
+        snapToBaseline,
       }),
     },
   }

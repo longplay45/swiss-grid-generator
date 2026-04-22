@@ -26,6 +26,8 @@ export type SnapshotState<
   blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
+  blockSnapToColumns: Partial<Record<Key, boolean>>
+  blockSnapToBaseline: Partial<Record<Key, boolean>>
   blockFontFamilies: Partial<Record<Key, FontFamily>>
   blockFontWeights: Partial<Record<Key, number>>
   blockOpticalKerning: Partial<Record<Key, boolean>>
@@ -52,6 +54,8 @@ type Args<
   getBlockHeightBaselines: (key: Key) => number
   isTextReflowEnabled: (key: Key) => boolean
   isSyllableDivisionEnabled: (key: Key) => boolean
+  isSnapToColumnsEnabled: (key: Key) => boolean
+  isSnapToBaselineEnabled: (key: Key) => boolean
   getBlockFontWeight: (key: Key) => number
   isBlockOpticalKerningEnabled: (key: Key) => boolean
   getBlockTrackingScale: (key: Key) => number
@@ -81,6 +85,8 @@ export function useLayoutSnapshot<
   getBlockHeightBaselines,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   getBlockFontWeight,
   isBlockOpticalKerningEnabled,
   getBlockTrackingScale,
@@ -99,6 +105,8 @@ export function useLayoutSnapshot<
       getBlockHeightBaselines,
       isTextReflowEnabled,
       isSyllableDivisionEnabled,
+      isSnapToColumnsEnabled,
+      isSnapToBaselineEnabled,
       getBlockFontWeight,
       isBlockOpticalKerningEnabled,
       getBlockTrackingScale,
@@ -117,6 +125,8 @@ export function useLayoutSnapshot<
     isBlockOpticalKerningEnabled,
     isBlockItalic,
     isSyllableDivisionEnabled,
+    isSnapToBaselineEnabled,
+    isSnapToColumnsEnabled,
     isTextReflowEnabled,
     state,
     toSnapshot,

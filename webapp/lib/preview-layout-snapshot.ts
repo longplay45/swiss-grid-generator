@@ -21,6 +21,8 @@ type ResolvedSnapshotState<
   blockVerticalAlignments: Record<Key, TextVerticalAlignMode>
   blockTextReflow: Record<Key, boolean>
   blockSyllableDivision: Record<Key, boolean>
+  blockSnapToColumns: Record<Key, boolean>
+  blockSnapToBaseline: Record<Key, boolean>
   blockFontWeights: Record<Key, number>
   blockOpticalKerning: Record<Key, boolean>
   blockTrackingScales: Record<Key, number>
@@ -45,6 +47,8 @@ export function buildResolvedSnapshotState<
     getBlockHeightBaselines,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
+    isSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
     getBlockFontWeight,
     isBlockOpticalKerningEnabled,
     getBlockTrackingScale,
@@ -58,6 +62,8 @@ export function buildResolvedSnapshotState<
     getBlockHeightBaselines: (key: Key) => number
     isTextReflowEnabled: (key: Key) => boolean
     isSyllableDivisionEnabled: (key: Key) => boolean
+    isSnapToColumnsEnabled: (key: Key) => boolean
+    isSnapToBaselineEnabled: (key: Key) => boolean
     getBlockFontWeight: (key: Key) => number
     isBlockOpticalKerningEnabled: (key: Key) => boolean
     getBlockTrackingScale: (key: Key) => number
@@ -93,6 +99,14 @@ export function buildResolvedSnapshotState<
   }, {} as Record<Key, boolean>)
   const resolvedSyllableDivision = state.blockOrder.reduce((acc, key) => {
     acc[key] = isSyllableDivisionEnabled(key)
+    return acc
+  }, {} as Record<Key, boolean>)
+  const resolvedSnapToColumns = state.blockOrder.reduce((acc, key) => {
+    acc[key] = isSnapToColumnsEnabled(key)
+    return acc
+  }, {} as Record<Key, boolean>)
+  const resolvedSnapToBaseline = state.blockOrder.reduce((acc, key) => {
+    acc[key] = isSnapToBaselineEnabled(key)
     return acc
   }, {} as Record<Key, boolean>)
   const resolvedFontWeights = state.blockOrder.reduce((acc, key) => {
@@ -144,6 +158,8 @@ export function buildResolvedSnapshotState<
     blockVerticalAlignments: resolvedVerticalAlignments,
     blockTextReflow: resolvedReflow,
     blockSyllableDivision: resolvedSyllableDivision,
+    blockSnapToColumns: resolvedSnapToColumns,
+    blockSnapToBaseline: resolvedSnapToBaseline,
     blockItalic: resolvedItalic,
     blockRotations: resolvedRotations,
     blockModulePositions: { ...state.blockModulePositions },
@@ -231,6 +247,8 @@ export function normalizeSnapshotStateForApply<
     blockVerticalAlignments: { ...(state.blockVerticalAlignments ?? {}) },
     blockTextReflow: { ...state.blockTextReflow },
     blockSyllableDivision: { ...state.blockSyllableDivision },
+    blockSnapToColumns: { ...state.blockSnapToColumns },
+    blockSnapToBaseline: { ...state.blockSnapToBaseline },
     blockModulePositions: { ...state.blockModulePositions },
   }
 }

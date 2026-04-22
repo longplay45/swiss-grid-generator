@@ -27,6 +27,8 @@ export type PreviewLayoutState<
   blockVerticalAlignments?: Record<Key, TextVerticalAlignMode>
   blockTextReflow?: Record<Key, boolean>
   blockSyllableDivision?: Record<Key, boolean>
+  blockSnapToColumns?: Record<Key, boolean>
+  blockSnapToBaseline?: Record<Key, boolean>
   // Legacy compatibility for older saved layouts.
   blockBold?: Record<Key, boolean>
   blockItalic?: Record<Key, boolean>

@@ -15,6 +15,8 @@ type Args<Key extends string> = {
   showImagePlaceholders: boolean
   getGridMetrics: () => PreviewGridMetrics
   getPlacementSpan: (key: Key) => number
+  isSnapToColumnsEnabled: (key: Key) => boolean
+  isSnapToBaselineEnabled: (key: Key) => boolean
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
 }
 
@@ -53,6 +55,8 @@ export function usePreviewHitTesting<Key extends string>({
   showImagePlaceholders,
   getGridMetrics,
   getPlacementSpan,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   toPagePointFromClient,
 }: Args<Key>) {
   const imageKeySet = useMemo(() => new Set(imageOrder), [imageOrder])
@@ -93,6 +97,26 @@ export function usePreviewHitTesting<Key extends string>({
     const rawRow = Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
     return clampBaselinePosition({ col: rawCol, row: rawRow }, key)
   }, [clampBaselinePosition, getGridMetrics])
+
+  const resolveTextBlockPlacement = useCallback((pageX: number, pageY: number, key: Key): ModulePosition => {
+    const metrics = getGridMetrics()
+    const span = getPlacementSpan(key)
+    const snapToColumns = isSnapToColumnsEnabled(key)
+    const snapToBaseline = isSnapToBaselineEnabled(key)
+    const minCol = -Math.max(0, span - 1)
+    const maxCol = Math.max(0, metrics.gridCols - (snapToColumns ? 1 : 0))
+    const minRow = -Math.max(0, metrics.maxBaselineRow)
+    const rawCol = snapToColumns
+      ? metrics.getNearestCol(pageX)
+      : metrics.getInterpolatedCol(pageX)
+    const rawRow = snapToBaseline
+      ? Math.round((pageY - metrics.baselineOriginTop) / metrics.baselineStep)
+      : (pageY - metrics.baselineOriginTop) / Math.max(metrics.baselineStep, 0.0001)
+    return {
+      col: Math.max(minCol, Math.min(maxCol, rawCol)),
+      row: Math.max(minRow, Math.min(metrics.maxBaselineRow, rawRow)),
+    }
+  }, [getGridMetrics, getPlacementSpan, isSnapToBaselineEnabled, isSnapToColumnsEnabled])
 
   const findTopmostLayerAtPoint = useCallback((pageX: number, pageY: number): Key | null => {
     for (let index = resolvedLayerOrder.length - 1; index >= 0; index -= 1) {
@@ -155,6 +179,7 @@ export function usePreviewHitTesting<Key extends string>({
     clampBaselinePosition,
     snapToModule,
     snapToBaseline,
+    resolveTextBlockPlacement,
     findTopmostLayerAtPoint,
     findTopmostBlockAtPoint,
     findTopmostImageAtPoint,

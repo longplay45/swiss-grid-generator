@@ -26,6 +26,7 @@ import {
   resolveAxisSizes,
   sumAxisSpan,
 } from "@/lib/grid-rhythm"
+import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
 import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
@@ -346,11 +347,12 @@ export function buildPageExportPlan({
         0,
         Math.min(Math.max(0, gridRows - 1), findNearestAxisIndex(rowStartsInBaselines, row)),
       )
+      const snappedStartCol = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), Math.round(col)))
       imagePlans.push({
         key,
-        x: contentLeft + (col < 0 ? col * firstColumnStep : (colStarts[col] ?? col * firstColumnStep)),
+        x: contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep),
         y: baselineOriginTop + row * baselineStep + baselineStep,
-        width: sumAxisSpan(moduleWidths, col, span, gridMarginHorizontal),
+        width: sumAxisSpan(moduleWidths, snappedStartCol, span, gridMarginHorizontal),
         height: resolveBlockHeight({
           rowStart: rowStartIndex,
           rows,
@@ -383,6 +385,7 @@ export function buildPageExportPlan({
   const blockVerticalAlignments = layout?.blockVerticalAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
+  const blockSnapToColumns = layout?.blockSnapToColumns ?? {}
   const blockFontWeights = layout?.blockFontWeights ?? {}
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
@@ -440,6 +443,7 @@ export function buildPageExportPlan({
   const isSyllableDivisionEnabled = (key: BlockId) => (
     resolveSyllableDivisionEnabled(key, getStyleKeyForBlock(key), blockSyllableDivision)
   )
+  const isSnapToColumnsEnabled = (key: BlockId) => blockSnapToColumns[key] !== false
   const getBlockFont = (key: BlockId): FontFamily => blockFontFamilies[key] ?? baseFont
   const getStyleDefaultItalic = (styleKey: TypographyStyleKey) => styleDefinitions[styleKey]?.blockItalic === true
   const getStyleDefaultWeight = (styleKey: TypographyStyleKey) => (
@@ -530,10 +534,10 @@ export function buildPageExportPlan({
     const span = getBlockSpan(key)
     const minCol = -Math.max(0, span - 1)
     const minRow = -Math.max(0, maxBaselineRow)
-    const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+    const col = Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col))
     const row = Math.max(minRow, Math.min(maxBaselineRow, manual.row))
     return {
-      x: contentLeft + (col < 0 ? col * firstColumnStep : (colStarts[col] ?? col * firstColumnStep)),
+      x: contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep),
       y: baselineOriginTop + row * baselineStep,
     }
   }
@@ -583,7 +587,8 @@ export function buildPageExportPlan({
         const manual = blockModulePositions[key]
         if (!manual || typeof manual.col !== "number") return 0
         const minCol = -Math.max(0, span - 1)
-        return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+        const rawCol = isSnapToColumnsEnabled(key) ? manual.col : Math.round(manual.col)
+        return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
       },
       getBlockRowStart: (key) => {
         const manual = blockModulePositions[key]

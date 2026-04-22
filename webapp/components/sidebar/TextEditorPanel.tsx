@@ -634,6 +634,8 @@ export function TextEditorPanel<StyleKey extends string>({
     ["V Align", controls.editorState.draftVerticalAlign.charAt(0).toUpperCase() + controls.editorState.draftVerticalAlign.slice(1)],
     ["Reflow", controls.editorState.draftReflow && canUseNewspaperReflow ? "On" : "Off"],
     ["Hyphen", controls.editorState.draftSyllableDivision ? "On" : "Off"],
+    ["Snap X", controls.editorState.draftSnapToColumns ? "On" : "Off"],
+    ["Snap Y", controls.editorState.draftSnapToBaseline ? "On" : "Off"],
     ["Font", selectionFontFamily ?? "Mixed"],
     ["Cut", selectedFontVariantForSelection?.label ?? "Mixed"],
     ["Hierarchy", selectedStyleLabelForSelection],
@@ -816,6 +818,32 @@ export function TextEditorPanel<StyleKey extends string>({
               <Switch
                 checked={controls.editorState.draftSyllableDivision}
                 onCheckedChange={(checked) => controls.setEditorState((prev) => prev ? { ...prev, draftSyllableDivision: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Snap to Columns (X)</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>Lock horizontal placement to column anchors.</p>
+              </div>
+              <Switch
+                checked={controls.editorState.draftSnapToColumns}
+                onCheckedChange={(checked) => controls.setEditorState((prev) => prev ? { ...prev, draftSnapToColumns: checked } : prev)}
+                className={inlineSwitchClassName}
+                thumbClassName={inlineSwitchThumbClassName}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className={sectionLabelClassName}>Snap to Baseline (Y)</Label>
+                <p className={`mt-1 text-[11px] ${tone.muted}`}>Lock vertical placement to baseline steps.</p>
+              </div>
+              <Switch
+                checked={controls.editorState.draftSnapToBaseline}
+                onCheckedChange={(checked) => controls.setEditorState((prev) => prev ? { ...prev, draftSnapToBaseline: checked } : prev)}
                 className={inlineSwitchClassName}
                 thumbClassName={inlineSwitchThumbClassName}
               />

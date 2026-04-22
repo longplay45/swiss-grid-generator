@@ -33,6 +33,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
   snapToModule: (x: number, y: number, key: Key) => ModulePosition
   snapToBaseline: (x: number, y: number, key: Key) => ModulePosition
+  resolveTextBlockPlacement: (x: number, y: number, key: Key) => ModulePosition
   getGridMetrics: () => PreviewGridMetrics
   findTopmostDraggableAtPoint: (x: number, y: number) => Key | null
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null
@@ -51,6 +52,8 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   getStyleKeyForBlock: (key: Key) => StyleKey
   isTextReflowEnabled: (key: Key) => boolean
   isSyllableDivisionEnabled: (key: Key) => boolean
+  isSnapToColumnsEnabled: (key: Key) => boolean
+  isSnapToBaselineEnabled: (key: Key) => boolean
   blockOrder: Key[]
   textContent: Record<Key, string>
   blockCustomSizes: Partial<Record<Key, number>>

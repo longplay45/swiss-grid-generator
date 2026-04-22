@@ -568,9 +568,9 @@ position = {
 ```
 
 Where:
-- `column` is the logical module column index
-- `row` is the logical module row index
-- `baselineOffset` is the baseline-row offset inside that logical row anchor
+- `column` is the logical column anchor. It is integral when `Snap to Columns (X)` is on and may be fractional when X snapping is off.
+- `row` is the logical module row anchor index.
+- `baselineOffset` is the baseline-row offset inside that logical row anchor. It is integral when `Snap to Baseline (Y)` is on and may be fractional when Y snapping is off.
 
 Absolute baseline position resolves from the current row starts:
 
@@ -580,6 +580,15 @@ absoluteCol = column
 ```
 
 This is the anchor model used for preview placement, export resolution, and save/load normalization.
+
+Paragraphs also persist two independent snap flags:
+
+```
+snapToColumnsX: boolean
+snapToBaselineY: boolean
+```
+
+The flags affect drag/editor placement resolution only. The underlying anchor model remains the same for preview, export, and save/load.
 
 Alt/Option-duplicate behavior (`Alt/Option` + drag) reuses the same anchor math; only the state mutation differs (new layer key is created instead of moving the original).
 

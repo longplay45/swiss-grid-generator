@@ -18,6 +18,7 @@ import {
 } from "@/lib/config/fonts"
 import { DEFAULT_STYLE_ASSIGNMENTS, DEFAULT_TEXT_CONTENT, isBaseBlockId } from "@/lib/document-defaults"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
+import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
 import type { LayoutPresetBrowserPage } from "@/lib/presets/types"
 import {
@@ -194,6 +195,7 @@ export function drawPresetThumbnailToCanvas(
   const blockVerticalAlignments = layout?.blockVerticalAlignments ?? {}
   const blockTextReflow = layout?.blockTextReflow ?? {}
   const blockSyllableDivision = layout?.blockSyllableDivision ?? {}
+  const blockSnapToColumns = layout?.blockSnapToColumns ?? {}
   const blockOpticalKerning = layout?.blockOpticalKerning ?? {}
   const blockTrackingScales = layout?.blockTrackingScales ?? {}
   const blockTrackingRuns = layout?.blockTrackingRuns ?? {}
@@ -357,9 +359,7 @@ export function drawPresetThumbnailToCanvas(
   }
 
   const toColumnX = (col: number) => {
-    if (col < 0) return contentLeft + col * firstColumnStep * scale
-    const start = colStarts[col] ?? col * firstColumnStep
-    return contentLeft + start * scale
+    return contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
   }
 
   const clampImageBaselinePosition = (position: ModulePosition, columns: number): ModulePosition => {
@@ -468,7 +468,8 @@ export function drawPresetThumbnailToCanvas(
         const manual = blockModulePositions[key]
         if (!manual) return 0
         const minCol = -Math.max(0, span - 1)
-        return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+        const rawCol = blockSnapToColumns[key] !== false ? manual.col : Math.round(manual.col)
+        return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
       },
       getBlockRowStart: (key) => {
         const manual = blockModulePositions[key]
@@ -483,7 +484,7 @@ export function drawPresetThumbnailToCanvas(
         if (!manual) return { x: fallbackX, y: fallbackY }
         const span = getBlockSpan(key)
         const minCol = -Math.max(0, span - 1)
-        const col = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+        const col = Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col))
         const row = Math.max(-Math.max(0, maxBaselineRow), Math.min(maxBaselineRow, manual.row))
         return {
           x: toColumnX(col),

@@ -19,6 +19,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "toPagePointFromClient"
   | "snapToModule"
   | "snapToBaseline"
+  | "resolveTextBlockPlacement"
   | "findTopmostDraggableAtPoint"
   | "resolveSelectedLayerAtClientPoint"
   | "isImagePlaceholderKey"
@@ -52,6 +53,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   toPagePointFromClient,
   snapToModule,
   snapToBaseline,
+  resolveTextBlockPlacement,
   findTopmostDraggableAtPoint,
   resolveSelectedLayerAtClientPoint,
   isImagePlaceholderKey,
@@ -102,8 +104,11 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     blockModulePositions: draggableModulePositions,
     findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
     toPagePoint,
-    snapToModule,
-    snapToBaseline,
+    resolveDragPreviewPosition: (pageX, pageY, key) => (
+      isImagePlaceholderKey(key)
+        ? snapToBaseline(pageX, pageY, key)
+        : resolveTextBlockPlacement(pageX, pageY, key)
+    ),
     onDrop: applyDragDrop,
     onClearHover: clearHover,
     touchLongPressMs,

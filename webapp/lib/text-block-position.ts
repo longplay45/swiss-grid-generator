@@ -6,12 +6,17 @@ function toRoundedInteger(value: number, fallback = 0): number {
   return Math.round(value)
 }
 
+function normalizeFiniteNumber(value: number, fallback = 0): number {
+  if (!Number.isFinite(value)) return fallback
+  return value
+}
+
 function normalizeRowIndex(value: number): number {
   return Math.max(0, toRoundedInteger(value))
 }
 
 function normalizeColumnIndex(value: number): number {
-  return toRoundedInteger(value)
+  return normalizeFiniteNumber(value)
 }
 
 function isTextBlockPosition(value: unknown): value is TextBlockPosition {
@@ -40,7 +45,7 @@ export function toTextBlockPosition(
     return {
       column: normalizeColumnIndex(value.column),
       row: normalizeRowIndex(value.row),
-      baselineOffset: toRoundedInteger(value.baselineOffset),
+      baselineOffset: normalizeFiniteNumber(value.baselineOffset),
     }
   }
 
@@ -49,7 +54,7 @@ export function toTextBlockPosition(
   return {
     column: normalizeColumnIndex(value.col),
     row: anchorRowIndex,
-    baselineOffset: toRoundedInteger(value.row - anchorRowStart),
+    baselineOffset: normalizeFiniteNumber(value.row - anchorRowStart),
   }
 }
 
@@ -63,7 +68,7 @@ export function toAbsoluteTextBlockPosition(
   const rowStart = rowStartBaselines[rowIndex] ?? 0
   return {
     col: normalizeColumnIndex(position.column),
-    row: rowStart + toRoundedInteger(position.baselineOffset),
+    row: rowStart + normalizeFiniteNumber(position.baselineOffset),
   }
 }
 

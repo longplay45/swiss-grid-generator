@@ -40,6 +40,8 @@ type Args = {
   getStyleSize: (style: string) => number
   getStyleLeading: (style: string) => number
   getBlockTextColor: (key: string) => string
+  isSnapToColumnsEnabled: (key: string) => boolean
+  isSnapToBaselineEnabled: (key: string) => boolean
   defaultTextColor: string
   getDefaultColumnSpan: (key: string, gridCols: number) => number
   getGridMetrics: () => { rowStartBaselines: number[] }
@@ -86,6 +88,8 @@ export function useBlockEditorCanvasDoubleClick({
   getStyleSize,
   getStyleLeading,
   getBlockTextColor,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   defaultTextColor,
   getDefaultColumnSpan,
   getGridMetrics,
@@ -144,6 +148,8 @@ export function useBlockEditorCanvasDoubleClick({
         getStyleSize,
         isBlockItalic,
         isBlockOpticalKerningEnabled,
+        isSnapToColumnsEnabled,
+        isSnapToBaselineEnabled,
         isSyllableDivisionEnabled,
         isTextReflowEnabled,
         fallbackStyle: "body",
@@ -196,6 +202,8 @@ export function useBlockEditorCanvasDoubleClick({
       getStyleLeading,
       getStyleSize,
       fxStyle: "fx",
+      snapToColumns: true,
+      snapToBaseline: true,
     }))
   }, [
     baseFont,
@@ -227,6 +235,8 @@ export function useBlockEditorCanvasDoubleClick({
     getStyleSize,
     isBlockItalic,
     isBlockOpticalKerningEnabled,
+    isSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onRequestNotice,

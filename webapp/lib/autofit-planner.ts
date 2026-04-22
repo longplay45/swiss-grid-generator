@@ -117,7 +117,7 @@ export function computeAutoFitBatch(
     if (maxLinesPerColumn <= 0) continue
 
     const fontSize = item.style.size * input.scale
-    const startCol = Math.max(0, Math.min(input.gridCols - 1, item.position.col))
+    const startCol = Math.max(0, Math.min(input.gridCols - 1, Math.round(item.position.col)))
     const columnWidth = sumAxisSpan(resolvedModuleWidths, startCol, 1, 0) * input.scale
     const scaledStyle: AutoFitStyle = {
       ...item.style,

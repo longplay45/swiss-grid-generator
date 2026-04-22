@@ -61,6 +61,8 @@ function createInitialBlockCollectionsState(): PreviewTextBlockCollectionsState 
     blockVerticalAlignments: {},
     blockTextReflow: {},
     blockSyllableDivision: {},
+    blockSnapToColumns: {},
+    blockSnapToBaseline: {},
     blockFontFamilies: {},
     blockFontWeights: {},
     blockOpticalKerning: {},
@@ -94,6 +96,8 @@ export function usePreviewTextBlockState({
     blockVerticalAlignments,
     blockTextReflow,
     blockSyllableDivision,
+    blockSnapToColumns,
+    blockSnapToBaseline,
     blockFontFamilies,
     blockFontWeights,
     blockOpticalKerning,
@@ -181,6 +185,14 @@ export function usePreviewTextBlockState({
     const styleKey = getStyleKeyForBlock(key)
     return resolveSyllableDivisionEnabled(key, styleKey, blockSyllableDivision)
   }, [blockSyllableDivision, getStyleKeyForBlock])
+
+  const isSnapToColumnsEnabled = useCallback((key: BlockId) => (
+    blockSnapToColumns[key] !== false
+  ), [blockSnapToColumns])
+
+  const isSnapToBaselineEnabled = useCallback((key: BlockId) => (
+    blockSnapToBaseline[key] !== false
+  ), [blockSnapToBaseline])
 
   const getBlockFont = useCallback((key: BlockId): FontFamily => {
     return blockFontFamilies[key] ?? baseFont
@@ -278,6 +290,8 @@ export function usePreviewTextBlockState({
     getBlockHeightBaselines,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
+    isSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
     getBlockFontWeight,
     isBlockOpticalKerningEnabled,
     getBlockTrackingScale,
@@ -305,6 +319,8 @@ export function usePreviewTextBlockState({
       blockVerticalAlignments: { ...(snapshot.blockVerticalAlignments ?? {}) },
       blockTextReflow: { ...(snapshot.blockTextReflow ?? {}) },
       blockSyllableDivision: { ...(snapshot.blockSyllableDivision ?? {}) },
+      blockSnapToColumns: { ...(snapshot.blockSnapToColumns ?? {}) },
+      blockSnapToBaseline: { ...(snapshot.blockSnapToBaseline ?? {}) },
       blockModulePositions: { ...snapshot.blockModulePositions },
     }),
     setState: setBlockCollections,
@@ -325,6 +341,8 @@ export function usePreviewTextBlockState({
     blockVerticalAlignments,
     blockTextReflow,
     blockSyllableDivision,
+    blockSnapToColumns,
+    blockSnapToBaseline,
     blockFontFamilies,
     blockFontWeights,
     blockOpticalKerning,
@@ -347,6 +365,8 @@ export function usePreviewTextBlockState({
     getStyleKeyForBlock,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,
+    isSnapToColumnsEnabled,
+    isSnapToBaselineEnabled,
     getBlockFont,
     getStyleSize,
     getStyleLeading,

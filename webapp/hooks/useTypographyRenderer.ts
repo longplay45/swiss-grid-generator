@@ -4,6 +4,7 @@ import type { MutableRefObject, RefObject } from "react"
 import type { GridResult } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
+import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import type { TextFormatRun, BaseTextFormat } from "@/lib/text-format-runs"
 import {
   buildCanvasImagePlans,
@@ -70,6 +71,8 @@ type Args<BlockId extends string> = {
   clampImageBaselinePosition: (position: ModulePosition, columns: number) => ModulePosition
   isTextReflowEnabled: (key: BlockId) => boolean
   isSyllableDivisionEnabled: (key: BlockId) => boolean
+  isSnapToColumnsEnabled: (key: BlockId) => boolean
+  isSnapToBaselineEnabled: (key: BlockId) => boolean
   getWrappedText: (
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -142,6 +145,8 @@ export function useTypographyRenderer<BlockId extends string>({
   clampImageBaselinePosition,
   isTextReflowEnabled,
   isSyllableDivisionEnabled,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   getWrappedText,
   getOpticalOffset,
   onOverflowLinesChange,
@@ -202,9 +207,7 @@ export function useTypographyRenderer<BlockId extends string>({
       const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
       const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
       const toColumnX = (col: number) => {
-        if (col < 0) return contentLeft + col * firstColumnStep * scale
-        const start = colStarts[col] ?? col * firstColumnStep
-        return contentLeft + start * scale
+        return contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
       }
       const toClosestRowIndex = (rowInBaselines: number) => {
         if (!rowStartsInBaselines.length) return 0
@@ -236,7 +239,7 @@ export function useTypographyRenderer<BlockId extends string>({
         const span = getBlockSpan(key)
         const minCol = -Math.max(0, span - 1)
         const clamped = {
-          col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col)),
+          col: Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col)),
           row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
         }
         return {
@@ -320,7 +323,8 @@ export function useTypographyRenderer<BlockId extends string>({
             const manual = resolveTextManualPosition(key, dragPreviewOverride)
             if (!manual) return 0
             const minCol = -Math.max(0, span - 1)
-            return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col))
+            const rawCol = isSnapToColumnsEnabled(key) ? manual.col : Math.round(manual.col)
+            return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
           },
           getBlockRowStart: (key) => {
             const manual = resolveTextManualPosition(key, dragPreviewOverride)
@@ -333,7 +337,7 @@ export function useTypographyRenderer<BlockId extends string>({
             const span = getBlockSpan(key)
             const minCol = -Math.max(0, span - 1)
             const clamped = {
-              col: Math.max(minCol, Math.min(Math.max(0, gridCols - 1), manual.col)),
+              col: Math.max(minCol, Math.min(Math.max(0, gridCols), manual.col)),
               row: Math.max(minBaselineRow, Math.min(maxBaselineRow, manual.row)),
             }
             return {
@@ -464,6 +468,8 @@ export function useTypographyRenderer<BlockId extends string>({
     imageRectsRef,
     isBlockItalic,
     isBlockOpticalKerningEnabled,
+    isSnapToBaselineEnabled,
+    isSnapToColumnsEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     layerOrder,

@@ -178,7 +178,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
           <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
           <li>When a text or image editor is already open, preview rollover stays active on other blocks so you can see the next target before switching.</li>
-          <li>Drag blocks to move them between modules; placement stays snapped to the grid unless you invoke baseline/overset placement.</li>
+          <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` and `Snap to Baseline (Y)` settings, while image placeholders stay grid-snapped unless you invoke baseline/overset placement.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
           <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
           <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
@@ -207,12 +207,14 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-editor-paragraph" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Paragraph Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Rows, baselines, columns, horizontal alignment, vertical alignment, newspaper reflow, hyphenation, and paragraph rotation (`-180..180`).</li>
+            <li>Rows, baselines, columns, horizontal alignment, vertical alignment, newspaper reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, and paragraph rotation (`-180..180`).</li>
             <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
             <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
             <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
             <li>Increasing paragraph `Cols` preserves the anchored column even when the wider frame intentionally overhangs the page edge.</li>
             <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
+            <li>`Snap to Columns (X)` locks paragraph placement to logical column anchors; turning it off allows free horizontal placement inside the page bounds.</li>
+            <li>`Snap to Baseline (Y)` locks paragraph placement to baseline rows; turning it off allows free vertical placement while the paragraph still resolves through the same stored anchor model.</li>
             <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
             <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
           </ul>
@@ -286,10 +288,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Drag and Placement
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Drag moves a block snapped to module anchors.</li>
+          <li>Default drag respects each paragraph&apos;s current X/Y snap settings; image placeholders stay snapped to module anchors.</li>
           <li>`Alt/Option` + drag duplicates a block and drops the copy.</li>
           <li>`Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).</li>
-          <li>`Shift` + drag snaps to baseline rows and baseline columns (not module rows, `Ctrl` fallback).</li>
+          <li>`Shift` + drag snaps to baseline rows and baseline columns for overset placement (`Ctrl` fallback).</li>
           <li>`Shift` + drag allows overset placement for “angeschnitten” layouts (left/right/top/bottom, `Ctrl` fallback).</li>
           <li>Standard drag stays within module-fit bounds; baseline drag uses extended overset bounds.</li>
         </ul>
@@ -690,7 +692,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
           <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
-          <li>Paragraphs and image placeholders are saved with logical grid anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes.</li>
+          <li>Paragraphs and image placeholders are saved with logical anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes; paragraphs also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags.</li>
           <li>Load Project JSON restores the full project structure and the active page where valid.</li>
           <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
           <li>Unknown font overrides are dropped during load normalization.</li>

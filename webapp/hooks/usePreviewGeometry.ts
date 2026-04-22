@@ -8,7 +8,11 @@ import {
   findNearestAxisIndex,
   resolveAxisSizes,
 } from "@/lib/grid-rhythm"
-import { resolveNearestPreviewColumn } from "@/lib/preview-column-snap"
+import {
+  resolveInterpolatedPreviewColumn,
+  resolveNearestPreviewColumn,
+  resolvePreviewColumnX,
+} from "@/lib/preview-column-snap"
 import type { PagePoint } from "@/lib/preview-types"
 import type { ModulePosition } from "@/lib/types/preview-layout"
 
@@ -33,6 +37,7 @@ export type PreviewGridMetrics = {
   moduleYStep: number
   getColumnX: (col: number) => number
   getNearestCol: (pageX: number) => number
+  getInterpolatedCol: (pageX: number) => number
   getNearestRowIndex: (pageY: number) => number
   getRowStartBaseline: (rowIndex: number) => number
 }
@@ -67,13 +72,15 @@ export function usePreviewGeometry({
     const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
 
     const getColumnX = (col: number) => (
-      col < 0
-        ? margins.left * scale + col * firstColumnStep * scale
-        : margins.left * scale + (colStarts[col] ?? col * firstColumnStep) * scale
+      margins.left * scale + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
     )
     const getNearestCol = (pageX: number) => {
       const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
       return resolveNearestPreviewColumn(relative, colStarts, firstColumnStep)
+    }
+    const getInterpolatedCol = (pageX: number) => {
+      const relative = (pageX - margins.left * scale) / Math.max(scale, 0.0001)
+      return resolveInterpolatedPreviewColumn(relative, colStarts, firstColumnStep)
     }
     const getNearestRowIndex = (pageY: number) => {
       const relative = (pageY - margins.top * scale) / Math.max(scale, 0.0001)
@@ -103,6 +110,7 @@ export function usePreviewGeometry({
       moduleYStep: firstRowStep * scale,
       getColumnX,
       getNearestCol,
+      getInterpolatedCol,
       getNearestRowIndex,
       getRowStartBaseline,
     }

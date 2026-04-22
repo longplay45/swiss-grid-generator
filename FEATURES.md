@@ -51,11 +51,13 @@ Current capability inventory for Swiss Grid Generator.
 - Inline editor overlay on the page surface.
 - Left-sidebar text editor with `Paragraph`, `Typo`, and `Info` sections.
 - The text editor header uses the same user-facing layer label shown in the Project panel instead of the internal block id.
-- Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, rotation.
+- Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
 - `Baselines` is a bounded dropdown capped by the current document's baselines-per-grid-module count.
 - Paragraph geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Vertical alignment positions the text stack inside the configured paragraph frame while preserving baseline rhythm.
+- `Snap to Columns (X)` keeps paragraphs on logical column anchors; turning it off allows free horizontal placement.
+- `Snap to Baseline (Y)` keeps paragraphs on baseline rows; turning it off allows free vertical placement.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
@@ -82,6 +84,7 @@ Current capability inventory for Swiss Grid Generator.
 - Drag paragraphs and placeholders to move them.
 - `Alt/Option` + drag duplicates the hovered layer.
 - `Shift` + drag switches to baseline/overset placement (`Ctrl` fallback).
+- Default paragraph drag respects each paragraph's current X/Y snap settings.
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
@@ -94,6 +97,7 @@ Current capability inventory for Swiss Grid Generator.
   - `column`
   - `row`
   - `baselineOffset`
+- Paragraphs also persist independent X/Y snap flags; unsnapped paragraph anchors may carry fractional `column` and/or `baselineOffset` values.
 - Increasing columns/rows preserves existing anchors.
 - Increasing a paragraph's column span preserves its anchored column even when the wider frame intentionally overhangs the page edge.
 - Decreasing columns/rows is blocked when any paragraph or image placeholder would fall outside the new grid.

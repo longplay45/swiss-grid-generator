@@ -28,8 +28,7 @@ type Args<Key extends string> = {
   blockModulePositions: Partial<Record<Key, DragModulePosition>>
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null
   toPagePoint: (x: number, y: number) => PagePoint | null
-  snapToModule: (x: number, y: number, key: Key) => DragModulePosition
-  snapToBaseline: (x: number, y: number, key: Key) => DragModulePosition
+  resolveDragPreviewPosition: (x: number, y: number, key: Key) => DragModulePosition
   onDrop: (drag: DragState<Key>, nextPreview: DragModulePosition, copyOnDrop: boolean) => void
   onClearHover: () => void
   touchLongPressMs: number
@@ -46,8 +45,7 @@ export function usePreviewDrag<Key extends string>({
   blockModulePositions,
   findTopmostBlockAtPoint,
   toPagePoint,
-  snapToModule,
-  snapToBaseline,
+  resolveDragPreviewPosition,
   onDrop,
   onClearHover,
   touchLongPressMs,
@@ -117,10 +115,11 @@ export function usePreviewDrag<Key extends string>({
       const rect = canvas.getBoundingClientRect()
       const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
       if (!point) return
-      const useBaselineSnap = event.pointerType !== "touch" && (event.shiftKey || event.ctrlKey)
-      const preview = useBaselineSnap
-        ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
-        : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+      const preview = resolveDragPreviewPosition(
+        point.x - dragState.pointerOffsetX,
+        point.y - dragState.pointerOffsetY,
+        dragState.key,
+      )
       pendingDragPreviewRef.current = { preview, moved: true, copyOnDrop: true }
       finishDrag()
       return
@@ -141,7 +140,7 @@ export function usePreviewDrag<Key extends string>({
     if (!block) return
     event.preventDefault()
 
-    const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
+    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(block.x, block.y, key)
     const nextDragState: DragState<Key> = {
       key,
       startPageX: pagePoint.x,
@@ -201,8 +200,7 @@ export function usePreviewDrag<Key extends string>({
     isEditorOpen,
     onClearHover,
     showTypography,
-    snapToBaseline,
-    snapToModule,
+    resolveDragPreviewPosition,
     toPagePoint,
     touchLongPressMs,
   ])
@@ -227,10 +225,11 @@ export function usePreviewDrag<Key extends string>({
     const point = toPagePoint(event.clientX - rect.left, event.clientY - rect.top)
     if (!point) return
 
-    const useBaselineSnap = event.pointerType !== "touch" && (event.shiftKey || event.ctrlKey)
-    const snap = useBaselineSnap
-      ? snapToBaseline(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
-      : snapToModule(point.x - dragState.pointerOffsetX, point.y - dragState.pointerOffsetY, dragState.key)
+    const snap = resolveDragPreviewPosition(
+      point.x - dragState.pointerOffsetX,
+      point.y - dragState.pointerOffsetY,
+      dragState.key,
+    )
     const moved = dragState.moved
       || Math.abs(point.x - dragState.startPageX) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
       || Math.abs(point.y - dragState.startPageY) > PREVIEW_DRAG_MOVE_THRESHOLD_PX
@@ -253,7 +252,7 @@ export function usePreviewDrag<Key extends string>({
           : prev
       ))
     })
-  }, [touchCancelDistancePx, clearPendingTouchLongPress, dragState, snapToBaseline, snapToModule, toPagePoint, canvasRef])
+  }, [touchCancelDistancePx, clearPendingTouchLongPress, dragState, resolveDragPreviewPosition, toPagePoint, canvasRef])
 
   const handleCanvasPointerUp = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
     const pendingTouchDrag = touchPendingDragRef.current
@@ -293,7 +292,7 @@ export function usePreviewDrag<Key extends string>({
     const rect = canvas.getBoundingClientRect()
     const pagePoint = toPagePoint(clientX - rect.left, clientY - rect.top)
     if (!pagePoint) return
-    const snapped = blockModulePositions[key] ?? snapToModule(block.x, block.y, key)
+    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(block.x, block.y, key)
     setDragState({
       key,
       startPageX: pagePoint.x,
@@ -307,7 +306,7 @@ export function usePreviewDrag<Key extends string>({
     })
     activeDragPointerIdRef.current = null
     onClearHover()
-  }, [blockModulePositions, blockRectsRef, canvasRef, getBlockRect, onClearHover, snapToModule, toPagePoint])
+  }, [blockModulePositions, blockRectsRef, canvasRef, getBlockRect, onClearHover, resolveDragPreviewPosition, toPagePoint])
 
   return {
     dragState,

@@ -45,6 +45,8 @@ type Args<StyleKey extends string, BlockKey extends string> = {
     blockVerticalAlignments: Partial<Record<BlockKey, TextVerticalAlignMode>>
     blockTextReflow: Partial<Record<BlockKey, boolean>>
     blockSyllableDivision: Partial<Record<BlockKey, boolean>>
+    blockSnapToColumns: Partial<Record<BlockKey, boolean>>
+    blockSnapToBaseline: Partial<Record<BlockKey, boolean>>
     blockItalic: Partial<Record<BlockKey, boolean>>
     blockRotations: Partial<Record<BlockKey, number>>
     blockModulePositions: Partial<Record<BlockKey, TextBlockPosition>>
@@ -105,6 +107,8 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
         blockVerticalAlignments: {} as Record<BlockKey, TextVerticalAlignMode>,
         blockTextReflow: {},
         blockSyllableDivision: {},
+        blockSnapToColumns: {},
+        blockSnapToBaseline: {},
         blockItalic: {},
         blockRotations: {},
         blockModulePositions: {},
@@ -206,6 +210,18 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       return acc
     }, {} as Record<BlockKey, boolean>)
 
+    const nextSnapToColumns = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockSnapToColumns?.[key]
+      acc[key] = raw !== false
+      return acc
+    }, {} as Record<BlockKey, boolean>)
+
+    const nextSnapToBaseline = normalizedKeys.reduce((acc, key) => {
+      const raw = initialLayout.blockSnapToBaseline?.[key]
+      acc[key] = raw !== false
+      return acc
+    }, {} as Record<BlockKey, boolean>)
+
     const nextOpticalKerning = normalizedKeys.reduce((acc, key) => {
       const raw = initialLayout.blockOpticalKerning?.[key]
       if (raw === true || raw === false) {
@@ -278,9 +294,9 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       const minCol = -Math.max(0, span - 1)
       const maxCol = Math.max(0, gridCols - 1)
       acc[key] = {
-        column: Math.max(minCol, Math.min(maxCol, Math.round(logical.column))),
+        column: Math.max(minCol, Math.min(maxCol + 1, logical.column)),
         row: Math.max(0, Math.min(Math.max(0, gridRows - 1), Math.round(logical.row))),
-        baselineOffset: Math.round(logical.baselineOffset),
+        baselineOffset: logical.baselineOffset,
       }
       return acc
     }, {} as Partial<Record<BlockKey, TextBlockPosition>>)
@@ -303,6 +319,8 @@ export function useInitialLayoutHydration<StyleKey extends string, BlockKey exte
       blockVerticalAlignments: nextVerticalAlignments,
       blockTextReflow: nextReflow,
       blockSyllableDivision: nextSyllableDivision,
+      blockSnapToColumns: nextSnapToColumns,
+      blockSnapToBaseline: nextSnapToBaseline,
       blockItalic: nextItalic,
       blockRotations: nextRotations,
       blockModulePositions: nextPositions,

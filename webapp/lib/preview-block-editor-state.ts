@@ -38,6 +38,8 @@ type ExistingBlockArgs<StyleKey extends string> = {
   getStyleSize: (style: StyleKey) => number
   isBlockItalic: (key: string) => boolean
   isBlockOpticalKerningEnabled: (key: string) => boolean
+  isSnapToColumnsEnabled: (key: string) => boolean
+  isSnapToBaselineEnabled: (key: string) => boolean
   isSyllableDivisionEnabled: (key: string) => boolean
   isTextReflowEnabled: (key: string) => boolean
   fallbackStyle: StyleKey
@@ -60,6 +62,8 @@ type NewBlockArgs<StyleKey extends string> = {
   verticalAlign?: BlockEditorVerticalAlign
   reflow?: boolean
   syllableDivision?: boolean
+  snapToColumns?: boolean
+  snapToBaseline?: boolean
   fontWeight?: number
   italic?: boolean
   opticalKerning?: boolean
@@ -93,6 +97,8 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
   getStyleSize,
   isBlockItalic,
   isBlockOpticalKerningEnabled,
+  isSnapToColumnsEnabled,
+  isSnapToBaselineEnabled,
   isSyllableDivisionEnabled,
   isTextReflowEnabled,
   fallbackStyle,
@@ -208,6 +214,8 @@ export function buildExistingBlockEditorState<StyleKey extends string>({
     draftColor: draftColor,
     draftReflow: isTextReflowEnabled(key),
     draftSyllableDivision: isSyllableDivisionEnabled(key),
+    draftSnapToColumns: isSnapToColumnsEnabled(key),
+    draftSnapToBaseline: isSnapToBaselineEnabled(key),
     draftItalic: draftItalic,
     draftOpticalKerning: isBlockOpticalKerningEnabled(key),
     draftTrackingScale: getBlockTrackingScale(key),
@@ -242,6 +250,8 @@ export function buildNewBlockEditorState<StyleKey extends string>({
   verticalAlign = "top",
   reflow = false,
   syllableDivision = true,
+  snapToColumns = true,
+  snapToBaseline = true,
   fontWeight = 400,
   italic = false,
   opticalKerning = DEFAULT_OPTICAL_KERNING,
@@ -273,6 +283,8 @@ export function buildNewBlockEditorState<StyleKey extends string>({
     draftColor: defaultTextColor,
     draftReflow: reflow,
     draftSyllableDivision: syllableDivision,
+    draftSnapToColumns: snapToColumns,
+    draftSnapToBaseline: snapToBaseline,
     draftItalic: italic,
     draftOpticalKerning: opticalKerning,
     draftTrackingScale: trackingScale,

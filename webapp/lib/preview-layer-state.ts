@@ -29,6 +29,8 @@ export type TextLayerCollections<
   blockVerticalAlignments: Partial<Record<Key, TextVerticalAlignMode>>
   blockTextReflow: Partial<Record<Key, boolean>>
   blockSyllableDivision: Partial<Record<Key, boolean>>
+  blockSnapToColumns: Partial<Record<Key, boolean>>
+  blockSnapToBaseline: Partial<Record<Key, boolean>>
   blockItalic: Partial<Record<Key, boolean>>
   blockRotations: Partial<Record<Key, number>>
   blockModulePositions: Partial<Record<Key, Position>>
@@ -63,6 +65,8 @@ export function removeTextLayerFromCollections<
     blockVerticalAlignments: omitOptionalRecordKey(state.blockVerticalAlignments, key),
     blockTextReflow: omitOptionalRecordKey(state.blockTextReflow, key),
     blockSyllableDivision: omitOptionalRecordKey(state.blockSyllableDivision, key),
+    blockSnapToColumns: omitOptionalRecordKey(state.blockSnapToColumns, key),
+    blockSnapToBaseline: omitOptionalRecordKey(state.blockSnapToBaseline, key),
     blockItalic: omitOptionalRecordKey(state.blockItalic, key),
     blockRotations: omitOptionalRecordKey(state.blockRotations, key),
     blockModulePositions: omitOptionalRecordKey(state.blockModulePositions, key),
@@ -130,6 +134,12 @@ export function removeLayerFromPreviewLayout<
       : undefined,
     blockSyllableDivision: layout.blockSyllableDivision
       ? omitRequiredRecordKey(layout.blockSyllableDivision, key)
+      : undefined,
+    blockSnapToColumns: layout.blockSnapToColumns
+      ? omitRequiredRecordKey(layout.blockSnapToColumns, key)
+      : undefined,
+    blockSnapToBaseline: layout.blockSnapToBaseline
+      ? omitRequiredRecordKey(layout.blockSnapToBaseline, key)
       : undefined,
     blockBold: layout.blockBold
       ? omitRequiredRecordKey(layout.blockBold, key)
