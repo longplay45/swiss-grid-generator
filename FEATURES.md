@@ -45,7 +45,7 @@ Current capability inventory for Swiss Grid Generator.
 - Hyphenation toggle per paragraph.
 - Newspaper reflow across paragraph columns.
 - Optical margin alignment engine for preview/export.
-- Dynamic document variables for `project_title`, `title`, `page`, `pages`, `date`, and `time`.
+- Dynamic document variables for `lorem`, `project_title`, `title`, `page`, `pages`, `date`, and `time`.
 
 ## Text Editing
 
@@ -63,6 +63,7 @@ Current capability inventory for Swiss Grid Generator.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Placeholders section lists the available document-variable tokens and inserts the clicked token at the caret or over the current selection.
+- `<% lorem %>` fills the active paragraph frame according to its geometry, reflow, and hyphenation settings.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
   - font family

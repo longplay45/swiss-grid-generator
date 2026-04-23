@@ -18,6 +18,19 @@ export type DocumentVariableContext = {
   now: Date
 }
 
+export type DocumentVariableResolverArgs = {
+  name: string
+  rawText: string
+  rawStart: number
+  rawEnd: number
+  context: DocumentVariableContext
+  resolveDefaultText: (text: string) => string
+}
+
+export type DocumentVariableResolver = (
+  args: DocumentVariableResolverArgs,
+) => string | null | undefined
+
 type ResolvedSegment = {
   kind: "literal" | "variable"
   rawStart: number
@@ -89,7 +102,10 @@ function formatDocumentVariableTime(date: Date): string {
   return `${hour}:${minute}`
 }
 
-function resolveDocumentVariableValue(name: string, context: DocumentVariableContext): string | null {
+function resolveBuiltInDocumentVariableValue(
+  name: string,
+  context: DocumentVariableContext,
+): string | null {
   switch (name.trim().toLowerCase()) {
     case "project_title":
     case "title":
@@ -107,7 +123,11 @@ function resolveDocumentVariableValue(name: string, context: DocumentVariableCon
   }
 }
 
-function parseResolvedSegments(text: string, context: DocumentVariableContext): {
+function parseResolvedSegments(
+  text: string,
+  context: DocumentVariableContext,
+  resolveVariable?: DocumentVariableResolver,
+): {
   text: string
   segments: ResolvedSegment[]
   hasVariables: boolean
@@ -120,7 +140,7 @@ function parseResolvedSegments(text: string, context: DocumentVariableContext): 
   DOCUMENT_VARIABLE_RE.lastIndex = 0
   for (const match of text.matchAll(DOCUMENT_VARIABLE_RE)) {
     const fullMatch = match[0]
-    const tokenName = match[1] ?? ""
+    const tokenName = (match[1] ?? "").trim().toLowerCase()
     const rawStart = match.index ?? 0
     const rawEnd = rawStart + fullMatch.length
 
@@ -137,7 +157,14 @@ function parseResolvedSegments(text: string, context: DocumentVariableContext): 
       })
     }
 
-    const resolvedValue = resolveDocumentVariableValue(tokenName, context)
+    const resolvedValue = resolveVariable?.({
+      name: tokenName,
+      rawText: text,
+      rawStart,
+      rawEnd,
+      context,
+      resolveDefaultText: (sample) => parseResolvedSegments(sample, context).text,
+    }) ?? resolveBuiltInDocumentVariableValue(tokenName, context)
     if (resolvedValue === null) {
       const resolvedStart = resolvedText.length
       resolvedText += fullMatch
@@ -281,8 +308,9 @@ function remapLiteralTrackingIntervals(
 export function resolveDocumentVariableText(
   text: string,
   context: DocumentVariableContext,
+  resolveVariable?: DocumentVariableResolver,
 ): string {
-  return parseResolvedSegments(text, context).text
+  return parseResolvedSegments(text, context, resolveVariable).text
 }
 
 export function resolveDocumentVariableContent<
@@ -295,6 +323,7 @@ export function resolveDocumentVariableContent<
   formatRuns,
   baseTrackingScale,
   trackingRuns,
+  resolveVariable,
 }: {
   text: string
   context: DocumentVariableContext
@@ -302,10 +331,11 @@ export function resolveDocumentVariableContent<
   formatRuns: readonly TextFormatRun<StyleKey, FontFamily>[] | null | undefined
   baseTrackingScale: number
   trackingRuns: readonly TextTrackingRun[] | null | undefined
+  resolveVariable?: DocumentVariableResolver
 }): ResolvedDocumentVariableText<StyleKey, FontFamily> {
   const normalizedFormatRuns = normalizeTextFormatRuns(text, formatRuns, baseFormat)
   const normalizedTrackingRuns = normalizeTextTrackingRuns(text, trackingRuns, baseTrackingScale)
-  const resolved = parseResolvedSegments(text, context)
+  const resolved = parseResolvedSegments(text, context, resolveVariable)
 
   if (!resolved.hasVariables) {
     return {

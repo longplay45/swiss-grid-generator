@@ -233,8 +233,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <div id="help-editor-placeholders" className="space-y-1 pt-1">
           <h5 className={`text-xs font-semibold ${tone.heading}`}>Placeholders Section</h5>
           <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Lists the available document-variable tokens for project title, folios, and proof timestamps.</li>
+            <li>Lists the available document-variable tokens for fitted lorem, project title, folios, and proof timestamps.</li>
             <li>Clicking a token inserts it at the current caret position or replaces the current text selection.</li>
+            <li><code>&lt;% lorem %&gt;</code> fills the active paragraph frame according to its rows, baselines, columns, reflow, and hyphenation settings.</li>
             <li>
               Available tokens: {DOCUMENT_VARIABLE_DEFINITIONS.map(({ token }, index) => (
                 <span key={token}>

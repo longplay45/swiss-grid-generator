@@ -1105,9 +1105,9 @@ export function TextEditorPanel<StyleKey extends string>({
         <div ref={registerSectionRef("placeholders")}>
         <EditorSidebarSection
           title="III. Placeholders"
-          tooltip="Insert editorial document variables for project title, folios, and proof timestamps"
+          tooltip="Insert fitted lorem, project title, folios, and proof timestamps"
           collapsed={collapsed.placeholders}
-          collapsedSummary="Project title, page, pages, date, time"
+          collapsedSummary="Lorem, project title, page, pages, date, time"
           onHeaderClick={handleSectionHeaderClick("placeholders")}
           onHeaderDoubleClick={handleSectionHeaderDoubleClick}
           isDarkMode={isDarkMode}

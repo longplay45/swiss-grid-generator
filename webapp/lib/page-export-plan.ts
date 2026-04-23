@@ -62,6 +62,7 @@ import {
   resolveDocumentVariableContent,
   type DocumentVariableContext,
 } from "@/lib/document-variable-text"
+import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -543,6 +544,48 @@ export function buildPageExportPlan({
   for (const key of blockOrder) {
     const styleKey = styleAssignments[key] ?? "body"
     const baseTrackingScale = getBlockTrackingScale(key)
+    const span = getBlockSpan(key)
+    const rowSpan = getBlockRows(key)
+    const heightBaselines = getBlockHeightBaselines(key)
+    const manualPosition = blockModulePositions[key]
+    const startCol = (() => {
+      if (!manualPosition || typeof manualPosition.col !== "number") return 0
+      const { minCol } = resolveLayerColumnBounds({
+        span,
+        gridCols,
+        snapToColumns: isSnapToColumnsEnabled(key),
+      })
+      const rawCol = isSnapToColumnsEnabled(key) ? manualPosition.col : Math.round(manualPosition.col)
+      return Math.max(minCol, Math.min(Math.max(0, gridCols - 1), rawCol))
+    })()
+    const startRow = (
+      manualPosition && typeof manualPosition.row === "number"
+        ? Math.max(
+            0,
+            Math.min(Math.max(0, gridRows - 1), findNearestAxisIndex(rowStartsInBaselines, manualPosition.row)),
+          )
+        : 0
+    )
+    const blockHeight = resolveBlockHeight({
+      rowStart: startRow,
+      rows: rowSpan,
+      baselines: heightBaselines,
+      gridRows,
+      moduleHeights,
+      fallbackModuleHeight: modH,
+      gutterY: gridMarginVertical,
+      baselineStep,
+    })
+    const spanWidth = sumAxisSpan(moduleWidths, startCol, span, gridMarginHorizontal)
+    const reflowEnabled = isTextReflowEnabled(key) && span >= 2
+    const reflowColumnWidth = Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
+      moduleWidths[startCol + columnIndex] ?? modW
+    )).reduce((smallest, width) => Math.min(smallest, width), Number.POSITIVE_INFINITY)
+    const wrapWidth = reflowEnabled
+      ? (Number.isFinite(reflowColumnWidth) && reflowColumnWidth > 0 ? reflowColumnWidth : modW)
+      : (Number.isFinite(spanWidth) && spanWidth > 0
+          ? spanWidth
+          : span * modW + Math.max(0, span - 1) * gridMarginHorizontal)
     const baseFormat = {
       fontFamily: getBlockFont(key),
       fontWeight: getBlockFontWeight(key, styleKey),
@@ -553,6 +596,26 @@ export function buildPageExportPlan({
     const rawText = textContent[key] ?? ""
     const rawFormatRuns = getBlockTextFormatRuns(key, styleKey)
     const rawTrackingRuns = getBlockTrackingRuns(key)
+    const defaultFontSize = styleDefinitions[styleKey]?.size ?? 12
+    const defaultBaselineMultiplier = styleDefinitions[styleKey]?.baselineMultiplier ?? 1
+    const resolvedBaselineMultiplier = styleKey !== "fx"
+      ? defaultBaselineMultiplier
+      : (() => {
+          const raw = blockCustomLeadings[key]
+          if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return defaultBaselineMultiplier
+          return Math.max(0.01, clampFxLeading(raw) / gridUnit)
+        })()
+    const opticalKerning = isBlockOpticalKerningEnabled(key)
+    const lineStep = Math.max(0.01, resolvedBaselineMultiplier * baselineStep)
+    const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
+    const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
+    const resolveFontSize = (segmentStyleKey: TypographyStyleKey) => {
+      const styleDefaultSize = styleDefinitions[segmentStyleKey]?.size ?? defaultFontSize
+      if (segmentStyleKey !== "fx") return styleDefaultSize
+      const raw = blockCustomSizes[key]
+      if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return styleDefaultSize
+      return clampFxSize(raw)
+    }
     const resolved = documentVariableContext
       ? resolveDocumentVariableContent({
           text: rawText,
@@ -561,6 +624,52 @@ export function buildPageExportPlan({
           formatRuns: rawFormatRuns,
           baseTrackingScale,
           trackingRuns: rawTrackingRuns,
+          resolveVariable: ({ name, rawText, rawStart, rawEnd, context }) => {
+            if (name !== "lorem") return null
+            return fitLoremTextToLineCapacity({
+              maxLines: maxLoremLines,
+              countLinesForCandidate: (candidate) => {
+                const candidateRawText = `${rawText.slice(0, rawStart)}${candidate}${rawText.slice(rawEnd)}`
+                const candidateResolved = resolveDocumentVariableContent({
+                  text: candidateRawText,
+                  context,
+                  baseFormat,
+                  formatRuns: rawFormatRuns,
+                  baseTrackingScale,
+                  trackingRuns: rawTrackingRuns,
+                })
+                if (!textMeasureContext) {
+                  return wrapTextDetailed(
+                    candidateResolved.text,
+                    wrapWidth,
+                    isSyllableDivisionEnabled(key),
+                    (sample) => sample.length * resolveFontSize(styleKey) * 0.56,
+                  ).length
+                }
+                applyCanvasTextConfig(textMeasureContext, {
+                  font: buildCanvasFont(
+                    baseFormat.fontFamily,
+                    baseFormat.fontWeight,
+                    baseFormat.italic,
+                    resolveFontSize(styleKey),
+                  ),
+                  opticalKerning,
+                })
+                return textMetrics.getWrappedText(
+                  textMeasureContext,
+                  candidateResolved.text,
+                  wrapWidth,
+                  isSyllableDivisionEnabled(key),
+                  baseTrackingScale,
+                  opticalKerning,
+                  candidateResolved.trackingRuns,
+                  baseFormat,
+                  candidateResolved.formatRuns,
+                  resolveFontSize,
+                ).length
+              },
+            })
+          },
         })
       : {
           text: rawText,

@@ -31,6 +31,7 @@ import {
   resolveDocumentVariableContent,
   type DocumentVariableContext,
 } from "@/lib/document-variable-text"
+import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
@@ -517,6 +518,34 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const styleKey = styleAssignments[key] ?? defaultBodyStyleKey
     const baseTrackingScale = getBlockTrackingScale(key)
     const baseColor = getBlockTextColor(key)
+    const span = getBlockSpan(key)
+    const rowSpan = getBlockRows(key)
+    const heightBaselines = getBlockHeightBaselines(key)
+    const startColRaw = getBlockColumnStart?.(key, span) ?? 0
+    const { minCol } = resolveLayerColumnBounds({ span, gridCols })
+    const startCol = Math.max(minCol, Math.min(Math.max(0, gridCols - 1), startColRaw))
+    const startRowRaw = getBlockRowStart?.(key, rowSpan) ?? 0
+    const startRow = Math.max(0, Math.min(Math.max(0, gridRows - 1), startRowRaw))
+    const blockHeight = resolveBlockHeight({
+      rowStart: startRow,
+      rows: rowSpan,
+      baselines: heightBaselines,
+      gridRows,
+      moduleHeights,
+      fallbackModuleHeight: moduleHeight,
+      gutterY,
+      baselineStep,
+    })
+    const spanWidth = sumAxisSpan(moduleWidths, startCol, span, gutterX)
+    const reflowEnabled = isTextReflowEnabled(key) && span >= 2
+    const reflowColumnWidth = Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
+      moduleWidths[startCol + columnIndex] ?? moduleWidth
+    )).reduce((smallest, width) => Math.min(smallest, width), Number.POSITIVE_INFINITY)
+    const wrapWidth = reflowEnabled
+      ? (Number.isFinite(reflowColumnWidth) && reflowColumnWidth > 0 ? reflowColumnWidth : moduleWidth)
+      : (Number.isFinite(spanWidth) && spanWidth > 0
+          ? spanWidth
+          : span * moduleWidth + Math.max(0, span - 1) * gutterX)
     const baseFormat = {
       fontFamily: getBlockFont(key, styleKey),
       fontWeight: getBlockFontWeight(key, styleKey),
@@ -527,6 +556,11 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const rawText = textContent[key] ?? ""
     const rawFormatRuns = getBlockTextFormatRuns(key, baseColor)
     const rawTrackingRuns = getBlockTrackingRuns(key)
+    const opticalKerning = isBlockOpticalKerningEnabled(key)
+    const lineStep = Math.max(0.01, getBlockBaselineMultiplier(key, styleKey) * baselineStep)
+    const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
+    const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
+    const resolveFontSize = (segmentStyleKey: StyleKey) => getBlockFontSize(key, segmentStyleKey)
     const resolved = documentVariableContext
       ? resolveDocumentVariableContent({
           text: rawText,
@@ -535,6 +569,35 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
           formatRuns: rawFormatRuns,
           baseTrackingScale,
           trackingRuns: rawTrackingRuns,
+          resolveVariable: ({ name, rawText, rawStart, rawEnd, context }) => {
+            if (name !== "lorem") return null
+            return fitLoremTextToLineCapacity({
+              maxLines: maxLoremLines,
+              countLinesForCandidate: (candidate) => {
+                const candidateRawText = `${rawText.slice(0, rawStart)}${candidate}${rawText.slice(rawEnd)}`
+                const candidateResolved = resolveDocumentVariableContent({
+                  text: candidateRawText,
+                  context,
+                  baseFormat,
+                  formatRuns: rawFormatRuns,
+                  baseTrackingScale,
+                  trackingRuns: rawTrackingRuns,
+                })
+                return getWrappedText(
+                  ctx,
+                  candidateResolved.text,
+                  wrapWidth,
+                  isSyllableDivisionEnabled(key),
+                  baseTrackingScale,
+                  opticalKerning,
+                  candidateResolved.trackingRuns,
+                  baseFormat,
+                  candidateResolved.formatRuns,
+                  resolveFontSize,
+                ).length
+              },
+            })
+          },
         })
       : {
           text: rawText,

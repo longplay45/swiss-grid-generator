@@ -5,6 +5,10 @@ export type DocumentVariableDefinition = {
 
 export const DOCUMENT_VARIABLE_DEFINITIONS: readonly DocumentVariableDefinition[] = [
   {
+    token: "<% lorem %>",
+    description: "Fill the active paragraph frame with fitted lorem ipsum.",
+  },
+  {
     token: "<% project_title %>",
     description: "Insert the current project title.",
   },
