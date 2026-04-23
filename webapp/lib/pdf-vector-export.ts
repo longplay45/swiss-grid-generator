@@ -16,6 +16,7 @@ import {
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
 import { parseHexColor, type RgbColor } from "@/lib/export-colors"
 import type { PdfExportColorMode } from "@/lib/pdf-output-intent"
+import type { DocumentVariableContext } from "@/lib/document-variable-text"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -60,6 +61,7 @@ type ExportVectorPdfOptions = {
   height: number
   result: GridResult
   layout: PreviewLayoutState | null
+  documentVariableContext?: DocumentVariableContext | null
   baseFont?: FontFamily
   originX?: number
   originY?: number
@@ -168,6 +170,7 @@ export function renderSwissGridVectorPdf({
   height,
   result,
   layout,
+  documentVariableContext = null,
   baseFont = DEFAULT_BASE_FONT,
   originX = 0,
   originY = 0,
@@ -185,6 +188,7 @@ export function renderSwissGridVectorPdf({
   const exportPlan = buildPageExportPlan({
     result,
     layout,
+    documentVariableContext,
     baseFont,
     imageColorScheme,
     canvasBackground,

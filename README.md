@@ -86,6 +86,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Paragraph and image-placeholder height can be composed as `rows + baselines`, including shallow frames such as `0 rows + 1 baseline`
 - Paragraph vertical alignment (`Top`, `Center`, `Bottom`) stays baseline-aligned inside the configured frame height
 - Optical/metric kerning toggle with shared render/export behavior
+- Dynamic document variables for editorial folios and proof lines: `<% project_title %>`, `<% title %>`, `<% page %>`, `<% pages %>`, `<% date %>`, `<% time %>`
 - Inline editor caret and selection follow rendered text geometry
 - Live character & word count
 

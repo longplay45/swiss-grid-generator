@@ -9,6 +9,7 @@ import { loadOutlineFont } from "@/lib/font-outline"
 import { buildPageExportPlan } from "@/lib/page-export-plan"
 import { getRenderedTextDrawCommandText } from "@/lib/text-draw-command"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
+import type { DocumentVariableContext } from "@/lib/document-variable-text"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -18,6 +19,7 @@ type ExportVectorSvgOptions = {
   height: number
   result: GridResult
   layout: PreviewLayoutState | null
+  documentVariableContext?: DocumentVariableContext | null
   baseFont?: FontFamily
   imageColorScheme: ImageColorSchemeId
   canvasBackground?: string | null
@@ -100,6 +102,7 @@ export async function renderSwissGridVectorSvg({
   height,
   result,
   layout,
+  documentVariableContext = null,
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme,
   canvasBackground = null,
@@ -115,6 +118,7 @@ export async function renderSwissGridVectorSvg({
   const exportPlan = buildPageExportPlan({
     result,
     layout,
+    documentVariableContext,
     baseFont,
     imageColorScheme,
     canvasBackground,

@@ -127,6 +127,13 @@ Default: `swiss`
   - `Caption`: `7pt / 8pt`
 - `Custom` is paragraph-level only; when first selected in the text editor it copies the paragraph's currently resolved size and leading into `Custom Size` and `Custom Leading`.
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
+- Paragraph text supports dynamic document variables in raw text:
+  - `<% project_title %>` and alias `<% title %>`
+  - `<% page %>`
+  - `<% pages %>`
+  - `<% date %>` rendered as local `YYYY-MM-DD`
+  - `<% time %>` rendered as local `HH:mm`
+- Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
 - `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:

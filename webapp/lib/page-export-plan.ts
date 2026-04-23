@@ -58,6 +58,10 @@ import {
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
 import { createTextMetricsService, measureCanvasTextAscent } from "@/lib/text-metrics-service"
+import {
+  resolveDocumentVariableContent,
+  type DocumentVariableContext,
+} from "@/lib/document-variable-text"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type BlockId = string
@@ -128,6 +132,7 @@ export type PageExportPlan = {
 type BuildPageExportPlanArgs = {
   result: GridResult
   layout: PreviewLayoutState | null
+  documentVariableContext?: DocumentVariableContext | null
   baseFont?: FontFamily
   imageColorScheme: ImageColorSchemeId
   canvasBackground?: string | null
@@ -196,6 +201,7 @@ function reconcileLayerOrder(
 export function buildPageExportPlan({
   result,
   layout,
+  documentVariableContext = null,
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme,
   canvasBackground = null,
@@ -530,6 +536,42 @@ export function buildPageExportPlan({
       },
     )
   )
+  const resolvedTextContent = {} as Record<BlockId, string>
+  const resolvedTrackingRunsByBlock = new Map<BlockId, TextTrackingRun[]>()
+  const resolvedFormatRunsByBlock = new Map<BlockId, TextFormatRun<TypographyStyleKey, FontFamily>[]>()
+
+  for (const key of blockOrder) {
+    const styleKey = styleAssignments[key] ?? "body"
+    const baseTrackingScale = getBlockTrackingScale(key)
+    const baseFormat = {
+      fontFamily: getBlockFont(key),
+      fontWeight: getBlockFontWeight(key, styleKey),
+      italic: isBlockItalic(key, styleKey),
+      styleKey,
+      color: getResolvedBlockTextColor(key),
+    }
+    const rawText = textContent[key] ?? ""
+    const rawFormatRuns = getBlockTextFormatRuns(key, styleKey)
+    const rawTrackingRuns = getBlockTrackingRuns(key)
+    const resolved = documentVariableContext
+      ? resolveDocumentVariableContent({
+          text: rawText,
+          context: documentVariableContext,
+          baseFormat,
+          formatRuns: rawFormatRuns,
+          baseTrackingScale,
+          trackingRuns: rawTrackingRuns,
+        })
+      : {
+          text: rawText,
+          formatRuns: rawFormatRuns,
+          trackingRuns: rawTrackingRuns,
+        }
+
+    resolvedTextContent[key] = resolved.text
+    resolvedTrackingRunsByBlock.set(key, resolved.trackingRuns)
+    resolvedFormatRunsByBlock.set(key, resolved.formatRuns)
+  }
   const getBlockRotation = (key: BlockId) => {
     const raw = blockRotations[key]
     if (typeof raw !== "number" || !Number.isFinite(raw)) return 0
@@ -572,7 +614,7 @@ export function buildPageExportPlan({
   const layoutOutput = showTypography
     ? buildTypographyLayoutPlan<BlockId, TypographyStyleKey, ExportTextContext>({
       blockOrder,
-      textContent,
+      textContent: resolvedTextContent,
       styleAssignments,
       styles: styleDefinitions,
       blockTextAlignments,
@@ -633,8 +675,8 @@ export function buildPageExportPlan({
       createTextContext: ({ key, styleKey, fontSize }) => {
         const opticalKerning = isBlockOpticalKerningEnabled(key)
         const trackingScale = getBlockTrackingScale(key)
-        const trackingRuns = getBlockTrackingRuns(key)
-        const sourceText = textContent[key] ?? ""
+        const trackingRuns = resolvedTrackingRunsByBlock.get(key) ?? []
+        const sourceText = resolvedTextContent[key] ?? ""
         const baseFormat = {
           fontFamily: getBlockFont(key),
           fontWeight: getBlockFontWeight(key, styleKey),
@@ -642,7 +684,7 @@ export function buildPageExportPlan({
           styleKey,
           color: getResolvedBlockTextColor(key),
         }
-        const formatRuns = getBlockTextFormatRuns(key, styleKey)
+        const formatRuns = resolvedFormatRunsByBlock.get(key) ?? []
         const resolveFontSize = (segmentStyleKey: TypographyStyleKey) => getBlockFontSize(key, segmentStyleKey, fontSize)
         const canvasFont = buildCanvasFont(
           baseFormat.fontFamily,
@@ -731,10 +773,10 @@ export function buildPageExportPlan({
       styleDefinitions[plan.styleKey]?.baselineMultiplier ?? 1,
     ) * baselineStep,
     trackingScale: getBlockTrackingScale(plan.key),
-    trackingRuns: getBlockTrackingRuns(plan.key),
+    trackingRuns: resolvedTrackingRunsByBlock.get(plan.key) ?? [],
     opticalKerning: isBlockOpticalKerningEnabled(plan.key),
     textColor: parseHexColor(getResolvedBlockTextColor(plan.key)) ?? { r: 31, g: 41, b: 55 },
-    sourceText: textContent[plan.key] ?? "",
+    sourceText: resolvedTextContent[plan.key] ?? "",
     segmentLines: [],
     graphemeLines: [],
   }))
@@ -756,7 +798,7 @@ export function buildPageExportPlan({
         styleKey: textPlan.styleKey,
         color: getResolvedBlockTextColor(textPlan.key),
       },
-      formatRuns: getBlockTextFormatRuns(textPlan.key, textPlan.styleKey),
+      formatRuns: resolvedFormatRunsByBlock.get(textPlan.key) ?? [],
       baseTrackingScale: textPlan.trackingScale,
       trackingRuns: textPlan.trackingRuns,
       resolveFontSize: (styleKey) => getBlockFontSize(textPlan.key, styleKey, textPlan.fontSize),
@@ -773,7 +815,7 @@ export function buildPageExportPlan({
         styleKey: textPlan.styleKey,
         color: getResolvedBlockTextColor(textPlan.key),
       },
-      formatRuns: getBlockTextFormatRuns(textPlan.key, textPlan.styleKey),
+      formatRuns: resolvedFormatRunsByBlock.get(textPlan.key) ?? [],
       baseTrackingScale: textPlan.trackingScale,
       trackingRuns: textPlan.trackingRuns,
       resolveFontSize: (styleKey) => getBlockFontSize(textPlan.key, styleKey, textPlan.fontSize),

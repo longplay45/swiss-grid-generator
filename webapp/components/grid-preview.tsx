@@ -61,6 +61,7 @@ import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
 import { usePreviewTextEditor } from "@/hooks/usePreviewTextEditor"
+import type { DocumentVariableContext } from "@/lib/document-variable-text"
 import {
   memo,
   useCallback,
@@ -163,6 +164,7 @@ interface GridPreviewProps {
   showPreviewHelpIndicator?: boolean
   baseFont?: FontFamily
   imageColorScheme?: ImageColorSchemeId
+  documentVariableContext?: DocumentVariableContext | null
   onImageColorSchemeChange?: (value: ImageColorSchemeId) => void
   onShowImagePlaceholdersChange?: (value: boolean) => void
   editorSidebarHost?: HTMLDivElement | null
@@ -216,6 +218,7 @@ export const GridPreview = memo(function GridPreview({
   showPreviewHelpIndicator = false,
   baseFont = DEFAULT_BASE_FONT,
   imageColorScheme = DEFAULT_IMAGE_COLOR_SCHEME_ID,
+  documentVariableContext = null,
   onImageColorSchemeChange,
   onShowImagePlaceholdersChange,
   editorSidebarHost = null,
@@ -961,6 +964,7 @@ export const GridPreview = memo(function GridPreview({
     imageOrder,
     layerOrder: resolvedLayerOrder,
     textContent,
+    documentVariableContext,
     styleAssignments,
     blockTextAlignments,
     blockVerticalAlignments,

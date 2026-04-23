@@ -24,6 +24,7 @@ import { type GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
 import type { UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
+import type { DocumentVariableContext } from "@/lib/document-variable-text"
 
 type TypographyStyleKey = string
 type BlockId = string
@@ -41,6 +42,7 @@ export type ResolvedProjectPageUiSettings = Record<string, unknown> & UiSettings
 export type ResolvedProjectPageExportSource = {
   id: string
   name: string
+  documentVariableContext: DocumentVariableContext
   uiSettings: ResolvedProjectPageUiSettings
   previewLayout: PreviewLayoutState | null
   result: GridResult
@@ -297,6 +299,7 @@ export function resolveProjectPageUiSettings(
 export function buildResolvedProjectPageExportSource(
   page: ProjectPage<Record<string, unknown>>,
   sourcePath: string,
+  variableContext?: Partial<DocumentVariableContext>,
 ): ResolvedProjectPageExportSource {
   if (!isObjectRecord(page.uiSettings)) {
     throw new Error(`Invalid project page "${sourcePath}": missing uiSettings`)
@@ -309,6 +312,12 @@ export function buildResolvedProjectPageExportSource(
   return {
     id: page.id,
     name: page.name,
+    documentVariableContext: {
+      projectTitle: variableContext?.projectTitle ?? "",
+      pageNumber: variableContext?.pageNumber ?? 1,
+      pageCount: variableContext?.pageCount ?? 1,
+      now: variableContext?.now ?? new Date(),
+    },
     uiSettings,
     previewLayout: isObjectRecord(page.previewLayout) ? page.previewLayout as PreviewLayoutState : null,
     result,
@@ -325,9 +334,15 @@ export function buildResolvedProjectPageExportSources(
   range: ProjectExportPageRange,
 ): ResolvedProjectPageExportSource[] {
   const normalizedRange = normalizeProjectExportPageRange(project.pages.length, range.fromPage, range.toPage)
+  const now = new Date()
   return sliceProjectPagesForExportRange(project, range).map((page, index) => {
     const pageNumber = normalizedRange.startIndex + index + 1
     const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
-    return buildResolvedProjectPageExportSource(page, sourcePath)
+    return buildResolvedProjectPageExportSource(page, sourcePath, {
+      projectTitle: project.metadata.title,
+      pageNumber,
+      pageCount: project.pages.length,
+      now,
+    })
   })
 }

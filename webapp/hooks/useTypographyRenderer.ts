@@ -16,6 +16,7 @@ import {
   drawCanvasLayerStack,
   type CanvasImageRenderPlan,
 } from "@/lib/canvas-page-renderer"
+import type { DocumentVariableContext } from "@/lib/document-variable-text"
 import type { BlockRect, BlockRenderPlan, TextAlignMode, TextVerticalAlignMode } from "@/lib/preview-types"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
@@ -45,6 +46,7 @@ type Args<BlockId extends string> = {
   imageOrder: BlockId[]
   layerOrder: BlockId[]
   textContent: Record<BlockId, string>
+  documentVariableContext?: DocumentVariableContext | null
   styleAssignments: Record<BlockId, keyof GridResult["typography"]["styles"]>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
   blockVerticalAlignments: Partial<Record<BlockId, TextVerticalAlignMode>>
@@ -121,6 +123,7 @@ export function useTypographyRenderer<BlockId extends string>({
   imageOrder,
   layerOrder,
   textContent,
+  documentVariableContext = null,
   styleAssignments,
   blockTextAlignments,
   blockVerticalAlignments,
@@ -296,6 +299,7 @@ export function useTypographyRenderer<BlockId extends string>({
           ctx,
           blockOrder: keys,
           textContent,
+          documentVariableContext,
           styleAssignments,
           styles,
           blockTextAlignments,
@@ -466,6 +470,7 @@ export function useTypographyRenderer<BlockId extends string>({
     blockVerticalAlignments,
     canvasRef,
     dragState,
+    documentVariableContext,
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,

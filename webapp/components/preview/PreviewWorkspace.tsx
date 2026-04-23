@@ -1,7 +1,7 @@
 "use client"
 
 import { Plus, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
@@ -210,6 +210,7 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [previewEditorOpenToken, setPreviewEditorOpenToken] = useState(0)
+  const previewVariableNow = useMemo(() => new Date(), [])
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
     !showPresetsBrowser
@@ -226,6 +227,18 @@ export function PreviewWorkspace({
     if (!showPresetsBrowser) return
     setPreviewHoveredLayerKey(null)
   }, [showPresetsBrowser])
+
+  const activePageNumber = useMemo(() => {
+    const activeIndex = projectPages.findIndex((page) => page.id === activePageId)
+    return activeIndex >= 0 ? activeIndex + 1 : 1
+  }, [activePageId, projectPages])
+
+  const documentVariableContext = useMemo(() => ({
+    projectTitle,
+    pageNumber: activePageNumber,
+    pageCount: Math.max(1, projectPages.length),
+    now: previewVariableNow,
+  }), [activePageNumber, previewVariableNow, projectPages.length, projectTitle])
 
   return (
     <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
@@ -284,6 +297,7 @@ export function PreviewWorkspace({
               smartTextEditZoomEnabled={smartTextZoomEnabled}
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
+              documentVariableContext={documentVariableContext}
               canvasBackground={resolvedCanvasBackground}
               onImageColorSchemeChange={onImageColorSchemeChange}
               onShowImagePlaceholdersChange={onShowImagePlaceholdersChange}

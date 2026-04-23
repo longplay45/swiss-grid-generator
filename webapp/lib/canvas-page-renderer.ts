@@ -27,6 +27,10 @@ import {
   type TextFormatRun,
 } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
+import {
+  resolveDocumentVariableContent,
+  type DocumentVariableContext,
+} from "@/lib/document-variable-text"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
@@ -83,6 +87,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   ctx: CanvasRenderingContext2D
   blockOrder: BlockId[]
   textContent: Record<BlockId, string>
+  documentVariableContext?: DocumentVariableContext | null
   styleAssignments: Record<BlockId, StyleKey>
   styles: Record<StyleKey, TypographyStyleDefinition>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
@@ -453,6 +458,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   ctx,
   blockOrder,
   textContent,
+  documentVariableContext = null,
   styleAssignments,
   styles,
   blockTextAlignments,
@@ -503,9 +509,47 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   blockRects: Record<BlockId, BlockRect>
   overflowByBlock: Partial<Record<BlockId, number>>
 } {
+  const resolvedTextContent = {} as Record<BlockId, string>
+  const resolvedTrackingRunsByBlock = new Map<BlockId, TextTrackingRun[]>()
+  const resolvedFormatRunsByBlock = new Map<BlockId, TextFormatRun<StyleKey, FontFamily>[]>()
+
+  for (const key of blockOrder) {
+    const styleKey = styleAssignments[key] ?? defaultBodyStyleKey
+    const baseTrackingScale = getBlockTrackingScale(key)
+    const baseColor = getBlockTextColor(key)
+    const baseFormat = {
+      fontFamily: getBlockFont(key, styleKey),
+      fontWeight: getBlockFontWeight(key, styleKey),
+      italic: isBlockItalic(key, styleKey),
+      styleKey,
+      color: baseColor,
+    }
+    const rawText = textContent[key] ?? ""
+    const rawFormatRuns = getBlockTextFormatRuns(key, baseColor)
+    const rawTrackingRuns = getBlockTrackingRuns(key)
+    const resolved = documentVariableContext
+      ? resolveDocumentVariableContent({
+          text: rawText,
+          context: documentVariableContext,
+          baseFormat,
+          formatRuns: rawFormatRuns,
+          baseTrackingScale,
+          trackingRuns: rawTrackingRuns,
+        })
+      : {
+          text: rawText,
+          formatRuns: rawFormatRuns,
+          trackingRuns: rawTrackingRuns,
+        }
+
+    resolvedTextContent[key] = resolved.text
+    resolvedTrackingRunsByBlock.set(key, resolved.trackingRuns)
+    resolvedFormatRunsByBlock.set(key, resolved.formatRuns)
+  }
+
   const layoutOutput = buildTypographyLayoutPlan<BlockId, StyleKey, CanvasRenderingContext2D>({
     blockOrder,
-    textContent,
+    textContent: resolvedTextContent,
     styleAssignments,
     styles,
     blockTextAlignments,
@@ -566,7 +610,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         hyphenate,
         getBlockTrackingScale(key),
         isBlockOpticalKerningEnabled(key),
-        getBlockTrackingRuns(key),
+        resolvedTrackingRunsByBlock.get(key) ?? [],
         {
           fontFamily: getBlockFont(key, styleKey),
           fontWeight: getBlockFontWeight(key, styleKey),
@@ -574,7 +618,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
           styleKey,
           color: getBlockTextColor(key),
         },
-        getBlockTextFormatRuns(key, getBlockTextColor(key)),
+        resolvedFormatRunsByBlock.get(key) ?? [],
         (segmentStyleKey) => resolveScaledCanvasFontSize(
           getBlockFontSize(key, segmentStyleKey),
           fontScale,
@@ -604,14 +648,17 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const blockItalic = isBlockItalic(plan.key, plan.styleKey)
     const opticalKerning = isBlockOpticalKerningEnabled(plan.key)
     const trackingScale = getBlockTrackingScale(plan.key)
-    const trackingRuns = getBlockTrackingRuns(plan.key)
+    const trackingRuns = resolvedTrackingRunsByBlock.get(plan.key) ?? []
+    const sourceText = resolvedTextContent[plan.key] ?? ""
+    const textColor = getBlockTextColor(plan.key)
+    const formatRuns = resolvedFormatRunsByBlock.get(plan.key) ?? []
     applyCanvasTextConfig(ctx, {
       font: buildCanvasFont(blockFont, blockFontWeight, blockItalic, plan.fontSize),
       opticalKerning,
     })
     const planFont = ctx.font
     const segmentLines = plan.commands.map((command) => buildPositionedTextFormatTrackingGraphemes(ctx, {
-      sourceText: textContent[plan.key] ?? "",
+      sourceText,
       command,
       textAlign: plan.textAlign,
       baseFormat: {
@@ -619,9 +666,9 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
         fontWeight: blockFontWeight,
         italic: blockItalic,
         styleKey: plan.styleKey,
-        color: getBlockTextColor(plan.key),
+        color: textColor,
       },
-      formatRuns: getBlockTextFormatRuns(plan.key, getBlockTextColor(plan.key)),
+      formatRuns,
       baseTrackingScale: trackingScale,
       trackingRuns,
       resolveFontSize: (styleKey) => resolveScaledCanvasFontSize(
@@ -633,7 +680,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     }))
     const renderedLines = buildRenderedTextLines(
       ctx,
-      textContent[plan.key] ?? "",
+      sourceText,
       plan.commands,
       segmentLines,
       planFont,
@@ -646,7 +693,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       signature: [
         plan.styleKey,
         blockFont,
-        getBlockTextColor(plan.key),
+        textColor,
         blockFontWeight,
         blockItalic ? "italic" : "normal",
         opticalKerning ? "kerning-on" : "kerning-off",
@@ -677,7 +724,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
           .join("###"),
       ].join("|"),
       font: planFont,
-      textColor: getBlockTextColor(plan.key),
+      textColor,
       textAlign: plan.textAlign,
       textVerticalAlign: plan.textVerticalAlign,
       blockRotation: plan.blockRotation,
@@ -686,7 +733,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       opticalKerning,
       trackingScale,
       trackingRuns,
-      sourceText: textContent[plan.key] ?? "",
+      sourceText,
       segmentLines,
       renderedLines,
       commands: plan.commands,

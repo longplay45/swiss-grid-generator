@@ -15,14 +15,21 @@ export async function renderSwissGridIdmlProject(
   project: LoadedProject<Record<string, unknown>>,
   onProgress?: (progress: IdmlExportProgress) => void,
 ): Promise<Uint8Array> {
+  const now = new Date()
   const pages = project.pages.map((page, index) => {
     const sourcePath = `${page.name || `Page ${index + 1}`} (${page.id})`
-    const resolved = buildResolvedProjectPageExportSource(page, sourcePath)
+    const resolved = buildResolvedProjectPageExportSource(page, sourcePath, {
+      projectTitle: project.metadata.title,
+      pageNumber: index + 1,
+      pageCount: project.pages.length,
+      now,
+    })
     const plannedPage = {
       ...resolved,
       exportPlan: buildPageExportPlan({
         result: resolved.result,
         layout: resolved.previewLayout,
+        documentVariableContext: resolved.documentVariableContext,
         baseFont: resolved.baseFont,
         imageColorScheme: resolved.imageColorScheme,
         canvasBackground: resolved.resolvedCanvasBackground,
