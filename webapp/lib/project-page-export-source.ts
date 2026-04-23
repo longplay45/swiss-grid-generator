@@ -306,7 +306,9 @@ export function buildResolvedProjectPageExportSource(
   }
 
   const uiSettings = resolveProjectPageUiSettings(page.uiSettings, sourcePath)
-  const result = buildGridResultFromUiSettings(uiSettings)
+  const result = buildGridResultFromUiSettings(uiSettings, {
+    layoutMode: page.layoutMode ?? "single",
+  })
   const imageColorScheme = uiSettings.imageColorScheme ?? DEFAULT_IMAGE_COLOR_SCHEME_ID
 
   return {

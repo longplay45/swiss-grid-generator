@@ -95,6 +95,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Full **Project → Pages → inline Layers** architecture
 - Multiple pages with independent settings
 - Project rail uses page cards with inline open/close layer stacks for faster long-document navigation
+- Opened page cards expose a one-way `Facing pages` control above `Layers`, converting the page into a facing spread with mirrored inner/outer margins and a zero-gap preview seam
+- Facing spreads stay a single project page and double the effective column space so layers and text reflow can extend across both sides
 - `Page Up` / `Page Down` step to the previous or next project page when multiple pages are present, and `Home` / `End` jump to the first or last page
 - Text and image layers with stable grid-based positioning
 - Drag to move, Alt/Option+drag to duplicate

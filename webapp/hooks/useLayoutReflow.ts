@@ -23,6 +23,7 @@ type Args<BlockId extends string> = {
   moduleWidth: number
   moduleHeight: number
   moduleWidths: number[]
+  columnStarts: number[]
   moduleHeights: number[]
   moduleRowStarts: number[]
   gridUnit: number
@@ -81,6 +82,7 @@ export function useLayoutReflow<BlockId extends string>({
   moduleWidth,
   moduleHeight,
   moduleWidths,
+  columnStarts,
   moduleHeights,
   moduleRowStarts,
   gridUnit,
@@ -254,6 +256,7 @@ export function useLayoutReflow<BlockId extends string>({
       moduleWidth,
       moduleHeight,
       moduleWidths,
+      columnStarts,
       moduleHeights,
       moduleRowStarts,
       gridMarginVertical,

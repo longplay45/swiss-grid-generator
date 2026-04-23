@@ -1,5 +1,6 @@
 import type { GridResult } from "@/lib/grid-calculator"
 import { buildAxisStarts, resolveAxisSizes } from "@/lib/grid-rhythm"
+import { resolveGridColumnStarts } from "@/lib/grid-column-layout"
 
 type StaticGuidesRenderOptions = {
   ctx: CanvasRenderingContext2D
@@ -29,12 +30,12 @@ export function renderStaticGuides({
   isMobile,
 }: StaticGuidesRenderOptions): void {
   const { width, height } = result.pageSizePt
-  const { margins, gridUnit, gridMarginHorizontal, gridMarginVertical } = result.grid
+  const { margins, gridUnit, gridMarginVertical } = result.grid
   const { width: modW, height: modH } = result.module
   const { gridCols, gridRows } = result.settings
   const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
   const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-  const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+  const colStarts = resolveGridColumnStarts(result, moduleWidths)
   const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
   const pageWidth = width * scale
   const pageHeight = height * scale
@@ -71,12 +72,20 @@ export function renderStaticGuides({
     ctx.strokeStyle = "#3b82f6"
     ctx.lineWidth = 0.5
     ctx.setLineDash([4, 4])
-    ctx.strokeRect(
-      margins.left * scale,
-      contentTop,
-      pageWidth - (margins.left + margins.right) * scale,
-      contentBottom - contentTop,
-    )
+    const contentRects = result.grid.contentRects ?? [{
+      x: margins.left,
+      y: margins.top,
+      width: pageWidth / Math.max(scale, 0.0001) - (margins.left + margins.right),
+      height: contentBottom / Math.max(scale, 0.0001) - contentTop / Math.max(scale, 0.0001),
+    }]
+    contentRects.forEach((rect) => {
+      ctx.strokeRect(
+        rect.x * scale,
+        rect.y * scale,
+        rect.width * scale,
+        rect.height * scale,
+      )
+    })
     ctx.setLineDash([])
   }
 

@@ -3,7 +3,11 @@ import type { MutableRefObject, RefObject } from "react"
 
 import type { GridResult } from "@/lib/grid-calculator"
 import type { FontFamily } from "@/lib/config/fonts"
-import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes, sumAxisSpan } from "@/lib/grid-rhythm"
+import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
+import {
+  resolveGridColumnStarts,
+  resolveGridFirstColumnStep,
+} from "@/lib/grid-column-layout"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { TextFormatRun, BaseTextFormat } from "@/lib/text-format-runs"
@@ -211,10 +215,10 @@ export function useTypographyRenderer<BlockId extends string>({
       const baselineOriginTop = contentTop - baselineStep
       const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
       const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-      const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+      const colStarts = resolveGridColumnStarts(result, moduleWidths)
       const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
       const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
-      const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+      const firstColumnStep = resolveGridFirstColumnStep(moduleWidths, colStarts, gridMarginHorizontal, modW)
       const toColumnX = (col: number) => {
         return contentLeft + resolvePreviewColumnX(col, colStarts, firstColumnStep) * scale
       }
@@ -282,6 +286,7 @@ export function useTypographyRenderer<BlockId extends string>({
           gridRows,
           moduleWidths,
           moduleHeights,
+          columnStarts: colStarts,
           gridMarginHorizontal,
           gridMarginVertical,
           scale,
@@ -313,6 +318,7 @@ export function useTypographyRenderer<BlockId extends string>({
           moduleHeight: modH * scale,
           moduleWidths: moduleWidths.map((value) => value * scale),
           moduleHeights: moduleHeights.map((value) => value * scale),
+          columnStarts: colStarts.map((value) => value * scale),
           gutterX,
           gutterY: gridMarginVertical * scale,
           gridRows,

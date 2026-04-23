@@ -13,8 +13,10 @@ import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import type { FontFamily } from "@/lib/config/fonts"
-import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import type { ProjectPage } from "@/lib/document-session"
+import {
+  type ImageColorSchemeId,
+} from "@/lib/config/color-schemes"
+import { type ProjectPage } from "@/lib/document-session"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import type { HeaderAction, HeaderItem } from "@/hooks/useHeaderActions"
@@ -91,6 +93,7 @@ type Props = {
   onProjectTitleChange: (nextTitle: string) => void
   onPageSelect: (pageId: string) => void
   onPageAdd: () => void
+  onPageFacingToggle: (pageId: string, enabled: boolean) => void
   onPageRename: (pageId: string, nextName: string) => void
   onPageDelete: (pageId: string) => void
   onPageOrderChange: (orderedIds: string[]) => void
@@ -192,6 +195,7 @@ export function PreviewWorkspace({
   onProjectTitleChange,
   onPageSelect,
   onPageAdd,
+  onPageFacingToggle,
   onPageRename,
   onPageDelete,
   onPageOrderChange,
@@ -411,6 +415,7 @@ export function PreviewWorkspace({
                     pages={projectPages}
                     activePageId={activePageId}
                     onSelectPage={onPageSelect}
+                    onFacingPageToggle={onPageFacingToggle}
                     onRenamePage={onPageRename}
                     onDeletePage={onPageDelete}
                     onPageOrderChange={onPageOrderChange}

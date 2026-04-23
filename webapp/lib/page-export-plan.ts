@@ -24,8 +24,12 @@ import {
   buildAxisStarts,
   findNearestAxisIndex,
   resolveAxisSizes,
-  sumAxisSpan,
 } from "@/lib/grid-rhythm"
+import {
+  resolveGridColumnStarts,
+  resolveGridFirstColumnStep,
+  sumGridColumnSpan,
+} from "@/lib/grid-column-layout"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { getDefaultColumnSpan, wrapTextDetailed } from "@/lib/text-layout"
@@ -220,10 +224,10 @@ export function buildPageExportPlan({
   const { gridCols, gridRows } = result.settings
   const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
   const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-  const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+  const colStarts = resolveGridColumnStarts(result, moduleWidths)
   const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
   const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
-  const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+  const firstColumnStep = resolveGridFirstColumnStep(moduleWidths, colStarts, gridMarginHorizontal, modW)
   const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
   const showPageOutline = showMargins || showModules || showBaselines
   const guideContentTop = margins.top
@@ -262,12 +266,17 @@ export function buildPageExportPlan({
       dashPattern: [4, 4],
       clipToPage: false,
       lines: [],
-      rects: [{
+      rects: (result.grid.contentRects ?? [{
         x: margins.left,
         y: guideContentTop,
         width: sourceWidth - (margins.left + margins.right),
         height: guideContentBottom - guideContentTop,
-      }],
+      }]).map((rect) => ({
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      })),
     })
   }
 
@@ -381,7 +390,7 @@ export function buildPageExportPlan({
         key,
         x,
         y,
-        width: sumAxisSpan(moduleWidths, snappedStartCol, span, gridMarginHorizontal),
+        width: sumGridColumnSpan(moduleWidths, colStarts, snappedStartCol, span, gridMarginHorizontal),
         height: resolveBlockHeight({
           rowStart: rowStartIndex,
           rows,
@@ -576,7 +585,7 @@ export function buildPageExportPlan({
       gutterY: gridMarginVertical,
       baselineStep,
     })
-    const spanWidth = sumAxisSpan(moduleWidths, startCol, span, gridMarginHorizontal)
+    const spanWidth = sumGridColumnSpan(moduleWidths, colStarts, startCol, span, gridMarginHorizontal)
     const reflowEnabled = isTextReflowEnabled(key) && span >= 2
     const reflowColumnWidth = Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
       moduleWidths[startCol + columnIndex] ?? modW
@@ -733,10 +742,11 @@ export function buildPageExportPlan({
       pageHeight: sourceHeight,
       marginsBottom: margins.bottom,
       baselineStep,
-      moduleWidth: modW,
-      moduleHeight: modH,
-      moduleWidths,
-      moduleHeights,
+    moduleWidth: modW,
+    moduleHeight: modH,
+    moduleWidths,
+    columnStarts: colStarts,
+    moduleHeights,
       gutterX: gridMarginHorizontal,
       gutterY: gridMarginVertical,
       gridRows,

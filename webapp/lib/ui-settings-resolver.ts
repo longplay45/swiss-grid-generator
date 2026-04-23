@@ -32,6 +32,7 @@ import {
   getCustomCanvasFormatDimensions,
   type GridResult,
 } from "@/lib/grid-calculator"
+import { buildAxisStarts, resolveAxisSizes } from "@/lib/grid-rhythm"
 import {
   buildCollapsedSectionState,
   type SectionKey,
@@ -205,7 +206,90 @@ export function buildSerializableUiSettingsSnapshot(snapshot: UiSettingsSnapshot
   }
 }
 
-export function buildGridResultFromUiSettings(snapshot: UiSettingsSnapshot): GridResult {
+function withResolvedGridGuides(result: GridResult): GridResult {
+  const moduleWidths = resolveAxisSizes(result.module.widths, result.settings.gridCols, result.module.width)
+  const columnStarts = buildAxisStarts(moduleWidths, result.grid.gridMarginHorizontal)
+  const contentHeight = result.pageSizePt.height - (result.grid.margins.top + result.grid.margins.bottom)
+
+  return {
+    ...result,
+    grid: {
+      ...result.grid,
+      columnStarts,
+      contentRects: [{
+        x: result.grid.margins.left,
+        y: result.grid.margins.top,
+        width: result.pageSizePt.width - (result.grid.margins.left + result.grid.margins.right),
+        height: contentHeight,
+      }],
+    },
+  }
+}
+
+function buildFacingSpreadGridResult(singlePage: GridResult): GridResult {
+  const moduleWidths = resolveAxisSizes(singlePage.module.widths, singlePage.settings.gridCols, singlePage.module.width)
+  const leftColumnStarts = buildAxisStarts(moduleWidths, singlePage.grid.gridMarginHorizontal)
+  const outerMargin = singlePage.grid.margins.left
+  const innerMargin = singlePage.grid.margins.right
+  const pageWidth = singlePage.pageSizePt.width
+  const pageHeight = singlePage.pageSizePt.height
+  const contentHeight = pageHeight - (singlePage.grid.margins.top + singlePage.grid.margins.bottom)
+  const rightPageStart = pageWidth + innerMargin - outerMargin
+  const spreadColumnStarts = [
+    ...leftColumnStarts,
+    ...leftColumnStarts.map((value) => value + rightPageStart),
+  ]
+  const spreadModuleWidths = [...moduleWidths, ...moduleWidths]
+  const spreadCols = singlePage.settings.gridCols * 2
+
+  return {
+    ...singlePage,
+    settings: {
+      ...singlePage.settings,
+      gridCols: spreadCols,
+    },
+    pageSizePt: {
+      width: pageWidth * 2,
+      height: pageHeight,
+    },
+    grid: {
+      ...singlePage.grid,
+      margins: {
+        ...singlePage.grid.margins,
+        right: outerMargin,
+      },
+      columnStarts: spreadColumnStarts,
+      contentRects: [
+        {
+          x: outerMargin,
+          y: singlePage.grid.margins.top,
+          width: singlePage.contentArea.width,
+          height: contentHeight,
+        },
+        {
+          x: pageWidth + innerMargin,
+          y: singlePage.grid.margins.top,
+          width: singlePage.contentArea.width,
+          height: contentHeight,
+        },
+      ],
+    },
+    contentArea: {
+      width: singlePage.contentArea.width * 2,
+      height: singlePage.contentArea.height,
+    },
+    module: {
+      ...singlePage.module,
+      widths: spreadModuleWidths,
+      aspectRatio: (pageWidth * 2) / Math.max(pageHeight, 0.0001),
+    },
+  }
+}
+
+export function buildGridResultFromUiSettings(
+  snapshot: UiSettingsSnapshot,
+  options?: { layoutMode?: "single" | "facing" },
+): GridResult {
   const baseline = snapshot.customBaseline
   const customMargins = snapshot.useCustomMargins
     ? {
@@ -216,7 +300,7 @@ export function buildGridResultFromUiSettings(snapshot: UiSettingsSnapshot): Gri
       }
     : undefined
 
-  return generateSwissGrid({
+  const baseResult = generateSwissGrid({
     format: resolvePreviewFormat(snapshot.canvasRatio),
     customFormatDimensions: snapshot.canvasRatio === "custom"
       ? getCustomCanvasFormatDimensions(snapshot.customRatioWidth, snapshot.customRatioHeight)
@@ -236,6 +320,12 @@ export function buildGridResultFromUiSettings(snapshot: UiSettingsSnapshot): Gri
     customMargins,
     typographyScale: snapshot.typographyScale,
   })
+
+  const normalized = withResolvedGridGuides(baseResult)
+  if (options?.layoutMode === "facing") {
+    return buildFacingSpreadGridResult(normalized)
+  }
+  return normalized
 }
 
 export function resolvePreviewFormatForCanvasRatio(canvasRatio: UiSettingsSnapshot["canvasRatio"]): string {

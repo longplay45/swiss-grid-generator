@@ -1,5 +1,5 @@
 import { resolveBlockHeight } from "@/lib/block-height"
-import { sumAxisSpan } from "@/lib/grid-rhythm"
+import { resolveGridColumnOffset, sumGridColumnSpan } from "@/lib/grid-column-layout"
 import { resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { WrappedTextLine } from "@/lib/text-layout"
 import type { TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
@@ -61,6 +61,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
   moduleWidth: number
   moduleHeight: number
   moduleWidths?: number[]
+  columnStarts?: number[]
   moduleHeights?: number[]
   gutterX: number
   gutterY: number
@@ -119,6 +120,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   moduleWidth,
   moduleHeight,
   moduleWidths,
+  columnStarts,
   moduleHeights,
   gutterX,
   gutterY,
@@ -177,7 +179,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     if (columnStart < 0 || columnStart >= gridCols) {
       return span * moduleWidth + Math.max(span - 1, 0) * gutterX
     }
-    return sumAxisSpan(resolvedModuleWidths, columnStart, span, gutterX)
+    return sumGridColumnSpan(resolvedModuleWidths, columnStarts ?? [], columnStart, span, gutterX)
   }
   const getReflowColumnWidth = (columnStart: number, span: number) => {
     let minWidth = Number.POSITIVE_INFINITY
@@ -188,11 +190,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     return Number.isFinite(minWidth) && minWidth > 0 ? minWidth : moduleWidth
   }
   const getColumnOffset = (columnStart: number, offset: number) => {
-    let position = 0
-    for (let index = 0; index < offset; index += 1) {
-      position += getColumnWidthAt(columnStart + index) + gutterX
-    }
-    return position
+    return resolveGridColumnOffset(columnStarts ?? [], columnStart, offset, resolvedModuleWidths, gutterX)
   }
   const getRowSpanHeight = (rowStart: number, rowSpan: number, heightBaselines: number) => {
     return resolveBlockHeight({

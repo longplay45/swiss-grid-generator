@@ -6,8 +6,12 @@ import {
   buildAxisStarts,
   findAxisIndexAtOffset,
   findNearestAxisIndex,
-  resolveAxisSizes,
 } from "@/lib/grid-rhythm"
+import {
+  resolveGridColumnStarts,
+  resolveGridFirstColumnStep,
+  resolveGridModuleWidths,
+} from "@/lib/grid-column-layout"
 import {
   resolveInterpolatedPreviewColumn,
   resolveNearestPreviewColumn,
@@ -64,12 +68,14 @@ export function usePreviewGeometry({
     const { gridCols, gridRows } = result.settings
     const contentHeight = (result.pageSizePt.height - margins.top - margins.bottom) * scale
     const baselineStep = gridUnit * scale
-    const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, modW)
-    const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, modH)
-    const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+    const moduleWidths = resolveGridModuleWidths(result)
+    const moduleHeights = Array.isArray(result.module.heights) && result.module.heights.length === gridRows
+      ? result.module.heights.map((value) => (Number.isFinite(value) && value > 0 ? value : modH))
+      : Array(gridRows).fill(modH)
+    const colStarts = resolveGridColumnStarts(result, moduleWidths)
     const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
     const rowStartBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
-    const firstColumnStep = (moduleWidths[0] ?? modW) + gridMarginHorizontal
+    const firstColumnStep = resolveGridFirstColumnStep(moduleWidths, colStarts, gridMarginHorizontal, modW)
     const firstRowStep = (moduleHeights[0] ?? modH) + gridMarginVertical
 
     const getColumnX = (col: number) => (

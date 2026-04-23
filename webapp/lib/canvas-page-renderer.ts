@@ -1,5 +1,5 @@
 import { resolveBlockHeight } from "@/lib/block-height"
-import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
+import { findNearestAxisIndex } from "@/lib/grid-rhythm"
 import type { FontFamily } from "@/lib/config/fonts"
 import { getOpticalTerminalCaretAdvance } from "@/lib/optical-margin"
 import { resolveTextDrawCommandRange } from "@/lib/text-draw-command"
@@ -33,6 +33,7 @@ import {
 } from "@/lib/document-variable-text"
 import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
+import { sumGridColumnSpan } from "@/lib/grid-column-layout"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
 import { resolveScaledCanvasFontSize } from "./canvas-render-math.ts"
@@ -79,6 +80,7 @@ type BuildCanvasImagePlansArgs<Key extends string> = {
   gridRows: number
   moduleWidths: number[]
   moduleHeights: number[]
+  columnStarts: number[]
   gridMarginHorizontal: number
   gridMarginVertical: number
   scale: number
@@ -102,6 +104,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   moduleHeight: number
   moduleWidths: number[]
   moduleHeights: number[]
+  columnStarts?: number[]
   gutterX: number
   gutterY: number
   gridRows: number
@@ -372,6 +375,7 @@ export function buildCanvasImagePlans<Key extends string>({
   gridRows,
   moduleWidths,
   moduleHeights,
+  columnStarts,
   gridMarginHorizontal,
   gridMarginVertical,
   scale,
@@ -415,7 +419,7 @@ export function buildCanvasImagePlans<Key extends string>({
       rect: {
         x,
         y,
-        width: sumAxisSpan(moduleWidths, snappedStartCol, columns, gridMarginHorizontal) * scale,
+        width: sumGridColumnSpan(moduleWidths, columnStarts, snappedStartCol, columns, gridMarginHorizontal) * scale,
         height: resolveBlockHeight({
           rowStart: rowStartIndex,
           rows,
@@ -473,6 +477,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   moduleHeight,
   moduleWidths,
   moduleHeights,
+  columnStarts,
   gutterX,
   gutterY,
   gridRows,
@@ -536,7 +541,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       gutterY,
       baselineStep,
     })
-    const spanWidth = sumAxisSpan(moduleWidths, startCol, span, gutterX)
+    const spanWidth = sumGridColumnSpan(moduleWidths, columnStarts ?? [], startCol, span, gutterX)
     const reflowEnabled = isTextReflowEnabled(key) && span >= 2
     const reflowColumnWidth = Array.from({ length: Math.max(1, span) }, (_, columnIndex) => (
       moduleWidths[startCol + columnIndex] ?? moduleWidth
@@ -626,6 +631,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     moduleHeight,
     moduleWidths,
     moduleHeights,
+    columnStarts,
     gutterX,
     gutterY,
     gridRows,

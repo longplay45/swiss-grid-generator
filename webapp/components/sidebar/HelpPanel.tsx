@@ -545,7 +545,9 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Opens the right-side Project panel with an editable project name and a `Pages` section.</li>
           <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
           <li>`Pages` stays visible in the fixed project-panel header while the page list scrolls; single-click a page card to activate it and double-click the card to open or close its inline layer list.</li>
+          <li>Opened page cards expose a one-way `Facing pages` checkbox above `Layers`, converting the page into a true spread with mirrored inner/outer margins and a zero-gap preview seam.</li>
           <li>`Page Up` and `Page Down` also step through project pages when multiple pages are available, and `Home` / `End` jump to the first or last one.</li>
+          <li>After conversion, the spread stays a single page card and edits inside one doubled coordinate space instead of managing a hidden companion page.</li>
           <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
           <li>Newly added pages open automatically.</li>
           <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>

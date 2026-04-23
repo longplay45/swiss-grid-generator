@@ -20,6 +20,7 @@ type Props = {
   pages: ProjectPage<PreviewLayoutState>[]
   activePageId: string
   onSelectPage: (pageId: string) => void
+  onFacingPageToggle: (pageId: string, enabled: boolean) => void
   onRenamePage: (pageId: string, nextName: string) => void
   onDeletePage: (pageId: string) => void
   onPageOrderChange: (orderedIds: string[]) => void
@@ -48,6 +49,7 @@ export function PagesPanel({
   pages,
   activePageId,
   onSelectPage,
+  onFacingPageToggle,
   onRenamePage,
   onDeletePage,
   onPageOrderChange,
@@ -381,12 +383,7 @@ export function PagesPanel({
                       ) : (
                         <div className="truncate text-[12px] font-medium">{page.name}</div>
                       )}
-                      <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${tone.cardMuted}`}>
-                        <span>{layerCount} {layerCount === 1 ? "layer" : "layers"}</span>
-                        {isActive ? <span className="text-[#fe9f97]">Active page</span> : null}
-                      </div>
                     </div>
-
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -438,8 +435,37 @@ export function PagesPanel({
                       </button>
                     </div>
                   </div>
+                  <div className={`mt-0.5 grid w-full grid-cols-[1fr_auto_1fr] items-center text-[11px] ${tone.cardMuted}`}>
+                    <span className="justify-self-start">
+                      {layerCount} {layerCount === 1 ? "layer" : "layers"}
+                    </span>
+                    <span className={`justify-self-center ${isActive ? "text-[#fe9f97]" : "invisible"}`}>
+                      Active page
+                    </span>
+                    <span className={`justify-self-end ${page.layoutMode === "facing" ? "" : "invisible"}`}>
+                      Facing
+                    </span>
+                  </div>
                   {isExpanded ? (
                     <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
+                      <label
+                        data-card-drag-ignore="true"
+                        className={`mb-3 inline-flex w-full items-center gap-2 text-[11px] ${tone.cardMuted}`}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={page.layoutMode === "facing"}
+                          disabled={page.layoutMode === "facing"}
+                          onChange={(event) => {
+                            event.stopPropagation()
+                            onFacingPageToggle(page.id, event.currentTarget.checked)
+                          }}
+                          className="h-3.5 w-3.5 rounded border-gray-300"
+                          aria-label={`Toggle facing page for ${page.name}`}
+                        />
+                        <span>Facing pages</span>
+                      </label>
                       <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
                         Layers
                       </div>

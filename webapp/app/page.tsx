@@ -219,99 +219,6 @@ export default function Home() {
     () => buildGridResultFromUiSettings(ui),
     [ui],
   )
-  const {
-    previewUi,
-    previewResult,
-    setPreviewPatch,
-    clearPreviewKeys,
-  } = useUiSettingsPreview(ui)
-  const handleCanvasRatioPreviewChange = useCallback((value: UiSettingsSnapshot["canvasRatio"] | null) => {
-    if (value === null) {
-      clearPreviewKeys(["canvasRatio"])
-      return
-    }
-    setPreviewPatch({ canvasRatio: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleOrientationPreviewChange = useCallback((value: UiSettingsSnapshot["orientation"] | null) => {
-    if (value === null) {
-      clearPreviewKeys(["orientation"])
-      return
-    }
-    setPreviewPatch({ orientation: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleMarginMethodPreviewChange = useCallback((value: "1" | "2" | "3" | "custom" | null) => {
-    if (value === null) {
-      clearPreviewKeys(["marginMethod", "useCustomMargins", "customMarginMultipliers"])
-      return
-    }
-    if (value === "custom") {
-      const customMarginScale = gridUnit * baselineMultiple
-      const clampCustomMarginMultiplier = (multiplier: number) => Math.max(1, Math.min(9, Math.round(multiplier)))
-      setPreviewPatch({
-        useCustomMargins: true,
-        customMarginMultipliers: {
-          top: clampCustomMarginMultiplier(result.grid.margins.top / customMarginScale),
-          left: clampCustomMarginMultiplier(result.grid.margins.left / customMarginScale),
-          right: clampCustomMarginMultiplier(result.grid.margins.right / customMarginScale),
-          bottom: clampCustomMarginMultiplier(result.grid.margins.bottom / customMarginScale),
-        },
-      })
-      return
-    }
-    setPreviewPatch({
-      marginMethod: parseInt(value, 10) as 1 | 2 | 3,
-      useCustomMargins: false,
-    })
-  }, [baselineMultiple, clearPreviewKeys, gridUnit, result.grid.margins, setPreviewPatch])
-  const handleRhythmPreviewChange = useCallback((value: typeof rhythm | null) => {
-    if (value === null) {
-      clearPreviewKeys(["rhythm"])
-      return
-    }
-    setPreviewPatch({ rhythm: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleRhythmRowsDirectionPreviewChange = useCallback((value: typeof rhythmRowsDirection | null) => {
-    if (value === null) {
-      clearPreviewKeys(["rhythmRowsDirection"])
-      return
-    }
-    setPreviewPatch({ rhythmRowsDirection: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleRhythmColsDirectionPreviewChange = useCallback((value: typeof rhythmColsDirection | null) => {
-    if (value === null) {
-      clearPreviewKeys(["rhythmColsDirection"])
-      return
-    }
-    setPreviewPatch({ rhythmColsDirection: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleTypographyScalePreviewChange = useCallback((value: typeof typographyScale | null) => {
-    if (value === null) {
-      clearPreviewKeys(["typographyScale"])
-      return
-    }
-    setPreviewPatch({ typographyScale: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleBaseFontPreviewChange = useCallback((value: FontFamily | null) => {
-    if (value === null) {
-      clearPreviewKeys(["baseFont"])
-      return
-    }
-    setPreviewPatch({ baseFont: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleColorSchemePreviewChange = useCallback((value: typeof imageColorScheme | null) => {
-    if (value === null) {
-      clearPreviewKeys(["imageColorScheme"])
-      return
-    }
-    setPreviewPatch({ imageColorScheme: value })
-  }, [clearPreviewKeys, setPreviewPatch])
-  const handleCanvasBackgroundPreviewChange = useCallback((value: string | null) => {
-    if (value === null) {
-      clearPreviewKeys(["canvasBackground"])
-      return
-    }
-    setPreviewPatch({ canvasBackground: value === "__none__" ? null : value })
-  }, [clearPreviewKeys, setPreviewPatch])
   const controlSidebarTheme = useMemo(() => ({
     leftPanel: uiTheme.leftPanel,
     leftPanelEdit: uiTheme.leftPanelEdit,
@@ -412,12 +319,14 @@ export default function Home() {
   }, [applyLoadedPreviewLayout, applyLoadedUiSnapshot, collapsed, setShowPresetsBrowser])
 
   const {
+    activePage,
     pages: projectPages,
     activePageId,
     getCurrentProjectSnapshot,
     applyLoadedProject,
     selectPage,
     addPage,
+    setFacingPageEnabled,
     renamePage,
     deletePage,
     reorderPages,
@@ -430,6 +339,101 @@ export default function Home() {
     getCurrentPreviewLayout,
     onApplyPage: handleApplyProjectPage,
   })
+  const activePageLayoutMode = activePage?.layoutMode ?? "single"
+  const effectiveGridCols = activePageLayoutMode === "facing" ? gridCols * 2 : gridCols
+  const {
+    previewUi,
+    previewResult,
+    setPreviewPatch,
+    clearPreviewKeys,
+  } = useUiSettingsPreview(ui, activePageLayoutMode)
+  const handleCanvasRatioPreviewChange = useCallback((value: UiSettingsSnapshot["canvasRatio"] | null) => {
+    if (value === null) {
+      clearPreviewKeys(["canvasRatio"])
+      return
+    }
+    setPreviewPatch({ canvasRatio: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleOrientationPreviewChange = useCallback((value: UiSettingsSnapshot["orientation"] | null) => {
+    if (value === null) {
+      clearPreviewKeys(["orientation"])
+      return
+    }
+    setPreviewPatch({ orientation: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleMarginMethodPreviewChange = useCallback((value: "1" | "2" | "3" | "custom" | null) => {
+    if (value === null) {
+      clearPreviewKeys(["marginMethod", "useCustomMargins", "customMarginMultipliers"])
+      return
+    }
+    if (value === "custom") {
+      const customMarginScale = gridUnit * baselineMultiple
+      const clampCustomMarginMultiplier = (multiplier: number) => Math.max(1, Math.min(9, Math.round(multiplier)))
+      setPreviewPatch({
+        useCustomMargins: true,
+        customMarginMultipliers: {
+          top: clampCustomMarginMultiplier(result.grid.margins.top / customMarginScale),
+          left: clampCustomMarginMultiplier(result.grid.margins.left / customMarginScale),
+          right: clampCustomMarginMultiplier(result.grid.margins.right / customMarginScale),
+          bottom: clampCustomMarginMultiplier(result.grid.margins.bottom / customMarginScale),
+        },
+      })
+      return
+    }
+    setPreviewPatch({
+      marginMethod: parseInt(value, 10) as 1 | 2 | 3,
+      useCustomMargins: false,
+    })
+  }, [baselineMultiple, clearPreviewKeys, gridUnit, result.grid.margins, setPreviewPatch])
+  const handleRhythmPreviewChange = useCallback((value: typeof rhythm | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythm"])
+      return
+    }
+    setPreviewPatch({ rhythm: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleRhythmRowsDirectionPreviewChange = useCallback((value: typeof rhythmRowsDirection | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythmRowsDirection"])
+      return
+    }
+    setPreviewPatch({ rhythmRowsDirection: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleRhythmColsDirectionPreviewChange = useCallback((value: typeof rhythmColsDirection | null) => {
+    if (value === null) {
+      clearPreviewKeys(["rhythmColsDirection"])
+      return
+    }
+    setPreviewPatch({ rhythmColsDirection: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleTypographyScalePreviewChange = useCallback((value: typeof typographyScale | null) => {
+    if (value === null) {
+      clearPreviewKeys(["typographyScale"])
+      return
+    }
+    setPreviewPatch({ typographyScale: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleBaseFontPreviewChange = useCallback((value: FontFamily | null) => {
+    if (value === null) {
+      clearPreviewKeys(["baseFont"])
+      return
+    }
+    setPreviewPatch({ baseFont: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleColorSchemePreviewChange = useCallback((value: typeof imageColorScheme | null) => {
+    if (value === null) {
+      clearPreviewKeys(["imageColorScheme"])
+      return
+    }
+    setPreviewPatch({ imageColorScheme: value })
+  }, [clearPreviewKeys, setPreviewPatch])
+  const handleCanvasBackgroundPreviewChange = useCallback((value: string | null) => {
+    if (value === null) {
+      clearPreviewKeys(["canvasBackground"])
+      return
+    }
+    setPreviewPatch({ canvasBackground: value === "__none__" ? null : value })
+  }, [clearPreviewKeys, setPreviewPatch])
 
   const handleApplyLoadedProject = useCallback((project: LoadedProject<PreviewLayoutState>) => {
     applyLoadedProject(project)
@@ -537,6 +541,9 @@ export default function Home() {
     handleRequestGridReductionWarning,
     setGridRows,
   ])
+  const handleEffectiveGridColsChange = useCallback((value: number) => {
+    handleGridColsChange(activePageLayoutMode === "facing" ? Math.max(1, Math.ceil(value / 2)) : value)
+  }, [activePageLayoutMode, handleGridColsChange])
 
   const handleProjectTitleChange = useCallback((nextTitle: string) => {
     const trimmedTitle = nextTitle.trim()
@@ -834,6 +841,7 @@ export default function Home() {
       onProjectTitleChange={handleProjectTitleChange}
       onPageSelect={selectPage}
       onPageAdd={addPage}
+      onPageFacingToggle={setFacingPageEnabled}
       onPageRename={renamePage}
       onPageDelete={deletePage}
       onPageOrderChange={reorderPages}
@@ -885,8 +893,8 @@ export default function Home() {
       onCustomMarginMultipliersChange={setCustomMarginMultipliers}
       currentMargins={result.grid.margins}
       gridUnit={gridUnit}
-      gridCols={gridCols}
-      onGridColsChange={handleGridColsChange}
+      gridCols={effectiveGridCols}
+      onGridColsChange={handleEffectiveGridColsChange}
       gridRows={gridRows}
       onGridRowsChange={handleGridRowsChange}
       gutterMultiple={gutterMultiple}
@@ -929,7 +937,7 @@ export default function Home() {
     customMarginMultipliers,
     customRatioHeight,
     customRatioWidth,
-    gridCols,
+    effectiveGridCols,
     gridRows,
     gridUnit,
     gutterMultiple,
@@ -937,7 +945,7 @@ export default function Home() {
     handleCanvasRatioPreviewChange,
     handleCanvasBackgroundPreviewChange,
     handleColorSchemePreviewChange,
-    handleGridColsChange,
+    handleEffectiveGridColsChange,
     handleGridRowsChange,
     handleMarginMethodPreviewChange,
     handleOrientationPreviewChange,

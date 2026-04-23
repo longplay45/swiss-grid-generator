@@ -1,11 +1,11 @@
 import type { FontFamily } from "@/lib/config/fonts"
 import { resolveBlockHeight } from "./block-height.ts"
+import { sumGridColumnSpan } from "./grid-column-layout.ts"
 import type { TextRange, TextTrackingRun } from "./text-tracking-runs.ts"
 import { wrapTextDetailed } from "./text-layout.ts"
 import {
   findNearestAxisIndex,
   resolveAxisSizes,
-  sumAxisSpan,
 } from "./grid-rhythm.ts"
 
 export type AutoFitStyle = {
@@ -42,6 +42,7 @@ export type AutoFitPlannerInput = {
   moduleWidth: number
   moduleHeight: number
   moduleWidths?: number[]
+  columnStarts?: number[]
   moduleHeights?: number[]
   moduleRowStarts?: number[]
   gridMarginVertical: number
@@ -118,7 +119,13 @@ export function computeAutoFitBatch(
 
     const fontSize = item.style.size * input.scale
     const startCol = Math.max(0, Math.min(input.gridCols - 1, Math.round(item.position.col)))
-    const columnWidth = sumAxisSpan(resolvedModuleWidths, startCol, 1, 0) * input.scale
+    const columnWidth = sumGridColumnSpan(
+      resolvedModuleWidths,
+      input.columnStarts ?? [],
+      startCol,
+      1,
+      0,
+    ) * input.scale
     const scaledStyle: AutoFitStyle = {
       ...item.style,
       size: fontSize,

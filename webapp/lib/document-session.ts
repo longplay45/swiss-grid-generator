@@ -5,12 +5,22 @@ export type ProjectMetadata = {
   createdAt?: string
 }
 
+export type ProjectPageFacingRole = "primary" | "secondary"
+export type ProjectPageLayoutMode = "single" | "facing"
+
+export type ProjectPageFacing = {
+  peerId: string
+  role: ProjectPageFacingRole
+}
+
 // NEW: Project/Pages/Layers architecture
 export type ProjectPage<Layout> = {
   id: string
   name: string
   uiSettings: Record<string, unknown>
   previewLayout: Layout | null
+  layoutMode?: ProjectPageLayoutMode
+  facing?: ProjectPageFacing | null
 }
 
 export type LoadedProject<Layout> = {
@@ -75,11 +85,15 @@ export function createProjectPage<Layout>({
   name = DEFAULT_PAGE_NAME,
   uiSettings,
   previewLayout,
+  layoutMode = "single",
+  facing = null,
 }: {
   id?: string
   name?: string
   uiSettings: Record<string, unknown>
   previewLayout: Layout | null
+  layoutMode?: ProjectPageLayoutMode
+  facing?: ProjectPageFacing | null
 }): ProjectPage<Layout> {
   const trimmedId = typeof id === "string" ? id.trim() : ""
 
@@ -88,6 +102,8 @@ export function createProjectPage<Layout>({
     name: toPageName(name, DEFAULT_PAGE_NAME),
     uiSettings,
     previewLayout,
+    layoutMode,
+    facing,
   }
 }
 
@@ -128,18 +144,33 @@ function parseProjectPages<Layout>(value: unknown): ProjectPage<Layout>[] {
 
     const rawId = typeof payload.id === "string" ? payload.id.trim() : ""
     const id = rawId.length > 0 && !seenIds.has(rawId) ? rawId : undefined
+    const rawFacing = payload.facing
+    const layoutMode = payload.layoutMode === "facing" ? "facing" : "single"
+    const facing = (
+      typeof rawFacing === "object"
+      && rawFacing !== null
+      && typeof (rawFacing as Record<string, unknown>).peerId === "string"
+      && (((rawFacing as Record<string, unknown>).role === "primary") || ((rawFacing as Record<string, unknown>).role === "secondary"))
+    )
+      ? {
+          peerId: ((rawFacing as Record<string, unknown>).peerId as string).trim(),
+          role: (rawFacing as Record<string, unknown>).role as ProjectPageFacingRole,
+        }
+      : null
     const page = createProjectPage<Layout>({
       id,
       name: toPageName(payload.name, `Page ${index + 1}`),
       uiSettings: payload.uiSettings as Record<string, unknown>,
       previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
+      layoutMode,
+      facing: facing && facing.peerId.length > 0 ? facing : null,
     })
 
     seenIds.add(page.id)
     pages.push(page)
   })
 
-  return pages
+  return normalizeProjectPageFacing(pages)
 }
 
 export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layout> {
@@ -174,6 +205,119 @@ export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layou
     previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
     metadata,
   })
+}
+
+export function normalizeProjectPageFacing<Layout>(
+  pages: readonly ProjectPage<Layout>[],
+): ProjectPage<Layout>[] {
+  const pageById = new Map(pages.map((page) => [page.id, page]))
+  const normalizedById = new Map<string, ProjectPageFacing>()
+  const pairedIds = new Set<string>()
+
+  const registerPair = (primary: ProjectPage<Layout>, secondary: ProjectPage<Layout>) => {
+    if (primary.id === secondary.id) return
+    if (pairedIds.has(primary.id) || pairedIds.has(secondary.id)) return
+    pairedIds.add(primary.id)
+    pairedIds.add(secondary.id)
+    normalizedById.set(primary.id, { peerId: secondary.id, role: "primary" })
+    normalizedById.set(secondary.id, { peerId: primary.id, role: "secondary" })
+  }
+
+  for (const page of pages) {
+    if (page.facing?.role !== "primary") continue
+    const peer = pageById.get(page.facing.peerId)
+    if (!peer) continue
+    registerPair(page, peer)
+  }
+
+  for (const page of pages) {
+    if (page.facing?.role !== "secondary") continue
+    if (pairedIds.has(page.id)) continue
+    const peer = pageById.get(page.facing.peerId)
+    if (!peer) continue
+    registerPair(peer, page)
+  }
+
+  return pages.map((page) => {
+    const normalizedFacing = normalizedById.get(page.id) ?? null
+    const currentFacing = page.facing ?? null
+    if (
+      (currentFacing?.peerId ?? null) === (normalizedFacing?.peerId ?? null)
+      && (currentFacing?.role ?? null) === (normalizedFacing?.role ?? null)
+    ) {
+      return page
+    }
+    return {
+      ...page,
+      facing: normalizedFacing,
+    }
+  })
+}
+
+export function normalizeProjectPageOrderWithFacing<Layout>(
+  pages: readonly ProjectPage<Layout>[],
+): ProjectPage<Layout>[] {
+  const normalizedPages = normalizeProjectPageFacing(pages)
+  const pageById = new Map(normalizedPages.map((page) => [page.id, page]))
+  const ordered: ProjectPage<Layout>[] = []
+  const seenIds = new Set<string>()
+
+  for (const page of normalizedPages) {
+    if (seenIds.has(page.id)) continue
+
+    const facing = page.facing
+    if (facing?.role === "secondary") {
+      const primary = pageById.get(facing.peerId)
+      if (primary && !seenIds.has(primary.id)) continue
+    }
+
+    ordered.push(page)
+    seenIds.add(page.id)
+
+    if (facing?.role === "primary") {
+      const secondary = pageById.get(facing.peerId)
+      if (secondary && !seenIds.has(secondary.id)) {
+        ordered.push(secondary)
+        seenIds.add(secondary.id)
+      }
+    }
+  }
+
+  for (const page of normalizedPages) {
+    if (seenIds.has(page.id)) continue
+    ordered.push(page)
+    seenIds.add(page.id)
+  }
+
+  return ordered
+}
+
+export function resolveProjectPageFacingPair<Layout>(
+  pages: readonly ProjectPage<Layout>[],
+  pageId: string,
+): { primary: ProjectPage<Layout>; secondary: ProjectPage<Layout> } | null {
+  const page = pages.find((entry) => entry.id === pageId)
+  if (!page?.facing) return null
+  const peer = pages.find((entry) => entry.id === page.facing?.peerId)
+  if (!peer) return null
+  return page.facing.role === "primary"
+    ? { primary: page, secondary: peer }
+    : { primary: peer, secondary: page }
+}
+
+export function filterVisibleProjectPages<Layout>(
+  pages: readonly ProjectPage<Layout>[],
+): ProjectPage<Layout>[] {
+  return pages.filter((page) => page.facing?.role !== "secondary")
+}
+
+export function resolveVisibleProjectPageId<Layout>(
+  pages: readonly ProjectPage<Layout>[],
+  pageId: string,
+): string {
+  const pair = resolveProjectPageFacingPair(pages, pageId)
+  if (!pair) return pageId
+  return pair.primary.id
 }
 
 export function getPreviewLayoutSeed<Layout>(layout: Layout | null, defaultLayout: Layout | null): Layout {

@@ -51,7 +51,10 @@ function clearPreviewPatchKeys(current: UiPreviewPatch, keys: (keyof UiSettingsS
   return changed ? next : current
 }
 
-export function useUiSettingsPreview(ui: UiSettingsSnapshot) {
+export function useUiSettingsPreview(
+  ui: UiSettingsSnapshot,
+  layoutMode: "single" | "facing" = "single",
+) {
   const [previewPatch, setPreviewPatchState] = useState<UiPreviewPatch>({})
 
   const setPreviewPatch = useCallback((patch: UiPreviewPatch) => {
@@ -74,8 +77,8 @@ export function useUiSettingsPreview(ui: UiSettingsSnapshot) {
   }), [deferredPreviewPatch, ui])
 
   const previewResult = useMemo(
-    () => buildGridResultFromUiSettings(previewUi),
-    [previewUi],
+    () => buildGridResultFromUiSettings(previewUi, { layoutMode }),
+    [layoutMode, previewUi],
   )
 
   return {

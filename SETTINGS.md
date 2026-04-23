@@ -207,7 +207,9 @@ Default: `swiss`
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
 - `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- `Facing pages`: one-way control inside an opened page card, positioned above `Layers`. It converts the current page into a true spread. The preview becomes a zero-gap `Doppelseite`, inner/outer margins mirror automatically, and the effective column count doubles across the spread.
 - `Page Up` selects the previous project page, `Page Down` selects the next one, and `Home` / `End` jump to the first or last page when multiple pages exist.
+- After conversion, the spread remains one project page and edits inside one continuous spread coordinate space.
 - Single-clicking a page card selects that page.
 - Double-clicking a page card toggles its inline layer list and aligns opened pages to the top of the panel.
 - Each page card also has an open/close toggle that reveals that page's layers inline.

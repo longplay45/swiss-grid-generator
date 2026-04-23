@@ -69,6 +69,13 @@ export interface GridResult {
       left: number;
       right: number;
     };
+    columnStarts?: number[];
+    contentRects?: Array<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }>;
     gutter: number;
     scaleFactor: number;
     baselineUnitsPerCell: number;

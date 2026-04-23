@@ -18,6 +18,10 @@ import {
 } from "@/lib/config/fonts"
 import { DEFAULT_STYLE_ASSIGNMENTS, DEFAULT_TEXT_CONTENT, isBaseBlockId } from "@/lib/document-defaults"
 import { buildAxisStarts, findNearestAxisIndex, resolveAxisSizes } from "@/lib/grid-rhythm"
+import {
+  resolveGridColumnStarts,
+  resolveGridFirstColumnStep,
+} from "@/lib/grid-column-layout"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import { reconcileLayerOrder } from "@/lib/preview-layer-order"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
@@ -221,7 +225,7 @@ export function drawPresetThumbnailToCanvas(
   const { gridCols, gridRows } = result.settings
   const moduleWidths = resolveAxisSizes(result.module.widths, gridCols, moduleWidthBase)
   const moduleHeights = resolveAxisSizes(result.module.heights, gridRows, moduleHeightBase)
-  const colStarts = buildAxisStarts(moduleWidths, gridMarginHorizontal)
+  const colStarts = resolveGridColumnStarts(result, moduleWidths)
   const rowStarts = buildAxisStarts(moduleHeights, gridMarginVertical)
   const rowStartsInBaselines = rowStarts.map((value) => value / Math.max(0.0001, gridUnit))
   const blockModulePositions = mapTextBlockPositionsToAbsolute(layout?.blockModulePositions ?? {}, rowStartsInBaselines)
@@ -235,7 +239,7 @@ export function drawPresetThumbnailToCanvas(
   const contentLeft = margins.left * scale
   const baselineStep = gridUnit * scale
   const baselineOriginTop = contentTop - baselineStep
-  const firstColumnStep = (moduleWidths[0] ?? moduleWidthBase) + gridMarginHorizontal
+  const firstColumnStep = resolveGridFirstColumnStep(moduleWidths, colStarts, gridMarginHorizontal, moduleWidthBase)
   const maxBaselineRow = Math.max(
     0,
     Math.floor((pageHeight - (margins.top + margins.bottom) * scale) / Math.max(0.0001, baselineStep)),
@@ -394,6 +398,7 @@ export function drawPresetThumbnailToCanvas(
     gridRows,
     moduleWidths,
     moduleHeights,
+    columnStarts: colStarts,
     gridMarginHorizontal,
     gridMarginVertical,
     scale,
@@ -441,6 +446,7 @@ export function drawPresetThumbnailToCanvas(
       moduleWidth: moduleWidthBase * scale,
       moduleHeight: moduleHeightBase * scale,
       moduleWidths: moduleWidths.map((value) => value * scale),
+      columnStarts: colStarts.map((value) => value * scale),
       moduleHeights: moduleHeights.map((value) => value * scale),
       gutterX: gridMarginHorizontal * scale,
       gutterY: gridMarginVertical * scale,

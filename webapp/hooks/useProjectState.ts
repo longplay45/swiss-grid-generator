@@ -68,7 +68,10 @@ function persistActivePageSnapshot<Layout>(
 ): LoadedProject<Layout> {
   const activePage = project.pages.find((page) => page.id === project.activePageId)
   if (!activePage) return project
-  if (activePage.uiSettings === currentUiSettings && activePage.previewLayout === currentPreviewLayout) {
+  if (
+    activePage.uiSettings === currentUiSettings
+    && activePage.previewLayout === currentPreviewLayout
+  ) {
     return project
   }
 
@@ -144,10 +147,12 @@ export function useProjectState<Layout>({
 
   const addPage = useCallback(() => {
     const currentProject = getCurrentProjectSnapshot()
+    const sourcePage = currentProject.pages.find((page) => page.id === currentProject.activePageId) ?? null
     const nextPage = createProjectPage({
       name: getNextPageName(currentProject.pages),
       uiSettings: cloneSerializable(currentUiSettings),
       previewLayout: cloneSerializable(getLivePreviewLayout() ?? defaultPreviewLayout),
+      layoutMode: sourcePage?.layoutMode ?? "single",
     })
 
     setProject({
@@ -157,6 +162,36 @@ export function useProjectState<Layout>({
     })
     onApplyPage(nextPage)
   }, [currentUiSettings, defaultPreviewLayout, getCurrentProjectSnapshot, getLivePreviewLayout, onApplyPage])
+
+  const setFacingPageEnabled = useCallback((pageId: string, enabled: boolean) => {
+    if (!enabled) return
+    const currentProject = getCurrentProjectSnapshot()
+    const pageIndex = currentProject.pages.findIndex((page) => page.id === pageId)
+    if (pageIndex === -1) return
+    const page = currentProject.pages[pageIndex]
+    if (!page) return
+    if (page.layoutMode === "facing") return
+
+    const nextPages = currentProject.pages.map((entry) => (
+      entry.id === page.id
+        ? {
+            ...entry,
+            layoutMode: "facing" as const,
+          }
+        : entry
+    ))
+    const nextActivePage = nextPages.find((entry) => entry.id === currentProject.activePageId) ?? nextPages[0] ?? null
+    if (!nextActivePage) return
+
+    setProject({
+      ...currentProject,
+      activePageId: nextActivePage.id,
+      pages: nextPages,
+    })
+    if (nextActivePage.id === currentProject.activePageId) {
+      onApplyPage(nextActivePage)
+    }
+  }, [getCurrentProjectSnapshot, onApplyPage])
 
   const renamePage = useCallback((pageId: string, nextName: string) => {
     const trimmedName = nextName.trim()
@@ -225,6 +260,7 @@ export function useProjectState<Layout>({
     applyLoadedProject,
     selectPage,
     addPage,
+    setFacingPageEnabled,
     renamePage,
     deletePage,
     reorderPages,

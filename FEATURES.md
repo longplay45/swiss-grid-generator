@@ -94,7 +94,9 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
+- Opened page cards expose a `Facing pages` control above `Layers`, converting a page into a true facing spread with mirrored inner/outer margins, a zero-gap preview seam, and doubled effective columns across the spread.
 - `Page Up` and `Page Down` step through project pages when multiple pages are present, and `Home` / `End` jump to the first or last page.
+- Facing spreads stay a single project page and keep the normal layer editing workflow inside one continuous spread space.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
 - Layer cards support selection, reordering, deletion, and editor opening.

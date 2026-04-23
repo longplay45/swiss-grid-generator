@@ -8,6 +8,7 @@ import {
 } from "@/lib/autofit-planner"
 import type { GridResult } from "@/lib/grid-calculator"
 import { buildAxisStarts, resolveAxisSizes } from "@/lib/grid-rhythm"
+import { resolveGridColumnStarts } from "@/lib/grid-column-layout"
 import {
   applyCanvasTextConfig,
   buildCanvasFont,
@@ -96,6 +97,10 @@ export function usePreviewLayoutReflowController<Key extends string>({
     () => resolveAxisSizes(result.module.widths, result.settings.gridCols, result.module.width),
     [result.module.widths, result.module.width, result.settings.gridCols],
   )
+  const columnStarts = useMemo(
+    () => resolveGridColumnStarts(result, moduleWidths),
+    [moduleWidths, result],
+  )
   const moduleHeights = useMemo(
     () => resolveAxisSizes(result.module.heights, result.settings.gridRows, result.module.height),
     [result.module.heights, result.module.height, result.settings.gridRows],
@@ -183,6 +188,7 @@ export function usePreviewLayoutReflowController<Key extends string>({
     moduleWidth: result.module.width,
     moduleHeight: result.module.height,
     moduleWidths,
+    columnStarts,
     moduleHeights,
     moduleRowStarts,
     gridUnit: result.grid.gridUnit,

@@ -5,7 +5,8 @@ import { resolveBlockHeight } from "@/lib/block-height"
 import type { GridResult } from "@/lib/grid-calculator"
 import { resolveLayerColumnBounds } from "@/lib/layer-placement"
 import { getPreviewTextGuideGeometry, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
-import { findNearestAxisIndex, sumAxisSpan } from "@/lib/grid-rhythm"
+import { findNearestAxisIndex } from "@/lib/grid-rhythm"
+import { resolveGridFirstColumnStep, sumGridColumnSpan } from "@/lib/grid-column-layout"
 import { resolvePreviewColumnX } from "@/lib/preview-column-snap"
 import type { BlockRect } from "@/lib/typography-layout-plan"
 import type { ModulePosition } from "@/lib/types/preview-layout"
@@ -127,7 +128,12 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
       const baselineOriginTop = margins.top * scale - baselineStep
       const contentLeft = margins.left * scale
       const metrics = getGridMetrics()
-      const firstColumnStepPt = (metrics.moduleWidths[0] ?? result.module.width) + gridMarginHorizontal
+      const firstColumnStepPt = resolveGridFirstColumnStep(
+        metrics.moduleWidths,
+        metrics.colStarts,
+        gridMarginHorizontal,
+        result.module.width,
+      )
 
       ctx.save()
       ctx.translate(cssWidth / 2, cssHeight / 2)
@@ -169,7 +175,13 @@ export function usePreviewOverlayCanvas<Key extends string, Plan extends Overlay
           0,
           Math.min(result.settings.gridRows - 1, findNearestAxisIndex(metrics.rowStartBaselines, dragState.preview.row)),
         )
-        const snapWidth = sumAxisSpan(metrics.moduleWidths, snappedStartCol, dragSpan, gridMarginHorizontal) * scale
+        const snapWidth = sumGridColumnSpan(
+          metrics.moduleWidths,
+          metrics.colStarts,
+          snappedStartCol,
+          dragSpan,
+          gridMarginHorizontal,
+        ) * scale
         const snapHeight = resolveBlockHeight({
           rowStart: dragRowStart,
           rows: dragRows,
