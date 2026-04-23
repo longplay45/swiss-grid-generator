@@ -448,24 +448,25 @@ export function PagesPanel({
                   </div>
                   {isExpanded ? (
                     <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
-                      <label
-                        data-card-drag-ignore="true"
-                        className={`mb-3 inline-flex w-full items-center gap-2 text-[11px] ${tone.cardMuted}`}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={page.layoutMode === "facing"}
-                          disabled={page.layoutMode === "facing"}
-                          onChange={(event) => {
-                            event.stopPropagation()
-                            onFacingPageToggle(page.id, event.currentTarget.checked)
-                          }}
-                          className="h-3.5 w-3.5 rounded border-gray-300"
-                          aria-label={`Toggle facing page for ${page.name}`}
-                        />
-                        <span>Facing pages</span>
-                      </label>
+                      {page.layoutMode !== "facing" ? (
+                        <label
+                          data-card-drag-ignore="true"
+                          className={`mb-3 inline-flex w-full items-center gap-2 text-[11px] ${tone.cardMuted}`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={false}
+                            onChange={(event) => {
+                              event.stopPropagation()
+                              onFacingPageToggle(page.id, event.currentTarget.checked)
+                            }}
+                            className="h-3.5 w-3.5 rounded border-gray-300"
+                            aria-label={`Toggle facing page for ${page.name}`}
+                          />
+                          <span>Facing pages</span>
+                        </label>
+                      ) : null}
                       <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
                         Layers
                       </div>
