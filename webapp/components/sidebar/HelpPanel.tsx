@@ -394,6 +394,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Opens the presets browser in the preview area.</li>
+          <li>Bundled files are grouped into `1. Presets` and `2. Examples`; `3. Users` is reserved for user-created layout JSONs.</li>
           <li>Double-click a thumbnail to load it.</li>
           <li>Press `Esc` to close the browser without loading a preset.</li>
           <li>When help is open, hovering the presets panel (or its `?` marker) jumps here.</li>

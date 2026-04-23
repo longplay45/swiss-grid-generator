@@ -38,6 +38,8 @@ export type LayoutPresetUiSettings = Record<string, unknown> & {
 
 export type LayoutPresetProjectSource = Record<string, unknown>
 
+export type LayoutPresetCategory = "presets" | "examples" | "users"
+
 export type LayoutPresetBrowserPage = {
   id: string
   name: string
@@ -51,6 +53,7 @@ export type LayoutPresetBrowserPage = {
 
 export type LayoutPreset = {
   id: string
+  category: LayoutPresetCategory
   label: string
   title?: string
   description?: string

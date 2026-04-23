@@ -1,5 +1,6 @@
 import { parseLoadedProject } from "@/lib/document-session"
 import type {
+  LayoutPresetCategory,
   LayoutPreset,
   LayoutPresetProjectSource,
 } from "@/lib/presets/types"
@@ -13,26 +14,22 @@ type PresetManifestEntry = {
 
 type PresetMetadataOverride = {
   label?: string
-  sortOrder?: number
 }
 
-const PRESET_METADATA_OVERRIDES: Readonly<Record<string, PresetMetadataOverride>> = {
-  "./data/din_ab_portrait_4x4_method1_12.000pt_grid.json": {
-    label: "4x4 Progressive",
-    sortOrder: 10,
-  },
-  "./data/din_ab_portrait_4x4_method1_12.000pt_grid_002.json": {
-    label: "3x4 Baseline",
-    sortOrder: 20,
-  },
-  "./data/4x4 12pt grid with image placeholder.json": {
-    label: "Image Placeholder",
-    sortOrder: 30,
-  },
-  "./data/050 Hamlet Reading Edition.json": {
-    label: "Hamlet",
-    sortOrder: 50,
-  },
+const PRESET_METADATA_OVERRIDES: Readonly<Record<string, PresetMetadataOverride>> = {}
+
+export const LAYOUT_PRESET_CATEGORY_ORDER = ["presets", "examples", "users"] as const satisfies readonly LayoutPresetCategory[]
+
+export const LAYOUT_PRESET_CATEGORY_LABELS: Readonly<Record<LayoutPresetCategory, string>> = {
+  presets: "1. Presets",
+  examples: "2. Examples",
+  users: "3. Users",
+}
+
+export type LayoutPresetGroup = {
+  category: LayoutPresetCategory
+  label: string
+  presets: LayoutPreset[]
 }
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
@@ -66,6 +63,22 @@ function toPresetLabel(sourcePath: string): string {
     .join(" ")
 }
 
+function parsePresetSortPrefix(sourcePath: string): number | null {
+  const match = getPresetBaseName(sourcePath).match(/^(\d{3})\b/)
+  if (!match) return null
+  const parsed = Number.parseInt(match[1] ?? "", 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function resolvePresetCategory(sourcePath: string): LayoutPresetCategory {
+  const prefix = parsePresetSortPrefix(sourcePath)
+  if (prefix !== null) {
+    if (prefix >= 100 && prefix < 200) return "examples"
+    if (prefix >= 0 && prefix < 100) return "presets"
+  }
+  return "presets"
+}
+
 function toOptionalText(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined
   const trimmed = value.trim()
@@ -93,10 +106,10 @@ function parseProjectSourceJson(sourceJson: string, sourcePath: string): LayoutP
 }
 
 function comparePresetEntries(a: PresetManifestEntry, b: PresetManifestEntry): number {
-  const aOrder = PRESET_METADATA_OVERRIDES[a.path]?.sortOrder ?? Number.MAX_SAFE_INTEGER
-  const bOrder = PRESET_METADATA_OVERRIDES[b.path]?.sortOrder ?? Number.MAX_SAFE_INTEGER
+  const aOrder = LAYOUT_PRESET_CATEGORY_ORDER.indexOf(resolvePresetCategory(a.path))
+  const bOrder = LAYOUT_PRESET_CATEGORY_ORDER.indexOf(resolvePresetCategory(b.path))
   if (aOrder !== bOrder) return aOrder - bOrder
-  return a.path.localeCompare(b.path)
+  return a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" })
 }
 
 function parseLayoutPreset(
@@ -115,6 +128,7 @@ function parseLayoutPreset(
 
   return {
     id: toPresetId(sourcePath),
+    category: resolvePresetCategory(sourcePath),
     label: PRESET_METADATA_OVERRIDES[sourcePath]?.label ?? title ?? toPresetLabel(sourcePath),
     title,
     description,
@@ -128,5 +142,11 @@ function parseLayoutPreset(
 export const LAYOUT_PRESETS: LayoutPreset[] = [...GENERATED_PRESET_MANIFEST]
   .sort(comparePresetEntries)
   .map((entry) => parseLayoutPreset(entry))
+
+export const LAYOUT_PRESET_GROUPS: LayoutPresetGroup[] = LAYOUT_PRESET_CATEGORY_ORDER.map((category) => ({
+  category,
+  label: LAYOUT_PRESET_CATEGORY_LABELS[category],
+  presets: LAYOUT_PRESETS.filter((preset) => preset.category === category),
+}))
 
 export type { LayoutPreset }
