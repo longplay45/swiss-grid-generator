@@ -25,6 +25,8 @@ type Args = {
   onToggleImprintPanel: () => void
   onOpenPresets: () => void
   onClosePresets: () => void
+  onSelectFirstPage: () => void
+  onSelectLastPage: () => void
   onSelectPreviousPage: () => void
   onSelectNextPage: () => void
 }
@@ -52,6 +54,8 @@ export function useShellKeyboardShortcuts({
   onToggleImprintPanel,
   onOpenPresets,
   onClosePresets,
+  onSelectFirstPage,
+  onSelectLastPage,
   onSelectPreviousPage,
   onSelectNextPage,
 }: Args) {
@@ -74,6 +78,16 @@ export function useShellKeyboardShortcuts({
         if (event.key === "PageDown") {
           event.preventDefault()
           onSelectNextPage()
+          return
+        }
+        if (event.key === "Home") {
+          event.preventDefault()
+          onSelectFirstPage()
+          return
+        }
+        if (event.key === "End") {
+          event.preventDefault()
+          onSelectLastPage()
           return
         }
       }
@@ -153,6 +167,8 @@ export function useShellKeyboardShortcuts({
     hasPreviewLayout,
     hasMultipleProjectPages,
     onExportPdf,
+    onSelectFirstPage,
+    onSelectLastPage,
     onLoadJson,
     onSelectNextPage,
     onSelectPreviousPage,

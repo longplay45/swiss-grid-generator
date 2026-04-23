@@ -10,6 +10,7 @@ import {
 import { PanelCard } from "@/components/settings/PanelCard"
 import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
+  getClosestImageSchemeColorToken,
   getImageSchemeColorToken,
   getImageColorScheme,
   IMAGE_COLOR_SCHEMES,
@@ -47,8 +48,10 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
   const selected = getImageColorScheme(colorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const displayedScheme = previewColorScheme ? getImageColorScheme(previewColorScheme) : selected
-  const paperBackgroundValue = getImageSchemeColorToken(0)
-  const backgroundSelectValue = canvasBackground ?? "__none__"
+  const backgroundOptionValues = displayedScheme.colors.map((_, index) => getImageSchemeColorToken(index))
+  const backgroundSelectValue = canvasBackground === null
+    ? "__none__"
+    : getClosestImageSchemeColorToken(canvasBackground, colorScheme)
   const colorSchemeSelectPreview = useSelectRolloverPreview<ImageColorSchemeId>({
     value: colorScheme,
     onCommitValue: onColorSchemeChange,
@@ -143,28 +146,18 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
           </SelectTrigger>
           <SelectContent onPointerLeave={backgroundSelectPreview.handleContentPointerLeave}>
             <SelectItem value="__none__" {...backgroundSelectPreview.getItemPreviewProps("__none__")}>None</SelectItem>
-            <SelectItem value={paperBackgroundValue} {...backgroundSelectPreview.getItemPreviewProps(paperBackgroundValue)}>
-              <span className="flex items-center gap-2">
-                <span
-                  className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
-                  style={{ backgroundColor: selected.colors[0] }}
-                />
-                <span>{COLOR_SLOT_LABELS[0]}</span>
-                <span className="font-mono text-xs">{selected.colors[0].toLowerCase()}</span>
-              </span>
-            </SelectItem>
-            {selected.colors.slice(1).map((color, index) => (
+            {selected.colors.map((color, index) => (
               <SelectItem
                 key={`background-${selected.id}-${color}`}
-                value={color}
-                {...backgroundSelectPreview.getItemPreviewProps(color)}
+                value={backgroundOptionValues[index] ?? getImageSchemeColorToken(index)}
+                {...backgroundSelectPreview.getItemPreviewProps(backgroundOptionValues[index] ?? getImageSchemeColorToken(index))}
               >
                 <span className="flex items-center gap-2">
                   <span
                     className={`inline-block h-3 w-3 rounded-full border ${isDarkMode ? "border-gray-600" : "border-gray-300"}`}
                     style={{ backgroundColor: color }}
                   />
-                  <span>{COLOR_SLOT_LABELS[index + 1]}</span>
+                  <span>{COLOR_SLOT_LABELS[index]}</span>
                   <span className="font-mono text-xs">{color.toLowerCase()}</span>
                 </span>
               </SelectItem>

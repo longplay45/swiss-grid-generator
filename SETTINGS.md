@@ -205,7 +205,7 @@ Default: `swiss`
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
 - `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
-- `Page Up` selects the previous project page and `Page Down` selects the next one when multiple pages exist.
+- `Page Up` selects the previous project page, `Page Down` selects the next one, and `Home` / `End` jump to the first or last page when multiple pages exist.
 - Single-clicking a page card selects that page.
 - Double-clicking a page card toggles its inline layer list and aligns opened pages to the top of the panel.
 - Each page card also has an open/close toggle that reveals that page's layers inline.
@@ -250,6 +250,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+4`: Toggle presets browser
 - `Page Up`: Select previous project page
 - `Page Down`: Select next project page
+- `Home`: Select first project page
+- `End`: Select last project page
 - `Esc`: Close presets browser without loading a preset
 
 ## Popups

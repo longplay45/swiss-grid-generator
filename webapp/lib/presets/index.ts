@@ -29,6 +29,10 @@ const PRESET_METADATA_OVERRIDES: Readonly<Record<string, PresetMetadataOverride>
     label: "Image Placeholder",
     sortOrder: 30,
   },
+  "./data/050 Hamlet Reading Edition.json": {
+    label: "Hamlet",
+    sortOrder: 50,
+  },
 }
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => (
