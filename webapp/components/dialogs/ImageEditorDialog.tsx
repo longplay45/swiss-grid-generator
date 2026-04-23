@@ -367,6 +367,33 @@ export function ImageEditorDialog({
           </div>
 
           <div className="mt-4 space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className={sectionLabelClassName}>Rotation</Label>
+                <span className={`rounded px-1.5 py-0.5 text-xs font-mono ${isDarkMode ? "bg-gray-800 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+                  {Math.round(editorState.draftRotation)}°
+                </span>
+              </div>
+              <DebouncedSlider
+                value={[editorState.draftRotation]}
+                min={-180}
+                max={180}
+                step={1}
+                onValueCommit={([value]) => {
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftRotation: clampRotation(value),
+                  } : prev)
+                }}
+                onThumbDoubleClick={() => {
+                  setEditorState((prev) => prev ? {
+                    ...prev,
+                    draftRotation: 0,
+                  } : prev)
+                }}
+              />
+            </div>
+
             <div className="flex items-center justify-between gap-3">
               <div>
                 <Label className={sectionLabelClassName}>Snap to Columns (X)</Label>
@@ -392,33 +419,6 @@ export function ImageEditorDialog({
                 thumbClassName={inlineSwitchThumbClassName}
               />
             </div>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className={sectionLabelClassName}>Rotation</Label>
-              <span className={`rounded px-1.5 py-0.5 text-xs font-mono ${isDarkMode ? "bg-gray-800 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-                {Math.round(editorState.draftRotation)}°
-              </span>
-            </div>
-            <DebouncedSlider
-              value={[editorState.draftRotation]}
-              min={-180}
-              max={180}
-              step={1}
-              onValueCommit={([value]) => {
-                setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftRotation: clampRotation(value),
-                } : prev)
-              }}
-              onThumbDoubleClick={() => {
-                setEditorState((prev) => prev ? {
-                  ...prev,
-                  draftRotation: 0,
-                } : prev)
-              }}
-            />
           </div>
         </EditorSidebarSection>
         </div>
