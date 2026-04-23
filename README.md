@@ -103,6 +103,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Logical anchoring (Column × Row + Baseline Offset)
 - Increasing a paragraph's column span preserves its anchored column, even when the wider frame intentionally overhangs the page edge
 - Bundled presets now use the same project JSON schema as saved documents
+- Project JSON can optionally include a `tour` block for guided onboarding across pages, layers, help sections, and editor states
 
 ### Preview & Interaction
 - Live WYSIWYG canvas

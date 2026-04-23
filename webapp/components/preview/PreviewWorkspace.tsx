@@ -25,6 +25,7 @@ import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types
 import type { LayoutPreset } from "@/lib/presets"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
+import { ProjectTourOverlay } from "@/components/preview/ProjectTourOverlay"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -108,6 +109,22 @@ type Props = {
   editorMode: "text" | "image" | null
   onEditorModeChange: (mode: "text" | "image" | null) => void
   closeSidebarPanel: () => void
+  tourState?: {
+    title: string
+    description?: string
+    isOpen: boolean
+    stepTitle?: string
+    stepCaption?: string
+    stepIndex: number
+    stepCount: number
+    waitingForLayerClick: boolean
+    canGoBack: boolean
+    canGoNext: boolean
+    onStart: () => void
+    onClose: () => void
+    onBack: () => void
+    onNext: () => void
+  } | null
 }
 
 function renderHeaderAction(
@@ -210,6 +227,7 @@ export function PreviewWorkspace({
   editorMode,
   onEditorModeChange,
   closeSidebarPanel,
+  tourState = null,
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
@@ -272,12 +290,31 @@ export function PreviewWorkspace({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
         <div
-          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-auto transition-colors ${
+          className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-auto transition-colors ${
             showPresetsBrowser ? "p-4 md:p-6" : ""
           } ${
             editorMode ? uiTheme.previewContentEdit : uiTheme.previewContent
           }`}
         >
+          {!showPresetsBrowser && tourState ? (
+            <ProjectTourOverlay
+              title={tourState.title}
+              description={tourState.description}
+              isOpen={tourState.isOpen}
+              stepTitle={tourState.stepTitle}
+              stepCaption={tourState.stepCaption}
+              stepIndex={tourState.stepIndex}
+              stepCount={tourState.stepCount}
+              waitingForLayerClick={tourState.waitingForLayerClick}
+              canGoBack={tourState.canGoBack}
+              canGoNext={tourState.canGoNext}
+              isDarkMode={isDarkUi}
+              onStart={tourState.onStart}
+              onClose={tourState.onClose}
+              onBack={tourState.onBack}
+              onNext={tourState.onNext}
+            />
+          ) : null}
           {showPresetsBrowser ? (
             <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-[#313A47] bg-[#1D232D]" : "border-gray-200 bg-gray-100/60"}`}>
               <PresetLayoutsPanel

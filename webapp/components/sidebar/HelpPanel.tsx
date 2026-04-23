@@ -420,7 +420,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Save
         </SectionHeading>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Saves project metadata plus every page&apos;s settings and layout state as project JSON. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
+          Saves project metadata plus every page&apos;s settings and layout state as project JSON; optional project tours are stored in the same file. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
         </p>
       </section>
 
@@ -581,7 +581,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           I. Canvas Ratio &amp; Rotation
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly, including fractional ratios such as `2:1.414` for facing DIN spreads.</li>
+          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly, including fractional ratios such as `2:1.414` for spread-style proportions like facing A4. Actual `Facing pages` conversion is configured per page in the Project panel.</li>
           <li>`Ratio` and `Orientation` preview live on dropdown rollover before commit.</li>
           <li>Orientation changes between portrait and landscape at the layout level.</li>
           <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
@@ -712,7 +712,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           Save and Load Project JSON
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Save Project JSON stores metadata, `activePageId`, and the full `pages[]` array with per-page settings and preview layout state.</li>
+          <li>Save Project JSON stores metadata, `activePageId`, the full `pages[]` array with per-page settings and preview layout state, and an optional `tour` block for onboarding flows.</li>
           <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
           <li>Paragraphs and image placeholders are saved with logical anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes; both layer types also persist independent `Snap to Columns (X)`, `Snap to Baseline (Y)`, and rotation values.</li>
           <li>Load Project JSON restores the full project structure and the active page where valid.</li>

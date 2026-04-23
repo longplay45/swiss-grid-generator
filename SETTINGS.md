@@ -215,6 +215,7 @@ Default: `swiss`
 - Each page card also has an open/close toggle that reveals that page's layers inline.
 - Newly added pages open automatically.
 - Every page stores its own settings payload plus preview layout state.
+- Project JSON can also carry an optional `tour` block for guided onboarding that steps through pages, layers, help, and editor targets.
 - Expanded page cards show the mixed text/image stack for that page using current `layerOrder`.
 - Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
 - Image cards display `Image Placeholder` and a single color swatch.

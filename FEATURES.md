@@ -99,6 +99,7 @@ Current capability inventory for Swiss Grid Generator.
 - Facing spreads stay a single project page and keep the normal layer editing workflow inside one continuous spread space.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
+- Project JSON supports an optional `tour` definition for quick onboarding tied to real pages and layers.
 - Layer cards support selection, reordering, deletion, and editor opening.
 - `Custom Ratio` accepts fractional width/height units, including decimal comma input for formats such as `2:1,414`.
 - Text paragraphs and image placeholders use logical grid anchors:

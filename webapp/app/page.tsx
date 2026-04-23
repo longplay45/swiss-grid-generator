@@ -26,6 +26,7 @@ import { useWorkspaceChrome } from "@/hooks/useWorkspaceChrome"
 import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
 import { useUiSettingsPreview } from "@/hooks/useUiSettingsPreview"
+import { useProjectTourController } from "@/hooks/useProjectTourController"
 import { type LoadedProject, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
@@ -319,6 +320,7 @@ export default function Home() {
   }, [applyLoadedPreviewLayout, applyLoadedUiSnapshot, collapsed, setShowPresetsBrowser])
 
   const {
+    project,
     activePage,
     pages: projectPages,
     activePageId,
@@ -339,6 +341,7 @@ export default function Home() {
     getCurrentPreviewLayout,
     onApplyPage: handleApplyProjectPage,
   })
+  const projectTour = project.tour ?? null
   const activePageLayoutMode = activePage?.layoutMode ?? "single"
   const effectiveGridCols = activePageLayoutMode === "facing" ? gridCols * 2 : gridCols
   const {
@@ -465,6 +468,19 @@ export default function Home() {
   const defaultJsonFilename = useMemo(() => {
     return toProjectJsonFilename(projectMetadata.title, baseFilename)
   }, [baseFilename, projectMetadata.title])
+
+  const projectTourController = useProjectTourController({
+    tour: projectTour,
+    showPresetsBrowser,
+    setShowPresetsBrowser,
+    activePageId,
+    selectedLayerKey,
+    onSelectPage: selectPage,
+    onSelectLayer: setSelectedLayerKeyWithGrace,
+    onOpenSidebarPanel: openSidebarPanel,
+    onOpenHelpSection: openHelpSection,
+    onOpenLayerEditor: handleToggleLayerEditor,
+  })
 
   const getGridReductionConflicts = useCallback((nextGridCols: number, nextGridRows: number) => {
     const layout = getCurrentPreviewLayout()
@@ -856,6 +872,27 @@ export default function Home() {
       editorMode={editorSidebarMode}
       onEditorModeChange={setEditorSidebarMode}
       closeSidebarPanel={closeSidebarPanel}
+      tourState={projectTour ? {
+        title: projectTour.title,
+        description: projectTour.description,
+        isOpen: projectTourController.isOpen,
+        stepTitle: projectTourController.currentStep?.title,
+        stepCaption: projectTourController.currentStep?.caption,
+        stepIndex: projectTourController.currentStepIndex,
+        stepCount: projectTourController.stepCount,
+        waitingForLayerClick: projectTourController.currentStep?.advanceOn?.type === "layerClick",
+        canGoBack: projectTourController.canGoBack,
+        canGoNext: projectTourController.canGoNext,
+        onStart: projectTourController.startTour,
+        onClose: () => {
+          projectTourController.closeTour()
+          setShowPresetsBrowser(true)
+        },
+        onBack: projectTourController.goToPreviousStep,
+        onNext: projectTourController.canGoNext
+          ? projectTourController.goToNextStep
+          : projectTourController.closeTour,
+      } : null}
     />
   )
 

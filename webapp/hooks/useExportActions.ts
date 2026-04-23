@@ -266,6 +266,7 @@ export function useExportActions(ctx: ExportActionsContext) {
         createdAt: metadata.createdAt,
         activePageId: projectSnapshot.activePageId,
         pages: projectSnapshot.pages,
+        tour: projectSnapshot.tour ?? undefined,
       }
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)

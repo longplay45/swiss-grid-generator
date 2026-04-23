@@ -1,3 +1,8 @@
+import {
+  parseProjectTour,
+  type ProjectTour,
+} from "@/lib/project-tour"
+
 export type ProjectMetadata = {
   title: string
   description: string
@@ -27,6 +32,7 @@ export type LoadedProject<Layout> = {
   activePageId: string
   pages: ProjectPage<Layout>[]
   metadata: ProjectMetadata
+  tour?: ProjectTour | null
 }
 
 export const EMPTY_PROJECT_METADATA: ProjectMetadata = {
@@ -112,11 +118,13 @@ export function createDefaultProject<Layout>({
   previewLayout,
   metadata = EMPTY_PROJECT_METADATA,
   defaultPageName = DEFAULT_PAGE_NAME,
+  tour = null,
 }: {
   uiSettings: Record<string, unknown>
   previewLayout: Layout | null
   metadata?: ProjectMetadata
   defaultPageName?: string
+  tour?: ProjectTour | null
 }): LoadedProject<Layout> {
   const page = createProjectPage({
     name: defaultPageName,
@@ -128,6 +136,7 @@ export function createDefaultProject<Layout>({
     activePageId: page.id,
     pages: [page],
     metadata,
+    tour,
   }
 }
 
@@ -180,6 +189,7 @@ export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layou
 
   const payload = source as Record<string, unknown>
   const metadata = extractProjectMetadata(payload)
+  const tour = parseProjectTour(payload.tour)
   const parsedPages = parseProjectPages<Layout>(payload.pages)
 
   if (parsedPages.length > 0) {
@@ -192,6 +202,7 @@ export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layou
       activePageId,
       pages: parsedPages,
       metadata,
+      tour,
     }
   }
 
@@ -204,6 +215,7 @@ export function parseLoadedProject<Layout>(source: unknown): LoadedProject<Layou
     uiSettings: payload.uiSettings as Record<string, unknown>,
     previewLayout: toLoadedPreviewLayout<Layout>(payload.previewLayout),
     metadata,
+    tour,
   })
 }
 
