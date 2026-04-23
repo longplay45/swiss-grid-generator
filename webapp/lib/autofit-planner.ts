@@ -136,6 +136,8 @@ export function computeAutoFitBatch(
     const lines = wrapTextDetailed(trimmed, columnWidth, item.syllableDivision, cachedMeasure)
     const neededCols = Math.max(1, Math.ceil(lines.length / maxLinesPerColumn))
 
+    if (neededCols <= item.currentSpan) continue
+
     const maxColsFromPlacement = Math.max(
       1,
       input.gridCols - Math.max(0, Math.min(input.gridCols - 1, item.position.col)),

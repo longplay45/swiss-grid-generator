@@ -143,6 +143,24 @@ test("computeAutoFitBatch counts extra baseline height when estimating column ca
   )
 })
 
+test("computeAutoFitBatch preserves an existing paragraph span when extra baseline capacity would make fewer columns sufficient", () => {
+  const input = makeInput()
+  input.items = [
+    {
+      ...input.items[0],
+      key: "preserve-span",
+      currentSpan: 4,
+      rowSpan: 0,
+      heightBaselines: 12,
+      text: "One two three four five six seven eight nine ten",
+    },
+  ]
+
+  const output = computeAutoFitBatch(input, (_style, text) => text.length * 5)
+
+  assert.equal(output.spanUpdates["preserve-span"], undefined)
+})
+
 test("computeAutoFitBatch passes range-aware measurements for mixed tracking runs", () => {
   const input = makeInput()
   input.items = [
