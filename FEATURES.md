@@ -45,11 +45,12 @@ Current capability inventory for Swiss Grid Generator.
 - Hyphenation toggle per paragraph.
 - Newspaper reflow across paragraph columns.
 - Optical margin alignment engine for preview/export.
+- Dynamic document variables for `project_title`, `title`, `page`, `pages`, `date`, and `time`.
 
 ## Text Editing
 
 - Inline editor overlay on the page surface.
-- Left-sidebar text editor with `Paragraph`, `Typo`, and `Info` sections.
+- Left-sidebar text editor with `Paragraph`, `Typo`, `Placeholders`, and `Info` sections.
 - The text editor header uses the same user-facing layer label shown in the Project panel instead of the internal block id.
 - Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
@@ -61,6 +62,7 @@ Current capability inventory for Swiss Grid Generator.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
+- Placeholders section lists the available document-variable tokens and inserts the clicked token at the caret or over the current selection.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
   - font family
@@ -70,6 +72,7 @@ Current capability inventory for Swiss Grid Generator.
   - tracking
 - Paragraph defaults are rebased when edits are applied without a scoped selection.
 - Caret and selection rendering follow rendered text geometry.
+- In text edit mode, resolved placeholder values render on the page while the editor keeps the raw tokens in source text.
 - Double-click selects the clicked word in inline text edit mode.
 - Triple-click selects the containing sentence in inline text edit mode.
 - `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active.

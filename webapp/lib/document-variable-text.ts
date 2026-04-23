@@ -9,6 +9,7 @@ import {
   normalizeTextTrackingRuns,
   type TextTrackingRun,
 } from "./text-tracking-runs.ts"
+export { DOCUMENT_VARIABLE_DEFINITIONS, type DocumentVariableDefinition } from "./document-variable-definitions.ts"
 
 export type DocumentVariableContext = {
   projectTitle: string

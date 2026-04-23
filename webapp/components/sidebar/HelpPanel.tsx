@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { FONT_DEFINITIONS } from "@/lib/config/fonts"
+import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
 import type { HelpSectionId } from "@/lib/help-registry"
@@ -195,7 +196,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
           <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
           <li>When edit mode is active, the left sidebar switches from layout settings to text settings.</li>
-          <li>The editor uses the same section layout rhythm as the main settings sidebar: `Paragraph`, `Typo`, and `Info`.</li>
+          <li>The editor uses the same section layout rhythm as the main settings sidebar: `Paragraph`, `Typo`, `Placeholders`, and `Info`.</li>
           <li>The paragraph header uses the same user-facing layer label shown in the Project panel instead of the internal block id.</li>
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
@@ -226,6 +227,22 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and Custom size/leading when `Custom` is selected.</li>
             <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
             <li>Font family, font cut, hierarchy, and scheme hover in their dropdowns preview the active result before you commit it.</li>
+          </ul>
+        </div>
+
+        <div id="help-editor-placeholders" className="space-y-1 pt-1">
+          <h5 className={`text-xs font-semibold ${tone.heading}`}>Placeholders Section</h5>
+          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+            <li>Lists the available document-variable tokens for project title, folios, and proof timestamps.</li>
+            <li>Clicking a token inserts it at the current caret position or replaces the current text selection.</li>
+            <li>
+              Available tokens: {DOCUMENT_VARIABLE_DEFINITIONS.map(({ token }, index) => (
+                <span key={token}>
+                  {index > 0 ? ", " : ""}
+                  <code>{token}</code>
+                </span>
+              ))}.
+            </li>
           </ul>
         </div>
 

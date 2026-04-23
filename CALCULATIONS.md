@@ -551,6 +551,23 @@ This changes when preview recalculation runs, not the underlying grid, typograph
 
 When an editor is already open, preview hit-testing and rollover remain active for other existing blocks; clicking one retargets the current editor to that block instead of tearing edit mode down first.
 
+## Document Variable Resolution
+
+Paragraph source text stores raw document-variable tokens such as `<% page %>` and `<% date %>`.
+
+Before preview line layout, inline edit rendering, and export geometry are measured, the text engine resolves those tokens against a document context:
+
+```
+resolvedText = resolveDocumentVariableText(rawText, {
+  projectTitle,
+  pageNumber,
+  pageCount,
+  now
+})
+```
+
+The raw source string remains unchanged in editor state and saved project JSON. Preview uses one stable `now` value per preview session; export uses one stable `now` value per export run so timestamped pages stay internally consistent.
+
 ## Preview Placement + Reflow
 
 Interactive placement is orchestrated in `webapp/components/grid-preview.tsx`, mirrored in PDF export (`webapp/lib/pdf-vector-export.ts`), and uses worker-backed planning (`webapp/workers/reflowPlanner.worker.ts`, `webapp/workers/autoFit.worker.ts`) with synchronous fallback to pure planner modules in `webapp/lib/`.

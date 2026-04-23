@@ -134,6 +134,7 @@ Default: `swiss`
   - `<% date %>` rendered as local `YYYY-MM-DD`
   - `<% time %>` rendered as local `HH:mm`
 - Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
+- In text edit mode, placeholders render as resolved values on the page while the raw tokens remain stored in paragraph source text.
 - `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
@@ -315,7 +316,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 Editor controls:
 - left sidebar editor that replaces layout settings while edit mode is active
-- text editor sections: `Paragraph`, `Typo`, `Info`
+- text editor sections: `Paragraph`, `Typo`, `Placeholders`, `Info`
 - image editor sections: `Geometry`, `Color`, `Info`
 - while edit mode is active, preview hover stays visible on other existing blocks and clicking one retargets the already open editor
 - the text editor header uses the same user-facing layer label shown in the Project panel instead of the internal paragraph id
@@ -346,6 +347,9 @@ Editor controls:
   - color scheme selector
   - color swatches
 - text `font family`, `font cut`, `hierarchy`, and `color scheme` dropdown items preview live on rollover before commit
+- Placeholders section:
+  - lists all available document-variable tokens
+  - inserts the clicked token at the current caret or over the current selection
 - image Color section:
   - color scheme selector
   - color swatches

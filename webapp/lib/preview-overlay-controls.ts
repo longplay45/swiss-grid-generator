@@ -12,6 +12,7 @@ export type PreviewColorSchemeOption = {
 export type TextEditorControls<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey>
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
+  insertEditorText: (value: string) => void
   deleteEditorBlock: () => void
   maxCharsPerLine: number | null
   baselinesPerGridModule: number

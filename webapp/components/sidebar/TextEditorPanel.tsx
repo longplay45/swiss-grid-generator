@@ -41,6 +41,7 @@ import {
   getUniformTrackingScaleForRange,
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
+import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
 import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
 import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
@@ -57,19 +58,21 @@ type TextEditorPanelProps<StyleKey extends string> = {
   isDarkMode?: boolean
 }
 
-type SectionKey = "layout" | "type" | "info"
+type SectionKey = "layout" | "type" | "placeholders" | "info"
 const SECTION_HEADER_CLICK_DELAY_MS = 180
-const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "info"]
+const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "placeholders", "info"]
 
 const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
   layout: false,
   type: true,
+  placeholders: true,
   info: true,
 }
 
 const TEXT_EDITOR_HELP_SECTION_BY_KEY: Record<SectionKey, HelpSectionId> = {
   layout: "help-editor-paragraph",
   type: "help-editor-typo",
+  placeholders: "help-editor-placeholders",
   info: "help-editor-info",
 }
 
@@ -625,6 +628,7 @@ export function TextEditorPanel<StyleKey extends string>({
   )
   const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-gray-300 data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
   const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-white shadow-none data-[state=checked]:translate-x-3"
+  const placeholderButtonClassName = `w-full rounded-sm border px-3 py-2 text-left transition-colors ${tone.button}`
   const infoRows = [
     ["Rows", String(controls.editorState.draftRows)],
     ["Baselines", String(controls.editorState.draftHeightBaselines)],
@@ -1098,9 +1102,47 @@ export function TextEditorPanel<StyleKey extends string>({
         </EditorSidebarSection>
         </div>
 
+        <div ref={registerSectionRef("placeholders")}>
+        <EditorSidebarSection
+          title="III. Placeholders"
+          tooltip="Insert editorial document variables for project title, folios, and proof timestamps"
+          collapsed={collapsed.placeholders}
+          collapsedSummary="Project title, page, pages, date, time"
+          onHeaderClick={handleSectionHeaderClick("placeholders")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
+          showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.placeholders)}
+        >
+          <div className="space-y-2">
+            {DOCUMENT_VARIABLE_DEFINITIONS.map(({ token, description }) => (
+              <button
+                key={token}
+                type="button"
+                className={placeholderButtonClassName}
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                }}
+                onClick={() => {
+                  controls.insertEditorText(token)
+                }}
+              >
+                <span className={`block font-mono text-[11px] leading-tight ${isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"}`}>
+                  {token}
+                </span>
+                <span className={`mt-1 block text-[11px] leading-snug ${tone.muted}`}>
+                  {description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </EditorSidebarSection>
+        </div>
+
         <div ref={registerSectionRef("info")}>
         <EditorSidebarSection
-          title="III. Info"
+          title="IV. Info"
           tooltip="Paragraph summary and live metrics"
           collapsed={collapsed.info}
           collapsedSummary={`${characterCount} chars, ${wordCount} words`}

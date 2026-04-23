@@ -62,6 +62,7 @@ export const ALL_HELP_INDEX_ITEMS = [
 export const EDITOR_HELP_SUBSECTION_ITEMS = [
   { id: "help-editor-paragraph", label: "Text Editor / Paragraph" },
   { id: "help-editor-typo", label: "Text Editor / Typo" },
+  { id: "help-editor-placeholders", label: "Text Editor / Placeholders" },
   { id: "help-editor-info", label: "Text Editor / Info" },
   { id: "help-image-editor-geometry", label: "Image Editor / Geometry" },
   { id: "help-image-editor-color", label: "Image Editor / Color" },

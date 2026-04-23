@@ -1,6 +1,7 @@
 "use client"
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
+import { applyBlockEditorTextEdit } from "@/lib/block-editor-text-edit"
 import { getFontFamilyCss } from "@/lib/config/fonts"
 import {
   resolveTextSchemeColor,
@@ -31,11 +32,7 @@ import {
   normalizeTrackingScale,
 } from "@/lib/text-rendering"
 import {
-  remapTrackingRunsForTextEdit,
-} from "@/lib/text-tracking-runs"
-import {
   measureFormattedTextRangeWidth,
-  rebaseTextFormatRunsForTextEdit,
   resolveTextFormatAtIndex,
   type PositionedTextFormatTrackingSegment,
 } from "@/lib/text-format-runs"
@@ -926,33 +923,9 @@ export function InlineBlockTextarea<StyleKey extends string>({
               const value = normalizeInlineEditorText(event.target.value)
               const nextSelection = readTextareaSelection(event.target, true)
               setSelectionFocused(true)
-              setEditorState((prev) => prev ? {
-                ...prev,
-                draftText: value,
-                draftTrackingRuns: remapTrackingRunsForTextEdit(
-                  prev.draftText,
-                  value,
-                  prev.draftTrackingRuns,
-                  prev.draftTrackingScale,
-                ),
-                draftTextFormatRuns: rebaseTextFormatRunsForTextEdit(
-                  prev.draftText,
-                  value,
-                  prev.draftTextFormatRuns,
-                  {
-                    fontFamily: prev.draftFont,
-                    fontWeight: prev.draftFontWeight,
-                    italic: prev.draftItalic,
-                    styleKey: prev.draftStyle,
-                    color: prev.draftColor,
-                  },
-                ),
-                draftTextEdited: true,
-                draftSelectionStart: nextSelection.start,
-                draftSelectionEnd: nextSelection.end,
-                draftSelectionAnchor: nextSelection.anchor,
-                draftSelectionFocusIndex: nextSelection.focusIndex,
-              } : prev)
+              setEditorState((prev) => prev
+                ? applyBlockEditorTextEdit(prev, value, nextSelection)
+                : prev)
               keyboardDesiredXRef.current = null
             }}
             onKeyDown={(event) => {
