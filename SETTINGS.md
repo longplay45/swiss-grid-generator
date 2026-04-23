@@ -50,9 +50,10 @@ Default: `swiss`
 #### Custom Ratio
 
 - Available when `Ratio` is set to `Custom Ratio`
-- Two numeric ratio-unit inputs: `Width` and `Height`
+- Two floating-point ratio-unit inputs: `Width` and `Height`
 - Range per field: min `0.1`, max `100`, step `0.001`
 - Default: `4 : 5`
+- Decimal point and decimal comma input are both accepted, so ratios like `2 : 1.414` or `2 : 1,414` are valid.
 - Orientation is applied after the ratio pair.
 - Export/preview dimensions are generated from the custom ratio at A4-equivalent area.
 

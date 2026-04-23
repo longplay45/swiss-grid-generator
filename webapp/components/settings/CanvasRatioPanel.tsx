@@ -13,6 +13,12 @@ import {
 } from "@/lib/grid-calculator"
 import { PanelCard } from "@/components/settings/PanelCard"
 
+function parseCustomRatioUnitInput(value: string): number {
+  const normalized = value.trim().replace(/\s+/g, "").replace(/,/g, ".")
+  if (normalized.length === 0) return Number.NaN
+  return Number(normalized)
+}
+
 type Props = {
   collapsed: boolean
   onHeaderClick: (event: React.MouseEvent) => void
@@ -67,14 +73,14 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
   const inputClassName = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
 
   const commitCustomRatioWidth = useCallback(() => {
-    const parsed = Number(customRatioWidthInput)
+    const parsed = parseCustomRatioUnitInput(customRatioWidthInput)
     const nextValue = clampCustomCanvasRatioUnit(parsed, customRatioWidth)
     onCustomRatioWidthChange(nextValue)
     setCustomRatioWidthInput(nextValue.toString())
   }, [customRatioWidth, customRatioWidthInput, onCustomRatioWidthChange])
 
   const commitCustomRatioHeight = useCallback(() => {
-    const parsed = Number(customRatioHeightInput)
+    const parsed = parseCustomRatioUnitInput(customRatioHeightInput)
     const nextValue = clampCustomCanvasRatioUnit(parsed, customRatioHeight)
     onCustomRatioHeightChange(nextValue)
     setCustomRatioHeightInput(nextValue.toString())
@@ -132,11 +138,10 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
             <div className="space-y-1">
               <Label className="text-xs uppercase tracking-[0.08em] text-gray-500">Width</Label>
               <input
-                type="number"
-                min={0.1}
-                max={100}
-                step={0.001}
+                type="text"
                 inputMode="decimal"
+                autoComplete="off"
+                spellCheck={false}
                 value={customRatioWidthInput}
                 onChange={(event) => setCustomRatioWidthInput(event.target.value)}
                 onBlur={commitCustomRatioWidth}
@@ -154,11 +159,10 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
             <div className="space-y-1">
               <Label className="text-xs uppercase tracking-[0.08em] text-gray-500">Height</Label>
               <input
-                type="number"
-                min={0.1}
-                max={100}
-                step={0.001}
+                type="text"
                 inputMode="decimal"
+                autoComplete="off"
+                spellCheck={false}
                 value={customRatioHeightInput}
                 onChange={(event) => setCustomRatioHeightInput(event.target.value)}
                 onBlur={commitCustomRatioHeight}

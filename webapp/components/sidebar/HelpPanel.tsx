@@ -577,7 +577,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           I. Canvas Ratio &amp; Rotation
         </SectionHeading>
         <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly.</li>
+          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly, including fractional ratios such as `2:1.414` for facing DIN spreads.</li>
           <li>`Ratio` and `Orientation` preview live on dropdown rollover before commit.</li>
           <li>Orientation changes between portrait and landscape at the layout level.</li>
           <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
