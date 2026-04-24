@@ -7,6 +7,7 @@ Core grid formulas reference `webapp/lib/grid-calculator.ts`; preview reflow/aut
 Recent UI updates (header dividers/tooltips, dark-mode shell styling, shortcut coverage, inline page-layer navigation) do not change these mathematical formulas.
 In the Project -> Pages -> inline Layers architecture, these calculations are evaluated independently per page.
 Supported dropdown rollover previews also use these same formulas; they apply transient preview state to the page or editor, then restore the committed state when the menu closes without a selection.
+Document-variable folios now count physical pages: a facing spread contributes two pages to `<%pages%>`, and `<%page%>` resolves to the next physical page number on the right-hand side of a spread.
 
 ## Table of Contents
 

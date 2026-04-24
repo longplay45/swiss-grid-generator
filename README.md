@@ -87,6 +87,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Paragraph vertical alignment (`Top`, `Center`, `Bottom`) stays baseline-aligned inside the configured frame height
 - Optical/metric kerning toggle with shared render/export behavior
 - Dynamic document variables for editorial folios, proof lines, and fitted sample copy: `<%lorem%>`, `<%project_title%>`, `<%title%>`, `<%page%>`, `<%pages%>`, `<%date%>`, `<%time%>`
+- `%page%` and `%pages%` count physical pages; on facing spreads the left side uses the spread's base page number and the right side resolves to the next physical page number
 - In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render to live values
 - Inline editor caret and selection follow rendered text geometry
 - Live character & word count
@@ -97,6 +98,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Project rail uses page cards with inline open/close layer stacks for faster long-document navigation
 - Opened page cards expose a one-way `Facing pages` control above `Layers`, converting the page into a facing spread with mirrored inner/outer margins and a zero-gap preview seam
 - Facing spreads stay a single project page and double the effective column space so layers and text reflow can extend across both sides
+- `Add Page` always creates a new single page, even when the active page is a facing spread
+- Project page creation is capped at `1000` pages per document
 - `Page Up` / `Page Down` step to the previous or next project page when multiple pages are present, and `Home` / `End` jump to the first or last page
 - Text and image layers with stable grid-based positioning
 - Drag to move, Alt/Option+drag to duplicate
@@ -113,7 +116,9 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Supported layout and editor dropdowns preview hovered items live in the page; closing a menu without selecting restores the committed state
 - Toggle visibility of baselines, margins, modules, and typography
 - Double-click empty module → create text
+- Hold `1..6` while double-clicking empty module to create text in a chosen hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, `6 Display`
 - Shift + double-click → create image placeholder
+- Double-click text creation uses the actual module under the pointer, so lower-half and right-half clicks stay in the clicked module
 - Image placeholders use the same `Snap to Columns (X)` / `Snap to Baseline (Y)` placement model as paragraphs
 - With `Snap to Columns (X)` off, paragraphs and image placeholders can overhang one column into either side margin
 - Hover interactions and edit affordances
@@ -137,6 +142,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - `PDF`, `SVG`, and `IDML` all export the selected page range using each page's stored document size
 - All export formats are vector-based rather than raster screenshot captures
 - Multi-page `SVG` export downloads a ZIP with one SVG per page
+- `Esc` closes the export dialog when idle and cancels a running export at the next safe checkpoint
 - PDF print options: bleed, registration-style marks, and output intents
 - PDF presets: **Digital Print** (RGB / sRGB) and **Press Proof** (CMYK / FOGRA39)
 - Use `SVG` or `IDML` when you need typography frozen as non-live geometry

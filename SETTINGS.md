@@ -131,8 +131,8 @@ Default: `swiss`
 - Paragraph text supports dynamic document variables in raw text:
   - `<%lorem%>` fills the current paragraph frame with fitted lorem ipsum
   - `<%project_title%>` and alias `<%title%>`
-  - `<%page%>`
-  - `<%pages%>`
+  - `<%page%>` uses the current physical page number; on facing spreads the right side resolves to `left + 1`
+  - `<%pages%>` uses the total physical page count across single pages and facing spreads
   - `<%date%>` rendered as local `YYYY-MM-DD`
   - `<%time%>` rendered as local `HH:mm`
 - Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
@@ -206,7 +206,9 @@ Default: `swiss`
 ### Project Panel
 
 - `Name`: editable project title; also drives the default project JSON filename stem.
-- `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` duplicates the active page.
+- Project header includes a small `i` toggle that shows or hides the document info text; when inactive no collapsed summary is shown.
+- `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` always creates a new single page.
+- Page creation is capped at `1000` pages per project.
 - `Facing pages`: one-way control inside an opened page card, positioned above `Layers`. It converts the current page into a true spread. The preview becomes a zero-gap `Doppelseite`, inner/outer margins mirror automatically, and the effective column count doubles across the spread.
 - `Page Up` selects the previous project page, `Page Down` selects the next one, and `Home` / `End` jump to the first or last page when multiple pages exist.
 - After conversion, the spread remains one project page and edits inside one continuous spread coordinate space.
@@ -294,7 +296,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `SVG` does not expose PDF print settings
   - converts typography to exact glyph outlines, so exported text is not live-editable
 - Confirm/Cancel
-- Esc closes popup
+- `Esc` closes the popup when idle and cancels a running export at the next safe checkpoint
 
 ## Paper Size Sets
 
@@ -319,6 +321,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
+- Double-click empty module creates a paragraph in the clicked module.
+- Holding `1..6` while double-clicking empty module sets the new paragraph hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, `6 Display`.
 - Drag to move; paragraphs and image placeholders respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
 - With a selected unlocked layer and no active editor field, arrow keys nudge the layer through the same logic: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes move in tenth-step logical increments with `Shift` as a 10x multiplier
 - With `Snap to Columns (X)` off, free horizontal placement may overhang one column into either side margin.

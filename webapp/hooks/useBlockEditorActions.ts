@@ -103,6 +103,7 @@ type Args = {
   resultGridUnit: number
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
+  resolveModulePositionAtPagePoint: (pageX: number, pageY: number) => ModulePosition | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
   getBlockFontWeight: (key: string) => number
@@ -161,6 +162,7 @@ export function useBlockEditorActions({
   resultGridUnit,
   toPagePoint,
   findTopmostBlockAtPoint,
+  resolveModulePositionAtPagePoint,
   snapToModule,
   getBlockFont,
   getBlockFontWeight,
@@ -334,6 +336,7 @@ export function useBlockEditorActions({
     getGridMetrics,
     toPagePoint,
     findTopmostBlockAtPoint,
+    resolveModulePositionAtPagePoint,
     snapToModule,
     isTextReflowEnabled,
     isSyllableDivisionEnabled,

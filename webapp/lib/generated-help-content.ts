@@ -78,7 +78,8 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "The preview is the live layout surface for the active page.",
-              "Double-click empty space to add text. `Shift` + double-click adds an image placeholder.",
+              "Double-click inside a module to add text. `Shift` + double-click adds an image placeholder.",
+              "Hold `1..6` while double-clicking empty space to choose the new paragraph hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, `6 Display`.",
               "Hover a layer to reveal edit access and placement guides.",
               "Drag to move. `Alt/Option` + drag duplicates.",
               "Locked layers stay visible but cannot be hovered, moved, or edited until unlocked in the Project panel.",
@@ -148,6 +149,7 @@ export const HELP_CONTENT_GROUPS = [
                 "items": [
                   "Insert document-variable tokens at the caret or over the current selection.",
                   "`<%lorem%>` fills the active frame using its current geometry and reflow settings.",
+                  "`<%page%>` and `<%pages%>` use physical page counts. On facing spreads, the right side resolves to the next physical page number.",
                   "Available tokens: {{DOCUMENT_VARIABLE_TOKENS}}."
                 ]
               }
@@ -287,7 +289,8 @@ export const HELP_CONTENT_GROUPS = [
             "items": [
               "Export supports vector PDF, SVG, and IDML.",
               "Multi-page projects can export a page range.",
-              "PDF stays visually faithful. SVG and IDML are the frozen-geometry path when you do not want live text."
+              "PDF stays visually faithful. SVG and IDML are the frozen-geometry path when you do not want live text.",
+              "`Esc` closes the dialog when no export is running and cancels an in-progress export at the next safe checkpoint."
             ]
           }
         ],
@@ -523,8 +526,11 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "Opens the project title and page/layer management panel.",
+              "The small `i` toggle in the Project header shows or hides the document info text.",
               "Single-click a page card to activate it. Double-click it to open or close its inline layer list.",
               "`Facing pages` converts a page into a spread inside the same page record.",
+              "`Add Page` always creates a new single page, even if the active page is a facing spread.",
+              "A project can contain up to `1000` pages.",
               "Active-page layer cards mirror preview hover/guides.",
               "Drag unlocked layer cards to reorder z-index.",
               "Single-click a layer card to select it. Double-click it to open or retarget the editor.",

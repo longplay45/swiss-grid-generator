@@ -57,6 +57,7 @@ type Args = {
   getGridMetrics: () => { rowStartBaselines: number[] }
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
+  resolveModulePositionAtPagePoint: (pageX: number, pageY: number) => ModulePosition | null
   snapToModule: (pageX: number, pageY: number, key: string) => ModulePosition
   getBlockFont: (key: string) => FontFamily
   getBlockFontWeight: (key: string) => number
@@ -103,6 +104,7 @@ export function useBlockEditorCanvasDoubleClick({
   getGridMetrics,
   toPagePoint,
   findTopmostBlockAtPoint,
+  resolveModulePositionAtPagePoint,
   snapToModule,
   getBlockFont,
   getBlockFontWeight,
@@ -219,7 +221,8 @@ export function useBlockEditorCanvasDoubleClick({
 
     const newKey = getNextCustomBlockId()
     recordHistoryBeforeChange()
-    const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
+    const rawPosition = resolveModulePositionAtPagePoint(pagePoint.x, pagePoint.y)
+    const snapped = rawPosition ?? snapToModule(pagePoint.x, pagePoint.y, newKey)
     const rowStartBaselines = getGridMetrics().rowStartBaselines
     const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
     const shortcutStyle = resolveHeldHierarchyShortcut(heldHierarchyShortcutKeysRef.current) ?? "body"
@@ -272,6 +275,7 @@ export function useBlockEditorCanvasDoubleClick({
     onRequestNotice,
     promoteLayerToTop,
     recordHistoryBeforeChange,
+    resolveModulePositionAtPagePoint,
     resultGridCols,
     resultGridRows,
     setBlockCollections,

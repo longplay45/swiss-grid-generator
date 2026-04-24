@@ -725,6 +725,7 @@ export const GridPreview = memo(function GridPreview({
       resultGridUnit: result.grid.gridUnit,
       toPagePoint,
       findTopmostBlockAtPoint,
+      resolveModulePositionAtPagePoint,
       snapToModule,
       getBlockFont,
       getBlockFontWeight,

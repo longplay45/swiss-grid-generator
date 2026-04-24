@@ -46,6 +46,7 @@ Current capability inventory for Swiss Grid Generator.
 - Newspaper reflow across paragraph columns.
 - Optical margin alignment engine for preview/export.
 - Dynamic document variables for `lorem`, `project_title`, `title`, `page`, `pages`, `date`, and `time`.
+- `%page%` / `%pages%` resolve against physical page counts; on facing spreads the right side advances by one physical page.
 
 ## Text Editing
 
@@ -84,7 +85,9 @@ Current capability inventory for Swiss Grid Generator.
 ## Placement and Layers
 
 - Double-click empty module to create a text paragraph.
+- Hold `1..6` while double-clicking empty module to create a paragraph as `Caption`, `Body`, `Subhead`, `Headline`, `Custom`, or `Display`.
 - `Shift` + double-click empty module to create an image placeholder (`Ctrl` fallback).
+- Paragraph creation uses the actual clicked module rather than the nearest module center.
 - Drag paragraphs and placeholders to move them.
 - `Alt/Option` + drag duplicates the hovered layer.
 - Default paragraph drag respects each paragraph's current `Snap to Columns (X)` state and, when `Snap to Baseline (Y)` is on, snaps Y to the nearest module top.
@@ -94,10 +97,13 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing unlocked paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
-- Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
+- Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and single-page creation.
 - Opened page cards expose a `Facing pages` control above `Layers`, converting a page into a true facing spread with mirrored inner/outer margins, a zero-gap preview seam, and doubled effective columns across the spread.
+- The Project header includes an `i` toggle for document info text.
 - `Page Up` and `Page Down` step through project pages when multiple pages are present, and `Home` / `End` jump to the first or last page.
 - Facing spreads stay a single project page and keep the normal layer editing workflow inside one continuous spread space.
+- `Add Page` always creates a new single page, even from a facing spread.
+- Projects are capped at `1000` pages.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
 - Project JSON supports an optional `tour` definition for quick onboarding tied to real pages and layers.
@@ -160,6 +166,7 @@ Current capability inventory for Swiss Grid Generator.
 - Multi-page SVG exports a ZIP with one trim-size SVG per page.
 - SVG typography is exported as outline geometry, so downstream text is not live-editable.
 - IDML exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry, so downstream text is not live-editable.
+- `Esc` closes idle export UI and cancels a running export at the next safe checkpoint.
 
 ## UI and Workflow
 
