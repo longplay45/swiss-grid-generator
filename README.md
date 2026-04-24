@@ -22,7 +22,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 ## Screenshots
 
 ### Web Application
-![Web App Screenshot 001](swiss-grid-generator-app-screenshot_001.png?001)
+![Web App Screenshot 001](swiss-grid-generator-app-screenshot_001.png?002)
 
 ![Web App Screenshot 002](swiss-grid-generator-app-screenshot_002.png?001)
 
