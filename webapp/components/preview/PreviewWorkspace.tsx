@@ -490,16 +490,24 @@ export function PreviewWorkspace({
             {activeSidebarPanel === "layers" && (
               <div className="flex h-full min-h-0 flex-col">
                 <div className="mb-3 shrink-0 px-4 pt-4 md:px-6 md:pt-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>P R O J E C T</h3>
-                    <button
-                      type="button"
-                      aria-label="Close project panel"
-                      onClick={closeSidebarPanel}
-                      className={`rounded-sm p-1 transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  <div className="rounded-md py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>P R O J E C T</h3>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Close project panel"
+                        onClick={closeSidebarPanel}
+                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          isDarkUi
+                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                        }`}
+                      >
+                        <X className="h-2 w-2" />
+                      </button>
+                    </div>
                   </div>
                   <section className="mt-2">
                     <header
@@ -547,20 +555,24 @@ export function PreviewWorkspace({
                     onProjectTitleChange={onProjectTitleChange}
                     isDarkMode={isDarkUi}
                   />
-                  <div className="mt-4 flex items-center justify-between gap-3 leading-none">
-                    <div className={`${SECTION_HEADLINE_CLASSNAME} ${uiTheme.sidebarHeading}`}>Pages</div>
-                    <button
-                      type="button"
-                      aria-label="Add page"
-                      onClick={onPageAdd}
-                      className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                        isDarkUi
-                          ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
-                          : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                      }`}
-                    >
-                      <Plus className="h-2 w-2" />
-                    </button>
+                  <div className="mt-4 rounded-md py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className={`${SECTION_HEADLINE_CLASSNAME} ${uiTheme.sidebarHeading}`}>Pages</div>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Add page"
+                        onClick={onPageAdd}
+                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          isDarkUi
+                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                        }`}
+                      >
+                        <Plus className="h-2 w-2" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div
