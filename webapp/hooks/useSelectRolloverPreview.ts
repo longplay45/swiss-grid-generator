@@ -4,6 +4,9 @@ import { useCallback, useRef } from "react"
 
 type SelectPreviewItemHandlers = {
   onFocus: () => void
+  onMouseEnter: () => void
+  onMouseMove: () => void
+  onPointerEnter: () => void
   onPointerMove: () => void
 }
 
@@ -23,6 +26,8 @@ export function useSelectRolloverPreview<T>({
   const committedValueRef = useRef(value)
   const hasPreviewValueRef = useRef(false)
   const previewValueRef = useRef<T>(value)
+
+  committedValueRef.current = value
 
   const clearPreview = useCallback(() => {
     hasPreviewValueRef.current = false
@@ -60,6 +65,9 @@ export function useSelectRolloverPreview<T>({
 
   const getItemPreviewProps = useCallback((nextValue: T): SelectPreviewItemHandlers => ({
     onFocus: () => previewValue(nextValue),
+    onMouseEnter: () => previewValue(nextValue),
+    onMouseMove: () => previewValue(nextValue),
+    onPointerEnter: () => previewValue(nextValue),
     onPointerMove: () => previewValue(nextValue),
   }), [previewValue])
 
