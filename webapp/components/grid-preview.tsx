@@ -965,6 +965,7 @@ export const GridPreview = memo(function GridPreview({
     layerOrder: resolvedLayerOrder,
     textContent,
     documentVariableContext,
+    rawDocumentVariableBlockKey: editorState?.target ?? null,
     styleAssignments,
     blockTextAlignments,
     blockVerticalAlignments,

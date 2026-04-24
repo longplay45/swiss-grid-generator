@@ -91,6 +91,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   blockOrder: BlockId[]
   textContent: Record<BlockId, string>
   documentVariableContext?: DocumentVariableContext | null
+  rawDocumentVariableBlockKey?: BlockId | null
   styleAssignments: Record<BlockId, StyleKey>
   styles: Record<StyleKey, TypographyStyleDefinition>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
@@ -464,6 +465,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   blockOrder,
   textContent,
   documentVariableContext = null,
+  rawDocumentVariableBlockKey = null,
   styleAssignments,
   styles,
   blockTextAlignments,
@@ -566,7 +568,8 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
     const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const resolveFontSize = (segmentStyleKey: StyleKey) => getBlockFontSize(key, segmentStyleKey)
-    const resolved = documentVariableContext
+    const shouldResolveDocumentVariables = documentVariableContext && key !== rawDocumentVariableBlockKey
+    const resolved = shouldResolveDocumentVariables
       ? resolveDocumentVariableContent({
           text: rawText,
           context: documentVariableContext,
@@ -608,6 +611,13 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
           text: rawText,
           formatRuns: rawFormatRuns,
           trackingRuns: rawTrackingRuns,
+          segments: [{
+            kind: "literal" as const,
+            rawStart: 0,
+            rawEnd: rawText.length,
+            resolvedStart: 0,
+            resolvedEnd: rawText.length,
+          }],
         }
 
     resolvedTextContent[key] = resolved.text
@@ -802,7 +812,6 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       opticalKerning,
       trackingScale,
       trackingRuns,
-      sourceText,
       segmentLines,
       renderedLines,
       commands: plan.commands,

@@ -63,7 +63,7 @@ Current capability inventory for Swiss Grid Generator.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
 - Placeholders section lists the available document-variable tokens and inserts the clicked token at the caret or over the current selection.
-- `<% lorem %>` fills the active paragraph frame according to its geometry, reflow, and hyphenation settings.
+- `<%lorem%>` fills the active paragraph frame according to its geometry, reflow, and hyphenation settings.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
 - Selection-aware styling for selected text:
   - font family
@@ -73,7 +73,7 @@ Current capability inventory for Swiss Grid Generator.
   - tracking
 - Paragraph defaults are rebased when edits are applied without a scoped selection.
 - Caret and selection rendering follow rendered text geometry.
-- In text edit mode, resolved placeholder values render on the page while the editor keeps the raw tokens in source text.
+- In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render to live values.
 - Double-click selects the clicked word in inline text edit mode.
 - Triple-click selects the containing sentence in inline text edit mode.
 - `Alt+A` and `Cmd/Ctrl+A` select the whole paragraph while inline text edit is active.

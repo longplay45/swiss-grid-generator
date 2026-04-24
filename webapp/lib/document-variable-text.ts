@@ -31,7 +31,7 @@ export type DocumentVariableResolver = (
   args: DocumentVariableResolverArgs,
 ) => string | null | undefined
 
-type ResolvedSegment = {
+export type DocumentVariableResolvedSegment = {
   kind: "literal" | "variable"
   rawStart: number
   rawEnd: number
@@ -61,9 +61,10 @@ export type ResolvedDocumentVariableText<
   text: string
   formatRuns: TextFormatRun<StyleKey, FontFamily>[]
   trackingRuns: TextTrackingRun[]
+  segments: DocumentVariableResolvedSegment[]
 }
 
-const DOCUMENT_VARIABLE_RE = /<%\s*([a-z_]+)\s*%>/gi
+const DOCUMENT_VARIABLE_RE = /<%([a-z_]+)%>/gi
 
 function pad2(value: number): string {
   return String(Math.max(0, Math.trunc(value))).padStart(2, "0")
@@ -129,10 +130,10 @@ function parseResolvedSegments(
   resolveVariable?: DocumentVariableResolver,
 ): {
   text: string
-  segments: ResolvedSegment[]
+  segments: DocumentVariableResolvedSegment[]
   hasVariables: boolean
 } {
-  const segments: ResolvedSegment[] = []
+  const segments: DocumentVariableResolvedSegment[] = []
   let resolvedText = ""
   let cursor = 0
   let hasVariables = false
@@ -270,7 +271,7 @@ function remapLiteralFormatIntervals<
   StyleKey extends string,
   FontFamily extends string,
 >(
-  segment: ResolvedSegment,
+  segment: DocumentVariableResolvedSegment,
   intervals: readonly EffectiveFormatInterval<StyleKey, FontFamily>[],
 ): TextFormatRun<StyleKey, FontFamily>[] {
   const remapped: TextFormatRun<StyleKey, FontFamily>[] = []
@@ -288,7 +289,7 @@ function remapLiteralFormatIntervals<
 }
 
 function remapLiteralTrackingIntervals(
-  segment: ResolvedSegment,
+  segment: DocumentVariableResolvedSegment,
   intervals: readonly EffectiveTrackingInterval[],
 ): TextTrackingRun[] {
   const remapped: TextTrackingRun[] = []
@@ -342,6 +343,7 @@ export function resolveDocumentVariableContent<
       text: resolved.text,
       formatRuns: normalizedFormatRuns,
       trackingRuns: normalizedTrackingRuns,
+      segments: resolved.segments,
     }
   }
 
@@ -374,5 +376,6 @@ export function resolveDocumentVariableContent<
     text: resolved.text,
     formatRuns: normalizeTextFormatRuns(resolved.text, remappedFormatRuns, baseFormat),
     trackingRuns: normalizeTextTrackingRuns(resolved.text, remappedTrackingRuns, baseTrackingScale),
+    segments: resolved.segments,
   }
 }

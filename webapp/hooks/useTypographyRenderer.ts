@@ -51,6 +51,7 @@ type Args<BlockId extends string> = {
   layerOrder: BlockId[]
   textContent: Record<BlockId, string>
   documentVariableContext?: DocumentVariableContext | null
+  rawDocumentVariableBlockKey?: BlockId | null
   styleAssignments: Record<BlockId, keyof GridResult["typography"]["styles"]>
   blockTextAlignments: Partial<Record<BlockId, TextAlignMode>>
   blockVerticalAlignments: Partial<Record<BlockId, TextVerticalAlignMode>>
@@ -128,6 +129,7 @@ export function useTypographyRenderer<BlockId extends string>({
   layerOrder,
   textContent,
   documentVariableContext = null,
+  rawDocumentVariableBlockKey = null,
   styleAssignments,
   blockTextAlignments,
   blockVerticalAlignments,
@@ -305,6 +307,7 @@ export function useTypographyRenderer<BlockId extends string>({
           blockOrder: keys,
           textContent,
           documentVariableContext,
+          rawDocumentVariableBlockKey,
           styleAssignments,
           styles,
           blockTextAlignments,
@@ -477,6 +480,7 @@ export function useTypographyRenderer<BlockId extends string>({
     canvasRef,
     dragState,
     documentVariableContext,
+    rawDocumentVariableBlockKey,
     getBlockFont,
     getBlockFontWeight,
     getBlockTrackingScale,

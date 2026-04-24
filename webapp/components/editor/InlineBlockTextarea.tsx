@@ -255,6 +255,28 @@ function resolveInlineSpecialCharacterColor(textColor: string, backgroundColor: 
   return formatRgba(markerColor, 0.55)
 }
 
+function clampIndex(index: number, textLength: number): number {
+  if (!Number.isFinite(index)) return 0
+  return Math.max(0, Math.min(textLength, Math.trunc(index)))
+}
+
+function clampSelectionToTextLength(
+  selection: InlineEditorSelectionState,
+  textLength: number,
+): InlineEditorSelectionState {
+  const anchor = clampIndex(selection.anchor, textLength)
+  const focusIndex = clampIndex(selection.focusIndex, textLength)
+  const start = Math.min(anchor, focusIndex)
+  const end = Math.max(anchor, focusIndex)
+  return {
+    ...selection,
+    start,
+    end,
+    anchor,
+    focusIndex,
+  }
+}
+
 function InlineEditorOverlayCanvas({
   width,
   height,
@@ -449,10 +471,17 @@ export function InlineBlockTextarea<StyleKey extends string>({
     updateEditorSelection(nextSelection)
   }, [readTextareaSelection, selectionFocused, textareaRef, updateEditorSelection])
 
+  const displayText = editorState?.draftText ?? ""
+  const displayTrackingRuns = editorState?.draftTrackingRuns ?? []
+  const displayFormatRuns = editorState?.draftTextFormatRuns ?? []
+
   const restoreSelectionFromEditorState = useCallback((focused: boolean) => {
     const element = textareaRef.current
     if (!element || !editorState) return false
-    const nextSelection = getEditorSelectionState(editorState, focused)
+    const nextSelection = clampSelectionToTextLength(
+      getEditorSelectionState(editorState, focused),
+      displayText.length,
+    )
     if (
       (element.selectionStart ?? 0) === nextSelection.start
       && (element.selectionEnd ?? 0) === nextSelection.end
@@ -468,12 +497,16 @@ export function InlineBlockTextarea<StyleKey extends string>({
     setSelectionFocused(focused)
     return true
   }, [
+    displayText.length,
     editorState,
     getEditorSelectionState,
     textareaRef,
   ])
 
-  const selection = getEditorSelectionState(editorState, selectionFocused)
+  const selection = clampSelectionToTextLength(
+    getEditorSelectionState(editorState, selectionFocused),
+    displayText.length,
+  )
 
   useEffect(() => {
     if (!editorState) {
@@ -560,9 +593,9 @@ export function InlineBlockTextarea<StyleKey extends string>({
       font: canvasFont,
       opticalKerning: editorState.draftOpticalKerning,
     })
-    if (range && (editorState.draftTrackingRuns.length > 0 || editorState.draftTextFormatRuns.length > 0)) {
+    if (range && (displayTrackingRuns.length > 0 || displayFormatRuns.length > 0)) {
       return measureFormattedTextRangeWidth(ctx, {
-        sourceText: editorState.draftText,
+        sourceText: displayText,
         renderedText: text,
         range,
         baseFormat: {
@@ -572,13 +605,13 @@ export function InlineBlockTextarea<StyleKey extends string>({
           styleKey: editorState.draftStyle,
           color: editorState.draftColor,
         },
-        formatRuns: editorState.draftTextFormatRuns,
+        formatRuns: displayFormatRuns,
         baseTrackingScale: trackingScale,
-        trackingRuns: editorState.draftTrackingRuns,
+        trackingRuns: displayTrackingRuns,
         resolveFontSize: (styleKey) => (
-          styleKey === editorState.draftStyle && isFxStyle(styleKey)
+          styleKey === editorState.draftStyle && isFxStyle(styleKey as StyleKey)
             ? editorState.draftFxSize * scale
-            : getStyleSizeValue(styleKey) * scale
+            : getStyleSizeValue(styleKey as StyleKey) * scale
         ),
         opticalKerning: editorState.draftOpticalKerning,
       })
@@ -625,7 +658,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   })
   const caret = selection.focused && selection.start === selection.end
     ? computeInlineEditorCaret({
-      text: editorState.draftText,
+      text: displayText,
       textAlign: layout.textAlign,
       commands: visualCommands,
       renderedLines: layout.renderedLines,
@@ -639,7 +672,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     })
     : null
   const selectionRects = computeInlineEditorSelectionRects({
-    text: editorState.draftText,
+    text: displayText,
     textAlign: layout.textAlign,
     commands: visualCommands,
     renderedLines: layout.renderedLines,
@@ -651,7 +684,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     measureText,
   })
   const hiddenCaret = caret ?? computeInlineEditorCaret({
-    text: editorState.draftText,
+    text: displayText,
     textAlign: layout.textAlign,
     commands: visualCommands,
     renderedLines: layout.renderedLines,
@@ -677,7 +710,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     }
     : null
   const caretFormat = resolveTextFormatAtIndex(
-    editorState.draftText,
+    displayText,
     selection.focusIndex,
     {
       fontFamily: editorState.draftFont,
@@ -686,7 +719,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
       styleKey: editorState.draftStyle,
       color: editorState.draftColor,
     },
-    editorState.draftTextFormatRuns,
+    displayFormatRuns,
   )
   const caretTextColor = resolveTextSchemeColor(caretFormat.color, imageColorScheme)
   const effectiveBackgroundColor = pageBackgroundColor ?? FALLBACK_LIGHT_COLOR
@@ -695,7 +728,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
   const specialCharacterFontFamily = `${getFontFamilyCss(editorState.draftFont)}, system-ui, sans-serif`
   const specialCharacterFontSize = Math.max(8, Math.min(scaledFontSize * 0.62, scaledLeading * 0.72, 18))
   const specialCharMarkers = computeInlineEditorSpecialCharMarkers({
-    text: editorState.draftText,
+    text: displayText,
     textAlign: layout.textAlign,
     commands: visualCommands,
     renderedLines: layout.renderedLines,
@@ -789,7 +822,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     const localPoint = toEditorLocalPoint(clientX, clientY)
     if (!localPoint) return
     const nextIndex = hitTestInlineEditorIndex({
-      text: editorState.draftText,
+      text: displayText,
       textAlign: layout.textAlign,
       commands: visualCommands,
       renderedLines: layout.renderedLines,
@@ -815,7 +848,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
     const localPoint = toEditorLocalPoint(clientX, clientY)
     if (!localPoint) return
     const nextIndex = hitTestInlineEditorIndex({
-      text: editorState.draftText,
+      text: displayText,
       textAlign: layout.textAlign,
       commands: visualCommands,
       renderedLines: layout.renderedLines,
@@ -827,8 +860,8 @@ export function InlineBlockTextarea<StyleKey extends string>({
       measureText,
     })
     const range = mode === "sentence"
-      ? resolveInlineEditorSentenceSelection(editorState.draftText, nextIndex)
-      : resolveInlineEditorWordSelection(editorState.draftText, nextIndex)
+      ? resolveInlineEditorSentenceSelection(displayText, nextIndex)
+      : resolveInlineEditorWordSelection(displayText, nextIndex)
     keyboardDesiredXRef.current = null
     dragPointerIdRef.current = null
     dragAnchorRef.current = null
@@ -912,7 +945,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
           />
           <textarea
             ref={textareaRef}
-            value={editorState.draftText}
+            value={displayText}
             spellCheck={false}
             wrap="off"
             onSelect={() => syncSelectionFromTextarea(true)}
@@ -930,7 +963,7 @@ export function InlineBlockTextarea<StyleKey extends string>({
             }}
             onKeyDown={(event) => {
               const transition = resolveInlineEditorKeyboardSelectionTransition({
-                text: editorState.draftText,
+                text: displayText,
                 textAlign: layout.textAlign,
                 commands: visualCommands,
                 renderedLines: layout.renderedLines,

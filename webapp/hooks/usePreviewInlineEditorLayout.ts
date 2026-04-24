@@ -39,12 +39,13 @@ export function usePreviewInlineEditorLayout<StyleKey extends string, Key extend
     if (!editorState) return null
     const rect = blockRectsRef.current[editorState.target as Key]
     if (!rect) return null
-    const plan = previousPlansRef.current.get(editorState.target as Key)
+    const key = editorState.target as Key
+    const plan = previousPlansRef.current.get(key)
     const textAscent = plan?.renderedLines[0]
       ? Math.max(0, plan.renderedLines[0].baselineY - plan.renderedLines[0].top)
       : plan?.commands[0]
         ? Math.max(0, plan.commands[0].y - (plan.rotationOriginY ?? rect.y))
-      : gridUnit * scale
+        : gridUnit * scale
 
     return {
       rect,

@@ -553,7 +553,7 @@ When an editor is already open, preview hit-testing and rollover remain active f
 
 ## Document Variable Resolution
 
-Paragraph source text stores raw document-variable tokens such as `<% page %>` and `<% date %>`.
+Paragraph source text stores raw document-variable tokens such as `<%page%>` and `<%date%>`.
 
 Before preview line layout, inline edit rendering, and export geometry are measured, the text engine resolves those tokens against a document context:
 

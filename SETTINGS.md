@@ -129,14 +129,14 @@ Default: `swiss`
 - `Custom` is paragraph-level only; when first selected in the text editor it copies the paragraph's currently resolved size and leading into `Custom Size` and `Custom Leading`.
 - `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - Paragraph text supports dynamic document variables in raw text:
-  - `<% lorem %>` fills the current paragraph frame with fitted lorem ipsum
-  - `<% project_title %>` and alias `<% title %>`
-  - `<% page %>`
-  - `<% pages %>`
-  - `<% date %>` rendered as local `YYYY-MM-DD`
-  - `<% time %>` rendered as local `HH:mm`
+  - `<%lorem%>` fills the current paragraph frame with fitted lorem ipsum
+  - `<%project_title%>` and alias `<%title%>`
+  - `<%page%>`
+  - `<%pages%>`
+  - `<%date%>` rendered as local `YYYY-MM-DD`
+  - `<%time%>` rendered as local `HH:mm`
 - Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
-- In text edit mode, placeholders render as resolved values on the page while the raw tokens remain stored in paragraph source text.
+- In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render as live values.
 - `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
@@ -357,7 +357,7 @@ Editor controls:
 - Placeholders section:
   - lists all available document-variable tokens
   - inserts the clicked token at the current caret or over the current selection
-  - `<% lorem %>` fills the active paragraph frame according to its rows, baselines, columns, reflow, and hyphenation settings
+  - `<%lorem%>` fills the active paragraph frame according to its rows, baselines, columns, reflow, and hyphenation settings
 - image Color section:
   - color scheme selector
   - color swatches
