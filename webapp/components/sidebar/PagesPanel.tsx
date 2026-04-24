@@ -12,6 +12,7 @@ import {
   isCardDragIgnoreTarget,
   lockDocumentUserSelect,
 } from "@/lib/sidebar-card-drag"
+import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
@@ -361,7 +362,7 @@ export function PagesPanel({
                     isEditing || isExpanded ? "select-none" : "cursor-grab select-none"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-h-6 items-center justify-between gap-3">
                     <div className={`min-w-0 flex-1 ${isEditing ? "" : "pointer-events-none select-none"}`}>
                       {isEditing ? (
                         <input
@@ -381,18 +382,18 @@ export function PagesPanel({
                               cancelRename()
                             }
                           }}
-                          className={`w-full rounded-sm border px-2 py-1 text-[12px] outline-none ${tone.input}`}
+                          className={`h-6 w-full rounded-sm border px-2 text-[12px] leading-none outline-none ${tone.input}`}
                         />
                       ) : (
-                        <div className="truncate text-[12px] font-medium">{page.name}</div>
+                        <div className="truncate text-[12px] font-medium leading-none">{page.name}</div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex h-6 items-center gap-1">
                       <button
                         type="button"
                         data-card-drag-ignore="true"
                         aria-label={isExpanded ? `Collapse ${page.name}` : `Expand ${page.name}`}
-                        className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-sm transition-colors ${tone.close}`}
                         onClick={(event) => {
                           event.stopPropagation()
                           if (isExpanded) {
@@ -408,7 +409,7 @@ export function PagesPanel({
                         type="button"
                         data-card-drag-ignore="true"
                         aria-label={`Rename ${page.name}`}
-                        className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-sm transition-colors ${tone.close}`}
                         onClick={(event) => {
                           event.stopPropagation()
                           beginRename(page)
@@ -421,7 +422,7 @@ export function PagesPanel({
                         data-card-drag-ignore="true"
                         aria-label={`Delete ${page.name}`}
                         disabled={deleteDisabled}
-                        className={`rounded-sm p-1 transition-colors ${
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-sm transition-colors ${
                           deleteDisabled
                             ? "cursor-not-allowed text-gray-400/60"
                             : `${tone.close} hover:text-red-500`
@@ -470,7 +471,7 @@ export function PagesPanel({
                   </div>
                   {isExpanded ? (
                     <div data-card-drag-ignore="true" className="mt-3">
-                      <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
+                      <div className={SECTION_HEADLINE_CLASSNAME}>
                         Layers
                       </div>
                       <ProjectPageLayersList
