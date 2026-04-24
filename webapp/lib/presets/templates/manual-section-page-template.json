@@ -1,0 +1,272 @@
+{
+  "id": "page-a681b7a7-dd35-4cc1-b9f4-293ad22d1433",
+  "name": "Introduction",
+  "uiSettings": {
+    "canvasRatio": "din_ab",
+    "customRatioWidth": 4,
+    "customRatioHeight": 5,
+    "orientation": "portrait",
+    "rotation": 0,
+    "marginMethod": 3,
+    "gridCols": 6,
+    "gridRows": 5,
+    "baselineMultiple": 1,
+    "gutterMultiple": 1,
+    "rhythm": "repetitive",
+    "rhythmRowsEnabled": true,
+    "rhythmRowsDirection": "ltr",
+    "rhythmColsEnabled": true,
+    "rhythmColsDirection": "ttb",
+    "typographyScale": "swiss",
+    "baseFont": "Inter",
+    "imageColorScheme": "mono",
+    "canvasBackground": null,
+    "customBaseline": 12,
+    "useCustomMargins": true,
+    "customMarginMultipliers": {
+      "top": 3,
+      "left": 3,
+      "right": 3,
+      "bottom": 2
+    },
+    "showBaselines": false,
+    "showModules": false,
+    "showMargins": false,
+    "showImagePlaceholders": true,
+    "showTypography": true,
+    "showLayers": true,
+    "collapsed": {
+      "format": true,
+      "baseline": true,
+      "margins": true,
+      "gutter": false,
+      "typo": true,
+      "color": true,
+      "summary": true
+    },
+    "exportPrintPro": false,
+    "exportBleedMm": 0,
+    "exportRegistrationMarks": false,
+    "format": "A4"
+  },
+  "previewLayout": {
+    "blockOrder": [
+      "cover-title",
+      "cover-step-1",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1"
+    ],
+    "textContent": {
+      "cover-title": "1.\nIntroduction",
+      "cover-step-1": "Swiss Grid Generator - User Manual - Page <%page%> of <%pages%>",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "Start with structure, \nnot decoration.",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "Beginne mit Struktur,\nnicht mit Dekoration.",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "Eine starke Seite entsteht meist aus der richtigen Reihenfolge der Entscheidungen:\n\nFormat festlegen.\nGrundlinie festlegen.\nRänder festlegen.\nRaster aufbauen.\nTypografisches System definieren.\nText- und Bildbereiche platzieren.\nExportieren, wenn die Komposition stabil ist.\n\nDas Werkzeug funktioniert am besten, wenn zuerst die globalen Entscheidungen getroffen werden und lokale Abweichungen die Ausnahme bleiben.",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "A strong page usually comes from the right order of decisions:\n\n\nSet the format.\nSet the baseline.\nSet the margins.\nBuild the grid.\nDefine the type system.\nPlace text and image areas.\nExport when the composition is stable.\n\n\nThe tool works best when global decisions are made first and local overrides are kept rare."
+    },
+    "blockTextEdited": {
+      "cover-title": true,
+      "cover-step-1": true,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": true,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": true,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": true,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": true
+    },
+    "styleAssignments": {
+      "cover-title": "fx",
+      "cover-step-1": "body",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "subhead",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "subhead",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "fx",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "fx"
+    },
+    "blockFontFamilies": {},
+    "blockFontWeights": {
+      "cover-title": 400,
+      "cover-step-1": 400,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 700,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 700,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 400,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 400
+    },
+    "blockOpticalKerning": {
+      "cover-title": true,
+      "cover-step-1": true,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": true,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": true,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": true,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": true
+    },
+    "blockTrackingScales": {
+      "cover-title": 0,
+      "cover-step-1": 0,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 0,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 0,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 0,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 0
+    },
+    "blockTrackingRuns": {},
+    "blockTextFormatRuns": {
+      "cover-title": [
+        {
+          "start": 0,
+          "end": 1,
+          "fontWeight": 600
+        }
+      ]
+    },
+    "blockItalic": {
+      "cover-title": false,
+      "cover-step-1": false,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": false,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": false,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": false,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": false
+    },
+    "blockRotations": {
+      "cover-title": 0,
+      "cover-step-1": 0,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 0,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 0,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 0,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 0
+    },
+    "blockColumnSpans": {
+      "cover-title": 6,
+      "cover-step-1": 6,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 3,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 3,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 3,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 3
+    },
+    "blockRowSpans": {
+      "cover-title": 2,
+      "cover-step-1": 0,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 1,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 1,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 3,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 3
+    },
+    "blockHeightBaselines": {
+      "cover-title": 0,
+      "cover-step-1": 1,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": 0,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": 0,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 0,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 0
+    },
+    "blockTextAlignments": {
+      "cover-title": "left",
+      "cover-step-1": "left",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "left",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "left",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "left",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "left"
+    },
+    "blockVerticalAlignments": {
+      "cover-title": "top",
+      "cover-step-1": "bottom",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "bottom",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "bottom",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "top",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "top"
+    },
+    "blockTextReflow": {
+      "cover-title": false,
+      "cover-step-1": false,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": false,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": false,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": false,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": false
+    },
+    "blockSyllableDivision": {
+      "cover-title": false,
+      "cover-step-1": false,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": false,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": false,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": false,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": false
+    },
+    "blockSnapToColumns": {
+      "cover-title": true,
+      "cover-step-1": true,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": true,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": true,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": true,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": true
+    },
+    "blockSnapToBaseline": {
+      "cover-title": true,
+      "cover-step-1": true,
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": true,
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": true,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": true,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": true
+    },
+    "blockModulePositions": {
+      "cover-title": {
+        "column": 0,
+        "row": 0,
+        "baselineOffset": 0
+      },
+      "cover-step-1": {
+        "column": 0,
+        "row": 4,
+        "baselineOffset": 13
+      },
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": {
+        "column": 0,
+        "row": 1,
+        "baselineOffset": 0
+      },
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": {
+        "column": 3,
+        "row": 1,
+        "baselineOffset": 0
+      },
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": {
+        "column": 3,
+        "row": 2,
+        "baselineOffset": 0
+      },
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": {
+        "column": 0,
+        "row": 2,
+        "baselineOffset": 0
+      }
+    },
+    "blockCustomSizes": {
+      "cover-title": 64,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 14,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 14
+    },
+    "blockCustomLeadings": {
+      "cover-title": 60,
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": 24,
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": 24
+    },
+    "blockTextColors": {},
+    "lockedLayers": {},
+    "layerOrder": [
+      "cover-step-1",
+      "cover-title",
+      "paragraph-1094c876-1831-4124-a765-f078fb4a84f9",
+      "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b",
+      "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1",
+      "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd"
+    ],
+    "imageOrder": [],
+    "imageModulePositions": {},
+    "imageColumnSpans": {},
+    "imageRowSpans": {},
+    "imageHeightBaselines": {},
+    "imageSnapToColumns": {},
+    "imageSnapToBaseline": {},
+    "imageRotations": {},
+    "imageColors": {},
+    "imageOpacities": {}
+  },
+  "layoutMode": "single"
+}

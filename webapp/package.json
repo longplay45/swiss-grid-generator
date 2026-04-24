@@ -1,6 +1,6 @@
 {
   "name": "webapp",
-  "version": "0.128.16",
+  "version": "0.129.16",
   "private": true,
   "type": "module",
   "config": {
@@ -8,6 +8,7 @@
   },
   "scripts": {
     "help:generate": "node scripts/generate-help-content.mjs",
+    "manual:generate": "node scripts/generate-manual-preset.mjs",
     "presets:manifest": "node scripts/generate-preset-manifest.mjs",
     "assets:generate": "npm run presets:manifest && npm run help:generate",
     "predev": "npm run assets:generate",
