@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-24T15:52:40.680Z",
-  "title": "Anzeige - Book Cover Lookalike",
+  "exportedAt": "2026-04-24T16:38:43.398Z",
+  "title": "Classic Book Cover Lookalike",
   "description": "Book Cover Lookalike from Anton Stankowski 1978.",
   "author": "Swiss Grid Generator",
   "createdAt": "2026-04-07T12:00:00.000Z",
@@ -138,22 +138,6 @@
           ]
         },
         "blockTextFormatRuns": {},
-        "blockItalic": {
-          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": false,
-          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": false,
-          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": false,
-          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": false,
-          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": false,
-          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": false
-        },
-        "blockRotations": {
-          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 12,
-          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 12,
-          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": 12,
-          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": 0,
-          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": 0,
-          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": 0
-        },
         "blockColumnSpans": {
           "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 3,
           "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 3,
@@ -225,6 +209,22 @@
           "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": true,
           "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": true,
           "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": true
+        },
+        "blockItalic": {
+          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": false,
+          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": false,
+          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": false,
+          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": false,
+          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": false,
+          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": false
+        },
+        "blockRotations": {
+          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 12,
+          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 12,
+          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": 12,
+          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": 0,
+          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": 0,
+          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": 0
         },
         "blockModulePositions": {
           "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": {
