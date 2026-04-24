@@ -2,15 +2,11 @@ import { useCallback } from "react"
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react"
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
-import { buildExistingBlockEditorState, buildNewBlockEditorState } from "@/lib/preview-block-editor-state"
+import { buildExistingBlockEditorState } from "@/lib/preview-block-editor-state"
+import type { FontFamily } from "@/lib/config/fonts"
 import { PREVIEW_DRAG_CLICK_GUARD_MS } from "@/lib/preview-interaction-constants"
 import { insertTextLayerIntoCollections, type PreviewTextLayerCollectionsState } from "@/lib/preview-text-layer-state"
-import type { FontFamily } from "@/lib/config/fonts"
 import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
-import {
-  DEFAULT_OPTICAL_KERNING,
-  DEFAULT_TRACKING_SCALE,
-} from "@/lib/text-rendering"
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
@@ -20,7 +16,6 @@ type Args = {
   dragEndedAtRef: RefObject<number>
   canvasRef: RefObject<HTMLCanvasElement | null>
   setEditorState: Dispatch<SetStateAction<BlockEditorState<string> | null>>
-  baseFont: FontFamily
   resultGridCols: number
   resultGridRows: number
   blockOrder: string[]
@@ -42,7 +37,6 @@ type Args = {
   getBlockTextColor: (key: string) => string
   isSnapToColumnsEnabled: (key: string) => boolean
   isSnapToBaselineEnabled: (key: string) => boolean
-  defaultTextColor: string
   getDefaultColumnSpan: (key: string, gridCols: number) => number
   getGridMetrics: () => { rowStartBaselines: number[] }
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
@@ -70,7 +64,6 @@ export function useBlockEditorCanvasDoubleClick({
   dragEndedAtRef,
   canvasRef,
   setEditorState,
-  baseFont,
   resultGridCols,
   resultGridRows,
   blockOrder,
@@ -90,7 +83,6 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockTextColor,
   isSnapToColumnsEnabled,
   isSnapToBaselineEnabled,
-  defaultTextColor,
   getDefaultColumnSpan,
   getGridMetrics,
   toPagePoint,
@@ -187,26 +179,7 @@ export function useBlockEditorCanvasDoubleClick({
       rowStartBaselines,
     }))
     promoteLayerToTop(newKey)
-    setEditorState(buildNewBlockEditorState({
-      key: newKey,
-      style: "body",
-      text: defaultText,
-      columns: defaultSpan,
-      rows: 1,
-      heightBaselines: 0,
-      baseFont,
-      defaultTextColor,
-      fontWeight: 400,
-      opticalKerning: DEFAULT_OPTICAL_KERNING,
-      trackingScale: DEFAULT_TRACKING_SCALE,
-      getStyleLeading,
-      getStyleSize,
-      fxStyle: "fx",
-      snapToColumns: true,
-      snapToBaseline: true,
-    }))
   }, [
-    baseFont,
     blockCustomLeadings,
     blockCustomSizes,
     blockOrder,
@@ -214,7 +187,6 @@ export function useBlockEditorCanvasDoubleClick({
     blockVerticalAlignments,
     blockTextEdited,
     canvasRef,
-    defaultTextColor,
     dragEndedAtRef,
     findTopmostBlockAtPoint,
     getBlockFont,

@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, Pencil, Trash2 } from "lucide-react"
+import { Check, ChevronUp, Pencil, Square, Trash2 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
@@ -307,6 +307,7 @@ export function PagesPanel({
             const isActive = page.id === activePageId
             const isEditing = page.id === editingPageId
             const isExpanded = expandedPageId === page.id
+            const isFacingPage = page.layoutMode === "facing"
             const deleteDisabled = pages.length <= 1
             const stationaryIndex = stationaryIndexByPageId.get(page.id) ?? null
 
@@ -437,38 +438,38 @@ export function PagesPanel({
                       </button>
                     </div>
                   </div>
-                  <div className={`mt-0.5 grid w-full grid-cols-[1fr_auto_1fr] items-center text-[11px] ${tone.cardMuted}`}>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
+                      Facing Pages
+                    </span>
+                    <button
+                      type="button"
+                      data-card-drag-ignore="true"
+                      role="checkbox"
+                      aria-checked={isFacingPage}
+                      aria-label={`Toggle facing pages for ${page.name}`}
+                      className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onFacingPageToggle(page.id, !isFacingPage)
+                      }}
+                    >
+                      {isFacingPage ? <Check className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <div className={`mt-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center text-[11px] ${tone.cardMuted}`}>
                     <span className="justify-self-start">
                       {layerCount} {layerCount === 1 ? "layer" : "layers"}
                     </span>
                     <span className={`justify-self-center ${isActive ? "text-[#fe9f97]" : "invisible"}`}>
                       Active page
                     </span>
-                    <span className={`justify-self-end ${page.layoutMode === "facing" ? "" : "invisible"}`}>
+                    <span className={`justify-self-end ${isFacingPage ? "" : "invisible"}`}>
                       Facing
                     </span>
                   </div>
                   {isExpanded ? (
-                    <div data-card-drag-ignore="true" className={`mt-3 border-t pt-3 ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
-                      {page.layoutMode !== "facing" ? (
-                        <label
-                          data-card-drag-ignore="true"
-                          className={`mb-3 inline-flex w-full items-center gap-2 text-[11px] ${tone.cardMuted}`}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={false}
-                            onChange={(event) => {
-                              event.stopPropagation()
-                              onFacingPageToggle(page.id, event.currentTarget.checked)
-                            }}
-                            className="h-3.5 w-3.5 rounded border-gray-300"
-                            aria-label={`Toggle facing page for ${page.name}`}
-                          />
-                          <span>Facing pages</span>
-                        </label>
-                      ) : null}
+                    <div data-card-drag-ignore="true" className="mt-3">
                       <div className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
                         Layers
                       </div>
