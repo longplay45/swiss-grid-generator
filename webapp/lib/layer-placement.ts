@@ -26,9 +26,11 @@ export function clampLayerColumn(column: number, args: LayerColumnBoundsArgs): n
 }
 
 export function resolveFreePlacementRowBounds(maxBaselineRow: number): { minRow: number; maxRow: number } {
+  const safeMaxBaselineRow = Math.max(0, maxBaselineRow)
   return {
-    minRow: -Math.max(0, maxBaselineRow),
-    maxRow: Math.max(0, maxBaselineRow),
+    minRow: -safeMaxBaselineRow,
+    // Allow the same travel range below the content field that already exists above it.
+    maxRow: safeMaxBaselineRow * 2,
   }
 }
 
