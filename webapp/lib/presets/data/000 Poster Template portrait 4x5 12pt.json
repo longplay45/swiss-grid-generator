@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-15T11:20:00.729Z",
-  "title": "000 Blank DIN portrait 4x5 12pt",
-  "description": "Blank Start Page to get you started.",
+  "exportedAt": "2026-04-24T14:12:47.439Z",
+  "title": "Poster Template portrait 4x5 12pt",
+  "description": "Blank Poster Template to get you started.",
   "author": "Swiss Grid Generator",
   "createdAt": "2026-04-07T12:00:00.000Z",
   "activePageId": "page-blank-start",
@@ -73,23 +73,31 @@
         "blockRowSpans": {},
         "blockHeightBaselines": {},
         "blockTextAlignments": {},
+        "blockVerticalAlignments": {},
         "blockTextReflow": {},
         "blockSyllableDivision": {},
+        "blockSnapToColumns": {},
+        "blockSnapToBaseline": {},
         "blockItalic": {},
         "blockRotations": {},
         "blockModulePositions": {},
         "blockCustomSizes": {},
         "blockCustomLeadings": {},
         "blockTextColors": {},
+        "lockedLayers": {},
         "layerOrder": [],
         "imageOrder": [],
         "imageModulePositions": {},
         "imageColumnSpans": {},
         "imageRowSpans": {},
         "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
         "imageColors": {},
         "imageOpacities": {}
-      }
+      },
+      "layoutMode": "single"
     }
   ]
 }

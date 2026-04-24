@@ -311,7 +311,7 @@ export function ProjectPageLayersList({
         onDoubleClick={(event) => event.stopPropagation()}
         className={`rounded-md border border-dashed px-3 py-2 text-[11px] ${tone.empty} ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}
       >
-        No layers on this page yet.
+        No layers on this page yet. <strong className="font-semibold">Just double-click onto module / Shift + click for image placeholder.</strong>
       </div>
     )
   }
