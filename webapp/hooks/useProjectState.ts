@@ -257,6 +257,7 @@ export function useProjectState<Layout>({
     activePage,
     activePageId: projectSnapshot.activePageId,
     getCurrentProjectSnapshot,
+    replaceProjectSnapshot: setProject,
     applyLoadedProject,
     selectPage,
     addPage,

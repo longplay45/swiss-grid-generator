@@ -329,6 +329,7 @@ export const HELP_CONTENT_GROUPS = [
               "`Save`, `Export`, and display toggles stay disabled until a preview layout exists.",
               "The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.",
               "Header icon labels are always available as hover popups.",
+              "`Shift` + click on a page-visibility toggle applies the same state to every page in the project.",
               "Only one right-side panel is open at a time."
             ]
           }
@@ -460,7 +461,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Shows or hides baseline guides. Shortcut: `Cmd/Ctrl+Shift+B`."
+            "text": "Shows or hides baseline guides on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+B`."
           }
         ],
         "subsections": []
@@ -472,7 +473,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Shows or hides margin guides. Shortcut: `Cmd/Ctrl+Shift+M`."
+            "text": "Shows or hides margin guides on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+M`."
           }
         ],
         "subsections": []
@@ -484,7 +485,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Shows or hides modules and gutters. Shortcut: `Cmd/Ctrl+Shift+G`."
+            "text": "Shows or hides modules and gutters on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+G`."
           }
         ],
         "subsections": []
@@ -496,7 +497,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Shows or hides typography overlays. Shortcut: `Cmd/Ctrl+Shift+T`."
+            "text": "Shows or hides typography overlays on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+T`."
           }
         ],
         "subsections": []
@@ -508,7 +509,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Shows or hides image placeholders. Shortcut: `Cmd/Ctrl+Shift+J`."
+            "text": "Shows or hides image placeholders on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+J`."
           }
         ],
         "subsections": []

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useSettingsHistory } from "@/hooks/useSettingsHistory"
 import type { UiSettingsSnapshot } from "@/hooks/useSettingsHistory"
 
-type HistoryDomain = "settings" | "preview"
+type HistoryDomain = "settings" | "preview" | "project"
 
 const GLOBAL_HISTORY_LIMIT = 150
 
@@ -11,16 +11,22 @@ type Args = {
   buildUiSnapshot: () => UiSettingsSnapshot
   onApplyUiSnapshot: (snapshot: UiSettingsSnapshot) => void
   canUndoPreview: boolean
+  canUndoProject: boolean
   requestPreviewUndo: () => void
   requestPreviewRedo: () => void
+  requestProjectUndo: () => void
+  requestProjectRedo: () => void
 }
 
 export function useWorkspaceHistory({
   buildUiSnapshot,
   onApplyUiSnapshot,
   canUndoPreview,
+  canUndoProject,
   requestPreviewUndo,
   requestPreviewRedo,
+  requestProjectUndo,
+  requestProjectRedo,
 }: Args) {
   const [undoDomains, setUndoDomains] = useState<HistoryDomain[]>([])
   const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
@@ -72,7 +78,8 @@ export function useWorkspaceHistory({
     if (!domain) return
 
     if (domain === "settings") undoSettings(applyUiSnapshot)
-    else requestPreviewUndo()
+    else if (domain === "preview") requestPreviewUndo()
+    else requestProjectUndo()
 
     setUndoDomains((prev) => prev.slice(0, -1))
     setRedoDomains((prev) => {
@@ -86,7 +93,8 @@ export function useWorkspaceHistory({
     if (!domain) return
 
     if (domain === "settings") redoSettings(applyUiSnapshot)
-    else requestPreviewRedo()
+    else if (domain === "preview") requestPreviewRedo()
+    else requestProjectRedo()
 
     setRedoDomains((prev) => prev.slice(0, -1))
     setUndoDomains((prev) => {
@@ -99,15 +107,19 @@ export function useWorkspaceHistory({
     recordHistoryDomain("preview")
   }, [recordHistoryDomain])
 
+  const handleProjectHistoryRecord = useCallback(() => {
+    recordHistoryDomain("project")
+  }, [recordHistoryDomain])
+
   const markClean = useCallback(() => {
     isDirtyRef.current = false
   }, [])
 
   useEffect(() => {
-    if (settingsPast.length > 0 || canUndoPreview) {
+    if (settingsPast.length > 0 || canUndoPreview || canUndoProject) {
       isDirtyRef.current = true
     }
-  }, [canUndoPreview, settingsPast.length])
+  }, [canUndoPreview, canUndoProject, settingsPast.length])
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -128,6 +140,7 @@ export function useWorkspaceHistory({
     undoAny,
     redoAny,
     handlePreviewHistoryRecord,
+    handleProjectHistoryRecord,
     markClean,
   }
 }

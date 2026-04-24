@@ -1,6 +1,6 @@
 "use client"
 
-import { useReducer, useState, useMemo, useRef, useEffect, useCallback } from "react"
+import { useReducer, useState, useMemo, useRef, useEffect, useCallback, type MouseEvent as ReactMouseEvent } from "react"
 import {
   getCanvasRatioDisplayLabel,
   getMaxBaseline,
@@ -30,6 +30,7 @@ import { useProjectTourController } from "@/hooks/useProjectTourController"
 import { type LoadedProject, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
+import { DEFAULT_UI } from "@/lib/config/ui-defaults"
 import {
   resolveImageSchemeColor,
 } from "@/lib/config/color-schemes"
@@ -76,6 +77,29 @@ type GridReductionWarningToastState = {
   message: string
 } | null
 
+type ProjectWideVisibilitySettingKey =
+  | "showBaselines"
+  | "showModules"
+  | "showMargins"
+  | "showImagePlaceholders"
+  | "showTypography"
+
+type ProjectWideVisibilityHistoryEntry = {
+  key: ProjectWideVisibilitySettingKey
+  nextValue: boolean
+  previousValues: Record<string, boolean>
+}
+
+const PROJECT_HISTORY_LIMIT = 100
+
+function resolveProjectWideVisibilitySettingValue(
+  source: Record<string, unknown>,
+  key: ProjectWideVisibilitySettingKey,
+): boolean {
+  const raw = source[key]
+  return typeof raw === "boolean" ? raw : DEFAULT_UI[key]
+}
+
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
@@ -86,6 +110,10 @@ export default function Home() {
   const [smartTextZoomEnabled, setSmartTextZoomEnabled] = useState(true)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
+  const [projectVisibilityHistoryPast, setProjectVisibilityHistoryPast] = useState<ProjectWideVisibilityHistoryEntry[]>([])
+  const [projectVisibilityHistoryFuture, setProjectVisibilityHistoryFuture] = useState<ProjectWideVisibilityHistoryEntry[]>([])
+  const projectUndoHandlerRef = useRef<() => void>(() => {})
+  const projectRedoHandlerRef = useRef<() => void>(() => {})
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -109,6 +137,12 @@ export default function Home() {
   }, [])
   const dismissGridReductionWarningToast = useCallback(() => {
     setGridReductionWarningToast(null)
+  }, [])
+  const requestProjectUndo = useCallback(() => {
+    projectUndoHandlerRef.current()
+  }, [])
+  const requestProjectRedo = useCallback(() => {
+    projectRedoHandlerRef.current()
   }, [])
   const {
     canvasRatio, exportPrintPro, exportBleedMm,
@@ -275,6 +309,7 @@ export default function Home() {
     undoAny,
     redoAny,
     handlePreviewHistoryRecord,
+    handleProjectHistoryRecord,
     markClean,
   } = useWorkspaceHistory({
     buildUiSnapshot,
@@ -282,8 +317,11 @@ export default function Home() {
       dispatch({ type: "APPLY_SNAPSHOT", snapshot })
     },
     canUndoPreview,
+    canUndoProject: projectVisibilityHistoryPast.length > 0,
     requestPreviewUndo,
     requestPreviewRedo,
+    requestProjectUndo,
+    requestProjectRedo,
   })
 
   const applyLoadedUiSnapshot = useCallback((snapshot: UiSettingsSnapshot) => {
@@ -325,6 +363,7 @@ export default function Home() {
     pages: projectPages,
     activePageId,
     getCurrentProjectSnapshot,
+    replaceProjectSnapshot,
     applyLoadedProject,
     selectPage,
     addPage,
@@ -440,6 +479,8 @@ export default function Home() {
 
   const handleApplyLoadedProject = useCallback((project: LoadedProject<PreviewLayoutState>) => {
     applyLoadedProject(project)
+    setProjectVisibilityHistoryPast([])
+    setProjectVisibilityHistoryFuture([])
     setShowPresetsBrowser(false)
     markClean()
   }, [applyLoadedProject, markClean, setShowPresetsBrowser])
@@ -449,6 +490,149 @@ export default function Home() {
   const handleToggleImprintPanel = useCallback(() => {
     openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
   }, [activeSidebarPanel, openSidebarPanel])
+
+  const applyVisibilitySettingToProject = useCallback((
+    key: ProjectWideVisibilitySettingKey,
+    nextValue: boolean,
+  ) => {
+    const currentProject = getCurrentProjectSnapshot()
+    const previousValues: Record<string, boolean> = {}
+
+    const nextPages = currentProject.pages.map((page) => {
+      const currentValue = resolveProjectWideVisibilitySettingValue(page.uiSettings, key)
+      if (currentValue === nextValue) return page
+      previousValues[page.id] = currentValue
+      return {
+        ...page,
+        uiSettings: {
+          ...page.uiSettings,
+          [key]: nextValue,
+        },
+      }
+    })
+
+    if (Object.keys(previousValues).length === 0) return null
+
+    const nextProject: LoadedProject<PreviewLayoutState> = {
+      ...currentProject,
+      pages: nextPages,
+    }
+
+    replaceProjectSnapshot(nextProject)
+    const activePage = nextProject.pages.find((page) => page.id === nextProject.activePageId) ?? null
+    if (activePage) {
+      suppressNextSettingsHistory()
+      dispatch({
+        type: "SET",
+        key,
+        value: resolveProjectWideVisibilitySettingValue(activePage.uiSettings, key),
+      })
+    }
+
+    return {
+      key,
+      nextValue,
+      previousValues,
+    } satisfies ProjectWideVisibilityHistoryEntry
+  }, [dispatch, getCurrentProjectSnapshot, replaceProjectSnapshot, suppressNextSettingsHistory])
+
+  const applyProjectVisibilityHistoryEntry = useCallback((
+    entry: ProjectWideVisibilityHistoryEntry,
+    mode: "undo" | "redo",
+  ) => {
+    const currentProject = getCurrentProjectSnapshot()
+    const nextPages = currentProject.pages.map((page) => {
+      if (!Object.prototype.hasOwnProperty.call(entry.previousValues, page.id)) {
+        return page
+      }
+      return {
+        ...page,
+        uiSettings: {
+          ...page.uiSettings,
+          [entry.key]: mode === "undo" ? entry.previousValues[page.id] : entry.nextValue,
+        },
+      }
+    })
+
+    const nextProject: LoadedProject<PreviewLayoutState> = {
+      ...currentProject,
+      pages: nextPages,
+    }
+
+    replaceProjectSnapshot(nextProject)
+    const activePage = nextProject.pages.find((page) => page.id === nextProject.activePageId) ?? null
+    if (activePage) {
+      suppressNextSettingsHistory()
+      dispatch({
+        type: "SET",
+        key: entry.key,
+        value: resolveProjectWideVisibilitySettingValue(activePage.uiSettings, entry.key),
+      })
+    }
+  }, [dispatch, getCurrentProjectSnapshot, replaceProjectSnapshot, suppressNextSettingsHistory])
+
+  const handleProjectVisibilityUndo = useCallback(() => {
+    const entry = projectVisibilityHistoryPast[projectVisibilityHistoryPast.length - 1]
+    if (!entry) return
+    applyProjectVisibilityHistoryEntry(entry, "undo")
+    setProjectVisibilityHistoryPast((past) => past.slice(0, -1))
+    setProjectVisibilityHistoryFuture((future) => {
+      const next = [...future, entry]
+      return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
+    })
+  }, [applyProjectVisibilityHistoryEntry, projectVisibilityHistoryPast])
+
+  const handleProjectVisibilityRedo = useCallback(() => {
+    const entry = projectVisibilityHistoryFuture[projectVisibilityHistoryFuture.length - 1]
+    if (!entry) return
+    applyProjectVisibilityHistoryEntry(entry, "redo")
+    setProjectVisibilityHistoryFuture((future) => future.slice(0, -1))
+    setProjectVisibilityHistoryPast((past) => {
+      const next = [...past, entry]
+      return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
+    })
+  }, [applyProjectVisibilityHistoryEntry, projectVisibilityHistoryFuture])
+
+  projectUndoHandlerRef.current = handleProjectVisibilityUndo
+  projectRedoHandlerRef.current = handleProjectVisibilityRedo
+
+  const recordProjectVisibilityHistory = useCallback((entry: ProjectWideVisibilityHistoryEntry) => {
+    setProjectVisibilityHistoryPast((past) => {
+      const next = [...past, entry]
+      return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
+    })
+    setProjectVisibilityHistoryFuture([])
+    handleProjectHistoryRecord()
+  }, [handleProjectHistoryRecord])
+
+  const currentProjectWideVisibilityValues = useMemo(() => ({
+    showBaselines,
+    showModules,
+    showMargins,
+    showImagePlaceholders,
+    showTypography,
+  }), [
+    showBaselines,
+    showModules,
+    showMargins,
+    showImagePlaceholders,
+    showTypography,
+  ])
+
+  const handleHeaderVisibilityToggle = useCallback((
+    key: ProjectWideVisibilitySettingKey,
+    event?: ReactMouseEvent<HTMLButtonElement>,
+  ) => {
+    const nextValue = !currentProjectWideVisibilityValues[key]
+    if (!event?.shiftKey) {
+      dispatch({ type: "SET", key, value: nextValue })
+      return
+    }
+
+    const entry = applyVisibilitySettingToProject(key, nextValue)
+    if (!entry) return
+    recordProjectVisibilityHistory(entry)
+  }, [applyVisibilitySettingToProject, currentProjectWideVisibilityValues, dispatch, recordProjectVisibilityHistory])
 
   const {
     projectMetadata,
@@ -788,11 +972,11 @@ export default function Home() {
     onRedo: redoAny,
     onToggleDarkMode: toggleDarkUi,
     onToggleSmartTextZoom: () => setSmartTextZoomEnabled((current) => !current),
-    onToggleBaselines: toggleShowBaselines,
-    onToggleMargins: toggleShowMargins,
-    onToggleModules: toggleShowModules,
-    onToggleImagePlaceholders: toggleShowImagePlaceholders,
-    onToggleTypography: toggleShowTypography,
+    onToggleBaselines: (event) => handleHeaderVisibilityToggle("showBaselines", event),
+    onToggleMargins: (event) => handleHeaderVisibilityToggle("showMargins", event),
+    onToggleModules: (event) => handleHeaderVisibilityToggle("showModules", event),
+    onToggleImagePlaceholders: (event) => handleHeaderVisibilityToggle("showImagePlaceholders", event),
+    onToggleTypography: (event) => handleHeaderVisibilityToggle("showTypography", event),
     onToggleLayersPanel: toggleLayersPanel,
     onToggleHelpPanel: toggleHelpPanel,
   })

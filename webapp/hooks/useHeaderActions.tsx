@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { MouseEventHandler, ReactNode } from "react"
 import {
   CircleHelp,
   Download,
@@ -30,7 +30,7 @@ export type HeaderAction = {
   variant?: "default" | "outline"
   pressed?: boolean
   disabled?: boolean
-  onClick: () => void
+  onClick: MouseEventHandler<HTMLButtonElement>
 }
 
 export type HeaderItem = { type: "action"; action: HeaderAction } | { type: "divider"; key: string }
@@ -55,15 +55,15 @@ type Args = {
   onExportPdf: () => void
   onUndo: () => void
   onRedo: () => void
-  onToggleDarkMode: () => void
-  onToggleSmartTextZoom: () => void
-  onToggleBaselines: () => void
-  onToggleMargins: () => void
-  onToggleModules: () => void
-  onToggleImagePlaceholders: () => void
-  onToggleTypography: () => void
-  onToggleLayersPanel: () => void
-  onToggleHelpPanel: () => void
+  onToggleDarkMode: MouseEventHandler<HTMLButtonElement>
+  onToggleSmartTextZoom: MouseEventHandler<HTMLButtonElement>
+  onToggleBaselines: MouseEventHandler<HTMLButtonElement>
+  onToggleMargins: MouseEventHandler<HTMLButtonElement>
+  onToggleModules: MouseEventHandler<HTMLButtonElement>
+  onToggleImagePlaceholders: MouseEventHandler<HTMLButtonElement>
+  onToggleTypography: MouseEventHandler<HTMLButtonElement>
+  onToggleLayersPanel: MouseEventHandler<HTMLButtonElement>
+  onToggleHelpPanel: MouseEventHandler<HTMLButtonElement>
 }
 
 export function useHeaderActions(args: Args) {
@@ -178,7 +178,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "baselines",
         ariaLabel: "Toggle baselines",
-        tooltip: "Toggle baselines",
+        tooltip: "Toggle baselines\nShift+click: all pages",
         shortcutId: "toggle_baselines",
         variant: args.showBaselines ? "default" : "outline",
         pressed: args.showBaselines,
@@ -192,7 +192,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "margins",
         ariaLabel: "Toggle margins",
-        tooltip: "Toggle margin frame",
+        tooltip: "Toggle margin frame\nShift+click: all pages",
         shortcutId: "toggle_margins",
         variant: args.showMargins ? "default" : "outline",
         pressed: args.showMargins,
@@ -206,7 +206,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "modules",
         ariaLabel: "Toggle gutter grid",
-        tooltip: "Toggle modules and gutter",
+        tooltip: "Toggle modules and gutter\nShift+click: all pages",
         shortcutId: "toggle_modules",
         variant: args.showModules ? "default" : "outline",
         pressed: args.showModules,
@@ -220,7 +220,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "typography",
         ariaLabel: "Toggle typography",
-        tooltip: "Toggle type preview",
+        tooltip: "Toggle type preview\nShift+click: all pages",
         shortcutId: "toggle_typography",
         variant: args.showTypography ? "default" : "outline",
         pressed: args.showTypography,
@@ -234,7 +234,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "image-placeholders",
         ariaLabel: "Toggle image placeholders",
-        tooltip: "Toggle image placeholders",
+        tooltip: "Toggle image placeholders\nShift+click: all pages",
         shortcutId: "toggle_image_placeholders",
         variant: args.showImagePlaceholders ? "default" : "outline",
         pressed: args.showImagePlaceholders,

@@ -114,6 +114,7 @@ Global controls and panel behavior.
 - `Save`, `Export`, and display toggles stay disabled until a preview layout exists.
 - The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.
 - Header icon labels are always available as hover popups.
+- `Shift` + click on a page-visibility toggle applies the same state to every page in the project.
 - Only one right-side panel is open at a time.
 
 ### Help Navigation {#help-help-navigation}
@@ -150,19 +151,19 @@ Toggles light and dark UI themes. Shortcut: `Cmd/Ctrl+Shift+D`.
 Toggles automatic zoom-to-paragraph while text editing.
 
 ### Baselines Toggle {#help-header-baselines}
-Shows or hides baseline guides. Shortcut: `Cmd/Ctrl+Shift+B`.
+Shows or hides baseline guides on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+B`.
 
 ### Margins Toggle {#help-header-margins}
-Shows or hides margin guides. Shortcut: `Cmd/Ctrl+Shift+M`.
+Shows or hides margin guides on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+M`.
 
 ### Modules Toggle {#help-header-modules}
-Shows or hides modules and gutters. Shortcut: `Cmd/Ctrl+Shift+G`.
+Shows or hides modules and gutters on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+G`.
 
 ### Typography Toggle {#help-header-typography}
-Shows or hides typography overlays. Shortcut: `Cmd/Ctrl+Shift+T`.
+Shows or hides typography overlays on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+T`.
 
 ### Image Placeholders Toggle {#help-header-image-placeholders}
-Shows or hides image placeholders. Shortcut: `Cmd/Ctrl+Shift+J`.
+Shows or hides image placeholders on the active page. `Shift` + click applies the same state to all pages. Shortcut: `Cmd/Ctrl+Shift+J`.
 
 ### Project Panel {#help-header-layers}
 - Opens the project title and page/layer management panel.
