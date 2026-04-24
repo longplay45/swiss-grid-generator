@@ -439,25 +439,6 @@ export function PagesPanel({
                       </button>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
-                      Facing Pages
-                    </span>
-                    <button
-                      type="button"
-                      data-card-drag-ignore="true"
-                      role="checkbox"
-                      aria-checked={isFacingPage}
-                      aria-label={`Toggle facing pages for ${page.name}`}
-                      className={`rounded-sm p-1 transition-colors ${tone.close}`}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        onFacingPageToggle(page.id, !isFacingPage)
-                      }}
-                    >
-                      {isFacingPage ? <Check className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
                   <div className={`mt-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center text-[11px] ${tone.cardMuted}`}>
                     <span className="justify-self-start">
                       {layerCount} {layerCount === 1 ? "layer" : "layers"}
@@ -471,7 +452,26 @@ export function PagesPanel({
                   </div>
                   {isExpanded ? (
                     <div data-card-drag-ignore="true" className="mt-3">
-                      <div className={SECTION_HEADLINE_CLASSNAME}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.cardMuted}`}>
+                          Facing Pages
+                        </span>
+                        <button
+                          type="button"
+                          data-card-drag-ignore="true"
+                          role="checkbox"
+                          aria-checked={isFacingPage}
+                          aria-label={`Toggle facing pages for ${page.name}`}
+                          className={`rounded-sm p-1 transition-colors ${tone.close}`}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onFacingPageToggle(page.id, !isFacingPage)
+                          }}
+                        >
+                          {isFacingPage ? <Check className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      <div className={`mt-3 ${SECTION_HEADLINE_CLASSNAME}`}>
                         Layers
                       </div>
                       <ProjectPageLayersList

@@ -161,11 +161,15 @@ export function useProjectState<Layout>({
       previewLayout: cloneSerializable(getLivePreviewLayout() ?? defaultPreviewLayout),
       layoutMode: "single",
     })
+    const activePageIndex = currentProject.pages.findIndex((page) => page.id === currentProject.activePageId)
+    const insertIndex = activePageIndex >= 0 ? activePageIndex + 1 : currentProject.pages.length
+    const nextPages = [...currentProject.pages]
+    nextPages.splice(insertIndex, 0, nextPage)
 
     setProject({
       ...currentProject,
       activePageId: nextPage.id,
-      pages: [...currentProject.pages, nextPage],
+      pages: nextPages,
     })
     onApplyPage(nextPage)
   }, [

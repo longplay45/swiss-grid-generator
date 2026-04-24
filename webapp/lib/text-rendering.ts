@@ -42,7 +42,7 @@ const FONT_STACKS: Record<string, string> = {
 
 export const DEFAULT_TRACKING_SCALE = 0
 export const DEFAULT_OPTICAL_KERNING = true
-export const MIN_TRACKING_SCALE = -120
+export const MIN_TRACKING_SCALE = -300
 export const MAX_TRACKING_SCALE = 300
 
 export const TRACKING_OPTIONS = [
