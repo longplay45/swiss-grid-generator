@@ -37,6 +37,7 @@ import { mapTextBlockPositionsToAbsolute } from "@/lib/text-block-position"
 import { normalizeImagePlaceholderOpacity } from "@/lib/image-placeholder-opacity"
 import {
   buildTypographyLayoutPlan,
+  getTypographyLineCapacityForHeight,
   type TypographyLayoutPlan,
 } from "@/lib/typography-layout-plan"
 import {
@@ -61,7 +62,11 @@ import {
 } from "@/lib/text-tracking-runs"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import { resolveSyllableDivisionEnabled, resolveTextReflowEnabled } from "@/lib/typography-behavior"
-import { createTextMetricsService, measureCanvasTextAscent } from "@/lib/text-metrics-service"
+import {
+  createTextMetricsService,
+  measureCanvasTextAscent,
+  measureCanvasTextDescent,
+} from "@/lib/text-metrics-service"
 import {
   resolveDocumentVariableContent,
   type DocumentVariableContext,
@@ -617,8 +622,6 @@ export function buildPageExportPlan({
         })()
     const opticalKerning = isBlockOpticalKerningEnabled(key)
     const lineStep = Math.max(0.01, resolvedBaselineMultiplier * baselineStep)
-    const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
-    const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const resolveFontSize = (segmentStyleKey: TypographyStyleKey) => {
       const styleDefaultSize = styleDefinitions[segmentStyleKey]?.size ?? defaultFontSize
       if (segmentStyleKey !== "fx") return styleDefaultSize
@@ -626,6 +629,23 @@ export function buildPageExportPlan({
       if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return styleDefaultSize
       return clampFxSize(raw)
     }
+    const baseCanvasFont = buildCanvasFont(
+      baseFormat.fontFamily,
+      baseFormat.fontWeight,
+      baseFormat.italic,
+      resolveFontSize(styleKey),
+    )
+    const firstLineHeight = measureCanvasTextAscent(
+      textMeasureContext,
+      baseCanvasFont,
+      resolveFontSize(styleKey),
+    ) + measureCanvasTextDescent(
+      textMeasureContext,
+      baseCanvasFont,
+      resolveFontSize(styleKey),
+    )
+    const maxLinesPerColumn = Math.max(1, getTypographyLineCapacityForHeight(blockHeight, lineStep, firstLineHeight))
+    const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const blockDocumentVariableContext = resolveSpreadDocumentVariableContextForColumn(
       documentVariableContext,
       startCol,
@@ -874,6 +894,8 @@ export function buildPageExportPlan({
       },
       textAscent: ({ context, fontSize }) =>
         measureCanvasTextAscent(textMeasureContext, context.canvasFont, fontSize),
+      textDescent: ({ context, fontSize }) =>
+        measureCanvasTextDescent(textMeasureContext, context.canvasFont, fontSize),
       opticalOffset: ({ context, styleKey, line, align, fontSize }) =>
         textMeasureContext
           ? textMetrics.getOpticalOffset(

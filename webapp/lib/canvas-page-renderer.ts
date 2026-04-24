@@ -33,7 +33,10 @@ import {
 } from "@/lib/document-variable-text"
 import { resolveSpreadDocumentVariableContextForColumn } from "@/lib/document-page-numbering"
 import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
-import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
+import {
+  buildTypographyLayoutPlan,
+  getTypographyLineCapacityForHeight,
+} from "@/lib/typography-layout-plan"
 import { sumGridColumnSpan } from "@/lib/grid-column-layout"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
 import type { ModulePosition } from "@/lib/types/layout-primitives"
@@ -168,6 +171,14 @@ export function getCanvasTextAscentPx(
 ): number {
   const metrics = ctx.measureText("Hg")
   return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSizePx * 0.8
+}
+
+export function getCanvasTextDescentPx(
+  ctx: CanvasRenderingContext2D,
+  fallbackFontSizePx: number,
+): number {
+  const metrics = ctx.measureText("Hgyp<>%")
+  return metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : fallbackFontSizePx * 0.2
 }
 
 const INVISIBLE_TEXT_ARTIFACTS_RE = /[\u00AD\u200B\u200C\u200D\uFEFF]/g
@@ -568,7 +579,23 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const rawTrackingRuns = getBlockTrackingRuns(key)
     const opticalKerning = isBlockOpticalKerningEnabled(key)
     const lineStep = Math.max(0.01, getBlockBaselineMultiplier(key, styleKey) * baselineStep)
-    const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
+    const scaledBlockFontSize = resolveScaledCanvasFontSize(
+      getBlockFontSize(key, styleKey),
+      fontScale,
+      getBlockFontSize(key, styleKey),
+    )
+    applyCanvasTextConfig(ctx, {
+      font: buildCanvasFont(
+        baseFormat.fontFamily,
+        baseFormat.fontWeight,
+        baseFormat.italic,
+        scaledBlockFontSize,
+      ),
+      opticalKerning,
+    })
+    const firstLineHeight = getCanvasTextAscentPx(ctx, scaledBlockFontSize)
+      + getCanvasTextDescentPx(ctx, scaledBlockFontSize)
+    const maxLinesPerColumn = Math.max(1, getTypographyLineCapacityForHeight(blockHeight, lineStep, firstLineHeight))
     const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const resolveFontSize = (segmentStyleKey: StyleKey) => getBlockFontSize(key, segmentStyleKey)
     const blockDocumentVariableContext = resolveSpreadDocumentVariableContextForColumn(
@@ -715,6 +742,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
       )
     ),
     textAscent: ({ context, fontSize }) => getCanvasTextAscentPx(context, fontSize),
+    textDescent: ({ context, fontSize }) => getCanvasTextDescentPx(context, fontSize),
     opticalOffset: ({ context, key, styleKey, line, align, fontSize }) => (
       getOpticalOffset(
         context,

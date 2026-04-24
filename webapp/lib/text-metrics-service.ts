@@ -72,6 +72,17 @@ export function measureCanvasTextAscent(
   return metrics.actualBoundingBoxAscent > 0 ? metrics.actualBoundingBoxAscent : fallbackFontSize * 0.8
 }
 
+export function measureCanvasTextDescent(
+  context: CanvasRenderingContext2D | null,
+  canvasFont: string,
+  fallbackFontSize: number,
+): number {
+  if (!context) return fallbackFontSize * 0.2
+  context.font = canvasFont
+  const metrics = context.measureText("Hgyp<>%")
+  return metrics.actualBoundingBoxDescent > 0 ? metrics.actualBoundingBoxDescent : fallbackFontSize * 0.2
+}
+
 export function createTextMetricsService<StyleKey extends string, Family extends string = FontFamily>(
   options: {
     cacheLimit?: number

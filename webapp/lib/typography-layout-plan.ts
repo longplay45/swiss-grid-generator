@@ -46,6 +46,18 @@ export type TypographyLayoutPlan<BlockId extends string, StyleKey extends string
   commands: TextDrawCommand[]
 }
 
+export function getTypographyLineCapacityForHeight(
+  availableHeight: number,
+  lineStep: number,
+  firstLineHeight = lineStep,
+): number {
+  if (!Number.isFinite(availableHeight) || availableHeight <= 0) return 0
+  const safeLineStep = Math.max(lineStep, 0.0001)
+  const safeFirstLineHeight = Math.max(0.0001, firstLineHeight)
+  if (availableHeight + 0.0001 < safeFirstLineHeight) return 0
+  return Math.max(1, 1 + Math.floor((availableHeight - safeFirstLineHeight) / safeLineStep))
+}
+
 type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends string, Context> = {
   blockOrder: BlockId[]
   textContent: Record<BlockId, string>
@@ -95,6 +107,7 @@ type BuildTypographyLayoutPlanArgs<BlockId extends string, StyleKey extends stri
     hyphenate: boolean
   }) => WrappedTextLine[]
   textAscent: (args: { context: Context; key: BlockId; styleKey: StyleKey; fontSize: number }) => number
+  textDescent?: (args: { context: Context; key: BlockId; styleKey: StyleKey; fontSize: number }) => number
   opticalOffset: (args: {
     context: Context
     key: BlockId
@@ -147,6 +160,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   createTextContext,
   wrapText,
   textAscent,
+  textDescent,
   opticalOffset,
 }: BuildTypographyLayoutPlanArgs<BlockId, StyleKey, Context>): {
   plans: TypographyLayoutPlan<BlockId, StyleKey>[]
@@ -215,20 +229,22 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
     return position
   }
-  const getLineCapacityForHeight = (availableHeight: number, lineStep: number) => {
-    if (!Number.isFinite(availableHeight) || availableHeight <= 0) return 0
-    const safeLineStep = Math.max(lineStep, 0.0001)
-    const remainingAfterFirstLine = availableHeight - baselineStep
-    if (remainingAfterFirstLine < 0) return 0
-    return 1 + Math.floor(remainingAfterFirstLine / safeLineStep)
+  const getLineCapacityForHeight = (availableHeight: number, lineStep: number, firstLineHeight: number) => {
+    return getTypographyLineCapacityForHeight(availableHeight, lineStep, firstLineHeight)
   }
-  const buildReflowRowLayouts = (rowStart: number, rowSpan: number, heightBaselines: number, lineStep: number) => {
+  const buildReflowRowLayouts = (
+    rowStart: number,
+    rowSpan: number,
+    heightBaselines: number,
+    lineStep: number,
+    firstLineHeight: number,
+  ) => {
     if (rowSpan <= 0) {
       const height = Math.max(heightBaselines * baselineStep, lineStep)
       return [{
         yOffset: 0,
         height,
-        lineCapacity: Math.max(1, getLineCapacityForHeight(height, lineStep)),
+        lineCapacity: Math.max(1, getLineCapacityForHeight(height, lineStep, firstLineHeight)),
       }]
     }
 
@@ -238,7 +254,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       return {
         yOffset: getRowOffset(rowStart, rowOffset),
         height: height + extraHeight,
-        lineCapacity: Math.max(1, getLineCapacityForHeight(height + extraHeight, lineStep)),
+        lineCapacity: Math.max(1, getLineCapacityForHeight(height + extraHeight, lineStep, firstLineHeight)),
       }
     })
   }
@@ -255,15 +271,17 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     lineCount,
     lineStep,
     availableHeight,
+    firstLineHeight,
     verticalAlign,
   }: {
     lineCount: number
     lineStep: number
     availableHeight: number
+    firstLineHeight: number
     verticalAlign: TextVerticalAlignMode
   }) => {
     if (verticalAlign === "top" || lineCount <= 0) return 0
-    const occupiedHeight = baselineStep + Math.max(0, lineCount - 1) * lineStep
+    const occupiedHeight = Math.max(0.0001, firstLineHeight) + Math.max(0, lineCount - 1) * lineStep
     const freeHeight = Math.max(0, availableHeight - occupiedHeight)
     const freeBaselineRows = Math.floor(freeHeight / Math.max(baselineStep, 0.0001))
     if (freeBaselineRows <= 0) return 0
@@ -337,19 +355,22 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const textAlign = blockTextAlignments[key] ?? "left"
     const textVerticalAlign = blockVerticalAlignments[key] ?? "top"
     const ascent = textAscent({ context, key, styleKey, fontSize })
+    const descent = Math.max(0, textDescent?.({ context, key, styleKey, fontSize }) ?? fontSize * 0.2)
+    const firstLineHeight = ascent + descent
     const hitTopPadding = Math.max(baselineStep, ascent)
     const lineStep = baselineMult * baselineStep
     const pageBottomY = (isBlockPositionManual?.(key) === true)
       ? Number.POSITIVE_INFINITY
       : pageHeight - marginsBottom
-    const bottomLineLimit = pageBottomY + 0.0001
     const moduleHeightForBlock = getRowSpanHeight(startRow, rowSpan, heightBaselines)
-    const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, heightBaselines, lineStep)
-    const maxLinesPerColumn = Math.max(1, getLineCapacityForHeight(moduleHeightForBlock, lineStep))
+    const reflowRowLayouts = buildReflowRowLayouts(startRow, rowSpan, heightBaselines, lineStep, firstLineHeight)
+    const maxLinesPerColumn = Math.max(1, getLineCapacityForHeight(moduleHeightForBlock, lineStep, firstLineHeight))
+    const visibleLineCount = Math.min(lines.length, maxLinesPerColumn)
     const verticalStartOffset = getVerticalStartOffset({
-      lineCount: columnReflow ? Math.min(lines.length, maxLinesPerColumn) : lines.length,
+      lineCount: visibleLineCount,
       lineStep,
       availableHeight: moduleHeightForBlock,
+      firstLineHeight,
       verticalAlign: textVerticalAlign,
     })
     let maxUsedRows = 0
@@ -383,7 +404,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + verticalStartOffset + lineIndex * lineStep
         const y = lineTopY + ascent
-        if (lineTopY > bottomLineLimit) continue
+        const lineBottomY = y + descent
+        const moduleBottomY = origin.y + baselineStep + moduleHeightForBlock + 0.0001
+        const bottomLineLimit = Math.min(pageBottomY + 0.0001, moduleBottomY)
+        if (lineBottomY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
         commands.push({
@@ -407,7 +431,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + verticalStartOffset + lineIndexWithinColumn * lineStep
         const y = lineTopY + ascent
-        if (lineTopY > bottomLineLimit) continue
+        const lineBottomY = y + descent
+        const moduleBottomY = origin.y + baselineStep + moduleHeightForBlock + 0.0001
+        const bottomLineLimit = Math.min(pageBottomY + 0.0001, moduleBottomY)
+        if (lineBottomY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndexWithinColumn + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
         commands.push({
@@ -422,7 +449,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       }
     }
 
-    const overflowLines = reflowEnabled ? Math.max(0, lines.length - commands.length) : 0
+    const overflowLines = Math.max(0, lines.length - commands.length)
     overflowByBlock[key] = overflowLines
     if (overflowLines > 0 && hyphenate && commands.length > 0) {
       const last = commands[commands.length - 1]
@@ -519,19 +546,33 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     styleKey: captionStyleKey,
     fontSize: captionFontSize,
   })
+  const captionDescent = Math.max(0, textDescent?.({
+    context: captionContext,
+    key: captionKey,
+    styleKey: captionStyleKey,
+    fontSize: captionFontSize,
+  }) ?? captionFontSize * 0.2)
+  const captionFirstLineHeight = captionAscent + captionDescent
   const captionHitTopPadding = Math.max(baselineStep, captionAscent)
   const captionLineStep = captionBaselineMult * baselineStep
   const captionPageBottomY = (isBlockPositionManual?.(captionKey) === true)
     ? Number.POSITIVE_INFINITY
     : pageHeight - marginsBottom
-  const captionBottomLineLimit = captionPageBottomY + 0.0001
   const captionModuleHeight = getRowSpanHeight(captionStartRow, captionRowSpan, captionHeightBaselines)
-  const captionReflowRowLayouts = buildReflowRowLayouts(captionStartRow, captionRowSpan, captionHeightBaselines, captionLineStep)
-  const captionMaxLinesPerColumn = Math.max(1, getLineCapacityForHeight(captionModuleHeight, captionLineStep))
+  const captionReflowRowLayouts = buildReflowRowLayouts(
+    captionStartRow,
+    captionRowSpan,
+    captionHeightBaselines,
+    captionLineStep,
+    captionFirstLineHeight,
+  )
+  const captionMaxLinesPerColumn = Math.max(1, getLineCapacityForHeight(captionModuleHeight, captionLineStep, captionFirstLineHeight))
+  const visibleCaptionLineCount = Math.min(captionLines.length, captionMaxLinesPerColumn)
   const captionVerticalStartOffset = getVerticalStartOffset({
-    lineCount: captionColumnReflow ? Math.min(captionLines.length, captionMaxLinesPerColumn) : captionLines.length,
+    lineCount: visibleCaptionLineCount,
     lineStep: captionLineStep,
     availableHeight: captionModuleHeight,
+    firstLineHeight: captionFirstLineHeight,
     verticalAlign: captionVerticalAlign,
   })
   const captionCommands: TextDrawCommand[] = []
@@ -542,7 +583,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + captionVerticalStartOffset + lineIndex * captionLineStep
       const y = lineTopY + captionAscent
-      if (lineTopY > captionBottomLineLimit) continue
+      const lineBottomY = y + captionDescent
+      const captionModuleBottomY = captionOrigin.y + baselineStep + captionModuleHeight + 0.0001
+      const captionBottomLineLimit = Math.min(captionPageBottomY + 0.0001, captionModuleBottomY)
+      if (lineBottomY > captionBottomLineLimit) continue
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -572,7 +616,10 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + captionVerticalStartOffset + lineIndexWithinColumn * captionLineStep
       const y = lineTopY + captionAscent
-      if (lineTopY > captionBottomLineLimit) continue
+      const lineBottomY = y + captionDescent
+      const captionModuleBottomY = captionOrigin.y + baselineStep + captionModuleHeight + 0.0001
+      const captionBottomLineLimit = Math.min(captionPageBottomY + 0.0001, captionModuleBottomY)
+      if (lineBottomY > captionBottomLineLimit) continue
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -593,9 +640,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
   }
 
-  const captionOverflowLines = captionReflowEnabled
-    ? Math.max(0, captionLines.length - captionCommands.length)
-    : 0
+  const captionOverflowLines = Math.max(0, captionLines.length - captionCommands.length)
   overflowByBlock[captionKey] = captionOverflowLines
   if (captionOverflowLines > 0 && captionSyllableDivision && captionCommands.length > 0) {
     const last = captionCommands[captionCommands.length - 1]
