@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type { Dispatch, MouseEvent as ReactMouseEvent, RefObject, SetStateAction } from "react"
 
 import type { BlockEditorState } from "@/components/editor/block-editor-types"
@@ -10,6 +10,22 @@ import type { NoticeRequest, PagePoint } from "@/lib/preview-types"
 import type { TextFormatRun } from "@/lib/text-format-runs"
 import type { TextTrackingRun } from "@/lib/text-tracking-runs"
 import type { ModulePosition, TextAlignMode, TextVerticalAlignMode } from "@/lib/types/layout-primitives"
+
+const HIERARCHY_SHORTCUT_STYLE_BY_KEY: Readonly<Record<string, string>> = {
+  "1": "caption",
+  "2": "body",
+  "3": "subhead",
+  "4": "headline",
+  "5": "fx",
+  "6": "display",
+}
+
+function resolveHeldHierarchyShortcut(keys: ReadonlySet<string>): string | null {
+  for (const key of ["6", "5", "4", "3", "2", "1"] as const) {
+    if (keys.has(key)) return HIERARCHY_SHORTCUT_STYLE_BY_KEY[key] ?? null
+  }
+  return null
+}
 
 type Args = {
   showTypography: boolean
@@ -104,6 +120,47 @@ export function useBlockEditorCanvasDoubleClick({
   promoteLayerToTop,
   onRequestNotice,
 }: Args) {
+  const heldHierarchyShortcutKeysRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const resolvedKey = HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.key]
+        ? event.key
+        : HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.code.replace(/^Digit/, "")]
+          ? event.code.replace(/^Digit/, "")
+          : HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.code.replace(/^Numpad/, "")]
+            ? event.code.replace(/^Numpad/, "")
+            : null
+      if (!resolvedKey) return
+      heldHierarchyShortcutKeysRef.current.add(resolvedKey)
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const resolvedKey = HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.key]
+        ? event.key
+        : HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.code.replace(/^Digit/, "")]
+          ? event.code.replace(/^Digit/, "")
+          : HIERARCHY_SHORTCUT_STYLE_BY_KEY[event.code.replace(/^Numpad/, "")]
+            ? event.code.replace(/^Numpad/, "")
+            : null
+      if (!resolvedKey) return
+      heldHierarchyShortcutKeysRef.current.delete(resolvedKey)
+    }
+
+    const clearHeldKeys = () => {
+      heldHierarchyShortcutKeysRef.current.clear()
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    window.addEventListener("blur", clearHeldKeys)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+      window.removeEventListener("blur", clearHeldKeys)
+    }
+  }, [])
+
   return useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
     if (!showTypography || Date.now() - dragEndedAtRef.current < PREVIEW_DRAG_CLICK_GUARD_MS) return
 
@@ -165,11 +222,12 @@ export function useBlockEditorCanvasDoubleClick({
     const snapped = snapToModule(pagePoint.x, pagePoint.y, newKey)
     const rowStartBaselines = getGridMetrics().rowStartBaselines
     const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
-    const defaultText = getDummyTextForStyle("body")
+    const shortcutStyle = resolveHeldHierarchyShortcut(heldHierarchyShortcutKeysRef.current) ?? "body"
+    const defaultText = getDummyTextForStyle(shortcutStyle)
     setBlockCollections((prev) => insertTextLayerIntoCollections(prev, {
       newKey,
       text: defaultText,
-      styleKey: "body",
+      styleKey: shortcutStyle,
       gridCols: resultGridCols,
       gridRows: resultGridRows,
       columns: defaultSpan,
