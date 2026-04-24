@@ -13,10 +13,14 @@ type IdmlExportProgress = {
 
 export async function renderSwissGridIdmlProject(
   project: LoadedProject<Record<string, unknown>>,
-  onProgress?: (progress: IdmlExportProgress) => void,
+  onProgress?: (progress: IdmlExportProgress) => void | Promise<void>,
+  assertNotCancelled?: () => void,
 ): Promise<Uint8Array> {
   const now = new Date()
-  const pages = project.pages.map((page, index) => {
+  const pages: SwissGridIdmlDocument["pages"] = []
+
+  for (const [index, page] of project.pages.entries()) {
+    assertNotCancelled?.()
     const sourcePath = `${page.name || `Page ${index + 1}`} (${page.id})`
     const resolved = buildResolvedProjectPageExportSource(page, sourcePath, {
       projectTitle: project.metadata.title,
@@ -41,21 +45,23 @@ export async function renderSwissGridIdmlProject(
         showTypography: resolved.uiSettings.showTypography,
       }),
     }
-    onProgress?.({
+    pages.push(plannedPage)
+    await onProgress?.({
       completedSteps: index + 1,
-      totalSteps: project.pages.length + 1,
+      totalSteps: project.pages.length,
       pageNumber: index + 1,
       pageName: page.name || `Page ${index + 1}`,
     })
-    return plannedPage
-  })
+  }
 
-  onProgress?.({
+  assertNotCancelled?.()
+  await onProgress?.({
     completedSteps: project.pages.length,
-    totalSteps: project.pages.length + 1,
+    totalSteps: project.pages.length,
     pageNumber: project.pages.length,
     pageName: "Packaging IDML",
   })
+  assertNotCancelled?.()
 
   return buildSwissGridIdmlPackage({
     metadata: project.metadata,
