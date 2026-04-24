@@ -155,12 +155,11 @@ export function useProjectState<Layout>({
       onPageLimitReached?.(MAX_PROJECT_PAGE_COUNT)
       return
     }
-    const sourcePage = currentProject.pages.find((page) => page.id === currentProject.activePageId) ?? null
     const nextPage = createProjectPage({
       name: getNextPageName(currentProject.pages),
       uiSettings: cloneSerializable(currentUiSettings),
       previewLayout: cloneSerializable(getLivePreviewLayout() ?? defaultPreviewLayout),
-      layoutMode: sourcePage?.layoutMode ?? "single",
+      layoutMode: "single",
     })
 
     setProject({
