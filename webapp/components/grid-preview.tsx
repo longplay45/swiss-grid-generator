@@ -184,6 +184,7 @@ interface GridPreviewProps {
   editorSidebarHost?: HTMLDivElement | null
   onEditorModeChange?: (mode: "text" | "image" | null) => void
   onPreviewEditorOpen?: () => void
+  onPreviewParagraphCreate?: () => void
   isDarkMode?: boolean
 }
 
@@ -242,6 +243,7 @@ export const GridPreview = memo(function GridPreview({
   editorSidebarHost = null,
   onEditorModeChange,
   onPreviewEditorOpen,
+  onPreviewParagraphCreate,
   isDarkMode = false,
 }: GridPreviewProps) {
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -744,6 +746,7 @@ export const GridPreview = memo(function GridPreview({
       getBlockRotation,
       promoteLayerToTop,
       onRequestNotice,
+      onParagraphCreated: onPreviewParagraphCreate,
     },
     blockOrder,
     imageOrder,

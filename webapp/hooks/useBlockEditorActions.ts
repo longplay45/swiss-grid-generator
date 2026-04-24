@@ -122,6 +122,7 @@ type Args = {
   getBlockRotation: (key: string) => number
   promoteLayerToTop: (key: string) => void
   onRequestNotice?: (notice: NoticeRequest) => void
+  onParagraphCreated?: () => void
 }
 
 export function useBlockEditorActions({
@@ -181,6 +182,7 @@ export function useBlockEditorActions({
   getBlockRotation,
   promoteLayerToTop,
   onRequestNotice,
+  onParagraphCreated,
 }: Args) {
   const applyEditorDraftLive = useCallback((draft: EditorState) => {
     const height = normalizeHeightMetrics({
@@ -346,6 +348,7 @@ export function useBlockEditorActions({
     isBlockOpticalKerningEnabled,
     promoteLayerToTop,
     onRequestNotice,
+    onParagraphCreated,
   })
 
   return {

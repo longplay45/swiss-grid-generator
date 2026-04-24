@@ -241,6 +241,7 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [previewEditorOpenToken, setPreviewEditorOpenToken] = useState(0)
+  const [previewParagraphCreateToken, setPreviewParagraphCreateToken] = useState(0)
   const [showProjectInfo, setShowProjectInfo] = useState(false)
   const previewVariableNow = useMemo(() => new Date(), [])
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
@@ -466,6 +467,7 @@ export function PreviewWorkspace({
               editorSidebarHost={editorSidebarHost}
               onEditorModeChange={onEditorModeChange}
               onPreviewEditorOpen={() => setPreviewEditorOpenToken((current) => current + 1)}
+              onPreviewParagraphCreate={() => setPreviewParagraphCreateToken((current) => current + 1)}
               isDarkMode={isDarkUi}
               onLayoutChange={onLayoutChange}
               onSnapshotGetterChange={onSnapshotGetterChange}
@@ -583,6 +585,7 @@ export function PreviewWorkspace({
                     editingLayerKey={editorMode ? selectedLayerKey : null}
                     editorMode={editorMode}
                     previewEditorOpenToken={previewEditorOpenToken}
+                    previewParagraphCreateToken={previewParagraphCreateToken}
                     onLayerOrderChange={onLayerOrderChange}
                     onSelectedLayerKeyChange={onSelectedLayerKeyChange}
                         onHoverLayerChange={setLayerPanelHoveredLayerKey}

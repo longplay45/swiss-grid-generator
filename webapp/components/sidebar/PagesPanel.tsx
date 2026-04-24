@@ -32,6 +32,7 @@ type Props = {
   editingLayerKey: string | null
   editorMode: "text" | "image" | null
   previewEditorOpenToken: number
+  previewParagraphCreateToken: number
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
@@ -62,6 +63,7 @@ export function PagesPanel({
   editingLayerKey,
   editorMode,
   previewEditorOpenToken,
+  previewParagraphCreateToken,
   onLayerOrderChange,
   onSelectedLayerKeyChange,
   onHoverLayerChange,
@@ -75,7 +77,9 @@ export function PagesPanel({
   const [pageNameDraft, setPageNameDraft] = useState("")
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
-  const [expandedPageId, setExpandedPageId] = useState<string | null>(activePageId)
+  const [expandedPageId, setExpandedPageId] = useState<string | null>(() => (
+    pages.length <= 1 ? activePageId : null
+  ))
   const previousPageIdsRef = useRef<string[]>(pages.map((page) => page.id))
   const scrollToPageHeaderRef = useRef<string | null>(null)
   const restoreExpandedPageIdRef = useRef<string | null | undefined>(undefined)
@@ -100,18 +104,33 @@ export function PagesPanel({
   }, [expandedPageId, pages])
 
   useEffect(() => {
+    if (pages.length !== 1) return
+    setExpandedPageId((current) => current ?? activePageId)
+  }, [activePageId, pages.length])
+
+  useEffect(() => {
     const previousPageIds = previousPageIdsRef.current
     const currentPageIds = pages.map((page) => page.id)
     const pageWasAdded = currentPageIds.length > previousPageIds.length
     const activePageIsNew = !previousPageIds.includes(activePageId) && currentPageIds.includes(activePageId)
 
     if (pageWasAdded && activePageIsNew) {
-      scrollToPageHeaderRef.current = activePageId
-      setExpandedPageId(activePageId)
+      if (currentPageIds.length <= 1) {
+        scrollToPageHeaderRef.current = activePageId
+        setExpandedPageId(activePageId)
+      } else {
+        setExpandedPageId(null)
+      }
     }
 
     previousPageIdsRef.current = currentPageIds
   }, [activePageId, pages])
+
+  useEffect(() => {
+    if (previewParagraphCreateToken === 0) return
+    scrollToPageHeaderRef.current = activePageId
+    setExpandedPageId(activePageId)
+  }, [activePageId, previewParagraphCreateToken])
 
   useEffect(() => {
     if (previewEditorOpenToken === 0) return

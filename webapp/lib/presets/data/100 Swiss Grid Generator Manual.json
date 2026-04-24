@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-24T15:38:37.962Z",
+  "exportedAt": "2026-04-24T15:54:17.102Z",
   "title": "Swiss Grid Generator Manual",
   "description": "Swiss Grid Generator Software Manual",
   "author": "Swiss Grid Generator",
   "createdAt": "2026-04-07T12:00:00.000Z",
-  "activePageId": "page-282310a3-efb4-4f04-945f-18e10216a6cb",
+  "activePageId": "page-1cbafc9f-7012-4b9e-8717-c04c0b6c9c0b",
   "pages": [
     {
       "id": "page-1cbafc9f-7012-4b9e-8717-c04c0b6c9c0b",
@@ -38,10 +38,10 @@
           "right": 3,
           "bottom": 2
         },
-        "showBaselines": true,
+        "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -306,10 +306,10 @@
           "right": 3,
           "bottom": 2
         },
-        "showBaselines": true,
-        "showModules": true,
-        "showMargins": true,
-        "showImagePlaceholders": false,
+        "showBaselines": false,
+        "showModules": false,
+        "showMargins": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -675,7 +675,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -935,7 +935,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -1215,7 +1215,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -1494,7 +1494,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -1773,7 +1773,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -2123,7 +2123,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -2473,7 +2473,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -2816,7 +2816,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -3166,7 +3166,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -3516,7 +3516,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -3866,7 +3866,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -4216,7 +4216,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -4566,7 +4566,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {
@@ -4916,7 +4916,7 @@
         "showBaselines": false,
         "showModules": false,
         "showMargins": false,
-        "showImagePlaceholders": false,
+        "showImagePlaceholders": true,
         "showTypography": true,
         "showLayers": true,
         "collapsed": {

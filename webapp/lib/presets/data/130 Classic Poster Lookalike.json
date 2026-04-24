@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-15T11:19:25.495Z",
+  "exportedAt": "2026-04-24T15:46:43.623Z",
   "title": "Classic Poster Lookalike",
   "description": "Classic Swiss poster lookalike preset with strong typographic contrast and image framing.",
   "author": "Swiss Grid Generator",
@@ -125,8 +125,8 @@
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 1
         },
         "blockHeightBaselines": {
-          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 0,
-          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 0,
+          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": 3,
+          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": 3,
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": 0,
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": 0
         },
@@ -135,6 +135,12 @@
           "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "left",
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "left",
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "left"
+        },
+        "blockVerticalAlignments": {
+          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": "top",
+          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": "top",
+          "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "top",
+          "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "top"
         },
         "blockTextReflow": {
           "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": false,
@@ -145,6 +151,18 @@
         "blockSyllableDivision": {
           "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": false,
           "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": false,
+          "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
+          "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
+        },
+        "blockSnapToColumns": {
+          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": true,
+          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": true,
+          "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
+          "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
+        },
+        "blockSnapToBaseline": {
+          "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111": true,
+          "paragraph-ef3bfc12-7608-4228-b959-491efd0ae437": true,
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": true,
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": true
         },
@@ -196,6 +214,7 @@
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe": "#c0c0c0",
           "paragraph-a7f3d6ae-7f39-4726-a9bb-0d62dd9996ed": "#c0c0c0"
         },
+        "lockedLayers": {},
         "layerOrder": [
           "paragraph-df057f6d-147c-4512-bc31-00fb044e75fe",
           "paragraph-762c79b3-e62c-4839-b941-e0e220ab4111",
@@ -207,9 +226,13 @@
         "imageColumnSpans": {},
         "imageRowSpans": {},
         "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
         "imageColors": {},
         "imageOpacities": {}
-      }
+      },
+      "layoutMode": "single"
     }
   ]
 }

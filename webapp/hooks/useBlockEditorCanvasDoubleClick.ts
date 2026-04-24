@@ -74,6 +74,7 @@ type Args = {
   getBlockRotation: (key: string) => number
   promoteLayerToTop: (key: string) => void
   onRequestNotice?: (notice: NoticeRequest) => void
+  onParagraphCreated?: () => void
 }
 
 export function useBlockEditorCanvasDoubleClick({
@@ -121,6 +122,7 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockRotation,
   promoteLayerToTop,
   onRequestNotice,
+  onParagraphCreated,
 }: Args) {
   const heldHierarchyShortcutKeysRef = useRef<Set<string>>(new Set())
 
@@ -240,6 +242,7 @@ export function useBlockEditorCanvasDoubleClick({
       rowStartBaselines,
     }))
     promoteLayerToTop(newKey)
+    onParagraphCreated?.()
   }, [
     blockCustomLeadings,
     blockCustomSizes,
@@ -273,6 +276,7 @@ export function useBlockEditorCanvasDoubleClick({
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
     onRequestNotice,
+    onParagraphCreated,
     promoteLayerToTop,
     recordHistoryBeforeChange,
     resolveModulePositionAtPagePoint,
