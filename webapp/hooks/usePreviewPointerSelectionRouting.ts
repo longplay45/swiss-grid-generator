@@ -21,6 +21,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "toPagePoint"
   | "toPagePointFromClient"
   | "resolveLayerPlacement"
+  | "getDragAnchorPoint"
   | "findTopmostDraggableAtPoint"
   | "resolveSelectedLayerAtClientPoint"
   | "isImagePlaceholderKey"
@@ -55,6 +56,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   toPagePoint,
   toPagePointFromClient,
   resolveLayerPlacement,
+  getDragAnchorPoint,
   findTopmostDraggableAtPoint,
   resolveSelectedLayerAtClientPoint,
   isImagePlaceholderKey,
@@ -108,6 +110,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     findTopmostBlockAtPoint: findTopmostDraggableAtPoint,
     toPagePoint,
     resolveDragPreviewPosition: (pageX, pageY, key, context) => resolveLayerPlacement(pageX, pageY, key, context),
+    getDragAnchorPoint: (key, context) => getDragAnchorPoint?.(key, context) ?? null,
     getDragPreviewContext: (event, key) => {
       if (event.shiftKey || event.ctrlKey) {
         return { dragYMode: "baseline" }

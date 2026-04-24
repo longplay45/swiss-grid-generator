@@ -34,6 +34,10 @@ type Args<Key extends string, DragPreviewContext = void> = {
     key: Key,
     context?: DragPreviewContext,
   ) => DragModulePosition
+  getDragAnchorPoint?: (
+    key: Key,
+    context?: DragPreviewContext,
+  ) => PagePoint | null
   getDragPreviewContext?: (
     event: ReactPointerEvent<HTMLCanvasElement>,
     key: Key,
@@ -55,6 +59,7 @@ export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
   findTopmostBlockAtPoint,
   toPagePoint,
   resolveDragPreviewPosition,
+  getDragAnchorPoint,
   getDragPreviewContext,
   onDrop,
   onClearHover,
@@ -148,17 +153,25 @@ export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
 
     const key = findTopmostBlockAtPoint(pagePoint.x, pagePoint.y)
     if (!key) return
+    const dragPreviewContext = getDragPreviewContext?.(event, key)
     const block = getBlockRect ? getBlockRect(key) : blockRectsRef.current[key]
-    if (!block) return
+    const anchorPoint = getDragAnchorPoint?.(key, dragPreviewContext)
+    const dragAnchorPoint = anchorPoint ?? (block ? { x: block.x, y: block.y } : null)
+    if (!dragAnchorPoint) return
     event.preventDefault()
 
-    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(block.x, block.y, key)
+    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(
+      dragAnchorPoint.x,
+      dragAnchorPoint.y,
+      key,
+      dragPreviewContext,
+    )
     const nextDragState: DragState<Key> = {
       key,
       startPageX: pagePoint.x,
       startPageY: pagePoint.y,
-      pointerOffsetX: pagePoint.x - block.x,
-      pointerOffsetY: pagePoint.y - block.y,
+      pointerOffsetX: pagePoint.x - dragAnchorPoint.x,
+      pointerOffsetY: pagePoint.y - dragAnchorPoint.y,
       preview: snapped,
       moved: false,
       copyOnDrop: event.pointerType !== "touch" && event.altKey,
@@ -209,6 +222,7 @@ export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
     findTopmostBlockAtPoint,
     finishDrag,
     getBlockRect,
+    getDragAnchorPoint,
     getDragPreviewContext,
     isEditorOpen,
     onClearHover,
@@ -311,17 +325,24 @@ export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
   const beginDetachedCopyDrag = useCallback((key: Key, clientX: number, clientY: number) => {
     const canvas = canvasRef.current
     const block = getBlockRect ? getBlockRect(key) : blockRectsRef.current[key]
-    if (!canvas || !block) return
+    if (!canvas) return
     const rect = canvas.getBoundingClientRect()
     const pagePoint = toPagePoint(clientX - rect.left, clientY - rect.top)
     if (!pagePoint) return
-    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(block.x, block.y, key)
+    const anchorPoint = getDragAnchorPoint?.(key)
+    const dragAnchorPoint = anchorPoint ?? (block ? { x: block.x, y: block.y } : null)
+    if (!dragAnchorPoint) return
+    const snapped = blockModulePositions[key] ?? resolveDragPreviewPosition(
+      dragAnchorPoint.x,
+      dragAnchorPoint.y,
+      key,
+    )
     setDragState({
       key,
       startPageX: pagePoint.x,
       startPageY: pagePoint.y,
-      pointerOffsetX: pagePoint.x - block.x,
-      pointerOffsetY: pagePoint.y - block.y,
+      pointerOffsetX: pagePoint.x - dragAnchorPoint.x,
+      pointerOffsetY: pagePoint.y - dragAnchorPoint.y,
       preview: snapped,
       moved: true,
       copyOnDrop: true,
@@ -329,7 +350,7 @@ export function usePreviewDrag<Key extends string, DragPreviewContext = void>({
     })
     activeDragPointerIdRef.current = null
     onClearHover()
-  }, [blockModulePositions, blockRectsRef, canvasRef, getBlockRect, onClearHover, resolveDragPreviewPosition, toPagePoint])
+  }, [blockModulePositions, blockRectsRef, canvasRef, getBlockRect, getDragAnchorPoint, onClearHover, resolveDragPreviewPosition, toPagePoint])
 
   return {
     dragState,

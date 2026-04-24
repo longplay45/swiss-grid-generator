@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 2,
+  "exportedAt": "2026-04-24T13:51:57.392Z",
+  "title": "001 Book Template - Van de Graaf 4x5 12pt",
+  "description": "Book Starter incl. Cover and Content templates with pagination.",
+  "author": "Swiss Grid Generator",
+  "createdAt": "2026-04-07T12:00:00.000Z",
+  "activePageId": "page-91be039f-3601-486e-ba90-1bdc8d78833e",
+  "pages": [
+    {
+      "id": "page-91be039f-3601-486e-ba90-1bdc8d78833e",
+      "name": "Right Page",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "customRatioWidth": 4,
+        "customRatioHeight": 5,
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 2,
+        "gridCols": 4,
+        "gridRows": 5,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": false,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": false,
+        "rhythmColsDirection": "btt",
+        "typographyScale": "swiss",
+        "baseFont": "Inter",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": false,
+        "customMarginMultipliers": {
+          "top": 3,
+          "left": 2,
+          "right": 2,
+          "bottom": 3
+        },
+        "showBaselines": true,
+        "showModules": true,
+        "showMargins": true,
+        "showImagePlaceholders": true,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af"
+        ],
+        "textContent": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "- <%page%> -"
+        },
+        "blockTextEdited": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "styleAssignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "body"
+        },
+        "blockFontFamilies": {},
+        "blockFontWeights": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 400
+        },
+        "blockOpticalKerning": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockTrackingScales": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockTrackingRuns": {},
+        "blockTextFormatRuns": {},
+        "blockColumnSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 1
+        },
+        "blockRowSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockHeightBaselines": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 4
+        },
+        "blockTextAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "right"
+        },
+        "blockVerticalAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "bottom"
+        },
+        "blockTextReflow": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false
+        },
+        "blockSyllableDivision": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockSnapToColumns": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockSnapToBaseline": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockItalic": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false
+        },
+        "blockRotations": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockModulePositions": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": {
+            "column": 3,
+            "row": 4,
+            "baselineOffset": 14
+          }
+        },
+        "blockCustomSizes": {},
+        "blockCustomLeadings": {},
+        "blockTextColors": {},
+        "lockedLayers": {},
+        "layerOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
+        "imageColors": {},
+        "imageOpacities": {}
+      },
+      "layoutMode": "single"
+    },
+    {
+      "id": "page-6f29a40d-f8da-4a48-9687-2ce41563fff0",
+      "name": "Left Page",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "customRatioWidth": 4,
+        "customRatioHeight": 5,
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 2,
+        "gridCols": 4,
+        "gridRows": 5,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": false,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": false,
+        "rhythmColsDirection": "btt",
+        "typographyScale": "swiss",
+        "baseFont": "Inter",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 2,
+          "left": 4,
+          "right": 3,
+          "bottom": 6
+        },
+        "showBaselines": true,
+        "showModules": true,
+        "showMargins": true,
+        "showImagePlaceholders": true,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af"
+        ],
+        "textContent": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "- <%page%> -"
+        },
+        "blockTextEdited": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "styleAssignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "body"
+        },
+        "blockFontFamilies": {},
+        "blockFontWeights": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 400
+        },
+        "blockOpticalKerning": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockTrackingScales": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockTrackingRuns": {},
+        "blockTextFormatRuns": {},
+        "blockColumnSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 1
+        },
+        "blockRowSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockHeightBaselines": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 4
+        },
+        "blockTextAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "left"
+        },
+        "blockVerticalAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "bottom"
+        },
+        "blockTextReflow": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false
+        },
+        "blockSyllableDivision": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockSnapToColumns": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockSnapToBaseline": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true
+        },
+        "blockItalic": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false
+        },
+        "blockRotations": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0
+        },
+        "blockModulePositions": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": {
+            "column": 0,
+            "row": 4,
+            "baselineOffset": 14
+          }
+        },
+        "blockCustomSizes": {},
+        "blockCustomLeadings": {},
+        "blockTextColors": {},
+        "lockedLayers": {},
+        "layerOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
+        "imageColors": {},
+        "imageOpacities": {}
+      },
+      "layoutMode": "single"
+    },
+    {
+      "id": "page-203ffd56-50fe-4346-a127-777a298f1760",
+      "name": "Facing Pages",
+      "uiSettings": {
+        "canvasRatio": "din_ab",
+        "customRatioWidth": 4,
+        "customRatioHeight": 5,
+        "orientation": "portrait",
+        "rotation": 0,
+        "marginMethod": 2,
+        "gridCols": 4,
+        "gridRows": 5,
+        "baselineMultiple": 1,
+        "gutterMultiple": 1,
+        "rhythm": "repetitive",
+        "rhythmRowsEnabled": false,
+        "rhythmRowsDirection": "ltr",
+        "rhythmColsEnabled": false,
+        "rhythmColsDirection": "btt",
+        "typographyScale": "swiss",
+        "baseFont": "Inter",
+        "imageColorScheme": "mono",
+        "canvasBackground": null,
+        "customBaseline": 12,
+        "useCustomMargins": true,
+        "customMarginMultipliers": {
+          "top": 2,
+          "left": 4,
+          "right": 3,
+          "bottom": 6
+        },
+        "showBaselines": true,
+        "showModules": true,
+        "showMargins": true,
+        "showImagePlaceholders": true,
+        "showTypography": true,
+        "showLayers": true,
+        "collapsed": {
+          "format": true,
+          "baseline": true,
+          "margins": true,
+          "gutter": true,
+          "typo": true,
+          "color": true,
+          "summary": true
+        },
+        "exportPrintPro": false,
+        "exportBleedMm": 0,
+        "exportRegistrationMarks": false,
+        "format": "A4"
+      },
+      "previewLayout": {
+        "blockOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36"
+        ],
+        "textContent": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "- <%page%> -",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": "- <%page%> -"
+        },
+        "blockTextEdited": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": true
+        },
+        "styleAssignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "body",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": "body"
+        },
+        "blockFontFamilies": {},
+        "blockFontWeights": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 400,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 400
+        },
+        "blockOpticalKerning": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": true
+        },
+        "blockTrackingScales": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 0
+        },
+        "blockTrackingRuns": {},
+        "blockTextFormatRuns": {},
+        "blockColumnSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 1,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 1
+        },
+        "blockRowSpans": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 0
+        },
+        "blockHeightBaselines": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 4,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 4
+        },
+        "blockTextAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "left",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": "right"
+        },
+        "blockVerticalAlignments": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": "bottom",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": "bottom"
+        },
+        "blockTextReflow": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": false
+        },
+        "blockSyllableDivision": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": true
+        },
+        "blockSnapToColumns": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": true
+        },
+        "blockSnapToBaseline": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": true,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": true
+        },
+        "blockItalic": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": false,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": false
+        },
+        "blockRotations": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": 0,
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": 0
+        },
+        "blockModulePositions": {
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af": {
+            "column": 0,
+            "row": 4,
+            "baselineOffset": 14
+          },
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36": {
+            "column": 7,
+            "row": 4,
+            "baselineOffset": 14
+          }
+        },
+        "blockCustomSizes": {},
+        "blockCustomLeadings": {},
+        "blockTextColors": {},
+        "lockedLayers": {},
+        "layerOrder": [
+          "paragraph-65863170-d5ed-43fd-860c-f59296c207af",
+          "paragraph-d7b8d476-40b7-4f9c-b2c4-296bf61b8f36"
+        ],
+        "imageOrder": [],
+        "imageModulePositions": {},
+        "imageColumnSpans": {},
+        "imageRowSpans": {},
+        "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
+        "imageColors": {},
+        "imageOpacities": {}
+      },
+      "layoutMode": "facing"
+    }
+  ]
+}

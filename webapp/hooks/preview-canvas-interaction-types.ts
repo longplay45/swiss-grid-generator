@@ -45,6 +45,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
     key: Key,
     options?: LayerPlacementOptions,
   ) => ModulePosition
+  getDragAnchorPoint?: (key: Key, options?: LayerPlacementOptions) => PagePoint | null
   getGridMetrics: () => PreviewGridMetrics
   findTopmostDraggableAtPoint: (x: number, y: number) => Key | null
   findTopmostBlockAtPoint: (x: number, y: number) => Key | null

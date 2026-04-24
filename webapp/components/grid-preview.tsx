@@ -833,6 +833,27 @@ export const GridPreview = memo(function GridPreview({
     snapToModule,
     snapToBaseline,
     resolveLayerPlacement,
+    getDragAnchorPoint: (key, options) => {
+      if (isImagePlaceholderKey(key)) {
+        const rect = imageRectsRef.current[key]
+        return rect ? { x: rect.x, y: rect.y } : null
+      }
+
+      const plan = previousPlansRef.current.get(key)
+      const rect = blockRectsRef.current[key] ?? null
+      if (!plan) {
+        return rect ? { x: rect.x, y: rect.y } : null
+      }
+
+      const firstGuideRect = plan.guideRects[0] ?? null
+      const baselineStep = getGridMetrics().baselineStep
+      const anchorX = firstGuideRect?.x ?? plan.rect.x
+      const anchorY = options?.dragYMode === "moduleTop"
+        ? (firstGuideRect?.y ?? plan.rect.y)
+        : (firstGuideRect ? firstGuideRect.y - baselineStep : plan.rect.y)
+
+      return { x: anchorX, y: anchorY }
+    },
     getGridMetrics,
     findTopmostDraggableAtPoint,
     findTopmostBlockAtPoint,
