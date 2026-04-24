@@ -47,9 +47,10 @@ export function renderStaticGuides({
     Math.round((pageHeight - (margins.top + margins.bottom) * scale) / baselineSpacing),
   )
   const contentBottom = contentTop + baselineRows * baselineSpacing
+  const stageBackgroundColor = backgroundColor ?? "#ffffff"
 
   ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-  ctx.fillStyle = "#ffffff"
+  ctx.fillStyle = stageBackgroundColor
   ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
   ctx.save()

@@ -484,6 +484,7 @@ async function buildSpreadAndStories(
     const pageHeight = page.exportPlan.pageHeight
     const marginPreference = page.result.grid.margins
     const contentWidth = Math.max(0, pageWidth - marginPreference.left - marginPreference.right)
+    const pageCoordinateTransform = buildPageCoordinateTransform(pageHeight)
     const pageTransformMatrix = buildPageItemTransform(pageWidth, pageHeight, page.exportPlan.rotation)
     const guideItems: string[] = []
     const placeholderItems: string[] = []
@@ -499,7 +500,7 @@ async function buildSpreadAndStories(
             Self: `sggBackground${String(pageIndex + 1).padStart(3, "0")}`,
             Name: "Canvas Background",
             ItemLayer: LAYER_PLACEHOLDERS_ID,
-            ItemTransform: isIdentityMatrix(pageTransformMatrix) ? undefined : formatMatrix(pageTransformMatrix),
+            ItemTransform: isIdentityMatrix(pageCoordinateTransform) ? undefined : formatMatrix(pageCoordinateTransform),
             Visible: true,
             FillColor: colorIdBySignature.get(signature) ?? COLOR_PAPER_ID,
             StrokeColor: SWATCH_NONE_ID,

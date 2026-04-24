@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-10T10:43:25.446Z",
-  "title": "Swiss Style Poster A0 001",
-  "description": "Swiss-style A0 poster preset with a bold editorial composition.",
+  "exportedAt": "2026-04-24T16:10:10.965Z",
+  "title": "Swiss Style Poster Example 001",
+  "description": "Swiss style poster preset with a bold editorial composition.",
   "author": "Swiss Grid Generator",
   "createdAt": "2026-03-09T12:51:56.921Z",
   "activePageId": "page-din-ab-portrait-4x4-method1-12-000pt-grid",
@@ -143,6 +143,15 @@
           "body": 1,
           "paragraph-1772528695124-y56i9f": 1
         },
+        "blockHeightBaselines": {
+          "display": 0,
+          "headline": 0,
+          "paragraph-1772610247079-0uugg8": 0,
+          "paragraph-1772610667455-372iaj": 0,
+          "paragraph-1772610667455-aooo5z": 0,
+          "body": 0,
+          "paragraph-1772528695124-y56i9f": 0
+        },
         "blockTextAlignments": {
           "display": "left",
           "headline": "left",
@@ -151,6 +160,15 @@
           "paragraph-1772610667455-aooo5z": "left",
           "body": "left",
           "paragraph-1772528695124-y56i9f": "left"
+        },
+        "blockVerticalAlignments": {
+          "display": "top",
+          "headline": "top",
+          "paragraph-1772610247079-0uugg8": "top",
+          "paragraph-1772610667455-372iaj": "top",
+          "paragraph-1772610667455-aooo5z": "top",
+          "body": "top",
+          "paragraph-1772528695124-y56i9f": "top"
         },
         "blockTextReflow": {
           "display": false,
@@ -169,6 +187,24 @@
           "paragraph-1772610667455-aooo5z": false,
           "body": true,
           "paragraph-1772528695124-y56i9f": false
+        },
+        "blockSnapToColumns": {
+          "display": true,
+          "headline": true,
+          "paragraph-1772610247079-0uugg8": true,
+          "paragraph-1772610667455-372iaj": true,
+          "paragraph-1772610667455-aooo5z": true,
+          "body": true,
+          "paragraph-1772528695124-y56i9f": true
+        },
+        "blockSnapToBaseline": {
+          "display": true,
+          "headline": true,
+          "paragraph-1772610247079-0uugg8": true,
+          "paragraph-1772610667455-372iaj": true,
+          "paragraph-1772610667455-aooo5z": true,
+          "body": true,
+          "paragraph-1772528695124-y56i9f": true
         },
         "blockItalic": {
           "display": false,
@@ -232,6 +268,7 @@
           "display": 90
         },
         "blockTextColors": {},
+        "lockedLayers": {},
         "layerOrder": [
           "body",
           "paragraph-1772528695124-y56i9f",
@@ -245,9 +282,14 @@
         "imageModulePositions": {},
         "imageColumnSpans": {},
         "imageRowSpans": {},
+        "imageHeightBaselines": {},
+        "imageSnapToColumns": {},
+        "imageSnapToBaseline": {},
+        "imageRotations": {},
         "imageColors": {},
         "imageOpacities": {}
-      }
+      },
+      "layoutMode": "single"
     }
   ]
 }

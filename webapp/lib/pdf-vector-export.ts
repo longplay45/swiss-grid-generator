@@ -295,7 +295,7 @@ export function renderSwissGridVectorPdf({
 
   if (exportPlan.backgroundColor) {
     setFillColor(pdf, exportPlan.backgroundColor, colorMode)
-    drawFilledRect(0, 0, sourceWidth, sourceHeight)
+    pdf.rect(originX, originY, width, height, "F")
   }
 
   const drawCropMarks = (offset: number, length: number) => {
