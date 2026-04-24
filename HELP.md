@@ -110,10 +110,10 @@ Global controls and panel behavior.
 ### Application Controls {#help-application-controls-overview} [noindex]
 
 ### Header and Sidebars {#help-sidebars-header}
-- Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, information, and help.
+- Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.
 - `Save`, `Export`, and display toggles stay disabled until a preview layout exists.
 - The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.
-- The `?` button opens help. The `i` button toggles rollover info/tooltips.
+- Header icon labels are always available as hover popups.
 - Only one right-side panel is open at a time.
 
 ### Help Navigation {#help-help-navigation}
@@ -172,9 +172,6 @@ Shows or hides image placeholders. Shortcut: `Cmd/Ctrl+Shift+J`.
 - Drag unlocked layer cards to reorder z-index.
 - Single-click a layer card to select it. Double-click it to open or retarget the editor.
 - Locked layers stay visible and selectable, but preview hover, move, and editor access are disabled until unlocked.
-
-### Information Toggle {#help-header-information}
-Toggles rollover info/tooltips. Shortcut: `Cmd/Ctrl+Shift+I`.
 
 ### Keyboard Shortcuts {#help-shortcuts}
 `Cmd/Ctrl` means `Cmd` on macOS and `Ctrl` on Windows/Linux.

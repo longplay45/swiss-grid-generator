@@ -57,7 +57,6 @@ const LIGHT_THEME: WorkspaceTheme = {
 
 export function useWorkspaceChrome() {
   const [isDarkUi, setIsDarkUi] = useState(false)
-  const [showRolloverInfo, setShowRolloverInfo] = useState(true)
   const [isSmartphone, setIsSmartphone] = useState(false)
 
   useEffect(() => {
@@ -108,10 +107,6 @@ export function useWorkspaceChrome() {
     setIsDarkUi((prev) => !prev)
   }, [])
 
-  const toggleRolloverInfo = useCallback(() => {
-    setShowRolloverInfo((prev) => !prev)
-  }, [])
-
   const uiTheme = useMemo(() => (
     isDarkUi ? DARK_THEME : LIGHT_THEME
   ), [isDarkUi])
@@ -120,9 +115,6 @@ export function useWorkspaceChrome() {
     isDarkUi,
     setIsDarkUi,
     toggleDarkUi,
-    showRolloverInfo,
-    setShowRolloverInfo,
-    toggleRolloverInfo,
     isSmartphone,
     uiTheme,
   }

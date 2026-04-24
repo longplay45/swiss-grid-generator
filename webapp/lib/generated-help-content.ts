@@ -325,10 +325,10 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, information, and help.",
+              "Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.",
               "`Save`, `Export`, and display toggles stay disabled until a preview layout exists.",
               "The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.",
-              "The `?` button opens help. The `i` button toggles rollover info/tooltips.",
+              "Header icon labels are always available as hover popups.",
               "Only one right-side panel is open at a time."
             ]
           }
@@ -529,18 +529,6 @@ export const HELP_CONTENT_GROUPS = [
               "Single-click a layer card to select it. Double-click it to open or retarget the editor.",
               "Locked layers stay visible and selectable, but preview hover, move, and editor access are disabled until unlocked."
             ]
-          }
-        ],
-        "subsections": []
-      },
-      {
-        "title": "Information Toggle",
-        "id": "help-header-information",
-        "indexed": true,
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Toggles rollover info/tooltips. Shortcut: `Cmd/Ctrl+Shift+I`."
           }
         ],
         "subsections": []
@@ -803,10 +791,6 @@ export const HELP_INDEX_GROUPS = [
         "label": "Project Panel"
       },
       {
-        "id": "help-header-information",
-        "label": "Information Toggle"
-      },
-      {
         "id": "help-shortcuts",
         "label": "Keyboard Shortcuts"
       }
@@ -955,10 +939,6 @@ export const ALL_HELP_INDEX_ITEMS = [
   {
     "id": "help-header-layers",
     "label": "Project Panel"
-  },
-  {
-    "id": "help-header-information",
-    "label": "Information Toggle"
   },
   {
     "id": "help-shortcuts",

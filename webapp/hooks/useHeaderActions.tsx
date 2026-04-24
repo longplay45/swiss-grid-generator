@@ -2,7 +2,6 @@ import type { ReactNode } from "react"
 import {
   CircleHelp,
   Download,
-  Info,
   FolderOpen,
   Image,
   LayoutGrid,
@@ -47,7 +46,6 @@ type Args = {
   showImagePlaceholders: boolean
   showTypography: boolean
   showLayers: boolean
-  showRolloverInfo: boolean
   smartTextZoomEnabled: boolean
   canUndo: boolean
   canRedo: boolean
@@ -65,7 +63,6 @@ type Args = {
   onToggleImagePlaceholders: () => void
   onToggleTypography: () => void
   onToggleLayersPanel: () => void
-  onToggleRolloverInfo: () => void
   onToggleHelpPanel: () => void
 }
 
@@ -264,16 +261,6 @@ export function useHeaderActions(args: Args) {
   ]
 
   const sidebarGroup: HeaderAction[] = [
-    {
-      key: "rollover-info",
-      ariaLabel: args.showRolloverInfo ? "Disable information" : "Enable information",
-      tooltip: "Information",
-      shortcutId: "toggle_rollover_info",
-      variant: args.showRolloverInfo ? "default" : "outline",
-      pressed: args.showRolloverInfo,
-      onClick: args.onToggleRolloverInfo,
-      icon: <Info className="h-4 w-4" />,
-    },
     {
       key: "help",
       ariaLabel: "Toggle help",

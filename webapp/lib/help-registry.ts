@@ -42,6 +42,5 @@ export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
   "image-placeholders": "help-header-image-placeholders",
   typography: "help-header-typography",
   layers: "help-header-layers",
-  "rollover-info": "help-header-information",
   help: "help-help-navigation",
 }

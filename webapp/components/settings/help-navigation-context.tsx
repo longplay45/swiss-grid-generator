@@ -10,7 +10,7 @@ type SettingsHelpNavigationValue = {
 
 const DEFAULT_VALUE: SettingsHelpNavigationValue = {
   showHelpIcons: false,
-  showRolloverInfo: true,
+  showRolloverInfo: false,
   onNavigate: () => {},
 }
 

@@ -11,7 +11,6 @@ import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
-import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import type { FontFamily } from "@/lib/config/fonts"
 import {
   type ImageColorSchemeId,
@@ -52,7 +51,6 @@ type Props = {
   showPresetsBrowser: boolean
   isDarkUi: boolean
   showSectionHelpIcons: boolean
-  showRolloverInfo: boolean
   smartTextZoomEnabled: boolean
   showBaselines: boolean
   showModules: boolean
@@ -132,7 +130,6 @@ type Props = {
 function renderHeaderAction(
   action: HeaderAction,
   showSectionHelpIcons: boolean,
-  showRolloverInfo: boolean,
   onHeaderHelpNavigate: (actionKey: string) => void,
 ) {
   const shortcut = action.shortcutId
@@ -153,7 +150,7 @@ function renderHeaderAction(
         aria-pressed={action.pressed}
         disabled={action.disabled}
         onClick={action.onClick}
-        showTooltip={showRolloverInfo}
+        showTooltip
         buttonClassName={showSectionHelpIcons ? "relative" : undefined}
       >
         {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
@@ -172,7 +169,6 @@ export function PreviewWorkspace({
   showPresetsBrowser,
   isDarkUi,
   showSectionHelpIcons,
-  showRolloverInfo,
   smartTextZoomEnabled,
   showBaselines,
   showModules,
@@ -274,7 +270,7 @@ export function PreviewWorkspace({
             {fileGroup.map((item) =>
               item.type === "divider"
                 ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                : renderHeaderAction(item.action, showSectionHelpIcons, showRolloverInfo, onHeaderHelpNavigate),
+                : renderHeaderAction(item.action, showSectionHelpIcons, onHeaderHelpNavigate),
             )}
           </div>
 
@@ -282,12 +278,12 @@ export function PreviewWorkspace({
             {displayGroup.map((item) =>
               item.type === "divider"
                 ? <div key={item.key} className={`h-6 w-px ${uiTheme.divider}`} aria-hidden="true" />
-                : renderHeaderAction(item.action, showSectionHelpIcons, showRolloverInfo, onHeaderHelpNavigate),
+                : renderHeaderAction(item.action, showSectionHelpIcons, onHeaderHelpNavigate),
             )}
           </div>
 
           <div className="flex flex-wrap items-start gap-2 landscape:flex-nowrap">
-            {sidebarGroup.map((action) => renderHeaderAction(action, showSectionHelpIcons, showRolloverInfo, onHeaderHelpNavigate))}
+            {sidebarGroup.map((action) => renderHeaderAction(action, showSectionHelpIcons, onHeaderHelpNavigate))}
           </div>
         </div>
       </div>
@@ -324,7 +320,7 @@ export function PreviewWorkspace({
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
-                showRolloverInfo={showRolloverInfo}
+                showRolloverInfo={false}
                 showHelpHints={showSectionHelpIcons}
                 onHelpNavigate={() => onHeaderHelpNavigate("presets")}
                 compact
@@ -338,7 +334,7 @@ export function PreviewWorkspace({
               showMargins={showMargins}
               showImagePlaceholders={showImagePlaceholders}
               showTypography={showTypography}
-              showRolloverInfo={showRolloverInfo}
+              showRolloverInfo={false}
               smartTextEditZoomEnabled={smartTextZoomEnabled}
               baseFont={baseFont}
               imageColorScheme={imageColorScheme}
@@ -419,11 +415,6 @@ export function PreviewWorkspace({
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                  {showRolloverInfo ? (
-                    <p className={`mt-1 text-xs ${uiTheme.sidebarBody}`}>
-                      Edit the project name, manage page order, and expand any page to inspect its layers inline. Add Page duplicates the active page, and active-page layer hover or selection stays linked to the preview.
-                    </p>
-                  ) : null}
                   <ProjectTitleSection
                     projectTitle={projectTitle}
                     pageCount={projectPages.length}
@@ -432,24 +423,18 @@ export function PreviewWorkspace({
                   />
                   <div className="mt-4 flex items-center justify-between gap-3 leading-none">
                     <div className={`${SECTION_HEADLINE_CLASSNAME} ${uiTheme.sidebarHeading}`}>Pages</div>
-                    <HoverTooltip
-                      label="Duplicate the active page."
-                      disabled={!showRolloverInfo}
-                      tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
+                    <button
+                      type="button"
+                      aria-label="Add page"
+                      onClick={onPageAdd}
+                      className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        isDarkUi
+                          ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                          : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                      }`}
                     >
-                      <button
-                        type="button"
-                        aria-label="Add page"
-                        onClick={onPageAdd}
-                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                          isDarkUi
-                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
-                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                        }`}
-                      >
-                        <Plus className="h-2 w-2" />
-                      </button>
-                    </HoverTooltip>
+                      <Plus className="h-2 w-2" />
+                    </button>
                   </div>
                 </div>
                 <div
@@ -483,20 +468,14 @@ export function PreviewWorkspace({
                 <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${isDarkUi ? "border-[#313A47]" : "border-gray-200"}`}>
                   <div className="flex items-center justify-between gap-3 leading-none">
                     <div className={`font-semibold uppercase tracking-[0.08em] ${uiTheme.sidebarHeading}`}>Add Page</div>
-                    <HoverTooltip
-                      label="Duplicate the active page."
-                      disabled={!showRolloverInfo}
-                      tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-[#313A47] dark:bg-[#1D232D]/95 dark:text-[#F4F6F8]"
+                    <button
+                      type="button"
+                      aria-label="Add page"
+                      onClick={onPageAdd}
+                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
                     >
-                      <button
-                        type="button"
-                        aria-label="Add page"
-                        onClick={onPageAdd}
-                        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </HoverTooltip>
+                      <Plus className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>

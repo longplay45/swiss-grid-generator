@@ -11,7 +11,6 @@ export type PreviewHeaderShortcutId =
   | "toggle_typography"
   | "toggle_image_placeholders"
   | "toggle_layers_panel"
-  | "toggle_rollover_info"
   | "toggle_help_panel"
   | "toggle_imprint_panel"
   | "toggle_example_panel"
@@ -101,12 +100,6 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
     combo: "Cmd/Ctrl+Shift+P",
     description: "Toggle project panel",
     bindings: [{ key: "p", shift: true }],
-  },
-  {
-    id: "toggle_rollover_info",
-    combo: "Cmd/Ctrl+Shift+I",
-    description: "Toggle information",
-    bindings: [{ key: "i", shift: true }],
   },
   {
     id: "toggle_help_panel",

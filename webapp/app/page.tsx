@@ -160,8 +160,6 @@ export default function Home() {
   const {
     isDarkUi,
     toggleDarkUi,
-    showRolloverInfo,
-    toggleRolloverInfo,
     isSmartphone,
     uiTheme,
   } = useWorkspaceChrome()
@@ -753,7 +751,6 @@ export default function Home() {
     onToggleTypography: toggleShowTypography,
     onToggleImagePlaceholders: toggleShowImagePlaceholders,
     onToggleLayersPanel: toggleLayersPanel,
-    onToggleRolloverInfo: toggleRolloverInfo,
     onToggleHelpPanel: toggleHelpPanel,
     onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
     onOpenPresets: () => setShowPresetsBrowser(true),
@@ -780,7 +777,6 @@ export default function Home() {
     showImagePlaceholders,
     showTypography,
     showLayers,
-    showRolloverInfo,
     smartTextZoomEnabled,
     canUndo,
     canRedo,
@@ -798,7 +794,6 @@ export default function Home() {
     onToggleImagePlaceholders: toggleShowImagePlaceholders,
     onToggleTypography: toggleShowTypography,
     onToggleLayersPanel: toggleLayersPanel,
-    onToggleRolloverInfo: toggleRolloverInfo,
     onToggleHelpPanel: toggleHelpPanel,
   })
 
@@ -812,7 +807,6 @@ export default function Home() {
       showPresetsBrowser={showPresetsBrowser}
       isDarkUi={isDarkUi}
       showSectionHelpIcons={showSectionHelpIcons}
-      showRolloverInfo={showRolloverInfo}
       smartTextZoomEnabled={smartTextZoomEnabled}
       showBaselines={showBaselines}
       showModules={showModules}
@@ -909,7 +903,7 @@ export default function Home() {
     <SettingsSidebarPanels
       collapsed={collapsed}
       showSectionHelpIcons={showSectionHelpIcons}
-      showRolloverInfo={showRolloverInfo}
+      showRolloverInfo={false}
       onHelpNavigate={handleSectionHelpNavigate}
       onSectionHeaderClick={handleSectionHeaderClick}
       onSectionHeaderDoubleClick={handleSectionHeaderDoubleClick}
@@ -1033,7 +1027,6 @@ export default function Home() {
     setRotation,
     setTypographyScale,
     setUseCustomMargins,
-    showRolloverInfo,
     showSectionHelpIcons,
     typographyScale,
     useCustomMargins,
