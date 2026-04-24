@@ -65,7 +65,6 @@ export function ExportPdfDialog({
   const dialogThemeClassName = isDarkUi ? "dark" : undefined
   const isPdfExport = exportFormatDraft === "pdf"
   const isSvgExport = exportFormatDraft === "svg"
-  const isIdmlExport = exportFormatDraft === "idml"
   const isMultiPageSelection = selectedPageCount > 1
   const isExporting = exportProgress !== null
   const totalProgressPercent = exportProgress
@@ -84,8 +83,7 @@ export function ExportPdfDialog({
           <h3 className="text-base font-semibold">Export</h3>
           <p className={helpTextClassName}>
             WYSIWYG: exports exactly what is currently shown in the preview, including baselines, margins, grid/modules,
-            typography, and image placeholders. All exports stay vector-based. Use `SVG` or `IDML` when you need
-            typography frozen into non-live geometry.
+            typography, and image placeholders. All exports stay vector-based.
           </p>
         </div>
         {isExporting ? (
@@ -189,18 +187,6 @@ export function ExportPdfDialog({
             </div>
           </div>
         )}
-        {isIdmlExport && (
-          <p className={helpTextClassName}>
-            IDML v1 exports the selected page range. Each page keeps its stored size, margins, bleed, guides,
-            placeholders, and outlined glyph geometry for maximum fidelity. Typography is no longer editable as live
-            text downstream.
-          </p>
-        )}
-        {!isIdmlExport && isMultiPageSelection && (
-          <p className={helpTextClassName}>
-            Multi-page PDF and SVG exports keep each selected page at its stored document size.
-          </p>
-        )}
         <div className="space-y-2">
           <Label>Filename</Label>
           <input
@@ -263,8 +249,8 @@ export function ExportPdfDialog({
         ) : isSvgExport ? (
           <p className={helpTextClassName}>
             {isMultiPageSelection
-              ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity, so exported text is not live-editable. PDF print presets are not applied."
-              : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths, so exported text is not live-editable. PDF print presets are not applied."}
+              ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity, so exported text is not live-editable."
+              : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths, so exported text is not live-editable."}
           </p>
         ) : (
           <p className={helpTextClassName}>

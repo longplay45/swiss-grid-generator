@@ -330,7 +330,6 @@ export const HELP_CONTENT_GROUPS = [
               "The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.",
               "Header icon labels are always available as hover popups.",
               "`Shift` + click on a page-visibility toggle applies the same state to every page in the project.",
-              "In settings dropdowns, hover previews stay local. Hold `Shift` while committing a value to apply the committed choice to all pages.",
               "Only one right-side panel is open at a time."
             ]
           }

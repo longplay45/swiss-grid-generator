@@ -129,6 +129,12 @@ export default function Home() {
   const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
     setNoticeState(notice)
   }, [])
+  const handleProjectPageLimitReached = useCallback((limit: number) => {
+    handleRequestNotice({
+      title: "Page Limit Reached",
+      message: `This project already has ${limit} pages. Delete a page before adding another.`,
+    })
+  }, [handleRequestNotice])
   const handleRequestGridReductionWarning = useCallback((message: string) => {
     setGridReductionWarningToast({
       id: Date.now(),
@@ -379,6 +385,7 @@ export default function Home() {
     currentPreviewLayout: previewLayout,
     getCurrentPreviewLayout,
     onApplyPage: handleApplyProjectPage,
+    onPageLimitReached: handleProjectPageLimitReached,
   })
   const projectTour = project.tour ?? null
   const activePageLayoutMode = activePage?.layoutMode ?? "single"

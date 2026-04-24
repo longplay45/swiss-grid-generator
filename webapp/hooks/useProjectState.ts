@@ -14,7 +14,10 @@ type Args<Layout> = {
   currentPreviewLayout: Layout | null
   getCurrentPreviewLayout: () => Layout | null
   onApplyPage: (page: ProjectPage<Layout>) => void
+  onPageLimitReached?: (limit: number) => void
 }
+
+const MAX_PROJECT_PAGE_COUNT = 1000
 
 function cloneSerializable<T>(value: T): T {
   if (typeof structuredClone === "function") {
@@ -96,6 +99,7 @@ export function useProjectState<Layout>({
   currentPreviewLayout,
   getCurrentPreviewLayout,
   onApplyPage,
+  onPageLimitReached,
 }: Args<Layout>) {
   const [project, setProject] = useState<LoadedProject<Layout>>(() =>
     createDefaultProject({
@@ -147,6 +151,10 @@ export function useProjectState<Layout>({
 
   const addPage = useCallback(() => {
     const currentProject = getCurrentProjectSnapshot()
+    if (currentProject.pages.length >= MAX_PROJECT_PAGE_COUNT) {
+      onPageLimitReached?.(MAX_PROJECT_PAGE_COUNT)
+      return
+    }
     const sourcePage = currentProject.pages.find((page) => page.id === currentProject.activePageId) ?? null
     const nextPage = createProjectPage({
       name: getNextPageName(currentProject.pages),
@@ -161,7 +169,14 @@ export function useProjectState<Layout>({
       pages: [...currentProject.pages, nextPage],
     })
     onApplyPage(nextPage)
-  }, [currentUiSettings, defaultPreviewLayout, getCurrentProjectSnapshot, getLivePreviewLayout, onApplyPage])
+  }, [
+    currentUiSettings,
+    defaultPreviewLayout,
+    getCurrentProjectSnapshot,
+    getLivePreviewLayout,
+    onApplyPage,
+    onPageLimitReached,
+  ])
 
   const setFacingPageEnabled = useCallback((pageId: string, enabled: boolean) => {
     if (!enabled) return
