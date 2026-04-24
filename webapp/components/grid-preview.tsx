@@ -154,6 +154,9 @@ interface GridPreviewProps {
   requestedLayerDeleteToken?: number
   requestedLayerEditorTarget?: BlockId | null
   requestedLayerEditorToken?: number
+  requestedLayerLockTarget?: BlockId | null
+  requestedLayerLockValue?: boolean
+  requestedLayerLockToken?: number
   selectedLayerKey?: BlockId | null
   hoveredLayerKey?: BlockId | null
   onHoverLayerChange?: (key: BlockId | null) => void
@@ -208,6 +211,9 @@ export const GridPreview = memo(function GridPreview({
   requestedLayerDeleteToken = 0,
   requestedLayerEditorTarget = null,
   requestedLayerEditorToken = 0,
+  requestedLayerLockTarget = null,
+  requestedLayerLockValue = false,
+  requestedLayerLockToken = 0,
   selectedLayerKey = null,
   hoveredLayerKey = null,
   onHoverLayerChange,
@@ -239,9 +245,11 @@ export const GridPreview = memo(function GridPreview({
   const lastAppliedImageLayoutKeyRef = useRef(0)
   const lastAppliedCustomSizeLayoutKeyRef = useRef(0)
   const lastAppliedLayerLayoutKeyRef = useRef(0)
+  const lastAppliedLockLayoutKeyRef = useRef(0)
   const lastAppliedLayerRequestKeyRef = useRef(0)
   const lastAppliedLayerDeleteRequestKeyRef = useRef(0)
   const lastAppliedLayerEditorRequestKeyRef = useRef(0)
+  const lastAppliedLayerLockRequestKeyRef = useRef(0)
   const suppressReflowCheckRef = useRef(false)
   const dragEndedAtRef = useRef(0)
   const layoutEmissionFrameRef = useRef<number | null>(null)
@@ -376,6 +384,9 @@ export const GridPreview = memo(function GridPreview({
     layerOrder,
     setLayerOrder,
     resolvedLayerOrder,
+    lockedLayers,
+    setLockedLayers,
+    isLayerLocked,
     blockCustomSizes,
     setBlockCustomSizes,
     blockCustomLeadings,
@@ -441,6 +452,7 @@ export const GridPreview = memo(function GridPreview({
     buildSnapshot,
     applyLayerOrderSnapshot,
     applyCustomSizeSnapshot,
+    applyLockedLayerSnapshot,
     applySnapshot,
   } = useGridPreviewDocumentState({
     result,
@@ -471,6 +483,7 @@ export const GridPreview = memo(function GridPreview({
     isSnapToBaselineEnabled,
     isImageSnapToColumnsEnabled,
     isImageSnapToBaselineEnabled,
+    isLayerLocked,
     toPagePointFromClient,
   })
 
@@ -598,6 +611,7 @@ export const GridPreview = memo(function GridPreview({
     requestedLayerEditorTarget,
     requestedLayerEditorToken,
     lastAppliedLayerEditorRequestKeyRef,
+    isLayerLocked,
     editorSidebarHost,
     onSelectLayer,
     textareaRef,
@@ -705,6 +719,7 @@ export const GridPreview = memo(function GridPreview({
     isSnapToBaselineEnabled,
     isImageSnapToColumnsEnabled,
     isImageSnapToBaselineEnabled,
+    isLayerLocked,
     blockOrder,
     textContent,
     blockCustomSizes,
@@ -789,6 +804,7 @@ export const GridPreview = memo(function GridPreview({
       || lastAppliedImageLayoutKeyRef.current !== initialLayoutToken
       || lastAppliedLayerLayoutKeyRef.current !== initialLayoutToken
       || lastAppliedCustomSizeLayoutKeyRef.current !== initialLayoutToken
+      || lastAppliedLockLayoutKeyRef.current !== initialLayoutToken
     ) {
       return
     }
@@ -815,6 +831,7 @@ export const GridPreview = memo(function GridPreview({
     initialLayoutToken,
     layoutEmissionEnabled,
     layerOrder,
+    lockedLayers,
   ])
 
   useEffect(() => (
@@ -845,8 +862,10 @@ export const GridPreview = memo(function GridPreview({
     lastAppliedImageLayoutKeyRef,
     lastAppliedCustomSizeLayoutKeyRef,
     lastAppliedLayerLayoutKeyRef,
+    lastAppliedLockLayoutKeyRef,
     lastAppliedLayerRequestKeyRef,
     lastAppliedLayerDeleteRequestKeyRef,
+    lastAppliedLayerLockRequestKeyRef,
     suppressReflowCheckRef,
     resetHistory,
     resetImageTransientState,
@@ -875,6 +894,7 @@ export const GridPreview = memo(function GridPreview({
     applyImageSnapshot,
     applyLayerOrderSnapshot,
     applyCustomSizeSnapshot,
+    applyLockedLayerSnapshot,
     blockOrder,
     layerOrder,
     setLayerOrder,
@@ -897,8 +917,45 @@ export const GridPreview = memo(function GridPreview({
     setBlockCustomSizes,
     setBlockCustomLeadings,
     setBlockTextColors,
+    setLockedLayers,
     setEditorState,
   })
+
+  useEffect(() => {
+    if (!requestedLayerLockTarget || requestedLayerLockToken === 0) return
+    if (lastAppliedLayerLockRequestKeyRef.current === requestedLayerLockToken) return
+    lastAppliedLayerLockRequestKeyRef.current = requestedLayerLockToken
+
+    const keyExists = blockOrder.includes(requestedLayerLockTarget) || imageOrder.includes(requestedLayerLockTarget)
+    if (!keyExists) return
+    if (isLayerLocked(requestedLayerLockTarget) === requestedLayerLockValue) return
+
+    recordHistoryBeforeChange()
+    setLockedLayers((current) => (
+      requestedLayerLockValue
+        ? { ...current, [requestedLayerLockTarget]: true }
+        : omitOptionalRecordKey(current, requestedLayerLockTarget)
+    ))
+
+    if (!requestedLayerLockValue) return
+    clearHover()
+    setDragState((current) => (current?.key === requestedLayerLockTarget ? null : current))
+    setEditorState((current) => (current?.target === requestedLayerLockTarget ? null : current))
+    setImageEditorState((current) => (current?.target === requestedLayerLockTarget ? null : current))
+  }, [
+    blockOrder,
+    clearHover,
+    imageOrder,
+    isLayerLocked,
+    recordHistoryBeforeChange,
+    requestedLayerLockTarget,
+    requestedLayerLockToken,
+    requestedLayerLockValue,
+    setDragState,
+    setEditorState,
+    setImageEditorState,
+    setLockedLayers,
+  ])
 
   usePreviewGuideCanvases({
     staticCanvasRef,
@@ -1103,6 +1160,7 @@ export const GridPreview = memo(function GridPreview({
       setImageColors((prev) => omitOptionalRecordKey(prev, key))
       setImageOpacities((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
+      setLockedLayers((prev) => omitOptionalRecordKey(prev, key))
       setImageEditorState((prev) => (prev?.target === key ? null : prev))
       return
     }
@@ -1126,6 +1184,7 @@ export const GridPreview = memo(function GridPreview({
       setBlockCustomLeadings((prev) => omitOptionalRecordKey(prev, key))
       setBlockTextColors((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
+      setLockedLayers((prev) => omitOptionalRecordKey(prev, key))
     }
 
     setEditorState((prev) => (prev?.target === key ? null : prev))
@@ -1150,6 +1209,7 @@ export const GridPreview = memo(function GridPreview({
     setImageRotations,
     setImageSnapToBaseline,
     setImageSnapToColumns,
+    setLockedLayers,
     setLayerOrder,
   ])
 

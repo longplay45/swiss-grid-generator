@@ -22,6 +22,12 @@ type LayerEditorRequest = {
   target: string
 } | null
 
+type LayerLockRequest = {
+  token: CommandToken
+  target: string
+  locked: boolean
+} | null
+
 type Args<Layout> = {
   defaultLayout: Layout | null
 }
@@ -34,6 +40,7 @@ export function usePreviewCommands<Layout>({ defaultLayout }: Args<Layout>) {
   const [layerOrderRequest, setLayerOrderRequest] = useState<LayerOrderRequest>(null)
   const [layerDeleteRequest, setLayerDeleteRequest] = useState<LayerDeleteRequest>(null)
   const [layerEditorRequest, setLayerEditorRequest] = useState<LayerEditorRequest>(null)
+  const [layerLockRequest, setLayerLockRequest] = useState<LayerLockRequest>(null)
 
   const issueCommandToken = useCallback(() => {
     commandTokenRef.current += 1
@@ -61,6 +68,14 @@ export function usePreviewCommands<Layout>({ defaultLayout }: Args<Layout>) {
     })
   }, [issueCommandToken])
 
+  const requestLayerLock = useCallback((target: string, locked: boolean) => {
+    setLayerLockRequest({
+      token: issueCommandToken(),
+      target,
+      locked,
+    })
+  }, [issueCommandToken])
+
   const loadLayout = useCallback((layout: Layout | null) => {
     if (!layout) {
       setLoadedLayoutState(null)
@@ -76,6 +91,7 @@ export function usePreviewCommands<Layout>({ defaultLayout }: Args<Layout>) {
     setLayerOrderRequest(null)
     setLayerDeleteRequest(null)
     setLayerEditorRequest(null)
+    setLayerLockRequest(null)
   }, [])
 
   return {
@@ -83,9 +99,11 @@ export function usePreviewCommands<Layout>({ defaultLayout }: Args<Layout>) {
     layerOrderRequest,
     layerDeleteRequest,
     layerEditorRequest,
+    layerLockRequest,
     requestLayerOrder,
     requestLayerDelete,
     requestLayerEditor,
+    requestLayerLock,
     loadLayout,
     clearLayerRequests,
   }

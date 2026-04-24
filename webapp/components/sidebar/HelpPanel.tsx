@@ -178,9 +178,10 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
           <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
           <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
-          <li>When a text or image editor is already open, preview rollover stays active on other blocks so you can see the next target before switching.</li>
+          <li>When a text or image editor is already open, preview rollover stays active on other unlocked blocks so you can see the next target before switching.</li>
           <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` setting and, when `Snap to Baseline (Y)` is on, default to module-top Y snapping with baseline drag available on `Shift`/`Ctrl`.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
+          <li>Locked layers are skipped by preview hover, hit-testing, drag, and editor retargeting until you unlock them from the Project panel.</li>
           <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
           <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
           <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
@@ -201,7 +202,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
           <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
           <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>`Esc` or outside click exits edit mode; clicking another active-page layer card or another existing preview block retargets the already open editor instead.</li>
+          <li>`Esc` or outside click exits edit mode; clicking another active-page unlocked layer card or another existing unlocked preview block retargets the already open editor instead.</li>
           <li>Inside inline text edit, double-click selects the clicked word, triple-click selects the containing sentence, `Alt+A` or `Cmd/Ctrl+A` select the whole paragraph, and `Arrow` / `Home` / `End` navigation follows the rendered line geometry.</li>
         </ul>
 
@@ -552,7 +553,8 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
           <li>Newly added pages open automatically.</li>
           <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>
-          <li>For the active page, drag layer cards to reorder z-index; click selects and opens or retargets the editor, while clicks elsewhere in the Project panel exit edit mode.</li>
+          <li>For the active page, drag unlocked layer cards to reorder z-index; click selects and opens or retargets the editor, while clicks elsewhere in the Project panel exit edit mode.</li>
+          <li>Each layer card includes a lock toggle to the left of delete. Locked layers stay visible and selectable in the stack, but preview hover, move, and editor access are disabled until unlocked.</li>
         </ul>
       </section>
 

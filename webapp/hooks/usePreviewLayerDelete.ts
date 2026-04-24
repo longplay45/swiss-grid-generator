@@ -35,6 +35,7 @@ type Args<
   setBlockCustomSizes: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setBlockCustomLeadings: Dispatch<SetStateAction<Partial<Record<Key, number>>>>
   setBlockTextColors: Dispatch<SetStateAction<Partial<Record<Key, string>>>>
+  setLockedLayers: Dispatch<SetStateAction<Partial<Record<Key, boolean>>>>
   setEditorState: Dispatch<SetStateAction<TextEditorState | null>>
 }
 
@@ -65,6 +66,7 @@ export function usePreviewLayerDelete<
   setBlockCustomSizes,
   setBlockCustomLeadings,
   setBlockTextColors,
+  setLockedLayers,
   setEditorState,
 }: Args<Key, StyleKey, Family, Align, TextPosition, ImagePosition, TextEditorState, ImageEditorState>) {
   const deleteLayerByKey = useCallback((key: Key) => {
@@ -76,6 +78,7 @@ export function usePreviewLayerDelete<
       setImageHeightBaselines((prev) => omitOptionalRecordKey(prev, key))
       setImageColors((prev) => omitOptionalRecordKey(prev, key))
       setLayerOrder((prev) => prev.filter((item) => item !== key))
+      setLockedLayers((prev) => omitOptionalRecordKey(prev, key))
       setImageEditorState((prev) => (prev?.target === key ? null : prev))
       return
     }
@@ -85,6 +88,7 @@ export function usePreviewLayerDelete<
     setBlockCustomLeadings((prev) => omitOptionalRecordKey(prev, key))
     setBlockTextColors((prev) => omitOptionalRecordKey(prev, key))
     setLayerOrder((prev) => prev.filter((item) => item !== key))
+    setLockedLayers((prev) => omitOptionalRecordKey(prev, key))
     setEditorState((prev) => (prev?.target === key ? null : prev))
   }, [
     imageOrder,
@@ -100,6 +104,7 @@ export function usePreviewLayerDelete<
     setImageModulePositions,
     setImageOrder,
     setImageRowSpans,
+    setLockedLayers,
     setLayerOrder,
   ])
 

@@ -27,6 +27,7 @@ type Args = {
   requestedLayerEditorTarget: string | null
   requestedLayerEditorToken: number
   lastAppliedLayerEditorRequestKeyRef: MutableRefObject<number>
+  isLayerLocked: (key: string) => boolean
   editorSidebarHost: HTMLDivElement | null
   onSelectLayer?: (key: string | null) => void
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>
@@ -48,6 +49,7 @@ export function usePreviewTextEditor({
   requestedLayerEditorTarget,
   requestedLayerEditorToken,
   lastAppliedLayerEditorRequestKeyRef,
+  isLayerLocked,
   editorSidebarHost,
   onSelectLayer,
   textareaRef,
@@ -152,18 +154,20 @@ export function usePreviewTextEditor({
   }, [applyEditorDraftLive, editorState])
 
   const openImageEditor = useCallback((key: string, options?: OpenEditorOptions) => {
+    if (isLayerLocked(key)) return
     setEditorState(null)
     if (options?.recordHistory !== false) {
       recordHistoryBeforeChange()
     }
     openImageEditorState(key)
-  }, [openImageEditorState, recordHistoryBeforeChange])
+  }, [isLayerLocked, openImageEditorState, recordHistoryBeforeChange])
 
   const closeImageEditor = useCallback(() => {
     closeImageEditorState()
   }, [closeImageEditorState])
 
   const openTextEditor = useCallback((key: string, options?: OpenEditorOptions) => {
+    if (isLayerLocked(key)) return
     setImageEditorState(null)
     if (options?.recordHistory !== false) {
       recordHistoryBeforeChange()
@@ -222,6 +226,7 @@ export function usePreviewTextEditor({
     isSnapToColumnsEnabled,
     isSyllableDivisionEnabled,
     isTextReflowEnabled,
+    isLayerLocked,
     recordHistoryBeforeChange,
     setImageEditorState,
     styleAssignments,

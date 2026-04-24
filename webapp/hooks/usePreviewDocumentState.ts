@@ -4,6 +4,7 @@ import { usePreviewCommands } from "@/hooks/usePreviewCommands"
 import { getPreviewLayoutSeed } from "@/lib/document-session"
 import { PREVIEW_LAYER_SELECTION_GRACE_MS } from "@/lib/preview-interaction-constants"
 import { removeLayerFromPreviewLayout } from "@/lib/preview-layer-state"
+import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import type { PreviewLayoutState } from "@/lib/types/preview-layout"
 
 type Args<StyleKey extends string, Family extends string> = {
@@ -21,9 +22,11 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     layerOrderRequest: requestedLayerOrderState,
     layerDeleteRequest: requestedLayerDeleteState,
     layerEditorRequest: requestedLayerEditorState,
+    layerLockRequest: requestedLayerLockState,
     requestLayerOrder,
     requestLayerDelete,
     requestLayerEditor,
+    requestLayerLock,
     loadLayout: loadPreviewLayout,
     clearLayerRequests,
   } = usePreviewCommands<PreviewLayoutState<StyleKey, Family, string>>({
@@ -116,6 +119,24 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     setSelectedLayerKeyWithGrace(target)
   }, [requestLayerEditor, setSelectedLayerKeyWithGrace])
 
+  const handleLayerLockChange = useCallback((target: string, locked: boolean) => {
+    setPreviewLayout((current) => {
+      const seeded = getPreviewLayoutSeed(current, defaultLayout)
+      const nextLockedLayers = locked
+        ? {
+            ...(seeded.lockedLayers ?? {}),
+            [target]: true,
+          }
+        : omitOptionalRecordKey(seeded.lockedLayers, target)
+
+      return {
+        ...seeded,
+        lockedLayers: nextLockedLayers,
+      }
+    })
+    requestLayerLock(target, locked)
+  }, [defaultLayout, requestLayerLock])
+
   return {
     previewLayout,
     setPreviewLayout,
@@ -123,6 +144,7 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     requestedLayerOrderState,
     requestedLayerDeleteState,
     requestedLayerEditorState,
+    requestedLayerLockState,
     selectedLayerKey,
     setSelectedLayerKeyWithGrace,
     canUndoPreview,
@@ -138,5 +160,6 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     handlePreviewLayoutChange,
     handlePreviewLayerSelect,
     handleToggleLayerEditor,
+    handleLayerLockChange,
   }
 }

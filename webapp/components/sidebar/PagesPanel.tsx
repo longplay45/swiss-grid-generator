@@ -35,6 +35,7 @@ type Props = {
   onSelectedLayerKeyChange: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
   onLayerEditorToggle: (target: string) => void
+  onLayerLockToggle: (target: string, locked: boolean) => void
   onLayerDelete: (target: string, kind: "text" | "image") => void
   isDarkMode?: boolean
 }
@@ -64,6 +65,7 @@ export function PagesPanel({
   onSelectedLayerKeyChange,
   onHoverLayerChange,
   onLayerEditorToggle,
+  onLayerLockToggle,
   onLayerDelete,
   isDarkMode = false,
 }: Props) {
@@ -484,6 +486,7 @@ export function PagesPanel({
                         onSelectLayer={onSelectedLayerKeyChange}
                         onHoverLayerChange={onHoverLayerChange}
                         onToggleEditor={onLayerEditorToggle}
+                        onToggleLock={onLayerLockToggle}
                         onDeleteLayer={onLayerDelete}
                         isDarkMode={isDarkMode}
                       />

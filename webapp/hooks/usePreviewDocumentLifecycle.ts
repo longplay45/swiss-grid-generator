@@ -44,8 +44,10 @@ type Args<StyleKey extends string, Key extends string, DragState, TextEditorStat
   lastAppliedImageLayoutKeyRef: MutableRefObject<number>
   lastAppliedCustomSizeLayoutKeyRef: MutableRefObject<number>
   lastAppliedLayerLayoutKeyRef: MutableRefObject<number>
+  lastAppliedLockLayoutKeyRef: MutableRefObject<number>
   lastAppliedLayerRequestKeyRef: MutableRefObject<number>
   lastAppliedLayerDeleteRequestKeyRef: MutableRefObject<number>
+  lastAppliedLayerLockRequestKeyRef: MutableRefObject<number>
   suppressReflowCheckRef: MutableRefObject<boolean>
   resetHistory: () => void
   resetImageTransientState: () => void
@@ -71,6 +73,7 @@ type Args<StyleKey extends string, Key extends string, DragState, TextEditorStat
   applyImageSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   applyLayerOrderSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   applyCustomSizeSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
+  applyLockedLayerSnapshot: (snapshot: PreviewLayoutState<StyleKey, FontFamily, Key>) => void
   blockOrder: Key[]
   imageOrder: Key[]
   layerOrder: Key[]
@@ -94,8 +97,10 @@ export function usePreviewDocumentLifecycle<
   lastAppliedImageLayoutKeyRef,
   lastAppliedCustomSizeLayoutKeyRef,
   lastAppliedLayerLayoutKeyRef,
+  lastAppliedLockLayoutKeyRef,
   lastAppliedLayerRequestKeyRef,
   lastAppliedLayerDeleteRequestKeyRef,
+  lastAppliedLayerLockRequestKeyRef,
   suppressReflowCheckRef,
   resetHistory,
   resetImageTransientState,
@@ -121,6 +126,7 @@ export function usePreviewDocumentLifecycle<
   applyImageSnapshot,
   applyLayerOrderSnapshot,
   applyCustomSizeSnapshot,
+  applyLockedLayerSnapshot,
   blockOrder,
   imageOrder,
   layerOrder,
@@ -134,8 +140,10 @@ export function usePreviewDocumentLifecycle<
     lastAppliedImageLayoutKeyRef.current = 0
     lastAppliedCustomSizeLayoutKeyRef.current = 0
     lastAppliedLayerLayoutKeyRef.current = 0
+    lastAppliedLockLayoutKeyRef.current = 0
     lastAppliedLayerRequestKeyRef.current = 0
     lastAppliedLayerDeleteRequestKeyRef.current = 0
+    lastAppliedLayerLockRequestKeyRef.current = 0
     suppressReflowCheckRef.current = true
     resetImageTransientState()
     setDragState(null)
@@ -147,7 +155,9 @@ export function usePreviewDocumentLifecycle<
     lastAppliedCustomSizeLayoutKeyRef,
     lastAppliedImageLayoutKeyRef,
     lastAppliedLayerDeleteRequestKeyRef,
+    lastAppliedLayerLockRequestKeyRef,
     lastAppliedLayerLayoutKeyRef,
+    lastAppliedLockLayoutKeyRef,
     lastAppliedLayerRequestKeyRef,
     lastAppliedLayoutKeyRef,
     lastHistoryResetTokenRef,
@@ -207,6 +217,13 @@ export function usePreviewDocumentLifecycle<
     lastAppliedCustomSizeLayoutKeyRef.current = initialLayoutToken
     applyCustomSizeSnapshot(initialLayout)
   }, [applyCustomSizeSnapshot, initialLayout, initialLayoutToken, lastAppliedCustomSizeLayoutKeyRef])
+
+  useEffect(() => {
+    if (!initialLayout || initialLayoutToken === 0) return
+    if (lastAppliedLockLayoutKeyRef.current === initialLayoutToken) return
+    lastAppliedLockLayoutKeyRef.current = initialLayoutToken
+    applyLockedLayerSnapshot(initialLayout)
+  }, [applyLockedLayerSnapshot, initialLayout, initialLayoutToken, lastAppliedLockLayoutKeyRef])
 
   useEffect(() => {
     if (!requestedLayerOrder || requestedLayerOrderToken === 0) return

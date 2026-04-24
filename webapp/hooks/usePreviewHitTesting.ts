@@ -21,6 +21,7 @@ type Args<Key extends string> = {
   isSnapToBaselineEnabled: (key: Key) => boolean
   isImageSnapToColumnsEnabled: (key: Key) => boolean
   isImageSnapToBaselineEnabled: (key: Key) => boolean
+  isLayerLocked: (key: Key) => boolean
   toPagePointFromClient: (clientX: number, clientY: number) => PagePoint | null
 }
 
@@ -63,6 +64,7 @@ export function usePreviewHitTesting<Key extends string>({
   isSnapToBaselineEnabled,
   isImageSnapToColumnsEnabled,
   isImageSnapToBaselineEnabled,
+  isLayerLocked,
   toPagePointFromClient,
 }: Args<Key>) {
   const imageKeySet = useMemo(() => new Set(imageOrder), [imageOrder])
@@ -138,6 +140,7 @@ export function usePreviewHitTesting<Key extends string>({
   const findTopmostLayerAtPoint = useCallback((pageX: number, pageY: number): Key | null => {
     for (let index = resolvedLayerOrder.length - 1; index >= 0; index -= 1) {
       const key = resolvedLayerOrder[index]
+      if (isLayerLocked(key)) continue
       const isImage = imageKeySet.has(key)
       if (isImage && !showImagePlaceholders) continue
 
@@ -167,7 +170,7 @@ export function usePreviewHitTesting<Key extends string>({
       }
     }
     return null
-  }, [blockRectsRef, imageKeySet, imageRectsRef, previousPlansRef, resolvedLayerOrder, showImagePlaceholders])
+  }, [blockRectsRef, imageKeySet, imageRectsRef, isLayerLocked, previousPlansRef, resolvedLayerOrder, showImagePlaceholders])
 
   const findTopmostBlockAtPoint = useCallback((pageX: number, pageY: number): Key | null => {
     const key = findTopmostLayerAtPoint(pageX, pageY)

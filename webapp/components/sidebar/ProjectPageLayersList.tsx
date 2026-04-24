@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { Lock, LockOpen, Trash2 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import type { DragEvent } from "react"
 
@@ -36,6 +36,7 @@ type Props = {
   onSelectLayer: (key: string | null) => void
   onHoverLayerChange: (key: string | null) => void
   onToggleEditor: (key: string) => void
+  onToggleLock: (key: string, locked: boolean) => void
   onDeleteLayer: (key: string, kind: "text" | "image") => void
   isDarkMode?: boolean
 }
@@ -107,6 +108,7 @@ export function ProjectPageLayersList({
   onSelectLayer,
   onHoverLayerChange,
   onToggleEditor,
+  onToggleLock,
   onDeleteLayer,
   isDarkMode = false,
 }: Props) {
@@ -334,8 +336,10 @@ export function ProjectPageLayersList({
         const isSelected = selectedLayerKey === thumb.key
         const isHovered = isActivePage && hoveredLayerKey === thumb.key
         const isEditing = editingLayerKey === thumb.key
+        const isLocked = layout?.lockedLayers?.[thumb.key] === true
         const stationaryIndex = stationaryIndexByKey.get(thumb.key) ?? null
-        const allowLayerInteractions = isActivePage
+        const allowLayerInteractions = isActivePage && !isLocked
+        const showLayerActions = isActivePage
         return (
           <Fragment key={`${pageId}-${thumb.key}`}>
             {thumb.key !== draggingKey && stationaryIndex !== null && stationaryIndex > 0
@@ -385,6 +389,8 @@ export function ProjectPageLayersList({
                 isEditing ? "shadow-[inset_1px_0_0_0_#fe9f97,inset_0_1px_0_0_#fe9f97]" : ""
               } ${
                 allowLayerInteractions ? "cursor-grab select-none" : "cursor-pointer"
+              } ${
+                isLocked ? "opacity-80" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -422,19 +428,41 @@ export function ProjectPageLayersList({
                     </div>
                   )}
                 </div>
-                {allowLayerInteractions ? (
-                  <button
-                    type="button"
-                    data-card-drag-ignore="true"
-                    aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
-                    className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      onDeleteLayer(thumb.key, thumb.kind)
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                {showLayerActions ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      data-card-drag-ignore="true"
+                      aria-label={`${isLocked ? "Unlock" : "Lock"} ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
+                      aria-pressed={isLocked}
+                      className={`rounded-sm p-1 transition-colors ${
+                        isLocked
+                          ? (isDarkMode ? "bg-[#313A47] text-[#F4F6F8]" : "bg-gray-200 text-gray-900")
+                          : tone.cardMuted
+                      } ${isLocked ? "" : "hover:text-[#fe9f97]"}`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (!isLocked) {
+                          onHoverLayerChange(null)
+                        }
+                        onToggleLock(thumb.key, !isLocked)
+                      }}
+                    >
+                      {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      data-card-drag-ignore="true"
+                      aria-label={`Delete ${thumb.kind === "image" ? "image placeholder" : "paragraph"}`}
+                      className={`rounded-sm p-1 ${tone.cardMuted} hover:text-red-500`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onDeleteLayer(thumb.key, thumb.kind)
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 ) : null}
               </div>
             </div>

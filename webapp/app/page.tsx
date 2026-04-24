@@ -188,6 +188,7 @@ export default function Home() {
     requestedLayerOrderState,
     requestedLayerDeleteState,
     requestedLayerEditorState,
+    requestedLayerLockState,
     selectedLayerKey,
     setSelectedLayerKeyWithGrace,
     canUndoPreview,
@@ -203,6 +204,7 @@ export default function Home() {
     handlePreviewLayoutChange,
     handlePreviewLayerSelect,
     handleToggleLayerEditor,
+    handleLayerLockChange,
   } = usePreviewDocumentState<TypographyStyleKey, FontFamily>({
     activeSidebarPanel,
     defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
@@ -624,6 +626,11 @@ export default function Home() {
     handleDeleteLayer(target, kind)
   }, [handleDeleteLayer])
 
+  const handleCommittedLayerLockToggle = useCallback((target: string, locked: boolean) => {
+    preferCommittedPreviewLayoutRef.current = true
+    handleLayerLockChange(target, locked)
+  }, [handleLayerLockChange])
+
   const handleCommittedPreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
     preferCommittedPreviewLayoutRef.current = false
     handlePreviewLayoutChange(layout)
@@ -827,6 +834,7 @@ export default function Home() {
       requestedLayerOrderState={requestedLayerOrderState}
       requestedLayerDeleteState={requestedLayerDeleteState}
       requestedLayerEditorState={requestedLayerEditorState}
+      requestedLayerLockState={requestedLayerLockState}
       appVersion={APP_VERSION}
       uiTheme={{
         divider: uiTheme.divider,
@@ -864,6 +872,7 @@ export default function Home() {
       onLayerOrderChange={handleCommittedLayerOrderChange}
       onLayerSelect={handlePreviewLayerSelect}
       onLayerEditorToggle={handleToggleLayerEditor}
+      onLayerLockToggle={handleCommittedLayerLockToggle}
       onLayerDelete={handleCommittedLayerDelete}
       onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
       onImageColorSchemeChange={setImageColorScheme}

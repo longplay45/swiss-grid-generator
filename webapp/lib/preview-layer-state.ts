@@ -157,6 +157,7 @@ export function removeLayerFromPreviewLayout<
     blockCustomLeadings: omitOptionalRecordKey(layout.blockCustomLeadings, key),
     blockTextColors: omitOptionalRecordKey(layout.blockTextColors, key),
     blockModulePositions: omitOptionalRecordKey(layout.blockModulePositions, key),
+    lockedLayers: omitOptionalRecordKey(layout.lockedLayers, key),
     layerOrder: (layout.layerOrder ?? []).filter((item) => item !== key),
   }
 }

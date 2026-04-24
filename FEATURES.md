@@ -92,7 +92,7 @@ Current capability inventory for Swiss Grid Generator.
 - Image placeholders now use the same X/Y snap model as paragraphs, including free-axis placement and per-layer rotation.
 - Paragraph hover guides follow the configured `rows + baselines` height rather than only the rendered text bounds.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
-- Preview rollover stays active while editing, so clicking another existing paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
+- Preview rollover stays active while editing, so clicking another existing unlocked paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and duplication.
 - Opened page cards expose a `Facing pages` control above `Layers`, converting a page into a true facing spread with mirrored inner/outer margins, a zero-gap preview seam, and doubled effective columns across the spread.
 - `Page Up` and `Page Down` step through project pages when multiple pages are present, and `Home` / `End` jump to the first or last page.
@@ -100,7 +100,8 @@ Current capability inventory for Swiss Grid Generator.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
 - Newly added pages open automatically.
 - Project JSON supports an optional `tour` definition for quick onboarding tied to real pages and layers.
-- Layer cards support selection, reordering, deletion, and editor opening.
+- Layer cards support selection, reordering, locking, deletion, and editor opening.
+- Locked layers stay visible but are excluded from preview hover, drag, and editor retarget/open behavior until unlocked.
 - `Custom Ratio` accepts fractional width/height units, including decimal comma input for formats such as `2:1,414`.
 - Text paragraphs and image placeholders use logical grid anchors:
   - `column`

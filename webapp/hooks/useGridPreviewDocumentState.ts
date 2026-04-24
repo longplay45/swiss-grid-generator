@@ -47,6 +47,7 @@ export function useGridPreviewDocumentState({
   onImageColorSchemeChange,
 }: Args) {
   const [layerOrder, setLayerOrder] = useState<BlockId[]>([...BASE_BLOCK_IDS])
+  const [lockedLayers, setLockedLayers] = useState<Partial<Record<BlockId, boolean>>>({})
   const {
     blockCollectionsState,
     setBlockCollections,
@@ -220,15 +221,21 @@ export function useGridPreviewDocumentState({
     isImagePlaceholderKey(key) ? getImageHeightBaselines(key) : getBlockHeightBaselines(key)
   ), [getBlockHeightBaselines, getImageHeightBaselines, isImagePlaceholderKey])
 
+  const isLayerLocked = useCallback((key: BlockId): boolean => (
+    lockedLayers[key] === true
+  ), [lockedLayers])
+
   const buildSnapshot = useCallback((): PreviewLayoutState => ({
     ...buildTextSnapshot(),
     ...buildTextOverridesSnapshot(),
+    lockedLayers: { ...lockedLayers },
     layerOrder: [...resolvedLayerOrder],
     ...buildImageSnapshotState(),
   }), [
     buildImageSnapshotState,
     buildTextOverridesSnapshot,
     buildTextSnapshot,
+    lockedLayers,
     resolvedLayerOrder,
   ])
 
@@ -244,12 +251,26 @@ export function useGridPreviewDocumentState({
     setLayerOrder(reconcileLayerOrder(normalizedLayerOrder, fallbackBlockOrder, fallbackImageOrder))
   }, [])
 
+  const applyLockedLayerSnapshot = useCallback((snapshot: PreviewLayoutState) => {
+    const validKeys = new Set<BlockId>([
+      ...((Array.isArray(snapshot.blockOrder) ? snapshot.blockOrder : []).filter((key): key is BlockId => typeof key === "string" && key.length > 0)),
+      ...((Array.isArray(snapshot.imageOrder) ? snapshot.imageOrder : []).filter((key): key is BlockId => typeof key === "string" && key.length > 0)),
+    ])
+    const nextLockedLayers = Object.entries(snapshot.lockedLayers ?? {}).reduce((acc, [key, locked]) => {
+      if (locked !== true || !validKeys.has(key)) return acc
+      acc[key as BlockId] = true
+      return acc
+    }, {} as Partial<Record<BlockId, boolean>>)
+    setLockedLayers(nextLockedLayers)
+  }, [])
+
   const applySnapshot = useCallback((snapshot: PreviewLayoutState) => {
     applyTextSnapshot(snapshot)
     applyImageSnapshot(snapshot)
     applyLayerOrderSnapshot(snapshot)
     applyTextOverridesSnapshot(snapshot)
-  }, [applyImageSnapshot, applyLayerOrderSnapshot, applyTextOverridesSnapshot, applyTextSnapshot])
+    applyLockedLayerSnapshot(snapshot)
+  }, [applyImageSnapshot, applyLayerOrderSnapshot, applyLockedLayerSnapshot, applyTextOverridesSnapshot, applyTextSnapshot])
 
   return {
     blockCollectionsState,
@@ -288,6 +309,9 @@ export function useGridPreviewDocumentState({
     layerOrder,
     setLayerOrder,
     resolvedLayerOrder,
+    lockedLayers,
+    setLockedLayers,
+    isLayerLocked,
     blockCustomSizes,
     setBlockCustomSizes,
     blockCustomLeadings,
@@ -363,6 +387,7 @@ export function useGridPreviewDocumentState({
     buildSnapshot,
     applyLayerOrderSnapshot,
     applyCustomSizeSnapshot: applyTextOverridesSnapshot,
+    applyLockedLayerSnapshot,
     applySnapshot,
   }
 }

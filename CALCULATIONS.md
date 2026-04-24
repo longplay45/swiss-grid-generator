@@ -549,7 +549,7 @@ restore(snapshot) on close/pointer-leave when no option was committed
 
 This changes when preview recalculation runs, not the underlying grid, typography, or placement formulas.
 
-When an editor is already open, preview hit-testing and rollover remain active for other existing blocks; clicking one retargets the current editor to that block instead of tearing edit mode down first.
+When an editor is already open, preview hit-testing and rollover remain active for other existing unlocked blocks; clicking one retargets the current editor to that block instead of tearing edit mode down first. Locked layers are skipped by preview hit-testing until unlocked from the Project panel.
 
 ## Document Variable Resolution
 

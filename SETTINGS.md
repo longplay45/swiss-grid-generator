@@ -221,6 +221,7 @@ Default: `swiss`
 - Image cards display `Image Placeholder` and a single color swatch.
 - Hovering an active-page layer card mirrors the same active preview rollover/guides for that block.
 - Dragging active-page layer cards changes z-index using a visible insertion marker between cards.
+- Layer cards include a lock toggle to the left of delete. Locked layers stay visible in the stack but cannot be hovered, edited, or moved in preview until unlocked.
 - Selecting a layer card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the active page and saved project JSON.
 - `Pages` section header single-clicks to collapse.
@@ -325,7 +326,8 @@ Editor controls:
 - left sidebar editor that replaces layout settings while edit mode is active
 - text editor sections: `Paragraph`, `Typo`, `Placeholders`, `Info`
 - image editor sections: `Geometry`, `Color`, `Info`
-- while edit mode is active, preview hover stays visible on other existing blocks and clicking one retargets the already open editor
+- while edit mode is active, preview hover stays visible on other unlocked existing blocks and clicking one retargets the already open editor
+- locked layers are excluded from preview hover, drag, and editor retarget/open behavior until unlocked from the Project panel
 - the text editor header uses the same user-facing layer label shown in the Project panel instead of the internal paragraph id
 - Paragraph section:
   - rows
@@ -454,10 +456,11 @@ Notes:
 
 ## JSON Preview Layout Fields (current)
 
-`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockHeightBaselines`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `blockSnapToColumns`, `blockSnapToBaseline`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageHeightBaselines`, `imageColors`, `imageOpacities`
+`blockOrder`, `textContent`, `blockTextEdited`, `styleAssignments`, `blockFontFamilies`, `blockFontWeights`, `blockOpticalKerning`, `blockTrackingScales`, `blockTrackingRuns`, `blockTextFormatRuns`, `blockColumnSpans`, `blockRowSpans`, `blockHeightBaselines`, `blockTextAlignments`, `blockTextReflow`, `blockSyllableDivision`, `blockItalic`, `blockRotations`, `blockCustomSizes`, `blockCustomLeadings`, `blockTextColors`, `blockModulePositions`, `blockSnapToColumns`, `blockSnapToBaseline`, `lockedLayers`, `layerOrder`, `imageOrder`, `imageModulePositions`, `imageColumnSpans`, `imageRowSpans`, `imageHeightBaselines`, `imageColors`, `imageOpacities`
 
 Notes:
 - `blockFontFamilies` is an override map and may omit paragraphs inheriting `baseFont`.
 - `blockModulePositions` and `imageModulePositions` are stored as logical anchors `{ column, row, baselineOffset }`; paragraph anchors may carry fractional `column` and/or `baselineOffset` values when X or Y snapping is disabled; legacy absolute `{ col, row }` values are normalized on load.
 - `blockSnapToColumns` and `blockSnapToBaseline` store the paragraph-level X/Y snap state. Omitted values default to `true`.
+- `lockedLayers` stores per-layer lock state. Omitted entries are unlocked.
 - `blockRowSpans` / `imageRowSpans` store the module-row component of block height, while `blockHeightBaselines` / `imageHeightBaselines` store the additional baseline component.

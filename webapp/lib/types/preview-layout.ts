@@ -37,6 +37,7 @@ export type PreviewLayoutState<
   blockCustomLeadings?: Partial<Record<Key, number>>
   blockTextColors?: Partial<Record<Key, string>>
   blockModulePositions: Partial<Record<Key, TextBlockPosition>>
+  lockedLayers?: Partial<Record<Key, boolean>>
   layerOrder?: Key[]
   imageOrder?: Key[]
   imageModulePositions?: Partial<Record<Key, TextBlockPosition | ModulePosition>>

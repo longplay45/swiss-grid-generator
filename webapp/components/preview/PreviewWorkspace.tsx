@@ -74,6 +74,7 @@ type Props = {
   requestedLayerOrderState: { token: number; order: string[] } | null
   requestedLayerDeleteState: { token: number; target: string } | null
   requestedLayerEditorState: { token: number; target: string } | null
+  requestedLayerLockState: { token: number; target: string; locked: boolean } | null
   appVersion: string
   uiTheme: UiTheme
   result: GridResult
@@ -101,6 +102,7 @@ type Props = {
   onLayerOrderChange: (nextLayerOrder: string[]) => void
   onLayerSelect: (key: string | null) => void
   onLayerEditorToggle: (target: string) => void
+  onLayerLockToggle: (target: string, locked: boolean) => void
   onLayerDelete: (target: string, kind: "text" | "image") => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onImageColorSchemeChange: (value: ImageColorSchemeId) => void
@@ -192,6 +194,7 @@ export function PreviewWorkspace({
   requestedLayerOrderState,
   requestedLayerDeleteState,
   requestedLayerEditorState,
+  requestedLayerLockState,
   appVersion,
   uiTheme,
   result,
@@ -219,6 +222,7 @@ export function PreviewWorkspace({
   onLayerOrderChange,
   onLayerSelect,
   onLayerEditorToggle,
+  onLayerLockToggle,
   onLayerDelete,
   onSelectedLayerKeyChange,
   onImageColorSchemeChange,
@@ -366,6 +370,9 @@ export function PreviewWorkspace({
               requestedLayerDeleteToken={requestedLayerDeleteState?.token ?? 0}
               requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
               requestedLayerEditorToken={requestedLayerEditorState?.token ?? 0}
+              requestedLayerLockTarget={requestedLayerLockState?.target ?? null}
+              requestedLayerLockValue={requestedLayerLockState?.locked ?? false}
+              requestedLayerLockToken={requestedLayerLockState?.token ?? 0}
               selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
               hoveredLayerKey={layerPanelHoveredLayerKey}
               onHoverLayerChange={setPreviewHoveredLayerKey}
@@ -465,11 +472,12 @@ export function PreviewWorkspace({
                     previewEditorOpenToken={previewEditorOpenToken}
                     onLayerOrderChange={onLayerOrderChange}
                     onSelectedLayerKeyChange={onSelectedLayerKeyChange}
-                    onHoverLayerChange={setLayerPanelHoveredLayerKey}
-                    onLayerEditorToggle={onLayerEditorToggle}
-                    onLayerDelete={onLayerDelete}
-                    isDarkMode={isDarkUi}
-                  />
+                        onHoverLayerChange={setLayerPanelHoveredLayerKey}
+                        onLayerEditorToggle={onLayerEditorToggle}
+                        onLayerLockToggle={onLayerLockToggle}
+                        onLayerDelete={onLayerDelete}
+                        isDarkMode={isDarkUi}
+                      />
                 </div>
                 <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${isDarkUi ? "border-[#313A47]" : "border-gray-200"}`}>
                   <div className="flex items-center justify-between gap-3 leading-none">

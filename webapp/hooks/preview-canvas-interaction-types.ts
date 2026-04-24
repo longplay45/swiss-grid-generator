@@ -69,6 +69,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   isSnapToBaselineEnabled: (key: Key) => boolean
   isImageSnapToColumnsEnabled: (key: Key) => boolean
   isImageSnapToBaselineEnabled: (key: Key) => boolean
+  isLayerLocked: (key: Key) => boolean
   blockOrder: Key[]
   textContent: Record<Key, string>
   blockCustomSizes: Partial<Record<Key, number>>
