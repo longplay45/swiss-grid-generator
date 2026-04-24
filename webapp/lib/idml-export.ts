@@ -3,6 +3,10 @@ import { buildPageExportPlan } from "@/lib/page-export-plan"
 import { buildSwissGridIdmlPackage } from "@/lib/idml/builder"
 import type { SwissGridIdmlDocument } from "@/lib/idml/types"
 import { buildResolvedProjectPageExportSource } from "@/lib/project-page-export-source"
+import {
+  getProjectPagePhysicalPageNumberAtIndex,
+  getProjectPhysicalPageCount,
+} from "@/lib/document-page-numbering"
 
 type IdmlExportProgress = {
   completedSteps: number
@@ -17,15 +21,17 @@ export async function renderSwissGridIdmlProject(
   assertNotCancelled?: () => void,
 ): Promise<Uint8Array> {
   const now = new Date()
+  const pageCount = getProjectPhysicalPageCount(project.pages)
   const pages: SwissGridIdmlDocument["pages"] = []
 
   for (const [index, page] of project.pages.entries()) {
     assertNotCancelled?.()
-    const sourcePath = `${page.name || `Page ${index + 1}`} (${page.id})`
+    const pageNumber = getProjectPagePhysicalPageNumberAtIndex(project.pages, index)
+    const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
     const resolved = buildResolvedProjectPageExportSource(page, sourcePath, {
       projectTitle: project.metadata.title,
-      pageNumber: index + 1,
-      pageCount: project.pages.length,
+      pageNumber,
+      pageCount,
       now,
     })
     const plannedPage = {
@@ -49,8 +55,8 @@ export async function renderSwissGridIdmlProject(
     await onProgress?.({
       completedSteps: index + 1,
       totalSteps: project.pages.length,
-      pageNumber: index + 1,
-      pageName: page.name || `Page ${index + 1}`,
+      pageNumber,
+      pageName: page.name || `Page ${pageNumber}`,
     })
   }
 

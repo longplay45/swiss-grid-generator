@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, Plus, X } from "lucide-react"
+import { Info, Plus, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
@@ -26,6 +26,10 @@ import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import { ProjectTourOverlay } from "@/components/preview/ProjectTourOverlay"
 import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
+import {
+  getProjectPagePhysicalPageNumber,
+  getProjectPhysicalPageCount,
+} from "@/lib/document-page-numbering"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -237,7 +241,7 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [previewEditorOpenToken, setPreviewEditorOpenToken] = useState(0)
-  const [isProjectInfoCollapsed, setIsProjectInfoCollapsed] = useState(true)
+  const [showProjectInfo, setShowProjectInfo] = useState(false)
   const previewVariableNow = useMemo(() => new Date(), [])
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
@@ -257,9 +261,12 @@ export function PreviewWorkspace({
   }, [showPresetsBrowser])
 
   const activePageNumber = useMemo(() => {
-    const activeIndex = projectPages.findIndex((page) => page.id === activePageId)
-    return activeIndex >= 0 ? activeIndex + 1 : 1
+    return getProjectPagePhysicalPageNumber(projectPages, activePageId)
   }, [activePageId, projectPages])
+  const documentVariablePageCount = useMemo(
+    () => getProjectPhysicalPageCount(projectPages),
+    [projectPages],
+  )
 
   const totalLayerCount = useMemo(() => (
     projectPages.reduce((sum, page) => (
@@ -334,19 +341,15 @@ export function PreviewWorkspace({
     const createdAtText = formattedProjectCreatedAt
       ? ` on ${formattedProjectCreatedAt}.`
       : "."
-    return `This document consists of ${projectPages.length} ${projectPages.length === 1 ? "page" : "pages"} with ${totalLayerCount} ${totalLayerCount === 1 ? "layer" : "layers"}, uses ${projectInfoStats.fontCount} ${projectInfoStats.fontCount === 1 ? "font" : "fonts"} and ${projectInfoStats.cutCount} ${projectInfoStats.cutCount === 1 ? "cut" : "cuts"}, and contains ${projectInfoStats.wordCount} ${projectInfoStats.wordCount === 1 ? "word" : "words"} and ${projectInfoStats.characterCount} ${projectInfoStats.characterCount === 1 ? "character" : "characters"}.${authorText}${createdAtText}`
-  }, [formattedProjectCreatedAt, projectAuthor, projectInfoStats.characterCount, projectInfoStats.cutCount, projectInfoStats.fontCount, projectInfoStats.wordCount, projectPages.length, totalLayerCount])
-
-  const projectInfoCollapsedSummary = useMemo(() => (
-    `${projectPages.length}p, ${totalLayerCount}l, ${projectInfoStats.fontCount}f, ${projectInfoStats.cutCount}c, ${projectInfoStats.wordCount}w`
-  ), [projectInfoStats.cutCount, projectInfoStats.fontCount, projectInfoStats.wordCount, projectPages.length, totalLayerCount])
+    return `This document consists of ${documentVariablePageCount} ${documentVariablePageCount === 1 ? "page" : "pages"} with ${totalLayerCount} ${totalLayerCount === 1 ? "layer" : "layers"}, uses ${projectInfoStats.fontCount} ${projectInfoStats.fontCount === 1 ? "font" : "fonts"} and ${projectInfoStats.cutCount} ${projectInfoStats.cutCount === 1 ? "cut" : "cuts"}, and contains ${projectInfoStats.wordCount} ${projectInfoStats.wordCount === 1 ? "word" : "words"} and ${projectInfoStats.characterCount} ${projectInfoStats.characterCount === 1 ? "character" : "characters"}.${authorText}${createdAtText}`
+  }, [documentVariablePageCount, formattedProjectCreatedAt, projectAuthor, projectInfoStats.characterCount, projectInfoStats.cutCount, projectInfoStats.fontCount, projectInfoStats.wordCount, totalLayerCount])
 
   const documentVariableContext = useMemo(() => ({
     projectTitle,
     pageNumber: activePageNumber,
-    pageCount: Math.max(1, projectPages.length),
+    pageCount: documentVariablePageCount,
     now: previewVariableNow,
-  }), [activePageNumber, previewVariableNow, projectPages.length, projectTitle])
+  }), [activePageNumber, documentVariablePageCount, previewVariableNow, projectTitle])
 
   return (
     <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
@@ -495,63 +498,49 @@ export function PreviewWorkspace({
                       <div className="min-w-0 flex-1">
                         <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>P R O J E C T</h3>
                       </div>
-                      <button
-                        type="button"
-                        aria-label="Close project panel"
-                        onClick={closeSidebarPanel}
-                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                          isDarkUi
-                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
-                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                        }`}
-                      >
-                        <X className="h-2 w-2" />
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          aria-label={showProjectInfo ? "Hide document info" : "Show document info"}
+                          aria-pressed={showProjectInfo}
+                          onClick={() => setShowProjectInfo((current) => !current)}
+                          className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                            showProjectInfo
+                              ? isDarkUi
+                                ? "border-[#f54123] bg-[#f54123] text-[#F4F6F8]"
+                                : "border-[#f54123] bg-[#f54123] text-white"
+                              : isDarkUi
+                                ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                                : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                          }`}
+                        >
+                          <Info className="h-2 w-2" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Close project panel"
+                          onClick={closeSidebarPanel}
+                          className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                            isDarkUi
+                              ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                              : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                          }`}
+                        >
+                          <X className="h-2 w-2" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <section className="mt-2">
-                    <header
-                      className="cursor-pointer select-none pt-1"
-                      onClick={() => setIsProjectInfoCollapsed((current) => !current)}
-                    >
-                      <div className="rounded-md py-2">
-                        <h3 className="leading-tight">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <div className={SECTION_HEADLINE_CLASSNAME}>Info</div>
-                              {isProjectInfoCollapsed ? (
-                                <div className={`text-[10px] font-normal leading-snug ${uiTheme.sidebarBody}`}>
-                                  {projectInfoCollapsedSummary}
-                                </div>
-                              ) : null}
-                            </div>
-                            <span
-                              className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                                isDarkUi
-                                  ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF]"
-                                  : "border-gray-300 bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              <ChevronUp
-                                className={`h-2 w-2 transition-transform ${isProjectInfoCollapsed ? "rotate-90" : "rotate-180"}`}
-                                aria-hidden="true"
-                              />
-                            </span>
-                          </div>
-                        </h3>
-                      </div>
-                    </header>
-                    {!isProjectInfoCollapsed ? (
-                      <div className="pb-4 pt-1">
-                        <p className={`text-xs leading-[1.45] ${uiTheme.sidebarBody}`}>
-                          {projectInfoSentence}
-                        </p>
-                      </div>
-                    ) : null}
-                  </section>
+                  {showProjectInfo ? (
+                    <div className="pb-4 pt-1">
+                      <p className={`text-xs leading-[1.45] ${uiTheme.sidebarBody}`}>
+                        {projectInfoSentence}
+                      </p>
+                    </div>
+                  ) : null}
                   <ProjectTitleSection
                     projectTitle={projectTitle}
-                    pageCount={projectPages.length}
+                    pageCount={documentVariablePageCount}
                     onProjectTitleChange={onProjectTitleChange}
                     isDarkMode={isDarkUi}
                   />

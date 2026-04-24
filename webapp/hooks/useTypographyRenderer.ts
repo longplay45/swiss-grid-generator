@@ -307,6 +307,7 @@ export function useTypographyRenderer<BlockId extends string>({
           blockOrder: keys,
           textContent,
           documentVariableContext,
+          isFacingSpread: (result.grid.contentRects?.length ?? 0) > 1,
           rawDocumentVariableBlockKey,
           styleAssignments,
           styles,

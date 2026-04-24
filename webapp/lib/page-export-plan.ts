@@ -66,6 +66,7 @@ import {
   resolveDocumentVariableContent,
   type DocumentVariableContext,
 } from "@/lib/document-variable-text"
+import { resolveSpreadDocumentVariableContextForColumn } from "@/lib/document-page-numbering"
 import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
@@ -625,10 +626,16 @@ export function buildPageExportPlan({
       if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return styleDefaultSize
       return clampFxSize(raw)
     }
-    const resolved = documentVariableContext
+    const blockDocumentVariableContext = resolveSpreadDocumentVariableContextForColumn(
+      documentVariableContext,
+      startCol,
+      gridCols,
+      (result.grid.contentRects?.length ?? 0) > 1,
+    )
+    const resolved = blockDocumentVariableContext
       ? resolveDocumentVariableContent({
           text: rawText,
-          context: documentVariableContext,
+          context: blockDocumentVariableContext,
           baseFormat,
           formatRuns: rawFormatRuns,
           baseTrackingScale,

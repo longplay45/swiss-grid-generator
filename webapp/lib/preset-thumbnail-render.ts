@@ -430,6 +430,7 @@ export function drawPresetThumbnailToCanvas(
         acc[key] = typeof value === "string" ? value : (isBaseBlockId(key) ? DEFAULT_TEXT_CONTENT[key] : "")
         return acc
       }, {} as Record<BlockId, string>),
+      isFacingSpread: (page.result.grid.contentRects?.length ?? 0) > 1,
       styleAssignments,
       styles: styleDefinitions,
       blockTextAlignments: Object.fromEntries(

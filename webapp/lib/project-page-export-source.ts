@@ -25,6 +25,10 @@ import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types
 import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
 import type { UiSettingsSnapshot } from "@/lib/workspace-ui-schema"
 import type { DocumentVariableContext } from "@/lib/document-variable-text"
+import {
+  getProjectPagePhysicalPageNumberAtIndex,
+  getProjectPhysicalPageCount,
+} from "@/lib/document-page-numbering"
 
 type TypographyStyleKey = string
 type BlockId = string
@@ -337,13 +341,15 @@ export function buildResolvedProjectPageExportSources(
 ): ResolvedProjectPageExportSource[] {
   const normalizedRange = normalizeProjectExportPageRange(project.pages.length, range.fromPage, range.toPage)
   const now = new Date()
+  const pageCount = getProjectPhysicalPageCount(project.pages)
   return sliceProjectPagesForExportRange(project, range).map((page, index) => {
-    const pageNumber = normalizedRange.startIndex + index + 1
+    const projectPageIndex = normalizedRange.startIndex + index
+    const pageNumber = getProjectPagePhysicalPageNumberAtIndex(project.pages, projectPageIndex)
     const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
     return buildResolvedProjectPageExportSource(page, sourcePath, {
       projectTitle: project.metadata.title,
       pageNumber,
-      pageCount: project.pages.length,
+      pageCount,
       now,
     })
   })

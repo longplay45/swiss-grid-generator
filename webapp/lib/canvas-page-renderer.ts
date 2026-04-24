@@ -31,6 +31,7 @@ import {
   resolveDocumentVariableContent,
   type DocumentVariableContext,
 } from "@/lib/document-variable-text"
+import { resolveSpreadDocumentVariableContextForColumn } from "@/lib/document-page-numbering"
 import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 import { buildTypographyLayoutPlan } from "@/lib/typography-layout-plan"
 import { sumGridColumnSpan } from "@/lib/grid-column-layout"
@@ -91,6 +92,7 @@ type BuildCanvasTypographyRenderPlansArgs<BlockId extends string, StyleKey exten
   blockOrder: BlockId[]
   textContent: Record<BlockId, string>
   documentVariableContext?: DocumentVariableContext | null
+  isFacingSpread?: boolean
   rawDocumentVariableBlockKey?: BlockId | null
   styleAssignments: Record<BlockId, StyleKey>
   styles: Record<StyleKey, TypographyStyleDefinition>
@@ -465,6 +467,7 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
   blockOrder,
   textContent,
   documentVariableContext = null,
+  isFacingSpread = false,
   rawDocumentVariableBlockKey = null,
   styleAssignments,
   styles,
@@ -568,11 +571,17 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     const maxLinesPerColumn = Math.max(1, Math.floor(blockHeight / Math.max(lineStep, 0.0001)))
     const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const resolveFontSize = (segmentStyleKey: StyleKey) => getBlockFontSize(key, segmentStyleKey)
-    const shouldResolveDocumentVariables = documentVariableContext && key !== rawDocumentVariableBlockKey
+    const blockDocumentVariableContext = resolveSpreadDocumentVariableContextForColumn(
+      documentVariableContext,
+      startCol,
+      gridCols,
+      isFacingSpread,
+    )
+    const shouldResolveDocumentVariables = blockDocumentVariableContext && key !== rawDocumentVariableBlockKey
     const resolved = shouldResolveDocumentVariables
       ? resolveDocumentVariableContent({
           text: rawText,
-          context: documentVariableContext,
+          context: blockDocumentVariableContext,
           baseFormat,
           formatRuns: rawFormatRuns,
           baseTrackingScale,
