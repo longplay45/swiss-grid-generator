@@ -377,9 +377,12 @@ export function ProjectPageLayersList({
               onClick={() => {
                 onSelectPage(pageId)
                 onSelectLayer(thumb.key)
-                if (allowLayerInteractions) {
-                  onToggleEditor(thumb.key)
-                }
+              }}
+              onDoubleClick={() => {
+                onSelectPage(pageId)
+                onSelectLayer(thumb.key)
+                if (!allowLayerInteractions) return
+                onToggleEditor(thumb.key)
               }}
               className={`${index > 0 ? "mt-2" : ""} relative rounded-md border px-3 py-2 text-xs leading-snug transition-colors ${
                 draggingKey === thumb.key

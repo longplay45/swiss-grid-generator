@@ -102,6 +102,7 @@ Current capability inventory for Swiss Grid Generator.
 - Newly added pages open automatically.
 - Project JSON supports an optional `tour` definition for quick onboarding tied to real pages and layers.
 - Layer cards support selection, reordering, locking, deletion, and editor opening.
+- Active-page layer cards now use single-click for selection and double-click for editor open/retarget, so keyboard nudging stays reachable from the Project panel without immediately entering edit mode.
 - Locked layers stay visible but are excluded from preview hover, drag, and editor retarget/open behavior until unlocked.
 - `Custom Ratio` accepts fractional width/height units, including decimal comma input for formats such as `2:1,414`.
 - Text paragraphs and image placeholders use logical grid anchors:

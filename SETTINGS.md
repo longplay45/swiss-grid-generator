@@ -221,6 +221,7 @@ Default: `swiss`
 - Image cards display `Image Placeholder` and a single color swatch.
 - Hovering an active-page layer card mirrors the same active preview rollover/guides for that block.
 - Dragging active-page layer cards changes z-index using a visible insertion marker between cards.
+- Single-clicking an active-page layer card selects that layer; double-clicking opens or retargets its editor.
 - Layer cards include a lock toggle to the left of delete. Locked layers stay visible in the stack but cannot be hovered, edited, or moved in preview until unlocked.
 - Selecting a layer card also highlights the corresponding layer in preview; selecting in preview scrolls the matching card into view in the panel.
 - Deleting from the panel removes the layer from the active page and saved project JSON.
