@@ -1,80 +1,21 @@
 import type { SectionKey } from "@/hooks/useSettingsHistory"
 
-export const QUICK_START_INDEX_ITEMS = [
-  { id: "help-quick-start", label: "Quick Start" },
-] as const
+import {
+  ALL_HELP_INDEX_ITEMS,
+  ALL_HELP_SECTION_ITEMS,
+  EDITOR_HELP_SUBSECTION_ITEMS,
+  HELP_INDEX_GROUPS,
+  type HelpSectionId,
+} from "@/lib/generated-help-content"
 
-export const GENERAL_INDEX_ITEMS = [
-  { id: "help-preview-workspace", label: "Preview Workspace" },
-  { id: "help-editor", label: "Text Editor" },
-  { id: "help-image-editor", label: "Image Editor" },
-  { id: "help-drag-placement", label: "Drag and Placement" },
-  { id: "help-history-reflow", label: "History and Reflow" },
-  { id: "help-save-load", label: "Save and Load Project JSON" },
-  { id: "help-export", label: "Export" },
-] as const
+export {
+  ALL_HELP_INDEX_ITEMS,
+  ALL_HELP_SECTION_ITEMS,
+  EDITOR_HELP_SUBSECTION_ITEMS,
+  HELP_INDEX_GROUPS,
+}
 
-export const GRID_SETTINGS_INDEX_ITEMS = [
-  { id: "help-canvas-ratio", label: "I. Canvas Ratio & Rotation" },
-  { id: "help-baseline-grid", label: "II. Baseline Grid" },
-  { id: "help-margins", label: "III. Margins" },
-  { id: "help-gutter", label: "IV. Gutter" },
-  { id: "help-typo", label: "V. Typo" },
-  { id: "help-available-fonts", label: "VI. Available Fonts" },
-  { id: "help-color-scheme", label: "VII. Color Scheme" },
-] as const
-
-export const HEADER_CONTROLS_INDEX_ITEMS = [
-  { id: "help-sidebars-header", label: "Header and Sidebars" },
-  { id: "help-help-navigation", label: "Help Navigation" },
-  { id: "help-header-examples", label: "Presets" },
-  { id: "help-header-load", label: "Load" },
-  { id: "help-header-save", label: "Save" },
-  { id: "help-header-export", label: "Export" },
-  { id: "help-header-undo", label: "Undo" },
-  { id: "help-header-redo", label: "Redo" },
-  { id: "help-header-dark-mode", label: "Dark Mode" },
-  { id: "help-header-smart-text-zoom", label: "Smart Text Zoom" },
-  { id: "help-header-baselines", label: "Baselines Toggle" },
-  { id: "help-header-margins", label: "Margins Toggle" },
-  { id: "help-header-modules", label: "Modules Toggle" },
-  { id: "help-header-typography", label: "Typography Toggle" },
-  { id: "help-header-image-placeholders", label: "Image Placeholders Toggle" },
-  { id: "help-header-layers", label: "Project Panel" },
-  { id: "help-header-information", label: "Information Toggle" },
-  { id: "help-shortcuts", label: "Keyboard Shortcuts" },
-] as const
-
-export const HELP_INDEX_GROUPS = [
-  { title: "Quick Start", items: QUICK_START_INDEX_ITEMS },
-  { title: "General Guidance", items: GENERAL_INDEX_ITEMS },
-  { title: "Application Controls", items: HEADER_CONTROLS_INDEX_ITEMS },
-  { title: "Grid Generator Settings", items: GRID_SETTINGS_INDEX_ITEMS },
-] as const
-
-export const ALL_HELP_INDEX_ITEMS = [
-  ...QUICK_START_INDEX_ITEMS,
-  ...GENERAL_INDEX_ITEMS,
-  ...HEADER_CONTROLS_INDEX_ITEMS,
-  ...GRID_SETTINGS_INDEX_ITEMS,
-] as const
-
-export const EDITOR_HELP_SUBSECTION_ITEMS = [
-  { id: "help-editor-paragraph", label: "Text Editor / Paragraph" },
-  { id: "help-editor-typo", label: "Text Editor / Typo" },
-  { id: "help-editor-placeholders", label: "Text Editor / Placeholders" },
-  { id: "help-editor-info", label: "Text Editor / Info" },
-  { id: "help-image-editor-geometry", label: "Image Editor / Geometry" },
-  { id: "help-image-editor-color", label: "Image Editor / Color" },
-  { id: "help-image-editor-info", label: "Image Editor / Info" },
-] as const
-
-export const ALL_HELP_SECTION_ITEMS = [
-  ...ALL_HELP_INDEX_ITEMS,
-  ...EDITOR_HELP_SUBSECTION_ITEMS,
-] as const
-
-export type HelpSectionId = (typeof ALL_HELP_SECTION_ITEMS)[number]["id"]
+export type { HelpSectionId }
 
 export const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId> = {
   format: "help-canvas-ratio",

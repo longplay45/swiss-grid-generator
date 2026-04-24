@@ -1,11 +1,19 @@
 import { useEffect } from "react"
-import { FONT_DEFINITIONS } from "@/lib/config/fonts"
-import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
-import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
-import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
-import type { HelpSectionId } from "@/lib/help-registry"
 import { ChevronUp, X } from "lucide-react"
 import type { ReactNode } from "react"
+
+import { FONT_DEFINITIONS } from "@/lib/config/fonts"
+import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
+import {
+  HELP_CONTENT_GROUPS,
+  type HelpBlock,
+  type HelpDirectiveName,
+  type HelpSection,
+  type HelpSubsection,
+} from "@/lib/generated-help-content"
+import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
+import type { HelpSectionId } from "@/lib/help-registry"
+import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
 
 type Props = {
   isDarkMode?: boolean
@@ -18,6 +26,17 @@ type SectionHeadingProps = {
   className: string
   jumpButtonClassName: string
   children: ReactNode
+}
+
+type Tone = {
+  heading: string
+  body: string
+  divider: string
+  emphasis: string
+  caption: string
+  indexLink: string
+  jumpButton: string
+  inlineCode: string
 }
 
 const GOOGLE_FONTS_SPECIMEN_BASE_URL = "https://fonts.google.com/specimen/"
@@ -62,6 +81,166 @@ function SectionHeading({
   )
 }
 
+function renderDocumentVariableTokens(tone: Tone, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = []
+  DOCUMENT_VARIABLE_DEFINITIONS.forEach(({ token }, index) => {
+    if (index > 0) {
+      nodes.push(<span key={`${keyPrefix}-sep-${token}`}>{", "}</span>)
+    }
+    nodes.push(
+      <code key={`${keyPrefix}-${token}`} className={tone.inlineCode}>
+        {token}
+      </code>,
+    )
+  })
+  return nodes
+}
+
+function renderInlineContent(text: string, tone: Tone, keyPrefix: string): ReactNode[] {
+  const tokenPattern = /(\{\{DOCUMENT_VARIABLE_TOKENS\}\}|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
+  return text.split(tokenPattern).flatMap((segment, index) => {
+    if (!segment) return []
+    const key = `${keyPrefix}-${index}`
+    if (segment === "{{DOCUMENT_VARIABLE_TOKENS}}") {
+      return renderDocumentVariableTokens(tone, key)
+    }
+    if (segment.startsWith("`") && segment.endsWith("`")) {
+      return (
+        <code key={key} className={tone.inlineCode}>
+          {segment.slice(1, -1)}
+        </code>
+      )
+    }
+    const linkMatch = segment.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+    if (linkMatch) {
+      return (
+        <a
+          key={key}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noreferrer"
+          className={tone.indexLink}
+        >
+          {linkMatch[1]}
+        </a>
+      )
+    }
+    return <span key={key}>{segment}</span>
+  })
+}
+
+function renderAvailableFonts(tone: Tone) {
+  return (
+    <div className="space-y-3">
+      {AVAILABLE_FONT_GROUPS.map((group) => (
+        <div key={group.category} className="space-y-1">
+          <p className={`text-xs font-semibold ${tone.heading}`}>{group.label}</p>
+          <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
+            {group.fonts.map((font) => (
+              <li key={font.value}>
+                <a
+                  href={getGoogleFontsSpecimenUrl(font.label)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={tone.indexLink}
+                >
+                  {font.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function renderShortcutTable(tone: Tone) {
+  return (
+    <div className="overflow-x-auto">
+      <table className={`w-full border-collapse text-xs ${tone.body}`}>
+        <thead>
+          <tr className={`border-b ${tone.divider}`}>
+            <th className={`py-1 text-left font-semibold ${tone.heading}`}>Action</th>
+            <th className={`py-1 text-left font-semibold ${tone.heading}`}>Shortcut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
+            <tr key={shortcut.id} className={`border-b last:border-0 ${tone.divider}`}>
+              <td className="py-1 align-top">{shortcut.description}</td>
+              <td className={`py-1 pr-3 align-top ${tone.emphasis}`}>{shortcut.combo}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function renderDirective(name: HelpDirectiveName, tone: Tone) {
+  switch (name) {
+    case "AVAILABLE_FONTS":
+      return renderAvailableFonts(tone)
+    case "SHORTCUT_TABLE":
+      return renderShortcutTable(tone)
+    case "DOCUMENT_VARIABLE_TOKENS":
+      return (
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          {renderDocumentVariableTokens(tone, "directive-document-variable-tokens")}
+        </p>
+      )
+    default:
+      return null
+  }
+}
+
+function renderHelpBlock(block: HelpBlock, tone: Tone, key: string) {
+  switch (block.type) {
+    case "paragraph":
+      return (
+        <p key={key} className={`text-xs leading-relaxed ${tone.body}`}>
+          {renderInlineContent(block.text, tone, key)}
+        </p>
+      )
+    case "list":
+      return (
+        <ul key={key} className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
+          {block.items.map((item, itemIndex) => (
+            <li key={`${key}-${itemIndex}`}>
+              {renderInlineContent(item, tone, `${key}-${itemIndex}`)}
+            </li>
+          ))}
+        </ul>
+      )
+    case "directive":
+      return <div key={key}>{renderDirective(block.name, tone)}</div>
+    default:
+      return null
+  }
+}
+
+function renderSubsection(subsection: HelpSubsection, tone: Tone) {
+  return (
+    <div key={subsection.id} id={subsection.id} className="space-y-1 pt-1">
+      <h5 className={`text-xs font-semibold ${tone.heading}`}>{subsection.title}</h5>
+      {subsection.blocks.map((block, index) => renderHelpBlock(block, tone, `${subsection.id}-${index}`))}
+    </div>
+  )
+}
+
+function renderSection(section: HelpSection, tone: Tone) {
+  return (
+    <section key={section.id} id={section.id} className="space-y-2">
+      <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+        {section.title}
+      </SectionHeading>
+      {section.blocks.map((block, index) => renderHelpBlock(block, tone, `${section.id}-${index}`))}
+      {section.subsections.map((subsection) => renderSubsection(subsection, tone))}
+    </section>
+  )
+}
+
 export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Props) {
   useEffect(() => {
     if (!activeSectionId) return
@@ -82,7 +261,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
     })
   }, [activeSectionId])
 
-  const tone = isDarkMode
+  const tone: Tone = isDarkMode
     ? {
         heading: "text-[#F4F6F8]",
         body: "text-[#A8B1BF]",
@@ -91,6 +270,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         caption: "text-[#8D98AA]",
         indexLink: "text-blue-400 hover:underline",
         jumpButton: "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:bg-[#1D232D] hover:text-[#F4F6F8]",
+        inlineCode: "rounded-sm bg-black/5 px-1 py-[1px] font-mono text-[11px] text-[#F4F6F8] dark:bg-white/10",
       }
     : {
         heading: "text-gray-900",
@@ -100,7 +280,15 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         caption: "text-gray-400",
         indexLink: "text-blue-600 hover:underline",
         jumpButton: "border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900",
+        inlineCode: "rounded-sm bg-gray-100 px-1 py-[1px] font-mono text-[11px] text-gray-900",
       }
+
+  const renderedSections: HelpSection[] = []
+  for (const group of HELP_CONTENT_GROUPS) {
+    for (const section of group.sections) {
+      renderedSections.push(section as HelpSection)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -134,644 +322,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         ))}
       </div>
 
-      <hr className={tone.divider} />
-
-      <section id="help-quick-start" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Quick Start
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Pick a ratio preset or `Custom Ratio` in `I. Canvas Ratio` and set orientation/rotation.</li>
-          <li>Set baseline in `II. Baseline Grid`; all vertical rhythm depends on it.</li>
-          <li>Choose a margin method in `III. Margins`, or select `Custom Margins` from the same dropdown.</li>
-          <li>Set columns/rows, gutter, and rhythm in `IV. Grid &amp; Rhythms`.</li>
-          <li>Set type hierarchy and base font in `V. Typo`, then use `VI. Available Fonts` for the full family list and Google Fonts links.</li>
-          <li>Set default placeholder palette in `VII. Color Scheme`.</li>
-          <li>Supported dropdown menus preview the hovered item live in the page; leaving or closing the menu restores the committed state until you select an option.</li>
-          <li>Use display toggles in the header to inspect baselines, margins, modules, and type.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <div className="space-y-1" id="help-general-overview">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          General Guidance
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Core workflows and operational reference for editing content, reflow behavior, file I/O, and troubleshooting.
-        </p>
-      </div>
-
-      <hr className={tone.divider} />
-
-      <section id="help-preview-workspace" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Preview Workspace
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>The preview page is the live layout surface for the active project page, including placement, editing, duplication, and deletion.</li>
-          <li>Supported layout and editor dropdowns can temporarily redraw the page while open so you can judge a hovered option before committing it.</li>
-          <li>Double-click an empty module to add a text paragraph; `Shift` + double-click adds an image placeholder (`Ctrl` fallback).</li>
-          <li>When a project has multiple pages, `Page Up` activates the previous page, `Page Down` activates the next one, and `Home` / `End` jump to the first or last page.</li>
-          <li>Hover a paragraph or image placeholder to reveal its edit affordance and its orange top/left guide lines.</li>
-          <li>Paragraph guide lines resolve from the configured paragraph height (`rows + baselines`), not only from the rendered text bounds.</li>
-          <li>The paragraph hover edit icon is anchored at the paragraph&apos;s top-left origin so it stays reachable on shallow frames such as `0 rows + 1 baseline`.</li>
-          <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
-          <li>When a text or image editor is already open, preview rollover stays active on other unlocked blocks so you can see the next target before switching.</li>
-          <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` setting and, when `Snap to Baseline (Y)` is on, default to module-top Y snapping with baseline drag available on `Shift`/`Ctrl`.</li>
-          <li>With a selected unlocked layer and no active editor field, arrow keys nudge the layer through the same logic: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes use tenth-step logical nudges with `Shift` as a 10x multiplier.</li>
-          <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
-          <li>Locked layers are skipped by preview hover, hit-testing, drag, and editor retargeting until you unlock them from the Project panel.</li>
-          <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>
-          <li>Preview hover and Project-panel layer hover stay linked, so moving across either surface reveals the same active guides for the same block.</li>
-          <li>Undo/redo includes preview edits, placement changes, duplication, deletion, and editor saves.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-editor" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Text Editor
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Open editor from the hover edit icon on a text block; double-click empty area creates a paragraph block.</li>
-          <li>When edit mode is active, the left sidebar switches from layout settings to text settings.</li>
-          <li>The editor uses the same section layout rhythm as the main settings sidebar: `Paragraph`, `Typo`, `Placeholders`, and `Info`.</li>
-          <li>The paragraph header uses the same user-facing layer label shown in the Project panel instead of the internal block id.</li>
-          <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
-          <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
-          <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>`Esc` or outside click exits edit mode; double-clicking another active-page unlocked layer card or clicking another existing unlocked preview block retargets the already open editor instead.</li>
-          <li>Inside inline text edit, double-click selects the clicked word, triple-click selects the containing sentence, `Alt+A` or `Cmd/Ctrl+A` select the whole paragraph, and `Arrow` / `Home` / `End` navigation follows the rendered line geometry.</li>
-        </ul>
-
-        <div id="help-editor-paragraph" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Paragraph Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Rows, baselines, columns, horizontal alignment, vertical alignment, newspaper reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, and paragraph rotation (`-180..180`).</li>
-            <li>Paragraph height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
-            <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-            <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
-            <li>Increasing paragraph `Cols` preserves the anchored column even when the wider frame intentionally overhangs the page edge.</li>
-            <li>Vertical alignment (`Top`, `Center`, `Bottom`) positions the line stack inside the configured paragraph frame while staying on the baseline system.</li>
-            <li>`Snap to Columns (X)` locks paragraph placement to logical column anchors; turning it off allows free horizontal placement with symmetric one-column overhang into the side margins.</li>
-            <li>`Snap to Baseline (Y)` keeps paragraph placement on editorial Y anchors; normal drag snaps to module tops, `Shift`/`Ctrl` drag snaps to baseline rows, and turning it off allows free vertical placement.</li>
-            <li>Newspaper reflow is available only when paragraph columns are `2+`.</li>
-            <li>With reflow active, text flows across configured columns (column 1 top-to-bottom, then column 2, etc.).</li>
-          </ul>
+      {renderedSections.map((section) => (
+        <div key={`${section.id}-wrapper`}>
+          <hr className={tone.divider} />
+          {renderSection(section, tone)}
         </div>
-
-        <div id="help-editor-typo" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Typo Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Font family, font cut, style hierarchy, scheme preview, paragraph swatches, kerning, tracking, and Custom size/leading when `Custom` is selected.</li>
-            <li>When a text range is selected, type and color controls apply to that selection instead of rebasing the whole paragraph.</li>
-            <li>Font family, font cut, hierarchy, and scheme hover in their dropdowns preview the active result before you commit it.</li>
-          </ul>
-        </div>
-
-        <div id="help-editor-placeholders" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Placeholders Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Lists the available document-variable tokens for fitted lorem, project title, folios, and proof timestamps.</li>
-            <li>Clicking a token inserts it at the current caret position or replaces the current text selection.</li>
-            <li>While editing, placeholder tokens stay visible as raw text in the active paragraph; outside edit mode they render to live values.</li>
-            <li><code>&lt;%lorem%&gt;</code> fills the active paragraph frame according to its rows, baselines, columns, reflow, and hyphenation settings.</li>
-            <li>
-              Available tokens: {DOCUMENT_VARIABLE_DEFINITIONS.map(({ token }, index) => (
-                <span key={token}>
-                  {index > 0 ? ", " : ""}
-                  <code>{token}</code>
-                </span>
-              ))}.
-            </li>
-          </ul>
-        </div>
-
-        <div id="help-editor-info" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Info includes geometry, type summary, character count, word count, and `Max/Line`.</li>
-            <li>Changes apply live while editing.</li>
-          </ul>
-        </div>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-image-editor" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Image Editor
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Open from the hover edit icon on an image placeholder or by `Shift` + double-click on an empty module.</li>
-          <li>When edit mode is active, the left sidebar switches from layout settings to image placeholder settings.</li>
-          <li>The editor uses the same section layout as the main settings sidebar: `Geometry`, `Color`, and `Info`.</li>
-          <li>The image header shows `IMAGE` plus the current placeholder swatch color.</li>
-          <li>When help is open, the editor section headers pick up the same blue help line and rollover jump behavior as the main settings sidebar.</li>
-          <li>Hover a blue-marked section header to jump directly to its matching help subsection below.</li>
-          <li>Section headers single-click to toggle one section; double-click opens or closes all editor sections.</li>
-          <li>`Esc` or outside click exits edit mode; double-clicking another active-page layer card retargets the editor instead.</li>
-        </ul>
-
-        <div id="help-image-editor-geometry" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Geometry Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Rows, baselines, columns, `Snap to Columns (X)`, `Snap to Baseline (Y)`, and placeholder rotation (`-180..180`).</li>
-            <li>Placeholder height is composed as `rows + baselines`; `rows` may be `0` when the baseline height is greater than `0`.</li>
-            <li>The `Baselines` control is a bounded dropdown from `0` to the current document&apos;s baselines-per-grid-module count.</li>
-            <li>`Rows`, `Baselines`, and `Cols` preview live on dropdown rollover before commit.</li>
-            <li>`Snap to Columns (X)` locks horizontal placement to logical column anchors; turning it off allows free horizontal placement with symmetric one-column overhang into the side margins.</li>
-            <li>`Snap to Baseline (Y)` keeps placeholder placement on editorial Y anchors; normal drag snaps to module tops, `Shift`/`Ctrl` drag snaps to baseline rows, and turning it off allows free vertical placement.</li>
-          </ul>
-        </div>
-
-        <div id="help-image-editor-color" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Color Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Scheme, swatch color, and transparency.</li>
-            <li>Scheme hover in the dropdown previews the active placeholder palette before you commit it.</li>
-          </ul>
-        </div>
-
-        <div id="help-image-editor-info" className="space-y-1 pt-1">
-          <h5 className={`text-xs font-semibold ${tone.heading}`}>Info Section</h5>
-          <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-            <li>Info summarizes the current rows, baselines, columns, X/Y snap state, rotation, scheme, color, and transparency for the active placeholder.</li>
-          </ul>
-        </div>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-drag-placement" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Drag and Placement
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Default paragraph and image-placeholder drag respect each layer&apos;s current `Snap to Columns (X)` state; when `Snap to Baseline (Y)` is on, the default Y target is the nearest module top.</li>
-          <li>`Alt/Option` + drag duplicates a block and drops the copy.</li>
-          <li>`Shift` + double-click on an empty module creates an image placeholder and opens its editor (`Ctrl` fallback).</li>
-          <li>Holding `Shift` during paragraph or image-placeholder drag temporarily snaps the Y position to the nearest baseline row (`Ctrl` fallback).</li>
-          <li>Paragraph and image-placeholder drag stay within their current placement bounds, including the extended overset range used by unsnapped and overhanging placements.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-history-reflow" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          History and Reflow
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Undo/redo includes settings changes and block edits/placement changes.</li>
-          <li>Reducing columns or rows does not auto-reposition paragraphs or image placeholders.</li>
-          <li>If a reduction would push positioned paragraphs or image placeholders beyond the proposed grid, the grid stays unchanged.</li>
-          <li>An invalid reduction shows a temporary warning in the preview instead of opening a modal.</li>
-          <li>Reposition or delete the conflicting paragraphs or image placeholders, then try the reduction again.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <div className="space-y-1" id="help-ux-overview">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          UX Reference
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Interaction patterns for settings controls and header controls, including visibility toggles and panel behavior.
-        </p>
-      </div>
-
-      <hr className={tone.divider} />
-
-      <SectionHeading
-        as="h5"
-        className={`text-sm font-semibold ${tone.heading}`}
-        jumpButtonClassName={tone.jumpButton}
-      >
-        Application Controls
-      </SectionHeading>
-
-      <section id="help-sidebars-header" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Header and Sidebars
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Header actions include Presets, Load, Save, Export, Undo/Redo, dark mode, smart text zoom, and display toggles.</li>
-          <li>Display controls include baselines, margins, modules, image placeholders, typography, and the Project panel toggle.</li>
-          <li>`Save`, `Export`, and the display toggles stay disabled until a preview layout is available.</li>
-          <li>The Project toggle sits directly after the image-placeholder toggle, separated by a divider.</li>
-          <li>The right-side header actions are ordered as `i` (information/tooltips) and `?` (help).</li>
-          <li>`i` toggles rollover info/tooltips globally across the app. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.</li>
-          <li>The Project panel can also be toggled from the keyboard via <span className={tone.emphasis}>Cmd/Ctrl+Shift+P</span>.</li>
-          <li>`?` opens or closes the help sidebar. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+H</span>.</li>
-          <li>While the presets browser is open, side panels and the header Project toggle are temporarily disabled.</li>
-          <li>Footer `Feedback` link toggles the feedback sidebar panel; `Imprint` toggles the imprint panel, and both remain active while presets are open.</li>
-          <li>Right-side content panels include close icons in their header rows.</li>
-          <li>Only one right-side panel is open at a time.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-help-navigation" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Help Navigation
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Use the header Help icon to open or close the help sidebar.</li>
-          <li>When help is open, blue-highlighted targets become hover-jump sensitive in the header, preview page, presets, editor sidebars, and settings sections.</li>
-          <li>Hover a highlighted target to jump to the matching help topic without closing help.</li>
-          <li>Use the small up-arrow beside each help title to jump back to the index at the top.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-examples" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Presets
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Opens the presets browser in the preview area.</li>
-          <li>Bundled files are grouped into `1. Presets` and `2. Examples`; `3. Users` is reserved for user-created layout JSONs.</li>
-          <li>Double-click a thumbnail to load it.</li>
-          <li>Press `Esc` to close the browser without loading a preset.</li>
-          <li>When help is open, hovering the presets panel (or its `?` marker) jumps here.</li>
-          <li>Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+4</span>.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-load" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Load
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Loads a saved project JSON from disk; legacy single-page JSON is still accepted and wrapped into a one-page project. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+O</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-save" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Save
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Saves project metadata plus every page&apos;s settings and layout state as project JSON; optional project tours are stored in the same file. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+S</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-export" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Export
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Opens the export dialog for vector PDF, SVG, and IDML output. Use `SVG` or `IDML` when you need typography
-          frozen into non-live geometry. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+E</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-undo" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Undo
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Reverts the latest history step when available. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Z</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-redo" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Redo
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Reapplies an undone history step when available. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+Z</span> or <span className={tone.emphasis}>Cmd/Ctrl+Y</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-dark-mode" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Dark Mode
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Toggles light and dark UI themes. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+D</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-smart-text-zoom" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Smart Text Zoom
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Toggles the preview&apos;s text-edit zoom mode. It is enabled by default, zooms to the active text paragraph on entry, stays stable through ordinary text and style edits, refits when paragraph frame geometry changes (`Rows`, `Baselines`, `Cols`), and returns to full-page fit when text edit mode closes.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-baselines" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Baselines Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Shows or hides baseline grid lines. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+B</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-margins" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Margins Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Shows or hides margin frame guides. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+M</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-modules" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Modules Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Shows or hides module and gutter guides. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+G</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-typography" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Typography Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Shows or hides text/style preview overlays. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+T</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-image-placeholders" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Image Placeholders Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Shows or hides image placeholder overlays. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+J</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-layers" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Project Panel
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Opens the right-side Project panel with an editable project name and a `Pages` section.</li>
-          <li>The name row edits the project title, and that title drives the default JSON filename stem.</li>
-          <li>`Pages` stays visible in the fixed project-panel header while the page list scrolls; single-click a page card to activate it and double-click the card to open or close its inline layer list.</li>
-          <li>Opened page cards expose a one-way `Facing pages` checkbox above `Layers`, converting the page into a true spread with mirrored inner/outer margins and a zero-gap preview seam.</li>
-          <li>`Page Up` and `Page Down` also step through project pages when multiple pages are available, and `Home` / `End` jump to the first or last one.</li>
-          <li>After conversion, the spread stays a single page card and edits inside one doubled coordinate space instead of managing a hidden companion page.</li>
-          <li>Each page card has its own open/close toggle; opening a page reveals that page&apos;s mixed text/image layer stack inline.</li>
-          <li>Newly added pages open automatically.</li>
-          <li>Active-page layer cards mirror the same preview rollover/guides, so layer inspection stays linked to the page surface.</li>
-          <li>For the active page, drag unlocked layer cards to reorder z-index; single-click selects the layer, double-click opens or retargets the editor, and clicks elsewhere in the Project panel exit edit mode.</li>
-          <li>Each layer card includes a lock toggle to the left of delete. Locked layers stay visible and selectable in the stack, but preview hover, move, and editor access are disabled until unlocked.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-header-information" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Information Toggle
-        </SectionHeading>
-        <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Toggles rollover info/tooltips globally across header controls, side panels, and editor affordances. Shortcut: <span className={tone.emphasis}>Cmd/Ctrl+Shift+I</span>.
-        </p>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <SectionHeading
-        as="h5"
-        className={`text-sm font-semibold ${tone.heading}`}
-        jumpButtonClassName={tone.jumpButton}
-      >
-        Grid Generator Settings
-      </SectionHeading>
-
-      <section id="help-canvas-ratio" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          I. Canvas Ratio &amp; Rotation
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Choose a base canvas ratio preset, or select `Custom Ratio` and enter width:height units directly, including fractional ratios such as `2:1.414` for spread-style proportions like facing A4. Actual `Facing pages` conversion is configured per page in the Project panel.</li>
-          <li>`Ratio` and `Orientation` preview live on dropdown rollover before commit.</li>
-          <li>Orientation changes between portrait and landscape at the layout level.</li>
-          <li>Rotation rotates the preview/export composition between `-180..180` degrees.</li>
-          <li>Custom ratios generate page dimensions at A4-equivalent area before orientation is applied.</li>
-          <li>Paper sizing for DIN/ANSI exports is derived from this ratio selection.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-baseline-grid" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          II. Baseline Grid
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>The baseline unit controls vertical rhythm for grid and typography.</li>
-          <li>Most style leading values follow baseline multiples; Swiss caption uses a tighter `7pt / 8pt` pairing.</li>
-          <li>Top and bottom margins are snapped to baseline units.</li>
-          <li>Changing baseline does not auto-reposition blocks.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-margins" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          III. Margins
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>The `Margin Method` dropdown offers Progressive (`1:2:2:3`), Van de Graaf (`2:3:4:6`), Baseline (`1:1:1:1`), and `Custom Margins`.</li>
-          <li>The `Margin Method` list previews hovered options live before commit.</li>
-          <li>`Baseline Multiple` scales both method ratios and custom margin ratios while staying baseline-aligned.</li>
-          <li>Selecting `Custom Margins` reveals independent top/left/right/bottom sliders that still scale through the shared baseline multiple.</li>
-          <li>Bottom margin is expected to align with the last baseline line.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-gutter" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          IV. Grid &amp; Rhythms
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Grid range is `1..13` for both columns and rows.</li>
-          <li>Gutter multiple range is `1.0..4.0` in `0.5` steps.</li>
-          <li>`Rhythms` options: `Fibonacci`, `Golden Ratio`, `Perfect Fifth`, `Perfect Fourth`, `Repetitive` (default).</li>
-          <li>`Rhythms` plus the non-repetitive direction lists preview hovered options live before commit.</li>
-          <li>For all non-repetitive rhythms, rows can be toggled on/off with direction `Left to right` or `Right to left` (default: on, `Left to right`).</li>
-          <li>For all non-repetitive rhythms, cols can be toggled on/off with direction `Top to Bottom` or `Bottom to top` (default: on, `Top to Bottom`).</li>
-          <li>Module sizes are recomputed after each rows/cols/gutter change.</li>
-          <li>Reducing rows or columns is blocked when paragraphs or image placeholders would fall outside the new grid.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-typo" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          V. Typo
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Typography scales: Swiss, Golden Ratio, Perfect Fourth, Perfect Fifth, Fibonacci.</li>
-          <li>The Typo panel shows current size and leading for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline.</li>
-          <li>`Custom` is paragraph-level only and is seeded from the paragraph&apos;s current size and leading when first selected in the text editor.</li>
-          <li>In Swiss scale on the 12pt A4 reference baseline, Display is `64pt / 72pt`.</li>
-          <li>In Swiss scale, caption uses `7pt` size with `8pt` leading on the A4 reference baseline.</li>
-          <li>`Font Hierarchy` and `Base Font` preview live on dropdown rollover before commit.</li>
-          <li>`Base Font` is inherited by blocks that do not store explicit overrides.</li>
-          <li>The text editor can override the paragraph cut with any available family variant, while untouched weight/slant defaults still follow the selected hierarchy.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-available-fonts" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          VI. Available Fonts
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Base-font and paragraph font-family pickers use the same grouped family list.</li>
-          <li>Supported font-family pickers preview hovered families live before commit.</li>
-          <li>Every listed family links to its Google Fonts specimen/download page.</li>
-        </ul>
-        <div className="space-y-3">
-          {AVAILABLE_FONT_GROUPS.map((group) => (
-            <div key={group.category} className="space-y-1">
-              <p className={`text-xs font-semibold ${tone.heading}`}>{group.label}</p>
-              <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
-                {group.fonts.map((font) => (
-                  <li key={font.value}>
-                    <a
-                      href={getGoogleFontsSpecimenUrl(font.label)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={tone.indexLink}
-                    >
-                      {font.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-color-scheme" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          VII. Color Scheme
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Selects the base scheme used for new image placeholders.</li>
-          <li>`Background` applies `None` or any color from the selected scheme to the page.</li>
-          <li>`Base Color Scheme` and `Background` preview live on dropdown rollover before commit.</li>
-          <li>The same selector appears in the image editor.</li>
-          <li>Image editor starts with the current global scheme selected.</li>
-          <li>Each placeholder still stores its own final color value.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-save-load" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Save and Load Project JSON
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>Save Project JSON stores metadata, `activePageId`, the full `pages[]` array with per-page settings and preview layout state, and an optional `tour` block for onboarding flows.</li>
-          <li>Bundled presets use the same project JSON schema as saved documents and are loaded through the same parser.</li>
-          <li>Paragraphs and image placeholders are saved with logical anchors (`column`, `row`, `baselineOffset`) so their positions stay stable across grid changes; both layer types also persist independent `Snap to Columns (X)`, `Snap to Baseline (Y)`, and rotation values.</li>
-          <li>Load Project JSON restores the full project structure and the active page where valid.</li>
-          <li>Legacy single-page JSON is still accepted and is wrapped into a one-page project during import.</li>
-          <li>Unknown font overrides are dropped during load normalization.</li>
-          <li>Overrides equal to inherited defaults are normalized away.</li>
-          <li>Invalid/out-of-range spans/rows/positions are clamped safely.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-export" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Export
-        </SectionHeading>
-        <ul className={`space-y-1.5 text-xs list-disc pl-4 ${tone.body}`}>
-          <li>All export formats are vector-based, not raster screenshots.</li>
-          <li>The export dialog defaults to the full project page range and lets you narrow it with `From` / `To` selectors when the project has multiple pages.</li>
-          <li>All export formats use each page&apos;s stored document size directly; the dialog no longer offers paper-size or width overrides.</li>
-          <li>`PDF` offers `Digital Print` (default) and `Press Proof`, with bleed, registration-style marks, and embedded output intents where applicable. It remains vector-based and visually faithful, but frozen non-live typography is the `SVG` / `IDML` path.</li>
-          <li>`SVG v1` exports trim-size SVGs with typography converted to exact glyph outlines, or a ZIP with one trim-size SVG per page for multi-page ranges. Exported text is no longer live-editable.</li>
-          <li>`IDML v1` exports the selected page range with separate `Guides`, `Typography`, and `Placeholders` layers plus frozen text-frame geometry and resolved font family/style names. Exported text is no longer live-editable.</li>
-          <li>All export formats preserve the current page rotation and the visible guide/content systems they support.</li>
-        </ul>
-      </section>
-
-      <hr className={tone.divider} />
-
-      <section id="help-shortcuts" className="space-y-2">
-        <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
-          Keyboard Shortcuts
-        </SectionHeading>
-        <p className={`text-[11px] leading-relaxed ${tone.body}`}>
-          `Cmd/Ctrl` means use <span className={tone.emphasis}>Cmd</span> on macOS and <span className={tone.emphasis}>Ctrl</span> on Windows/Linux.
-        </p>
-        <div className="overflow-x-auto">
-          <table className={`w-full border-collapse text-xs ${tone.body}`}>
-            <thead>
-              <tr className={`border-b ${tone.divider}`}>
-                <th className={`py-1 text-left font-semibold ${tone.heading}`}>Action</th>
-                <th className={`py-1 text-left font-semibold ${tone.heading}`}>Shortcut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {PREVIEW_HEADER_SHORTCUTS.map((shortcut) => (
-                <tr key={shortcut.id} className={`border-b last:border-0 ${tone.divider}`}>
-                  <td className="py-1 align-top">{shortcut.description}</td>
-                  <td className={`py-1 pr-3 align-top ${tone.emphasis}`}>{shortcut.combo}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      ))}
     </div>
   )
 }
