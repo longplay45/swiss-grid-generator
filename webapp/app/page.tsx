@@ -1006,6 +1006,8 @@ export default function Home() {
       documentHistoryResetNonce={documentHistoryResetNonce}
       selectedLayerKey={selectedLayerKey}
       projectTitle={projectMetadata.title}
+      projectAuthor={projectMetadata.author}
+      projectCreatedAt={projectMetadata.createdAt}
       projectPages={projectPages}
       activePageId={activePageId}
       loadedPreviewLayout={loadedPreviewLayout}

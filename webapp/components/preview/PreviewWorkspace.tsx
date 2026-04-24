@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, X } from "lucide-react"
+import { ChevronUp, Plus, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { GridPreview } from "@/components/grid-preview"
@@ -11,7 +11,7 @@ import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
-import type { FontFamily } from "@/lib/config/fonts"
+import { getStyleDefaultFontWeight, resolveFontVariant, type FontFamily } from "@/lib/config/fonts"
 import {
   type ImageColorSchemeId,
 } from "@/lib/config/color-schemes"
@@ -25,6 +25,7 @@ import type { LayoutPreset } from "@/lib/presets"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import { ProjectTourOverlay } from "@/components/preview/ProjectTourOverlay"
+import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -66,6 +67,8 @@ type Props = {
   documentHistoryResetNonce: number
   selectedLayerKey: string | null
   projectTitle: string
+  projectAuthor: string
+  projectCreatedAt?: string
   projectPages: PreviewProjectPage[]
   activePageId: string
   loadedPreviewLayout: { token: number; layout: PreviewLayoutState } | null
@@ -184,6 +187,8 @@ export function PreviewWorkspace({
   documentHistoryResetNonce,
   selectedLayerKey,
   projectTitle,
+  projectAuthor,
+  projectCreatedAt,
   projectPages,
   activePageId,
   loadedPreviewLayout,
@@ -232,6 +237,7 @@ export function PreviewWorkspace({
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
   const [layerPanelHoveredLayerKey, setLayerPanelHoveredLayerKey] = useState<string | null>(null)
   const [previewEditorOpenToken, setPreviewEditorOpenToken] = useState(0)
+  const [isProjectInfoCollapsed, setIsProjectInfoCollapsed] = useState(true)
   const previewVariableNow = useMemo(() => new Date(), [])
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
@@ -254,6 +260,86 @@ export function PreviewWorkspace({
     const activeIndex = projectPages.findIndex((page) => page.id === activePageId)
     return activeIndex >= 0 ? activeIndex + 1 : 1
   }, [activePageId, projectPages])
+
+  const totalLayerCount = useMemo(() => (
+    projectPages.reduce((sum, page) => (
+      sum
+      + (page.previewLayout?.blockOrder.length ?? 0)
+      + (page.previewLayout?.imageOrder?.length ?? 0)
+    ), 0)
+  ), [projectPages])
+
+  const projectInfoStats = useMemo(() => {
+    const usedFonts = new Set<string>()
+    const usedCuts = new Set<string>()
+    let wordCount = 0
+    let characterCount = 0
+
+    projectPages.forEach((page) => {
+      const layout = page.previewLayout
+      if (!layout) return
+
+      const uiSnapshot = resolveUiSettingsSnapshot(page.uiSettings)
+      const pageResult = buildGridResultFromUiSettings(uiSnapshot)
+      const styleDefinitions = pageResult.typography.styles
+      const pageBaseFont = uiSnapshot.baseFont
+      const blockFonts = layout.blockFontFamilies ?? {}
+      const blockWeights = layout.blockFontWeights ?? {}
+      const blockItalic = layout.blockItalic ?? {}
+      const styleAssignments = layout.styleAssignments ?? {}
+
+      layout.blockOrder.forEach((key) => {
+        const rawText = layout.textContent[key] ?? ""
+        characterCount += rawText.length
+        const words = rawText.trim().match(/\S+/g)
+        wordCount += words?.length ?? 0
+
+        const styleKey = styleAssignments[key] ?? "body"
+        const family = blockFonts[key] ?? pageBaseFont
+        const requestedWeight = typeof blockWeights[key] === "number" && Number.isFinite(blockWeights[key])
+          ? blockWeights[key]!
+          : getStyleDefaultFontWeight(styleDefinitions[styleKey]?.weight)
+        const requestedItalic = typeof blockItalic[key] === "boolean"
+          ? blockItalic[key]!
+          : styleDefinitions[styleKey]?.blockItalic === true
+        const variant = resolveFontVariant(family, requestedWeight, requestedItalic)
+        usedFonts.add(family)
+        usedCuts.add(`${family}:${variant.id}`)
+      })
+    })
+
+    return {
+      fontCount: usedFonts.size,
+      cutCount: usedCuts.size,
+      wordCount,
+      characterCount,
+    }
+  }, [projectPages])
+
+  const formattedProjectCreatedAt = useMemo(() => {
+    if (!projectCreatedAt) return null
+    const timestamp = Date.parse(projectCreatedAt)
+    if (Number.isNaN(timestamp)) return null
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(timestamp))
+  }, [projectCreatedAt])
+
+  const projectInfoSentence = useMemo(() => {
+    const authorText = projectAuthor.trim()
+      ? ` It was created by ${projectAuthor.trim()}`
+      : " It has no saved author"
+    const createdAtText = formattedProjectCreatedAt
+      ? ` on ${formattedProjectCreatedAt}.`
+      : "."
+    return `This document consists of ${projectPages.length} ${projectPages.length === 1 ? "page" : "pages"} with ${totalLayerCount} ${totalLayerCount === 1 ? "layer" : "layers"}, uses ${projectInfoStats.fontCount} ${projectInfoStats.fontCount === 1 ? "font" : "fonts"} and ${projectInfoStats.cutCount} ${projectInfoStats.cutCount === 1 ? "cut" : "cuts"}, and contains ${projectInfoStats.wordCount} ${projectInfoStats.wordCount === 1 ? "word" : "words"} and ${projectInfoStats.characterCount} ${projectInfoStats.characterCount === 1 ? "character" : "characters"}.${authorText}${createdAtText}`
+  }, [formattedProjectCreatedAt, projectAuthor, projectInfoStats.characterCount, projectInfoStats.cutCount, projectInfoStats.fontCount, projectInfoStats.wordCount, projectPages.length, totalLayerCount])
+
+  const projectInfoCollapsedSummary = useMemo(() => (
+    `${projectPages.length}p, ${totalLayerCount}l, ${projectInfoStats.fontCount}f, ${projectInfoStats.cutCount}c, ${projectInfoStats.wordCount}w`
+  ), [projectInfoStats.cutCount, projectInfoStats.fontCount, projectInfoStats.wordCount, projectPages.length, totalLayerCount])
 
   const documentVariableContext = useMemo(() => ({
     projectTitle,
@@ -405,7 +491,7 @@ export function PreviewWorkspace({
               <div className="flex h-full min-h-0 flex-col">
                 <div className="mb-3 shrink-0 px-4 pt-4 md:px-6 md:pt-6">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>Project Structure</h3>
+                    <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>P R O J E C T</h3>
                     <button
                       type="button"
                       aria-label="Close project panel"
@@ -415,6 +501,46 @@ export function PreviewWorkspace({
                       <X className="h-4 w-4" />
                     </button>
                   </div>
+                  <section className="mt-2">
+                    <header
+                      className="cursor-pointer select-none pt-1"
+                      onClick={() => setIsProjectInfoCollapsed((current) => !current)}
+                    >
+                      <div className="rounded-md py-2">
+                        <h3 className="leading-tight">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className={SECTION_HEADLINE_CLASSNAME}>Info</div>
+                              {isProjectInfoCollapsed ? (
+                                <div className={`text-[10px] font-normal leading-snug ${uiTheme.sidebarBody}`}>
+                                  {projectInfoCollapsedSummary}
+                                </div>
+                              ) : null}
+                            </div>
+                            <span
+                              className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                isDarkUi
+                                  ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF]"
+                                  : "border-gray-300 bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              <ChevronUp
+                                className={`h-2 w-2 transition-transform ${isProjectInfoCollapsed ? "rotate-90" : "rotate-180"}`}
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </div>
+                        </h3>
+                      </div>
+                    </header>
+                    {!isProjectInfoCollapsed ? (
+                      <div className="pb-4 pt-1">
+                        <p className={`text-xs leading-[1.45] ${uiTheme.sidebarBody}`}>
+                          {projectInfoSentence}
+                        </p>
+                      </div>
+                    ) : null}
+                  </section>
                   <ProjectTitleSection
                     projectTitle={projectTitle}
                     pageCount={projectPages.length}
