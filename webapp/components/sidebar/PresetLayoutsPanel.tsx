@@ -1,5 +1,4 @@
 import {
-  LAYOUT_PRESET_CATEGORY_LABELS,
   LAYOUT_PRESET_GROUPS,
   type LayoutPreset,
 } from "@/lib/presets"
@@ -81,6 +80,7 @@ export function PresetLayoutsPanel({
 }: Props) {
   const cardGapClass = compact ? "gap-2" : "gap-3"
   const minCardWidth = compact ? 120 : 168
+  const visibleGroups = LAYOUT_PRESET_GROUPS.filter((group) => group.category !== "users")
   return (
     <div
       data-tooltip-boundary="preset-browser"
@@ -123,17 +123,12 @@ export function PresetLayoutsPanel({
         </div>
       ) : null}
       <div className="space-y-6">
-        {LAYOUT_PRESET_GROUPS.map((group) => (
+        {visibleGroups.map((group) => (
           <section key={group.category} className="space-y-3">
             <div className="space-y-1">
               <h4 className={`text-xs font-semibold uppercase tracking-[0.08em] ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}>
                 {group.label}
               </h4>
-              {group.category === "users" ? (
-                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                  Saved or imported user layout JSONs will appear here.
-                </p>
-              ) : null}
             </div>
 
             {group.presets.length > 0 ? (
@@ -150,10 +145,6 @@ export function PresetLayoutsPanel({
                     showRolloverInfo={showRolloverInfo}
                   />
                 ))}
-              </div>
-            ) : group.category === "users" ? (
-              <div className={`rounded-md border border-dashed px-3 py-4 text-xs ${isDarkMode ? "border-gray-700 text-gray-400" : "border-gray-300 text-gray-500"}`}>
-                {LAYOUT_PRESET_CATEGORY_LABELS.users} is reserved for user-created layout files.
               </div>
             ) : null}
           </section>

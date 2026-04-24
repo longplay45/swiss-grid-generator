@@ -316,7 +316,7 @@ export function PreviewWorkspace({
             />
           ) : null}
           {showPresetsBrowser ? (
-            <div className={`h-full min-h-[360px] w-full rounded-md border p-4 ${isDarkUi ? "border-[#313A47] bg-[#1D232D]" : "border-gray-200 bg-gray-100/60"}`}>
+            <div className={`h-full min-h-[360px] w-full p-4 ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}>
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}

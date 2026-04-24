@@ -31,7 +31,7 @@ export type DocumentVariableResolver = (
   args: DocumentVariableResolverArgs,
 ) => string | null | undefined
 
-export type DocumentVariableResolvedSegment = {
+type DocumentVariableResolvedSegment = {
   kind: "literal" | "variable"
   rawStart: number
   rawEnd: number
@@ -54,7 +54,7 @@ type EffectiveTrackingInterval = {
   trackingScale: number
 }
 
-export type ResolvedDocumentVariableText<
+type ResolvedDocumentVariableText<
   StyleKey extends string,
   FontFamily extends string,
 > = {
