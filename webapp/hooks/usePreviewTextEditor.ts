@@ -6,7 +6,7 @@ import { type ImageEditorState } from "@/components/dialogs/ImageEditorDialog"
 import { buildExistingBlockEditorState } from "@/lib/preview-block-editor-state"
 import { useBlockEditorActions } from "@/hooks/useBlockEditorActions"
 import { useCloseEditorsOnOutsidePointer } from "@/hooks/useCloseEditorsOnOutsidePointer"
-import { usePreviewKeyboard } from "@/hooks/usePreviewKeyboard"
+import { usePreviewKeyboard, type PreviewNudgeRequest } from "@/hooks/usePreviewKeyboard"
 
 type BlockEditorActionsArgs = Omit<
   Parameters<typeof useBlockEditorActions>[0],
@@ -36,6 +36,8 @@ type Args = {
   onRedoRequest?: () => void
   undo: () => void
   redo: () => void
+  selectedLayerKey?: string | null
+  onNudgeSelectedLayer?: (request: PreviewNudgeRequest) => boolean
 }
 
 export function usePreviewTextEditor({
@@ -58,6 +60,8 @@ export function usePreviewTextEditor({
   onRedoRequest,
   undo,
   redo,
+  selectedLayerKey = null,
+  onNudgeSelectedLayer,
 }: Args) {
   const [editorState, setEditorStateState] = useState<EditorState | null>(null)
   const editorStateRef = useRef<EditorState | null>(null)
@@ -290,6 +294,8 @@ export function usePreviewTextEditor({
     onCloseEditor: closeAnyEditor,
     undo: onUndoRequest ?? undo,
     redo: onRedoRequest ?? redo,
+    selectedLayerKey,
+    onNudgeSelectedLayer,
   })
 
   useCloseEditorsOnOutsidePointer({

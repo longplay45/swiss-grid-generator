@@ -33,7 +33,10 @@ import {
 import { buildSmartTextZoomGeometrySignature } from "@/lib/preview-smart-text-zoom"
 import { getHoveredPreviewTextGuideRect, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
+import { clampTextBlockPosition } from "@/lib/preview-text-layer-state"
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
+import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
+import { findNearestAxisIndex } from "@/lib/grid-rhythm"
 import {
   type BlockRect,
   type BlockRenderPlan,
@@ -121,6 +124,13 @@ function toPageSpaceRect(rect: BlockRect, scale: number): BlockRect {
   }
 }
 
+function roundLogicalStep(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.round(value * 1_000_000) / 1_000_000
+}
+
+const FREE_AXIS_NUDGE_DIVISOR = 10
+
 interface GridPreviewProps {
   result: GridResult
   showBaselines: boolean
@@ -158,6 +168,7 @@ interface GridPreviewProps {
   requestedLayerLockValue?: boolean
   requestedLayerLockToken?: number
   selectedLayerKey?: BlockId | null
+  keyboardSelectedLayerKey?: BlockId | null
   hoveredLayerKey?: BlockId | null
   onHoverLayerChange?: (key: BlockId | null) => void
   onSelectLayer?: (key: BlockId | null) => void
@@ -215,6 +226,7 @@ export const GridPreview = memo(function GridPreview({
   requestedLayerLockValue = false,
   requestedLayerLockToken = 0,
   selectedLayerKey = null,
+  keyboardSelectedLayerKey = null,
   hoveredLayerKey = null,
   onHoverLayerChange,
   onSelectLayer,
@@ -538,6 +550,136 @@ export const GridPreview = memo(function GridPreview({
     setLayerOrder((current) => [...current.filter((item) => item !== key), key])
   }, [setLayerOrder])
 
+  const clearHover = useCallback(() => {
+    setHoverState(null)
+    setHoverImageKey(null)
+    setHoverCopyIntent(false)
+  }, [])
+
+  const baselinesPerGridModule = useMemo(
+    () => Math.max(1, Math.round(result.module.height / Math.max(0.0001, result.grid.gridUnit))),
+    [result.grid.gridUnit, result.module.height],
+  )
+  const freeColumnNudgeStep = useMemo(
+    () => 1 / (baselinesPerGridModule * FREE_AXIS_NUDGE_DIVISOR),
+    [baselinesPerGridModule],
+  )
+  const freeRowNudgeStep = 1 / FREE_AXIS_NUDGE_DIVISOR
+
+  const handleNudgeSelectedLayer = useCallback(({ direction, shiftKey }: { direction: "left" | "right" | "up" | "down"; shiftKey: boolean }) => {
+    const key = keyboardSelectedLayerKey
+    if (!key || isLayerLocked(key)) return false
+
+    const isImage = isImagePlaceholderKey(key)
+    const snapToColumns = isImage ? isImageSnapToColumnsEnabled(key) : isSnapToColumnsEnabled(key)
+    const snapToBaseline = isImage ? isImageSnapToBaselineEnabled(key) : isSnapToBaselineEnabled(key)
+    const delta = direction === "left" || direction === "up" ? -1 : 1
+    const metrics = getGridMetrics()
+    const fallbackRect = isImage ? imageRectsRef.current[key] : blockRectsRef.current[key]
+    const fallbackPosition = fallbackRect
+      ? resolveLayerPlacement(
+          fallbackRect.x,
+          fallbackRect.y,
+          key,
+          {
+            dragYMode: snapToBaseline && shiftKey
+              ? "baseline"
+              : snapToBaseline
+                ? "moduleTop"
+                : "free",
+          },
+        )
+      : null
+    const currentPosition = (isImage ? imageModulePositions[key] : blockModulePositions[key]) ?? fallbackPosition
+    if (!currentPosition) return false
+    const freeAxisMultiplier = shiftKey ? FREE_AXIS_NUDGE_DIVISOR : 1
+
+    let nextPosition = currentPosition
+    if (direction === "left" || direction === "right") {
+      nextPosition = {
+        ...currentPosition,
+        col: roundLogicalStep(currentPosition.col + delta * (snapToColumns ? 1 : freeColumnNudgeStep * freeAxisMultiplier)),
+      }
+    } else if (snapToBaseline && !shiftKey) {
+      const rowStarts = metrics.rowStartBaselines
+      const currentIndex = findNearestAxisIndex(Array.from(rowStarts), currentPosition.row)
+      const nextIndex = Math.max(0, Math.min(rowStarts.length - 1, currentIndex + delta))
+      nextPosition = {
+        ...currentPosition,
+        row: rowStarts[nextIndex] ?? currentPosition.row,
+      }
+    } else {
+      nextPosition = {
+        ...currentPosition,
+        row: roundLogicalStep(currentPosition.row + delta * freeRowNudgeStep * freeAxisMultiplier),
+      }
+    }
+
+    if (isImage) {
+      const span = getImageSpan(key)
+      const clamped = {
+        col: clampLayerColumn(nextPosition.col, { span, gridCols: result.settings.gridCols, snapToColumns }),
+        row: clampFreePlacementRow(nextPosition.row, metrics.maxBaselineRow),
+      }
+      if (
+        Math.abs(clamped.col - currentPosition.col) < 0.000001
+        && Math.abs(clamped.row - currentPosition.row) < 0.000001
+      ) {
+        return false
+      }
+      recordHistoryBeforeChange()
+      clearHover()
+      setImageModulePositions((current) => ({
+        ...current,
+        [key]: clamped,
+      }))
+      return true
+    }
+
+    const span = getBlockSpan(key)
+    const clamped = clampTextBlockPosition({
+      position: nextPosition,
+      span,
+      gridCols: result.settings.gridCols,
+      maxBaselineRow: metrics.maxBaselineRow,
+      snapToColumns,
+    })
+    if (
+      Math.abs(clamped.col - currentPosition.col) < 0.000001
+      && Math.abs(clamped.row - currentPosition.row) < 0.000001
+    ) {
+      return false
+    }
+    recordHistoryBeforeChange()
+    clearHover()
+    setBlockModulePositions((current) => ({
+      ...current,
+      [key]: clamped,
+    }))
+    return true
+  }, [
+    blockModulePositions,
+    clearHover,
+    freeColumnNudgeStep,
+    freeRowNudgeStep,
+    getBlockSpan,
+    getGridMetrics,
+    getImageSpan,
+    imageModulePositions,
+    isImagePlaceholderKey,
+    isImageSnapToBaselineEnabled,
+    isImageSnapToColumnsEnabled,
+    isLayerLocked,
+    isSnapToBaselineEnabled,
+    isSnapToColumnsEnabled,
+    recordHistoryBeforeChange,
+    resolveLayerPlacement,
+    result.settings.gridCols,
+    keyboardSelectedLayerKey,
+    setBlockModulePositions,
+    setImageModulePositions,
+  ])
+
   const {
     editorState,
     setEditorState,
@@ -626,6 +768,8 @@ export const GridPreview = memo(function GridPreview({
     onRedoRequest,
     undo,
     redo,
+    selectedLayerKey: keyboardSelectedLayerKey,
+    onNudgeSelectedLayer: handleNudgeSelectedLayer,
   })
   const smartTextZoomGeometrySignature = useMemo(() => {
     if (!smartTextEditZoomEnabled || !editorState?.target) return null
@@ -642,12 +786,6 @@ export const GridPreview = memo(function GridPreview({
     editorState?.target,
     smartTextEditZoomEnabled,
   ])
-
-  const clearHover = useCallback(() => {
-    setHoverState(null)
-    setHoverImageKey(null)
-    setHoverCopyIntent(false)
-  }, [])
 
   const handleCanvasMouseLeave = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
     const nextTarget = event.relatedTarget
@@ -1227,10 +1365,6 @@ export const GridPreview = memo(function GridPreview({
     }
   }, [buildSnapshot, onSnapshotGetterChange])
 
-  const baselinesPerGridModule = useMemo(
-    () => Math.max(1, Math.round(result.module.height / Math.max(0.0001, result.grid.gridUnit))),
-    [result.grid.gridUnit, result.module.height],
-  )
   const inlineEditorLayout = usePreviewInlineEditorLayout({
     editorState,
     blockRectsRef,

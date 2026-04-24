@@ -319,6 +319,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 - Double-click text block to open editor
 - Drag to move; paragraphs and image placeholders respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
+- With a selected unlocked layer and no active editor field, arrow keys nudge the layer through the same logic: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes move in tenth-step logical increments with `Shift` as a 10x multiplier
 - With `Snap to Columns (X)` off, free horizontal placement may overhang one column into either side margin.
 - Hover shows style/span/alignment tooltip when `i` is active
 

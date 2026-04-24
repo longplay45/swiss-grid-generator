@@ -630,6 +630,8 @@ Holding `Shift` (Ctrl fallback) temporarily switches the Y resolution to the nea
 rawRow = round((pageY - baselineOriginTop) / baselineStep)
 ```
 
+Keyboard nudging reuses the same logical placement rules for the selected unlocked layer. Snapped X steps by whole columns, snapped Y steps by module rows by default and by baseline rows on `Shift`, and unsnapped axes move in tenth-steps of the fine logical unit (`0.1` baseline rows on Y, `1 / (baselinesPerGridModule * 10)` columns on X). When that axis is unsnapped, `Shift` multiplies the fine nudge by `10`.
+
 Image placeholders now use the same X/Y drag resolution model as paragraphs. Their width and height still resolve from image spans and `rows + baselines`, and rotation pivots around the placeholder frame's visible top-left origin.
 
 ### Per-Paragraph Span

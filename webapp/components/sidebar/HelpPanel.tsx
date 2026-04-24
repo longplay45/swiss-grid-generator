@@ -180,6 +180,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
           <li>Click the hover edit affordance to open the matching text or image editor in the left sidebar without leaving the page.</li>
           <li>When a text or image editor is already open, preview rollover stays active on other unlocked blocks so you can see the next target before switching.</li>
           <li>Drag blocks to move them between modules; paragraphs follow their `Snap to Columns (X)` setting and, when `Snap to Baseline (Y)` is on, default to module-top Y snapping with baseline drag available on `Shift`/`Ctrl`.</li>
+          <li>With a selected unlocked layer and no active editor field, arrow keys nudge the layer through the same logic: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes use tenth-step logical nudges with `Shift` as a 10x multiplier.</li>
           <li>`Alt/Option` + drag duplicates the hovered block and drops the copy at the new position.</li>
           <li>Locked layers are skipped by preview hover, hit-testing, drag, and editor retargeting until you unlock them from the Project panel.</li>
           <li>Delete blocks from the Project panel; base text blocks are cleared while custom blocks/placeholders are removed.</li>

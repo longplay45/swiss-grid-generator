@@ -1,5 +1,12 @@
 import { useEffect } from "react"
 
+export type PreviewNudgeDirection = "left" | "right" | "up" | "down"
+
+export type PreviewNudgeRequest = {
+  direction: PreviewNudgeDirection
+  shiftKey: boolean
+}
+
 type Args = {
   editorTarget: string | null
   isEditorOpen: boolean
@@ -7,6 +14,8 @@ type Args = {
   onCloseEditor: () => void
   undo: () => void
   redo: () => void
+  selectedLayerKey?: string | null
+  onNudgeSelectedLayer?: (request: PreviewNudgeRequest) => boolean
 }
 
 export function usePreviewKeyboard({
@@ -16,6 +25,8 @@ export function usePreviewKeyboard({
   onCloseEditor,
   undo,
   redo,
+  selectedLayerKey = null,
+  onNudgeSelectedLayer,
 }: Args) {
   useEffect(() => {
     if (!isEditorOpen) return
@@ -37,7 +48,36 @@ export function usePreviewKeyboard({
   }, [isEditorOpen, onCloseEditor])
 
   useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false
+      const tag = target.tagName
+      return target.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) return
+      if (
+        !isEditorOpen
+        && selectedLayerKey
+        && !event.metaKey
+        && !event.ctrlKey
+        && !event.altKey
+      ) {
+        const direction = event.key === "ArrowLeft"
+          ? "left"
+          : event.key === "ArrowRight"
+            ? "right"
+            : event.key === "ArrowUp"
+              ? "up"
+              : event.key === "ArrowDown"
+                ? "down"
+                : null
+        if (direction && onNudgeSelectedLayer?.({ direction, shiftKey: event.shiftKey })) {
+          event.preventDefault()
+          return
+        }
+      }
+
       if (event.defaultPrevented) return
       if (!(event.metaKey || event.ctrlKey)) return
       if (isEditorOpen) return
@@ -53,5 +93,5 @@ export function usePreviewKeyboard({
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [isEditorOpen, redo, undo])
+  }, [isEditorOpen, onNudgeSelectedLayer, redo, selectedLayerKey, undo])
 }

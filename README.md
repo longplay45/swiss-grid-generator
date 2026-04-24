@@ -100,6 +100,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - `Page Up` / `Page Down` step to the previous or next project page when multiple pages are present, and `Home` / `End` jump to the first or last page
 - Text and image layers with stable grid-based positioning
 - Drag to move, Alt/Option+drag to duplicate
+- Arrow keys nudge the selected unlocked layer; snapped axes move by whole modules, `Shift` switches snapped Y nudging to baselines, and unsnapped axes use tenth-step logical nudges with `Shift` as a 10x multiplier
 - Layer cards include a lock toggle in the Project panel; locked layers stay visible but cannot be hovered, edited, or moved in preview until unlocked
 - Logical anchoring (Column × Row + Baseline Offset)
 - Increasing a paragraph's column span preserves its anchored column, even when the wider frame intentionally overhangs the page edge
@@ -118,6 +119,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Hover interactions and edit affordances
 - Paragraph hover guides resolve from the configured `rows + baselines` height, and the paragraph edit icon sits at the block's top-left origin for shallow frames
 - When a text or image editor is open, preview hover stays active on other unlocked blocks and a single click retargets the already open editor
+- With a selected unlocked layer and no active editor field, arrow keys reuse the same placement logic as drag: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes nudge in tenth-step logical increments with `Shift` as a 10x multiplier
 - Text and image editors reuse the left-sidebar section pattern instead of a preview-docked rail
 - Text and image geometry editors include bounded `Baselines` dropdowns based on the active document's baselines-per-grid-module count
 - Text editor family, cut, hierarchy, and geometry dropdowns preview on rollover before commit; image editor geometry and scheme dropdowns do the same
