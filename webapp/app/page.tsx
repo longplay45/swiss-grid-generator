@@ -1097,6 +1097,7 @@ export default function Home() {
       collapsed={collapsed}
       showSectionHelpIcons={showSectionHelpIcons}
       showRolloverInfo={false}
+      interactionsDisabled={showPresetsBrowser}
       onHelpNavigate={handleSectionHelpNavigate}
       onSectionHeaderClick={handleSectionHeaderClick}
       onSectionHeaderDoubleClick={handleSectionHeaderDoubleClick}
@@ -1220,6 +1221,7 @@ export default function Home() {
     setRotation,
     setTypographyScale,
     setUseCustomMargins,
+    showPresetsBrowser,
     showSectionHelpIcons,
     typographyScale,
     useCustomMargins,
@@ -1252,7 +1254,6 @@ export default function Home() {
       />
       <div className={`flex h-screen overflow-hidden flex-col md:flex-row ${uiTheme.root}`}>
         <ControlSidebar
-          showPresetsBrowser={showPresetsBrowser}
           showBetaBadge={SHOW_BETA_BADGE}
           appVersion={APP_VERSION}
           uiTheme={controlSidebarTheme}

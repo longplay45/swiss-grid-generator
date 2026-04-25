@@ -147,9 +147,10 @@ function renderHeaderAction(
     <div
       key={action.key}
       data-preview-header-action={action.key}
-      className="inline-flex w-8 items-center justify-center"
+      className={`inline-flex h-8 w-8 justify-center ${showSectionHelpIcons ? "relative items-center" : "items-center"}`}
       onMouseEnter={showSectionHelpIcons ? () => onHeaderHelpNavigate(action.key) : undefined}
     >
+      {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
       <HeaderIconButton
         ariaLabel={action.ariaLabel}
         tooltip={tooltip}
@@ -158,9 +159,8 @@ function renderHeaderAction(
         disabled={action.disabled}
         onClick={action.onClick}
         showTooltip
-        buttonClassName={showSectionHelpIcons ? "relative" : undefined}
+        buttonClassName={undefined}
       >
-        {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
         {action.icon}
       </HeaderIconButton>
     </div>
@@ -247,6 +247,7 @@ export function PreviewWorkspace({
   const hoveredLayerKey = previewHoveredLayerKey ?? layerPanelHoveredLayerKey
   const shouldRenderSidebarPanel = activeSidebarPanel !== null && (
     !showPresetsBrowser
+    || activeSidebarPanel === "help"
     || activeSidebarPanel === "feedback"
     || activeSidebarPanel === "imprint"
   )
@@ -406,13 +407,16 @@ export function PreviewWorkspace({
             />
           ) : null}
           {showPresetsBrowser ? (
-            <div className={`h-full min-h-[360px] w-full p-4 ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}>
+            <div
+              className={`relative h-full min-h-[360px] w-full p-4 ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}
+              onMouseEnter={showSectionHelpIcons ? () => onHeaderHelpNavigate("presets") : undefined}
+            >
+              {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
                 showRolloverInfo={false}
-                showHelpHints={showSectionHelpIcons}
-                onHelpNavigate={() => onHeaderHelpNavigate("presets")}
+                showHelpHints={false}
                 compact
               />
             </div>

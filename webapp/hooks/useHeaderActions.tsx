@@ -268,7 +268,6 @@ export function useHeaderActions(args: Args) {
       shortcutId: "toggle_help_panel",
       variant: args.activeSidebarPanel === "help" ? "default" : "outline",
       pressed: args.activeSidebarPanel === "help",
-      disabled: args.showPresetsBrowser,
       onClick: args.onToggleHelpPanel,
       icon: <CircleHelp className="h-4 w-4" />,
     },

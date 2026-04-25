@@ -32,6 +32,7 @@ type Props = {
   collapsed: Record<SectionKey, boolean>
   showSectionHelpIcons: boolean
   showRolloverInfo: boolean
+  interactionsDisabled?: boolean
   onHelpNavigate: (section: SectionKey) => void
   onSectionHeaderClick: (section: SectionKey) => (event: React.MouseEvent) => void
   onSectionHeaderDoubleClick: (event: React.MouseEvent) => void
@@ -100,6 +101,7 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   collapsed,
   showSectionHelpIcons,
   showRolloverInfo,
+  interactionsDisabled = false,
   onHelpNavigate,
   onSectionHeaderClick,
   onSectionHeaderDoubleClick,
@@ -168,7 +170,12 @@ export const SettingsSidebarPanels = memo(function SettingsSidebarPanels({
   return (
     <div ref={scrollRootRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
       <SettingsHelpNavigationProvider
-        value={{ showHelpIcons: showSectionHelpIcons, showRolloverInfo, onNavigate: onHelpNavigate }}
+        value={{
+          showHelpIcons: showSectionHelpIcons,
+          showRolloverInfo,
+          interactionsDisabled,
+          onNavigate: onHelpNavigate,
+        }}
       >
         <div ref={registerSectionRef("format")}>
           <CanvasRatioPanel

@@ -11,7 +11,6 @@ type UiTheme = {
 }
 
 type Props = {
-  showPresetsBrowser: boolean
   showBetaBadge: boolean
   appVersion: string
   uiTheme: UiTheme
@@ -23,7 +22,6 @@ type Props = {
 }
 
 export const ControlSidebar = memo(function ControlSidebar({
-  showPresetsBrowser,
   showBetaBadge,
   appVersion,
   uiTheme,
@@ -47,14 +45,7 @@ export const ControlSidebar = memo(function ControlSidebar({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${showPresetsBrowser ? "opacity-50" : ""}`}>
-          {showPresetsBrowser ? (
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 z-10 cursor-not-allowed"
-            />
-          ) : null}
-
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           {editorMode ? (
             <div
               ref={onEditorHostChange}

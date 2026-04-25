@@ -10,7 +10,7 @@ type Args = {
 }
 
 function isPanelAllowedWhilePresetsOpen(panel: SidebarPanel): boolean {
-  return panel === null || panel === "feedback" || panel === "imprint"
+  return panel === null || panel === "help" || panel === "feedback" || panel === "imprint"
 }
 
 export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
@@ -51,14 +51,13 @@ export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
   }, [openSidebarPanel])
 
   const toggleHelpPanel = useCallback(() => {
-    if (showPresetsBrowser) return
     setActiveSidebarPanel((prev) => {
       const next = prev === "help" ? null : "help"
       onShowLayersChange(false)
       setActiveHelpSectionId(null)
       return next
     })
-  }, [onShowLayersChange, showPresetsBrowser])
+  }, [onShowLayersChange])
 
   const toggleLayersPanel = useCallback(() => {
     if (showPresetsBrowser) return

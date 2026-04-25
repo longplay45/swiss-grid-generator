@@ -5,11 +5,13 @@ Current capability inventory for Swiss Grid Generator.
 ## Document Model
 
 - Multi-page projects with project metadata (`title`, `description`, `author`, `createdAt`).
+- Save Project JSON dialog for filename plus optional title, description, and author metadata.
 - Independent page settings and layout state per page.
 - Mixed page layer stack with text paragraphs and image placeholders.
 - Save/load as project JSON.
 - Bundled presets use the same project JSON schema as saved documents.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project on load.
+- Optional guided project tours embedded in project JSON and rendered as an in-app step overlay.
 
 ## Grid System
 
@@ -30,6 +32,7 @@ Current capability inventory for Swiss Grid Generator.
 
 - Hierarchy levels: `Display`, `Headline`, `Subhead`, `Body`, `Caption`, `Custom`.
 - Scale systems: `Swiss`, `Golden Ratio`, `Fibonacci`, `Perfect Fourth`, `Perfect Fifth`.
+- Left-panel hierarchy table showing the resolved `Display`, `Headline`, `Subhead`, `Body`, and `Caption` metrics for the active baseline/scale.
 - Base font inheritance plus block-level override support.
 - Font family groups: `Sans-Serif`, `Serif`, `Poster`.
 - Available Fonts:
@@ -66,6 +69,8 @@ Current capability inventory for Swiss Grid Generator.
 - Placeholders section lists the available document-variable tokens and inserts the clicked token at the caret or over the current selection.
 - `<%lorem%>` fills the active paragraph frame according to its geometry, reflow, and hyphenation settings.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.
+- Text editor can be opened from the preview affordance or by double-clicking an unlocked text layer card in the Project panel.
+- When a text editor is already open, clicking another unlocked preview paragraph or double-clicking another unlocked text layer card retargets the editor to that paragraph.
 - Selection-aware styling for selected text:
   - font family
   - font cut
@@ -98,6 +103,8 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing unlocked paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and single-page creation.
+- Project panel includes editable project title plus live page count.
+- Project panel includes a document-info toggle with project/page/layer/type summary text.
 - Opened page cards expose a `Facing pages` control above `Layers`, converting a page into a true facing spread with mirrored inner/outer margins, a zero-gap preview seam, and doubled effective columns across the spread.
 - The Project header includes an `i` toggle for document info text.
 - `Page Up` and `Page Down` step through project pages when multiple pages are present, and `Home` / `End` jump to the first or last page.
@@ -105,8 +112,10 @@ Current capability inventory for Swiss Grid Generator.
 - `Add Page` always creates a new single page, even from a facing spread.
 - Projects are capped at `1000` pages.
 - Single-clicking a page card selects it; double-clicking toggles its inline layer list and aligns opened pages to the top of the panel.
+- Expanded page cards expose rename, delete, facing-pages, and inline layer-management controls.
 - Newly added pages open automatically.
 - Project JSON supports an optional `tour` definition for quick onboarding tied to real pages and layers.
+- Tour overlay supports open/close, back/next, step captions, optional layer focus, optional editor opening, and click-to-advance steps.
 - Layer cards support selection, reordering, locking, deletion, and editor opening.
 - Active-page layer cards now use single-click for selection and double-click for editor open/retarget, so keyboard nudging stays reachable from the Project panel without immediately entering edit mode.
 - Locked layers stay visible but are excluded from preview hover, drag, and editor retarget/open behavior until unlocked.
@@ -131,6 +140,8 @@ Current capability inventory for Swiss Grid Generator.
 - Stable logical positioning across grid changes.
 - Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
 - The image editor header shows `IMAGE` plus the current placeholder swatch color.
+- Image editor can be opened from the preview affordance or by double-clicking the corresponding unlocked image layer card in the Project panel.
+- When an image editor is already open, double-clicking another unlocked active-page image layer card retargets the editor.
 - Geometry section includes rows, baselines, columns, X/Y snapping, and rotation.
 - Geometry dropdowns preview hovered row/col/baseline values live before commit.
 - Scheme, swatch color, and transparency live in the Color section.
@@ -142,6 +153,7 @@ Current capability inventory for Swiss Grid Generator.
 
 - Preset browser in the preview area.
 - Rendered page-1 thumbnails for bundled presets.
+- Preset rollover tooltip with title, description, author, and creation date metadata when rollover info is enabled.
 - Double-click preset to load.
 - `Esc` closes the browser without loading.
 
@@ -151,6 +163,8 @@ Current capability inventory for Swiss Grid Generator.
 - `SVG v1` selected-range export.
 - `IDML v1` selected-range export.
 - Export defaults to the full project page range.
+- Export dialog includes format switcher, page-range controls, filename field, and progress state.
+- Export is WYSIWYG with respect to the current preview visibility state for baselines, margins, modules, typography, and image placeholders.
 - All export formats use stored page geometry directly.
 - All export formats are vector-based, not raster captures.
 - `PDF` print presets:
@@ -177,4 +191,6 @@ Current capability inventory for Swiss Grid Generator.
 - Undo/redo across settings, layout, and editor operations.
 - Help sidebar with hover-jump references.
 - Rollover-info toggle for tooltips and affordances.
+- Feedback sidebar with structured in-app survey submission.
+- Imprint sidebar with app, developer, license, and contact information.
 - Keyboard shortcuts for header controls and panel toggles.

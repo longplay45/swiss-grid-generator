@@ -246,14 +246,12 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
     if (!activeSectionId) return
     const target = document.getElementById(activeSectionId)
     if (!target) return
-    const maybeDivider = target.previousElementSibling
-    const scrollTarget = maybeDivider instanceof HTMLHRElement ? maybeDivider : target
-    const scrollRoot = scrollTarget.closest("[data-help-scroll-root='true']") as HTMLElement | null
+    const scrollRoot = target.closest("[data-help-scroll-root='true']") as HTMLElement | null
     if (!scrollRoot) return
 
     const topGapPx = -1
     const rootRect = scrollRoot.getBoundingClientRect()
-    const targetRect = scrollTarget.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
     const deltaToTop = targetRect.top - rootRect.top
     const nextTop = scrollRoot.scrollTop + deltaToTop - topGapPx
     window.requestAnimationFrame(() => {
@@ -322,12 +320,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         ))}
       </div>
 
-      {renderedSections.map((section) => (
-        <div key={`${section.id}-wrapper`}>
-          <hr className={tone.divider} />
-          {renderSection(section, tone)}
-        </div>
-      ))}
+      {renderedSections.map((section) => renderSection(section, tone))}
     </div>
   )
 }

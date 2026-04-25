@@ -5,12 +5,14 @@ import type { SectionKey } from "@/hooks/useSettingsHistory"
 type SettingsHelpNavigationValue = {
   showHelpIcons: boolean
   showRolloverInfo: boolean
+  interactionsDisabled: boolean
   onNavigate: (section: SectionKey) => void
 }
 
 const DEFAULT_VALUE: SettingsHelpNavigationValue = {
   showHelpIcons: false,
   showRolloverInfo: false,
+  interactionsDisabled: false,
   onNavigate: () => {},
 }
 

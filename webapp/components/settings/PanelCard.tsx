@@ -29,7 +29,7 @@ export function PanelCard({
   isDarkMode,
   children,
 }: Props) {
-  const { showHelpIcons, showRolloverInfo, onNavigate } = useSettingsHelpNavigation()
+  const { showHelpIcons, showRolloverInfo, interactionsDisabled, onNavigate } = useSettingsHelpNavigation()
 
   return (
     <section
@@ -46,9 +46,9 @@ export function PanelCard({
         tooltipClassName="border-gray-200 bg-white/95 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
       >
         <header
-          className="cursor-pointer select-none pt-3"
-          onClick={onHeaderClick}
-          onDoubleClick={onHeaderDoubleClick}
+          className={`select-none pt-3 ${interactionsDisabled ? "cursor-default" : "cursor-pointer"}`}
+          onClick={interactionsDisabled ? undefined : onHeaderClick}
+          onDoubleClick={interactionsDisabled ? undefined : onHeaderDoubleClick}
           onMouseEnter={showHelpIcons ? () => onNavigate(helpSectionKey) : undefined}
         >
           <div
@@ -57,7 +57,7 @@ export function PanelCard({
             }`}
           >
             {showHelpIcons ? <HelpIndicatorLine /> : null}
-            <h3 className="leading-tight">
+            <h3 className={`leading-tight ${interactionsDisabled ? "opacity-50" : ""}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className={SECTION_HEADLINE_CLASSNAME}>{title}</div>
@@ -84,7 +84,11 @@ export function PanelCard({
           </div>
         </header>
       </HoverTooltip>
-      {!collapsed && <div className="space-y-4 pb-4 pt-1">{children}</div>}
+      {!collapsed && (
+        <div className={`space-y-4 pb-4 pt-1 ${interactionsDisabled ? "pointer-events-none opacity-50" : ""}`}>
+          {children}
+        </div>
+      )}
     </section>
   )
 }
