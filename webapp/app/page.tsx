@@ -59,10 +59,12 @@ import {
   resolveAdjacentProjectPageId,
   resolveProjectPageBoundaryId,
 } from "@/lib/project-page-navigation"
+import { LAYOUT_OPEN_TOOLTIP_ITEMS, type LayoutOpenTooltipItem } from "@/lib/generated-tooltip-content"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
 const SHOW_BETA_BADGE = RELEASE_CHANNEL === "beta"
+const LAYOUT_OPEN_TOOLTIP_CURSOR_STORAGE_KEY = "swiss-grid-generator.layout-open-tooltip-cursor"
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
 const DEFAULT_PAGE_PREVIEW_LAYOUT: PreviewLayoutState | null = null
@@ -100,6 +102,18 @@ function resolveProjectWideVisibilitySettingValue(
   return typeof raw === "boolean" ? raw : DEFAULT_UI[key]
 }
 
+function readStoredNonNegativeInteger(key: string): number {
+  if (typeof window === "undefined") return 0
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return 0
+    const parsed = Number.parseInt(raw, 10)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+  } catch {
+    return 0
+  }
+}
+
 export default function Home() {
   const loadFileInputRef = useRef<HTMLInputElement | null>(null)
   const livePreviewSnapshotGetterRef = useRef<(() => PreviewLayoutState) | null>(null)
@@ -108,12 +122,18 @@ export default function Home() {
   const [editorSidebarMode, setEditorSidebarMode] = useState<"text" | "image" | null>(null)
   const [editorSidebarHost, setEditorSidebarHost] = useState<HTMLDivElement | null>(null)
   const [smartTextZoomEnabled, setSmartTextZoomEnabled] = useState(true)
+  const [activeLayoutOpenTooltip, setActiveLayoutOpenTooltip] = useState<{
+    displayToken: number
+    index: number
+    item: LayoutOpenTooltipItem
+  } | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [projectVisibilityHistoryPast, setProjectVisibilityHistoryPast] = useState<ProjectWideVisibilityHistoryEntry[]>([])
   const [projectVisibilityHistoryFuture, setProjectVisibilityHistoryFuture] = useState<ProjectWideVisibilityHistoryEntry[]>([])
   const projectUndoHandlerRef = useRef<() => void>(() => {})
   const projectRedoHandlerRef = useRef<() => void>(() => {})
+  const layoutOpenTooltipDisplayTokenRef = useRef(0)
   const [gridUi, dispatchGrid] = useReducer(gridUiReducer, INITIAL_GRID_UI_STATE)
   const [exportUi, dispatchExport] = useReducer(exportUiReducer, INITIAL_EXPORT_UI_STATE)
   const dispatch = useCallback((action: UiAction) => {
@@ -129,6 +149,48 @@ export default function Home() {
   const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
     setNoticeState(notice)
   }, [])
+  const dismissLayoutOpenTooltip = useCallback(() => {
+    setActiveLayoutOpenTooltip(null)
+  }, [])
+  const setLayoutOpenTooltipByIndex = useCallback((index: number) => {
+    const fallbackItem = LAYOUT_OPEN_TOOLTIP_ITEMS[0]
+    if (!fallbackItem) return
+
+    const totalCount = LAYOUT_OPEN_TOOLTIP_ITEMS.length
+    const safeIndex = ((index % totalCount) + totalCount) % totalCount
+    const item = LAYOUT_OPEN_TOOLTIP_ITEMS[safeIndex] ?? fallbackItem
+
+    layoutOpenTooltipDisplayTokenRef.current += 1
+    setActiveLayoutOpenTooltip({
+      displayToken: layoutOpenTooltipDisplayTokenRef.current,
+      index: safeIndex,
+      item,
+    })
+
+    try {
+      window.localStorage.setItem(
+        LAYOUT_OPEN_TOOLTIP_CURSOR_STORAGE_KEY,
+        String((safeIndex + 1) % totalCount),
+      )
+    } catch {
+      // Ignore persistence failures and continue rotating in-memory for this session.
+    }
+  }, [])
+  const showNextLayoutOpenTooltip = useCallback(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const cursor = readStoredNonNegativeInteger(LAYOUT_OPEN_TOOLTIP_CURSOR_STORAGE_KEY)
+    setLayoutOpenTooltipByIndex(cursor)
+  }, [setLayoutOpenTooltipByIndex])
+  const handleNextLayoutOpenTooltip = useCallback(() => {
+    if (typeof window === "undefined" || !LAYOUT_OPEN_TOOLTIP_ITEMS[0]) return
+    const nextIndex = activeLayoutOpenTooltip
+      ? (activeLayoutOpenTooltip.index + 1) % LAYOUT_OPEN_TOOLTIP_ITEMS.length
+      : readStoredNonNegativeInteger(LAYOUT_OPEN_TOOLTIP_CURSOR_STORAGE_KEY)
+    setLayoutOpenTooltipByIndex(nextIndex)
+  }, [activeLayoutOpenTooltip, setLayoutOpenTooltipByIndex])
   const handleProjectPageLimitReached = useCallback((limit: number) => {
     handleRequestNotice({
       title: "Page Limit Reached",
@@ -654,6 +716,7 @@ export default function Home() {
         message: "Could not load project JSON.",
       })
     },
+    onProjectLoaded: showNextLayoutOpenTooltip,
   })
 
   const defaultJsonFilename = useMemo(() => {
@@ -1068,6 +1131,10 @@ export default function Home() {
       editorMode={editorSidebarMode}
       onEditorModeChange={setEditorSidebarMode}
       closeSidebarPanel={closeSidebarPanel}
+      layoutOpenTooltip={activeLayoutOpenTooltip}
+      layoutOpenTooltipTotalCount={LAYOUT_OPEN_TOOLTIP_ITEMS.length}
+      onDismissLayoutOpenTooltip={dismissLayoutOpenTooltip}
+      onNextLayoutOpenTooltip={handleNextLayoutOpenTooltip}
       tourState={projectTour ? {
         title: projectTour.title,
         description: projectTour.description,

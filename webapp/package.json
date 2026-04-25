@@ -8,9 +8,10 @@
   },
   "scripts": {
     "help:generate": "node scripts/generate-help-content.mjs",
+    "tooltips:generate": "node scripts/generate-tooltip-content.mjs",
     "manual:generate": "node scripts/generate-manual-preset.mjs",
     "presets:manifest": "node scripts/generate-preset-manifest.mjs",
-    "assets:generate": "npm run presets:manifest && npm run help:generate",
+    "assets:generate": "npm run presets:manifest && npm run help:generate && npm run tooltips:generate",
     "predev": "npm run assets:generate",
     "dev": "next dev",
     "predev:beta": "npm run assets:generate",

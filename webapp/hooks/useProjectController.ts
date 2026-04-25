@@ -13,12 +13,14 @@ type Args<Layout> = {
   defaultMetadata?: ProjectMetadata
   onApplyProject: (project: LoadedProject<Layout>) => void
   onLoadFailed: (error: unknown) => void
+  onProjectLoaded?: (source: "file" | "preset") => void
 }
 
 export function useProjectController<Layout>({
   defaultMetadata = EMPTY_PROJECT_METADATA,
   onApplyProject,
   onLoadFailed,
+  onProjectLoaded,
 }: Args<Layout>) {
   const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>(defaultMetadata)
 
@@ -39,6 +41,7 @@ export function useProjectController<Layout>({
     reader.onload = () => {
       try {
         applyLoadedProject(parseLoadedProject<Layout>(JSON.parse(String(reader.result))))
+        onProjectLoaded?.("file")
       } catch (error) {
         console.error(error)
         onLoadFailed(error)
@@ -55,16 +58,17 @@ export function useProjectController<Layout>({
     }
 
     reader.readAsText(file)
-  }, [applyLoadedProject, onLoadFailed])
+  }, [applyLoadedProject, onLoadFailed, onProjectLoaded])
 
   const loadPresetProject = useCallback((preset: LayoutPreset) => {
     try {
       applyLoadedProject(parseLoadedProject<Layout>(JSON.parse(preset.projectSourceJson)))
+      onProjectLoaded?.("preset")
     } catch (error) {
       console.error(error)
       onLoadFailed(error)
     }
-  }, [applyLoadedProject, onLoadFailed])
+  }, [applyLoadedProject, onLoadFailed, onProjectLoaded])
 
   return {
     projectMetadata,

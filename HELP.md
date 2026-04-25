@@ -125,6 +125,12 @@ Core editing and layout workflows.
 - Closed tours can be reopened from the `Open Tour` button at the bottom of the preview.
 - Tour steps can move between pages, highlight layers, open editors, jump to help topics, or wait for a specific layer click before advancing.
 
+### Layout Tooltips {#help-layout-tooltips}
+- Loading a preset or project also opens a short workflow tooltip at the bottom of the preview.
+- The popup fades in, shows one authored tip at a time, and stays open until it is closed with `X`, outside click, or replaced with `Next >`.
+- `Next >` cycles through the tooltip sequence and updates the `Tooltip x of y` counter.
+- When Help is open, the tooltip popup becomes a blue-marked help target like the rest of the interface and hovering it jumps the Help panel to this section.
+
 ## Application Controls
 
 ### UX Reference {#help-ux-overview} [noindex]
@@ -140,6 +146,7 @@ Global controls and panel behavior.
 ### Help Navigation {#help-help-navigation}
 - When help is open, blue-marked UI targets jump to their matching help topic on hover.
 - Opening the Help panel also enables those contextual help markers across header actions, settings panels, the preview surface, and the preset browser.
+- The layout-tooltip popup uses the same help-hover logic and only shows its blue top indicator while Help is open.
 - The Help panel remains available while the preset browser is open.
 - While the preset browser is open and the left settings controls are inactive, the left-panel section headers still keep their help-hover targets.
 - Use the small up-arrow beside a help title to jump back to the index.

@@ -25,11 +25,13 @@ import type { LayoutPreset } from "@/lib/presets"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import { ProjectTourOverlay } from "@/components/preview/ProjectTourOverlay"
+import { LayoutOpenTooltipOverlay } from "@/components/preview/LayoutOpenTooltipOverlay"
 import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
 import {
   getProjectPagePhysicalPageNumber,
   getProjectPhysicalPageCount,
 } from "@/lib/document-page-numbering"
+import type { LayoutOpenTooltipItem } from "@/lib/generated-tooltip-content"
 
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
 type PreviewLayoutState = SharedPreviewLayoutState<TypographyStyleKey, FontFamily>
@@ -116,6 +118,14 @@ type Props = {
   editorMode: "text" | "image" | null
   onEditorModeChange: (mode: "text" | "image" | null) => void
   closeSidebarPanel: () => void
+  layoutOpenTooltip?: {
+    displayToken: number
+    index: number
+    item: LayoutOpenTooltipItem
+  } | null
+  layoutOpenTooltipTotalCount: number
+  onDismissLayoutOpenTooltip: () => void
+  onNextLayoutOpenTooltip: () => void
   tourState?: {
     title: string
     description?: string
@@ -236,6 +246,10 @@ export function PreviewWorkspace({
   editorMode,
   onEditorModeChange,
   closeSidebarPanel,
+  layoutOpenTooltip = null,
+  layoutOpenTooltipTotalCount,
+  onDismissLayoutOpenTooltip,
+  onNextLayoutOpenTooltip,
   tourState = null,
 }: Props) {
   const [previewHoveredLayerKey, setPreviewHoveredLayerKey] = useState<string | null>(null)
@@ -404,6 +418,20 @@ export function PreviewWorkspace({
               onClose={tourState.onClose}
               onBack={tourState.onBack}
               onNext={tourState.onNext}
+            />
+          ) : null}
+          {!showPresetsBrowser && layoutOpenTooltip ? (
+            <LayoutOpenTooltipOverlay
+              tooltip={layoutOpenTooltip.item}
+              displayToken={layoutOpenTooltip.displayToken}
+              index={layoutOpenTooltip.index}
+              totalCount={layoutOpenTooltipTotalCount}
+              isDarkMode={isDarkUi}
+              showHelpIndicator={showSectionHelpIcons}
+              bottomClassName={tourState ? (tourState.isOpen ? "bottom-36" : "bottom-20") : "bottom-4"}
+              onClose={onDismissLayoutOpenTooltip}
+              onNext={onNextLayoutOpenTooltip}
+              onHelpHover={() => onOpenHelpSection("help-layout-tooltips")}
             />
           ) : null}
           {showPresetsBrowser ? (

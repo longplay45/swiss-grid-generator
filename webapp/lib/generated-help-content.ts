@@ -326,6 +326,23 @@ export const HELP_CONTENT_GROUPS = [
           }
         ],
         "subsections": []
+      },
+      {
+        "title": "Layout Tooltips",
+        "id": "help-layout-tooltips",
+        "indexed": true,
+        "blocks": [
+          {
+            "type": "list",
+            "items": [
+              "Loading a preset or project also opens a short workflow tooltip at the bottom of the preview.",
+              "The popup fades in, shows one authored tip at a time, and stays open until it is closed with `X`, outside click, or replaced with `Next >`.",
+              "`Next >` cycles through the tooltip sequence and updates the `Tooltip x of y` counter.",
+              "When Help is open, the tooltip popup becomes a blue-marked help target like the rest of the interface and hovering it jumps the Help panel to this section."
+            ]
+          }
+        ],
+        "subsections": []
       }
     ]
   },
@@ -377,6 +394,7 @@ export const HELP_CONTENT_GROUPS = [
             "items": [
               "When help is open, blue-marked UI targets jump to their matching help topic on hover.",
               "Opening the Help panel also enables those contextual help markers across header actions, settings panels, the preview surface, and the preset browser.",
+              "The layout-tooltip popup uses the same help-hover logic and only shows its blue top indicator while Help is open.",
               "The Help panel remains available while the preset browser is open.",
               "While the preset browser is open and the left settings controls are inactive, the left-panel section headers still keep their help-hover targets.",
               "Use the small up-arrow beside a help title to jump back to the index."
@@ -804,6 +822,10 @@ export const HELP_INDEX_GROUPS = [
       {
         "id": "help-project-tours",
         "label": "Project Tours"
+      },
+      {
+        "id": "help-layout-tooltips",
+        "label": "Layout Tooltips"
       }
     ]
   },
@@ -963,6 +985,10 @@ export const ALL_HELP_INDEX_ITEMS = [
   {
     "id": "help-project-tours",
     "label": "Project Tours"
+  },
+  {
+    "id": "help-layout-tooltips",
+    "label": "Layout Tooltips"
   },
   {
     "id": "help-ux-overview",
