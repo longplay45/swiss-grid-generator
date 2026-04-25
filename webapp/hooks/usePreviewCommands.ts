@@ -24,7 +24,7 @@ type LayerEditorRequest = {
 
 type LayerLockRequest = {
   token: CommandToken
-  target: string
+  targets: string[]
   locked: boolean
 } | null
 
@@ -68,10 +68,10 @@ export function usePreviewCommands<Layout>({ defaultLayout }: Args<Layout>) {
     })
   }, [issueCommandToken])
 
-  const requestLayerLock = useCallback((target: string, locked: boolean) => {
+  const requestLayerLock = useCallback((targets: string[], locked: boolean) => {
     setLayerLockRequest({
       token: issueCommandToken(),
-      target,
+      targets,
       locked,
     })
   }, [issueCommandToken])

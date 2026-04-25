@@ -164,7 +164,7 @@ interface GridPreviewProps {
   requestedLayerDeleteToken?: number
   requestedLayerEditorTarget?: BlockId | null
   requestedLayerEditorToken?: number
-  requestedLayerLockTarget?: BlockId | null
+  requestedLayerLockTargets?: BlockId[] | null
   requestedLayerLockValue?: boolean
   requestedLayerLockToken?: number
   selectedLayerKey?: BlockId | null
@@ -223,7 +223,7 @@ export const GridPreview = memo(function GridPreview({
   requestedLayerDeleteToken = 0,
   requestedLayerEditorTarget = null,
   requestedLayerEditorToken = 0,
-  requestedLayerLockTarget = null,
+  requestedLayerLockTargets = null,
   requestedLayerLockValue = false,
   requestedLayerLockToken = 0,
   selectedLayerKey = null,
@@ -1085,33 +1085,39 @@ export const GridPreview = memo(function GridPreview({
   })
 
   useEffect(() => {
-    if (!requestedLayerLockTarget || requestedLayerLockToken === 0) return
+    if (!requestedLayerLockTargets?.length || requestedLayerLockToken === 0) return
     if (lastAppliedLayerLockRequestKeyRef.current === requestedLayerLockToken) return
     lastAppliedLayerLockRequestKeyRef.current = requestedLayerLockToken
 
-    const keyExists = blockOrder.includes(requestedLayerLockTarget) || imageOrder.includes(requestedLayerLockTarget)
-    if (!keyExists) return
-    if (isLayerLocked(requestedLayerLockTarget) === requestedLayerLockValue) return
+    const nextTargets = [...new Set(requestedLayerLockTargets)].filter((key) => (
+      (blockOrder.includes(key) || imageOrder.includes(key))
+      && isLayerLocked(key) !== requestedLayerLockValue
+    ))
+    if (nextTargets.length === 0) return
+    const nextTargetSet = new Set(nextTargets)
 
     recordHistoryBeforeChange()
     setLockedLayers((current) => (
       requestedLayerLockValue
-        ? { ...current, [requestedLayerLockTarget]: true }
-        : omitOptionalRecordKey(current, requestedLayerLockTarget)
+        ? nextTargets.reduce((acc, key) => {
+            acc[key] = true
+            return acc
+          }, { ...current })
+        : nextTargets.reduce((acc, key) => omitOptionalRecordKey(acc, key), current)
     ))
 
     if (!requestedLayerLockValue) return
     clearHover()
-    setDragState((current) => (current?.key === requestedLayerLockTarget ? null : current))
-    setEditorState((current) => (current?.target === requestedLayerLockTarget ? null : current))
-    setImageEditorState((current) => (current?.target === requestedLayerLockTarget ? null : current))
+    setDragState((current) => (current && nextTargetSet.has(current.key) ? null : current))
+    setEditorState((current) => (current && nextTargetSet.has(current.target) ? null : current))
+    setImageEditorState((current) => (current && nextTargetSet.has(current.target) ? null : current))
   }, [
     blockOrder,
     clearHover,
     imageOrder,
     isLayerLocked,
     recordHistoryBeforeChange,
-    requestedLayerLockTarget,
+    requestedLayerLockTargets,
     requestedLayerLockToken,
     requestedLayerLockValue,
     setDragState,

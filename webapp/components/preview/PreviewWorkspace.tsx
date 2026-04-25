@@ -81,7 +81,7 @@ type Props = {
   requestedLayerOrderState: { token: number; order: string[] } | null
   requestedLayerDeleteState: { token: number; target: string } | null
   requestedLayerEditorState: { token: number; target: string } | null
-  requestedLayerLockState: { token: number; target: string; locked: boolean } | null
+  requestedLayerLockState: { token: number; targets: string[]; locked: boolean } | null
   appVersion: string
   uiTheme: UiTheme
   result: GridResult
@@ -110,6 +110,7 @@ type Props = {
   onLayerSelect: (key: string | null) => void
   onLayerEditorToggle: (target: string) => void
   onLayerLockToggle: (target: string, locked: boolean) => void
+  onPageLayerLockToggle: (pageId: string, locked: boolean) => void
   onLayerDelete: (target: string, kind: "text" | "image") => void
   onSelectedLayerKeyChange: (key: string | null) => void
   onImageColorSchemeChange: (value: ImageColorSchemeId) => void
@@ -238,6 +239,7 @@ export function PreviewWorkspace({
   onLayerSelect,
   onLayerEditorToggle,
   onLayerLockToggle,
+  onPageLayerLockToggle,
   onLayerDelete,
   onSelectedLayerKeyChange,
   onImageColorSchemeChange,
@@ -488,7 +490,7 @@ export function PreviewWorkspace({
               requestedLayerDeleteToken={requestedLayerDeleteState?.token ?? 0}
               requestedLayerEditorTarget={requestedLayerEditorState?.target ?? null}
               requestedLayerEditorToken={requestedLayerEditorState?.token ?? 0}
-              requestedLayerLockTarget={requestedLayerLockState?.target ?? null}
+              requestedLayerLockTargets={requestedLayerLockState?.targets ?? null}
               requestedLayerLockValue={requestedLayerLockState?.locked ?? false}
               requestedLayerLockToken={requestedLayerLockState?.token ?? 0}
               selectedLayerKey={activeSidebarPanel === "layers" ? selectedLayerKey : null}
@@ -623,6 +625,7 @@ export function PreviewWorkspace({
                         onHoverLayerChange={setLayerPanelHoveredLayerKey}
                         onLayerEditorToggle={onLayerEditorToggle}
                         onLayerLockToggle={onLayerLockToggle}
+                        onPageLayerLockToggle={onPageLayerLockToggle}
                         onLayerDelete={onLayerDelete}
                         isDarkMode={isDarkUi}
                       />

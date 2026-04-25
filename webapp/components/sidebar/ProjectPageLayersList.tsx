@@ -37,6 +37,7 @@ type Props = {
   onHoverLayerChange: (key: string | null) => void
   onToggleEditor: (key: string) => void
   onToggleLock: (key: string, locked: boolean) => void
+  onToggleAllLocks: (pageId: string, locked: boolean) => void
   onDeleteLayer: (key: string, kind: "text" | "image") => void
   isDarkMode?: boolean
 }
@@ -59,6 +60,8 @@ const STYLE_LABELS: Record<string, string> = {
   body: "Body",
   caption: "Caption",
 }
+
+const LOCK_BUTTON_CLICK_DELAY_MS = 180
 
 function toLabel(value: string): string {
   return STYLE_LABELS[value] ?? (value ? value.charAt(0).toUpperCase() + value.slice(1) : "Body")
@@ -109,6 +112,7 @@ export function ProjectPageLayersList({
   onHoverLayerChange,
   onToggleEditor,
   onToggleLock,
+  onToggleAllLocks,
   onDeleteLayer,
   isDarkMode = false,
 }: Props) {
@@ -117,6 +121,7 @@ export function ProjectPageLayersList({
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const dropIndicatorIndexRef = useRef<number | null>(null)
   const selectionLockCleanupRef = useRef<(() => void) | null>(null)
+  const lockButtonClickTimeoutRef = useRef<number | null>(null)
 
   const blockOrder = useMemo(() => layout?.blockOrder ?? [], [layout?.blockOrder])
   const imageOrder = useMemo(() => layout?.imageOrder ?? [], [layout?.imageOrder])
@@ -212,6 +217,10 @@ export function ProjectPageLayersList({
 
   useEffect(() => (
     () => {
+      if (lockButtonClickTimeoutRef.current !== null) {
+        window.clearTimeout(lockButtonClickTimeoutRef.current)
+        lockButtonClickTimeoutRef.current = null
+      }
       selectionLockCleanupRef.current?.()
       selectionLockCleanupRef.current = null
     }
@@ -445,10 +454,23 @@ export function ProjectPageLayersList({
                       } ${isLocked ? "" : "hover:text-[#fe9f97]"}`}
                       onClick={(event) => {
                         event.stopPropagation()
-                        if (!isLocked) {
-                          onHoverLayerChange(null)
+                        if (lockButtonClickTimeoutRef.current !== null) {
+                          window.clearTimeout(lockButtonClickTimeoutRef.current)
                         }
-                        onToggleLock(thumb.key, !isLocked)
+                        lockButtonClickTimeoutRef.current = window.setTimeout(() => {
+                          onHoverLayerChange(null)
+                          onToggleLock(thumb.key, !isLocked)
+                          lockButtonClickTimeoutRef.current = null
+                        }, LOCK_BUTTON_CLICK_DELAY_MS)
+                      }}
+                      onDoubleClick={(event) => {
+                        event.stopPropagation()
+                        if (lockButtonClickTimeoutRef.current !== null) {
+                          window.clearTimeout(lockButtonClickTimeoutRef.current)
+                          lockButtonClickTimeoutRef.current = null
+                        }
+                        onHoverLayerChange(null)
+                        onToggleAllLocks(pageId, !isLocked)
                       }}
                     >
                       {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}

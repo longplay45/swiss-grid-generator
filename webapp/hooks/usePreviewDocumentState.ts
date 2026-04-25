@@ -119,23 +119,30 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     setSelectedLayerKeyWithGrace(target)
   }, [requestLayerEditor, setSelectedLayerKeyWithGrace])
 
-  const handleLayerLockChange = useCallback((target: string, locked: boolean) => {
+  const handleLayerLockBatchChange = useCallback((targets: string[], locked: boolean) => {
+    const nextTargets = [...new Set(targets)]
+    if (nextTargets.length === 0) return
+
     setPreviewLayout((current) => {
       const seeded = getPreviewLayoutSeed(current, defaultLayout)
       const nextLockedLayers = locked
-        ? {
-            ...(seeded.lockedLayers ?? {}),
-            [target]: true,
-          }
-        : omitOptionalRecordKey(seeded.lockedLayers, target)
+        ? nextTargets.reduce((acc, key) => {
+            acc[key] = true
+            return acc
+          }, { ...(seeded.lockedLayers ?? {}) } as Partial<Record<string, boolean>>)
+        : nextTargets.reduce((acc, key) => omitOptionalRecordKey(acc, key), seeded.lockedLayers ?? {})
 
       return {
         ...seeded,
         lockedLayers: nextLockedLayers,
       }
     })
-    requestLayerLock(target, locked)
+    requestLayerLock(nextTargets, locked)
   }, [defaultLayout, requestLayerLock])
+
+  const handleLayerLockChange = useCallback((target: string, locked: boolean) => {
+    handleLayerLockBatchChange([target], locked)
+  }, [handleLayerLockBatchChange])
 
   return {
     previewLayout,
@@ -161,5 +168,6 @@ export function usePreviewDocumentState<StyleKey extends string, Family extends 
     handlePreviewLayerSelect,
     handleToggleLayerEditor,
     handleLayerLockChange,
+    handleLayerLockBatchChange,
   }
 }

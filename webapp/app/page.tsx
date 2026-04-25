@@ -60,6 +60,7 @@ import {
   resolveProjectPageBoundaryId,
 } from "@/lib/project-page-navigation"
 import { LAYOUT_OPEN_TOOLTIP_ITEMS, type LayoutOpenTooltipItem } from "@/lib/generated-tooltip-content"
+import { omitOptionalRecordKey } from "@/lib/record-helpers"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -112,6 +113,21 @@ function readStoredNonNegativeInteger(key: string): number {
   } catch {
     return 0
   }
+}
+
+function applyLayerLockStateToKeys(
+  source: Partial<Record<string, boolean>> | undefined,
+  targets: readonly string[],
+  locked: boolean,
+): Partial<Record<string, boolean>> {
+  if (locked) {
+    return targets.reduce((acc, key) => {
+      acc[key] = true
+      return acc
+    }, { ...(source ?? {}) } as Partial<Record<string, boolean>>)
+  }
+
+  return targets.reduce((acc, key) => omitOptionalRecordKey(acc, key), source ?? {})
 }
 
 export default function Home() {
@@ -305,6 +321,7 @@ export default function Home() {
     handlePreviewLayerSelect,
     handleToggleLayerEditor,
     handleLayerLockChange,
+    handleLayerLockBatchChange,
   } = usePreviewDocumentState<TypographyStyleKey, FontFamily>({
     activeSidebarPanel,
     defaultLayout: DEFAULT_PAGE_PREVIEW_LAYOUT,
@@ -883,6 +900,40 @@ export default function Home() {
     handleLayerLockChange(target, locked)
   }, [handleLayerLockChange])
 
+  const handleCommittedPageLayerLockToggle = useCallback((pageId: string, locked: boolean) => {
+    const currentProject = getCurrentProjectSnapshot()
+    const targetPage = currentProject.pages.find((page) => page.id === pageId)
+    const targetLayout = targetPage?.previewLayout
+    if (!targetPage || !targetLayout) return
+
+    const targetKeys = [...targetLayout.blockOrder, ...(targetLayout.imageOrder ?? [])]
+    if (targetKeys.length === 0) return
+
+    preferCommittedPreviewLayoutRef.current = true
+
+    if (pageId === activePageId) {
+      handleLayerLockBatchChange(targetKeys, locked)
+      return
+    }
+
+    const nextProject: LoadedProject<PreviewLayoutState> = {
+      ...currentProject,
+      pages: currentProject.pages.map((page) => (
+        page.id === pageId
+          ? {
+              ...page,
+              previewLayout: {
+                ...targetLayout,
+                lockedLayers: applyLayerLockStateToKeys(targetLayout.lockedLayers, targetKeys, locked),
+              },
+            }
+          : page
+      )),
+    }
+
+    replaceProjectSnapshot(nextProject)
+  }, [activePageId, getCurrentProjectSnapshot, handleLayerLockBatchChange, replaceProjectSnapshot])
+
   const handleCommittedPreviewLayoutChange = useCallback((layout: PreviewLayoutState) => {
     preferCommittedPreviewLayoutRef.current = false
     handlePreviewLayoutChange(layout)
@@ -1123,6 +1174,7 @@ export default function Home() {
       onLayerSelect={handlePreviewLayerSelect}
       onLayerEditorToggle={handleToggleLayerEditor}
       onLayerLockToggle={handleCommittedLayerLockToggle}
+      onPageLayerLockToggle={handleCommittedPageLayerLockToggle}
       onLayerDelete={handleCommittedLayerDelete}
       onSelectedLayerKeyChange={setSelectedLayerKeyWithGrace}
       onImageColorSchemeChange={setImageColorScheme}
