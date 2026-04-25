@@ -42,7 +42,7 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "Set ratio, orientation, and rotation in `I. Canvas Ratio`.",
-              "Set the baseline first. It drives vertical rhythm.",
+              "Set the baseline first. It drives everything.",
               "Set margins in `III. Margins`.",
               "Set columns, rows, gutter, and rhythm in `IV. Grid & Rhythms`.",
               "Set the type scale and base font in `V. Typo`.",
@@ -178,7 +178,8 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Open from the preview affordance or by `Shift` + double-clicking empty space.",
+              "`Shift` + double-click on an empty space in the preview to create a new image placeholder.",
+              "Open from the preview affordance or by double-clicking on that layer in the project panel.",
               "The left sidebar switches to `Geometry`, `Color`, and `Info`.",
               "`Esc` or outside click exits edit mode.",
               "Double-clicking another active-page layer card retargets the open image editor."
@@ -240,7 +241,8 @@ export const HELP_CONTENT_GROUPS = [
               "Drag respects each layer's current X/Y snap settings.",
               "With `Snap to Baseline (Y)` on, normal drag uses module tops.",
               "Holding `Shift` during drag switches Y movement to baseline rows.",
-              "Unsnapped layers still stay inside their allowed placement bounds."
+              "Unsnapped layers still stay inside their allowed placement bounds.",
+              "Selected layers can also be moved via cursor keys `UP`, `DOWN`, `LEFT`, `RIGHT`. `SHIFT` + `Cursor Keys` increments the steps 10x."
             ]
           }
         ],
@@ -289,7 +291,7 @@ export const HELP_CONTENT_GROUPS = [
             "items": [
               "Export supports vector PDF, SVG, and IDML.",
               "Multi-page projects can export a page range.",
-              "PDF stays visually faithful. SVG and IDML are the frozen-geometry path when you do not want live text.",
+              "All export formats are 100% vector based.",
               "`Esc` closes the dialog when no export is running and cancels an in-progress export at the next safe checkpoint."
             ]
           }
@@ -329,11 +331,8 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.",
-              "`Save`, `Export`, and display toggles stay disabled until a preview layout exists.",
-              "The Project panel can also be toggled with `Cmd/Ctrl+Shift+P`.",
-              "Header icon labels are always available as hover popups.",
-              "`Shift` + click on a page-visibility toggle applies the same state to every page in the project.",
-              "Only one right-side panel is open at a time."
+              "The Project panel can be toggled with `Cmd/Ctrl+Shift+P`.",
+              "`Shift` + click on a page-visibility toggle applies the same state to every page in the project."
             ]
           }
         ],
@@ -347,7 +346,6 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Open help from the header.",
               "When help is open, blue-marked UI targets jump to their matching help topic on hover.",
               "Use the small up-arrow beside a help title to jump back to the index."
             ]
