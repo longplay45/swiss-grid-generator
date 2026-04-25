@@ -63,7 +63,7 @@ const SECTION_HEADER_CLICK_DELAY_MS = 180
 const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "placeholders", "info"]
 
 const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
-  layout: false,
+  layout: true,
   type: true,
   placeholders: true,
   info: true,

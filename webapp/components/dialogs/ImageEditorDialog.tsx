@@ -44,7 +44,7 @@ const SECTION_HEADER_CLICK_DELAY_MS = 180
 const IMAGE_EDITOR_SECTION_KEYS: SectionKey[] = ["geometry", "color", "info"]
 
 const IMAGE_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
-  geometry: false,
+  geometry: true,
   color: true,
   info: true,
 }

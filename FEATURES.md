@@ -55,6 +55,7 @@ Current capability inventory for Swiss Grid Generator.
 
 - Inline editor overlay on the page surface.
 - Left-sidebar text editor with `Paragraph`, `Typo`, `Placeholders`, and `Info` sections.
+- Text-editor section open/closed state is remembered globally across pages, paragraphs, and projects, with an all-closed first-use default.
 - The text editor header uses the same user-facing layer label shown in the Project panel instead of the internal block id.
 - Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, rotation.
 - Paragraph height resolves as `rows + baselines`, with `rows = 0` allowed when `baselines > 0`.
@@ -139,6 +140,7 @@ Current capability inventory for Swiss Grid Generator.
 - With X snapping off, image placeholders use the same symmetric one-column side-margin overhang as paragraphs.
 - Stable logical positioning across grid changes.
 - Separate left-sidebar editor with `Geometry`, `Color`, and `Info` sections.
+- Image-editor section open/closed state is remembered globally across pages, placeholders, and projects, with an all-closed first-use default.
 - The image editor header shows `IMAGE` plus the current placeholder swatch color.
 - Image editor can be opened from the preview affordance or by double-clicking the corresponding unlocked image layer card in the Project panel.
 - When an image editor is already open, double-clicking another unlocked active-page image layer card retargets the editor.

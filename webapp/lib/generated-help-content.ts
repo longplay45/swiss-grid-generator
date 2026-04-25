@@ -103,6 +103,7 @@ export const HELP_CONTENT_GROUPS = [
               "Open text edit from the preview affordance, or by double-clicking an unlocked text layer card in the Project panel.",
               "Retarget an open text editor by clicking another unlocked preview block or by double-clicking another unlocked text layer card in the Project panel.",
               "While editing, the left sidebar switches to `Paragraph`, `Typo`, `Placeholders`, and `Info`.",
+              "Those editor sections remember their last open/closed GUI state globally across pages, paragraphs, and projects. First use starts with all sections closed.",
               "The editor title uses the same layer label shown in the Project panel.",
               "`Esc` or outside click exits edit mode.",
               "Inside inline text edit: double-click selects a word, triple-click selects a sentence, `Alt+A` or `Cmd/Ctrl+A` selects all, and `Arrow` / `Home` / `End` follow the rendered line layout."
@@ -186,6 +187,7 @@ export const HELP_CONTENT_GROUPS = [
               "`Shift` + double-click on an empty space in the preview to create a new image placeholder.",
               "Open from the preview affordance or by double-clicking the corresponding unlocked image layer card in the Project panel.",
               "The left sidebar switches to `Geometry`, `Color`, and `Info`.",
+              "Those editor sections remember their last open/closed GUI state globally across pages, image placeholders, and projects. First use starts with all sections closed.",
               "The editor title shows `IMAGE` plus the current placeholder swatch color.",
               "`Esc` or outside click exits edit mode.",
               "Double-clicking another unlocked active-page image layer card retargets the open image editor."
