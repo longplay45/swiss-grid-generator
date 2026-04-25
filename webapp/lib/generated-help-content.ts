@@ -99,7 +99,8 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Open text edit from the preview affordance, or retarget an open editor by clicking another unlocked preview block.",
+              "Open text edit from the preview affordance, or by double-clicking an unlocked text layer card in the Project panel.",
+              "Retarget an open text editor by clicking another unlocked preview block or by double-clicking another unlocked text layer card in the Project panel.",
               "While editing, the left sidebar switches to `Paragraph`, `Typo`, `Placeholders`, and `Info`.",
               "`Esc` or outside click exits edit mode.",
               "Inside inline text edit: double-click selects a word, triple-click selects a sentence, `Alt+A` or `Cmd/Ctrl+A` selects all, and `Arrow` / `Home` / `End` follow the rendered line layout."
@@ -179,10 +180,10 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "`Shift` + double-click on an empty space in the preview to create a new image placeholder.",
-              "Open from the preview affordance or by double-clicking on that layer in the project panel.",
+              "Open from the preview affordance or by double-clicking the corresponding unlocked image layer card in the Project panel.",
               "The left sidebar switches to `Geometry`, `Color`, and `Info`.",
               "`Esc` or outside click exits edit mode.",
-              "Double-clicking another active-page layer card retargets the open image editor."
+              "Double-clicking another unlocked active-page image layer card retargets the open image editor."
             ]
           }
         ],
@@ -531,7 +532,7 @@ export const HELP_CONTENT_GROUPS = [
               "A project can contain up to `1000` pages.",
               "Active-page layer cards mirror preview hover/guides.",
               "Drag unlocked layer cards to reorder z-index.",
-              "Single-click a layer card to select it. Double-click it to open or retarget the editor.",
+              "Single-click a layer card to select it. Double-click an unlocked layer card to open or retarget its corresponding text or image editor.",
               "Locked layers stay visible and selectable, but preview hover, move, and editor access are disabled until unlocked."
             ]
           }
