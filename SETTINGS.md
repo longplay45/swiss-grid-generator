@@ -116,10 +116,11 @@ Default: `swiss`
   - enabled (`rhythmColsEnabled`): `true|false` (default `true`)
   - direction (`rhythmColsDirection`): `ttb` (`Top to Bottom`) or `btt` (`Bottom to top`) (default `ttb`)
 
-### V. Typo
+### V. Typo & Rhythms
 
-- `Font Hierarchy`: select typography scale preset (see Typography Scale Presets).
-- Hierarchy table: shows current size and leading for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline/scale.
+- `Base`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
+- `Rhythm`: selects the typography scale preset (see Typography Scale Presets).
+- `Steps` table: shows current size and leading for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline/scale.
 - Swiss on the A4 12pt reference baseline:
   - `Display`: `64pt / 72pt`
   - `Headline`: `30pt / 36pt`
@@ -127,7 +128,6 @@ Default: `swiss`
   - `Body`: `10pt / 12pt`
   - `Caption`: `7pt / 8pt`
 - `Custom` is paragraph-level only; when first selected in the text editor it copies the paragraph's currently resolved size and leading into `Custom Size` and `Custom Leading`.
-- `Base Font`: sets the default canvas rendering font for all paragraphs that do not have an explicit paragraph-level font override.
 - Paragraph text supports dynamic document variables in raw text:
   - `<%lorem%>` fills the current paragraph frame with fitted lorem ipsum
   - `<%project_title%>` and alias `<%title%>`
@@ -137,7 +137,8 @@ Default: `swiss`
   - `<%time%>` rendered as local `HH:mm`
 - Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
 - In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render as live values.
-- `Font Hierarchy` and `Base Font` dropdown items preview live on rollover before commit.
+- `Rhythm` and `Base` dropdown items preview live on rollover before commit.
+- Settings-panel dropdowns open upward.
 - Font dropdown groups: `Sans-Serif`, `Serif`, `Poster` (same grouping in left panel and popup editor).
 - Available fonts:
   - Sans-Serif: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)

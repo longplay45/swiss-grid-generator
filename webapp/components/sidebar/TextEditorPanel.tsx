@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label"
 import { DebouncedSlider } from "@/components/ui/slider"
 import {
   Select,
-  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -691,13 +691,13 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: controls.gridRows + 1 }, (_, index) => index).map((count) => (
                   <SelectItem key={count} value={String(count)} {...rowsSelectPreview.getItemPreviewProps(String(count))}>
                     {count} {count === 1 ? "row" : "rows"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
 
             <Select
@@ -708,13 +708,13 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: controls.gridCols }, (_, index) => index + 1).map((count) => (
                   <SelectItem key={count} value={String(count)} {...columnsSelectPreview.getItemPreviewProps(String(count))}>
                     {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
 
             <Label className={sectionLabelClassName}>Baselines</Label>
@@ -728,7 +728,7 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
                 <SelectItem value="0" {...baselinesSelectPreview.getItemPreviewProps("0")}>0 baselines</SelectItem>
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
                   <SelectItem
@@ -739,7 +739,7 @@ export function TextEditorPanel<StyleKey extends string>({
                     {count} {count === 1 ? "baseline" : "baselines"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
           </div>
 
@@ -913,7 +913,7 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue placeholder="Mixed" />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={hierarchySelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={hierarchySelectPreview.handleContentPointerLeave}>
                 {controls.styleOptions.map((option) => (
                   <SelectItem
                     key={option.value}
@@ -923,7 +923,7 @@ export function TextEditorPanel<StyleKey extends string>({
                     {getStyleOptionLabel(option.value, option.label)}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
             </LabeledControlRow>
           </div>
@@ -1019,13 +1019,13 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue placeholder="Mixed" />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={cutSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={cutSelectPreview.handleContentPointerLeave}>
                 {getFontVariants(selectionFontFamily ?? controls.editorState.draftFont).map((variant) => (
                   <SelectItem key={variant.id} value={variant.id} {...cutSelectPreview.getItemPreviewProps(variant.id)}>
                     {variant.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
             </LabeledControlRow>
           </div>
@@ -1067,10 +1067,10 @@ export function TextEditorPanel<StyleKey extends string>({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={kerningSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={kerningSelectPreview.handleContentPointerLeave}>
                 <SelectItem value="on" {...kerningSelectPreview.getItemPreviewProps("on")}>Optical</SelectItem>
                 <SelectItem value="off" {...kerningSelectPreview.getItemPreviewProps("off")}>Metric</SelectItem>
-              </SelectContent>
+              </TopSelectContent>
             </Select>
             </LabeledControlRow>
           </div>

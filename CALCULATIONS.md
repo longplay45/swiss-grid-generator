@@ -415,7 +415,7 @@ effectiveFont(block) = blockFontFamilies[block] ?? baseFont
 ```
 
 Where:
-- `baseFont` is selected in `V. Typo` and saved in `uiSettings.baseFont`.
+- `baseFont` is selected in `V. Typo & Rhythms` and saved in `uiSettings.baseFont`.
 - `blockFontFamilies` is stored in `previewLayout` as an override map.
 
 ### Inheritance Rule

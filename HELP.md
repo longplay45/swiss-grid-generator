@@ -19,7 +19,7 @@ Format:
 - Set the baseline first. It drives everything.
 - Set margins in `III. Margins`.
 - Set columns, rows, gutter, and rhythm in `IV. Grid & Rhythms`.
-- Set the type scale and base font in `V. Typo`.
+- Set the type scale and base font in `V. Typo & Rhythms`.
 - Use the header toggles to inspect baselines, margins, modules, and type.
 
 ## General Guidance
@@ -212,6 +212,7 @@ Shows or hides image placeholders on the active page. `Shift` + click applies th
 - Drag unlocked layer cards to reorder z-index.
 - Layer cards include lock and delete controls.
 - Single-click a layer card to select it. Double-click an unlocked layer card to open or retarget its corresponding text or image editor.
+- Double-click a layer card's lock toggle to apply the same lock state to every layer on that page.
 - Locked layers stay visible and selectable, but preview hover, move, and editor access are disabled until unlocked.
 
 ### Feedback {#help-feedback-panel}
@@ -255,10 +256,11 @@ Shows or hides image placeholders on the active page. `Shift` + click applies th
 - Non-repetitive rhythms can be enabled and directed independently for rows and columns.
 - Reducing rows or columns is blocked when existing content would fall outside the new grid.
 
-### V. Typo {#help-typo}
+### V. Typo & Rhythms {#help-typo}
 - Set the type scale and base font for the document.
-- `Font Hierarchy` and `Base Font` preview on dropdown hover before commit.
-- The hierarchy table shows the resolved size/leading values for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline.
+- `Rhythm` and `Base` preview on dropdown hover before commit.
+- In the settings sidebar, dropdowns open upward.
+- The `Steps` table shows the resolved size/leading values for `Display`, `Headline`, `Subhead`, `Body`, and `Caption` on the active baseline.
 - Blocks without explicit overrides inherit the base font.
 
 ### VI. Available Fonts {#help-available-fonts}

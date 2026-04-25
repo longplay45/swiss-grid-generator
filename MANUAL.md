@@ -22,7 +22,7 @@ The tool works best when global decisions are made first and local overrides are
 
 ### Build the page in the simplest reliable order.
 
-Choose `Ratio`, `Orientation`, and, if needed, `Rotation`. Then set the `Baseline`, choose the `Margins` method, and adjust the `Baseline Multiple` until the content field feels proportionate. After that, set `Cols`, `Rows`, `Gutter`, and `Rhythm`, then define the document type scale and base font in `Typo`.
+Choose `Ratio`, `Orientation`, and, if needed, `Rotation`. Then set the `Baseline`, choose the `Margins` method, and adjust the `Baseline Multiple` until the content field feels proportionate. After that, set `Cols`, `Rows`, `Gutter`, and `Rhythm`, then define the document type scale and base font in `Typo & Rhythms`.
 
 Only after the page structure is established should you create content. Double-click a module to create a text paragraph. Use `Shift` + double-click to create an image placeholder. If the page feels wrong, return to baseline and margins before changing the content blocks.
 

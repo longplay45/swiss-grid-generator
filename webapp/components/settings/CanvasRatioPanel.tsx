@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectItem, SelectTrigger, SelectValue, TopSelectContent } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
 import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
@@ -109,7 +109,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={() => onCanvasRatioPreviewChange?.(null)}>
+          <TopSelectContent onPointerLeave={() => onCanvasRatioPreviewChange?.(null)}>
             {CANVAS_RATIOS.map((opt) => (
               <SelectItem
                 key={opt.key}
@@ -122,7 +122,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
                   : `${opt.label} (${opt.ratioLabel} / 1:${opt.ratioDecimal.toFixed(3)})`}
               </SelectItem>
             ))}
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>
@@ -191,7 +191,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={() => onOrientationPreviewChange?.(null)}>
+          <TopSelectContent onPointerLeave={() => onOrientationPreviewChange?.(null)}>
             <SelectItem
               value="portrait"
               onFocus={() => onOrientationPreviewChange?.("portrait")}
@@ -206,7 +206,7 @@ export const CanvasRatioPanel = memo(function CanvasRatioPanel({
             >
               Landscape
             </SelectItem>
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>

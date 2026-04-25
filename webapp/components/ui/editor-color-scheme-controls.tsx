@@ -4,10 +4,10 @@ import { Label } from "@/components/ui/label"
 import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import {
   Select,
-  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 
 type PreviewItemHandlers = {
@@ -69,11 +69,8 @@ export function EditorColorSchemeControls({
           <SelectTrigger className={triggerClassName}>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent
+          <TopSelectContent
             className={selectContentClassName}
-            side="top"
-            sideOffset={4}
-            avoidCollisions={false}
             onPointerLeave={onSchemeContentPointerLeave}
           >
             {schemes.map((scheme) => (
@@ -85,7 +82,7 @@ export function EditorColorSchemeControls({
                 {scheme.label}
               </SelectItem>
             ))}
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>

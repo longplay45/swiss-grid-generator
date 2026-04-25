@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label"
 import { DebouncedSlider } from "@/components/ui/slider"
 import {
   Select,
-  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { clampRotation } from "@/lib/block-constraints"
@@ -306,7 +306,7 @@ export function ImageEditorDialog({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={rowsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: gridRows + 1 }, (_, index) => index).map((count) => (
                   <SelectItem
                     key={`image-row-${count}`}
@@ -316,7 +316,7 @@ export function ImageEditorDialog({
                     {count} {count === 1 ? "row" : "rows"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
 
             <Select
@@ -327,7 +327,7 @@ export function ImageEditorDialog({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={columnsSelectPreview.handleContentPointerLeave}>
                 {Array.from({ length: gridCols }, (_, index) => index + 1).map((count) => (
                   <SelectItem
                     key={`image-col-${count}`}
@@ -337,7 +337,7 @@ export function ImageEditorDialog({
                     {count} {count === 1 ? "col" : "cols"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
 
             <Label className={sectionLabelClassName}>Baselines</Label>
@@ -351,7 +351,7 @@ export function ImageEditorDialog({
               <SelectTrigger className={triggerClassName}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent className={tone.selectContent} onPointerLeave={baselinesSelectPreview.handleContentPointerLeave}>
                 <SelectItem value="0" {...baselinesSelectPreview.getItemPreviewProps("0")}>0 baselines</SelectItem>
                 {Array.from({ length: maxHeightBaselines }, (_, index) => index + 1).map((count) => (
                   <SelectItem
@@ -362,7 +362,7 @@ export function ImageEditorDialog({
                     {count} {count === 1 ? "baseline" : "baselines"}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </TopSelectContent>
             </Select>
           </div>
 

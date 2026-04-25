@@ -103,6 +103,20 @@ const SelectContent = React.forwardRef<
 ))
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
+const TopSelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+>(({ side = "top", sideOffset = 4, avoidCollisions = false, ...props }, ref) => (
+  <SelectContent
+    ref={ref}
+    side={side}
+    sideOffset={sideOffset}
+    avoidCollisions={avoidCollisions}
+    {...props}
+  />
+))
+TopSelectContent.displayName = "TopSelectContent"
+
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
@@ -156,6 +170,7 @@ export {
   SelectValue,
   SelectTrigger,
   SelectContent,
+  TopSelectContent,
   SelectLabel,
   SelectItem,
   SelectSeparator,

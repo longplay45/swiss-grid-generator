@@ -2,10 +2,10 @@ import { memo, useState } from "react"
 import { Label } from "@/components/ui/label"
 import {
   Select,
-  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 import { PanelCard } from "@/components/settings/PanelCard"
 import { LabeledControlRow } from "@/components/ui/labeled-control-row"
@@ -103,7 +103,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={colorSchemeSelectPreview.handleContentPointerLeave}>
+          <TopSelectContent onPointerLeave={colorSchemeSelectPreview.handleContentPointerLeave}>
             {IMAGE_COLOR_SCHEMES.map((scheme) => (
               <SelectItem
                 key={scheme.id}
@@ -113,7 +113,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
                 {scheme.label}
               </SelectItem>
             ))}
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>
@@ -144,7 +144,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={backgroundSelectPreview.handleContentPointerLeave}>
+          <TopSelectContent onPointerLeave={backgroundSelectPreview.handleContentPointerLeave}>
             <SelectItem value="__none__" {...backgroundSelectPreview.getItemPreviewProps("__none__")}>None</SelectItem>
             {selected.colors.map((color, index) => (
               <SelectItem
@@ -162,7 +162,7 @@ export const ColorSchemePanel = memo(function ColorSchemePanel({
                 </span>
               </SelectItem>
             ))}
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>

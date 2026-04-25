@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectItem, SelectTrigger, SelectValue, TopSelectContent } from "@/components/ui/select"
 import { DebouncedSlider } from "@/components/ui/slider"
 import { LabeledControlRow } from "@/components/ui/labeled-control-row"
 import { PanelCard } from "@/components/settings/PanelCard"
@@ -115,12 +115,12 @@ export const MarginsPanel = memo(function MarginsPanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={marginMethodSelectPreview.handleContentPointerLeave}>
+          <TopSelectContent onPointerLeave={marginMethodSelectPreview.handleContentPointerLeave}>
             <SelectItem value="1" {...marginMethodSelectPreview.getItemPreviewProps("1")}>Progressive (1:2:2:3)</SelectItem>
             <SelectItem value="2" {...marginMethodSelectPreview.getItemPreviewProps("2")}>Van de Graaf (2:3:4:6)</SelectItem>
             <SelectItem value="3" {...marginMethodSelectPreview.getItemPreviewProps("3")}>Baseline (1:1:1:1)</SelectItem>
             <SelectItem value="custom" {...marginMethodSelectPreview.getItemPreviewProps("custom")}>Custom Margins</SelectItem>
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>

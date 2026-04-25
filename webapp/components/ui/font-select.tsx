@@ -1,12 +1,12 @@
 import {
   Select,
-  SelectContent,
   SelectGroup,
   SelectItem,
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 import type { CSSProperties } from "react"
 
@@ -67,7 +67,10 @@ export function FontSelect({
       <SelectTrigger className={triggerClassName} style={resolvedTriggerStyle}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className={contentClassName} onPointerLeave={onContentPointerLeave}>
+      <TopSelectContent
+        className={contentClassName}
+        onPointerLeave={onContentPointerLeave}
+      >
         {FONT_GROUPS.map((group, index) => {
           const groupOptions = options.filter((option) => option.category === group.key)
           if (!groupOptions.length) return null
@@ -83,7 +86,7 @@ export function FontSelect({
             </SelectGroup>
           )
         })}
-      </SelectContent>
+      </TopSelectContent>
     </Select>
   )
 }

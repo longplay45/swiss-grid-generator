@@ -5,10 +5,10 @@ import { PanelCard } from "@/components/settings/PanelCard"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
-  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TopSelectContent,
 } from "@/components/ui/select"
 import {
   GUTTER_MULTIPLE_RANGE,
@@ -117,7 +117,7 @@ export const GutterPanel = memo(function GutterPanel({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent onPointerLeave={rhythmSelectPreview.handleContentPointerLeave}>
+          <TopSelectContent onPointerLeave={rhythmSelectPreview.handleContentPointerLeave}>
             {RHYTHM_OPTIONS.map((option) => (
               <SelectItem
                 key={option.value}
@@ -127,7 +127,7 @@ export const GutterPanel = memo(function GutterPanel({
                 {option.label}
               </SelectItem>
             ))}
-          </SelectContent>
+          </TopSelectContent>
         </Select>
         </LabeledControlRow>
       </div>
@@ -152,10 +152,10 @@ export const GutterPanel = memo(function GutterPanel({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent onPointerLeave={rowsDirectionSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent onPointerLeave={rowsDirectionSelectPreview.handleContentPointerLeave}>
                 <SelectItem value="ltr" {...rowsDirectionSelectPreview.getItemPreviewProps("ltr")}>Left to right</SelectItem>
                 <SelectItem value="rtl" {...rowsDirectionSelectPreview.getItemPreviewProps("rtl")}>Right to left</SelectItem>
-              </SelectContent>
+              </TopSelectContent>
             </Select>
           </div>
 
@@ -178,10 +178,10 @@ export const GutterPanel = memo(function GutterPanel({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent onPointerLeave={colsDirectionSelectPreview.handleContentPointerLeave}>
+              <TopSelectContent onPointerLeave={colsDirectionSelectPreview.handleContentPointerLeave}>
                 <SelectItem value="ttb" {...colsDirectionSelectPreview.getItemPreviewProps("ttb")}>Top to Bottom</SelectItem>
                 <SelectItem value="btt" {...colsDirectionSelectPreview.getItemPreviewProps("btt")}>Bottom to top</SelectItem>
-              </SelectContent>
+              </TopSelectContent>
             </Select>
           </div>
         </div>
