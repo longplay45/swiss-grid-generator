@@ -143,7 +143,7 @@ Default: `swiss`
 - Available fonts:
   - Sans-Serif: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
   - Serif: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
-  - Poster: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display)
+  - Poster: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display), [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono), [Noto Sans Symbols 2](https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2)
 
 ### VI. Color Scheme
 
@@ -223,6 +223,7 @@ Default: `swiss`
 - Text cards display hierarchy, font, and a short text preview rendered in the selected paragraph color and font.
 - Image cards display `Image Placeholder` and a single color swatch.
 - Hovering an active-page layer card mirrors the same active preview rollover/guides for that block.
+- Hovered text paragraphs in preview expose a `+` affordance: click copies the full paragraph, `Shift` + click copies `Paragraph` settings, `Alt/Option` + click copies `Typo` settings, and `Alt/Option` + `Shift` + click copies both. The next click on a paragraph applies the copied content/settings, even across pages and loaded layouts.
 - Dragging active-page layer cards changes z-index using a visible insertion marker between cards.
 - Single-clicking an active-page layer card selects that layer; double-clicking opens or retargets its editor.
 - Layer cards include a lock toggle to the left of delete. Locked layers stay visible in the stack but cannot be hovered, edited, or moved in preview until unlocked.
@@ -426,6 +427,7 @@ Syllable division behavior:
 Drag behavior:
 - Default drag moves a paragraph.
 - `Alt/Option` + drag duplicates a paragraph and drops the copy.
+- Hovered text paragraphs expose a `+` affordance: click copies the full paragraph, `Shift` + click copies `Paragraph` settings, `Alt/Option` + click copies `Typo` settings, and `Alt/Option` + `Shift` + click copies both. Click another paragraph to apply the copied content/settings, even across pages and loaded layouts.
 - Paragraphs and image placeholders are stored as logical anchors: `{ column, row, baselineOffset }`.
 - Paragraphs and image placeholders also persist independent `Snap to Columns (X)` and `Snap to Baseline (Y)` flags. When either axis snap is off, the corresponding `column` and/or `baselineOffset` value may remain fractional while the logical row anchor stays stable.
 - With `Snap to Columns (X)` off, horizontal placement clamps symmetrically: one-column side-margin overhang remains available on both left and right.

@@ -53,6 +53,9 @@ const AVAILABLE_FONT_GROUPS = FONT_CATEGORY_ORDER.map((category) => ({
 }))
 
 function getGoogleFontsSpecimenUrl(fontLabel: string): string {
+  if (fontLabel === "Noto Sans Symbols 2") {
+    return "https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2"
+  }
   return `${GOOGLE_FONTS_SPECIMEN_BASE_URL}${fontLabel.replace(/\s+/g, "+")}`
 }
 

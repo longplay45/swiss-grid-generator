@@ -30,7 +30,14 @@ type Props<StyleKey extends string> = {
   hoveredImageRect: BlockRect | null
   openTextEditor: (key: string) => void
   openImageEditor: (key: string) => void
-  beginDetachedCopyDrag: (key: string, clientX: number, clientY: number) => void
+  onCopyAffordanceActivate: (args: {
+    key: string
+    kind: "text" | "image"
+    clientX: number
+    clientY: number
+    altKey: boolean
+    shiftKey: boolean
+  }) => void
   deletePreviewTarget: (key: string) => void
   clearHover: () => void
   setImageEditorState: Dispatch<SetStateAction<ImageEditorState | null>>
@@ -63,7 +70,7 @@ export function GridPreviewOverlays<StyleKey extends string>({
   hoveredImageRect,
   openTextEditor,
   openImageEditor,
-  beginDetachedCopyDrag,
+  onCopyAffordanceActivate,
   deletePreviewTarget,
   clearHover,
   setImageEditorState,
@@ -242,10 +249,21 @@ export function GridPreviewOverlays<StyleKey extends string>({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
-                beginDetachedCopyDrag(hoveredEditTarget.key, event.clientX, event.clientY)
+                onCopyAffordanceActivate({
+                  key: hoveredEditTarget.key,
+                  kind: hoveredEditTarget.kind,
+                  clientX: event.clientX,
+                  clientY: event.clientY,
+                  altKey: event.altKey,
+                  shiftKey: event.shiftKey,
+                })
               }}
-              aria-label={`Duplicate ${hoveredEditTarget.kind === "text" ? "paragraph" : "image placeholder"}`}
-              title={hoveredEditTarget.kind === "text" ? "Duplicate paragraph" : "Duplicate image placeholder"}
+              aria-label={hoveredEditTarget.kind === "text"
+                ? "Copy paragraph or copy settings"
+                : "Duplicate image placeholder"}
+              title={hoveredEditTarget.kind === "text"
+                ? "Copy paragraph. Shift-click: copy Paragraph. Alt-click: copy Typo. Alt+Shift-click: copy both."
+                : "Duplicate image placeholder"}
             >
               <Plus className="h-3 w-3" />
             </button>

@@ -34,6 +34,12 @@ import { buildSmartTextZoomGeometrySignature } from "@/lib/preview-smart-text-zo
 import { getHoveredPreviewTextGuideRect, getPreviewTextGuideRect } from "@/lib/preview-guide-rect"
 import { removeTextLayerFromCollections } from "@/lib/preview-layer-state"
 import { clampTextBlockPosition } from "@/lib/preview-text-layer-state"
+import {
+  applyOptionalTransferredValue,
+  applyTextStyleTransferToCollections,
+  type TextStyleTransferMode,
+  type TextStyleTransferSnapshot,
+} from "@/lib/preview-text-style-transfer"
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { clampFreePlacementRow, clampLayerColumn } from "@/lib/layer-placement"
 import { findNearestAxisIndex } from "@/lib/grid-rhythm"
@@ -78,6 +84,7 @@ import {
 
 type BlockId = string
 type TypographyStyleKey = keyof GridResult["typography"]["styles"]
+type PendingTextStyleTransfer = TextStyleTransferSnapshot<BlockId, TypographyStyleKey>
 
 function unionRects(rects: BlockRect[]): BlockRect | null {
   if (rects.length === 0) return null
@@ -279,6 +286,7 @@ export const GridPreview = memo(function GridPreview({
   const [hoverState, setHoverState] = useState<PreviewHoverState<BlockId> | null>(null)
   const [hoverImageKey, setHoverImageKey] = useState<BlockId | null>(null)
   const [hoverCopyIntent, setHoverCopyIntent] = useState(false)
+  const [pendingTextStyleTransfer, setPendingTextStyleTransfer] = useState<PendingTextStyleTransfer | null>(null)
   const [layoutEmissionEnabled, setLayoutEmissionEnabled] = useState(initialLayoutToken === 0)
   const [pendingLayerEditorMode, setPendingLayerEditorMode] = useState<"text" | "image" | null>(null)
   const [activeTextZoomTarget, setActiveTextZoomTarget] = useState<BlockId | null>(null)
@@ -558,6 +566,84 @@ export const GridPreview = memo(function GridPreview({
     setHoverCopyIntent(false)
   }, [])
 
+  const buildTextStyleTransfer = (
+    sourceKey: BlockId,
+    mode: TextStyleTransferMode,
+  ): PendingTextStyleTransfer | null => {
+    if (isImagePlaceholderKey(sourceKey)) return null
+    const includeParagraph = mode === "full" || mode === "paragraph" || mode === "both"
+    const includeTypo = mode === "full" || mode === "typo" || mode === "both"
+
+    return {
+      sourceKey,
+      mode,
+      textContent: mode === "full" ? (textContent[sourceKey] ?? "") : undefined,
+      textEdited: mode === "full" ? (blockTextEdited[sourceKey] ?? true) : undefined,
+      paragraph: includeParagraph
+        ? {
+            columns: getBlockSpan(sourceKey),
+            rows: getBlockRows(sourceKey),
+            heightBaselines: getBlockHeightBaselines(sourceKey),
+            align: blockTextAlignments[sourceKey] ?? "left",
+            verticalAlign: blockVerticalAlignments[sourceKey] ?? "top",
+            reflow: isTextReflowEnabled(sourceKey),
+            syllableDivision: isSyllableDivisionEnabled(sourceKey),
+            snapToColumns: isSnapToColumnsEnabled(sourceKey),
+            snapToBaseline: isSnapToBaselineEnabled(sourceKey),
+            rotation: blockRotations[sourceKey],
+          }
+        : undefined,
+      typo: includeTypo
+        ? {
+            styleKey: getStyleKeyForBlock(sourceKey),
+            fontFamily: blockFontFamilies[sourceKey],
+            fontWeight: blockFontWeights[sourceKey],
+            opticalKerning: blockOpticalKerning[sourceKey],
+            trackingScale: blockTrackingScales[sourceKey],
+            italic: blockItalic[sourceKey],
+            customSize: blockCustomSizes[sourceKey],
+            customLeading: blockCustomLeadings[sourceKey],
+            textColor: blockTextColors[sourceKey],
+            trackingRuns: mode === "full"
+              ? getBlockTrackingRuns(sourceKey).map((run) => ({ ...run }))
+              : undefined,
+            textFormatRuns: mode === "full"
+              ? getBlockTextFormatRuns(sourceKey).map((run) => ({ ...run }))
+              : undefined,
+          }
+        : undefined,
+    }
+  }
+
+  const announceTextStyleTransfer = useCallback((mode: TextStyleTransferMode) => {
+    if (!onRequestNotice) return
+    if (mode === "full") {
+      onRequestNotice({
+        title: "Paragraph Copied",
+        message: "Click another paragraph, even on a different page or layout, to replace its text and paragraph settings with the copied paragraph.",
+      })
+      return
+    }
+    if (mode === "paragraph") {
+      onRequestNotice({
+        title: "Paragraph Settings Copied",
+        message: "Click another paragraph, even on a different page or layout, to apply rows, baselines, columns, alignment, reflow, snap, and rotation.",
+      })
+      return
+    }
+    if (mode === "typo") {
+      onRequestNotice({
+        title: "Typo Settings Copied",
+        message: "Click another paragraph, even on a different page or layout, to apply hierarchy, font, cut, kerning, tracking, and local type overrides.",
+      })
+      return
+    }
+    onRequestNotice({
+      title: "Paragraph And Typo Copied",
+      message: "Click another paragraph, even on a different page or layout, to apply both paragraph and typo settings.",
+    })
+  }, [onRequestNotice])
+
   const baselinesPerGridModule = useMemo(
     () => Math.max(1, Math.round(result.module.height / Math.max(0.0001, result.grid.gridUnit))),
     [result.grid.gridUnit, result.module.height],
@@ -686,6 +772,7 @@ export const GridPreview = memo(function GridPreview({
     editorState,
     setEditorState,
     closeEditor,
+    closeImageEditor,
     openTextEditor,
     openImageEditor,
     saveEditor,
@@ -789,6 +876,53 @@ export const GridPreview = memo(function GridPreview({
     editorState?.draftRows,
     editorState?.target,
     smartTextEditZoomEnabled,
+  ])
+
+  const tryApplyPendingTextStyleTransfer = useCallback((targetKey: BlockId | null): boolean => {
+    if (!pendingTextStyleTransfer || !targetKey || isImagePlaceholderKey(targetKey) || isLayerLocked(targetKey)) {
+      return false
+    }
+
+    closeEditor()
+    closeImageEditor()
+    recordHistoryBeforeChange()
+    setBlockCollections((current) => (
+      applyTextStyleTransferToCollections(current, targetKey, pendingTextStyleTransfer)
+    ))
+    if (pendingTextStyleTransfer.typo) {
+      setBlockCustomSizes((current) => applyOptionalTransferredValue(
+        current,
+        targetKey,
+        pendingTextStyleTransfer.typo?.customSize,
+      ))
+      setBlockCustomLeadings((current) => applyOptionalTransferredValue(
+        current,
+        targetKey,
+        pendingTextStyleTransfer.typo?.customLeading,
+      ))
+      setBlockTextColors((current) => applyOptionalTransferredValue(
+        current,
+        targetKey,
+        pendingTextStyleTransfer.typo?.textColor,
+      ))
+    }
+    clearHover()
+    onSelectLayer?.(targetKey)
+    setPendingTextStyleTransfer(null)
+    return true
+  }, [
+    clearHover,
+    closeEditor,
+    closeImageEditor,
+    isImagePlaceholderKey,
+    isLayerLocked,
+    onSelectLayer,
+    pendingTextStyleTransfer,
+    recordHistoryBeforeChange,
+    setBlockCollections,
+    setBlockCustomLeadings,
+    setBlockCustomSizes,
+    setBlockTextColors,
   ])
 
   const handleCanvasMouseLeave = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
@@ -913,7 +1047,46 @@ export const GridPreview = memo(function GridPreview({
     dragEndedAtRef,
     touchLongPressMs: PREVIEW_TOUCH_LONG_PRESS_MS,
     touchCancelDistancePx: PREVIEW_TOUCH_CANCEL_DISTANCE_PX,
+    tryApplyPendingTextStyleTransfer,
   })
+
+  const handleCopyAffordanceActivate = ({
+    key,
+    kind,
+    clientX,
+    clientY,
+    altKey,
+    shiftKey,
+  }: {
+    key: BlockId
+    kind: "text" | "image"
+    clientX: number
+    clientY: number
+    altKey: boolean
+    shiftKey: boolean
+  }) => {
+    if (kind === "text") {
+      const mode: TextStyleTransferMode = altKey && shiftKey
+        ? "both"
+        : shiftKey
+          ? "paragraph"
+          : altKey
+            ? "typo"
+            : "full"
+      const transfer = buildTextStyleTransfer(key, mode)
+      if (!transfer) return
+      closeEditor()
+      closeImageEditor()
+      clearHover()
+      setPendingTextStyleTransfer(transfer)
+      onSelectLayer?.(key)
+      announceTextStyleTransfer(mode)
+      return
+    }
+
+    setPendingTextStyleTransfer(null)
+    beginDetachedCopyDrag(key, clientX, clientY)
+  }
 
   const {
     handleCanvasMouseMove,
@@ -926,6 +1099,7 @@ export const GridPreview = memo(function GridPreview({
     hoverState,
     hoverImageKey,
     hoverCopyIntent,
+    persistentTextCopyIntent: pendingTextStyleTransfer !== null,
     setHoverState,
     setHoverImageKey,
     setHoverCopyIntent,
@@ -1559,7 +1733,7 @@ export const GridPreview = memo(function GridPreview({
         hoveredImageRect={hoveredImageRect}
         openTextEditor={openTextEditor}
         openImageEditor={openImageEditor}
-        beginDetachedCopyDrag={beginDetachedCopyDrag}
+        onCopyAffordanceActivate={handleCopyAffordanceActivate}
         deletePreviewTarget={deletePreviewTarget}
         clearHover={clearHover}
         setImageEditorState={setImageEditorState}

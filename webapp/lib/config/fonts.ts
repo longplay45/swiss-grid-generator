@@ -53,6 +53,20 @@ export const FONT_DEFINITIONS = [
     cssVar: "--font-libre-franklin",
   },
   {
+    value: "IBM Plex Mono",
+    label: "IBM Plex Mono",
+    category: "Display",
+    stack: "\"IBM Plex Mono\", monospace",
+    cssVar: "--font-ibm-plex-mono",
+  },
+  {
+    value: "Noto Sans Symbols 2",
+    label: "Noto Sans Symbols 2",
+    category: "Display",
+    stack: "\"Noto Sans Symbols 2\", sans-serif",
+    cssVar: "--font-noto-sans-symbols-2",
+  },
+  {
     value: "EB Garamond",
     label: "EB Garamond",
     category: "Serif",

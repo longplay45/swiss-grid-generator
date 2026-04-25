@@ -115,6 +115,7 @@ export type PreviewCanvasInteractionArgs<Key extends string, StyleKey extends st
   openTextEditor: (key: Key, options?: OpenTextEditorOptions) => void
   openImageEditor: (key: Key, options?: OpenImageEditorOptions) => void
   closeImageEditorPanel: () => void
+  tryApplyPendingTextStyleTransfer?: (key: Key | null) => boolean
   clearHover: () => void
   dragEndedAtRef: MutableRefObject<number>
   touchLongPressMs: number

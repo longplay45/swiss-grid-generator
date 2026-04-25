@@ -19,13 +19,15 @@ Legacy compatibility files are also written:
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 import shutil
+import subprocess
 import tempfile
-import urllib.request
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
+from urllib.parse import quote
 
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
@@ -68,9 +70,34 @@ def base_name(font_family: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "", font_family)
 
 
+def fetch_url(url: str) -> bytes:
+    return subprocess.check_output(["curl", "-fsSL", url])
+
+
 def get_json(url: str):
-    with urllib.request.urlopen(url) as response:
-        return json.load(response)
+    return json.loads(fetch_url(url))
+
+
+def _score_upright_candidate(filename: str, basename: str) -> int:
+    if filename == f"{basename}[wght].ttf":
+        return 0
+    if re.fullmatch(rf"{re.escape(basename)}\[[^\]]*wght[^\]]*\]\.ttf", filename):
+        return 1
+    if filename == f"{basename}-Regular.ttf":
+        return 2
+    if filename == f"{basename}.ttf":
+        return 3
+    return 10
+
+
+def _score_italic_candidate(filename: str, basename: str) -> int:
+    if filename == f"{basename}-Italic[wght].ttf":
+        return 0
+    if re.fullmatch(rf"{re.escape(basename)}-Italic\[[^\]]*wght[^\]]*\]\.ttf", filename):
+        return 1
+    if filename == f"{basename}-Italic.ttf":
+        return 2
+    return 10
 
 
 def discover_repo_files(font_family: str) -> Tuple[str, str, str]:
@@ -84,27 +111,38 @@ def discover_repo_files(font_family: str) -> Tuple[str, str, str]:
         except Exception:
             continue
 
-        ttf_files = [
-            entry["name"]
+        ttf_entries = [
+            entry
             for entry in listing
             if entry.get("type") == "file"
             and isinstance(entry.get("name"), str)
             and entry["name"].endswith(".ttf")
         ]
-        if not ttf_files:
+        if not ttf_entries:
             continue
 
-        upright = next(
-            (name for name in ttf_files if name.startswith(basename) and "-Italic" not in name),
-            None,
-        )
-        if upright is None:
+        upright_candidates = [
+            entry["name"]
+            for entry in ttf_entries
+            if entry["name"].startswith(basename) and "-Italic" not in entry["name"]
+        ]
+        if not upright_candidates:
             continue
 
-        italic = next(
-            (name for name in ttf_files if name.startswith(f"{basename}-Italic")),
-            upright,
+        upright = min(
+            upright_candidates,
+            key=lambda name: (_score_upright_candidate(name, basename), name),
         )
+
+        italic_candidates = [
+            entry["name"]
+            for entry in ttf_entries
+            if entry["name"].startswith(f"{basename}-Italic")
+        ]
+        italic = min(
+            italic_candidates,
+            key=lambda name: (_score_italic_candidate(name, basename), name),
+        ) if italic_candidates else upright
         return bucket, upright, italic
 
     raise RuntimeError(f"Could not resolve Google Fonts source for '{font_family}'")
@@ -112,8 +150,21 @@ def discover_repo_files(font_family: str) -> Tuple[str, str, str]:
 
 def download_to(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url) as response, destination.open("wb") as out:
-        out.write(response.read())
+    payload = fetch_url(url)
+
+    if "api.github.com/repos/google/fonts/contents/" in url:
+        parsed = json.loads(payload)
+        if not isinstance(parsed, dict) or parsed.get("encoding") != "base64":
+            raise RuntimeError(f"Unexpected GitHub contents payload for {url}")
+        content = parsed.get("content")
+        if not isinstance(content, str):
+            raise RuntimeError(f"Missing file content for {url}")
+        binary = base64.b64decode(content)
+    else:
+        binary = payload
+
+    with destination.open("wb") as out:
+        out.write(binary)
 
 
 def instantiate_weight(source_path: Path, output_path: Path, weight: int) -> None:
@@ -148,11 +199,11 @@ def sync_font(font_family: str, variant_config: Dict[str, Dict[str, object]]) ->
         italic_src = tmp_dir / "italic.ttf"
 
         download_to(
-            f"{GOOGLE_RAW_BASE}/{bucket}/{slug}/{upright_file}",
+            f"{GOOGLE_RAW_BASE}/{bucket}/{slug}/{quote(upright_file, safe='')}",
             upright_src,
         )
         download_to(
-            f"{GOOGLE_RAW_BASE}/{bucket}/{slug}/{italic_file}",
+            f"{GOOGLE_RAW_BASE}/{bucket}/{slug}/{quote(italic_file, safe='')}",
             italic_src,
         )
 

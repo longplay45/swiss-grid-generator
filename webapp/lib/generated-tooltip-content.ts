@@ -109,7 +109,7 @@ export const LAYOUT_OPEN_TOOLTIP_ITEMS = [
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `Alt/Option` + drag to duplicate a paragraph or image placeholder. Duplicated layers keep their geometry and type behavior, which makes repeated editorial structures faster to build without resetting controls."
+        "text": "Use `Alt/Option` + drag to duplicate a paragraph or image placeholder. Hovered text paragraphs also expose a `+` affordance: click copies the full paragraph, `Shift` + click copies `Paragraph` settings, `Alt/Option` + click copies `Typo` settings, and `Alt/Option` + `Shift` + click copies both for transfer onto another paragraph, even across pages and loaded layouts."
       }
     ]
   },

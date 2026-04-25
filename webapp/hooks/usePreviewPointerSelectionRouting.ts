@@ -34,6 +34,7 @@ type Args<Key extends string, StyleKey extends string> = Pick<
   | "openImageEditor"
   | "isSnapToBaselineEnabled"
   | "isImageSnapToBaselineEnabled"
+  | "tryApplyPendingTextStyleTransfer"
 > & {
   handleTextDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
   handleImageDrop: (drag: PreviewDragState<Key>, nextPreview: ModulePosition, copyOnDrop: boolean) => void
@@ -69,6 +70,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
   touchCancelDistancePx,
   openTextEditor,
   openImageEditor,
+  tryApplyPendingTextStyleTransfer,
   handleTextDrop,
   handleImageDrop,
   openTextEditorFromCanvas,
@@ -134,6 +136,9 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
       return
     }
     const target = resolveSelectedLayerAtClientPoint(event.clientX, event.clientY)
+    if (tryApplyPendingTextStyleTransfer?.(target ?? null)) {
+      return
+    }
     onSelectLayer?.(target)
     if (editorOpen && target && target !== activeEditorTarget) {
       clearHover()
@@ -155,6 +160,7 @@ export function usePreviewPointerSelectionRouting<Key extends string, StyleKey e
     openImageEditor,
     openTextEditor,
     resolveSelectedLayerAtClientPoint,
+    tryApplyPendingTextStyleTransfer,
   ])
 
   const handleCanvasDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {

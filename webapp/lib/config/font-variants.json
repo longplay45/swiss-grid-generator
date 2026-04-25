@@ -19,6 +19,14 @@
     "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "italic": true
   },
+  "IBM Plex Mono": {
+    "weights": [100, 200, 300, 400, 500, 600, 700],
+    "italic": true
+  },
+  "Noto Sans Symbols 2": {
+    "weights": [400],
+    "italic": false
+  },
   "EB Garamond": {
     "weights": [400, 500, 600, 700, 800],
     "italic": true
