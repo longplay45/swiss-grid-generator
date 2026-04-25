@@ -118,7 +118,6 @@ async function main() {
       seenIds.add(topic.id)
       flattenedTopics.push({
         id: topic.id,
-        groupTitle: group.title,
         title: topic.title,
         blocks: topic.blocks,
       })
@@ -133,25 +132,11 @@ export type TooltipBlock =
   | { type: "paragraph"; text: string }
   | { type: "list"; items: string[] }
 
-export type TooltipTopic = {
-  id: string
-  title: string
-  blocks: TooltipBlock[]
-}
-
-export type TooltipGroup = {
-  title: string
-  topics: TooltipTopic[]
-}
-
 export type LayoutOpenTooltipItem = {
   id: string
-  groupTitle: string
   title: string
   blocks: TooltipBlock[]
 }
-
-export const TOOLTIP_CONTENT_GROUPS = ${JSON.stringify(groups, null, 2)} as const satisfies readonly TooltipGroup[]
 
 export const LAYOUT_OPEN_TOOLTIP_ITEMS = ${JSON.stringify(flattenedTopics, null, 2)} as const satisfies readonly LayoutOpenTooltipItem[]
 `

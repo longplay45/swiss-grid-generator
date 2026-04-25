@@ -65,7 +65,7 @@ export function LayoutOpenTooltipOverlay({
   return (
     <div className="absolute inset-0 z-30 pointer-events-auto" onClick={closeWithFade}>
       <div
-        className={`absolute left-1/2 w-[min(444px,calc(100%-2rem))] -translate-x-1/2 ${bottomClassName}`}
+        className={`absolute left-1/2 w-[min(483px,calc(100%-2rem))] -translate-x-1/2 ${bottomClassName}`}
         onClick={(event) => {
           event.stopPropagation()
         }}
@@ -85,9 +85,9 @@ export function LayoutOpenTooltipOverlay({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className={`text-[11px] uppercase tracking-[0.08em] ${isDarkMode ? "text-[#A8B1BF]" : "text-gray-500"}`}>
-                  {tooltip.groupTitle}
+                  Tooltip {index + 1} of {totalCount}
                 </div>
-                <div className="mt-1 text-sm font-medium leading-snug">
+                <div className="mt-1 text-[12px] font-semibold leading-[1.55]">
                   {tooltip.title}
                 </div>
               </div>
@@ -114,7 +114,7 @@ export function LayoutOpenTooltipOverlay({
               </div>
             </div>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-1.5 space-y-2">
               {tooltip.blocks.map((block, blockIndex) => (
                 block.type === "paragraph" ? (
                   <p
@@ -139,11 +139,6 @@ export function LayoutOpenTooltipOverlay({
               ))}
             </div>
 
-            <div className={`mt-3 flex flex-wrap items-center justify-between gap-3`}>
-              <div className={`text-[11px] uppercase tracking-[0.08em] ${isDarkMode ? "text-[#A8B1BF]" : "text-gray-500"}`}>
-                Tooltip {index + 1} of {totalCount}
-              </div>
-            </div>
           </div>
         </div>
       </div>

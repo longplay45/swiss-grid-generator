@@ -6,1056 +6,350 @@ export type TooltipBlock =
   | { type: "paragraph"; text: string }
   | { type: "list"; items: string[] }
 
-export type TooltipTopic = {
-  id: string
-  title: string
-  blocks: TooltipBlock[]
-}
-
-export type TooltipGroup = {
-  title: string
-  topics: TooltipTopic[]
-}
-
 export type LayoutOpenTooltipItem = {
   id: string
-  groupTitle: string
   title: string
   blocks: TooltipBlock[]
 }
-
-export const TOOLTIP_CONTENT_GROUPS = [
-  {
-    "title": "Working Order",
-    "topics": [
-      {
-        "title": "Start With The Page System",
-        "id": "tooltip-start-with-system",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Set format, baseline, margins, grid, rhythm, type scale, and base font before placing many layers."
-          },
-          {
-            "type": "paragraph",
-            "text": "If the page feels wrong, adjust the system first. Local paragraph fixes are most useful after the grid field is already stable."
-          }
-        ]
-      },
-      {
-        "title": "Structure Before Styling",
-        "id": "tooltip-structure-before-styling",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use `Rows`, `Baselines`, and `Cols` to define the text frame before refining wording, tracking, or color."
-          },
-          {
-            "type": "paragraph",
-            "text": "The frame is the editorial decision. Styling should clarify that decision, not compensate for a weak one."
-          }
-        ]
-      },
-      {
-        "title": "Use Repetitive As A Control",
-        "id": "tooltip-repetitive-reference",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Start with `Repetitive` rhythm when judging a layout. It gives the clearest read on whether margins, baseline, and hierarchy are working."
-          },
-          {
-            "type": "paragraph",
-            "text": "Move to Fibonacci, Golden Ratio, Perfect Fourth, or Perfect Fifth only when the structure benefits from asymmetry."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Creating Content",
-    "topics": [
-      {
-        "title": "Create Text Directly On The Grid",
-        "id": "tooltip-create-text",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Double-click inside a module to create a paragraph exactly where the page structure suggests it belongs."
-          },
-          {
-            "type": "paragraph",
-            "text": "The created block uses the clicked module, so deliberate clicks matter. Place first, refine second."
-          }
-        ]
-      },
-      {
-        "title": "Choose Hierarchy While Creating",
-        "id": "tooltip-create-hierarchy",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Hold `1..6` while double-clicking to create a paragraph with the intended hierarchy immediately."
-          },
-          {
-            "type": "paragraph",
-            "text": "Use `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, and `6 Display`."
-          }
-        ]
-      },
-      {
-        "title": "Add Image Placeholders In Place",
-        "id": "tooltip-create-image",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use `Shift` + double-click on an empty module to create an image placeholder."
-          },
-          {
-            "type": "paragraph",
-            "text": "Image placeholders share the same snap, span, baseline-height, and rotation discipline as text blocks, so they should be placed with the same structural care."
-          }
-        ]
-      },
-      {
-        "title": "Use Lorem As A Frame Test",
-        "id": "tooltip-lorem-frame-test",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Insert `<%lorem%>` when you need to test whether a paragraph frame can carry the intended text density."
-          },
-          {
-            "type": "paragraph",
-            "text": "`<%lorem%>` fills the active frame using its current rows, baselines, columns, reflow, and hyphenation settings."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Moving And Duplicating",
-    "topics": [
-      {
-        "title": "Drag For Placement, Nudge For Decision",
-        "id": "tooltip-drag-and-nudge",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Drag to establish the rough position. Use cursor keys to make controlled placement decisions."
-          },
-          {
-            "type": "paragraph",
-            "text": "Arrow-key nudging uses the same logical placement model as drag, so movement stays tied to the grid instead of becoming arbitrary screen motion."
-          }
-        ]
-      },
-      {
-        "title": "Nudge With The Grid",
-        "id": "tooltip-cursor-nudge",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "With snapped axes enabled, arrow keys move the selected unlocked layer by columns and module rows."
-          },
-          {
-            "type": "paragraph",
-            "text": "Hold `Shift` while nudging to switch snapped Y movement to baseline rows. On unsnapped axes, `Shift` increases the fine movement step."
-          }
-        ]
-      },
-      {
-        "title": "Duplicate Without Losing Rhythm",
-        "id": "tooltip-duplicate-layer",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use `Alt/Option` + drag to duplicate a paragraph or image placeholder."
-          },
-          {
-            "type": "paragraph",
-            "text": "Duplicated layers keep their geometry and type behavior, which makes repeated editorial structures faster to build without resetting controls."
-          }
-        ]
-      },
-      {
-        "title": "Free Placement Is An Exception",
-        "id": "tooltip-free-placement",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Turn off `Snap to Columns (X)` or `Snap to Baseline (Y)` only when the composition needs a controlled exception."
-          },
-          {
-            "type": "paragraph",
-            "text": "Free X placement allows a disciplined one-column side-margin overhang. It is useful for optical tension, not casual alignment drift."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Editing Flow",
-    "topics": [
-      {
-        "title": "Smart Text Zoom Keeps The Work Local",
-        "id": "tooltip-smart-text-zoom",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Keep Smart Text Zoom on when editing text-heavy layouts."
-          },
-          {
-            "type": "paragraph",
-            "text": "Entering text edit focuses the active paragraph. Ordinary text and style edits keep the current view stable, while frame-geometry changes refit the paragraph."
-          }
-        ]
-      },
-      {
-        "title": "Turbo Edit Paragraph To Paragraph",
-        "id": "tooltip-turbo-edit",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "When an editor is open, click another unlocked preview paragraph to retarget the editor immediately."
-          },
-          {
-            "type": "paragraph",
-            "text": "Use this to move through a page paragraph by paragraph without repeatedly closing and reopening edit mode."
-          }
-        ]
-      },
-      {
-        "title": "Turbo Edit From Layer Cards",
-        "id": "tooltip-layer-card-retarget",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Double-click an unlocked layer card in the Project panel to open or retarget the corresponding text or image editor."
-          },
-          {
-            "type": "paragraph",
-            "text": "Single-click still only selects the layer, which keeps keyboard nudging available without accidentally entering edit mode."
-          }
-        ]
-      },
-      {
-        "title": "Edit The Rendered Text, Not A Generic Textarea",
-        "id": "tooltip-rendered-text-editing",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Inside inline text edit, cursor movement follows the rendered line layout."
-          },
-          {
-            "type": "paragraph",
-            "text": "Double-click selects a word, triple-click selects a sentence, and `Alt+A` or `Cmd/Ctrl+A` selects the whole paragraph."
-          }
-        ]
-      },
-      {
-        "title": "Keep Placeholders Visible While Editing",
-        "id": "tooltip-placeholder-editing",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Document variables stay visible as raw tokens while editing, then render as live values outside edit mode."
-          },
-          {
-            "type": "paragraph",
-            "text": "Use this to place folios, project titles, dates, times, and proof text with predictable editorial control."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Paragraph Geometry",
-    "topics": [
-      {
-        "title": "Frame Height Is Rows Plus Baselines",
-        "id": "tooltip-rows-plus-baselines",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Paragraph and image heights are built from `rows + baselines`."
-          },
-          {
-            "type": "paragraph",
-            "text": "Use full rows for modular blocks and baseline-only height for shallow editorial frames, captions, folios, and proof lines."
-          }
-        ]
-      },
-      {
-        "title": "Set Columns Before Reflow",
-        "id": "tooltip-columns-before-reflow",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Choose `Cols` before judging paragraph flow."
-          },
-          {
-            "type": "paragraph",
-            "text": "A weak line length is usually a frame problem. Reflow and hyphenation work best after the column span is structurally correct."
-          }
-        ]
-      },
-      {
-        "title": "Align Inside The Frame",
-        "id": "tooltip-frame-alignment",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Horizontal and vertical alignment position text inside the configured paragraph frame."
-          },
-          {
-            "type": "paragraph",
-            "text": "Use alignment to make a compositional decision within a clear frame, not to repair a poorly placed frame."
-          }
-        ]
-      },
-      {
-        "title": "Use Custom Type Deliberately",
-        "id": "tooltip-custom-type",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "When first selected, `Custom` copies the paragraph's resolved size and leading."
-          },
-          {
-            "type": "paragraph",
-            "text": "Treat Custom as a local editorial exception after the hierarchy is clear."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Layers And Pages",
-    "topics": [
-      {
-        "title": "Select Before Nudging",
-        "id": "tooltip-select-before-nudge",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Single-click a layer card to select it, then use arrow keys to nudge it."
-          },
-          {
-            "type": "paragraph",
-            "text": "This keeps placement changes precise and avoids entering edit mode when you only need a positional adjustment."
-          }
-        ]
-      },
-      {
-        "title": "Lock Finished Layers",
-        "id": "tooltip-lock-finished-layers",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Lock layers once their position and role are resolved."
-          },
-          {
-            "type": "paragraph",
-            "text": "Locked layers stay visible but cannot be hovered, moved, edited, or retargeted until unlocked, which protects stable structure during later edits."
-          }
-        ]
-      },
-      {
-        "title": "Use Page Cards For Document Rhythm",
-        "id": "tooltip-page-cards",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use page cards to activate, rename, reorder, and inspect pages."
-          },
-          {
-            "type": "paragraph",
-            "text": "Page order is part of the design. Treat it with the same discipline as grid and type hierarchy."
-          }
-        ]
-      },
-      {
-        "title": "Use Facing Pages Only For Real Spreads",
-        "id": "tooltip-facing-pages",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use `Facing pages` when two physical pages need one continuous editorial field."
-          },
-          {
-            "type": "paragraph",
-            "text": "A facing spread remains one project page, doubles the effective column field, mirrors inner and outer margins, and affects physical page variables."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Preview Discipline",
-    "topics": [
-      {
-        "title": "Toggle Guides While Judging",
-        "id": "tooltip-preview-guides",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use the header toggles to inspect baselines, margins, modules, typography, and image placeholders."
-          },
-          {
-            "type": "paragraph",
-            "text": "Judge the same layout both with and without guides. A strong layout should keep its rhythm after the construction lines disappear."
-          }
-        ]
-      },
-      {
-        "title": "Rollover Guides Show The Frame",
-        "id": "tooltip-rollover-guides",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Hover a layer to see its edit access and placement guides."
-          },
-          {
-            "type": "paragraph",
-            "text": "Paragraph guides follow the configured `rows + baselines` frame, not only the visible text bounds."
-          }
-        ]
-      },
-      {
-        "title": "Help Hover Is Contextual",
-        "id": "tooltip-help-hover",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Open Help, then hover blue-marked UI areas to jump the Help panel to the matching reference."
-          },
-          {
-            "type": "paragraph",
-            "text": "This works for header actions, settings sections, the preview surface, editor sections, and the preset browser."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Export Readiness",
-    "topics": [
-      {
-        "title": "Export Only After The System Is Stable",
-        "id": "tooltip-export-readiness",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Export should confirm a resolved layout, not repair it."
-          },
-          {
-            "type": "paragraph",
-            "text": "Before exporting, check page order, page range, visible guide toggles, rotation, page numbering, and document variables."
-          }
-        ]
-      },
-      {
-        "title": "Pick Export By Downstream Use",
-        "id": "tooltip-export-format",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use `PDF` for faithful vector output, `SVG` for frozen per-page vector geometry, and `IDML` for InDesign continuation."
-          },
-          {
-            "type": "paragraph",
-            "text": "SVG and IDML freeze typography as geometry, so choose them when exact shape fidelity matters more than live text editing."
-          }
-        ]
-      },
-      {
-        "title": "WYSIWYG Includes The Visible Overlays",
-        "id": "tooltip-export-visibility",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Export follows the current preview visibility state for baselines, margins, modules, typography, and image placeholders."
-          },
-          {
-            "type": "paragraph",
-            "text": "Turn off construction guides before final output unless they are intentionally part of the deliverable."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Common Corrections",
-    "topics": [
-      {
-        "title": "If The Page Feels Loose",
-        "id": "tooltip-fix-loose-page",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Return to baseline, margins, and grid rhythm before editing individual paragraphs."
-          },
-          {
-            "type": "paragraph",
-            "text": "Most loose layouts need a clearer field, not more local styling."
-          }
-        ]
-      },
-      {
-        "title": "If Text Feels Weak",
-        "id": "tooltip-fix-weak-type",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Check hierarchy, frame width, leading, and baseline alignment before changing tracking."
-          },
-          {
-            "type": "paragraph",
-            "text": "Tracking changes the color of the paragraph. It should refine type texture, not replace hierarchy."
-          }
-        ]
-      },
-      {
-        "title": "If Content Falls Out Of Bounds",
-        "id": "tooltip-grid-reduction",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Grid reductions are blocked when existing layers would fall outside the new field."
-          },
-          {
-            "type": "paragraph",
-            "text": "Resolve the layer placement first, then reduce rows or columns. The tool protects composition by refusing silent repositioning."
-          }
-        ]
-      },
-      {
-        "title": "If Editing Feels Slow",
-        "id": "tooltip-faster-editing",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Use Smart Text Zoom, open one editor, then retarget from paragraph to paragraph or layer card to layer card."
-          },
-          {
-            "type": "paragraph",
-            "text": "The fastest workflow is not many commands. It is staying in context while moving through the page deliberately."
-          }
-        ]
-      }
-    ]
-  }
-] as const satisfies readonly TooltipGroup[]
 
 export const LAYOUT_OPEN_TOOLTIP_ITEMS = [
   {
     "id": "tooltip-start-with-system",
-    "groupTitle": "Working Order",
     "title": "Start With The Page System",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Set format, baseline, margins, grid, rhythm, type scale, and base font before placing many layers."
-      },
-      {
-        "type": "paragraph",
-        "text": "If the page feels wrong, adjust the system first. Local paragraph fixes are most useful after the grid field is already stable."
+        "text": "Set format, baseline, margins, grid, rhythm, type scale, and base font before placing many layers. If the page feels wrong, adjust the system first. Local paragraph fixes are most useful after the grid field is already stable."
       }
     ]
   },
   {
     "id": "tooltip-structure-before-styling",
-    "groupTitle": "Working Order",
     "title": "Structure Before Styling",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `Rows`, `Baselines`, and `Cols` to define the text frame before refining wording, tracking, or color."
-      },
-      {
-        "type": "paragraph",
-        "text": "The frame is the editorial decision. Styling should clarify that decision, not compensate for a weak one."
+        "text": "Use `Rows`, `Baselines`, and `Cols` to define the text frame before refining wording, tracking, or color. The frame is the editorial decision. Styling should clarify that decision, not compensate for a weak one."
       }
     ]
   },
   {
     "id": "tooltip-repetitive-reference",
-    "groupTitle": "Working Order",
     "title": "Use Repetitive As A Control",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Start with `Repetitive` rhythm when judging a layout. It gives the clearest read on whether margins, baseline, and hierarchy are working."
-      },
-      {
-        "type": "paragraph",
-        "text": "Move to Fibonacci, Golden Ratio, Perfect Fourth, or Perfect Fifth only when the structure benefits from asymmetry."
+        "text": "Start with `Repetitive` rhythm when judging a layout. It gives the clearest read on whether margins, baseline, and hierarchy are working. Move to Fibonacci, Golden Ratio, Perfect Fourth, or Perfect Fifth only when the structure benefits from asymmetry."
       }
     ]
   },
   {
     "id": "tooltip-create-text",
-    "groupTitle": "Creating Content",
     "title": "Create Text Directly On The Grid",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Double-click inside a module to create a paragraph exactly where the page structure suggests it belongs."
-      },
-      {
-        "type": "paragraph",
-        "text": "The created block uses the clicked module, so deliberate clicks matter. Place first, refine second."
+        "text": "Double-click inside a module to create a paragraph exactly where the page structure suggests it belongs. The created block uses the clicked module, so deliberate clicks matter. Place first, refine second."
       }
     ]
   },
   {
     "id": "tooltip-create-hierarchy",
-    "groupTitle": "Creating Content",
     "title": "Choose Hierarchy While Creating",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Hold `1..6` while double-clicking to create a paragraph with the intended hierarchy immediately."
-      },
-      {
-        "type": "paragraph",
-        "text": "Use `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, and `6 Display`."
+        "text": "Hold `1..6` while double-clicking to create a paragraph with the intended hierarchy immediately. Use `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, and `6 Display`."
       }
     ]
   },
   {
     "id": "tooltip-create-image",
-    "groupTitle": "Creating Content",
     "title": "Add Image Placeholders In Place",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `Shift` + double-click on an empty module to create an image placeholder."
-      },
-      {
-        "type": "paragraph",
-        "text": "Image placeholders share the same snap, span, baseline-height, and rotation discipline as text blocks, so they should be placed with the same structural care."
+        "text": "Use `Shift` + double-click on an empty module to create an image placeholder. Image placeholders share the same snap, span, baseline-height, and rotation discipline as text blocks, so they should be placed with the same structural care."
       }
     ]
   },
   {
     "id": "tooltip-lorem-frame-test",
-    "groupTitle": "Creating Content",
     "title": "Use Lorem As A Frame Test",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Insert `<%lorem%>` when you need to test whether a paragraph frame can carry the intended text density."
-      },
-      {
-        "type": "paragraph",
-        "text": "`<%lorem%>` fills the active frame using its current rows, baselines, columns, reflow, and hyphenation settings."
+        "text": "Insert `<%lorem%>` when you need to test whether a paragraph frame can carry the intended text density. `<%lorem%>` fills the active frame using its current rows, baselines, columns, reflow, and hyphenation settings."
       }
     ]
   },
   {
     "id": "tooltip-drag-and-nudge",
-    "groupTitle": "Moving And Duplicating",
     "title": "Drag For Placement, Nudge For Decision",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Drag to establish the rough position. Use cursor keys to make controlled placement decisions."
-      },
-      {
-        "type": "paragraph",
-        "text": "Arrow-key nudging uses the same logical placement model as drag, so movement stays tied to the grid instead of becoming arbitrary screen motion."
+        "text": "Drag to establish the rough position. Use cursor keys to make controlled placement decisions. Arrow-key nudging uses the same logical placement model as drag, so movement stays tied to the grid instead of becoming arbitrary screen motion."
       }
     ]
   },
   {
     "id": "tooltip-cursor-nudge",
-    "groupTitle": "Moving And Duplicating",
     "title": "Nudge With The Grid",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "With snapped axes enabled, arrow keys move the selected unlocked layer by columns and module rows."
-      },
-      {
-        "type": "paragraph",
-        "text": "Hold `Shift` while nudging to switch snapped Y movement to baseline rows. On unsnapped axes, `Shift` increases the fine movement step."
+        "text": "With snapped axes enabled, arrow keys move the selected unlocked layer by columns and module rows. Hold `Shift` while nudging to switch snapped Y movement to baseline rows. On unsnapped axes, `Shift` increases the fine movement step."
       }
     ]
   },
   {
     "id": "tooltip-duplicate-layer",
-    "groupTitle": "Moving And Duplicating",
     "title": "Duplicate Without Losing Rhythm",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `Alt/Option` + drag to duplicate a paragraph or image placeholder."
-      },
-      {
-        "type": "paragraph",
-        "text": "Duplicated layers keep their geometry and type behavior, which makes repeated editorial structures faster to build without resetting controls."
+        "text": "Use `Alt/Option` + drag to duplicate a paragraph or image placeholder. Duplicated layers keep their geometry and type behavior, which makes repeated editorial structures faster to build without resetting controls."
       }
     ]
   },
   {
     "id": "tooltip-free-placement",
-    "groupTitle": "Moving And Duplicating",
     "title": "Free Placement Is An Exception",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Turn off `Snap to Columns (X)` or `Snap to Baseline (Y)` only when the composition needs a controlled exception."
-      },
-      {
-        "type": "paragraph",
-        "text": "Free X placement allows a disciplined one-column side-margin overhang. It is useful for optical tension, not casual alignment drift."
+        "text": "Turn off `Snap to Columns (X)` or `Snap to Baseline (Y)` only when the composition needs a controlled exception. Free X placement allows a disciplined one-column side-margin overhang. It is useful for optical tension, not casual alignment drift."
       }
     ]
   },
   {
     "id": "tooltip-smart-text-zoom",
-    "groupTitle": "Editing Flow",
     "title": "Smart Text Zoom Keeps The Work Local",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Keep Smart Text Zoom on when editing text-heavy layouts."
-      },
-      {
-        "type": "paragraph",
-        "text": "Entering text edit focuses the active paragraph. Ordinary text and style edits keep the current view stable, while frame-geometry changes refit the paragraph."
+        "text": "Keep Smart Text Zoom on when editing text-heavy layouts. Entering text edit focuses the active paragraph. Ordinary text and style edits keep the current view stable, while frame-geometry changes refit the paragraph."
       }
     ]
   },
   {
     "id": "tooltip-turbo-edit",
-    "groupTitle": "Editing Flow",
     "title": "Turbo Edit Paragraph To Paragraph",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "When an editor is open, click another unlocked preview paragraph to retarget the editor immediately."
-      },
-      {
-        "type": "paragraph",
-        "text": "Use this to move through a page paragraph by paragraph without repeatedly closing and reopening edit mode."
+        "text": "When an editor is open, click another unlocked preview paragraph to retarget the editor immediately. Use this to move through a page paragraph by paragraph without repeatedly closing and reopening edit mode."
       }
     ]
   },
   {
     "id": "tooltip-layer-card-retarget",
-    "groupTitle": "Editing Flow",
     "title": "Turbo Edit From Layer Cards",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Double-click an unlocked layer card in the Project panel to open or retarget the corresponding text or image editor."
-      },
-      {
-        "type": "paragraph",
-        "text": "Single-click still only selects the layer, which keeps keyboard nudging available without accidentally entering edit mode."
+        "text": "Double-click an unlocked layer card in the Project panel to open or retarget the corresponding text or image editor. Single-click still only selects the layer, which keeps keyboard nudging available without accidentally entering edit mode."
       }
     ]
   },
   {
     "id": "tooltip-rendered-text-editing",
-    "groupTitle": "Editing Flow",
     "title": "Edit The Rendered Text, Not A Generic Textarea",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Inside inline text edit, cursor movement follows the rendered line layout."
-      },
-      {
-        "type": "paragraph",
-        "text": "Double-click selects a word, triple-click selects a sentence, and `Alt+A` or `Cmd/Ctrl+A` selects the whole paragraph."
+        "text": "Inside inline text edit, cursor movement follows the rendered line layout. Double-click selects a word, triple-click selects a sentence, and `Alt+A` or `Cmd/Ctrl+A` selects the whole paragraph."
       }
     ]
   },
   {
     "id": "tooltip-placeholder-editing",
-    "groupTitle": "Editing Flow",
     "title": "Keep Placeholders Visible While Editing",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Document variables stay visible as raw tokens while editing, then render as live values outside edit mode."
-      },
-      {
-        "type": "paragraph",
-        "text": "Use this to place folios, project titles, dates, times, and proof text with predictable editorial control."
+        "text": "Document variables stay visible as raw tokens while editing, then render as live values outside edit mode. Use this to place folios, project titles, dates, times, and proof text with predictable editorial control."
       }
     ]
   },
   {
     "id": "tooltip-rows-plus-baselines",
-    "groupTitle": "Paragraph Geometry",
     "title": "Frame Height Is Rows Plus Baselines",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Paragraph and image heights are built from `rows + baselines`."
-      },
-      {
-        "type": "paragraph",
-        "text": "Use full rows for modular blocks and baseline-only height for shallow editorial frames, captions, folios, and proof lines."
+        "text": "Paragraph and image heights are built from `rows + baselines`. Use full rows for modular blocks and baseline-only height for shallow editorial frames, captions, folios, and proof lines."
       }
     ]
   },
   {
     "id": "tooltip-columns-before-reflow",
-    "groupTitle": "Paragraph Geometry",
     "title": "Set Columns Before Reflow",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Choose `Cols` before judging paragraph flow."
-      },
-      {
-        "type": "paragraph",
-        "text": "A weak line length is usually a frame problem. Reflow and hyphenation work best after the column span is structurally correct."
+        "text": "Choose `Cols` before judging paragraph flow. A weak line length is usually a frame problem. Reflow and hyphenation work best after the column span is structurally correct."
       }
     ]
   },
   {
     "id": "tooltip-frame-alignment",
-    "groupTitle": "Paragraph Geometry",
     "title": "Align Inside The Frame",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Horizontal and vertical alignment position text inside the configured paragraph frame."
-      },
-      {
-        "type": "paragraph",
-        "text": "Use alignment to make a compositional decision within a clear frame, not to repair a poorly placed frame."
+        "text": "Horizontal and vertical alignment position text inside the configured paragraph frame. Use alignment to make a compositional decision within a clear frame, not to repair a poorly placed frame."
       }
     ]
   },
   {
     "id": "tooltip-custom-type",
-    "groupTitle": "Paragraph Geometry",
     "title": "Use Custom Type Deliberately",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "When first selected, `Custom` copies the paragraph's resolved size and leading."
-      },
-      {
-        "type": "paragraph",
-        "text": "Treat Custom as a local editorial exception after the hierarchy is clear."
+        "text": "When first selected, `Custom` copies the paragraph's resolved size and leading. Treat Custom as a local editorial exception after the hierarchy is clear."
       }
     ]
   },
   {
     "id": "tooltip-select-before-nudge",
-    "groupTitle": "Layers And Pages",
     "title": "Select Before Nudging",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Single-click a layer card to select it, then use arrow keys to nudge it."
-      },
-      {
-        "type": "paragraph",
-        "text": "This keeps placement changes precise and avoids entering edit mode when you only need a positional adjustment."
+        "text": "Single-click a layer card to select it, then use arrow keys to nudge it. This keeps placement changes precise and avoids entering edit mode when you only need a positional adjustment."
       }
     ]
   },
   {
     "id": "tooltip-lock-finished-layers",
-    "groupTitle": "Layers And Pages",
     "title": "Lock Finished Layers",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Lock layers once their position and role are resolved."
-      },
-      {
-        "type": "paragraph",
-        "text": "Locked layers stay visible but cannot be hovered, moved, edited, or retargeted until unlocked, which protects stable structure during later edits."
+        "text": "Lock layers once their position and role are resolved. Locked layers stay visible but cannot be hovered, moved, edited, or retargeted until unlocked, which protects stable structure during later edits."
       }
     ]
   },
   {
     "id": "tooltip-page-cards",
-    "groupTitle": "Layers And Pages",
     "title": "Use Page Cards For Document Rhythm",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use page cards to activate, rename, reorder, and inspect pages."
-      },
-      {
-        "type": "paragraph",
-        "text": "Page order is part of the design. Treat it with the same discipline as grid and type hierarchy."
+        "text": "Use page cards to activate, rename, reorder, and inspect pages. Page order is part of the design. Treat it with the same discipline as grid and type hierarchy."
       }
     ]
   },
   {
     "id": "tooltip-facing-pages",
-    "groupTitle": "Layers And Pages",
     "title": "Use Facing Pages Only For Real Spreads",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `Facing pages` when two physical pages need one continuous editorial field."
-      },
-      {
-        "type": "paragraph",
-        "text": "A facing spread remains one project page, doubles the effective column field, mirrors inner and outer margins, and affects physical page variables."
+        "text": "Use `Facing pages` when two physical pages need one continuous editorial field. A facing spread remains one project page, doubles the effective column field, mirrors inner and outer margins, and affects physical page variables."
       }
     ]
   },
   {
     "id": "tooltip-preview-guides",
-    "groupTitle": "Preview Discipline",
     "title": "Toggle Guides While Judging",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use the header toggles to inspect baselines, margins, modules, typography, and image placeholders."
-      },
-      {
-        "type": "paragraph",
-        "text": "Judge the same layout both with and without guides. A strong layout should keep its rhythm after the construction lines disappear."
+        "text": "Use the header toggles to inspect baselines, margins, modules, typography, and image placeholders. Judge the same layout both with and without guides. A strong layout should keep its rhythm after the construction lines disappear."
       }
     ]
   },
   {
     "id": "tooltip-rollover-guides",
-    "groupTitle": "Preview Discipline",
     "title": "Rollover Guides Show The Frame",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Hover a layer to see its edit access and placement guides."
-      },
-      {
-        "type": "paragraph",
-        "text": "Paragraph guides follow the configured `rows + baselines` frame, not only the visible text bounds."
+        "text": "Hover a layer to see its edit access and placement guides. Paragraph guides follow the configured `rows + baselines` frame, not only the visible text bounds."
       }
     ]
   },
   {
     "id": "tooltip-help-hover",
-    "groupTitle": "Preview Discipline",
     "title": "Help Hover Is Contextual",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Open Help, then hover blue-marked UI areas to jump the Help panel to the matching reference."
-      },
-      {
-        "type": "paragraph",
-        "text": "This works for header actions, settings sections, the preview surface, editor sections, and the preset browser."
+        "text": "Open Help, then hover blue-marked UI areas to jump the Help panel to the matching reference. This works for header actions, settings sections, the preview surface, editor sections, and the preset browser."
       }
     ]
   },
   {
     "id": "tooltip-export-readiness",
-    "groupTitle": "Export Readiness",
     "title": "Export Only After The System Is Stable",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Export should confirm a resolved layout, not repair it."
-      },
-      {
-        "type": "paragraph",
-        "text": "Before exporting, check page order, page range, visible guide toggles, rotation, page numbering, and document variables."
+        "text": "Export should confirm a resolved layout, not repair it. Before exporting, check page order, page range, visible guide toggles, rotation, page numbering, and document variables."
       }
     ]
   },
   {
     "id": "tooltip-export-format",
-    "groupTitle": "Export Readiness",
     "title": "Pick Export By Downstream Use",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use `PDF` for faithful vector output, `SVG` for frozen per-page vector geometry, and `IDML` for InDesign continuation."
-      },
-      {
-        "type": "paragraph",
-        "text": "SVG and IDML freeze typography as geometry, so choose them when exact shape fidelity matters more than live text editing."
+        "text": "Use `PDF` for faithful vector output, `SVG` for frozen per-page vector geometry, and `IDML` for InDesign continuation. SVG and IDML freeze typography as geometry, so choose them when exact shape fidelity matters more than live text editing."
       }
     ]
   },
   {
     "id": "tooltip-export-visibility",
-    "groupTitle": "Export Readiness",
     "title": "WYSIWYG Includes The Visible Overlays",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Export follows the current preview visibility state for baselines, margins, modules, typography, and image placeholders."
-      },
-      {
-        "type": "paragraph",
-        "text": "Turn off construction guides before final output unless they are intentionally part of the deliverable."
+        "text": "Export follows the current preview visibility state for baselines, margins, modules, typography, and image placeholders. Turn off construction guides before final output unless they are intentionally part of the deliverable."
       }
     ]
   },
   {
     "id": "tooltip-fix-loose-page",
-    "groupTitle": "Common Corrections",
     "title": "If The Page Feels Loose",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Return to baseline, margins, and grid rhythm before editing individual paragraphs."
-      },
-      {
-        "type": "paragraph",
-        "text": "Most loose layouts need a clearer field, not more local styling."
+        "text": "Return to baseline, margins, and grid rhythm before editing individual paragraphs. Most loose layouts need a clearer field, not more local styling."
       }
     ]
   },
   {
     "id": "tooltip-fix-weak-type",
-    "groupTitle": "Common Corrections",
     "title": "If Text Feels Weak",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Check hierarchy, frame width, leading, and baseline alignment before changing tracking."
-      },
-      {
-        "type": "paragraph",
-        "text": "Tracking changes the color of the paragraph. It should refine type texture, not replace hierarchy."
+        "text": "Check hierarchy, frame width, leading, and baseline alignment before changing tracking. Tracking changes the color of the paragraph. It should refine type texture, not replace hierarchy."
       }
     ]
   },
   {
     "id": "tooltip-grid-reduction",
-    "groupTitle": "Common Corrections",
     "title": "If Content Falls Out Of Bounds",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Grid reductions are blocked when existing layers would fall outside the new field."
-      },
-      {
-        "type": "paragraph",
-        "text": "Resolve the layer placement first, then reduce rows or columns. The tool protects composition by refusing silent repositioning."
+        "text": "Grid reductions are blocked when existing layers would fall outside the new field. Resolve the layer placement first, then reduce rows or columns. The tool protects composition by refusing silent repositioning."
       }
     ]
   },
   {
     "id": "tooltip-faster-editing",
-    "groupTitle": "Common Corrections",
     "title": "If Editing Feels Slow",
     "blocks": [
       {
         "type": "paragraph",
-        "text": "Use Smart Text Zoom, open one editor, then retarget from paragraph to paragraph or layer card to layer card."
-      },
-      {
-        "type": "paragraph",
-        "text": "The fastest workflow is not many commands. It is staying in context while moving through the page deliberately."
+        "text": "Use Smart Text Zoom, open one editor, then retarget from paragraph to paragraph or layer card to layer card. The fastest workflow is not many commands. It is staying in context while moving through the page deliberately."
       }
     ]
   }
