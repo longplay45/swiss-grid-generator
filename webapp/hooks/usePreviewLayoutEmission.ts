@@ -14,6 +14,15 @@ export function usePreviewLayoutEmission<Snapshot>({
   onLayoutChange,
 }: Args<Snapshot>) {
   const timeoutRef = useRef<number | null>(null)
+  const lastEmittedSignatureRef = useRef<string | null>(null)
+
+  const getSnapshotSignature = (snapshot: Snapshot): string | null => {
+    try {
+      return JSON.stringify(snapshot)
+    } catch {
+      return null
+    }
+  }
 
   useEffect(() => {
     if (!enabled || !onLayoutChange) {
@@ -30,7 +39,11 @@ export function usePreviewLayoutEmission<Snapshot>({
 
     timeoutRef.current = window.setTimeout(() => {
       timeoutRef.current = null
-      onLayoutChange(buildSnapshot())
+      const snapshot = buildSnapshot()
+      const signature = getSnapshotSignature(snapshot)
+      if (signature !== null && signature === lastEmittedSignatureRef.current) return
+      lastEmittedSignatureRef.current = signature
+      onLayoutChange(snapshot)
     }, debounceMs)
 
     return () => {

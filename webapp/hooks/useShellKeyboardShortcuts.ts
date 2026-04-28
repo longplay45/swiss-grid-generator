@@ -180,6 +180,7 @@ export function useShellKeyboardShortcuts({
     onToggleImagePlaceholders,
     onToggleTypography,
     onUndo,
+    showPresetsBrowser,
   ])
 
   useEffect(() => {

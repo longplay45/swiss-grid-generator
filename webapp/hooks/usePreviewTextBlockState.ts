@@ -274,6 +274,35 @@ export function usePreviewTextBlockState({
     textContent,
   ])
 
+  const toTextSnapshot = useCallback((value: PreviewTextBlockCollectionsState) => (
+    value as PreviewLayoutState
+  ), [])
+
+  const fromTextSnapshot = useCallback((snapshot: PreviewLayoutState): PreviewTextBlockCollectionsState => ({
+    blockOrder: [...snapshot.blockOrder],
+    textContent: { ...snapshot.textContent },
+    blockTextEdited: { ...snapshot.blockTextEdited },
+    styleAssignments: { ...snapshot.styleAssignments },
+    blockFontFamilies: { ...(snapshot.blockFontFamilies ?? {}) },
+    blockFontWeights: { ...(snapshot.blockFontWeights ?? {}) },
+    blockOpticalKerning: { ...(snapshot.blockOpticalKerning ?? {}) },
+    blockTrackingScales: { ...(snapshot.blockTrackingScales ?? {}) },
+    blockTrackingRuns: { ...(snapshot.blockTrackingRuns ?? {}) },
+    blockTextFormatRuns: { ...(snapshot.blockTextFormatRuns ?? {}) },
+    blockItalic: { ...(snapshot.blockItalic ?? {}) },
+    blockRotations: { ...(snapshot.blockRotations ?? {}) },
+    blockColumnSpans: { ...snapshot.blockColumnSpans },
+    blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
+    blockHeightBaselines: { ...(snapshot.blockHeightBaselines ?? {}) },
+    blockTextAlignments: { ...snapshot.blockTextAlignments },
+    blockVerticalAlignments: { ...(snapshot.blockVerticalAlignments ?? {}) },
+    blockTextReflow: { ...(snapshot.blockTextReflow ?? {}) },
+    blockSyllableDivision: { ...(snapshot.blockSyllableDivision ?? {}) },
+    blockSnapToColumns: { ...(snapshot.blockSnapToColumns ?? {}) },
+    blockSnapToBaseline: { ...(snapshot.blockSnapToBaseline ?? {}) },
+    blockModulePositions: { ...snapshot.blockModulePositions },
+  }), [])
+
   const { buildSnapshot: buildTextSnapshot, applySnapshot: applyTextSnapshot } = useLayoutSnapshot<
     BlockId,
     TypographyStyleKey,
@@ -298,31 +327,8 @@ export function usePreviewTextBlockState({
     isBlockItalic,
     getBlockRotation,
     isFontFamily,
-    toSnapshot: (value) => value as PreviewLayoutState,
-    fromSnapshot: (snapshot) => ({
-      blockOrder: [...snapshot.blockOrder],
-      textContent: { ...snapshot.textContent },
-      blockTextEdited: { ...snapshot.blockTextEdited },
-      styleAssignments: { ...snapshot.styleAssignments },
-      blockFontFamilies: { ...(snapshot.blockFontFamilies ?? {}) },
-      blockFontWeights: { ...(snapshot.blockFontWeights ?? {}) },
-      blockOpticalKerning: { ...(snapshot.blockOpticalKerning ?? {}) },
-      blockTrackingScales: { ...(snapshot.blockTrackingScales ?? {}) },
-      blockTrackingRuns: { ...(snapshot.blockTrackingRuns ?? {}) },
-      blockTextFormatRuns: { ...(snapshot.blockTextFormatRuns ?? {}) },
-      blockItalic: { ...(snapshot.blockItalic ?? {}) },
-      blockRotations: { ...(snapshot.blockRotations ?? {}) },
-      blockColumnSpans: { ...snapshot.blockColumnSpans },
-      blockRowSpans: { ...(snapshot.blockRowSpans ?? {}) },
-      blockHeightBaselines: { ...(snapshot.blockHeightBaselines ?? {}) },
-      blockTextAlignments: { ...snapshot.blockTextAlignments },
-      blockVerticalAlignments: { ...(snapshot.blockVerticalAlignments ?? {}) },
-      blockTextReflow: { ...(snapshot.blockTextReflow ?? {}) },
-      blockSyllableDivision: { ...(snapshot.blockSyllableDivision ?? {}) },
-      blockSnapToColumns: { ...(snapshot.blockSnapToColumns ?? {}) },
-      blockSnapToBaseline: { ...(snapshot.blockSnapToBaseline ?? {}) },
-      blockModulePositions: { ...snapshot.blockModulePositions },
-    }),
+    toSnapshot: toTextSnapshot,
+    fromSnapshot: fromTextSnapshot,
     setState: setBlockCollections,
   })
 

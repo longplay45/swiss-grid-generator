@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   createDefaultProject,
@@ -107,6 +107,11 @@ export function useProjectState<Layout>({
       previewLayout: defaultPreviewLayout,
     }),
   )
+  const activePageIdRef = useRef(project.activePageId)
+
+  useEffect(() => {
+    activePageIdRef.current = project.activePageId
+  }, [project.activePageId])
 
   const getLivePreviewLayout = useCallback(
     () => getCurrentPreviewLayout() ?? currentPreviewLayout,
@@ -116,6 +121,11 @@ export function useProjectState<Layout>({
   const getCurrentProjectSnapshot = useCallback(() => (
     persistActivePageSnapshot(project, currentUiSettings, getLivePreviewLayout())
   ), [currentUiSettings, getLivePreviewLayout, project])
+
+  const replaceProjectSnapshot = useCallback((nextProject: LoadedProject<Layout>) => {
+    activePageIdRef.current = nextProject.activePageId
+    setProject(nextProject)
+  }, [])
 
   const projectSnapshot = useMemo(
     () => persistActivePageSnapshot(project, currentUiSettings, currentPreviewLayout),
@@ -131,23 +141,25 @@ export function useProjectState<Layout>({
     setProject(loadedProject)
     const nextActivePage = loadedProject.pages.find((page) => page.id === loadedProject.activePageId) ?? loadedProject.pages[0]
     if (nextActivePage) {
+      activePageIdRef.current = nextActivePage.id
       onApplyPage(nextActivePage)
     }
   }, [onApplyPage])
 
   const selectPage = useCallback((pageId: string) => {
-    if (pageId === project.activePageId) return
+    if (pageId === activePageIdRef.current) return
 
     const currentProject = getCurrentProjectSnapshot()
     const nextActivePage = currentProject.pages.find((page) => page.id === pageId)
     if (!nextActivePage) return
 
+    activePageIdRef.current = pageId
     setProject({
       ...currentProject,
       activePageId: pageId,
     })
     onApplyPage(nextActivePage)
-  }, [getCurrentProjectSnapshot, onApplyPage, project.activePageId])
+  }, [getCurrentProjectSnapshot, onApplyPage])
 
   const addPage = useCallback(() => {
     const currentProject = getCurrentProjectSnapshot()
@@ -171,6 +183,7 @@ export function useProjectState<Layout>({
       activePageId: nextPage.id,
       pages: nextPages,
     })
+    activePageIdRef.current = nextPage.id
     onApplyPage(nextPage)
   }, [
     currentUiSettings,
@@ -252,6 +265,7 @@ export function useProjectState<Layout>({
       activePageId: nextActivePage.id,
       pages: remainingPages,
     })
+    activePageIdRef.current = nextActivePage.id
     onApplyPage(nextActivePage)
   }, [getCurrentProjectSnapshot, onApplyPage, projectSnapshot.pages.length])
 
@@ -275,7 +289,7 @@ export function useProjectState<Layout>({
     activePage,
     activePageId: projectSnapshot.activePageId,
     getCurrentProjectSnapshot,
-    replaceProjectSnapshot: setProject,
+    replaceProjectSnapshot,
     applyLoadedProject,
     selectPage,
     addPage,
