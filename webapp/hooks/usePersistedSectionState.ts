@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react"
 
+type PersistedSectionStateOptions = {
+  resetEventName?: string
+}
+
 function readPersistedSectionState<SectionKey extends string>(
   storageKey: string,
   defaults: Record<SectionKey, boolean>,
@@ -27,10 +31,12 @@ function readPersistedSectionState<SectionKey extends string>(
 export function usePersistedSectionState<SectionKey extends string>(
   storageKey: string,
   defaults: Record<SectionKey, boolean>,
+  options: PersistedSectionStateOptions = {},
 ) {
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(() => (
     readPersistedSectionState(storageKey, defaults)
   ))
+  const { resetEventName } = options
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -41,6 +47,17 @@ export function usePersistedSectionState<SectionKey extends string>(
       // Ignore persistence failures and keep the in-memory UI state.
     }
   }, [collapsed, storageKey])
+
+  useEffect(() => {
+    if (!resetEventName || typeof window === "undefined") return
+
+    const handleReset = () => {
+      setCollapsed(defaults)
+    }
+
+    window.addEventListener(resetEventName, handleReset)
+    return () => window.removeEventListener(resetEventName, handleReset)
+  }, [defaults, resetEventName])
 
   return [collapsed, setCollapsed] as const
 }

@@ -21,6 +21,7 @@ export type DocumentVariableContext = {
 
 export type DocumentVariableResolverArgs = {
   name: string
+  value: string | null
   rawText: string
   rawStart: number
   rawEnd: number
@@ -65,7 +66,7 @@ type ResolvedDocumentVariableText<
   segments: DocumentVariableResolvedSegment[]
 }
 
-const DOCUMENT_VARIABLE_RE = /<%([a-z_]+)%>/gi
+const DOCUMENT_VARIABLE_RE = /<%([a-z_]+)(?::([\s\S]*?))?%>/gi
 
 function pad2(value: number): string {
   return String(Math.max(0, Math.trunc(value))).padStart(2, "0")
@@ -106,6 +107,7 @@ function formatDocumentVariableTime(date: Date): string {
 
 function resolveBuiltInDocumentVariableValue(
   name: string,
+  value: string | null,
   context: DocumentVariableContext,
 ): string | null {
   switch (name.trim().toLowerCase()) {
@@ -122,6 +124,10 @@ function resolveBuiltInDocumentVariableValue(
       return formatDocumentVariableDate(context.now)
     case "time":
       return formatDocumentVariableTime(context.now)
+    case "url": {
+      const resolvedUrl = value?.trim() ?? ""
+      return resolvedUrl.length > 0 ? resolvedUrl : null
+    }
     default:
       return null
   }
@@ -145,6 +151,7 @@ function parseResolvedSegments(
   for (const match of text.matchAll(DOCUMENT_VARIABLE_RE)) {
     const fullMatch = match[0]
     const tokenName = (match[1] ?? "").trim().toLowerCase()
+    const tokenValue = match[2] ?? null
     const rawStart = match.index ?? 0
     const rawEnd = rawStart + fullMatch.length
 
@@ -163,12 +170,13 @@ function parseResolvedSegments(
 
     const resolvedValue = resolveVariable?.({
       name: tokenName,
+      value: tokenValue,
       rawText: text,
       rawStart,
       rawEnd,
       context,
       resolveDefaultText: (sample) => parseResolvedSegments(sample, context).text,
-    }) ?? resolveBuiltInDocumentVariableValue(tokenName, context)
+    }) ?? resolveBuiltInDocumentVariableValue(tokenName, tokenValue, context)
     if (resolvedValue === null) {
       const resolvedStart = resolvedText.length
       resolvedText += fullMatch

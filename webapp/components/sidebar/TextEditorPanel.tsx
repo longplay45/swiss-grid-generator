@@ -42,6 +42,11 @@ import {
   rebaseTextTrackingRuns,
 } from "@/lib/text-tracking-runs"
 import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
+import {
+  EDITOR_PANEL_PERSISTENCE_RESET_EVENT,
+  TEXT_EDITOR_SCROLL_STORAGE_KEY,
+  TEXT_EDITOR_SECTIONS_STORAGE_KEY,
+} from "@/lib/editor-panel-persistence"
 import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
 import { TEXT_SYMBOL_PALETTE_GROUPS } from "@/lib/text-symbol-palette"
@@ -95,8 +100,9 @@ export function TextEditorPanel<StyleKey extends string>({
   const [editorColorScheme, setEditorColorScheme] = useState<ImageColorSchemeId>(controls.selectedColorScheme)
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const [collapsed, setCollapsed] = usePersistedSectionState(
-    "swiss-grid-generator:text-editor-sections",
+    TEXT_EDITOR_SECTIONS_STORAGE_KEY,
     TEXT_EDITOR_COLLAPSED_DEFAULTS,
+    { resetEventName: EDITOR_PANEL_PERSISTENCE_RESET_EVENT },
   )
   const [recentSymbols, setRecentSymbols] = useState<string[]>(() => {
     if (typeof window === "undefined") return []
@@ -108,7 +114,11 @@ export function TextEditorPanel<StyleKey extends string>({
       return []
     }
   })
-  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
+  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed, {
+    resetEventName: EDITOR_PANEL_PERSISTENCE_RESET_EVENT,
+    restoreKey: controls.editorState.target,
+    scrollStorageKey: TEXT_EDITOR_SCROLL_STORAGE_KEY,
+  })
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
 

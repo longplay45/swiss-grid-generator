@@ -136,6 +136,7 @@ Default: `swiss`
   - `<%pages%>` uses the total physical page count across single pages and facing spreads
   - `<%date%>` rendered as local `YYYY-MM-DD`
   - `<%time%>` rendered as local `HH:mm`
+  - `<%url:https://lp45.net%>` resolves to the URL text after `url:`
 - Preview freezes `date` and `time` to the current preview session; PDF/SVG/IDML freeze them to the export run so all pages share one consistent timestamp.
 - In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render as live values.
 - `Rhythm` and `Base` dropdown items preview live on rollover before commit.

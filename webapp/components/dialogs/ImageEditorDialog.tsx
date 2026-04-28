@@ -21,6 +21,11 @@ import {
   opacityToTransparencyPercent,
   transparencyPercentToOpacity,
 } from "@/lib/image-placeholder-opacity"
+import {
+  EDITOR_PANEL_PERSISTENCE_RESET_EVENT,
+  IMAGE_EDITOR_SCROLL_STORAGE_KEY,
+  IMAGE_EDITOR_SECTIONS_STORAGE_KEY,
+} from "@/lib/editor-panel-persistence"
 import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
@@ -88,10 +93,15 @@ export function ImageEditorDialog({
   const [previewColorScheme, setPreviewColorScheme] = useState<ImageColorSchemeId | null>(null)
   const [transparencyInput, setTransparencyInput] = useState("")
   const [collapsed, setCollapsed] = usePersistedSectionState(
-    "swiss-grid-generator:image-editor-sections",
+    IMAGE_EDITOR_SECTIONS_STORAGE_KEY,
     IMAGE_EDITOR_COLLAPSED_DEFAULTS,
+    { resetEventName: EDITOR_PANEL_PERSISTENCE_RESET_EVENT },
   )
-  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
+  const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed, {
+    resetEventName: EDITOR_PANEL_PERSISTENCE_RESET_EVENT,
+    restoreKey: editorState?.target ?? null,
+    scrollStorageKey: IMAGE_EDITOR_SCROLL_STORAGE_KEY,
+  })
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {

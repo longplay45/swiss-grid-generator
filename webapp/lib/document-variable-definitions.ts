@@ -32,4 +32,8 @@ export const DOCUMENT_VARIABLE_DEFINITIONS: readonly DocumentVariableDefinition[
     token: "<%time%>",
     description: "Insert the local render time.",
   },
+  {
+    token: "<%url:https://lp45.net%>",
+    description: "Insert a URL as visible text.",
+  },
 ] as const

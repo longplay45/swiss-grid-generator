@@ -61,6 +61,7 @@ import {
 } from "@/lib/project-page-navigation"
 import { LAYOUT_OPEN_TOOLTIP_ITEMS, type LayoutOpenTooltipItem } from "@/lib/generated-tooltip-content"
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
+import { resetEditorPanelPersistence } from "@/lib/editor-panel-persistence"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -564,6 +565,7 @@ export default function Home() {
   }, [clearPreviewKeys, setPreviewPatch])
 
   const handleApplyLoadedProject = useCallback((project: LoadedProject<PreviewLayoutState>) => {
+    resetEditorPanelPersistence()
     applyLoadedProject(project)
     setProjectVisibilityHistoryPast([])
     setProjectVisibilityHistoryFuture([])
