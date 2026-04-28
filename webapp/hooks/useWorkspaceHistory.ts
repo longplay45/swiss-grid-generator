@@ -10,8 +10,6 @@ const GLOBAL_HISTORY_LIMIT = 150
 type Args = {
   buildUiSnapshot: () => UiSettingsSnapshot
   onApplyUiSnapshot: (snapshot: UiSettingsSnapshot) => void
-  canUndoPreview: boolean
-  canUndoProject: boolean
   requestPreviewUndo: () => void
   requestPreviewRedo: () => void
   requestProjectUndo: () => void
@@ -21,8 +19,6 @@ type Args = {
 export function useWorkspaceHistory({
   buildUiSnapshot,
   onApplyUiSnapshot,
-  canUndoPreview,
-  canUndoProject,
   requestPreviewUndo,
   requestPreviewRedo,
   requestProjectUndo,
@@ -30,6 +26,7 @@ export function useWorkspaceHistory({
 }: Args) {
   const [undoDomains, setUndoDomains] = useState<HistoryDomain[]>([])
   const [redoDomains, setRedoDomains] = useState<HistoryDomain[]>([])
+  const [isDirty, setIsDirty] = useState(false)
   const undoDomainsRef = useRef<HistoryDomain[]>([])
   const redoDomainsRef = useRef<HistoryDomain[]>([])
   const isDirtyRef = useRef(false)
@@ -48,6 +45,8 @@ export function useWorkspaceHistory({
       return next.length > GLOBAL_HISTORY_LIMIT ? next.slice(next.length - GLOBAL_HISTORY_LIMIT) : next
     })
     setRedoDomains([])
+    isDirtyRef.current = true
+    setIsDirty(true)
   }, [])
 
   const resetHistoryDomains = useCallback(() => {
@@ -59,7 +58,6 @@ export function useWorkspaceHistory({
     onRecordHistory: () => recordHistoryDomain("settings"),
   })
   const {
-    settingsPast,
     suppressNext,
     setCurrentSnapshot,
     reset: resetSettingsHistory,
@@ -113,13 +111,8 @@ export function useWorkspaceHistory({
 
   const markClean = useCallback(() => {
     isDirtyRef.current = false
+    setIsDirty(false)
   }, [])
-
-  useEffect(() => {
-    if (settingsPast.length > 0 || canUndoPreview || canUndoProject) {
-      isDirtyRef.current = true
-    }
-  }, [canUndoPreview, canUndoProject, settingsPast.length])
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -137,6 +130,7 @@ export function useWorkspaceHistory({
     resetHistoryDomains,
     canUndo: undoDomains.length > 0,
     canRedo: redoDomains.length > 0,
+    isDirty,
     undoAny,
     redoAny,
     handlePreviewHistoryRecord,

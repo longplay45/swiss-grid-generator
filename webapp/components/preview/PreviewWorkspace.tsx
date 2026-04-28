@@ -169,6 +169,7 @@ function renderHeaderAction(
         aria-pressed={action.pressed}
         disabled={action.disabled}
         onClick={action.onClick}
+        showStatusDot={action.showStatusDot}
         showTooltip
         buttonClassName={undefined}
       >

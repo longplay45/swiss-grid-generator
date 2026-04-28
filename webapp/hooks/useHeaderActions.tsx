@@ -27,6 +27,7 @@ export type HeaderAction = {
   tooltip: string
   shortcutId?: PreviewHeaderShortcutId
   icon: ReactNode
+  showStatusDot?: boolean
   variant?: "default" | "outline"
   pressed?: boolean
   disabled?: boolean
@@ -47,6 +48,7 @@ type Args = {
   showTypography: boolean
   showLayers: boolean
   smartTextZoomEnabled: boolean
+  hasUnsavedChanges: boolean
   canUndo: boolean
   canRedo: boolean
   onOpenPresets: () => void
@@ -100,6 +102,7 @@ export function useHeaderActions(args: Args) {
         ariaLabel: "Save",
         tooltip: "Save to Library",
         shortcutId: "save_json",
+        showStatusDot: args.hasUnsavedChanges,
         disabled: !args.hasPreviewLayout,
         onClick: args.onSaveJson,
         icon: <Save className="h-4 w-4" />,

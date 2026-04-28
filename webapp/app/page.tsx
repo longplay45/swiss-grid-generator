@@ -311,7 +311,6 @@ export default function Home() {
     requestedLayerLockState,
     selectedLayerKey,
     setSelectedLayerKeyWithGrace,
-    canUndoPreview,
     previewUndoNonce,
     previewRedoNonce,
     documentHistoryResetNonce,
@@ -390,6 +389,7 @@ export default function Home() {
     resetHistoryDomains,
     canUndo,
     canRedo,
+    isDirty,
     undoAny,
     redoAny,
     handlePreviewHistoryRecord,
@@ -400,8 +400,6 @@ export default function Home() {
     onApplyUiSnapshot: (snapshot) => {
       dispatch({ type: "APPLY_SNAPSHOT", snapshot })
     },
-    canUndoPreview,
-    canUndoProject: projectVisibilityHistoryPast.length > 0,
     requestPreviewUndo,
     requestPreviewRedo,
     requestProjectUndo,
@@ -1160,6 +1158,7 @@ export default function Home() {
     showTypography,
     showLayers,
     smartTextZoomEnabled,
+    hasUnsavedChanges: isDirty,
     canUndo,
     canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),

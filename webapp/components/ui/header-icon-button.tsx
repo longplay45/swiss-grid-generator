@@ -10,6 +10,7 @@ type HeaderIconButtonProps = {
   children: ReactNode
   buttonClassName?: string
   showTooltip?: boolean
+  showStatusDot?: boolean
 } & Pick<ButtonProps, "variant" | "disabled" | "onClick"> & {
     "aria-pressed"?: boolean
   }
@@ -23,6 +24,7 @@ export function HeaderIconButton({
   onClick,
   buttonClassName,
   showTooltip = true,
+  showStatusDot = false,
   "aria-pressed": ariaPressed,
 }: HeaderIconButtonProps) {
   return (
@@ -34,12 +36,18 @@ export function HeaderIconButton({
       <Button
         size="icon"
         variant={variant}
-        className={cn("h-8 w-8", buttonClassName)}
+        className={cn("relative h-8 w-8", buttonClassName)}
         aria-label={ariaLabel}
         aria-pressed={ariaPressed}
         disabled={disabled}
         onClick={onClick}
       >
+        {showStatusDot ? (
+          <span
+            aria-hidden="true"
+            className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white dark:ring-[#1D232D]"
+          />
+        ) : null}
         {children}
       </Button>
     </HoverTooltip>
