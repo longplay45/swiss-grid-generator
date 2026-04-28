@@ -113,8 +113,13 @@ export type FontVariant = {
 }
 
 export const DEFAULT_BASE_FONT: FontFamily = "Inter"
+const INTERNAL_FONT_FAMILIES = new Set<FontFamily>(["Noto Sans Symbols 2"])
 
-export const FONT_OPTIONS: FontOption[] = FONT_DEFINITIONS.map(({ value, label, category }) => ({
+export const USER_FONT_DEFINITIONS = FONT_DEFINITIONS.filter(({ value }) => (
+  !INTERNAL_FONT_FAMILIES.has(value)
+))
+
+export const FONT_OPTIONS: FontOption[] = USER_FONT_DEFINITIONS.map(({ value, label, category }) => ({
   value,
   label,
   category,
@@ -137,6 +142,7 @@ const FONT_SLUG_MAP = new Map<FontFamily, string>(
 )
 
 export const FONT_OPTION_SET = new Set<FontFamily>(FONT_OPTIONS.map((option) => option.value))
+const FONT_FAMILY_SET = new Set<FontFamily>(FONT_DEFINITIONS.map((definition) => definition.value))
 const FONT_VARIANT_CONFIG = FONT_VARIANT_DATA as Record<FontFamily, FontVariantConfig>
 
 const WEIGHT_LABELS: Record<number, string> = {
@@ -192,7 +198,7 @@ const FONT_VARIANTS_MAP = new Map<FontFamily, readonly FontVariant[]>(
 )
 
 export function isFontFamily(value: unknown): value is FontFamily {
-  return typeof value === "string" && FONT_OPTION_SET.has(value as FontFamily)
+  return typeof value === "string" && FONT_FAMILY_SET.has(value as FontFamily)
 }
 
 export function getFontAssetSlug(fontFamily: FontFamily): string {

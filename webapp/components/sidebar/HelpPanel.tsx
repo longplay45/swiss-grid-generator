@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { ChevronUp, X } from "lucide-react"
 import type { ReactNode } from "react"
 
-import { FONT_DEFINITIONS } from "@/lib/config/fonts"
+import { USER_FONT_DEFINITIONS } from "@/lib/config/fonts"
 import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
 import {
   HELP_CONTENT_GROUPS,
@@ -49,13 +49,10 @@ const FONT_CATEGORY_LABEL: Record<(typeof FONT_CATEGORY_ORDER)[number], string> 
 const AVAILABLE_FONT_GROUPS = FONT_CATEGORY_ORDER.map((category) => ({
   category,
   label: FONT_CATEGORY_LABEL[category],
-  fonts: FONT_DEFINITIONS.filter((definition) => definition.category === category),
+  fonts: USER_FONT_DEFINITIONS.filter((definition) => definition.category === category),
 }))
 
 function getGoogleFontsSpecimenUrl(fontLabel: string): string {
-  if (fontLabel === "Noto Sans Symbols 2") {
-    return "https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2"
-  }
   return `${GOOGLE_FONTS_SPECIMEN_BASE_URL}${fontLabel.replace(/\s+/g, "+")}`
 }
 
