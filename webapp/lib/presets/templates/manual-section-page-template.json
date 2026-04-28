@@ -29,8 +29,8 @@
       "right": 3,
       "bottom": 2
     },
-    "showBaselines": false,
-    "showModules": false,
+    "showBaselines": true,
+    "showModules": true,
     "showMargins": false,
     "showImagePlaceholders": true,
     "showTypography": true,
@@ -39,7 +39,7 @@
       "format": true,
       "baseline": true,
       "margins": true,
-      "gutter": false,
+      "gutter": true,
       "typo": true,
       "color": true,
       "summary": true

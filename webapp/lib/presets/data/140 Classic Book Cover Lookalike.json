@@ -38,8 +38,8 @@
           "right": 2,
           "bottom": 3
         },
-        "showBaselines": false,
-        "showModules": false,
+        "showBaselines": true,
+        "showModules": true,
         "showMargins": false,
         "showImagePlaceholders": true,
         "showTypography": true,
@@ -50,7 +50,7 @@
           "margins": true,
           "gutter": true,
           "typo": true,
-          "color": false,
+          "color": true,
           "summary": true
         },
         "exportPrintPro": false,

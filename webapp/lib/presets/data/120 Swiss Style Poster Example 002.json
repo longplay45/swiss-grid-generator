@@ -38,8 +38,8 @@
           "right": 1,
           "bottom": 1
         },
-        "showBaselines": false,
-        "showModules": false,
+        "showBaselines": true,
+        "showModules": true,
         "showMargins": false,
         "showImagePlaceholders": true,
         "showTypography": true,
