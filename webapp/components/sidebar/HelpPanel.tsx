@@ -14,6 +14,7 @@ import {
 import { HELP_INDEX_GROUPS } from "@/lib/help-registry"
 import type { HelpSectionId } from "@/lib/help-registry"
 import { PREVIEW_HEADER_SHORTCUTS } from "@/lib/preview-header-shortcuts"
+import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 
 type Props = {
   isDarkMode?: boolean
@@ -25,6 +26,7 @@ type SectionHeadingProps = {
   as?: "h4" | "h5"
   className: string
   jumpButtonClassName: string
+  labelClassName?: string
   children: ReactNode
 }
 
@@ -60,11 +62,13 @@ function SectionHeading({
   as = "h4",
   className,
   jumpButtonClassName,
+  labelClassName,
   children,
 }: SectionHeadingProps) {
   const Tag = as
   return (
-    <Tag className={`flex items-center gap-1.5 ${className}`}>
+    <Tag className={`flex items-start justify-between gap-2 ${className}`}>
+      <span className={`min-w-0 flex-1 ${labelClassName}`}>{children}</span>
       <button
         type="button"
         aria-label="Jump to top"
@@ -72,11 +76,10 @@ function SectionHeading({
         onClick={() => {
           document.getElementById("help-index")?.scrollIntoView({ behavior: "smooth", block: "start" })
         }}
-        className={`inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${jumpButtonClassName}`}
+        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${jumpButtonClassName}`}
       >
-        <ChevronUp className="h-2.5 w-2.5" />
+        <ChevronUp className="h-2 w-2" />
       </button>
-      <span>{children}</span>
     </Tag>
   )
 }
@@ -223,7 +226,7 @@ function renderHelpBlock(block: HelpBlock, tone: Tone, key: string) {
 function renderSubsection(subsection: HelpSubsection, tone: Tone) {
   return (
     <div key={subsection.id} id={subsection.id} className="space-y-1 pt-1">
-      <h5 className={`text-xs font-semibold ${tone.heading}`}>{subsection.title}</h5>
+      <h5 className={`text-xs font-semibold uppercase tracking-[0.08em] ${tone.caption}`}>{subsection.title}</h5>
       {subsection.blocks.map((block, index) => renderHelpBlock(block, tone, `${subsection.id}-${index}`))}
     </div>
   )
@@ -232,7 +235,11 @@ function renderSubsection(subsection: HelpSubsection, tone: Tone) {
 function renderSection(section: HelpSection, tone: Tone) {
   return (
     <section key={section.id} id={section.id} className="space-y-2">
-      <SectionHeading className={`text-sm font-semibold ${tone.heading}`} jumpButtonClassName={tone.jumpButton}>
+      <SectionHeading
+        className="text-[11px] font-semibold uppercase tracking-[0.08em]"
+        jumpButtonClassName={tone.jumpButton}
+        labelClassName={SECTION_HEADLINE_CLASSNAME}
+      >
         {section.title}
       </SectionHeading>
       {section.blocks.map((block, index) => renderHelpBlock(block, tone, `${section.id}-${index}`))}
@@ -290,23 +297,27 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className={`text-sm font-semibold ${tone.heading}`}>Help</h3>
-        <button
-          type="button"
-          aria-label="Close help panel"
-          onClick={onClose}
-          className={`rounded-sm p-1 transition-colors ${isDarkMode ? "text-[#A8B1BF] hover:bg-[#232A35] hover:text-[#F4F6F8]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <div className="rounded-md py-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>H E L P</h3>
+          </div>
+          <button
+            type="button"
+            aria-label="Close help panel"
+            onClick={onClose}
+            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${tone.jumpButton}`}
+          >
+            <X className="h-2 w-2" />
+          </button>
+        </div>
       </div>
 
-      <div id="help-index">
-        <h4 className={`mb-2 text-sm font-semibold ${tone.heading}`}>Index</h4>
+      <div id="help-index" className="space-y-2">
+        <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Index</h4>
         {HELP_INDEX_GROUPS.map((group, groupIndex) => (
           <div key={group.title} className={groupIndex > 0 ? "mt-2" : ""}>
-            <h5 className={`mb-1 text-xs font-semibold ${tone.heading}`}>{group.title}</h5>
+            <h5 className={`${SECTION_HEADLINE_CLASSNAME} mb-1`}>{group.title}</h5>
             <ul className={`space-y-1 text-xs list-disc pl-4 ${tone.body}`}>
               {group.items.map((item) => (
                 <li key={item.id}>

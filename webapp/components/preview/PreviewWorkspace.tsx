@@ -450,7 +450,7 @@ export function PreviewWorkspace({
           ) : null}
           {showPresetsBrowser ? (
             <div
-              className={`relative h-full min-h-[360px] w-full p-4 ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}
+              className={`relative h-full min-h-[360px] w-full ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}
               onMouseEnter={showSectionHelpIcons ? () => onHeaderHelpNavigate("presets") : undefined}
             >
               {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
