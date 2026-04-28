@@ -1220,7 +1220,9 @@ export default function Home() {
       markClean()
       handleRequestNotice({
         title: "Saved to Library",
-        message: "Project stored in the local Users library.",
+        message: user
+          ? "Project stored in the local Users library. Signed-in layouts sync to the cloud automatically."
+          : "Project stored in the local Users library. Sign in to sync saved layouts to the cloud.",
       })
     } catch (error) {
       console.error(error)

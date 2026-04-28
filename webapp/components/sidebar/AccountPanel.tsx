@@ -47,6 +47,7 @@ export function AccountPanel({
       }
   const fieldClassName = `rounded-md border px-3 py-2 text-xs ${tone.field}`
   const authButtonClassName = "h-auto rounded-md px-3 py-2 text-xs"
+  const shouldShowResend = !userEmail && Boolean(authMessage) && !authError
 
   return (
     <div className="space-y-4">
@@ -145,7 +146,7 @@ export function AccountPanel({
                 }
               }}
             >
-              Send Magic Link
+              {shouldShowResend ? "Re-Send" : "Send Magic Link"}
             </Button>
           </div>
         </section>

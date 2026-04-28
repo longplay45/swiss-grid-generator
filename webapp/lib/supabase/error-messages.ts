@@ -55,6 +55,16 @@ export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorC
     return "Too many sign-in emails were requested. Wait a moment and try again. If this keeps happening, check the Supabase Auth rate limits and SMTP setup."
   }
 
+  if (typeof status === "number" && status >= 500) {
+    if (context === "sign_out") {
+      return "Supabase is temporarily unavailable and could not complete sign-out. Wait a moment and try again."
+    }
+    if (context === "session") {
+      return "Supabase is temporarily unavailable and the cloud session could not be restored right now. Wait a moment and try again."
+    }
+    return "Supabase is temporarily unavailable and could not send the sign-in link. Wait a moment and try again."
+  }
+
   if (/email address not authorized/i.test(rawMessage)) {
     return "This email address is not allowed by the current Supabase mail configuration. Check the SMTP sender setup or authorized test addresses."
   }
@@ -123,6 +133,13 @@ export function mapCloudSyncError(error: unknown): UserFacingNotice {
     return {
       title: "Cloud Rate Limit Reached",
       message: "Supabase temporarily refused more cloud requests. Wait a moment and try again.",
+    }
+  }
+
+  if (typeof status === "number" && status >= 500) {
+    return {
+      title: "Cloud Service Unavailable",
+      message: "Supabase is temporarily unavailable. Local changes remain safe in Dexie and will sync when the service recovers.",
     }
   }
 
