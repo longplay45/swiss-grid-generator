@@ -395,11 +395,17 @@ export const GridPreview = memo(function GridPreview({
     textContent,
     blockTextEdited,
     styleAssignments,
+    blockFontFamilies,
+    blockFontWeights,
+    blockOpticalKerning,
+    blockTrackingScales,
     blockGridPositions,
     blockModulePositions,
     blockColumnSpans,
     blockTextAlignments,
     blockVerticalAlignments,
+    blockItalic,
+    blockRotations,
     setBlockCollections,
     setBlockColumnSpans,
     setBlockModulePositions,
@@ -522,6 +528,8 @@ export const GridPreview = memo(function GridPreview({
     getBlockFontWeight,
     isBlockItalic,
     getBlockFontSize,
+    getBlockTextColor,
+    getBlockTextFormatRuns,
     scale,
   })
 
@@ -608,7 +616,7 @@ export const GridPreview = memo(function GridPreview({
               ? getBlockTrackingRuns(sourceKey).map((run) => ({ ...run }))
               : undefined,
             textFormatRuns: mode === "full"
-              ? getBlockTextFormatRuns(sourceKey).map((run) => ({ ...run }))
+              ? getBlockTextFormatRuns(sourceKey, getBlockTextColor(sourceKey)).map((run) => ({ ...run }))
               : undefined,
           }
         : undefined,

@@ -110,7 +110,8 @@ async function discoverGoogleRepoVariableSources(fontFamily: FontFamily): Promis
     const baseName = fontFamily.replace(/[^A-Za-z0-9]/g, "")
     for (const bucket of ["ofl", "apache", "ufl"] as const) {
       const apiUrl = `https://api.github.com/repos/google/fonts/contents/${bucket}/${slug}`
-      const response = await fetch(apiUrl)
+      const response = await fetch(apiUrl).catch(() => null)
+      if (!response) continue
       if (!response.ok) continue
       const listing = await response.json() as Array<{ type?: string; name?: string }>
       const ttfFiles = listing

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { FontFamily } from "@/lib/config/fonts"
+import { isFontFamily, type FontFamily } from "@/lib/config/fonts"
+import type { TextFormatRun } from "@/lib/text-format-runs"
 import { createTextMetricsService } from "@/lib/text-metrics-service"
 
 type Args<Key extends string, StyleKey extends string> = {
@@ -12,6 +13,8 @@ type Args<Key extends string, StyleKey extends string> = {
   getBlockFontWeight: (key: Key) => number
   isBlockItalic: (key: Key) => boolean
   getBlockFontSize: (key: Key, styleKey: StyleKey) => number
+  getBlockTextColor: (key: Key) => string
+  getBlockTextFormatRuns: (key: Key, color: string) => TextFormatRun<StyleKey, FontFamily>[]
   scale: number
 }
 
@@ -24,6 +27,8 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
   getBlockFontWeight,
   isBlockItalic,
   getBlockFontSize,
+  getBlockTextColor,
+  getBlockTextFormatRuns,
   scale,
 }: Args<Key, StyleKey>) {
   const textMetricsRef = useRef(createTextMetricsService<StyleKey, FontFamily>())
@@ -42,6 +47,8 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     getBlockFont,
     getBlockFontWeight,
     getBlockFontSize,
+    getBlockTextColor,
+    getBlockTextFormatRuns,
     getStyleKeyForBlock,
     isBlockItalic,
     scale,
@@ -64,6 +71,15 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
       const fontStyle = isBlockItalic(key) ? "italic" : "normal"
       const fontSize = getBlockFontSize(key, styleKey) * scale
       specs.add(`${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}"`)
+      const textColor = getBlockTextColor(key)
+      getBlockTextFormatRuns(key, textColor).forEach((run) => {
+        if (!isFontFamily(run.fontFamily)) return
+        const runStyleKey = run.styleKey ?? styleKey
+        const runFontStyle = (run.italic ?? isBlockItalic(key)) ? "italic" : "normal"
+        const runFontWeight = String(run.fontWeight ?? getBlockFontWeight(key))
+        const runFontSize = getBlockFontSize(key, runStyleKey) * scale
+        specs.add(`${runFontStyle} ${runFontWeight} ${runFontSize}px "${run.fontFamily}"`)
+      })
     }
 
     if (!specs.size) return
@@ -85,6 +101,8 @@ export function usePreviewTypographyMetrics<Key extends string, StyleKey extends
     getBlockFont,
     getBlockFontWeight,
     getBlockFontSize,
+    getBlockTextColor,
+    getBlockTextFormatRuns,
     getStyleKeyForBlock,
     isBlockItalic,
     scale,

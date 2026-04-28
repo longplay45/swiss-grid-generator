@@ -19,12 +19,13 @@ test("page export plan extends baselines beyond the page before downstream clipp
 
 test("typography layout plan reflows across the full stacked row height before advancing to the next column", () => {
   const source = readText("lib/typography-layout-plan.ts")
-  assert.match(source, /const\s+getLineCapacityForHeight\s*=\s*\(availableHeight:\s*number,\s*lineStep:\s*number\)\s*=>/)
-  assert.match(source, /const\s+buildReflowRowLayouts\s*=\s*\(rowStart:\s*number,\s*rowSpan:\s*number,\s*heightBaselines:\s*number,\s*lineStep:\s*number\)/)
-  assert.match(source, /const\s+reflowRowLayouts\s*=\s*buildReflowRowLayouts\(startRow,\s*rowSpan,\s*heightBaselines,\s*lineStep\)/)
-  assert.match(source, /const\s+remainingAfterFirstLine\s*=\s*availableHeight\s*-\s*baselineStep/)
-  assert.match(source, /return\s+1\s*\+\s*Math\.floor\(remainingAfterFirstLine\s*\/\s*safeLineStep\)/)
-  assert.match(source, /const\s+maxLinesPerColumn\s*=\s*Math\.max\(1,\s*getLineCapacityForHeight\(moduleHeightForBlock,\s*lineStep\)\)/)
+  assert.match(source, /export\s+function\s+getTypographyLineCapacityForHeight\([\s\S]*?firstLineHeight\s*=\s*lineStep/)
+  assert.match(source, /const\s+safeFirstLineHeight\s*=\s*Math\.max\(0\.0001,\s*firstLineHeight\)/)
+  assert.match(source, /return\s+Math\.max\(1,\s*1\s*\+\s*Math\.floor\(\(availableHeight\s*-\s*safeFirstLineHeight\)\s*\/\s*safeLineStep\)\)/)
+  assert.match(source, /const\s+getLineCapacityForHeight\s*=\s*\(availableHeight:\s*number,\s*lineStep:\s*number,\s*firstLineHeight:\s*number\)\s*=>/)
+  assert.match(source, /const\s+buildReflowRowLayouts\s*=\s*\([\s\S]*?rowStart:\s*number,[\s\S]*?rowSpan:\s*number,[\s\S]*?heightBaselines:\s*number,[\s\S]*?lineStep:\s*number,[\s\S]*?firstLineHeight:\s*number,/)
+  assert.match(source, /const\s+reflowRowLayouts\s*=\s*buildReflowRowLayouts\(startRow,\s*rowSpan,\s*heightBaselines,\s*lineStep,\s*firstLineHeight\)/)
+  assert.match(source, /const\s+maxLinesPerColumn\s*=\s*Math\.max\(1,\s*getLineCapacityForHeight\(moduleHeightForBlock,\s*lineStep,\s*firstLineHeight\)\)/)
   assert.match(source, /const\s+lineIndexWithinColumn\s*=\s*lineIndex\s*%\s*maxLinesPerColumn/)
   assert.match(source, /const\s+lineTopY\s*=\s*origin\.y\s*\+\s*baselineStep\s*\+\s*verticalStartOffset\s*\+\s*lineIndexWithinColumn\s*\*\s*lineStep/)
   assert.match(source, /reflowRowLayouts\.map\(\(rowLayout\)\s*=>\s*\(\{\s*x:\s*origin\.x\s*\+\s*getColumnOffset\(startCol,\s*columnIndex\),[\s\S]*?y:\s*origin\.y\s*\+\s*baselineStep\s*\+\s*rowLayout\.yOffset,/)
@@ -104,6 +105,30 @@ test("pdf export draws pre-positioned tracking segments with explicit left ancho
 test("pdf export action forwards placeholder visibility and active image color scheme", () => {
   const source = readText("hooks/useExportActions.ts")
   assert.match(source, /renderSwissGridVectorPdf\(\{[\s\S]*?imageColorScheme:\s*page\.imageColorScheme,[\s\S]*?canvasBackground:\s*page\.resolvedCanvasBackground,[\s\S]*?showImagePlaceholders:\s*page\.uiSettings\.showImagePlaceholders,[\s\S]*?showTypography:\s*page\.uiSettings\.showTypography,/)
+})
+
+test("pdf export registers inline format-run fonts before rendering text", () => {
+  const source = readText("hooks/useExportActions.ts")
+  assert.match(source, /function\s+collectPdfFontFamilies\(pages:\s*ResolvedProjectPageExportSource\[\]\):\s*Set<FontFamily>/)
+  assert.match(source, /page\.previewLayout\?\.blockTextFormatRuns/)
+  assert.match(source, /isFontFamily\(run\.fontFamily\)/)
+  assert.match(source, /ensurePdfFontsRegistered\(pdf,\s*collectPdfFontFamilies\(pages\)\)/)
+})
+
+test("canvas preview loads inline format-run fonts before measuring text", () => {
+  const previewSource = readText("components/grid-preview.tsx")
+  const metricsSource = readText("hooks/usePreviewTypographyMetrics.ts")
+  assert.match(previewSource, /usePreviewTypographyMetrics<BlockId,\s*TypographyStyleKey>\(\{[\s\S]*?getBlockTextColor,[\s\S]*?getBlockTextFormatRuns,/)
+  assert.match(metricsSource, /getBlockTextFormatRuns:\s*\(key:\s*Key,\s*color:\s*string\)\s*=>\s*TextFormatRun<StyleKey,\s*FontFamily>\[\]/)
+  assert.match(metricsSource, /getBlockTextFormatRuns\(key,\s*textColor\)\.forEach/)
+  assert.match(metricsSource, /isFontFamily\(run\.fontFamily\)/)
+  assert.match(metricsSource, /run\.styleKey\s*\?\?\s*styleKey/)
+})
+
+test("pdf font registry falls back to bundled local assets when remote discovery fails", () => {
+  const source = readText("lib/pdf-font-registry.ts")
+  assert.match(source, /const\s+response\s*=\s*await\s+fetch\(apiUrl\)\.catch\(\(\)\s*=>\s*null\)/)
+  assert.match(source, /if\s*\(!response\)\s*continue/)
 })
 
 test("pdf export switches between rgb and cmyk setters based on export color mode", () => {

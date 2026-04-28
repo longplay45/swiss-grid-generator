@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { flushSync } from "react-dom"
 import jsPDF from "jspdf"
-import type { FontFamily } from "@/lib/config/fonts"
+import { isFontFamily, type FontFamily } from "@/lib/config/fonts"
 import { attachPdfOutputIntent, type PdfExportColorMode, type PdfOutputIntentProfileId } from "@/lib/pdf-output-intent"
 import { renderSwissGridVectorPdf } from "@/lib/pdf-vector-export"
 import { renderSwissGridVectorSvg } from "@/lib/svg-vector-export"
@@ -83,6 +83,23 @@ const PRINT_CROP_OFFSET_MM = 2
 const PRINT_CROP_LENGTH_MM = 5
 const EXPORT_PROGRESS_BATCH_SIZE = 8
 const EXPORT_PROGRESS_MIN_INTERVAL_MS = 100
+
+function collectPdfFontFamilies(pages: ResolvedProjectPageExportSource[]): Set<FontFamily> {
+  const fontsToRegister = new Set<FontFamily>()
+  pages.forEach((page) => {
+    fontsToRegister.add(page.baseFont)
+    Object.values(page.previewLayout?.blockFontFamilies ?? {}).forEach((family) => {
+      if (isFontFamily(family)) fontsToRegister.add(family)
+    })
+    Object.values(page.previewLayout?.blockTextFormatRuns ?? {}).forEach((runs) => {
+      if (!Array.isArray(runs)) return
+      runs.forEach((run) => {
+        if (isFontFamily(run.fontFamily)) fontsToRegister.add(run.fontFamily)
+      })
+    })
+  })
+  return fontsToRegister
+}
 
 class ExportCancelledError extends Error {
   constructor() {
@@ -461,16 +478,7 @@ export function useExportActions(ctx: ExportActionsContext) {
       ViewClip: "TrimBox",
     })
 
-    const fontsToRegister = new Set<FontFamily>()
-    pages.forEach((page) => {
-      fontsToRegister.add(page.baseFont)
-      const blockFonts = page.previewLayout?.blockFontFamilies
-      if (!blockFonts) return
-      Object.values(blockFonts).forEach((family) => {
-        if (family) fontsToRegister.add(family)
-      })
-    })
-    await ensurePdfFontsRegistered(pdf, fontsToRegister)
+    await ensurePdfFontsRegistered(pdf, collectPdfFontFamilies(pages))
     await attachPdfOutputIntent(pdf, outputIntentProfileId)
     const publishProgress = createProgressPublisher()
 
