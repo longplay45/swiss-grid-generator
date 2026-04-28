@@ -103,7 +103,7 @@ export const HELP_CONTENT_GROUPS = [
             "items": [
               "Open text edit from the preview affordance, or by double-clicking an unlocked text layer card in the Project panel.",
               "Retarget an open text editor by clicking another unlocked preview block or by double-clicking another unlocked text layer card in the Project panel.",
-              "While editing, the left sidebar switches to `Paragraph`, `Typo`, `Placeholders`, and `Info`.",
+              "While editing, the left sidebar switches to `Paragraph`, `Typo`, `Symbols`, `Placeholders`, and `Info`.",
               "Those editor sections remember their last open/closed GUI state globally across pages, paragraphs, and projects. First use starts with all sections closed.",
               "The editor title uses the same layer label shown in the Project panel.",
               "`Esc` or outside click exits edit mode.",
@@ -142,6 +142,21 @@ export const HELP_CONTENT_GROUPS = [
                   "Choosing `Custom` seeds the size and leading fields from the paragraph's current resolved metrics.",
                   "If text is selected, type and color controls apply to the selection instead of the whole paragraph.",
                   "Font, cut, hierarchy, and scheme preview on dropdown hover before commit."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Symbols Section",
+            "id": "help-editor-symbols",
+            "indexed": true,
+            "blocks": [
+              {
+                "type": "list",
+                "items": [
+                  "Insert typographic symbols at the caret or over the current selection.",
+                  "Symbol insertion stores normal paragraph text plus a run-level `Noto Sans Symbols 2` font assignment for stable canvas and export rendering.",
+                  "Recent symbols appear above the grouped palette after first use."
                 ]
               }
             ]
@@ -1121,6 +1136,10 @@ export const EDITOR_HELP_SUBSECTION_ITEMS = [
   {
     "id": "help-editor-typo",
     "label": "Text Editor / Typo"
+  },
+  {
+    "id": "help-editor-symbols",
+    "label": "Text Editor / Symbols"
   },
   {
     "id": "help-editor-placeholders",

@@ -4,8 +4,9 @@ import type { Dispatch, SetStateAction } from "react"
 import type { BlockEditorState, BlockEditorStyleOption } from "@/components/editor/block-editor-types"
 import { applyBlockEditorTextEdit } from "@/lib/block-editor-text-edit"
 import { normalizeInlineEditorText } from "@/lib/inline-text-normalization"
+import { applyTextFormatToRange } from "@/lib/text-format-runs"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
-import type { PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
+import type { InsertEditorTextOptions, PreviewColorSchemeOption, TextEditorControls } from "@/lib/preview-overlay-controls"
 
 type Args<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey> | null
@@ -50,7 +51,7 @@ export function usePreviewOverlayControls<StyleKey extends string>({
 }: Args<StyleKey>) {
   return useMemo<TextEditorControls<StyleKey> | null>(() => {
     if (!editorState) return null
-    const insertEditorText = (value: string) => {
+    const insertEditorText = (value: string, options?: InsertEditorTextOptions<StyleKey>) => {
       const insertedText = normalizeInlineEditorText(value)
       if (!insertedText) return
       setEditorState((prev) => {
@@ -59,12 +60,32 @@ export function usePreviewOverlayControls<StyleKey extends string>({
         const selectionEnd = Math.max(prev.draftSelectionStart, prev.draftSelectionEnd)
         const nextText = `${prev.draftText.slice(0, selectionStart)}${insertedText}${prev.draftText.slice(selectionEnd)}`
         const nextCaretIndex = selectionStart + insertedText.length
-        return applyBlockEditorTextEdit(prev, nextText, {
+        const nextState = applyBlockEditorTextEdit(prev, nextText, {
           start: nextCaretIndex,
           end: nextCaretIndex,
           anchor: nextCaretIndex,
           focusIndex: nextCaretIndex,
         })
+        if (!options?.format) return nextState
+        return {
+          ...nextState,
+          draftTextFormatRuns: applyTextFormatToRange(
+            nextState.draftText,
+            {
+              start: selectionStart,
+              end: nextCaretIndex,
+            },
+            options.format,
+            {
+              fontFamily: nextState.draftFont,
+              fontWeight: nextState.draftFontWeight,
+              italic: nextState.draftItalic,
+              styleKey: nextState.draftStyle,
+              color: nextState.draftColor,
+            },
+            nextState.draftTextFormatRuns,
+          ),
+        }
       })
     }
 

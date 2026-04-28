@@ -54,7 +54,7 @@ Current capability inventory for Swiss Grid Generator.
 ## Text Editing
 
 - Inline editor overlay on the page surface.
-- Left-sidebar text editor with `Paragraph`, `Typo`, `Placeholders`, and `Info` sections.
+- Left-sidebar text editor with `Paragraph`, `Typo`, `Symbols`, `Placeholders`, and `Info` sections.
 - Text-editor section open/closed state is remembered globally across pages, paragraphs, and projects, with an all-closed first-use default.
 - The text editor header uses the same user-facing layer label shown in the Project panel instead of the internal block id.
 - Paragraph section: rows, baselines, cols, horizontal alignment, vertical alignment, reflow, hyphenation, `Snap to Columns (X)`, `Snap to Baseline (Y)`, rotation.
@@ -67,6 +67,7 @@ Current capability inventory for Swiss Grid Generator.
 - Typo section: font, cut, hierarchy, Custom size/leading, kerning, tracking, scheme, color.
 - Selecting `Custom` seeds Custom size/leading from the paragraph's currently resolved size and leading.
 - Typo dropdowns preview hovered family, cut, hierarchy, and scheme values before commit.
+- Symbols section inserts typographic marks from a grouped palette, stores recent picks, and assigns inserted symbols to `Noto Sans Symbols 2` as run-level formatting.
 - Placeholders section lists the available document-variable tokens and inserts the clicked token at the caret or over the current selection.
 - `<%lorem%>` fills the active paragraph frame according to its geometry, reflow, and hyphenation settings.
 - Info section: geometry, style, font, size, leading, kerning, tracking, counts, `Max/Line`.

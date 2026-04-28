@@ -2,6 +2,12 @@ import type { Dispatch, SetStateAction } from "react"
 
 import type { BlockEditorState, BlockEditorStyleOption } from "@/components/editor/block-editor-types"
 import type { ImageColorSchemeId } from "@/lib/config/color-schemes"
+import type { FontFamily } from "@/lib/config/fonts"
+import type { BaseTextFormat } from "@/lib/text-format-runs"
+
+export type InsertEditorTextOptions<StyleKey extends string> = {
+  format?: Partial<BaseTextFormat<StyleKey, FontFamily>>
+}
 
 export type PreviewColorSchemeOption = {
   id: ImageColorSchemeId
@@ -12,7 +18,7 @@ export type PreviewColorSchemeOption = {
 export type TextEditorControls<StyleKey extends string> = {
   editorState: BlockEditorState<StyleKey>
   setEditorState: Dispatch<SetStateAction<BlockEditorState<StyleKey> | null>>
-  insertEditorText: (value: string) => void
+  insertEditorText: (value: string, options?: InsertEditorTextOptions<StyleKey>) => void
   deleteEditorBlock: () => void
   maxCharsPerLine: number | null
   baselinesPerGridModule: number

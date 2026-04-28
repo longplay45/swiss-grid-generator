@@ -332,7 +332,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 Editor controls:
 - left sidebar editor that replaces layout settings while edit mode is active
-- text editor sections: `Paragraph`, `Typo`, `Placeholders`, `Info`
+- text editor sections: `Paragraph`, `Typo`, `Symbols`, `Placeholders`, `Info`
 - image editor sections: `Geometry`, `Color`, `Info`
 - while edit mode is active, preview hover stays visible on other unlocked existing blocks and clicking one retargets the already open editor
 - locked layers are excluded from preview hover, drag, and editor retarget/open behavior until unlocked from the Project panel
@@ -364,6 +364,11 @@ Editor controls:
   - color scheme selector
   - color swatches
 - text `font family`, `font cut`, `hierarchy`, and `color scheme` dropdown items preview live on rollover before commit
+- Symbols section:
+  - inserts symbols at the current caret or over the current selection
+  - grouped sets: `Arrows`, `Bullets`, `Marks`, `Math`, `Geometry`, `Editorial`
+  - recent symbols appear above the grouped palette after first use
+  - inserted symbols remain normal paragraph text and receive a run-level `Noto Sans Symbols 2` font assignment
 - Placeholders section:
   - lists all available document-variable tokens
   - inserts the clicked token at the current caret or over the current selection

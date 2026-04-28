@@ -44,6 +44,7 @@ import {
 import { DOCUMENT_VARIABLE_DEFINITIONS } from "@/lib/document-variable-definitions"
 import { getTextLayerDisplayName } from "@/lib/layer-display-name"
 import { resolveCustomStyleSeedMetrics } from "@/lib/preview-text-config"
+import { TEXT_SYMBOL_PALETTE_GROUPS } from "@/lib/text-symbol-palette"
 import { useAutoScrollOpenedSection } from "@/hooks/useAutoScrollOpenedSection"
 import { usePersistedSectionState } from "@/hooks/usePersistedSectionState"
 import { useStateSnapshotSelectPreview } from "@/hooks/useStateSnapshotSelectPreview"
@@ -58,13 +59,17 @@ type TextEditorPanelProps<StyleKey extends string> = {
   isDarkMode?: boolean
 }
 
-type SectionKey = "layout" | "type" | "placeholders" | "info"
+type SectionKey = "layout" | "type" | "symbols" | "placeholders" | "info"
 const SECTION_HEADER_CLICK_DELAY_MS = 180
-const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "placeholders", "info"]
+const TEXT_EDITOR_SECTION_KEYS: SectionKey[] = ["layout", "type", "symbols", "placeholders", "info"]
+const RECENT_SYMBOLS_STORAGE_KEY = "swiss-grid-generator:text-editor-recent-symbols"
+const MAX_RECENT_SYMBOL_COUNT = 12
+const SYMBOL_FONT_FAMILY: FontFamily = "Noto Sans Symbols 2"
 
 const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
   layout: true,
   type: true,
+  symbols: true,
   placeholders: true,
   info: true,
 }
@@ -72,6 +77,7 @@ const TEXT_EDITOR_COLLAPSED_DEFAULTS: Record<SectionKey, boolean> = {
 const TEXT_EDITOR_HELP_SECTION_BY_KEY: Record<SectionKey, HelpSectionId> = {
   layout: "help-editor-paragraph",
   type: "help-editor-typo",
+  symbols: "help-editor-symbols",
   placeholders: "help-editor-placeholders",
   info: "help-editor-info",
 }
@@ -92,6 +98,16 @@ export function TextEditorPanel<StyleKey extends string>({
     "swiss-grid-generator:text-editor-sections",
     TEXT_EDITOR_COLLAPSED_DEFAULTS,
   )
+  const [recentSymbols, setRecentSymbols] = useState<string[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(RECENT_SYMBOLS_STORAGE_KEY) ?? "[]") as unknown
+      if (!Array.isArray(parsed)) return []
+      return parsed.filter((value): value is string => typeof value === "string" && value.length > 0).slice(0, MAX_RECENT_SYMBOL_COUNT)
+    } catch {
+      return []
+    }
+  })
   const { scrollRootRef, registerSectionRef } = useAutoScrollOpenedSection(collapsed)
   const sectionHeaderClickTimeoutRef = useRef<number | null>(null)
   const fxSelected = controls.isFxStyle(controls.editorState.draftStyle)
@@ -180,6 +196,15 @@ export function TextEditorPanel<StyleKey extends string>({
   }, [controls.editorState.target, controls.selectedColorScheme])
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem(RECENT_SYMBOLS_STORAGE_KEY, JSON.stringify(recentSymbols))
+    } catch {
+      // Recent symbols are a convenience; insertion must not depend on storage.
+    }
+  }, [recentSymbols])
+
+  useEffect(() => {
     return () => {
       if (sectionHeaderClickTimeoutRef.current !== null) {
         window.clearTimeout(sectionHeaderClickTimeoutRef.current)
@@ -189,6 +214,19 @@ export function TextEditorPanel<StyleKey extends string>({
 
   const maxHeightBaselines = Math.max(0, controls.baselinesPerGridModule - 1)
   const setTextEditorState = controls.setEditorState
+  const insertSymbol = (symbol: string) => {
+    controls.insertEditorText(symbol, {
+      format: {
+        fontFamily: SYMBOL_FONT_FAMILY,
+        fontWeight: 400,
+        italic: false,
+      },
+    })
+    setRecentSymbols((current) => [
+      symbol,
+      ...current.filter((item) => item !== symbol),
+    ].slice(0, MAX_RECENT_SYMBOL_COUNT))
+  }
 
   useEffect(() => {
     if (controls.editorState.draftHeightBaselines <= maxHeightBaselines) return
@@ -629,6 +667,7 @@ export function TextEditorPanel<StyleKey extends string>({
   const inlineSwitchClassName = "h-3 w-6 rounded-none border border-black bg-gray-300 data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
   const inlineSwitchThumbClassName = "h-3 w-3 rounded-none border border-black bg-white shadow-none data-[state=checked]:translate-x-3"
   const placeholderButtonClassName = `w-full rounded-sm border px-3 py-2 text-left transition-colors ${tone.button}`
+  const symbolButtonClassName = `flex h-9 w-full items-center justify-center rounded-sm border text-[17px] leading-none transition-colors ${tone.button}`
   const infoRows = [
     ["Rows", String(controls.editorState.draftRows)],
     ["Baselines", String(controls.editorState.draftHeightBaselines)],
@@ -1102,9 +1141,74 @@ export function TextEditorPanel<StyleKey extends string>({
         </EditorSidebarSection>
         </div>
 
+        <div ref={registerSectionRef("symbols")}>
+        <EditorSidebarSection
+          title="III. Symbols"
+          tooltip="Insert typographic symbols at the caret or over the current selection"
+          collapsed={collapsed.symbols}
+          collapsedSummary="Arrows, bullets, marks, math, geometry"
+          onHeaderClick={handleSectionHeaderClick("symbols")}
+          onHeaderDoubleClick={handleSectionHeaderDoubleClick}
+          isDarkMode={isDarkMode}
+          showHelpIndicator={showHelpIndicator}
+          showRolloverInfo={showRolloverInfo}
+          onHelpNavigate={() => onOpenHelpSection?.(TEXT_EDITOR_HELP_SECTION_BY_KEY.symbols)}
+        >
+          <div className="space-y-4">
+            {recentSymbols.length > 0 ? (
+              <div className="space-y-2">
+                <Label className={sectionLabelClassName}>Recent</Label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {recentSymbols.map((symbol) => (
+                    <button
+                      key={`recent-symbol-${symbol}`}
+                      type="button"
+                      className={symbolButtonClassName}
+                      style={{ fontFamily: SYMBOL_FONT_FAMILY }}
+                      aria-label={`Insert ${symbol}`}
+                      title={`Insert ${symbol}`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                      }}
+                      onClick={() => insertSymbol(symbol)}
+                    >
+                      {symbol}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {TEXT_SYMBOL_PALETTE_GROUPS.map((group) => (
+              <div key={group.id} className="space-y-2">
+                <Label className={sectionLabelClassName}>{group.label}</Label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {group.symbols.map((symbol, index) => (
+                    <button
+                      key={`${group.id}-${symbol}-${index}`}
+                      type="button"
+                      className={symbolButtonClassName}
+                      style={{ fontFamily: SYMBOL_FONT_FAMILY }}
+                      aria-label={`Insert ${symbol}`}
+                      title={`Insert ${symbol}`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                      }}
+                      onClick={() => insertSymbol(symbol)}
+                    >
+                      {symbol}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </EditorSidebarSection>
+        </div>
+
         <div ref={registerSectionRef("placeholders")}>
         <EditorSidebarSection
-          title="III. Placeholders"
+          title="IV. Placeholders"
           tooltip="Insert fitted lorem, project title, folios, and proof timestamps"
           collapsed={collapsed.placeholders}
           collapsedSummary="Lorem, project title, page, pages, date, time"
@@ -1142,7 +1246,7 @@ export function TextEditorPanel<StyleKey extends string>({
 
         <div ref={registerSectionRef("info")}>
         <EditorSidebarSection
-          title="IV. Info"
+          title="V. Info"
           tooltip="Paragraph summary and live metrics"
           collapsed={collapsed.info}
           collapsedSummary={`${characterCount} chars, ${wordCount} words`}
