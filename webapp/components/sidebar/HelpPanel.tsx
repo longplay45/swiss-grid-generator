@@ -76,7 +76,7 @@ function SectionHeading({
         onClick={() => {
           document.getElementById("help-index")?.scrollIntoView({ behavior: "smooth", block: "start" })
         }}
-        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${jumpButtonClassName}`}
+        className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${jumpButtonClassName}`}
       >
         <ChevronUp className="h-2 w-2" />
       </button>
@@ -256,7 +256,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
     const scrollRoot = target.closest("[data-help-scroll-root='true']") as HTMLElement | null
     if (!scrollRoot) return
 
-    const topGapPx = -1
+    const topGapPx = 4
     const rootRect = scrollRoot.getBoundingClientRect()
     const targetRect = target.getBoundingClientRect()
     const deltaToTop = targetRect.top - rootRect.top
@@ -306,7 +306,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
             type="button"
             aria-label="Close help panel"
             onClick={onClose}
-            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${tone.jumpButton}`}
+            className={`mt-[2px] inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${tone.jumpButton}`}
           >
             <X className="h-2 w-2" />
           </button>

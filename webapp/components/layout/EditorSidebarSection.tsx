@@ -67,7 +67,7 @@ export function EditorSidebarSection({
                   ) : null}
                 </div>
                 <span
-                  className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isDarkMode
                       ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF]"
                       : "border-gray-300 bg-gray-100 text-gray-700"

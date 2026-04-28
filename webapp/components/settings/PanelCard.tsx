@@ -68,7 +68,7 @@ export function PanelCard({
                   ) : null}
                 </div>
                 <span
-                  className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isDarkMode
                       ? "border-gray-600 bg-gray-800 text-gray-300"
                       : "border-gray-300 bg-gray-100 text-gray-700"

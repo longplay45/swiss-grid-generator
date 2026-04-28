@@ -83,7 +83,7 @@ export function ProjectTitleSection({
           aria-label={isExpanded ? "Collapse title metadata" : "Expand title metadata"}
           aria-pressed={isExpanded}
           onClick={() => setIsExpanded((current) => !current)}
-          className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}
+          className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}
         >
           <ChevronUp
             className={`h-2 w-2 transition-transform ${isExpanded ? "rotate-180" : "rotate-90"}`}
@@ -118,7 +118,7 @@ export function ProjectTitleSection({
         <button
           type="button"
           aria-label="Rename project"
-          className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}
+          className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}
           onClick={beginProjectTitleEdit}
         >
           <Pencil className="h-2 w-2" />

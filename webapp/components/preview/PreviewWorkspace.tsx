@@ -553,7 +553,7 @@ export function PreviewWorkspace({
                           aria-label={showProjectInfo ? "Hide document info" : "Show document info"}
                           aria-pressed={showProjectInfo}
                           onClick={() => setShowProjectInfo((current) => !current)}
-                          className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                          className={`mt-[2px] inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
                             showProjectInfo
                               ? isDarkUi
                                 ? "border-[#f54123] bg-[#f54123] text-[#F4F6F8]"
@@ -569,7 +569,7 @@ export function PreviewWorkspace({
                           type="button"
                           aria-label="Close project panel"
                           onClick={closeSidebarPanel}
-                          className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                          className={`mt-[2px] inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
                             isDarkUi
                               ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
                               : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
@@ -605,7 +605,7 @@ export function PreviewWorkspace({
                         type="button"
                         aria-label="Add page"
                         onClick={onPageAdd}
-                        className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                           isDarkUi
                             ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
                             : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
