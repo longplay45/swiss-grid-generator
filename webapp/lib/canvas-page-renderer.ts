@@ -36,6 +36,7 @@ import { fitLoremTextToLineCapacity } from "@/lib/document-variable-lorem"
 import {
   buildTypographyLayoutPlan,
   getTypographyLineCapacityForHeight,
+  getTypographyReflowLineCapacityForHeight,
 } from "@/lib/typography-layout-plan"
 import { sumGridColumnSpan } from "@/lib/grid-column-layout"
 import { clampFreePlacementRow, clampLayerColumn, resolveLayerColumnBounds } from "@/lib/layer-placement"
@@ -595,7 +596,10 @@ export function buildCanvasTypographyRenderPlans<BlockId extends string, StyleKe
     })
     const firstLineHeight = getCanvasTextAscentPx(ctx, scaledBlockFontSize)
       + getCanvasTextDescentPx(ctx, scaledBlockFontSize)
-    const maxLinesPerColumn = Math.max(1, getTypographyLineCapacityForHeight(blockHeight, lineStep, firstLineHeight))
+    const reflowCapacityHeight = blockHeight + (reflowEnabled && rowSpan > 0 ? gutterY : 0)
+    const maxLinesPerColumn = Math.max(1, reflowEnabled
+      ? getTypographyReflowLineCapacityForHeight(reflowCapacityHeight, lineStep)
+      : getTypographyLineCapacityForHeight(blockHeight, lineStep, firstLineHeight))
     const maxLoremLines = reflowEnabled ? Math.max(1, maxLinesPerColumn * span) : maxLinesPerColumn
     const resolveFontSize = (segmentStyleKey: StyleKey) => getBlockFontSize(key, segmentStyleKey)
     const blockDocumentVariableContext = resolveSpreadDocumentVariableContextForColumn(
