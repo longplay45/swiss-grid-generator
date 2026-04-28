@@ -48,7 +48,7 @@ Current capability inventory for Swiss Grid Generator.
 - Hyphenation toggle per paragraph.
 - Newspaper reflow across paragraph columns.
 - Optical margin alignment engine for preview/export.
-- Dynamic document variables for `lorem`, `project_title`, `title`, `page`, `pages`, `date`, and `time`.
+- Dynamic document variables for `lorem`, `project_title`, `page_title`, `page`, `pages`, `date`, and `time`.
 - `%page%` / `%pages%` resolve against physical page counts; on facing spreads the right side advances by one physical page.
 
 ## Text Editing

@@ -30,6 +30,7 @@ export async function renderSwissGridIdmlProject(
     const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
     const resolved = buildResolvedProjectPageExportSource(page, sourcePath, {
       projectTitle: project.metadata.title,
+      pageTitle: page.name || `Page ${pageNumber}`,
       pageNumber,
       pageCount,
       now,

@@ -130,7 +130,8 @@ Default: `swiss`
 - `Custom` is paragraph-level only; when first selected in the text editor it copies the paragraph's currently resolved size and leading into `Custom Size` and `Custom Leading`.
 - Paragraph text supports dynamic document variables in raw text:
   - `<%lorem%>` fills the current paragraph frame with fitted lorem ipsum
-  - `<%project_title%>` and alias `<%title%>`
+  - `<%project_title%>` resolves to the project metadata title
+  - `<%page_title%>` resolves to the current page name
   - `<%page%>` uses the current physical page number; on facing spreads the right side resolves to `left + 1`
   - `<%pages%>` uses the total physical page count across single pages and facing spreads
   - `<%date%>` rendered as local `YYYY-MM-DD`

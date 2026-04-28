@@ -320,6 +320,7 @@ export function buildResolvedProjectPageExportSource(
     name: page.name,
     documentVariableContext: {
       projectTitle: variableContext?.projectTitle ?? "",
+      pageTitle: variableContext?.pageTitle ?? page.name ?? "",
       pageNumber: variableContext?.pageNumber ?? 1,
       pageCount: variableContext?.pageCount ?? 1,
       now: variableContext?.now ?? new Date(),
@@ -348,6 +349,7 @@ export function buildResolvedProjectPageExportSources(
     const sourcePath = `${page.name || `Page ${pageNumber}`} (${page.id})`
     return buildResolvedProjectPageExportSource(page, sourcePath, {
       projectTitle: project.metadata.title,
+      pageTitle: page.name || `Page ${pageNumber}`,
       pageNumber,
       pageCount,
       now,

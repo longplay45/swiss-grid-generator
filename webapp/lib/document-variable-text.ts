@@ -13,6 +13,7 @@ export { DOCUMENT_VARIABLE_DEFINITIONS, type DocumentVariableDefinition } from "
 
 export type DocumentVariableContext = {
   projectTitle: string
+  pageTitle: string
   pageNumber: number
   pageCount: number
   now: Date
@@ -109,8 +110,10 @@ function resolveBuiltInDocumentVariableValue(
 ): string | null {
   switch (name.trim().toLowerCase()) {
     case "project_title":
-    case "title":
       return context.projectTitle
+    case "page_title":
+    case "title":
+      return context.pageTitle
     case "page":
       return String(context.pageNumber)
     case "pages":

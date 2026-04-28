@@ -13,8 +13,8 @@ export const DOCUMENT_VARIABLE_DEFINITIONS: readonly DocumentVariableDefinition[
     description: "Insert the current project title.",
   },
   {
-    token: "<%title%>",
-    description: "Alias of the current project title.",
+    token: "<%page_title%>",
+    description: "Insert the current page title.",
   },
   {
     token: "<%page%>",

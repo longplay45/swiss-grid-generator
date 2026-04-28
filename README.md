@@ -86,7 +86,7 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Paragraph and image-placeholder height can be composed as `rows + baselines`, including shallow frames such as `0 rows + 1 baseline`
 - Paragraph vertical alignment (`Top`, `Center`, `Bottom`) stays baseline-aligned inside the configured frame height
 - Optical/metric kerning toggle with shared render/export behavior
-- Dynamic document variables for editorial folios, proof lines, and fitted sample copy: `<%lorem%>`, `<%project_title%>`, `<%title%>`, `<%page%>`, `<%pages%>`, `<%date%>`, `<%time%>`
+- Dynamic document variables for editorial folios, proof lines, and fitted sample copy: `<%lorem%>`, `<%project_title%>`, `<%page_title%>`, `<%page%>`, `<%pages%>`, `<%date%>`, `<%time%>`
 - `%page%` and `%pages%` count physical pages; on facing spreads the left side uses the spread's base page number and the right side resolves to the next physical page number
 - In text edit mode, placeholders stay visible as raw tokens in the edited paragraph; outside edit mode they render to live values
 - Inline editor caret and selection follow rendered text geometry

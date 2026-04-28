@@ -281,6 +281,10 @@ export function PreviewWorkspace({
   const activePageNumber = useMemo(() => {
     return getProjectPagePhysicalPageNumber(projectPages, activePageId)
   }, [activePageId, projectPages])
+  const activePageTitle = useMemo(() => {
+    const activePage = projectPages.find((page) => page.id === activePageId)
+    return activePage?.name?.trim() || `Page ${activePageNumber}`
+  }, [activePageId, activePageNumber, projectPages])
   const documentVariablePageCount = useMemo(
     () => getProjectPhysicalPageCount(projectPages),
     [projectPages],
@@ -364,10 +368,11 @@ export function PreviewWorkspace({
 
   const documentVariableContext = useMemo(() => ({
     projectTitle,
+    pageTitle: activePageTitle,
     pageNumber: activePageNumber,
     pageCount: documentVariablePageCount,
     now: previewVariableNow,
-  }), [activePageNumber, documentVariablePageCount, previewVariableNow, projectTitle])
+  }), [activePageNumber, activePageTitle, documentVariablePageCount, previewVariableNow, projectTitle])
 
   return (
     <div className={`min-h-0 min-w-0 flex flex-1 flex-col ${uiTheme.previewShell}`}>
