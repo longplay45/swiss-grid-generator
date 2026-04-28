@@ -116,6 +116,7 @@ Core editing and layout workflows.
 - `Import` restores the full project and active page from either a saved project JSON or a compressed `.swissgridgenerator` archive.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project.
 - Positioned layers are stored with logical anchors so layouts stay stable across grid changes.
+- Supabase magic-link auth is optional and used only for cloud sync.
 
 ### Export {#help-export}
 - Export supports JSON, vector PDF, SVG, and IDML.
@@ -141,7 +142,7 @@ Core editing and layout workflows.
 - Loading a preset or project also opens a short workflow tooltip at the bottom of the preview.
 - The popup fades in, shows one authored tip at a time, and stays open until it is closed with `X`, outside click, or replaced with `Next >`.
 - `Next >` cycles through the tooltip sequence and updates the `Tooltip x of y` counter.
-- When Help is open, the tooltip popup becomes a blue-marked help target like the rest of the interface and hovering it jumps the Help panel to this section.
+- When Help is open, the tooltip popup becomes an orange-marked help target like the rest of the interface and hovering it jumps the Help panel to this section.
 
 ## Application Controls
 
@@ -151,14 +152,14 @@ Global controls and panel behavior.
 ### Application Controls {#help-application-controls-overview} [noindex]
 
 ### Header and Sidebars {#help-sidebars-header}
-- Header actions cover presets, import, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.
+- Header actions cover presets, import, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, help, and cloud account.
 - The Project panel can be toggled with `Cmd/Ctrl+Shift+P`.
 - `Shift` + click on a page-visibility toggle applies the same state to every page in the project.
 
 ### Help Navigation {#help-help-navigation}
-- When help is open, blue-marked UI targets jump to their matching help topic on hover.
+- When help is open, orange-marked UI targets jump to their matching help topic on hover.
 - Opening the Help panel also enables those contextual help markers across header actions, settings panels, the preview surface, and the preset browser.
-- The layout-tooltip popup uses the same help-hover logic and only shows its blue top indicator while Help is open.
+- The layout-tooltip popup uses the same help-hover logic and only shows its orange top indicator while Help is open.
 - The Help panel remains available while the preset browser is open.
 - While the preset browser is open and the left settings controls are inactive, the left-panel section headers still keep their help-hover targets.
 - Use the small up-arrow beside a help title to jump back to the index.
@@ -167,6 +168,8 @@ Global controls and panel behavior.
 - Opens the presets browser.
 - Bundled files are grouped into `1. Presets` and `2. Examples`. `3. Users` is reserved for user files.
 - With rollover info enabled, hovering a preset thumbnail shows title, description, author, and date metadata.
+- User thumbnails in `3. Users` show the orange status dot while the local copy is not yet fully cloud-synced.
+- Deleting a user thumbnail removes it locally immediately and, when required, queues or performs a Supabase soft-delete for the cloud copy.
 - Double-click a thumbnail to load it.
 - `Esc` closes the browser without loading.
 - Shortcut: `Cmd/Ctrl+Shift+4`.
@@ -176,6 +179,16 @@ Imports a saved project JSON or compressed `.swissgridgenerator` archive. Shortc
 
 ### Save {#help-header-save}
 Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library as a gzip-compressed archive. Shortcut: `Cmd/Ctrl+S`.
+
+### Cloud Account {#help-cloud-account}
+- The header account icon opens the right sidebar cloud account panel.
+- The account icon shows a green status dot only when the user is signed in and cloud sync is fully up to date; otherwise it stays orange.
+- While signed out, the `STATUS` row reads `Not connected`.
+- Magic-link sign-in uses Supabase browser auth.
+- Signed-in projects continue to use Dexie as the offline cache while syncing to Supabase in the background.
+- Existing saved user-library projects auto-save locally and sync debounced to the cloud while you edit.
+- Auth and cloud-sync failures are translated into user-facing messages for rate limits, permissions, offline state, session expiry, and setup errors.
+- When the tab is hidden or closed, the app performs a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
 
 ### Export {#help-header-export}
 Opens export for JSON, PDF, SVG, and IDML. Shortcut: `Cmd/Ctrl+Shift+E`.

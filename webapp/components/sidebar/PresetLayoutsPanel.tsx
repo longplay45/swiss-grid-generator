@@ -18,6 +18,8 @@ import {
 
 type Props = {
   onLoadPreset: (preset: LayoutPreset) => void
+  onDeleteUserPreset?: (preset: LayoutPreset) => Promise<void>
+  isCloudSignedIn?: boolean
   isDarkMode?: boolean
   compact?: boolean
   showHelpHints?: boolean
@@ -42,6 +44,7 @@ function PresetCard({
   onMenuOpenChange,
   onCopyUserPreset,
   onDeleteUserPreset,
+  isCloudSignedIn,
 }: {
   preset: LayoutPreset
   onLoadPreset: (preset: LayoutPreset) => void
@@ -51,9 +54,11 @@ function PresetCard({
   onMenuOpenChange: (open: boolean) => void
   onCopyUserPreset: (preset: LayoutPreset) => void
   onDeleteUserPreset: (preset: LayoutPreset) => void
+  isCloudSignedIn: boolean
 }) {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const isUserPreset = preset.source === "user"
+  const showUnsyncedDot = isUserPreset && (!isCloudSignedIn || preset.syncState !== "synced")
 
   useEffect(() => {
     if (!menuOpen) return
@@ -102,6 +107,12 @@ function PresetCard({
           className={`relative h-full w-full rounded-md border-2 transition-colors cursor-pointer overflow-hidden ${isDarkMode ? "border-gray-700 bg-gray-800 hover:border-blue-400 hover:bg-gray-700" : "border-gray-200 bg-gray-50 hover:border-blue-500 hover:bg-blue-50"}`}
           onDoubleClick={() => onLoadPreset(preset)}
         >
+          {showUnsyncedDot ? (
+            <span
+              aria-hidden="true"
+              className="absolute right-1 top-1 z-10 h-1.5 w-1.5 rounded-full bg-[#fe9f97] ring-1 ring-white dark:ring-[#1D232D]"
+            />
+          ) : null}
           <div className={`absolute inset-2 border ${isDarkMode ? "border-gray-600 bg-gray-900" : "border-gray-300 bg-white"}`}>
             <PresetPageThumbnail page={preset.browserPage} />
           </div>
@@ -174,6 +185,8 @@ function PresetCard({
 
 export function PresetLayoutsPanel({
   onLoadPreset,
+  onDeleteUserPreset,
+  isCloudSignedIn = false,
   isDarkMode = false,
   compact = false,
   showHelpHints = false,
@@ -260,6 +273,11 @@ export function PresetLayoutsPanel({
     if (!targetId) return
 
     try {
+      if (onDeleteUserPreset) {
+        await onDeleteUserPreset(preset)
+        return
+      }
+
       await deleteUserProjectFromLibrary(targetId)
       onRequestNotice?.({
         title: "Deleted from Users",
@@ -272,7 +290,7 @@ export function PresetLayoutsPanel({
         message: "Could not remove the selected user layout.",
       })
     }
-  }, [onRequestNotice])
+  }, [onDeleteUserPreset, onRequestNotice])
 
   const cardGapClass = compact ? "gap-2" : "gap-3"
   const minCardWidth = compact ? 120 : 168
@@ -344,6 +362,7 @@ export function PresetLayoutsPanel({
                     }}
                     onCopyUserPreset={handleCopyUserPreset}
                     onDeleteUserPreset={handleDeleteUserPreset}
+                    isCloudSignedIn={isCloudSignedIn}
                   />
                 ))}
               </div>

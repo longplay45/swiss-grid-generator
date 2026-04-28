@@ -12,6 +12,9 @@ Current capability inventory for Swiss Grid Generator.
 - Bundled presets use the same project JSON schema as saved documents.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project on load.
 - Optional guided project tours embedded in project JSON and rendered as an in-app step overlay.
+- Optional Supabase magic-link authentication for cloud sync.
+- Authenticated projects keep Dexie as the offline-first cache and use Supabase as the remote source of truth.
+- Saved user-library projects track `ownerUserId`, `remoteProjectId`, `remoteRevision`, `lastSyncedAt`, and sync state.
 
 ## Grid System
 
@@ -159,6 +162,8 @@ Current capability inventory for Swiss Grid Generator.
 - Preset browser in the preview area.
 - Rendered page-1 thumbnails for bundled presets.
 - Preset rollover tooltip with title, description, author, and creation date metadata when rollover info is enabled.
+- User-library thumbnails show the orange status dot while the local copy is not yet fully cloud-synced.
+- Deleting a user-library thumbnail removes it locally immediately and, when needed, queues or performs a Supabase soft-delete for the cloud copy.
 - Double-click preset to load.
 - `Esc` closes the browser without loading.
 
@@ -199,11 +204,24 @@ Current capability inventory for Swiss Grid Generator.
 - Smart text-edit zoom toggle in the header, enabled by default.
 - While smart text zoom is enabled, entering text edit mode focuses the active paragraph, ordinary text/style edits keep the current zoom, frame-geometry changes (`Rows`, `Baselines`, `Cols`) refit it, and leaving text edit returns to full-page fit.
 - Bottom-of-preview layout-open tooltip popup sourced from `TOOLTIPS.md`, with fade-in, `Next >` sequencing, `Tooltip x of y` count, and dismiss via `X` or outside click.
-- Layout-open tooltip popup participates in the Help system: its blue top indicator appears only while Help is open, and hover routes the Help panel to the tooltip reference section.
+- Layout-open tooltip popup participates in the Help system: its orange top indicator appears only while Help is open, and hover routes the Help panel to the tooltip reference section.
 - Visibility toggles for baselines, margins, modules, image placeholders, and typography.
 - Undo/redo across settings, layout, and editor operations.
 - Help sidebar with hover-jump references.
 - Rollover-info toggle for tooltips and affordances.
 - Feedback sidebar with structured in-app survey submission.
 - Imprint sidebar with app, developer, license, and contact information.
+- Header account panel with magic-link sign-in, cloud sync status, and a green/orange header status dot.
+- When signed out, the account panel status row reads `Not connected`.
+- Auth and cloud-sync failures surface as actionable product messages instead of raw provider errors.
+- Hidden-tab / page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
 - Keyboard shortcuts for header controls and panel toggles.
+
+## Cloud Sync
+
+- Supabase browser auth with magic-link email sign-in.
+- Cloud archives stored as gzip-compressed `.swissgridgenerator` files.
+- On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into Dexie.
+- Existing saved user-library projects auto-save locally and sync debounced to the cloud while editing.
+- Revision mismatches are marked as `conflict` instead of overwriting local work silently.
+- Remote-backed deletions are soft-deleted in Supabase via `deleted_at`, while local-only deletions purge the Dexie record immediately.

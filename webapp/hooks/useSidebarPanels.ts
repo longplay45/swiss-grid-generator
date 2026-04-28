@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 
 import type { HelpSectionId } from "@/lib/help-registry"
 
-export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | null
+export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | "account" | null
 
 type Args = {
   showLayers: boolean
@@ -10,7 +10,7 @@ type Args = {
 }
 
 function isPanelAllowedWhilePresetsOpen(panel: SidebarPanel): boolean {
-  return panel === null || panel === "help" || panel === "feedback" || panel === "imprint"
+  return panel === null || panel === "help" || panel === "feedback" || panel === "imprint" || panel === "account"
 }
 
 export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
@@ -68,6 +68,14 @@ export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
     })
   }, [onShowLayersChange, showPresetsBrowser])
 
+  const toggleAccountPanel = useCallback(() => {
+    setActiveSidebarPanel((prev) => {
+      const next = prev === "account" ? null : "account"
+      onShowLayersChange(false)
+      return next
+    })
+  }, [onShowLayersChange])
+
   return {
     activeSidebarPanel,
     activeHelpSectionId,
@@ -80,5 +88,6 @@ export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {
     openHelpSection,
     toggleHelpPanel,
     toggleLayersPanel,
+    toggleAccountPanel,
   }
 }

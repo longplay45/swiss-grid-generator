@@ -301,7 +301,8 @@ export const HELP_CONTENT_GROUPS = [
               "`Save to Library` opens a metadata dialog for project title plus optional description and author, then stores the full project in the local `Users` library as a gzip-compressed archive.",
               "`Import` restores the full project and active page from either a saved project JSON or a compressed `.swissgridgenerator` archive.",
               "Legacy single-page JSON is still accepted and wrapped into a one-page project.",
-              "Positioned layers are stored with logical anchors so layouts stay stable across grid changes."
+              "Positioned layers are stored with logical anchors so layouts stay stable across grid changes.",
+              "Supabase magic-link auth is optional and used only for cloud sync."
             ]
           }
         ],
@@ -360,7 +361,7 @@ export const HELP_CONTENT_GROUPS = [
               "Loading a preset or project also opens a short workflow tooltip at the bottom of the preview.",
               "The popup fades in, shows one authored tip at a time, and stays open until it is closed with `X`, outside click, or replaced with `Next >`.",
               "`Next >` cycles through the tooltip sequence and updates the `Tooltip x of y` counter.",
-              "When Help is open, the tooltip popup becomes a blue-marked help target like the rest of the interface and hovering it jumps the Help panel to this section."
+              "When Help is open, the tooltip popup becomes an orange-marked help target like the rest of the interface and hovering it jumps the Help panel to this section."
             ]
           }
         ],
@@ -398,7 +399,7 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Header actions cover presets, import, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.",
+              "Header actions cover presets, import, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, help, and cloud account.",
               "The Project panel can be toggled with `Cmd/Ctrl+Shift+P`.",
               "`Shift` + click on a page-visibility toggle applies the same state to every page in the project."
             ]
@@ -414,9 +415,9 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "When help is open, blue-marked UI targets jump to their matching help topic on hover.",
+              "When help is open, orange-marked UI targets jump to their matching help topic on hover.",
               "Opening the Help panel also enables those contextual help markers across header actions, settings panels, the preview surface, and the preset browser.",
-              "The layout-tooltip popup uses the same help-hover logic and only shows its blue top indicator while Help is open.",
+              "The layout-tooltip popup uses the same help-hover logic and only shows its orange top indicator while Help is open.",
               "The Help panel remains available while the preset browser is open.",
               "While the preset browser is open and the left settings controls are inactive, the left-panel section headers still keep their help-hover targets.",
               "Use the small up-arrow beside a help title to jump back to the index."
@@ -436,6 +437,8 @@ export const HELP_CONTENT_GROUPS = [
               "Opens the presets browser.",
               "Bundled files are grouped into `1. Presets` and `2. Examples`. `3. Users` is reserved for user files.",
               "With rollover info enabled, hovering a preset thumbnail shows title, description, author, and date metadata.",
+              "User thumbnails in `3. Users` show the orange status dot while the local copy is not yet fully cloud-synced.",
+              "Deleting a user thumbnail removes it locally immediately and, when required, queues or performs a Supabase soft-delete for the cloud copy.",
               "Double-click a thumbnail to load it.",
               "`Esc` closes the browser without loading.",
               "Shortcut: `Cmd/Ctrl+Shift+4`."
@@ -464,6 +467,27 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "paragraph",
             "text": "Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library as a gzip-compressed archive. Shortcut: `Cmd/Ctrl+S`."
+          }
+        ],
+        "subsections": []
+      },
+      {
+        "title": "Cloud Account",
+        "id": "help-cloud-account",
+        "indexed": true,
+        "blocks": [
+          {
+            "type": "list",
+            "items": [
+              "The header account icon opens the right sidebar cloud account panel.",
+              "The account icon shows a green status dot only when the user is signed in and cloud sync is fully up to date; otherwise it stays orange.",
+              "While signed out, the `STATUS` row reads `Not connected`.",
+              "Magic-link sign-in uses Supabase browser auth.",
+              "Signed-in projects continue to use Dexie as the offline cache while syncing to Supabase in the background.",
+              "Existing saved user-library projects auto-save locally and sync debounced to the cloud while you edit.",
+              "Auth and cloud-sync failures are translated into user-facing messages for rate limits, permissions, offline state, session expiry, and setup errors.",
+              "When the tab is hidden or closed, the app performs a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects."
+            ]
           }
         ],
         "subsections": []
@@ -877,6 +901,10 @@ export const HELP_INDEX_GROUPS = [
         "label": "Save"
       },
       {
+        "id": "help-cloud-account",
+        "label": "Cloud Account"
+      },
+      {
         "id": "help-header-export",
         "label": "Export"
       },
@@ -1041,6 +1069,10 @@ export const ALL_HELP_INDEX_ITEMS = [
   {
     "id": "help-header-save",
     "label": "Save"
+  },
+  {
+    "id": "help-cloud-account",
+    "label": "Cloud Account"
   },
   {
     "id": "help-header-export",

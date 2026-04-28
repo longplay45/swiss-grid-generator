@@ -164,6 +164,8 @@ Default: `swiss`
 ### File Actions (icon buttons)
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
+- User thumbnails in `3. Users` show the same orange status dot while the stored local copy is not yet fully cloud-synced
+- Deleting a user thumbnail removes it locally immediately and, when needed, queues or performs a Supabase soft-delete for the cloud copy
 - `Save` (save icon): opens Save to Library dialog
 - `Import` (download icon): import project JSON or compressed `.swissgridgenerator` archive
 - `Export` (upload icon): opens the export dialog
@@ -202,8 +204,9 @@ Default: `swiss`
 - `Information` (`i` icon): toggles rollover info/tooltips globally
 - Shortcuts: `Cmd/Ctrl+Shift+P` toggles the Project sidebar, `Cmd/Ctrl+Shift+I` toggles Information
 - `Help` (`?` icon): opens help/reference panel
+- `Account` (user icon): opens the right sidebar cloud account panel and shows a green status dot only when the user is signed in and cloud sync is fully up to date; otherwise the dot stays orange
 - `Presets` (layout-template icon): opens preset thumbnails in the preview area
-- Behavior: only one right sidebar panel can be open at a time; clicking the active Project or Help control closes that panel.
+- Behavior: only one right sidebar panel can be open at a time; clicking the active panel icon closes that panel.
 - Behavior: while presets are open, the left settings panel and header Project toggle are disabled.
 
 ### Project Panel
@@ -288,6 +291,17 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - All export formats use each page's stored document size
   - no paper-size override controls
   - no custom width override controls
+
+### Cloud Account panel
+
+- Cloud sync status line
+- `STATUS` shows `Not connected` while signed out
+- Email input for magic-link sign-in while signed out
+- Signed-in email display while authenticated
+- `Send Magic Link`
+- `Sign Out`
+- Auth and cloud-sync failures are mapped to user-facing guidance for rate limits, permissions, offline state, session expiry, and setup errors
+- Hidden-tab and page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects
 - All export formats stay vector-based
 - `JSON` exports the full editable project document with metadata, pages, and current layout state
 - `PDF`, `SVG`, and `IDML` preserve available project metadata where the format supports it

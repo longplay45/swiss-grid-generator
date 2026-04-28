@@ -15,11 +15,12 @@ import {
   Type,
   Undo2,
   Upload,
+  UserRound,
   ZoomIn,
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
-export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | null
+export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | "account" | null
 
 export type HeaderAction = {
   key: string
@@ -28,6 +29,8 @@ export type HeaderAction = {
   shortcutId?: PreviewHeaderShortcutId
   icon: ReactNode
   showStatusDot?: boolean
+  statusDotClassName?: string
+  buttonClassName?: string
   variant?: "default" | "outline"
   pressed?: boolean
   disabled?: boolean
@@ -49,6 +52,7 @@ type Args = {
   showLayers: boolean
   smartTextZoomEnabled: boolean
   hasUnsavedChanges: boolean
+  accountStatusDotClassName: string
   canUndo: boolean
   canRedo: boolean
   onOpenPresets: () => void
@@ -66,6 +70,7 @@ type Args = {
   onToggleTypography: MouseEventHandler<HTMLButtonElement>
   onToggleLayersPanel: MouseEventHandler<HTMLButtonElement>
   onToggleHelpPanel: MouseEventHandler<HTMLButtonElement>
+  onToggleAccountPanel: MouseEventHandler<HTMLButtonElement>
 }
 
 export function useHeaderActions(args: Args) {
@@ -271,6 +276,20 @@ export function useHeaderActions(args: Args) {
       pressed: args.activeSidebarPanel === "help",
       onClick: args.onToggleHelpPanel,
       icon: <CircleHelp className="h-4 w-4" />,
+    },
+    {
+      key: "account",
+      ariaLabel: args.activeSidebarPanel === "account" ? "Hide account panel" : "Show account panel",
+      tooltip: "Cloud account",
+      showStatusDot: true,
+      statusDotClassName: args.accountStatusDotClassName,
+      buttonClassName: args.activeSidebarPanel === "account"
+        ? "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+        : undefined,
+      variant: "outline",
+      pressed: args.activeSidebarPanel === "account",
+      onClick: args.onToggleAccountPanel,
+      icon: <UserRound className="h-4 w-4" />,
     },
   ]
 

@@ -7,6 +7,7 @@ import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
 import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
+import { AccountPanel } from "@/components/sidebar/AccountPanel"
 import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
@@ -53,7 +54,7 @@ type Props = {
   fileGroup: HeaderItem[]
   displayGroup: HeaderItem[]
   sidebarGroup: HeaderAction[]
-  activeSidebarPanel: "settings" | "help" | "imprint" | "layers" | "feedback" | null
+  activeSidebarPanel: "settings" | "help" | "imprint" | "layers" | "feedback" | "account" | null
   activeHelpSectionId: HelpSectionId | null
   showPresetsBrowser: boolean
   isDarkUi: boolean
@@ -76,6 +77,11 @@ type Props = {
   projectDescription: string
   projectAuthor: string
   projectCreatedAt?: string
+  userEmail: string | null
+  isCloudSignedIn: boolean
+  cloudStatusLabel: string
+  authError: string | null
+  authMessage: string | null
   projectPages: PreviewProjectPage[]
   activePageId: string
   loadedPreviewLayout: { token: number; layout: PreviewLayoutState } | null
@@ -87,6 +93,7 @@ type Props = {
   uiTheme: UiTheme
   result: GridResult
   onLoadPreset: (preset: LayoutPreset) => void
+  onDeleteUserPreset: (preset: LayoutPreset) => Promise<void>
   onHeaderHelpNavigate: (actionKey: string) => void
   onOpenHelpSection: (sectionId: HelpSectionId) => void
   onHistoryRecord: () => void
@@ -103,6 +110,9 @@ type Props = {
   onProjectTitleChange: (nextTitle: string) => void
   onProjectDescriptionChange: (nextDescription: string) => void
   onProjectAuthorChange: (nextAuthor: string) => void
+  onClearAuthFeedback: () => void
+  onSendMagicLink: (email: string) => Promise<void>
+  onSignOut: () => Promise<void>
   onPageSelect: (pageId: string) => void
   onPageAdd: () => void
   onPageFacingToggle: (pageId: string, enabled: boolean) => void
@@ -173,8 +183,9 @@ function renderHeaderAction(
         disabled={action.disabled}
         onClick={action.onClick}
         showStatusDot={action.showStatusDot}
+        statusDotClassName={action.statusDotClassName}
         showTooltip
-        buttonClassName={undefined}
+        buttonClassName={action.buttonClassName}
       >
         {action.icon}
       </HeaderIconButton>
@@ -209,6 +220,11 @@ export function PreviewWorkspace({
   projectDescription,
   projectAuthor,
   projectCreatedAt,
+  userEmail,
+  isCloudSignedIn,
+  cloudStatusLabel,
+  authError,
+  authMessage,
   projectPages,
   activePageId,
   loadedPreviewLayout,
@@ -220,6 +236,7 @@ export function PreviewWorkspace({
   uiTheme,
   result,
   onLoadPreset,
+  onDeleteUserPreset,
   onHeaderHelpNavigate,
   onOpenHelpSection,
   onHistoryRecord,
@@ -236,6 +253,9 @@ export function PreviewWorkspace({
   onProjectTitleChange,
   onProjectDescriptionChange,
   onProjectAuthorChange,
+  onClearAuthFeedback,
+  onSendMagicLink,
+  onSignOut,
   onPageSelect,
   onPageAdd,
   onPageFacingToggle,
@@ -273,6 +293,7 @@ export function PreviewWorkspace({
     || activeSidebarPanel === "help"
     || activeSidebarPanel === "feedback"
     || activeSidebarPanel === "imprint"
+    || activeSidebarPanel === "account"
   )
 
   useEffect(() => {
@@ -457,6 +478,8 @@ export function PreviewWorkspace({
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
+                onDeleteUserPreset={onDeleteUserPreset}
+                isCloudSignedIn={isCloudSignedIn}
                 onRequestNotice={onRequestNotice}
                 showRolloverInfo={false}
                 showHelpHints={false}
@@ -527,9 +550,7 @@ export function PreviewWorkspace({
             className={` min-h-0 w-[280px] basis-[280px] shrink-0 border-l overflow-x-hidden text-sm ${uiTheme.sidebar} ${
               activeSidebarPanel === "layers"
                 ? "overflow-hidden"
-                : activeSidebarPanel === "help"
-                  ? "overflow-y-auto overscroll-contain px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-0"
-                  : "overflow-y-auto overscroll-contain p-4 md:p-6"
+                : "overflow-y-auto overscroll-contain p-4 md:p-6"
             }`}
           >
             {activeSidebarPanel === "help" && (
@@ -665,6 +686,19 @@ export function PreviewWorkspace({
               <ImprintPanel
                 isDarkMode={isDarkUi}
                 onClose={closeSidebarPanel}
+              />
+            )}
+            {activeSidebarPanel === "account" && (
+              <AccountPanel
+                isDarkMode={isDarkUi}
+                onClose={closeSidebarPanel}
+                userEmail={userEmail}
+                cloudStatusLabel={cloudStatusLabel}
+                authError={authError}
+                authMessage={authMessage}
+                onClearFeedback={onClearAuthFeedback}
+                onSendMagicLink={onSendMagicLink}
+                onSignOut={onSignOut}
               />
             )}
             {activeSidebarPanel === "feedback" && (

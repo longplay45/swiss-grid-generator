@@ -29,7 +29,7 @@ export const HELP_SECTION_BY_SETTINGS_SECTION: Record<SectionKey, HelpSectionId>
 
 export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
   presets: "help-header-examples",
-  load: "help-header-load",
+  import: "help-header-load",
   save: "help-header-save",
   export: "help-header-export",
   undo: "help-header-undo",
@@ -43,4 +43,5 @@ export const HELP_SECTION_BY_HEADER_ACTION: Record<string, HelpSectionId> = {
   typography: "help-header-typography",
   layers: "help-header-layers",
   help: "help-help-navigation",
+  account: "help-cloud-account",
 }

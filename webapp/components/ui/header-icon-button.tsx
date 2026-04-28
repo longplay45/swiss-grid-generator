@@ -11,6 +11,7 @@ type HeaderIconButtonProps = {
   buttonClassName?: string
   showTooltip?: boolean
   showStatusDot?: boolean
+  statusDotClassName?: string
 } & Pick<ButtonProps, "variant" | "disabled" | "onClick"> & {
     "aria-pressed"?: boolean
   }
@@ -25,6 +26,7 @@ export function HeaderIconButton({
   buttonClassName,
   showTooltip = true,
   showStatusDot = false,
+  statusDotClassName,
   "aria-pressed": ariaPressed,
 }: HeaderIconButtonProps) {
   return (
@@ -45,7 +47,10 @@ export function HeaderIconButton({
         {showStatusDot ? (
           <span
             aria-hidden="true"
-            className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[#fe9f97] ring-1 ring-white dark:ring-[#1D232D]"
+            className={cn(
+              "absolute right-1 top-1 h-1.5 w-1.5 rounded-full ring-1 ring-white dark:ring-[#1D232D]",
+              statusDotClassName ?? "bg-[#fe9f97]",
+            )}
           />
         ) : null}
         {children}

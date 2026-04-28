@@ -26,6 +26,8 @@ import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
 import { useUiSettingsPreview } from "@/hooks/useUiSettingsPreview"
 import { useProjectTourController } from "@/hooks/useProjectTourController"
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth"
+import { useCloudProjectSync } from "@/hooks/useCloudProjectSync"
 import { type LoadedProject, type ProjectMetadata, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
@@ -180,6 +182,25 @@ export default function Home() {
   const handleRequestNotice = useCallback((notice: NonNullable<NoticeState>) => {
     setNoticeState(notice)
   }, [])
+  const {
+    supabase,
+    user,
+    authError,
+    authMessage,
+    clearAuthFeedback,
+    signInWithMagicLink,
+    signOut,
+  } = useSupabaseAuth()
+  const {
+    status: cloudSyncStatus,
+    statusLabel: cloudStatusLabel,
+    deleteProjectByLocalId,
+    syncProjectByLocalId,
+  } = useCloudProjectSync({
+    supabase,
+    user,
+    onRequestNotice: handleRequestNotice,
+  })
   const dismissLayoutOpenTooltip = useCallback(() => {
     setActiveLayoutOpenTooltip(null)
   }, [])
@@ -309,6 +330,7 @@ export default function Home() {
     openHelpSection,
     toggleHelpPanel,
     toggleLayersPanel,
+    toggleAccountPanel,
   } = useSidebarPanels({
     showLayers,
     onShowLayersChange: setShowLayers,
@@ -596,7 +618,7 @@ export default function Home() {
     onLoadFailed: () => {
       handleRequestNotice({
         title: "Load Failed",
-        message: "Could not load project JSON.",
+        message: "Could not load project file.",
       })
     },
     onProjectLoaded: (source) => {
@@ -794,6 +816,41 @@ export default function Home() {
     )
     handleLoadPresetProject(preset)
   }, [handleLoadPresetProject])
+
+  const handleDeleteBrowserPreset = useCallback(async (preset: LayoutPreset) => {
+    const targetId = preset.userProjectId ?? preset.id
+    if (!targetId) return
+
+    if (activeUserProjectId === targetId) {
+      setActiveUserProjectId(null)
+      setActiveOriginPresetId(preset.originPresetId ?? null)
+    }
+
+    const deleteResult = await deleteProjectByLocalId(targetId)
+
+    if (deleteResult === "deleted_cloud") {
+      handleRequestNotice({
+        title: "Deleted from Cloud",
+        message: "The selected user layout was removed from the local library and soft-deleted in Supabase.",
+      })
+      return
+    }
+
+    if (deleteResult === "queued_cloud_delete") {
+      handleRequestNotice({
+        title: "Deleted Locally",
+        message: "The selected user layout was removed from the local library and will be deleted from Supabase the next time cloud sync is available.",
+      })
+      return
+    }
+
+    if (deleteResult === "purged_local") {
+      handleRequestNotice({
+        title: "Deleted from Users",
+        message: "The selected user layout was removed from the local library.",
+      })
+    }
+  }, [activeUserProjectId, deleteProjectByLocalId, handleRequestNotice])
 
   const defaultJsonFilename = useMemo(() => {
     return toProjectJsonFilename(projectMetadata.title, baseFilename)
@@ -1111,6 +1168,7 @@ export default function Home() {
 
   const exportActions = useExportActions(exportActionsContext)
   const hasPreviewLayout = previewLayout !== null
+  const persistActiveUserProjectPromiseRef = useRef<Promise<void> | null>(null)
 
   const handleSaveToLibrary = useCallback(async () => {
     const fallbackStem = toProjectFilenameStem(defaultJsonFilename.replace(/\.json$/i, "")) || "Untitled Project"
@@ -1137,6 +1195,7 @@ export default function Home() {
         author: normalizedMetadata.author,
         createdAt: normalizedMetadata.createdAt,
         originPresetId: activeOriginPresetId,
+        ownerUserId: user?.id ?? null,
         project: {
           activePageId: currentProject.activePageId,
           pages: currentProject.pages,
@@ -1149,6 +1208,9 @@ export default function Home() {
       })
 
       setActiveUserProjectId(savedId)
+      if (user) {
+        await syncProjectByLocalId(savedId)
+      }
       replaceProjectSnapshot({
         ...currentProject,
         metadata: normalizedMetadata,
@@ -1181,7 +1243,120 @@ export default function Home() {
     projectMetadata.title,
     replaceProjectSnapshot,
     setProjectMetadata,
+    syncProjectByLocalId,
+    user,
   ])
+
+  const persistActiveUserProject = useCallback(async (syncCloud = true) => {
+    if (!activeUserProjectId || !isDirty) return
+    if (persistActiveUserProjectPromiseRef.current) {
+      await persistActiveUserProjectPromiseRef.current
+      return
+    }
+
+    const persistPromise = (async () => {
+      const currentProject = getCurrentProjectSnapshot()
+      const nextCreatedAt = projectMetadata.createdAt && !Number.isNaN(Date.parse(projectMetadata.createdAt))
+        ? new Date(projectMetadata.createdAt).toISOString()
+        : new Date().toISOString()
+      const normalizedMetadata = {
+        title: projectMetadata.title.trim(),
+        description: projectMetadata.description.trim(),
+        author: projectMetadata.author.trim(),
+        createdAt: nextCreatedAt,
+      }
+
+      try {
+        const savedId = await saveProjectToUserLibrary({
+          id: activeUserProjectId,
+          label: normalizedMetadata.title || toProjectFilenameStem(defaultJsonFilename.replace(/\.json$/i, "")) || "Untitled Project",
+          title: normalizedMetadata.title,
+          description: normalizedMetadata.description,
+          author: normalizedMetadata.author,
+          createdAt: normalizedMetadata.createdAt,
+          originPresetId: activeOriginPresetId,
+          ownerUserId: user?.id ?? null,
+          project: {
+            activePageId: currentProject.activePageId,
+            pages: currentProject.pages,
+            title: normalizedMetadata.title,
+            description: normalizedMetadata.description,
+            author: normalizedMetadata.author,
+            createdAt: normalizedMetadata.createdAt,
+            tour: currentProject.tour ?? undefined,
+          },
+        })
+        setActiveUserProjectId(savedId)
+        if (syncCloud && user) {
+          await syncProjectByLocalId(savedId)
+        }
+        replaceProjectSnapshot({
+          ...currentProject,
+          metadata: normalizedMetadata,
+        })
+        setProjectMetadata(normalizedMetadata)
+        markClean()
+      } catch (error) {
+        console.error(error)
+      }
+    })()
+
+    persistActiveUserProjectPromiseRef.current = persistPromise
+    try {
+      await persistPromise
+    } finally {
+      if (persistActiveUserProjectPromiseRef.current === persistPromise) {
+        persistActiveUserProjectPromiseRef.current = null
+      }
+    }
+  }, [
+    activeOriginPresetId,
+    activeUserProjectId,
+    defaultJsonFilename,
+    getCurrentProjectSnapshot,
+    isDirty,
+    markClean,
+    projectMetadata.author,
+    projectMetadata.createdAt,
+    projectMetadata.description,
+    projectMetadata.title,
+    replaceProjectSnapshot,
+    setProjectMetadata,
+    syncProjectByLocalId,
+    user,
+  ])
+
+  useEffect(() => {
+    if (!activeUserProjectId || !isDirty) return
+
+    const timeoutId = window.setTimeout(() => {
+      void persistActiveUserProject(true)
+    }, 1500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [activeUserProjectId, isDirty, persistActiveUserProject])
+
+  useEffect(() => {
+    const flushIfNeeded = () => {
+      if (!activeUserProjectId || !isDirty) return
+      void persistActiveUserProject(true)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushIfNeeded()
+      }
+    }
+
+    window.addEventListener("pagehide", flushIfNeeded)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("beforeunload", flushIfNeeded)
+    return () => {
+      window.removeEventListener("pagehide", flushIfNeeded)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("beforeunload", flushIfNeeded)
+    }
+  }, [activeUserProjectId, isDirty, persistActiveUserProject])
 
   useShellKeyboardShortcuts({
     canUndo,
@@ -1224,6 +1399,7 @@ export default function Home() {
     showLayers,
     smartTextZoomEnabled,
     hasUnsavedChanges: isDirty,
+    accountStatusDotClassName: user && cloudSyncStatus === "synced" ? "bg-[#4CAF50]" : "bg-[#fe9f97]",
     canUndo,
     canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),
@@ -1241,6 +1417,7 @@ export default function Home() {
     onToggleTypography: (event) => handleHeaderVisibilityToggle("showTypography", event),
     onToggleLayersPanel: toggleLayersPanel,
     onToggleHelpPanel: toggleHelpPanel,
+    onToggleAccountPanel: toggleAccountPanel,
   })
 
   const previewWorkspace = (
@@ -1271,6 +1448,11 @@ export default function Home() {
       projectDescription={projectMetadata.description}
       projectAuthor={projectMetadata.author}
       projectCreatedAt={projectMetadata.createdAt}
+      userEmail={user?.email ?? null}
+      isCloudSignedIn={Boolean(user)}
+      cloudStatusLabel={cloudStatusLabel}
+      authError={authError}
+      authMessage={authMessage}
       projectPages={projectPages}
       activePageId={activePageId}
       loadedPreviewLayout={loadedPreviewLayout}
@@ -1292,6 +1474,7 @@ export default function Home() {
       }}
       result={previewResult}
       onLoadPreset={handleLoadBrowserPreset}
+      onDeleteUserPreset={handleDeleteBrowserPreset}
       onHeaderHelpNavigate={handleHeaderHelpNavigate}
       onOpenHelpSection={openHelpSection}
       onHistoryRecord={handlePreviewHistoryRecord}
@@ -1308,6 +1491,9 @@ export default function Home() {
       onProjectTitleChange={handleProjectTitleChange}
       onProjectDescriptionChange={handleProjectDescriptionChange}
       onProjectAuthorChange={handleProjectAuthorChange}
+      onClearAuthFeedback={clearAuthFeedback}
+      onSendMagicLink={signInWithMagicLink}
+      onSignOut={signOut}
       onPageSelect={selectPage}
       onPageAdd={addPage}
       onPageFacingToggle={setFacingPageEnabled}
