@@ -214,7 +214,7 @@ export function useExportActions(ctx: ExportActionsContext) {
     onProjectMetadataChange,
     getCurrentProjectSnapshot,
   } = ctx
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [isSaveLibraryDialogOpen, setIsSaveLibraryDialogOpen] = useState(false)
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [exportFormatDraft, setExportFormatDraft] = useState<ExportFormat>("pdf")
   const [exportFilenameDraft, setExportFilenameDraft] = useState("")
@@ -312,11 +312,11 @@ export function useExportActions(ctx: ExportActionsContext) {
     [getCurrentProjectSnapshot],
   )
 
-  const openSaveDialog = useCallback(() => {
+  const openSaveLibraryDialog = useCallback(() => {
     setSaveTitleDraft(projectMetadata.title ?? "")
     setSaveDescriptionDraft(projectMetadata.description ?? "")
     setSaveAuthorDraft(projectMetadata.author ?? "")
-    setIsSaveDialogOpen(true)
+    setIsSaveLibraryDialogOpen(true)
   }, [projectMetadata.author, projectMetadata.description, projectMetadata.title])
 
   const openExportDialog = useCallback(() => {
@@ -902,10 +902,10 @@ export function useExportActions(ctx: ExportActionsContext) {
   }, [cancelExport, exportProgress, isExportDialogOpen])
 
   return {
-    // Save dialog
-    isSaveDialogOpen,
-    setIsSaveDialogOpen,
-    openSaveDialog,
+    // Save to Library dialog
+    isSaveLibraryDialogOpen,
+    setIsSaveLibraryDialogOpen,
+    openSaveLibraryDialog,
     // JSON export metadata
     saveTitleDraft,
     setSaveTitleDraft: handleSaveTitleChange,

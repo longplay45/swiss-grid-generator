@@ -99,7 +99,7 @@ test("multi-page svg export switches to zip packaging with one file per selected
 })
 
 test("export dialog exposes an explicit pdf-svg-idml-json format switch", () => {
-  const source = readText("components/dialogs/ExportPdfDialog.tsx")
+  const source = readText("components/dialogs/ExportDialog.tsx")
   assert.match(source, /Label>Format<\/Label>/)
   assert.match(source, /Label>Pages<\/Label>/)
   assert.match(source, /onExportFormatChange\("json"\)[\s\S]*onExportFormatChange\("pdf"\)[\s\S]*onExportFormatChange\("svg"\)[\s\S]*onExportFormatChange\("idml"\)/)

@@ -1,6 +1,6 @@
 "use client"
 
-import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
+import { ExportDialog } from "@/components/dialogs/ExportDialog"
 import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
 import { SaveLibraryDialog } from "@/components/dialogs/SaveLibraryDialog"
 import type { ExportFormat, ExportProgressState, PrintPresetKey } from "@/hooks/useExportActions"
@@ -47,7 +47,7 @@ type Props = {
     onConfirm: () => void
     progress: ExportProgressState | null
   }
-  saveDialog: {
+  saveLibraryDialog: {
     isOpen: boolean
     onClose: () => void
     title: string
@@ -65,13 +65,13 @@ type Props = {
 export function WorkspaceDialogs({
   isDarkUi,
   exportDialog,
-  saveDialog,
+  saveLibraryDialog,
   noticeState,
   onCloseNotice,
 }: Props) {
   return (
     <>
-      <ExportPdfDialog
+      <ExportDialog
         isOpen={exportDialog.isOpen}
         onClose={exportDialog.onClose}
         isDarkUi={isDarkUi}
@@ -104,16 +104,16 @@ export function WorkspaceDialogs({
       />
 
       <SaveLibraryDialog
-        isOpen={saveDialog.isOpen}
-        onClose={saveDialog.onClose}
+        isOpen={saveLibraryDialog.isOpen}
+        onClose={saveLibraryDialog.onClose}
         isDarkUi={isDarkUi}
-        title={saveDialog.title}
-        onTitleChange={saveDialog.onTitleChange}
-        description={saveDialog.description}
-        onDescriptionChange={saveDialog.onDescriptionChange}
-        author={saveDialog.author}
-        onAuthorChange={saveDialog.onAuthorChange}
-        onConfirm={saveDialog.onConfirm}
+        title={saveLibraryDialog.title}
+        onTitleChange={saveLibraryDialog.onTitleChange}
+        description={saveLibraryDialog.description}
+        onDescriptionChange={saveLibraryDialog.onDescriptionChange}
+        author={saveLibraryDialog.author}
+        onAuthorChange={saveLibraryDialog.onAuthorChange}
+        onConfirm={saveLibraryDialog.onConfirm}
       />
 
       <NoticeDialog

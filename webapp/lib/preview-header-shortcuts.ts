@@ -1,7 +1,7 @@
 export type PreviewHeaderShortcutId =
-  | "load_json"
-  | "save_json"
-  | "export_pdf"
+  | "import_project"
+  | "save_to_library"
+  | "open_export"
   | "undo"
   | "redo"
   | "toggle_dark_mode"
@@ -30,19 +30,19 @@ export type PreviewHeaderShortcut = {
 
 export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
-    id: "load_json",
+    id: "import_project",
     combo: "Cmd/Ctrl+O",
     description: "Import project JSON",
     bindings: [{ key: "o" }],
   },
   {
-    id: "save_json",
+    id: "save_to_library",
     combo: "Cmd/Ctrl+S",
     description: "Save to Library",
     bindings: [{ key: "s" }],
   },
   {
-    id: "export_pdf",
+    id: "open_export",
     combo: "Cmd/Ctrl+Shift+E",
     description: "Export dialog",
     bindings: [{ key: "e", shift: true }],

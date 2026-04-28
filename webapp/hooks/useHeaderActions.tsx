@@ -52,9 +52,9 @@ type Args = {
   canUndo: boolean
   canRedo: boolean
   onOpenPresets: () => void
-  onLoadJson: () => void
-  onSaveJson: () => void
-  onExportPdf: () => void
+  onImportProject: () => void
+  onOpenSaveLibraryDialog: () => void
+  onOpenExportDialog: () => void
   onUndo: () => void
   onRedo: () => void
   onToggleDarkMode: MouseEventHandler<HTMLButtonElement>
@@ -89,10 +89,10 @@ export function useHeaderActions(args: Args) {
         key: "save",
         ariaLabel: "Save",
         tooltip: "Save to Library",
-        shortcutId: "save_json",
+        shortcutId: "save_to_library",
         showStatusDot: args.hasUnsavedChanges,
         disabled: !args.hasPreviewLayout,
-        onClick: args.onSaveJson,
+        onClick: args.onOpenSaveLibraryDialog,
         icon: <Save className="h-4 w-4" />,
       },
     },
@@ -102,8 +102,8 @@ export function useHeaderActions(args: Args) {
         key: "import",
         ariaLabel: "Import",
         tooltip: "Import project JSON",
-        shortcutId: "load_json",
-        onClick: args.onLoadJson,
+        shortcutId: "import_project",
+        onClick: args.onImportProject,
         icon: <Download className="h-4 w-4" />,
       },
     },
@@ -113,9 +113,9 @@ export function useHeaderActions(args: Args) {
         key: "export",
         ariaLabel: "Export",
         tooltip: "Export",
-        shortcutId: "export_pdf",
+        shortcutId: "open_export",
         disabled: !args.hasPreviewLayout,
-        onClick: args.onExportPdf,
+        onClick: args.onOpenExportDialog,
         icon: <Upload className="h-4 w-4" />,
       },
     },

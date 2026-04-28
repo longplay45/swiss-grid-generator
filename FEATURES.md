@@ -5,7 +5,7 @@ Current capability inventory for Swiss Grid Generator.
 ## Document Model
 
 - Multi-page projects with project metadata (`title`, `description`, `author`, `createdAt`).
-- Save Project JSON dialog for filename plus optional title, description, and author metadata.
+- Save to Library dialog for project title plus optional description and author metadata.
 - Independent page settings and layout state per page.
 - Mixed page layer stack with text paragraphs and image placeholders.
 - Save/load as project JSON.

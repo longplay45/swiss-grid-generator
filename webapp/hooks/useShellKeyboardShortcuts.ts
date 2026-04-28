@@ -8,9 +8,9 @@ type Args = {
   showPresetsBrowser: boolean
   hasPreviewLayout: boolean
   hasMultipleProjectPages: boolean
-  onLoadJson: () => void
-  onSaveJson: () => void
-  onExportPdf: () => void
+  onImportProject: () => void
+  onOpenSaveLibraryDialog: () => void
+  onOpenExportDialog: () => void
   onUndo: () => void
   onRedo: () => void
   onToggleDarkMode: () => void
@@ -36,9 +36,9 @@ export function useShellKeyboardShortcuts({
   showPresetsBrowser,
   hasPreviewLayout,
   hasMultipleProjectPages,
-  onLoadJson,
-  onSaveJson,
-  onExportPdf,
+  onImportProject,
+  onOpenSaveLibraryDialog,
+  onOpenExportDialog,
   onUndo,
   onRedo,
   onToggleDarkMode,
@@ -107,14 +107,14 @@ export function useShellKeyboardShortcuts({
 
       event.preventDefault()
       switch (shortcut.id) {
-        case "load_json":
-          onLoadJson()
+        case "import_project":
+          onImportProject()
           return
-        case "save_json":
-          if (hasPreviewLayout) onSaveJson()
+        case "save_to_library":
+          if (hasPreviewLayout) onOpenSaveLibraryDialog()
           return
-        case "export_pdf":
-          if (hasPreviewLayout) onExportPdf()
+        case "open_export":
+          if (hasPreviewLayout) onOpenExportDialog()
           return
         case "undo":
           if (canUndo) onUndo()
@@ -161,15 +161,15 @@ export function useShellKeyboardShortcuts({
     canUndo,
     hasPreviewLayout,
     hasMultipleProjectPages,
-    onExportPdf,
+    onOpenExportDialog,
+    onImportProject,
+    onOpenSaveLibraryDialog,
     onSelectFirstPage,
     onSelectLastPage,
-    onLoadJson,
     onSelectNextPage,
     onSelectPreviousPage,
     onOpenPresets,
     onRedo,
-    onSaveJson,
     onToggleBaselines,
     onToggleDarkMode,
     onToggleHelpPanel,

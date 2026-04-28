@@ -26,7 +26,7 @@ import { useWorkspaceHistory } from "@/hooks/useWorkspaceHistory"
 import { useWorkspaceUiActions } from "@/hooks/useWorkspaceUiActions"
 import { useUiSettingsPreview } from "@/hooks/useUiSettingsPreview"
 import { useProjectTourController } from "@/hooks/useProjectTourController"
-import { type LoadedProject, type ProjectPage } from "@/lib/document-session"
+import { type LoadedProject, type ProjectMetadata, type ProjectPage } from "@/lib/document-session"
 import { type FontFamily } from "@/lib/config/fonts"
 import { BASELINE_OPTIONS } from "@/lib/config/defaults"
 import { DEFAULT_UI } from "@/lib/config/ui-defaults"
@@ -89,11 +89,20 @@ type ProjectWideVisibilitySettingKey =
   | "showImagePlaceholders"
   | "showTypography"
 
-type ProjectWideVisibilityHistoryEntry = {
+type ProjectVisibilityHistoryEntry = {
+  type: "visibility"
   key: ProjectWideVisibilitySettingKey
   nextValue: boolean
   previousValues: Record<string, boolean>
 }
+
+type ProjectMetadataHistoryEntry = {
+  type: "metadata"
+  previousMetadata: ProjectMetadata
+  nextMetadata: ProjectMetadata
+}
+
+type ProjectHistoryEntry = ProjectVisibilityHistoryEntry | ProjectMetadataHistoryEntry
 
 type EditableProjectMetadataField = "title" | "description" | "author"
 
@@ -151,8 +160,8 @@ export default function Home() {
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [activeUserProjectId, setActiveUserProjectId] = useState<string | null>(null)
   const [activeOriginPresetId, setActiveOriginPresetId] = useState<string | null>(null)
-  const [projectVisibilityHistoryPast, setProjectVisibilityHistoryPast] = useState<ProjectWideVisibilityHistoryEntry[]>([])
-  const [projectVisibilityHistoryFuture, setProjectVisibilityHistoryFuture] = useState<ProjectWideVisibilityHistoryEntry[]>([])
+  const [projectHistoryPast, setProjectHistoryPast] = useState<ProjectHistoryEntry[]>([])
+  const [projectHistoryFuture, setProjectHistoryFuture] = useState<ProjectHistoryEntry[]>([])
   const projectUndoHandlerRef = useRef<() => void>(() => {})
   const projectRedoHandlerRef = useRef<() => void>(() => {})
   const layoutOpenTooltipDisplayTokenRef = useRef(0)
@@ -396,7 +405,6 @@ export default function Home() {
     redoAny,
     handlePreviewHistoryRecord,
     handleProjectHistoryRecord,
-    markDirty,
     markClean,
   } = useWorkspaceHistory({
     buildUiSnapshot,
@@ -566,8 +574,8 @@ export default function Home() {
   const handleApplyLoadedProject = useCallback((project: LoadedProject<PreviewLayoutState>) => {
     resetEditorPanelPersistence()
     applyLoadedProject(project)
-    setProjectVisibilityHistoryPast([])
-    setProjectVisibilityHistoryFuture([])
+    setProjectHistoryPast([])
+    setProjectHistoryFuture([])
     setShowPresetsBrowser(false)
     markClean()
   }, [applyLoadedProject, markClean, setShowPresetsBrowser])
@@ -577,6 +585,28 @@ export default function Home() {
   const handleToggleImprintPanel = useCallback(() => {
     openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
   }, [activeSidebarPanel, openSidebarPanel])
+
+  const {
+    projectMetadata,
+    setProjectMetadata,
+    loadProjectFromInput,
+    loadPresetProject: handleLoadPresetProject,
+  } = useProjectController<PreviewLayoutState>({
+    onApplyProject: handleApplyLoadedProject,
+    onLoadFailed: () => {
+      handleRequestNotice({
+        title: "Load Failed",
+        message: "Could not load project JSON.",
+      })
+    },
+    onProjectLoaded: (source) => {
+      if (source === "file") {
+        setActiveUserProjectId(null)
+        setActiveOriginPresetId(null)
+      }
+      showNextLayoutOpenTooltip()
+    },
+  })
 
   const applyVisibilitySettingToProject = useCallback((
     key: ProjectWideVisibilitySettingKey,
@@ -617,16 +647,28 @@ export default function Home() {
     }
 
     return {
+      type: "visibility",
       key,
       nextValue,
       previousValues,
-    } satisfies ProjectWideVisibilityHistoryEntry
+    } satisfies ProjectVisibilityHistoryEntry
   }, [dispatch, getCurrentProjectSnapshot, replaceProjectSnapshot, suppressNextSettingsHistory])
 
-  const applyProjectVisibilityHistoryEntry = useCallback((
-    entry: ProjectWideVisibilityHistoryEntry,
+  const applyProjectHistoryEntry = useCallback((
+    entry: ProjectHistoryEntry,
     mode: "undo" | "redo",
   ) => {
+    if (entry.type === "metadata") {
+      const nextMetadata = mode === "undo" ? entry.previousMetadata : entry.nextMetadata
+      const currentProject = getCurrentProjectSnapshot()
+      replaceProjectSnapshot({
+        ...currentProject,
+        metadata: nextMetadata,
+      })
+      setProjectMetadata(nextMetadata)
+      return
+    }
+
     const currentProject = getCurrentProjectSnapshot()
     const nextPages = currentProject.pages.map((page) => {
       if (!Object.prototype.hasOwnProperty.call(entry.previousValues, page.id)) {
@@ -656,39 +698,39 @@ export default function Home() {
         value: resolveProjectWideVisibilitySettingValue(activePage.uiSettings, entry.key),
       })
     }
-  }, [dispatch, getCurrentProjectSnapshot, replaceProjectSnapshot, suppressNextSettingsHistory])
+  }, [dispatch, getCurrentProjectSnapshot, replaceProjectSnapshot, setProjectMetadata, suppressNextSettingsHistory])
 
-  const handleProjectVisibilityUndo = useCallback(() => {
-    const entry = projectVisibilityHistoryPast[projectVisibilityHistoryPast.length - 1]
+  const handleProjectUndo = useCallback(() => {
+    const entry = projectHistoryPast[projectHistoryPast.length - 1]
     if (!entry) return
-    applyProjectVisibilityHistoryEntry(entry, "undo")
-    setProjectVisibilityHistoryPast((past) => past.slice(0, -1))
-    setProjectVisibilityHistoryFuture((future) => {
+    applyProjectHistoryEntry(entry, "undo")
+    setProjectHistoryPast((past) => past.slice(0, -1))
+    setProjectHistoryFuture((future) => {
       const next = [...future, entry]
       return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
     })
-  }, [applyProjectVisibilityHistoryEntry, projectVisibilityHistoryPast])
+  }, [applyProjectHistoryEntry, projectHistoryPast])
 
-  const handleProjectVisibilityRedo = useCallback(() => {
-    const entry = projectVisibilityHistoryFuture[projectVisibilityHistoryFuture.length - 1]
+  const handleProjectRedo = useCallback(() => {
+    const entry = projectHistoryFuture[projectHistoryFuture.length - 1]
     if (!entry) return
-    applyProjectVisibilityHistoryEntry(entry, "redo")
-    setProjectVisibilityHistoryFuture((future) => future.slice(0, -1))
-    setProjectVisibilityHistoryPast((past) => {
+    applyProjectHistoryEntry(entry, "redo")
+    setProjectHistoryFuture((future) => future.slice(0, -1))
+    setProjectHistoryPast((past) => {
       const next = [...past, entry]
       return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
     })
-  }, [applyProjectVisibilityHistoryEntry, projectVisibilityHistoryFuture])
+  }, [applyProjectHistoryEntry, projectHistoryFuture])
 
-  projectUndoHandlerRef.current = handleProjectVisibilityUndo
-  projectRedoHandlerRef.current = handleProjectVisibilityRedo
+  projectUndoHandlerRef.current = handleProjectUndo
+  projectRedoHandlerRef.current = handleProjectRedo
 
-  const recordProjectVisibilityHistory = useCallback((entry: ProjectWideVisibilityHistoryEntry) => {
-    setProjectVisibilityHistoryPast((past) => {
+  const recordProjectHistory = useCallback((entry: ProjectHistoryEntry) => {
+    setProjectHistoryPast((past) => {
       const next = [...past, entry]
       return next.length > PROJECT_HISTORY_LIMIT ? next.slice(next.length - PROJECT_HISTORY_LIMIT) : next
     })
-    setProjectVisibilityHistoryFuture([])
+    setProjectHistoryFuture([])
     handleProjectHistoryRecord()
   }, [handleProjectHistoryRecord])
 
@@ -718,30 +760,30 @@ export default function Home() {
 
     const entry = applyVisibilitySettingToProject(key, nextValue)
     if (!entry) return
-    recordProjectVisibilityHistory(entry)
-  }, [applyVisibilitySettingToProject, currentProjectWideVisibilityValues, dispatch, recordProjectVisibilityHistory])
+    recordProjectHistory(entry)
+  }, [applyVisibilitySettingToProject, currentProjectWideVisibilityValues, dispatch, recordProjectHistory])
 
-  const {
-    projectMetadata,
-    setProjectMetadata,
-    loadProjectFromInput,
-    loadPresetProject: handleLoadPresetProject,
-  } = useProjectController<PreviewLayoutState>({
-    onApplyProject: handleApplyLoadedProject,
-    onLoadFailed: () => {
-      handleRequestNotice({
-        title: "Load Failed",
-        message: "Could not load project JSON.",
-      })
-    },
-    onProjectLoaded: (source) => {
-      if (source === "file") {
-        setActiveUserProjectId(null)
-        setActiveOriginPresetId(null)
-      }
-      showNextLayoutOpenTooltip()
-    },
-  })
+  const applyProjectMetadata = useCallback((nextMetadata: ProjectMetadata) => {
+    if (
+      projectMetadata.title === nextMetadata.title
+      && projectMetadata.description === nextMetadata.description
+      && projectMetadata.author === nextMetadata.author
+      && projectMetadata.createdAt === nextMetadata.createdAt
+    ) {
+      return
+    }
+
+    recordProjectHistory({
+      type: "metadata",
+      previousMetadata: projectMetadata,
+      nextMetadata,
+    })
+    replaceProjectSnapshot({
+      ...getCurrentProjectSnapshot(),
+      metadata: nextMetadata,
+    })
+    setProjectMetadata(nextMetadata)
+  }, [getCurrentProjectSnapshot, projectMetadata, recordProjectHistory, replaceProjectSnapshot, setProjectMetadata])
 
   const handleLoadBrowserPreset = useCallback((preset: LayoutPreset) => {
     setActiveUserProjectId(preset.source === "user" ? (preset.userProjectId ?? preset.id) : null)
@@ -852,30 +894,22 @@ export default function Home() {
   const handleProjectTitleChange = useCallback((nextTitle: string) => {
     const trimmedTitle = nextTitle.trim()
     if (!trimmedTitle) return
-    setProjectMetadata((current) => {
-      if (current.title === trimmedTitle) return current
-      markDirty()
-      return {
-        ...current,
-        title: trimmedTitle,
-      }
+    applyProjectMetadata({
+      ...projectMetadata,
+      title: trimmedTitle,
     })
-  }, [markDirty, setProjectMetadata])
+  }, [applyProjectMetadata, projectMetadata])
 
   const handleProjectMetadataFieldChange = useCallback((
     field: Exclude<EditableProjectMetadataField, "title">,
     nextValue: string,
   ) => {
     const trimmedValue = nextValue.trim()
-    setProjectMetadata((current) => {
-      if (current[field] === trimmedValue) return current
-      markDirty()
-      return {
-        ...current,
-        [field]: trimmedValue,
-      }
+    applyProjectMetadata({
+      ...projectMetadata,
+      [field]: trimmedValue,
     })
-  }, [markDirty, setProjectMetadata])
+  }, [applyProjectMetadata, projectMetadata])
 
   const handleProjectDescriptionChange = useCallback((nextDescription: string) => {
     handleProjectMetadataFieldChange("description", nextDescription)
@@ -1055,7 +1089,7 @@ export default function Home() {
       defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
-      onProjectMetadataChange: setProjectMetadata,
+      onProjectMetadataChange: applyProjectMetadata,
       getCurrentProjectSnapshot,
     }),
     [
@@ -1070,7 +1104,7 @@ export default function Home() {
       defaultIdmlFilename,
       defaultJsonFilename,
       projectMetadata,
-      setProjectMetadata,
+      applyProjectMetadata,
       getCurrentProjectSnapshot,
     ],
   )
@@ -1115,8 +1149,12 @@ export default function Home() {
       })
 
       setActiveUserProjectId(savedId)
+      replaceProjectSnapshot({
+        ...currentProject,
+        metadata: normalizedMetadata,
+      })
       setProjectMetadata(normalizedMetadata)
-      exportActions.setIsSaveDialogOpen(false)
+      exportActions.setIsSaveLibraryDialogOpen(false)
       markClean()
       handleRequestNotice({
         title: "Saved to Library",
@@ -1141,6 +1179,7 @@ export default function Home() {
     projectMetadata.createdAt,
     projectMetadata.description,
     projectMetadata.title,
+    replaceProjectSnapshot,
     setProjectMetadata,
   ])
 
@@ -1150,9 +1189,9 @@ export default function Home() {
     showPresetsBrowser,
     hasPreviewLayout,
     hasMultipleProjectPages: projectPages.length > 1,
-    onLoadJson: () => loadFileInputRef.current?.click(),
-    onSaveJson: exportActions.openSaveDialog,
-    onExportPdf: exportActions.openExportDialog,
+    onImportProject: () => loadFileInputRef.current?.click(),
+    onOpenSaveLibraryDialog: exportActions.openSaveLibraryDialog,
+    onOpenExportDialog: exportActions.openExportDialog,
     onUndo: undoAny,
     onRedo: redoAny,
     onToggleDarkMode: toggleDarkUi,
@@ -1188,9 +1227,9 @@ export default function Home() {
     canUndo,
     canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),
-    onLoadJson: () => loadFileInputRef.current?.click(),
-    onSaveJson: exportActions.openSaveDialog,
-    onExportPdf: exportActions.openExportDialog,
+    onImportProject: () => loadFileInputRef.current?.click(),
+    onOpenSaveLibraryDialog: exportActions.openSaveLibraryDialog,
+    onOpenExportDialog: exportActions.openExportDialog,
     onUndo: undoAny,
     onRedo: redoAny,
     onToggleDarkMode: toggleDarkUi,
@@ -1522,9 +1561,9 @@ export default function Home() {
             onConfirm: exportActions.confirmExport,
             progress: exportActions.exportProgress,
           }}
-          saveDialog={{
-            isOpen: exportActions.isSaveDialogOpen,
-            onClose: () => exportActions.setIsSaveDialogOpen(false),
+          saveLibraryDialog={{
+            isOpen: exportActions.isSaveLibraryDialogOpen,
+            onClose: () => exportActions.setIsSaveLibraryDialogOpen(false),
             title: exportActions.saveTitleDraft,
             onTitleChange: exportActions.setSaveTitleDraft,
             description: exportActions.saveDescriptionDraft,

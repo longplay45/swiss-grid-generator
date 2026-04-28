@@ -653,9 +653,9 @@
           "workflow-b": "Hover a block to edit it. Drag to reposition it. Alt/Option + drag duplicates it.",
           "workflow-c": "Use the left sidebar editor for geometry, type, color, reflow, rotation, and delete.",
           "workflow-d": "Header toggles let you inspect baselines, margins, modules, typography, and placeholders.",
-          "workflow-e": "Save Project JSON stores pages, settings, layers, and logical block positions.",
+          "workflow-e": "Save to Library stores pages, settings, layers, logical block positions, and project metadata.",
           "workflow-f": "Export creates vector PDF, SVG, or IDML from the same layout calculation.",
-          "workflow-caption": "Shortcuts: Cmd/Ctrl+O load, Cmd/Ctrl+S save, Cmd/Ctrl+Z undo."
+          "workflow-caption": "Shortcuts: Cmd/Ctrl+O import, Cmd/Ctrl+S save to library, Cmd/Ctrl+Z undo."
         },
         "blockTextEdited": {
           "workflow-title": true,

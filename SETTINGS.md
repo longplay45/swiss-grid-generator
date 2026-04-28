@@ -145,7 +145,7 @@ Default: `swiss`
 - Available fonts:
   - Sans-Serif: [Inter](https://fonts.google.com/specimen/Inter), [Work Sans](https://fonts.google.com/specimen/Work+Sans), [Jost](https://fonts.google.com/specimen/Jost), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [Libre Franklin](https://fonts.google.com/specimen/Libre+Franklin)
   - Serif: [EB Garamond](https://fonts.google.com/specimen/EB+Garamond), [Libre Baskerville](https://fonts.google.com/specimen/Libre+Baskerville), [Bodoni Moda](https://fonts.google.com/specimen/Bodoni+Moda), [Besley](https://fonts.google.com/specimen/Besley)
-  - Poster: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display), [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono), [Noto Sans Symbols 2](https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2)
+  - Poster: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display), [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono)
 
 ### VI. Color Scheme
 
@@ -164,9 +164,9 @@ Default: `swiss`
 ### File Actions (icon buttons)
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
-- `Save` (save icon): opens Save to Library popup
+- `Save` (save icon): opens Save to Library dialog
 - `Import` (download icon): import project JSON
-- `Export` (upload icon): opens the export popup
+- `Export` (upload icon): opens the export dialog
 - `Save` and `Export` stay disabled until a preview layout is available.
 - Divider placement: between `Export` and `Undo`
 - `Esc` closes the presets browser without loading a preset
@@ -270,15 +270,14 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ## Popups
 
-### Save Project JSON popup
+### Save to Library dialog
 
-- Filename input seeded from the current project title
 - Project Title input
 - Description input
 - Author input
 - Confirm/Cancel
 
-### Export popup
+### Export dialog
 
 - Format buttons: `JSON`, `PDF`, `SVG`, `IDML`
 - `Pages` range controls (`From`, `To`) appear for multipage projects

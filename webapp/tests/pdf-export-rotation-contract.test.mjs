@@ -186,7 +186,7 @@ test("pdf export presets stay ordered from digital to offset and drive color-man
 })
 
 test("export dialog relies on print presets instead of a separate print-pro switch", () => {
-  const source = readText("components/dialogs/ExportPdfDialog.tsx")
+  const source = readText("components/dialogs/ExportDialog.tsx")
   assert.match(source, /Label>Print Presets<\/Label>/)
   assert.match(source, /EXPORT_DIALOG_PRINT_PRESETS/)
   assert.match(source, /grid-cols-2/)
@@ -195,7 +195,7 @@ test("export dialog relies on print presets instead of a separate print-pro swit
 })
 
 test("export dialog stays dark-mode-safe after removing size override controls", () => {
-  const source = readText("components/dialogs/ExportPdfDialog.tsx")
+  const source = readText("components/dialogs/ExportDialog.tsx")
   assert.match(source, /isDarkUi:\s*boolean/)
   assert.match(source, /const\s+dialogThemeClassName\s*=\s*isDarkUi\s*\?\s*"dark"\s*:\s*undefined/)
   assert.match(source, /SelectContent className=\{dialogThemeClassName\}/)

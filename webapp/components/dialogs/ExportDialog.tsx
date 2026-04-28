@@ -38,7 +38,7 @@ type Props = {
   exportProgress: ExportProgressState | null
 }
 
-export function ExportPdfDialog({
+export function ExportDialog({
   isOpen,
   onClose,
   isDarkUi,
