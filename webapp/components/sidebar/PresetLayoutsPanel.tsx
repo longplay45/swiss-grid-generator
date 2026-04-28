@@ -1,3 +1,7 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+
 import {
   LAYOUT_PRESET_GROUPS,
   type LayoutPreset,
@@ -5,6 +9,7 @@ import {
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { PresetPageThumbnail } from "@/components/sidebar/PresetPageThumbnail"
+import { userLayoutPresetQuery } from "@/lib/user-layout-library"
 
 type Props = {
   onLoadPreset: (preset: LayoutPreset) => void
@@ -78,9 +83,34 @@ export function PresetLayoutsPanel({
   onHelpNavigate,
   showRolloverInfo = true,
 }: Props) {
+  const [userPresets, setUserPresets] = useState<LayoutPreset[]>([])
+
+  useEffect(() => {
+    const subscription = userLayoutPresetQuery.subscribe({
+      next: (presets) => {
+        setUserPresets(Array.isArray(presets) ? presets : [])
+      },
+      error: (error) => {
+        console.error(error)
+        setUserPresets([])
+      },
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const visibleGroups = useMemo(() => (
+    LAYOUT_PRESET_GROUPS
+      .map((group) => (
+        group.category === "users"
+          ? { ...group, presets: userPresets }
+          : group
+      ))
+      .filter((group) => group.presets.length > 0)
+  ), [userPresets])
+
   const cardGapClass = compact ? "gap-2" : "gap-3"
   const minCardWidth = compact ? 120 : 168
-  const visibleGroups = LAYOUT_PRESET_GROUPS.filter((group) => group.category !== "users")
   return (
     <div
       data-tooltip-boundary="preset-browser"

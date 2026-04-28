@@ -29,11 +29,9 @@ test("svg export emits a trim-sized svg with page clipping, guide groups, placeh
 
 test("svg export converts positioned graphemes into outline paths from the resolved font variant", () => {
   const source = readText("lib/svg-vector-export.ts")
-  assert.match(source, /import\s+\{\s*parse\s+as\s+parseOpenType\s*\}\s+from\s+"opentype\.js"/)
-  assert.match(source, /async\s+function\s+loadSvgOutlineFont/)
-  assert.match(source, /getFontAssetPath/)
-  assert.match(source, /resolveFontVariant/)
+  assert.match(source, /import\s+\{\s*loadOutlineFont\s*\}\s+from\s+"@\/lib\/font-outline"/)
   assert.match(source, /await\s+Promise\.all\(exportPlan\.textPlans\.flatMap/)
+  assert.match(source, /loadOutlineFont\(grapheme\.fontFamily,\s*grapheme\.fontWeight,\s*grapheme\.italic\)/)
   assert.match(source, /textPlan\.graphemeLines\.map/)
   assert.match(source, /grapheme\.x/)
   assert.match(source, /grapheme\.y/)
@@ -57,9 +55,9 @@ test("svg export keeps a narrow live-text fallback if outline loading fails unex
   assert.match(source, /data-text-rendering="text-fallback"/)
 })
 
-test("export actions support pdf, svg, and idml formats with format-specific filenames", () => {
+test("export actions support pdf, svg, idml, and json formats with format-specific filenames", () => {
   const source = readText("hooks/useExportActions.ts")
-  assert.match(source, /export\s+type\s+ExportFormat\s*=\s*"pdf"\s*\|\s*"svg"\s*\|\s*"idml"/)
+  assert.match(source, /export\s+type\s+ExportFormat\s*=\s*"pdf"\s*\|\s*"svg"\s*\|\s*"idml"\s*\|\s*"json"/)
   assert.match(source, /renderSwissGridVectorSvg/)
   assert.match(source, /const\s+getDefaultExportFilename\s*=\s*useCallback\(\(format:\s*ExportFormat,\s*selectedPages:\s*number\)\s*=>\s*\{/)
   assert.match(source, /if\s*\(format\s*===\s*"svg"\s*&&\s*selectedPageCount\s*>\s*1\)\s*return\s*"\.zip"/)
@@ -67,6 +65,9 @@ test("export actions support pdf, svg, and idml formats with format-specific fil
   assert.match(source, /const\s+currentProjectSnapshot\s*=\s*getCurrentProjectWithMetadata\(\)/)
   assert.match(source, /filterProjectByExportRange\(currentProjectSnapshot,\s*selectedRange\)/)
   assert.match(source, /buildResolvedProjectPageExportSources\(currentProjectSnapshot,\s*selectedRange\)/)
+  assert.match(source, /if\s*\(format\s*===\s*"json"\)\s*return\s*"\.json"/)
+  assert.match(source, /if\s*\(exportFormatDraft\s*!==\s*"json"\s*&&\s*selectedPageCount\s*===\s*0\)\s*return/)
+  assert.match(source, /if\s*\(exportFormatDraft\s*===\s*"json"\)\s*\{[\s\S]*?saveJSON\(filename,\s*normalizedMetadata\)/)
   assert.match(source, /if\s*\(exportFormatDraft\s*===\s*"idml"\)\s*\{[\s\S]*?await\s+exportIDML\(selectedProject,\s*filename\)/)
   assert.match(source, /await\s+exportPDF\(resolvedPages,\s*filename,/)
   assert.match(source, /await\s+exportSVG\(resolvedPages,\s*filename,\s*normalizedRange\.fromPage\)/)
@@ -81,22 +82,35 @@ test("multi-page svg export switches to zip packaging with one file per selected
   assert.match(source, /_page_\$\{String\(pageNumber\)\.padStart\(3,\s*"0"\)\}_/)
 })
 
-test("export dialog exposes an explicit pdf-svg-idml format switch", () => {
+test("export dialog exposes an explicit pdf-svg-idml-json format switch", () => {
   const source = readText("components/dialogs/ExportPdfDialog.tsx")
   assert.match(source, /Label>Format<\/Label>/)
   assert.match(source, /Label>Pages<\/Label>/)
+  assert.match(source, /onExportFormatChange\("json"\)[\s\S]*onExportFormatChange\("pdf"\)[\s\S]*onExportFormatChange\("svg"\)[\s\S]*onExportFormatChange\("idml"\)/)
   assert.match(source, /onExportFormatChange\("pdf"\)/)
   assert.match(source, /onExportFormatChange\("svg"\)/)
   assert.match(source, /onExportFormatChange\("idml"\)/)
+  assert.match(source, /onExportFormatChange\("json"\)/)
   assert.match(source, /onExportRangeStartChange/)
   assert.match(source, /onExportRangeEndChange/)
   assert.match(source, /SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders\./)
   assert.match(source, /SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page\./)
-  assert.match(source, /IDML v1 exports the selected page range\./)
+  assert.match(source, /IDML v1 exports the selected project page range/)
+  assert.match(source, /JSON exports the full editable project document/)
   assert.match(source, /Export IDML/)
+  assert.match(source, /Save JSON/)
   assert.doesNotMatch(source, /Units \/ Paper Size/)
   assert.doesNotMatch(source, /Width \(mm\)/)
   assert.doesNotMatch(source, /Ratio:/)
+})
+
+test("save dialog remains focused on library metadata rather than json filename export", () => {
+  const source = readText("components/dialogs/SaveLibraryDialog.tsx")
+  assert.match(source, /Save to Library/)
+  assert.match(source, /Project Title/)
+  assert.match(source, /Description \(optional\)/)
+  assert.match(source, /Author \(optional\)/)
+  assert.doesNotMatch(source, /Filename/)
 })
 
 test("default pdf and svg filenames no longer encode a paper-size override", () => {

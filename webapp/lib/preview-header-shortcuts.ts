@@ -32,13 +32,13 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
   {
     id: "load_json",
     combo: "Cmd/Ctrl+O",
-    description: "Load project JSON",
+    description: "Import project JSON",
     bindings: [{ key: "o" }],
   },
   {
     id: "save_json",
     combo: "Cmd/Ctrl+S",
-    description: "Save project JSON",
+    description: "Save to Library",
     bindings: [{ key: "s" }],
   },
   {

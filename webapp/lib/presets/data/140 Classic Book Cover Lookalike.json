@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-24T16:38:43.398Z",
+  "exportedAt": "2026-04-28T12:24:23.314Z",
   "title": "Classic Book Cover Lookalike",
   "description": "Book Cover Lookalike from Anton Stankowski 1978.",
   "author": "Swiss Grid Generator",
@@ -109,7 +109,7 @@
           "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": true
         },
         "blockTrackingScales": {
-          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": -50,
+          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": -55,
           "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": -100,
           "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": -100,
           "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": 0,
@@ -121,12 +121,12 @@
             {
               "start": 0,
               "end": 1,
-              "trackingScale": -120
+              "trackingScale": -85
             },
             {
               "start": 1,
               "end": 3,
-              "trackingScale": -50
+              "trackingScale": -55
             }
           ],
           "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": [
@@ -138,6 +138,22 @@
           ]
         },
         "blockTextFormatRuns": {},
+        "blockItalic": {
+          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": false,
+          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": false,
+          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": false,
+          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": false,
+          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": false,
+          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": false
+        },
+        "blockRotations": {
+          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 12,
+          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 12,
+          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": 12,
+          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": 0,
+          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": 0,
+          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": 0
+        },
         "blockColumnSpans": {
           "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 3,
           "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 3,
@@ -210,37 +226,21 @@
           "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": true,
           "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": true
         },
-        "blockItalic": {
-          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": false,
-          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": false,
-          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": false,
-          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": false,
-          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": false,
-          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": false
-        },
-        "blockRotations": {
-          "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": 12,
-          "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": 12,
-          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": 12,
-          "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": 0,
-          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": 0,
-          "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": 0
-        },
         "blockModulePositions": {
           "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": {
-            "column": 1.358241120779814,
+            "column": 1.374907,
             "row": 0,
             "baselineOffset": -13.946865224138497
           },
           "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": {
-            "column": -0.4217791959145257,
+            "column": -0.521776,
             "row": 0,
-            "baselineOffset": 5.905765065063219
+            "baselineOffset": 5.705765
           },
           "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": {
-            "column": 0.9774462828684997,
+            "column": 0.96078,
             "row": 3,
-            "baselineOffset": -5.559097440259755
+            "baselineOffset": -5.559097000000001
           },
           "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": {
             "column": 0,
@@ -280,14 +280,14 @@
           "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": "#f54123"
         },
         "lockedLayers": {
-          "image-af134876-ca45-46f6-a73c-85b77cdfaa37": true,
           "paragraph-7970b3a1-3bc6-4656-9bde-5af645df7a66": true,
-          "image-18413935-44ba-4dd2-8f2b-670d3297bf94": true,
-          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": true,
           "paragraph-202c13d3-32ad-4b6f-ab62-82d7806e8ade": true,
+          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": true,
           "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf": true,
+          "paragraph-41271a3a-49c4-4cd5-80be-725e0f20241f": true,
           "paragraph-db893dc0-b8e9-4feb-8251-a132d4dd6d9e": true,
-          "paragraph-934b7f1a-d397-4017-b1c8-73e34de45fcf": true
+          "image-af134876-ca45-46f6-a73c-85b77cdfaa37": true,
+          "image-18413935-44ba-4dd2-8f2b-670d3297bf94": true
         },
         "layerOrder": [
           "paragraph-04b6200b-0b47-4ac8-9cfd-26b247de3dcf",

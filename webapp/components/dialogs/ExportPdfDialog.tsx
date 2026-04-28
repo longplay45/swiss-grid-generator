@@ -21,6 +21,12 @@ type Props = {
   exportFilenameDraft: string
   onExportFilenameChange: (value: string) => void
   defaultFilename: string
+  jsonTitleDraft: string
+  onJsonTitleChange: (value: string) => void
+  jsonDescriptionDraft: string
+  onJsonDescriptionChange: (value: string) => void
+  jsonAuthorDraft: string
+  onJsonAuthorChange: (value: string) => void
   activePrintPresetDraft: PrintPresetKey | null
   showPrintAdjustmentsDraft: boolean
   onApplyPrintPreset: (key: PrintPresetKey) => void
@@ -47,6 +53,12 @@ export function ExportPdfDialog({
   exportFilenameDraft,
   onExportFilenameChange,
   defaultFilename,
+  jsonTitleDraft,
+  onJsonTitleChange,
+  jsonDescriptionDraft,
+  onJsonDescriptionChange,
+  jsonAuthorDraft,
+  onJsonAuthorChange,
   activePrintPresetDraft,
   showPrintAdjustmentsDraft,
   onApplyPrintPreset,
@@ -65,6 +77,7 @@ export function ExportPdfDialog({
   const dialogThemeClassName = isDarkUi ? "dark" : undefined
   const isPdfExport = exportFormatDraft === "pdf"
   const isSvgExport = exportFormatDraft === "svg"
+  const isJsonExport = exportFormatDraft === "json"
   const isMultiPageSelection = selectedPageCount > 1
   const isExporting = exportProgress !== null
   const totalProgressPercent = exportProgress
@@ -82,8 +95,7 @@ export function ExportPdfDialog({
         <div className="space-y-1">
           <h3 className="text-base font-semibold">Export</h3>
           <p className={helpTextClassName}>
-            WYSIWYG: exports exactly what is currently shown in the preview, including baselines, margins, grid/modules,
-            typography, and image placeholders. All exports stay vector-based.
+            Vector exports follow the current preview exactly, including guides, typography, and placeholders. JSON exports preserve the editable project document.
           </p>
         </div>
         {isExporting ? (
@@ -109,7 +121,17 @@ export function ExportPdfDialog({
         ) : null}
         <div className="space-y-2">
           <Label>Format</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
+            <Button
+              type="button"
+              variant={exportFormatDraft === "json" ? "default" : "outline"}
+              size="sm"
+              className="text-[11px]"
+              disabled={isExporting}
+              onClick={() => onExportFormatChange("json")}
+            >
+              JSON
+            </Button>
             <Button
               type="button"
               variant={exportFormatDraft === "pdf" ? "default" : "outline"}
@@ -142,7 +164,7 @@ export function ExportPdfDialog({
             </Button>
           </div>
         </div>
-        {pageRangeOptions.length > 1 && (
+        {!isJsonExport && pageRangeOptions.length > 1 && (
           <div className="space-y-2">
             <Label>Pages</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -198,6 +220,45 @@ export function ExportPdfDialog({
             placeholder={defaultFilename}
           />
         </div>
+        {isJsonExport ? (
+          <>
+            <div className="space-y-2">
+              <Label>Project Title</Label>
+              <input
+                type="text"
+                value={jsonTitleDraft}
+                onChange={(event) => onJsonTitleChange(event.target.value)}
+                disabled={isExporting}
+                className={inputClassName}
+                placeholder="Project title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description (optional)</Label>
+              <textarea
+                value={jsonDescriptionDraft}
+                onChange={(event) => onJsonDescriptionChange(event.target.value)}
+                disabled={isExporting}
+                className={`${inputClassName} min-h-20`}
+                placeholder="Short description"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Author (optional)</Label>
+              <input
+                type="text"
+                value={jsonAuthorDraft}
+                onChange={(event) => onJsonAuthorChange(event.target.value)}
+                disabled={isExporting}
+                className={inputClassName}
+                placeholder="Author name"
+              />
+            </div>
+            <p className={helpTextClassName}>
+              JSON exports the full editable project document, including all pages, metadata, and current layout state.
+            </p>
+          </>
+        ) : null}
         {isPdfExport ? (
           <>
             <div className="space-y-2">
@@ -252,7 +313,7 @@ export function ExportPdfDialog({
               ? "SVG v1 exports a ZIP with one trim-sized outlined SVG per selected page. Typography is converted to glyph paths for geometric fidelity, so exported text is not live-editable."
               : "SVG v1 exports trim-sized glyph-outline vectors, guides, and placeholders. Typography is converted to exact glyph paths, so exported text is not live-editable."}
           </p>
-        ) : (
+        ) : isJsonExport ? null : (
           <p className={helpTextClassName}>
             IDML v1 exports the selected project page range as an InDesign package with separate guides, outlined
             typography, and placeholder layers. Exported typography is frozen as geometry rather than live text.
@@ -265,7 +326,7 @@ export function ExportPdfDialog({
           <Button size="sm" onClick={onConfirm} disabled={isExporting}>
             {isExporting
               ? (isPdfExport ? "Exporting PDF" : isSvgExport ? "Exporting SVG" : "Exporting IDML")
-              : isPdfExport ? "Export PDF" : isSvgExport ? "Export SVG" : "Export IDML"}
+              : isPdfExport ? "Export PDF" : isSvgExport ? "Export SVG" : isJsonExport ? "Save JSON" : "Export IDML"}
           </Button>
         </div>
       </div>

@@ -2,7 +2,6 @@
 
 import { useReducer, useState, useMemo, useRef, useEffect, useCallback, type MouseEvent as ReactMouseEvent } from "react"
 import {
-  getCanvasRatioDisplayLabel,
   getMaxBaseline,
 } from "@/lib/grid-calculator"
 import type { GridResult } from "@/lib/grid-calculator"
@@ -53,7 +52,7 @@ import {
   findTextLayerGridReductionConflicts,
   getGridReductionWarningMessage,
 } from "@/lib/grid-reduction-validation"
-import { toProjectJsonFilename } from "@/lib/project-file-naming"
+import { toProjectFilenameStem, toProjectJsonFilename } from "@/lib/project-file-naming"
 import { getDefaultColumnSpan } from "@/lib/text-layout"
 import {
   resolveAdjacentProjectPageId,
@@ -62,6 +61,8 @@ import {
 import { LAYOUT_OPEN_TOOLTIP_ITEMS, type LayoutOpenTooltipItem } from "@/lib/generated-tooltip-content"
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { resetEditorPanelPersistence } from "@/lib/editor-panel-persistence"
+import type { LayoutPreset } from "@/lib/presets"
+import { saveProjectToUserLibrary } from "@/lib/user-layout-library"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -146,6 +147,8 @@ export default function Home() {
   } | null>(null)
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
+  const [activeUserProjectId, setActiveUserProjectId] = useState<string | null>(null)
+  const [activeOriginPresetId, setActiveOriginPresetId] = useState<string | null>(null)
   const [projectVisibilityHistoryPast, setProjectVisibilityHistoryPast] = useState<ProjectWideVisibilityHistoryEntry[]>([])
   const [projectVisibilityHistoryFuture, setProjectVisibilityHistoryFuture] = useState<ProjectWideVisibilityHistoryEntry[]>([])
   const projectUndoHandlerRef = useRef<() => void>(() => {})
@@ -331,11 +334,6 @@ export default function Home() {
   // ─── Derived values ───────────────────────────────────────────────────────
 
   const gridUnit = customBaseline ?? DEFAULT_A4_BASELINE
-  const canvasRatioLabel = useMemo(
-    () => getCanvasRatioDisplayLabel(canvasRatio, customRatioWidth, customRatioHeight),
-    [canvasRatio, customRatioWidth, customRatioHeight],
-  )
-
   const result = useMemo(
     () => buildGridResultFromUiSettings(ui),
     [ui],
@@ -735,8 +733,24 @@ export default function Home() {
         message: "Could not load project JSON.",
       })
     },
-    onProjectLoaded: showNextLayoutOpenTooltip,
+    onProjectLoaded: (source) => {
+      if (source === "file") {
+        setActiveUserProjectId(null)
+        setActiveOriginPresetId(null)
+      }
+      showNextLayoutOpenTooltip()
+    },
   })
+
+  const handleLoadBrowserPreset = useCallback((preset: LayoutPreset) => {
+    setActiveUserProjectId(preset.source === "user" ? (preset.userProjectId ?? preset.id) : null)
+    setActiveOriginPresetId(
+      preset.source === "user"
+        ? (preset.originPresetId ?? null)
+        : preset.id,
+    )
+    handleLoadPresetProject(preset)
+  }, [handleLoadPresetProject])
 
   const defaultJsonFilename = useMemo(() => {
     return toProjectJsonFilename(projectMetadata.title, baseFilename)
@@ -1040,6 +1054,72 @@ export default function Home() {
   const exportActions = useExportActions(exportActionsContext)
   const hasPreviewLayout = previewLayout !== null
 
+  const handleSaveToLibrary = useCallback(async () => {
+    const fallbackStem = toProjectFilenameStem(defaultJsonFilename.replace(/\.json$/i, "")) || "Untitled Project"
+    const trimmedTitle = projectMetadata.title.trim()
+    const trimmedDescription = projectMetadata.description.trim()
+    const trimmedAuthor = projectMetadata.author.trim()
+    const nextCreatedAt = projectMetadata.createdAt && !Number.isNaN(Date.parse(projectMetadata.createdAt))
+      ? new Date(projectMetadata.createdAt).toISOString()
+      : new Date().toISOString()
+    const normalizedMetadata = {
+      title: trimmedTitle,
+      description: trimmedDescription,
+      author: trimmedAuthor,
+      createdAt: nextCreatedAt,
+    }
+    const currentProject = getCurrentProjectSnapshot()
+
+    try {
+      const savedId = await saveProjectToUserLibrary({
+        id: activeUserProjectId,
+        label: trimmedTitle || fallbackStem,
+        title: normalizedMetadata.title,
+        description: normalizedMetadata.description,
+        author: normalizedMetadata.author,
+        createdAt: normalizedMetadata.createdAt,
+        originPresetId: activeOriginPresetId,
+        project: {
+          activePageId: currentProject.activePageId,
+          pages: currentProject.pages,
+          title: normalizedMetadata.title,
+          description: normalizedMetadata.description,
+          author: normalizedMetadata.author,
+          createdAt: normalizedMetadata.createdAt,
+          tour: currentProject.tour ?? undefined,
+        },
+      })
+
+      setActiveUserProjectId(savedId)
+      setProjectMetadata(normalizedMetadata)
+      exportActions.setIsSaveDialogOpen(false)
+      markClean()
+      handleRequestNotice({
+        title: "Saved to Library",
+        message: "Project stored in the local Users library.",
+      })
+    } catch (error) {
+      console.error(error)
+      handleRequestNotice({
+        title: "Library Save Failed",
+        message: "Could not store the project in the local library.",
+      })
+    }
+  }, [
+    activeOriginPresetId,
+    activeUserProjectId,
+    defaultJsonFilename,
+    exportActions,
+    getCurrentProjectSnapshot,
+    handleRequestNotice,
+    markClean,
+    projectMetadata.author,
+    projectMetadata.createdAt,
+    projectMetadata.description,
+    projectMetadata.title,
+    setProjectMetadata,
+  ])
+
   useShellKeyboardShortcuts({
     canUndo,
     canRedo,
@@ -1067,11 +1147,6 @@ export default function Home() {
     onSelectPreviousPage: handleSelectPreviousProjectPage,
     onSelectNextPage: handleSelectNextProjectPage,
   })
-
-  const handleConfirmSaveJSON = useCallback(() => {
-    exportActions.confirmSaveJSON()
-    markClean()
-  }, [exportActions, markClean])
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
@@ -1151,7 +1226,7 @@ export default function Home() {
         sidebarHeading: uiTheme.sidebarHeading,
       }}
       result={previewResult}
-      onLoadPreset={handleLoadPresetProject}
+      onLoadPreset={handleLoadBrowserPreset}
       onHeaderHelpNavigate={handleHeaderHelpNavigate}
       onOpenHelpSection={openHelpSection}
       onHistoryRecord={handlePreviewHistoryRecord}
@@ -1388,9 +1463,6 @@ export default function Home() {
         {previewWorkspace}
 
         <WorkspaceDialogs
-          ratioLabel={canvasRatioLabel}
-          orientation={orientation}
-          rotation={rotation}
           isDarkUi={isDarkUi}
           exportDialog={{
             isOpen: exportActions.isExportDialogOpen,
@@ -1406,6 +1478,12 @@ export default function Home() {
             filename: exportActions.exportFilenameDraft,
             onFilenameChange: exportActions.setExportFilenameDraft,
             defaultFilename: exportActions.defaultExportFilename,
+            jsonTitle: exportActions.saveTitleDraft,
+            onJsonTitleChange: exportActions.setSaveTitleDraft,
+            jsonDescription: exportActions.saveDescriptionDraft,
+            onJsonDescriptionChange: exportActions.setSaveDescriptionDraft,
+            jsonAuthor: exportActions.saveAuthorDraft,
+            onJsonAuthorChange: exportActions.setSaveAuthorDraft,
             activePrintPreset: exportActions.activePrintPresetDraft,
             showPrintAdjustments: exportActions.showPrintAdjustmentsDraft,
             onApplyPrintPreset: exportActions.applyPrintPreset,
@@ -1419,16 +1497,13 @@ export default function Home() {
           saveDialog={{
             isOpen: exportActions.isSaveDialogOpen,
             onClose: () => exportActions.setIsSaveDialogOpen(false),
-            filename: exportActions.saveFilenameDraft,
-            onFilenameChange: exportActions.setSaveFilenameDraft,
             title: exportActions.saveTitleDraft,
             onTitleChange: exportActions.setSaveTitleDraft,
             description: exportActions.saveDescriptionDraft,
             onDescriptionChange: exportActions.setSaveDescriptionDraft,
             author: exportActions.saveAuthorDraft,
             onAuthorChange: exportActions.setSaveAuthorDraft,
-            onConfirm: handleConfirmSaveJSON,
-            defaultFilename: defaultJsonFilename,
+            onConfirm: handleSaveToLibrary,
           }}
           noticeState={noticeState}
           onCloseNotice={() => setNoticeState(null)}

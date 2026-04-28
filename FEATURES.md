@@ -164,14 +164,16 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Export
 
+- Save dialog stores the current project into the local `Users` library with editable title, description, and author metadata.
 - `PDF` selected-range export.
+- `JSON` full-project export.
 - `SVG v1` selected-range export.
 - `IDML v1` selected-range export.
 - Export defaults to the full project page range.
-- Export dialog includes format switcher, page-range controls, filename field, and progress state.
+- Export dialog includes JSON/PDF/SVG/IDML format switching, page-range controls for non-JSON exports, filename field, and progress state.
 - Export is WYSIWYG with respect to the current preview visibility state for baselines, margins, modules, typography, and image placeholders.
 - All export formats use stored page geometry directly.
-- All export formats are vector-based, not raster captures.
+- PDF, SVG, and IDML are vector-based, not raster captures.
 - `PDF` print presets:
   - `Digital Print`
   - `Press Proof`

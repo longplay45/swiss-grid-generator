@@ -54,11 +54,15 @@ export type LayoutPresetBrowserPage = {
 export type LayoutPreset = {
   id: string
   category: LayoutPresetCategory
+  source?: "bundled" | "user"
+  userProjectId?: string
+  originPresetId?: string
   label: string
   title?: string
   description?: string
   author?: string
   createdAt?: string
+  updatedAt?: string
   projectSourceJson: string
   browserPage: LayoutPresetBrowserPage
 }

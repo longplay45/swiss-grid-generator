@@ -2,8 +2,8 @@ import type { MouseEventHandler, ReactNode } from "react"
 import {
   CircleHelp,
   Download,
-  FolderOpen,
   Image,
+  Import,
   LayoutGrid,
   LayoutTemplate,
   Layers3,
@@ -85,12 +85,12 @@ export function useHeaderActions(args: Args) {
     {
       type: "action",
       action: {
-        key: "load",
-        ariaLabel: "Load",
-        tooltip: "Load project JSON",
+        key: "import",
+        ariaLabel: "Import",
+        tooltip: "Import project JSON",
         shortcutId: "load_json",
         onClick: args.onLoadJson,
-        icon: <FolderOpen className="h-4 w-4" />,
+        icon: <Import className="h-4 w-4" />,
       },
     },
     {
@@ -98,7 +98,7 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "save",
         ariaLabel: "Save",
-        tooltip: "Save project JSON",
+        tooltip: "Save to Library",
         shortcutId: "save_json",
         disabled: !args.hasPreviewLayout,
         onClick: args.onSaveJson,

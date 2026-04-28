@@ -163,9 +163,9 @@ Default: `swiss`
 
 ### File Actions (icon buttons)
 
-- `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Load)
-- `Load` (folder icon): load project JSON
-- `Save` (save icon): opens Save Project JSON popup
+- `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Import)
+- `Import` (import icon): import project JSON
+- `Save` (save icon): opens Save to Library popup
 - `Export` (download icon): opens the export popup
 - `Save` and `Export` stay disabled until a preview layout is available.
 - Divider placement: between `Presets` and `Load`, and between `Export` and `Undo`
@@ -245,8 +245,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ### Header Keyboard Shortcuts
 
-- `Cmd/Ctrl+O`: Load project JSON
-- `Cmd/Ctrl+S`: Save project JSON
+- `Cmd/Ctrl+O`: Import project JSON
+- `Cmd/Ctrl+S`: Save to Library
 - `Cmd/Ctrl+Shift+E`: Open export popup
 - `Cmd/Ctrl+Z`: Undo
 - `Cmd/Ctrl+Shift+Z` or `Cmd/Ctrl+Y`: Redo

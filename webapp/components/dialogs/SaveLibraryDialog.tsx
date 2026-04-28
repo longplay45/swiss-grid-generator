@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
@@ -5,8 +7,6 @@ type Props = {
   isOpen: boolean
   onClose: () => void
   isDarkUi: boolean
-  filename: string
-  onFilenameChange: (value: string) => void
   title: string
   onTitleChange: (value: string) => void
   description: string
@@ -14,18 +14,12 @@ type Props = {
   author: string
   onAuthorChange: (value: string) => void
   onConfirm: () => void
-  defaultFilename: string
-  ratioLabel: string
-  orientation: string
-  rotation: number
 }
 
-export function SaveJsonDialog({
+export function SaveLibraryDialog({
   isOpen,
   onClose,
   isDarkUi,
-  filename,
-  onFilenameChange,
   title,
   onTitleChange,
   description,
@@ -33,32 +27,20 @@ export function SaveJsonDialog({
   author,
   onAuthorChange,
   onConfirm,
-  defaultFilename,
-  ratioLabel,
-  orientation,
-  rotation,
 }: Props) {
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className={`${isDarkUi ? "dark" : ""} w-full max-w-md rounded-lg border border-border bg-card p-4 text-card-foreground shadow-xl space-y-4`}>
-        <h3 className="text-base font-semibold">Save Project JSON</h3>
-        <p className="text-xs text-muted-foreground">
-          Ratio: {ratioLabel} | Orientation: {orientation} | Rotation: {rotation}°
-        </p>
-        <div className="space-y-2">
-          <Label>Filename</Label>
-          <input
-            type="text"
-            value={filename}
-            onChange={(event) => onFilenameChange(event.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-            placeholder={defaultFilename}
-          />
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold">Save to Library</h3>
+          <p className="text-xs text-muted-foreground">
+            Stores the current project in the local `Users` library.
+          </p>
         </div>
         <div className="space-y-2">
-          <Label>Project Title (optional)</Label>
+          <Label>Project Title</Label>
           <input
             type="text"
             value={title}
@@ -91,7 +73,7 @@ export function SaveJsonDialog({
             Cancel
           </Button>
           <Button size="sm" onClick={onConfirm}>
-            Save Project JSON
+            Save to Library
           </Button>
         </div>
       </div>

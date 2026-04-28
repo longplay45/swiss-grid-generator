@@ -2,7 +2,7 @@
 
 import { ExportPdfDialog } from "@/components/dialogs/ExportPdfDialog"
 import { NoticeDialog } from "@/components/dialogs/NoticeDialog"
-import { SaveJsonDialog } from "@/components/dialogs/SaveJsonDialog"
+import { SaveLibraryDialog } from "@/components/dialogs/SaveLibraryDialog"
 import type { ExportFormat, ExportProgressState, PrintPresetKey } from "@/hooks/useExportActions"
 
 type NoticeState = {
@@ -16,9 +16,6 @@ type DialogOption = {
 }
 
 type Props = {
-  ratioLabel: string
-  orientation: "portrait" | "landscape"
-  rotation: number
   isDarkUi: boolean
   exportDialog: {
     isOpen: boolean
@@ -34,6 +31,12 @@ type Props = {
     filename: string
     onFilenameChange: (value: string) => void
     defaultFilename: string
+    jsonTitle: string
+    onJsonTitleChange: (value: string) => void
+    jsonDescription: string
+    onJsonDescriptionChange: (value: string) => void
+    jsonAuthor: string
+    onJsonAuthorChange: (value: string) => void
     activePrintPreset: PrintPresetKey | null
     showPrintAdjustments: boolean
     onApplyPrintPreset: (key: PrintPresetKey) => void
@@ -47,8 +50,6 @@ type Props = {
   saveDialog: {
     isOpen: boolean
     onClose: () => void
-    filename: string
-    onFilenameChange: (value: string) => void
     title: string
     onTitleChange: (value: string) => void
     description: string
@@ -56,16 +57,12 @@ type Props = {
     author: string
     onAuthorChange: (value: string) => void
     onConfirm: () => void
-    defaultFilename: string
   }
   noticeState: NoticeState
   onCloseNotice: () => void
 }
 
 export function WorkspaceDialogs({
-  ratioLabel,
-  orientation,
-  rotation,
   isDarkUi,
   exportDialog,
   saveDialog,
@@ -89,6 +86,12 @@ export function WorkspaceDialogs({
         exportFilenameDraft={exportDialog.filename}
         onExportFilenameChange={exportDialog.onFilenameChange}
         defaultFilename={exportDialog.defaultFilename}
+        jsonTitleDraft={exportDialog.jsonTitle}
+        onJsonTitleChange={exportDialog.onJsonTitleChange}
+        jsonDescriptionDraft={exportDialog.jsonDescription}
+        onJsonDescriptionChange={exportDialog.onJsonDescriptionChange}
+        jsonAuthorDraft={exportDialog.jsonAuthor}
+        onJsonAuthorChange={exportDialog.onJsonAuthorChange}
         activePrintPresetDraft={exportDialog.activePrintPreset}
         showPrintAdjustmentsDraft={exportDialog.showPrintAdjustments}
         onApplyPrintPreset={exportDialog.onApplyPrintPreset}
@@ -100,12 +103,10 @@ export function WorkspaceDialogs({
         exportProgress={exportDialog.progress}
       />
 
-      <SaveJsonDialog
+      <SaveLibraryDialog
         isOpen={saveDialog.isOpen}
         onClose={saveDialog.onClose}
         isDarkUi={isDarkUi}
-        filename={saveDialog.filename}
-        onFilenameChange={saveDialog.onFilenameChange}
         title={saveDialog.title}
         onTitleChange={saveDialog.onTitleChange}
         description={saveDialog.description}
@@ -113,10 +114,6 @@ export function WorkspaceDialogs({
         author={saveDialog.author}
         onAuthorChange={saveDialog.onAuthorChange}
         onConfirm={saveDialog.onConfirm}
-        defaultFilename={saveDialog.defaultFilename}
-        ratioLabel={ratioLabel}
-        orientation={orientation}
-        rotation={rotation}
       />
 
       <NoticeDialog

@@ -112,7 +112,7 @@ Open Help, then hover blue-marked UI areas to jump the Help panel to the matchin
 Export should confirm a resolved layout, not repair it. Before exporting, check page order, page range, visible guide toggles, rotation, page numbering, and document variables.
 
 ### Pick Export By Downstream Use {#tooltip-export-format}
-Use `PDF` for faithful vector output, `SVG` for frozen per-page vector geometry, and `IDML` for InDesign continuation. SVG and IDML freeze typography as geometry, so choose them when exact shape fidelity matters more than live text editing.
+Use `JSON` for editable project exchange and backup, `PDF` for faithful vector output, `SVG` for frozen per-page vector geometry, and `IDML` for InDesign continuation. SVG and IDML freeze typography as geometry, so choose them when exact shape fidelity matters more than live text editing.
 
 ### WYSIWYG Includes The Visible Overlays {#tooltip-export-visibility}
 Export follows the current preview visibility state for baselines, margins, modules, typography, and image placeholders. Turn off construction guides before final output unless they are intentionally part of the deliverable.

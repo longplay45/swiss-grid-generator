@@ -129,6 +129,7 @@ function parseLayoutPreset(
   return {
     id: toPresetId(sourcePath),
     category: resolvePresetCategory(sourcePath),
+    source: "bundled",
     label: PRESET_METADATA_OVERRIDES[sourcePath]?.label ?? title ?? toPresetLabel(sourcePath),
     title,
     description,

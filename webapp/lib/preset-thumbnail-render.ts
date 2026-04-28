@@ -58,11 +58,83 @@ type TypographyStyleDefinition = {
   baselineMultiplier: number
 }
 
+type ThumbnailGuideArgs = {
+  ctx: CanvasRenderingContext2D
+  margins: { top: number; left: number; bottom: number }
+  gridUnit: number
+  gridRows: number
+  gridCols: number
+  moduleWidths: readonly number[]
+  moduleHeights: readonly number[]
+  colStarts: readonly number[]
+  rowStarts: readonly number[]
+  fallbackModuleWidth: number
+  fallbackModuleHeight: number
+  pageWidth: number
+  pageHeight: number
+  scale: number
+}
+
 function normalizeKeys(value: unknown): BlockId[] {
   if (!Array.isArray(value)) return []
   return value
     .filter((entry): entry is BlockId => typeof entry === "string" && entry.trim().length > 0)
     .filter((key, index, source) => source.indexOf(key) === index)
+}
+
+function drawThumbnailConstructionGuides({
+  ctx,
+  margins,
+  gridUnit,
+  gridRows,
+  gridCols,
+  moduleWidths,
+  moduleHeights,
+  colStarts,
+  rowStarts,
+  fallbackModuleWidth,
+  fallbackModuleHeight,
+  pageWidth,
+  pageHeight,
+  scale,
+}: ThumbnailGuideArgs): void {
+  const contentTop = margins.top * scale
+  const baselineSpacing = gridUnit * scale
+  const baselineRows = Math.max(
+    0,
+    Math.round((pageHeight - (margins.top + margins.bottom) * scale) / Math.max(0.0001, baselineSpacing)),
+  )
+  const contentBottom = contentTop + baselineRows * baselineSpacing
+
+  ctx.save()
+  ctx.globalAlpha = 0.48
+  ctx.strokeStyle = "#06b6d4"
+  ctx.lineWidth = 0.5
+
+  for (let row = 0; row < gridRows; row += 1) {
+    for (let col = 0; col < gridCols; col += 1) {
+      const x = margins.left * scale + (colStarts[col] ?? 0) * scale
+      const y = contentTop + (rowStarts[row] ?? 0) * scale
+      const width = (moduleWidths[col] ?? fallbackModuleWidth) * scale
+      const height = (moduleHeights[row] ?? fallbackModuleHeight) * scale
+      ctx.strokeRect(x, y, width, height)
+    }
+  }
+
+  ctx.globalAlpha = 0.3
+  ctx.strokeStyle = "#ec4899"
+  ctx.lineWidth = 0.3
+
+  for (let row = 0; row <= baselineRows; row += 1) {
+    const y = contentTop + row * baselineSpacing
+    if (y > contentBottom + 0.0001) break
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(pageWidth, y)
+    ctx.stroke()
+  }
+
+  ctx.restore()
 }
 
 function getThumbnailLayout(page: LayoutPresetBrowserPage): ThumbnailLayout | null {
@@ -417,6 +489,22 @@ export function drawPresetThumbnailToCanvas(
   ctx.beginPath()
   ctx.rect(0, 0, pageWidth, pageHeight)
   ctx.clip()
+  drawThumbnailConstructionGuides({
+    ctx,
+    margins,
+    gridUnit,
+    gridRows,
+    gridCols,
+    moduleWidths,
+    moduleHeights,
+    colStarts,
+    rowStarts,
+    fallbackModuleWidth: moduleWidthBase,
+    fallbackModuleHeight: moduleHeightBase,
+    pageWidth,
+    pageHeight,
+    scale,
+  })
 
   if (blockOrder.length > 0) {
     const textMetrics = createTextMetricsService<TypographyStyleKey, FontFamily>()

@@ -298,8 +298,8 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "Save stores project metadata, pages, page settings, layout state, and optional tours.",
-              "The Save dialog lets you set filename plus optional project title, description, and author.",
-              "Load restores the full project and active page.",
+              "`Save to Library` opens a metadata dialog for project title plus optional description and author, then stores the full project in the local `Users` library.",
+              "`Import` restores the full project and active page from a saved project JSON.",
               "Legacy single-page JSON is still accepted and wrapped into a one-page project.",
               "Positioned layers are stored with logical anchors so layouts stay stable across grid changes."
             ]
@@ -315,11 +315,12 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Export supports vector PDF, SVG, and IDML.",
+              "Export supports JSON, vector PDF, SVG, and IDML.",
               "Multi-page projects can export a page range.",
               "The dialog includes format switcher, page-range selectors, filename field, and export progress.",
               "Exports are WYSIWYG with respect to the current preview visibility state for baselines, margins, modules, typography, and image placeholders.",
-              "All export formats are 100% vector based.",
+              "PDF, SVG, and IDML exports are 100% vector based.",
+              "JSON exports the full editable project document with metadata, pages, and current layout state.",
               "PDF includes print presets plus optional bleed and registration-style marks.",
               "Multi-page SVG exports a ZIP with one outlined SVG per selected page.",
               "IDML exports separate guides, typography, and placeholder layers with frozen text geometry.",
@@ -394,7 +395,7 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "Header actions cover presets, load, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.",
+              "Header actions cover presets, import, save, export, undo/redo, dark mode, smart text zoom, display toggles, Project, and help.",
               "The Project panel can be toggled with `Cmd/Ctrl+Shift+P`.",
               "`Shift` + click on a page-visibility toggle applies the same state to every page in the project."
             ]
@@ -441,13 +442,13 @@ export const HELP_CONTENT_GROUPS = [
         "subsections": []
       },
       {
-        "title": "Load",
+        "title": "Import",
         "id": "help-header-load",
         "indexed": true,
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Loads a saved project JSON. Shortcut: `Cmd/Ctrl+O`."
+            "text": "Imports a saved project JSON. Shortcut: `Cmd/Ctrl+O`."
           }
         ],
         "subsections": []
@@ -459,7 +460,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Saves the current project JSON and opens metadata fields for filename, title, description, and author. Shortcut: `Cmd/Ctrl+S`."
+            "text": "Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library. Shortcut: `Cmd/Ctrl+S`."
           }
         ],
         "subsections": []
@@ -471,7 +472,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Opens export for PDF, SVG, and IDML. Shortcut: `Cmd/Ctrl+Shift+E`."
+            "text": "Opens export for JSON, PDF, SVG, and IDML. Shortcut: `Cmd/Ctrl+Shift+E`."
           }
         ],
         "subsections": []
@@ -866,7 +867,7 @@ export const HELP_INDEX_GROUPS = [
       },
       {
         "id": "help-header-load",
-        "label": "Load"
+        "label": "Import"
       },
       {
         "id": "help-header-save",
@@ -1032,7 +1033,7 @@ export const ALL_HELP_INDEX_ITEMS = [
   },
   {
     "id": "help-header-load",
-    "label": "Load"
+    "label": "Import"
   },
   {
     "id": "help-header-save",
