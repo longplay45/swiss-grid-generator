@@ -298,8 +298,8 @@ export const HELP_CONTENT_GROUPS = [
             "type": "list",
             "items": [
               "Save stores project metadata, pages, page settings, layout state, and optional tours.",
-              "`Save to Library` opens a metadata dialog for project title plus optional description and author, then stores the full project in the local `Users` library.",
-              "`Import` restores the full project and active page from a saved project JSON.",
+              "`Save to Library` opens a metadata dialog for project title plus optional description and author, then stores the full project in the local `Users` library as a gzip-compressed archive.",
+              "`Import` restores the full project and active page from either a saved project JSON or a compressed `.swissgridgenerator` archive.",
               "Legacy single-page JSON is still accepted and wrapped into a one-page project.",
               "Positioned layers are stored with logical anchors so layouts stay stable across grid changes."
             ]
@@ -320,7 +320,7 @@ export const HELP_CONTENT_GROUPS = [
               "The dialog includes format switcher, page-range selectors, filename field, and export progress.",
               "Exports are WYSIWYG with respect to the current preview visibility state for baselines, margins, modules, typography, and image placeholders.",
               "PDF, SVG, and IDML exports are 100% vector based.",
-              "JSON exports the full editable project document with metadata, pages, and current layout state.",
+              "JSON exports the full editable project document with metadata, pages, and current layout state, with an optional gzip-compressed `.swissgridgenerator` variant.",
               "PDF exports store available project metadata in the PDF document info dictionary.",
               "SVG exports embed available project metadata in the SVG metadata block.",
               "IDML exports carry project metadata into the package XMP metadata.",
@@ -451,7 +451,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Imports a saved project JSON. Shortcut: `Cmd/Ctrl+O`."
+            "text": "Imports a saved project JSON or compressed `.swissgridgenerator` archive. Shortcut: `Cmd/Ctrl+O`."
           }
         ],
         "subsections": []
@@ -463,7 +463,7 @@ export const HELP_CONTENT_GROUPS = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library. Shortcut: `Cmd/Ctrl+S`."
+            "text": "Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library as a gzip-compressed archive. Shortcut: `Cmd/Ctrl+S`."
           }
         ],
         "subsections": []

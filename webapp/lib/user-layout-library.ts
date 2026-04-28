@@ -3,6 +3,12 @@ import Dexie, { liveQuery } from "dexie"
 import { parseLoadedProject } from "@/lib/document-session"
 import { buildPresetBrowserPage } from "@/lib/presets/browser-page"
 import type { LayoutPreset, LayoutPresetProjectSource } from "@/lib/presets/types"
+import {
+  buildProjectTransferPayload,
+  encodeProjectTransferPayload,
+  parseProjectTransferPayloadBytes,
+  toArrayBuffer,
+} from "@/lib/project-transfer"
 
 type StoredUserProject = {
   id: string
@@ -13,7 +19,9 @@ type StoredUserProject = {
   createdAt: string
   updatedAt: string
   originPresetId?: string
-  project: LayoutPresetProjectSource
+  projectCompression?: "gzip"
+  projectArchive?: ArrayBuffer
+  project?: LayoutPresetProjectSource
 }
 
 type SaveUserProjectArgs = {
@@ -38,6 +46,18 @@ class UserLayoutLibraryDb extends Dexie {
     this.version(1).stores({
       projects: "id, updatedAt, createdAt, label",
     })
+    this.version(2).stores({
+      projects: "id, updatedAt, createdAt, label",
+    }).upgrade((tx) => tx.table("projects").toCollection().modify((record: StoredUserProject) => {
+      if (record.projectArchive || !record.project) return
+      const encoded = encodeProjectTransferPayload(
+        buildProjectTransferPayload(parseLoadedProject<Record<string, unknown>>(record.project)),
+        true,
+      )
+      record.projectArchive = toArrayBuffer(encoded.bytes)
+      record.projectCompression = "gzip"
+      delete record.project
+    }))
   }
 }
 
@@ -61,7 +81,13 @@ function createUserProjectId(): string {
 }
 
 function normalizeStoredProject(record: StoredUserProject): StoredUserProject {
-  const parsed = parseLoadedProject<Record<string, unknown>>(record.project)
+  const projectSource = record.projectArchive
+    ? parseProjectTransferPayloadBytes(record.projectArchive)
+    : record.project
+  if (!projectSource) {
+    throw new Error(`Invalid user project "${record.id}": missing project archive`)
+  }
+  const parsed = parseLoadedProject<Record<string, unknown>>(projectSource)
   const createdAt = record.createdAt && !Number.isNaN(Date.parse(record.createdAt))
     ? new Date(record.createdAt).toISOString()
     : parsed.metadata.createdAt && !Number.isNaN(Date.parse(parsed.metadata.createdAt))
@@ -72,7 +98,7 @@ function normalizeStoredProject(record: StoredUserProject): StoredUserProject {
     ...record,
     createdAt,
     project: {
-      ...record.project,
+      ...projectSource,
       title: record.title,
       description: record.description,
       author: record.author,
@@ -104,7 +130,7 @@ function toUserPreset(record: StoredUserProject): LayoutPreset {
     projectSourceJson: JSON.stringify(normalized.project),
     browserPage: buildPresetBrowserPage(
       browserPage,
-      `${USER_LAYOUT_SOURCE_PATH_PREFIX}/${normalized.id}.json`,
+      `${USER_LAYOUT_SOURCE_PATH_PREFIX}/${normalized.id}.swissgridgenerator`,
     ),
   }
 }
@@ -128,6 +154,17 @@ export async function saveProjectToUserLibrary({
   const normalizedCreatedAt = createdAt && !Number.isNaN(Date.parse(createdAt))
     ? new Date(createdAt).toISOString()
     : now
+  const projectDocument = parseLoadedProject<Record<string, unknown>>({
+    ...project,
+    title,
+    description,
+    author,
+    createdAt: normalizedCreatedAt,
+  })
+  const encoded = encodeProjectTransferPayload(
+    buildProjectTransferPayload(projectDocument),
+    true,
+  )
 
   await getDb().projects.put({
     id: nextId,
@@ -138,13 +175,8 @@ export async function saveProjectToUserLibrary({
     createdAt: normalizedCreatedAt,
     updatedAt: now,
     originPresetId: typeof originPresetId === "string" && originPresetId.trim().length > 0 ? originPresetId : undefined,
-    project: {
-      ...project,
-      title,
-      description,
-      author,
-      createdAt: normalizedCreatedAt,
-    },
+    projectCompression: "gzip",
+    projectArchive: toArrayBuffer(encoded.bytes),
   })
 
   return nextId

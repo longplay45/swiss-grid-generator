@@ -37,6 +37,8 @@ type Props = {
     onJsonDescriptionChange: (value: string) => void
     jsonAuthor: string
     onJsonAuthorChange: (value: string) => void
+    jsonCompressionEnabled: boolean
+    onJsonCompressionEnabledChange: (value: boolean) => void
     activePrintPreset: PrintPresetKey | null
     showPrintAdjustments: boolean
     onApplyPrintPreset: (key: PrintPresetKey) => void
@@ -92,6 +94,8 @@ export function WorkspaceDialogs({
         onJsonDescriptionChange={exportDialog.onJsonDescriptionChange}
         jsonAuthorDraft={exportDialog.jsonAuthor}
         onJsonAuthorChange={exportDialog.onJsonAuthorChange}
+        jsonCompressionEnabledDraft={exportDialog.jsonCompressionEnabled}
+        onJsonCompressionEnabledChange={exportDialog.onJsonCompressionEnabledChange}
         activePrintPresetDraft={exportDialog.activePrintPreset}
         showPrintAdjustmentsDraft={exportDialog.showPrintAdjustments}
         onApplyPrintPreset={exportDialog.onApplyPrintPreset}

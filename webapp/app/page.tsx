@@ -1511,7 +1511,7 @@ export default function Home() {
       <input
         ref={loadFileInputRef}
         type="file"
-        accept="application/json,.json"
+        accept="application/json,application/gzip,.json,.swissgridgenerator"
         className="hidden"
         onChange={loadProjectFromInput}
       />
@@ -1551,6 +1551,8 @@ export default function Home() {
             onJsonDescriptionChange: exportActions.setSaveDescriptionDraft,
             jsonAuthor: exportActions.saveAuthorDraft,
             onJsonAuthorChange: exportActions.setSaveAuthorDraft,
+            jsonCompressionEnabled: exportActions.jsonCompressionEnabledDraft,
+            onJsonCompressionEnabledChange: exportActions.setJsonCompressionEnabledDraft,
             activePrintPreset: exportActions.activePrintPresetDraft,
             showPrintAdjustments: exportActions.showPrintAdjustmentsDraft,
             onApplyPrintPreset: exportActions.applyPrintPreset,

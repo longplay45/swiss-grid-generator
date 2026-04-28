@@ -8,7 +8,7 @@ Current capability inventory for Swiss Grid Generator.
 - Save to Library dialog for project title plus optional description and author metadata.
 - Independent page settings and layout state per page.
 - Mixed page layer stack with text paragraphs and image placeholders.
-- Save/load as project JSON.
+- Save/load as plain project JSON or gzip-compressed `.swissgridgenerator` archives.
 - Bundled presets use the same project JSON schema as saved documents.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project on load.
 - Optional guided project tours embedded in project JSON and rendered as an in-app step overlay.
@@ -165,8 +165,9 @@ Current capability inventory for Swiss Grid Generator.
 ## Export
 
 - Save dialog stores the current project into the local `Users` library with editable title, description, and author metadata.
+- Local `Users` library records are stored as gzip-compressed project archives in IndexedDB.
 - `PDF` selected-range export.
-- `JSON` full-project export.
+- `JSON` full-project export, optionally gzip-compressed as `.swissgridgenerator`.
 - `SVG v1` selected-range export.
 - `IDML v1` selected-range export.
 - Export defaults to the full project page range.

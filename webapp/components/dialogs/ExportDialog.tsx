@@ -27,6 +27,8 @@ type Props = {
   onJsonDescriptionChange: (value: string) => void
   jsonAuthorDraft: string
   onJsonAuthorChange: (value: string) => void
+  jsonCompressionEnabledDraft: boolean
+  onJsonCompressionEnabledChange: (value: boolean) => void
   activePrintPresetDraft: PrintPresetKey | null
   showPrintAdjustmentsDraft: boolean
   onApplyPrintPreset: (key: PrintPresetKey) => void
@@ -59,6 +61,8 @@ export function ExportDialog({
   onJsonDescriptionChange,
   jsonAuthorDraft,
   onJsonAuthorChange,
+  jsonCompressionEnabledDraft,
+  onJsonCompressionEnabledChange,
   activePrintPresetDraft,
   showPrintAdjustmentsDraft,
   onApplyPrintPreset,
@@ -254,6 +258,21 @@ export function ExportDialog({
                 placeholder="Author name"
               />
             </div>
+            <label className="flex items-start gap-2 rounded-md border border-input bg-background px-3 py-2">
+              <input
+                type="checkbox"
+                checked={jsonCompressionEnabledDraft}
+                onChange={(event) => onJsonCompressionEnabledChange(event.target.checked)}
+                disabled={isExporting}
+                className="mt-0.5 h-3.5 w-3.5"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm text-foreground">Gzip-compress export</span>
+                <span className="block text-xs text-muted-foreground">
+                  Save compressed project files as <code>.swissgridgenerator</code> instead of plain <code>.json</code>.
+                </span>
+              </span>
+            </label>
             <p className={helpTextClassName}>
               JSON exports the full editable project document, including all pages, metadata, and current layout state.
             </p>

@@ -8,6 +8,7 @@ import {
   type ProjectMetadata,
   type LoadedProject,
 } from "@/lib/document-session"
+import { parseProjectTransferPayloadBytes } from "@/lib/project-transfer"
 
 type Args<Layout> = {
   defaultMetadata?: ProjectMetadata
@@ -40,7 +41,8 @@ export function useProjectController<Layout>({
 
     reader.onload = () => {
       try {
-        applyLoadedProject(parseLoadedProject<Layout>(JSON.parse(String(reader.result))))
+        const payload = parseProjectTransferPayloadBytes(reader.result as ArrayBuffer)
+        applyLoadedProject(parseLoadedProject<Layout>(payload))
         onProjectLoaded?.("file")
       } catch (error) {
         console.error(error)
@@ -51,13 +53,13 @@ export function useProjectController<Layout>({
     }
 
     reader.onerror = () => {
-      const error = reader.error ?? new Error("Could not read project JSON.")
+      const error = reader.error ?? new Error("Could not read project file.")
       console.error(error)
       onLoadFailed(error)
       finish()
     }
 
-    reader.readAsText(file)
+    reader.readAsArrayBuffer(file)
   }, [applyLoadedProject, onLoadFailed, onProjectLoaded])
 
   const loadPresetProject = useCallback((preset: LayoutPreset) => {

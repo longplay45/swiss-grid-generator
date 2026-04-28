@@ -165,7 +165,7 @@ Default: `swiss`
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
 - `Save` (save icon): opens Save to Library dialog
-- `Import` (download icon): import project JSON
+- `Import` (download icon): import project JSON or compressed `.swissgridgenerator` archive
 - `Export` (upload icon): opens the export dialog
 - `Save` and `Export` stay disabled until a preview layout is available.
 - Divider placement: between `Export` and `Undo`
@@ -246,7 +246,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ### Header Keyboard Shortcuts
 
-- `Cmd/Ctrl+O`: Import project JSON
+- `Cmd/Ctrl+O`: Import project JSON or `.swissgridgenerator`
 - `Cmd/Ctrl+S`: Save to Library
 - `Cmd/Ctrl+Shift+E`: Open export popup
 - `Cmd/Ctrl+Z`: Undo
@@ -275,11 +275,14 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - Project Title input
 - Description input
 - Author input
+- Stores the project in the local Users library as a gzip-compressed archive
 - Confirm/Cancel
 
 ### Export dialog
 
 - Format buttons: `JSON`, `PDF`, `SVG`, `IDML`
+- `JSON` export includes an optional gzip-compression checkbox
+- Uncompressed JSON exports use `.json`; compressed exports use `.swissgridgenerator`
 - `Pages` range controls (`From`, `To`) appear for multipage projects
   - default selection is the full project page range
 - All export formats use each page's stored document size
