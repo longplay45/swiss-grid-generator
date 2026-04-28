@@ -3,7 +3,6 @@ import {
   CircleHelp,
   Download,
   Image,
-  Import,
   LayoutGrid,
   LayoutTemplate,
   Layers3,
@@ -15,6 +14,7 @@ import {
   Sun,
   Type,
   Undo2,
+  Upload,
   ZoomIn,
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
@@ -83,18 +83,6 @@ export function useHeaderActions(args: Args) {
         icon: <LayoutTemplate className="h-4 w-4" />,
       },
     },
-    { type: "divider", key: "divider-presets-load" },
-    {
-      type: "action",
-      action: {
-        key: "import",
-        ariaLabel: "Import",
-        tooltip: "Import project JSON",
-        shortcutId: "load_json",
-        onClick: args.onLoadJson,
-        icon: <Import className="h-4 w-4" />,
-      },
-    },
     {
       type: "action",
       action: {
@@ -108,7 +96,17 @@ export function useHeaderActions(args: Args) {
         icon: <Save className="h-4 w-4" />,
       },
     },
-    { type: "divider", key: "divider-save-export" },
+    {
+      type: "action",
+      action: {
+        key: "import",
+        ariaLabel: "Import",
+        tooltip: "Import project JSON",
+        shortcutId: "load_json",
+        onClick: args.onLoadJson,
+        icon: <Download className="h-4 w-4" />,
+      },
+    },
     {
       type: "action",
       action: {
@@ -118,7 +116,7 @@ export function useHeaderActions(args: Args) {
         shortcutId: "export_pdf",
         disabled: !args.hasPreviewLayout,
         onClick: args.onExportPdf,
-        icon: <Download className="h-4 w-4" />,
+        icon: <Upload className="h-4 w-4" />,
       },
     },
     { type: "divider", key: "divider-export-undo" },

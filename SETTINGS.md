@@ -163,12 +163,12 @@ Default: `swiss`
 
 ### File Actions (icon buttons)
 
-- `Presets` (layout-template icon): opens/closes the presets browser in the preview area (placed before Import)
-- `Import` (import icon): import project JSON
+- `Presets` (layout-template icon): opens/closes the presets browser in the preview area
 - `Save` (save icon): opens Save to Library popup
-- `Export` (download icon): opens the export popup
+- `Import` (download icon): import project JSON
+- `Export` (upload icon): opens the export popup
 - `Save` and `Export` stay disabled until a preview layout is available.
-- Divider placement: between `Presets` and `Load`, and between `Export` and `Undo`
+- Divider placement: between `Export` and `Undo`
 - `Esc` closes the presets browser without loading a preset
 
 ### Undo / Redo (icon buttons)
@@ -208,7 +208,8 @@ Default: `swiss`
 
 ### Project Panel
 
-- `Name`: editable project title; also drives the default project JSON filename stem.
+- `Title`: editable project title; also drives the default project JSON filename stem.
+- `Title` section can be expanded or collapsed; when collapsed the compact title row remains visible, and when expanded it also shows `Description` and `Author` inputs.
 - Project header includes a small `i` toggle that shows or hides the document info text; when inactive no collapsed summary is shown.
 - `Pages`: single-click to select, double-click to open or close inline layers, drag to reorder, rename/delete as needed, and `Add Page` always creates a new single page.
 - Page creation is capped at `1000` pages per project.
@@ -279,13 +280,15 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 ### Export popup
 
-- Format buttons: `PDF`, `SVG`, `IDML`
+- Format buttons: `JSON`, `PDF`, `SVG`, `IDML`
 - `Pages` range controls (`From`, `To`) appear for multipage projects
   - default selection is the full project page range
 - All export formats use each page's stored document size
   - no paper-size override controls
   - no custom width override controls
 - All export formats stay vector-based
+- `JSON` exports the full editable project document with metadata, pages, and current layout state
+- `PDF`, `SVG`, and `IDML` preserve available project metadata where the format supports it
 - Use `SVG` or `IDML` when typography must be frozen as non-live geometry
 - `IDML`:
   - exports the selected page range

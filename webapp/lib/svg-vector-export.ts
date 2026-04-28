@@ -31,6 +31,9 @@ type ExportVectorSvgOptions = {
   showTypography: boolean
   title?: string
   description?: string
+  author?: string
+  createdAt?: string
+  creatorTool?: string
 }
 
 function formatNumber(value: number): string {
@@ -49,6 +52,41 @@ function escapeXml(value: string): string {
 
 function quoteAttr(value: string): string {
   return escapeXml(value)
+}
+
+function buildSvgMetadataMarkup({
+  title,
+  description,
+  author,
+  createdAt,
+  creatorTool,
+}: {
+  title: string
+  description: string
+  author: string
+  createdAt: string
+  creatorTool: string
+}): string {
+  return [
+    `<metadata>`,
+    `<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">`,
+    `<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/">`,
+    `<dc:format>image/svg+xml</dc:format>`,
+    `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(title)}</rdf:li></rdf:Alt></dc:title>`,
+    description
+      ? `<dc:description><rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(description)}</rdf:li></rdf:Alt></dc:description>`
+      : "",
+    author
+      ? `<dc:creator><rdf:Seq><rdf:li>${escapeXml(author)}</rdf:li></rdf:Seq></dc:creator>`
+      : "",
+    createdAt
+      ? `<dc:date><rdf:Seq><rdf:li>${escapeXml(createdAt)}</rdf:li></rdf:Seq></dc:date>`
+      : "",
+    creatorTool ? `<xmp:CreatorTool>${escapeXml(creatorTool)}</xmp:CreatorTool>` : "",
+    `</rdf:Description>`,
+    `</rdf:RDF>`,
+    `</metadata>`,
+  ].join("")
 }
 
 function isRenderableTextFragment(text: string): boolean {
@@ -114,6 +152,9 @@ export async function renderSwissGridVectorSvg({
   showTypography,
   title = "Swiss Grid Vector Export",
   description = "Swiss Grid Generator SVG export",
+  author = "",
+  createdAt = "",
+  creatorTool = "Swiss Grid Generator",
 }: ExportVectorSvgOptions): Promise<string> {
   const exportPlan = buildPageExportPlan({
     result,
@@ -210,12 +251,20 @@ export async function renderSwissGridVectorSvg({
   const pageOutlineMarkup = exportPlan.pageOutline
     ? `<rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" fill="none" stroke="${formatSvgColor(exportPlan.pageOutline.strokeColor)}" stroke-width="${formatNumber(exportPlan.pageOutline.strokeWidth)}" />`
     : ""
+  const metadataMarkup = buildSvgMetadataMarkup({
+    title,
+    description,
+    author,
+    createdAt,
+    creatorTool,
+  })
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${formatNumber(width)}pt" height="${formatNumber(height)}pt" viewBox="0 0 ${formatNumber(exportPlan.pageWidth)} ${formatNumber(exportPlan.pageHeight)}" role="img" aria-labelledby="title desc">`,
     `<title id="title">${escapeXml(title)}</title>`,
     `<desc id="desc">${escapeXml(description)}</desc>`,
+    metadataMarkup,
     backgroundMarkup,
     `<defs><clipPath id="${pageClipId}"><rect x="0" y="0" width="${formatNumber(exportPlan.pageWidth)}" height="${formatNumber(exportPlan.pageHeight)}" /></clipPath></defs>`,
     `<g id="page"${pageRotationTransform} stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">`,

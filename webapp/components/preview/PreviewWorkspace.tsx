@@ -73,6 +73,7 @@ type Props = {
   documentHistoryResetNonce: number
   selectedLayerKey: string | null
   projectTitle: string
+  projectDescription: string
   projectAuthor: string
   projectCreatedAt?: string
   projectPages: PreviewProjectPage[]
@@ -100,6 +101,8 @@ type Props = {
   onLayoutChange: (layout: PreviewLayoutState) => void
   onSnapshotGetterChange: (getSnapshot: (() => PreviewLayoutState) | null) => void
   onProjectTitleChange: (nextTitle: string) => void
+  onProjectDescriptionChange: (nextDescription: string) => void
+  onProjectAuthorChange: (nextAuthor: string) => void
   onPageSelect: (pageId: string) => void
   onPageAdd: () => void
   onPageFacingToggle: (pageId: string, enabled: boolean) => void
@@ -203,6 +206,7 @@ export function PreviewWorkspace({
   documentHistoryResetNonce,
   selectedLayerKey,
   projectTitle,
+  projectDescription,
   projectAuthor,
   projectCreatedAt,
   projectPages,
@@ -230,6 +234,8 @@ export function PreviewWorkspace({
   onLayoutChange,
   onSnapshotGetterChange,
   onProjectTitleChange,
+  onProjectDescriptionChange,
+  onProjectAuthorChange,
   onPageSelect,
   onPageAdd,
   onPageFacingToggle,
@@ -451,6 +457,7 @@ export function PreviewWorkspace({
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
+                onRequestNotice={onRequestNotice}
                 showRolloverInfo={false}
                 showHelpHints={false}
                 compact
@@ -582,8 +589,11 @@ export function PreviewWorkspace({
                   ) : null}
                   <ProjectTitleSection
                     projectTitle={projectTitle}
-                    pageCount={documentVariablePageCount}
+                    projectDescription={projectDescription}
+                    projectAuthor={projectAuthor}
                     onProjectTitleChange={onProjectTitleChange}
+                    onProjectDescriptionChange={onProjectDescriptionChange}
+                    onProjectAuthorChange={onProjectAuthorChange}
                     isDarkMode={isDarkUi}
                   />
                   <div className="mt-4 rounded-md py-2">

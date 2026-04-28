@@ -106,7 +106,7 @@ Current capability inventory for Swiss Grid Generator.
 - Paragraph hover edit affordance is anchored at the paragraph's top-left origin so shallow frames remain reachable.
 - Preview rollover stays active while editing, so clicking another existing unlocked paragraph or image placeholder retargets the already open editor instead of leaving edit mode.
 - Project panel supports page switching, page-card open/close toggles with inline layer lists, reordering, renaming, deletion, and single-page creation.
-- Project panel includes editable project title plus live page count.
+- Project panel includes an editable `TITLE` section that expands to reveal inline `description` and `author` metadata fields storing on blur.
 - Project panel includes a document-info toggle with project/page/layer/type summary text.
 - Opened page cards expose a `Facing pages` control above `Layers`, converting a page into a true facing spread with mirrored inner/outer margins, a zero-gap preview seam, and doubled effective columns across the spread.
 - The Project header includes an `i` toggle for document info text.
@@ -182,11 +182,14 @@ Current capability inventory for Swiss Grid Generator.
   - `sRGB IEC61966-2.1` for digital export
   - `Coated FOGRA39` for print export
 - PDF guide groups exported as separate form objects for margins, modules, and baselines.
+- PDF exports preserve available project metadata (`title`, `description`, `author`, `createdAt`) where the format supports it.
 - Use `SVG` or `IDML` when typography must be frozen as non-live geometry.
 - Single-page SVG exports a trim-size vector file with exact glyph-outline typography, guides, and placeholders.
 - Multi-page SVG exports a ZIP with one trim-size SVG per page.
+- SVG exports embed available project metadata in the file metadata block.
 - SVG typography is exported as outline geometry, so downstream text is not live-editable.
 - IDML exports separate `Guides`, `Typography`, and `Placeholders` layers with frozen text-frame geometry, so downstream text is not live-editable.
+- IDML exports preserve available project metadata in the package XMP metadata.
 - `Esc` closes idle export UI and cancels a running export at the next safe checkpoint.
 
 ## UI and Workflow

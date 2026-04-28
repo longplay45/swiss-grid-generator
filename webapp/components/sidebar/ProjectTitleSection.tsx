@@ -1,23 +1,31 @@
 "use client"
 
-import { Pencil } from "lucide-react"
+import { ChevronUp, Pencil } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
+import { ProjectMetadataSection } from "@/components/sidebar/ProjectMetadataSection"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 
 type Props = {
   projectTitle: string
-  pageCount: number
+  projectDescription: string
+  projectAuthor: string
   onProjectTitleChange: (nextTitle: string) => void
+  onProjectDescriptionChange: (nextDescription: string) => void
+  onProjectAuthorChange: (nextAuthor: string) => void
   isDarkMode?: boolean
 }
 
 export function ProjectTitleSection({
   projectTitle,
-  pageCount,
+  projectDescription,
+  projectAuthor,
   onProjectTitleChange,
+  onProjectDescriptionChange,
+  onProjectAuthorChange,
   isDarkMode = false,
 }: Props) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false)
   const [projectTitleDraft, setProjectTitleDraft] = useState(projectTitle)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
@@ -68,7 +76,21 @@ export function ProjectTitleSection({
 
   return (
     <div className="mt-4">
-      <div className={SECTION_HEADLINE_CLASSNAME}>Name</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className={SECTION_HEADLINE_CLASSNAME}>Title</div>
+        <button
+          type="button"
+          aria-label={isExpanded ? "Collapse title metadata" : "Expand title metadata"}
+          aria-pressed={isExpanded}
+          onClick={() => setIsExpanded((current) => !current)}
+          className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}
+        >
+          <ChevronUp
+            className={`h-2 w-2 transition-transform ${isExpanded ? "rotate-180" : "rotate-90"}`}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
       <div className="mt-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           {isEditingProjectTitle ? (
@@ -90,9 +112,7 @@ export function ProjectTitleSection({
               className={`w-full rounded-sm border px-2 py-1 text-[12px] outline-none ${tone.input}`}
             />
           ) : (
-            <div className={`truncate text-xs ${tone.body}`}>
-              {visibleProjectTitle} | {pageCount} {pageCount === 1 ? "page" : "pages"}
-            </div>
+            <div className={`truncate text-xs ${tone.body}`}>{visibleProjectTitle}</div>
           )}
         </div>
         <button
@@ -104,6 +124,15 @@ export function ProjectTitleSection({
           <Pencil className="h-2 w-2" />
         </button>
       </div>
+      {isExpanded ? (
+        <ProjectMetadataSection
+          projectDescription={projectDescription}
+          projectAuthor={projectAuthor}
+          onProjectDescriptionChange={onProjectDescriptionChange}
+          onProjectAuthorChange={onProjectAuthorChange}
+          isDarkMode={isDarkMode}
+        />
+      ) : null}
     </div>
   )
 }

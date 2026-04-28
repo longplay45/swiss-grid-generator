@@ -321,6 +321,9 @@ export const HELP_CONTENT_GROUPS = [
               "Exports are WYSIWYG with respect to the current preview visibility state for baselines, margins, modules, typography, and image placeholders.",
               "PDF, SVG, and IDML exports are 100% vector based.",
               "JSON exports the full editable project document with metadata, pages, and current layout state.",
+              "PDF exports store available project metadata in the PDF document info dictionary.",
+              "SVG exports embed available project metadata in the SVG metadata block.",
+              "IDML exports carry project metadata into the package XMP metadata.",
               "PDF includes print presets plus optional bleed and registration-style marks.",
               "Multi-page SVG exports a ZIP with one outlined SVG per selected page.",
               "IDML exports separate guides, typography, and placeholder layers with frozen text geometry.",
@@ -595,7 +598,7 @@ export const HELP_CONTENT_GROUPS = [
             "items": [
               "Opens the project title and page/layer management panel.",
               "The small `i` toggle in the Project header shows or hides the document info text.",
-              "The Project name row lets you rename the project title and shows the current page count.",
+              "The `TITLE` section keeps the compact title row visible by default and can be expanded to show `Description` and `Author`.",
               "The document info text summarizes pages, layers, fonts, cuts, words, characters, author, and creation date when metadata exists.",
               "Single-click a page card to activate it. Double-click it to open or close its inline layer list.",
               "Drag collapsed page cards to reorder the project.",

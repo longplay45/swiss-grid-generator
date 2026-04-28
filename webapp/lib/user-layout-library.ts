@@ -150,6 +150,19 @@ export async function saveProjectToUserLibrary({
   return nextId
 }
 
+export async function deleteUserProjectFromLibrary(id: string): Promise<void> {
+  if (!isIndexedDbAvailable()) {
+    throw new Error("IndexedDB is unavailable in this browser.")
+  }
+
+  const normalizedId = id.trim()
+  if (!normalizedId) {
+    throw new Error("User project id is required.")
+  }
+
+  await getDb().projects.delete(normalizedId)
+}
+
 export async function listUserLayoutPresets(): Promise<LayoutPreset[]> {
   if (!isIndexedDbAvailable()) return []
 

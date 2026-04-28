@@ -95,6 +95,8 @@ type ProjectWideVisibilityHistoryEntry = {
   previousValues: Record<string, boolean>
 }
 
+type EditableProjectMetadataField = "title" | "description" | "author"
+
 const PROJECT_HISTORY_LIMIT = 100
 
 function resolveProjectWideVisibilitySettingValue(
@@ -394,6 +396,7 @@ export default function Home() {
     redoAny,
     handlePreviewHistoryRecord,
     handleProjectHistoryRecord,
+    markDirty,
     markClean,
   } = useWorkspaceHistory({
     buildUiSnapshot,
@@ -849,15 +852,38 @@ export default function Home() {
   const handleProjectTitleChange = useCallback((nextTitle: string) => {
     const trimmedTitle = nextTitle.trim()
     if (!trimmedTitle) return
-    setProjectMetadata((current) => (
-      current.title === trimmedTitle
-        ? current
-        : {
-            ...current,
-            title: trimmedTitle,
-        }
-    ))
-  }, [setProjectMetadata])
+    setProjectMetadata((current) => {
+      if (current.title === trimmedTitle) return current
+      markDirty()
+      return {
+        ...current,
+        title: trimmedTitle,
+      }
+    })
+  }, [markDirty, setProjectMetadata])
+
+  const handleProjectMetadataFieldChange = useCallback((
+    field: Exclude<EditableProjectMetadataField, "title">,
+    nextValue: string,
+  ) => {
+    const trimmedValue = nextValue.trim()
+    setProjectMetadata((current) => {
+      if (current[field] === trimmedValue) return current
+      markDirty()
+      return {
+        ...current,
+        [field]: trimmedValue,
+      }
+    })
+  }, [markDirty, setProjectMetadata])
+
+  const handleProjectDescriptionChange = useCallback((nextDescription: string) => {
+    handleProjectMetadataFieldChange("description", nextDescription)
+  }, [handleProjectMetadataFieldChange])
+
+  const handleProjectAuthorChange = useCallback((nextAuthor: string) => {
+    handleProjectMetadataFieldChange("author", nextAuthor)
+  }, [handleProjectMetadataFieldChange])
 
   const handleSelectPreviousProjectPage = useCallback(() => {
     const nextPageId = resolveAdjacentProjectPageId(
@@ -1203,6 +1229,7 @@ export default function Home() {
       documentHistoryResetNonce={documentHistoryResetNonce}
       selectedLayerKey={selectedLayerKey}
       projectTitle={projectMetadata.title}
+      projectDescription={projectMetadata.description}
       projectAuthor={projectMetadata.author}
       projectCreatedAt={projectMetadata.createdAt}
       projectPages={projectPages}
@@ -1240,6 +1267,8 @@ export default function Home() {
       onLayoutChange={handleCommittedPreviewLayoutChange}
       onSnapshotGetterChange={handlePreviewSnapshotGetterChange}
       onProjectTitleChange={handleProjectTitleChange}
+      onProjectDescriptionChange={handleProjectDescriptionChange}
+      onProjectAuthorChange={handleProjectAuthorChange}
       onPageSelect={selectPage}
       onPageAdd={addPage}
       onPageFacingToggle={setFacingPageEnabled}

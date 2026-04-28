@@ -109,6 +109,11 @@ export function useWorkspaceHistory({
     recordHistoryDomain("project")
   }, [recordHistoryDomain])
 
+  const markDirty = useCallback(() => {
+    isDirtyRef.current = true
+    setIsDirty(true)
+  }, [])
+
   const markClean = useCallback(() => {
     isDirtyRef.current = false
     setIsDirty(false)
@@ -135,6 +140,7 @@ export function useWorkspaceHistory({
     redoAny,
     handlePreviewHistoryRecord,
     handleProjectHistoryRecord,
+    markDirty,
     markClean,
   }
 }

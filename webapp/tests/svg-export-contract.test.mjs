@@ -27,6 +27,20 @@ test("svg export emits a trim-sized svg with page clipping, guide groups, placeh
   assert.match(source, /<path d="\$\{quoteAttr\(pathData\)\}"/)
 })
 
+test("svg export embeds project metadata in a dedicated rdf block", () => {
+  const source = readText("lib/svg-vector-export.ts")
+  assert.match(source, /function\s+buildSvgMetadataMarkup\(/)
+  assert.match(source, /<metadata>/)
+  assert.match(source, /<rdf:RDF xmlns:rdf="http:\/\/www\.w3\.org\/1999\/02\/22-rdf-syntax-ns#">/)
+  assert.match(source, /<dc:format>image\/svg\+xml<\/dc:format>/)
+  assert.match(source, /<dc:title><rdf:Alt><rdf:li xml:lang="x-default">/)
+  assert.match(source, /<dc:description><rdf:Alt><rdf:li xml:lang="x-default">/)
+  assert.match(source, /<dc:creator><rdf:Seq><rdf:li>/)
+  assert.match(source, /<dc:date><rdf:Seq><rdf:li>/)
+  assert.match(source, /<xmp:CreatorTool>/)
+  assert.match(source, /metadataMarkup/)
+})
+
 test("svg export converts positioned graphemes into outline paths from the resolved font variant", () => {
   const source = readText("lib/svg-vector-export.ts")
   assert.match(source, /import\s+\{\s*loadOutlineFont\s*\}\s+from\s+"@\/lib\/font-outline"/)
@@ -72,6 +86,8 @@ test("export actions support pdf, svg, idml, and json formats with format-specif
   assert.match(source, /await\s+exportPDF\(resolvedPages,\s*filename,/)
   assert.match(source, /await\s+exportSVG\(resolvedPages,\s*filename,\s*normalizedRange\.fromPage\)/)
   assert.match(source, /const\s+defaultRange\s*=\s*\{\s*fromPage:\s*1,\s*toPage:\s*projectPageCount\s*\}/)
+  assert.match(source, /author:\s*trimmedAuthor,/)
+  assert.match(source, /createdAt:\s*normalizedCreatedAt,/)
 })
 
 test("multi-page svg export switches to zip packaging with one file per selected page", () => {

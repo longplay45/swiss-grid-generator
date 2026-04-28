@@ -544,6 +544,11 @@ export function useExportActions(ctx: ExportActionsContext) {
 
     const trimmedTitle = projectMetadata.title.trim()
     const trimmedDescription = projectMetadata.description.trim()
+    const trimmedAuthor = projectMetadata.author.trim()
+    const parsedCreatedAt = projectMetadata.createdAt ? Date.parse(projectMetadata.createdAt) : Number.NaN
+    const normalizedCreatedAt = Number.isNaN(parsedCreatedAt)
+      ? ""
+      : new Date(parsedCreatedAt).toISOString()
     const publishProgress = createProgressPublisher()
 
     if (pages.length === 1) {
@@ -574,6 +579,9 @@ export function useExportActions(ctx: ExportActionsContext) {
         showTypography: page.uiSettings.showTypography,
         title: trimmedTitle || filename,
         description: trimmedDescription || "Swiss Grid Vector Export",
+        author: trimmedAuthor,
+        createdAt: normalizedCreatedAt,
+        creatorTool: "Swiss Grid Generator",
       })
       throwIfExportCancelled()
       await publishProgress({
@@ -615,6 +623,9 @@ export function useExportActions(ctx: ExportActionsContext) {
         showTypography: page.uiSettings.showTypography,
         title: trimmedTitle ? `${trimmedTitle} - Page ${pageNumber}` : `${archiveBaseName} - Page ${pageNumber}`,
         description: trimmedDescription || `Swiss Grid Vector Export - Page ${pageNumber}`,
+        author: trimmedAuthor,
+        createdAt: normalizedCreatedAt,
+        creatorTool: "Swiss Grid Generator",
       })
       throwIfExportCancelled()
       zipEntries[pageFilename] = strToU8(svg)
@@ -645,6 +656,8 @@ export function useExportActions(ctx: ExportActionsContext) {
   }, [
     createProgressPublisher,
     downloadBlob,
+    projectMetadata.author,
+    projectMetadata.createdAt,
     projectMetadata.description,
     projectMetadata.title,
     throwIfExportCancelled,
