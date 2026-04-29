@@ -248,9 +248,9 @@ Shows or hides image placeholders on the active page. `Shift` + click applies th
 - If you are signed in, the account email is used in the form.
 - Submitting feedback stores the message in Supabase.
 
-### Imprint {#help-imprint-panel}
-- The footer `Imprint` action opens the app imprint sidebar.
-- It shows app, developer, license, contact, and the short Swiss-design disclaimer text.
+### Legal Notice {#help-legal-notice-panel}
+- The footer `Legal Notice` action opens the legal notice sidebar.
+- It includes provider details, contact, privacy notes, cloud storage notes, feedback handling, user rights, terms of use, and consumer dispute resolution.
 
 ### Keyboard Shortcuts {#help-shortcuts}
 `Cmd/Ctrl` means `Cmd` on macOS and `Ctrl` on Windows/Linux.
@@ -303,3 +303,8 @@ Shows or hides image placeholders on the active page. `Shift` + click applies th
 - `Background` applies `None` or a scheme color to the page.
 - The same scheme system is used in the image editor, where individual placeholders can still override swatch color and transparency.
 - Scheme and background preview on dropdown hover before commit.
+
+## App Information
+
+### Version {#help-app-version}
+{{APP_VERSION}}

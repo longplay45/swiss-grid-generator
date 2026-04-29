@@ -20,6 +20,7 @@ type Props = {
   isDarkMode?: boolean
   onClose: () => void
   activeSectionId?: HelpSectionId | null
+  appVersion: string
 }
 
 type SectionHeadingProps = {
@@ -179,8 +180,14 @@ function renderShortcutTable(tone: Tone) {
   )
 }
 
-function renderDirective(name: HelpDirectiveName, tone: Tone) {
+function renderDirective(name: HelpDirectiveName, tone: Tone, appVersion: string) {
   switch (name) {
+    case "APP_VERSION":
+      return (
+        <p className={`text-xs leading-relaxed ${tone.body}`}>
+          Current version: <span className={tone.emphasis}>V {appVersion}</span>
+        </p>
+      )
     case "AVAILABLE_FONTS":
       return renderAvailableFonts(tone)
     case "SHORTCUT_TABLE":
@@ -196,7 +203,7 @@ function renderDirective(name: HelpDirectiveName, tone: Tone) {
   }
 }
 
-function renderHelpBlock(block: HelpBlock, tone: Tone, key: string) {
+function renderHelpBlock(block: HelpBlock, tone: Tone, key: string, appVersion: string) {
   switch (block.type) {
     case "paragraph":
       return (
@@ -215,22 +222,22 @@ function renderHelpBlock(block: HelpBlock, tone: Tone, key: string) {
         </ul>
       )
     case "directive":
-      return <div key={key}>{renderDirective(block.name, tone)}</div>
+      return <div key={key}>{renderDirective(block.name, tone, appVersion)}</div>
     default:
       return null
   }
 }
 
-function renderSubsection(subsection: HelpSubsection, tone: Tone) {
+function renderSubsection(subsection: HelpSubsection, tone: Tone, appVersion: string) {
   return (
     <div key={subsection.id} id={subsection.id} className="space-y-1 pt-1">
       <h5 className={`text-xs font-semibold uppercase tracking-[0.08em] ${tone.caption}`}>{subsection.title}</h5>
-      {subsection.blocks.map((block, index) => renderHelpBlock(block, tone, `${subsection.id}-${index}`))}
+      {subsection.blocks.map((block, index) => renderHelpBlock(block, tone, `${subsection.id}-${index}`, appVersion))}
     </div>
   )
 }
 
-function renderSection(section: HelpSection, tone: Tone) {
+function renderSection(section: HelpSection, tone: Tone, appVersion: string) {
   return (
     <section key={section.id} id={section.id} className="space-y-2">
       <SectionHeading
@@ -239,13 +246,13 @@ function renderSection(section: HelpSection, tone: Tone) {
       >
         {section.title}
       </SectionHeading>
-      {section.blocks.map((block, index) => renderHelpBlock(block, tone, `${section.id}-${index}`))}
-      {section.subsections.map((subsection) => renderSubsection(subsection, tone))}
+      {section.blocks.map((block, index) => renderHelpBlock(block, tone, `${section.id}-${index}`, appVersion))}
+      {section.subsections.map((subsection) => renderSubsection(subsection, tone, appVersion))}
     </section>
   )
 }
 
-export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Props) {
+export function HelpPanel({ isDarkMode = false, onClose, activeSectionId, appVersion }: Props) {
   useEffect(() => {
     if (!activeSectionId) return
     const target = document.getElementById(activeSectionId)
@@ -322,7 +329,7 @@ export function HelpPanel({ isDarkMode = false, onClose, activeSectionId }: Prop
         ))}
       </div>
 
-      {renderedSections.map((section) => renderSection(section, tone))}
+      {renderedSections.map((section) => renderSection(section, tone, appVersion))}
     </div>
   )
 }

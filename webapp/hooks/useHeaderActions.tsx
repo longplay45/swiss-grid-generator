@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import type { PreviewHeaderShortcutId } from "@/lib/preview-header-shortcuts"
 
-export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | "account" | null
+export type SidebarPanel = "help" | "legal" | "layers" | "feedback" | "account" | null
 
 export type HeaderAction = {
   key: string

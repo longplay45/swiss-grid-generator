@@ -2,7 +2,7 @@ import type { PositionedTextFormatTrackingSegment } from "./text-format-runs.ts"
 import { getRenderedTextDrawCommandText } from "./text-draw-command.ts"
 import { splitTextForTracking } from "./text-rendering.ts"
 
-export type SidebarPanel = "settings" | "help" | "imprint" | "example" | "text-editor" | null
+export type SidebarPanel = "settings" | "help" | "legal" | "example" | "text-editor" | null
 export type NonEditorSidebarPanel = Exclude<SidebarPanel, "text-editor">
 export type InlineEditorTextAlign = "left" | "center" | "right"
 

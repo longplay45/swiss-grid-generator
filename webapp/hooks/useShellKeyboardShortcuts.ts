@@ -21,7 +21,7 @@ type Args = {
   onToggleImagePlaceholders: () => void
   onToggleLayersPanel: () => void
   onToggleHelpPanel: () => void
-  onToggleImprintPanel: () => void
+  onToggleLegalNoticePanel: () => void
   onOpenPresets: () => void
   onClosePresets: () => void
   onSelectFirstPage: () => void
@@ -49,7 +49,7 @@ export function useShellKeyboardShortcuts({
   onToggleImagePlaceholders,
   onToggleLayersPanel,
   onToggleHelpPanel,
-  onToggleImprintPanel,
+  onToggleLegalNoticePanel,
   onOpenPresets,
   onClosePresets,
   onSelectFirstPage,
@@ -146,8 +146,8 @@ export function useShellKeyboardShortcuts({
         case "toggle_help_panel":
           onToggleHelpPanel()
           return
-        case "toggle_imprint_panel":
-          onToggleImprintPanel()
+        case "toggle_legal_notice_panel":
+          onToggleLegalNoticePanel()
           return
         case "toggle_example_panel":
           onOpenPresets()
@@ -173,7 +173,7 @@ export function useShellKeyboardShortcuts({
     onToggleBaselines,
     onToggleDarkMode,
     onToggleHelpPanel,
-    onToggleImprintPanel,
+    onToggleLegalNoticePanel,
     onToggleLayersPanel,
     onToggleMargins,
     onToggleModules,

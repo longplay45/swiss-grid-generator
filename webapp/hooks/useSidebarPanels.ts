@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 
 import type { HelpSectionId } from "@/lib/help-registry"
 
-export type SidebarPanel = "help" | "imprint" | "layers" | "feedback" | "account" | null
+export type SidebarPanel = "help" | "legal" | "layers" | "feedback" | "account" | null
 
 type Args = {
   showLayers: boolean
@@ -10,7 +10,7 @@ type Args = {
 }
 
 function isPanelAllowedWhilePresetsOpen(panel: SidebarPanel): boolean {
-  return panel === null || panel === "help" || panel === "feedback" || panel === "imprint" || panel === "account"
+  return panel === null || panel === "help" || panel === "feedback" || panel === "legal" || panel === "account"
 }
 
 export function useSidebarPanels({ showLayers, onShowLayersChange }: Args) {

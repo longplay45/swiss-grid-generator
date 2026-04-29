@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react"
 import { GridPreview } from "@/components/grid-preview"
 import { FeedbackPanel } from "@/components/sidebar/FeedbackPanel"
 import { HelpPanel } from "@/components/sidebar/HelpPanel"
-import { ImprintPanel } from "@/components/sidebar/ImprintPanel"
+import { LegalNoticePanel } from "@/components/sidebar/LegalNoticePanel"
 import { AccountPanel } from "@/components/sidebar/AccountPanel"
 import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
@@ -54,7 +54,7 @@ type Props = {
   fileGroup: HeaderItem[]
   displayGroup: HeaderItem[]
   sidebarGroup: HeaderAction[]
-  activeSidebarPanel: "settings" | "help" | "imprint" | "layers" | "feedback" | "account" | null
+  activeSidebarPanel: "settings" | "help" | "legal" | "layers" | "feedback" | "account" | null
   activeHelpSectionId: HelpSectionId | null
   showPresetsBrowser: boolean
   isDarkUi: boolean
@@ -298,7 +298,7 @@ export function PreviewWorkspace({
     !showPresetsBrowser
     || activeSidebarPanel === "help"
     || activeSidebarPanel === "feedback"
-    || activeSidebarPanel === "imprint"
+    || activeSidebarPanel === "legal"
     || activeSidebarPanel === "account"
   )
 
@@ -564,6 +564,7 @@ export function PreviewWorkspace({
                 isDarkMode={isDarkUi}
                 onClose={closeSidebarPanel}
                 activeSectionId={activeHelpSectionId}
+                appVersion={appVersion}
               />
             )}
             {activeSidebarPanel === "layers" && (
@@ -681,8 +682,8 @@ export function PreviewWorkspace({
                 </div>
               </div>
             )}
-            {activeSidebarPanel === "imprint" && (
-              <ImprintPanel
+            {activeSidebarPanel === "legal" && (
+              <LegalNoticePanel
                 isDarkMode={isDarkUi}
                 onClose={closeSidebarPanel}
               />

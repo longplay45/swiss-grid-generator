@@ -12,24 +12,22 @@ type UiTheme = {
 
 type Props = {
   showBetaBadge: boolean
-  appVersion: string
   uiTheme: UiTheme
   settingsPanels: ReactNode
   editorMode: "text" | "image" | null
   onEditorHostChange: (node: HTMLDivElement | null) => void
   onToggleFeedbackPanel: () => void
-  onToggleImprintPanel: () => void
+  onToggleLegalNoticePanel: () => void
 }
 
 export const ControlSidebar = memo(function ControlSidebar({
   showBetaBadge,
-  appVersion,
   uiTheme,
   settingsPanels,
   editorMode,
   onEditorHostChange,
   onToggleFeedbackPanel,
-  onToggleImprintPanel,
+  onToggleLegalNoticePanel,
 }: Props) {
   return (
     <div
@@ -61,13 +59,10 @@ export const ControlSidebar = memo(function ControlSidebar({
         </div>
 
         <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${uiTheme.subtleBorder} ${uiTheme.bodyText}`}>
-          <div className="flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2">
-              {showBetaBadge ? (
-                <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
-              ) : null}
-              <span>V {appVersion}</span>
-            </span>
+          <div className={`flex items-center gap-3 ${showBetaBadge ? "justify-between" : "justify-end"}`}>
+            {showBetaBadge ? (
+              <span className="inline-flex items-center rounded bg-red-600 px-2 py-0.5 font-medium text-white">Beta</span>
+            ) : null}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -79,9 +74,9 @@ export const ControlSidebar = memo(function ControlSidebar({
               <button
                 type="button"
                 className={uiTheme.link}
-                onClick={onToggleImprintPanel}
+                onClick={onToggleLegalNoticePanel}
               >
-                Imprint
+                Legal Notice
               </button>
             </div>
           </div>

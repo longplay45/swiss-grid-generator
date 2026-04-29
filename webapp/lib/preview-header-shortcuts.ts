@@ -12,7 +12,7 @@ export type PreviewHeaderShortcutId =
   | "toggle_image_placeholders"
   | "toggle_layers_panel"
   | "toggle_help_panel"
-  | "toggle_imprint_panel"
+  | "toggle_legal_notice_panel"
   | "toggle_example_panel"
 
 export type ShortcutBinding = {
@@ -108,9 +108,9 @@ export const PREVIEW_HEADER_SHORTCUTS: PreviewHeaderShortcut[] = [
     bindings: [{ key: "h", shift: true }],
   },
   {
-    id: "toggle_imprint_panel",
+    id: "toggle_legal_notice_panel",
     combo: "Cmd/Ctrl+Shift+3",
-    description: "Toggle imprint sidebar",
+    description: "Toggle legal notice sidebar",
     bindings: [{ key: "3", shift: true }],
   },
   {

@@ -630,8 +630,8 @@ export default function Home() {
   const handleToggleFeedbackPanel = useCallback(() => {
     openSidebarPanel(activeSidebarPanel === "feedback" ? null : "feedback")
   }, [activeSidebarPanel, openSidebarPanel])
-  const handleToggleImprintPanel = useCallback(() => {
-    openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint")
+  const handleToggleLegalNoticePanel = useCallback(() => {
+    openSidebarPanel(activeSidebarPanel === "legal" ? null : "legal")
   }, [activeSidebarPanel, openSidebarPanel])
 
   const {
@@ -1414,7 +1414,7 @@ export default function Home() {
     onToggleImagePlaceholders: toggleShowImagePlaceholders,
     onToggleLayersPanel: toggleLayersPanel,
     onToggleHelpPanel: toggleHelpPanel,
-    onToggleImprintPanel: () => openSidebarPanel(activeSidebarPanel === "imprint" ? null : "imprint"),
+    onToggleLegalNoticePanel: () => openSidebarPanel(activeSidebarPanel === "legal" ? null : "legal"),
     onOpenPresets: () => setShowPresetsBrowser(true),
     onClosePresets: () => setShowPresetsBrowser(false),
     onSelectFirstPage: handleSelectFirstProjectPage,
@@ -1751,13 +1751,12 @@ export default function Home() {
       <div className={`flex h-screen overflow-hidden flex-col md:flex-row ${uiTheme.root}`}>
         <ControlSidebar
           showBetaBadge={SHOW_BETA_BADGE}
-          appVersion={APP_VERSION}
           uiTheme={controlSidebarTheme}
           editorMode={editorSidebarMode}
           onEditorHostChange={setEditorSidebarHost}
           settingsPanels={settingsPanels}
           onToggleFeedbackPanel={handleToggleFeedbackPanel}
-          onToggleImprintPanel={handleToggleImprintPanel}
+          onToggleLegalNoticePanel={handleToggleLegalNoticePanel}
         />
 
         {previewWorkspace}
