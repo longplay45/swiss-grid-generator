@@ -184,7 +184,8 @@ Opens the `Save to Library` dialog for project title, description, and author, t
 - The header account icon opens the right sidebar cloud account panel.
 - The account icon shows a green status dot only when the user is signed in and cloud sync is fully up to date; otherwise it stays orange.
 - While signed out, the `STATUS` row reads `Not connected`.
-- Magic-link sign-in uses Supabase browser auth.
+- Email-code sign-in uses Supabase browser auth.
+- The `STATUS` row expands to show recent local cloud/account events and a `Copy Log` support action.
 - Signed-in projects continue to use Dexie as the offline cache while syncing to Supabase in the background.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while you edit.
 - Auth and cloud-sync failures are translated into user-facing messages for rate limits, permissions, offline state, session expiry, and setup errors.

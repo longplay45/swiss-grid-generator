@@ -296,6 +296,8 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 - Cloud sync status line
 - `STATUS` shows `Not connected` while signed out
+- `STATUS` expands/collapses the local cloud activity log
+- Expanded status shows the latest event timestamp, recent local events, and `Copy Log`
 - Email input for email-code sign-in while signed out
 - Six-digit code input after a sign-in code is sent
 - Signed-in email display while authenticated

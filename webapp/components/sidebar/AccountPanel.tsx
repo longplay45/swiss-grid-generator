@@ -1,11 +1,17 @@
 "use client"
 
-import { X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { ChevronUp, Clipboard, X } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
+import {
+  cloudActivityLogQuery,
+  formatCloudActivityLogForSupport,
+  listCloudActivityLogEntries,
+  type CloudActivityLogEntry,
+} from "@/lib/user-layout-library"
 
 type Props = {
   isDarkMode?: boolean
@@ -18,6 +24,31 @@ type Props = {
   onSendSignInCode: (email: string) => Promise<void>
   onVerifySignInCode: (email: string, code: string) => Promise<void>
   onSignOut: () => Promise<void>
+}
+
+function formatActivityTimestamp(value: string | null | undefined, mode: "full" | "time" = "full"): string {
+  if (!value) return "No events"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  if (mode === "time") {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+  }
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })}`
+}
+
+function getActivityLevelClassName(level: CloudActivityLogEntry["level"], isDarkMode: boolean): string {
+  if (level === "success") return isDarkMode ? "text-[#9AC99A]" : "text-[#2f7d32]"
+  if (level === "warning") return isDarkMode ? "text-[#f2c182]" : "text-[#9a621f]"
+  if (level === "error") return isDarkMode ? "text-[#fe9f97]" : "text-[#c55a52]"
+  return isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"
 }
 
 export function AccountPanel({
@@ -35,6 +66,9 @@ export function AccountPanel({
   const [emailDraft, setEmailDraft] = useState(userEmail ?? "")
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [codeDraft, setCodeDraft] = useState("")
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [activityEntries, setActivityEntries] = useState<CloudActivityLogEntry[]>([])
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const tone = isDarkMode
     ? {
@@ -51,7 +85,11 @@ export function AccountPanel({
       }
   const fieldClassName = `rounded-md border px-3 py-2 text-xs ${tone.field}`
   const authButtonClassName = "h-auto rounded-md px-3 py-2 text-xs"
+  const pairedHeaderLabelClassName = `${SECTION_HEADLINE_CLASSNAME} mb-0 leading-none`
+  const pairedHeaderValueClassName = `min-w-0 truncate text-[11px] leading-none ${tone.caption}`
   const hasPendingCode = !userEmail && Boolean(pendingEmail)
+  const latestActivityTimestamp = activityEntries[0]?.createdAt ?? null
+  const latestActivityLabel = useMemo(() => formatActivityTimestamp(latestActivityTimestamp), [latestActivityTimestamp])
 
   useEffect(() => {
     if (!userEmail) return
@@ -59,6 +97,20 @@ export function AccountPanel({
     setCodeDraft("")
     setEmailDraft(userEmail)
   }, [userEmail])
+
+  useEffect(() => {
+    const subscription = cloudActivityLogQuery.subscribe({
+      next: setActivityEntries,
+      error: () => setActivityEntries([]),
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (copyState === "idle") return
+    const timeout = window.setTimeout(() => setCopyState("idle"), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [copyState])
 
   return (
     <div className="space-y-4">
@@ -86,19 +138,88 @@ export function AccountPanel({
       </section>
 
       <section className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Status</h4>
-          <div className={`pt-[1px] text-right text-[11px] leading-tight ${tone.caption}`}>
-            {cloudStatusLabel}
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          aria-expanded={isStatusOpen}
+          onClick={() => setIsStatusOpen((open) => !open)}
+        >
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span className={pairedHeaderLabelClassName}>Status</span>
+            <span className={pairedHeaderValueClassName}>
+              {cloudStatusLabel}
+            </span>
+          </span>
+          <span className={`relative top-[-3px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}>
+            <ChevronUp
+              className={`h-2 w-2 transition-transform ${isStatusOpen ? "rotate-180" : "rotate-90"}`}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+        {isStatusOpen ? (
+          <div className={`space-y-2 border-t pt-2 text-xs ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className={tone.body}>Last Event</div>
+              <div className={`text-right text-[11px] leading-tight ${tone.caption}`}>
+                {latestActivityLabel}
+              </div>
+            </div>
+            <div className={`max-h-48 overflow-y-auto border-y py-1 ${isDarkMode ? "border-[#313A47]" : "border-gray-200"}`}>
+              {activityEntries.length > 0 ? (
+                <div className="space-y-1">
+                  {activityEntries.slice(0, 12).map((entry) => (
+                    <div key={entry.id} className="grid grid-cols-[54px_1fr] gap-2 py-1 text-[11px] leading-snug">
+                      <div className={`tabular-nums ${tone.caption}`}>
+                        {formatActivityTimestamp(entry.createdAt, "time")}
+                      </div>
+                      <div className="min-w-0">
+                        <div className={getActivityLevelClassName(entry.level, isDarkMode)}>
+                          {entry.action}
+                        </div>
+                        {entry.projectTitle || entry.message ? (
+                          <div className={`truncate ${tone.caption}`}>
+                            {[entry.projectTitle, entry.message].filter(Boolean).join(" · ")}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`py-2 text-[11px] ${tone.caption}`}>No local cloud activity yet.</div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className={`text-[11px] leading-tight ${tone.caption}`}>
+                {activityEntries.length} local {activityEntries.length === 1 ? "entry" : "entries"}
+              </div>
+              <Button
+                size="sm"
+                className={`${authButtonClassName} inline-flex items-center gap-1.5`}
+                onClick={async () => {
+                  try {
+                    const entries = await listCloudActivityLogEntries()
+                    await navigator.clipboard.writeText(formatCloudActivityLogForSupport(entries))
+                    setCopyState("copied")
+                  } catch {
+                    setCopyState("error")
+                  }
+                }}
+              >
+                <Clipboard className="h-3 w-3" />
+                {copyState === "copied" ? "Copied" : copyState === "error" ? "Copy Failed" : "Copy Log"}
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
       {userEmail ? (
         <section className="space-y-2">
-          <div className="flex items-start justify-between gap-3">
-            <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Signed In As</h4>
-            <div className={`pt-[1px] text-right text-[11px] leading-tight ${tone.caption}`}>
+          <div className="flex items-baseline justify-between gap-3">
+            <h4 className={pairedHeaderLabelClassName}>Signed In As</h4>
+            <div className={`text-right ${pairedHeaderValueClassName}`}>
               {userEmail}
             </div>
           </div>

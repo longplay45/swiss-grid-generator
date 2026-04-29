@@ -18,6 +18,7 @@ import {
   type UserFacingNotice,
 } from "@/lib/supabase/error-messages"
 import {
+  addCloudActivityLogEntry,
   getUserProjectRecord,
   listUserProjectRecords,
   markUserProjectDeleted,
@@ -76,6 +77,11 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
       syncState: "syncing",
       syncError: null,
     })
+    void addCloudActivityLogEntry({
+      level: "info",
+      action: localRecord.remoteProjectId ? "Project upload started" : "Project cloud create started",
+      projectTitle: localRecord.title,
+    })
 
     try {
       const loadedProject = toLoadedProject(localRecord)
@@ -98,6 +104,12 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         syncError: null,
         lastSyncedAt: remoteRow.last_synced_at ?? remoteRow.updated_at,
       })
+      void addCloudActivityLogEntry({
+        level: "success",
+        action: localRecord.remoteProjectId ? "Project uploaded" : "Project created in cloud",
+        message: `revision ${remoteRow.revision}`,
+        projectTitle: localRecord.title,
+      })
 
       return remoteRow.id
     } catch (error) {
@@ -109,6 +121,12 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         })
         setStatus("conflict")
         setLastNotice(CLOUD_SYNC_CONFLICT_NOTICE)
+        void addCloudActivityLogEntry({
+          level: "warning",
+          action: "Project sync conflict",
+          message: CLOUD_SYNC_CONFLICT_NOTICE.message,
+          projectTitle: localRecord.title,
+        })
         return localRecord.remoteProjectId ?? null
       }
 
@@ -120,6 +138,12 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
       })
       setStatus(navigator.onLine ? "error" : "offline")
       setLastNotice(notice)
+      void addCloudActivityLogEntry({
+        level: "error",
+        action: "Project sync failed",
+        message: notice.message,
+        projectTitle: localRecord.title,
+      })
       return localRecord.remoteProjectId ?? null
     }
   }, [supabase, user])
@@ -131,23 +155,49 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
     const deletionResult = await markUserProjectDeleted(localRecord.id)
 
     if (!supabase || !user || !localRecord.remoteProjectId || localRecord.ownerUserId && localRecord.ownerUserId !== user.id) {
+      void addCloudActivityLogEntry({
+        level: "warning",
+        action: "Cloud delete queued",
+        projectTitle: localRecord.title,
+      })
       return deletionResult === "purged" ? "purged_local" : "queued_cloud_delete"
     }
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
+      void addCloudActivityLogEntry({
+        level: "warning",
+        action: "Cloud delete queued offline",
+        projectTitle: localRecord.title,
+      })
       return deletionResult === "purged" ? "purged_local" : "queued_cloud_delete"
     }
 
     try {
       setStatus("syncing")
+      void addCloudActivityLogEntry({
+        level: "info",
+        action: "Cloud delete started",
+        projectTitle: localRecord.title,
+      })
       await deleteCloudProject(supabase, user.id, localRecord.remoteProjectId)
       await purgeUserProjectFromLibrary(localRecord.id)
       setStatus("synced")
+      void addCloudActivityLogEntry({
+        level: "success",
+        action: "Cloud project deleted",
+        projectTitle: localRecord.title,
+      })
       return deletionResult === "purged" ? "purged_local" : "deleted_cloud"
     } catch (error) {
       const notice = mapCloudSyncError(error)
       setStatus(notice.title === "Cloud Offline" ? "offline" : "error")
       setLastNotice(notice)
+      void addCloudActivityLogEntry({
+        level: "error",
+        action: "Cloud delete failed",
+        message: notice.message,
+        projectTitle: localRecord.title,
+      })
       return deletionResult === "purged" ? "purged_local" : "queued_cloud_delete"
     }
   }, [supabase, user])
@@ -159,11 +209,19 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
     }
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setStatus("offline")
+      void addCloudActivityLogEntry({
+        level: "warning",
+        action: "Cloud sync skipped offline",
+      })
       return
     }
 
     setStatus("syncing")
     setLastNotice(null)
+    void addCloudActivityLogEntry({
+      level: "info",
+      action: "Cloud sync started",
+    })
 
     try {
       const initialLocalRecords = await listUserProjectRecords()
@@ -173,6 +231,11 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         if (record.ownerUserId && record.ownerUserId !== user.id) continue
         await deleteCloudProject(supabase, user.id, record.remoteProjectId)
         await purgeUserProjectFromLibrary(record.id)
+        void addCloudActivityLogEntry({
+          level: "success",
+          action: "Queued cloud delete completed",
+          projectTitle: record.title,
+        })
       }
 
       const [localRecords, remoteRows] = await Promise.all([
@@ -201,6 +264,11 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
             lastSyncedAt: remoteRow.last_synced_at ?? remoteRow.updated_at,
             archiveBytes,
           })
+          void addCloudActivityLogEntry({
+            level: "success",
+            action: "Cloud project downloaded",
+            projectTitle: remoteRow.title,
+          })
           continue
         }
 
@@ -212,6 +280,12 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
           })
           sawConflict = true
           setLastNotice(CLOUD_SYNC_CONFLICT_NOTICE)
+          void addCloudActivityLogEntry({
+            level: "warning",
+            action: "Project sync conflict",
+            message: CLOUD_SYNC_CONFLICT_NOTICE.message,
+            projectTitle: localRecord.title,
+          })
           continue
         }
 
@@ -233,6 +307,12 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
             originPresetId: localRecord.originPresetId,
             archiveBytes,
           })
+          void addCloudActivityLogEntry({
+            level: "success",
+            action: "Cloud project updated locally",
+            message: `revision ${remoteRow.revision}`,
+            projectTitle: remoteRow.title,
+          })
         }
       }
 
@@ -244,10 +324,19 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
       }
 
       setStatus(sawConflict ? "conflict" : "synced")
+      void addCloudActivityLogEntry({
+        level: sawConflict ? "warning" : "success",
+        action: sawConflict ? "Cloud sync completed with conflict" : "Cloud sync completed",
+      })
     } catch (error) {
       const notice = mapCloudSyncError(error)
       setLastNotice(notice)
       setStatus(notice.title === "Cloud Offline" ? "offline" : "error")
+      void addCloudActivityLogEntry({
+        level: "error",
+        action: "Cloud sync failed",
+        message: notice.message,
+      })
     }
   }, [supabase, syncProjectByLocalId, user])
 
@@ -265,7 +354,13 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         void syncAllProjects()
       }
     }
-    const handleOffline = () => setStatus("offline")
+    const handleOffline = () => {
+      setStatus("offline")
+      void addCloudActivityLogEntry({
+        level: "warning",
+        action: "Browser went offline",
+      })
+    }
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
     return () => {

@@ -11,6 +11,16 @@ import {
 } from "@/lib/project-transfer"
 
 export type UserProjectSyncState = "local" | "syncing" | "synced" | "conflict" | "error" | "deleted"
+export type CloudActivityLevel = "info" | "success" | "warning" | "error"
+
+export type CloudActivityLogEntry = {
+  id: string
+  createdAt: string
+  level: CloudActivityLevel
+  action: string
+  message?: string
+  projectTitle?: string
+}
 
 type StoredUserProjectRow = {
   id: string
@@ -33,8 +43,17 @@ type StoredUserProjectRow = {
   project?: LayoutPresetProjectSource
 }
 
+type StoredCloudActivityRow = CloudActivityLogEntry
+
 export type UserProjectRecord = Omit<StoredUserProjectRow, "projectArchive"> & {
   project: LayoutPresetProjectSource
+}
+
+type AddCloudActivityLogEntryArgs = {
+  level: CloudActivityLevel
+  action: string
+  message?: string | null
+  projectTitle?: string | null
 }
 
 type SaveUserProjectArgs = {
@@ -78,9 +97,11 @@ type UpsertCloudProjectArgs = {
 
 const USER_LAYOUT_LIBRARY_DB_NAME = "swiss-grid-generator-user-layouts"
 const USER_LAYOUT_SOURCE_PATH_PREFIX = "user-library"
+const CLOUD_ACTIVITY_LOG_LIMIT = 100
 
 class UserLayoutLibraryDb extends Dexie {
   projects!: Dexie.Table<StoredUserProjectRow, string>
+  cloudActivity!: Dexie.Table<StoredCloudActivityRow, string>
 
   constructor() {
     super(USER_LAYOUT_LIBRARY_DB_NAME)
@@ -112,6 +133,10 @@ class UserLayoutLibraryDb extends Dexie {
         record.deletedAt = null
       }
     }))
+    this.version(4).stores({
+      projects: "id, updatedAt, createdAt, label, ownerUserId, remoteProjectId, syncState",
+      cloudActivity: "id, createdAt, level, action",
+    })
   }
 }
 
@@ -132,6 +157,18 @@ function createUserProjectId(): string {
     return crypto.randomUUID()
   }
   return `user-${Date.now()}`
+}
+
+function createCloudActivityId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  return `cloud-activity-${Date.now()}`
+}
+
+function toOptionalLogText(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed.slice(0, 240) : undefined
 }
 
 function normalizeIsoDate(value: string | null | undefined, fallback: string): string {
@@ -404,6 +441,67 @@ export async function deleteUserProjectFromLibrary(id: string): Promise<void> {
   await purgeUserProjectFromLibrary(id)
 }
 
+export async function addCloudActivityLogEntry({
+  level,
+  action,
+  message,
+  projectTitle,
+}: AddCloudActivityLogEntryArgs): Promise<void> {
+  try {
+    if (!isIndexedDbAvailable()) return
+
+    const normalizedAction = action.trim()
+    if (!normalizedAction) return
+
+    const table = getDb().cloudActivity
+    await table.add({
+      id: createCloudActivityId(),
+      createdAt: new Date().toISOString(),
+      level,
+      action: normalizedAction.slice(0, 80),
+      message: toOptionalLogText(message),
+      projectTitle: toOptionalLogText(projectTitle),
+    })
+
+    const count = await table.count()
+    if (count <= CLOUD_ACTIVITY_LOG_LIMIT) return
+
+    const excess = count - CLOUD_ACTIVITY_LOG_LIMIT
+    const oldEntries = await table
+      .orderBy("createdAt")
+      .limit(excess)
+      .primaryKeys()
+    if (oldEntries.length > 0) {
+      await table.bulkDelete(oldEntries as string[])
+    }
+  } catch {
+    // Diagnostic logging must never interrupt auth or sync work.
+  }
+}
+
+export async function listCloudActivityLogEntries(limit = CLOUD_ACTIVITY_LOG_LIMIT): Promise<CloudActivityLogEntry[]> {
+  if (!isIndexedDbAvailable()) return []
+  return getDb().cloudActivity
+    .orderBy("createdAt")
+    .reverse()
+    .limit(limit)
+    .toArray()
+}
+
+export function formatCloudActivityLogForSupport(entries: readonly CloudActivityLogEntry[]): string {
+  const lines = entries.map((entry) => {
+    const parts = [
+      entry.createdAt,
+      entry.level.toUpperCase(),
+      entry.action,
+      entry.projectTitle ? `project="${entry.projectTitle}"` : null,
+      entry.message ?? null,
+    ].filter(Boolean)
+    return parts.join(" | ")
+  })
+  return lines.length > 0 ? lines.join("\n") : "No local cloud activity log entries."
+}
+
 export async function listUserLayoutPresets(): Promise<LayoutPreset[]> {
   const records = await listUserProjectRecords()
   return records.flatMap((record) => {
@@ -418,3 +516,4 @@ export async function listUserLayoutPresets(): Promise<LayoutPreset[]> {
 }
 
 export const userLayoutPresetQuery = liveQuery(async () => listUserLayoutPresets())
+export const cloudActivityLogQuery = liveQuery(async () => listCloudActivityLogEntries())

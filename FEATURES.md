@@ -15,6 +15,7 @@ Current capability inventory for Swiss Grid Generator.
 - Optional Supabase email-code authentication for cloud sync.
 - Authenticated projects keep Dexie as the offline-first cache and use Supabase as the remote source of truth.
 - Saved user-library projects track `ownerUserId`, `remoteProjectId`, `remoteRevision`, `lastSyncedAt`, and sync state.
+- Local cloud/account activity is stored in a capped Dexie support log and is not uploaded automatically.
 
 ## Grid System
 
@@ -213,6 +214,7 @@ Current capability inventory for Swiss Grid Generator.
 - Imprint sidebar with app, developer, license, and contact information.
 - Header account panel with email-code sign-in, cloud sync status, and a green/orange header status dot.
 - When signed out, the account panel status row reads `Not connected`.
+- The account panel `Status` row expands to show recent local cloud/account events and a `Copy Log` support action.
 - Auth and cloud-sync failures surface as actionable product messages instead of raw provider errors.
 - Hidden-tab / page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
 - Keyboard shortcuts for header controls and panel toggles.
@@ -224,4 +226,5 @@ Current capability inventory for Swiss Grid Generator.
 - On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into Dexie.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while editing.
 - Revision mismatches are marked as `conflict` instead of overwriting local work silently.
+- Account and sync events are recorded locally as capped support diagnostics with `info`, `success`, `warning`, or `error` severity.
 - Remote-backed deletions are soft-deleted in Supabase via `deleted_at`, while local-only deletions purge the Dexie record immediately.
