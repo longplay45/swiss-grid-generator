@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { SupabaseClient, User } from "@supabase/supabase-js"
 
 import type { LoadedProject } from "@/lib/document-session"
@@ -28,6 +28,12 @@ import {
   type UserProjectRecord,
 } from "@/lib/user-layout-library"
 export type CloudSyncStatus = "signed_out" | "syncing" | "synced" | "offline" | "error" | "conflict"
+export type CloudSyncRequestReason = "session" | "online" | "focus" | "visible" | "preset_browser" | "manual"
+
+type CloudSyncRequestOptions = {
+  force?: boolean
+  throttleMs?: number
+}
 
 type Notice = {
   title: string
@@ -38,6 +44,17 @@ type Args = {
   supabase: SupabaseClient | null
   user: User | null
   onRequestNotice?: (notice: Notice) => void
+}
+
+const DEFAULT_SYNC_THROTTLE_MS = 60_000
+
+function hasLocalChangesAfterLastSync(record: UserProjectRecord): boolean {
+  if (record.syncState === "local") return true
+  if (!record.lastSyncedAt) return false
+  const updatedAt = Date.parse(record.updatedAt)
+  const lastSyncedAt = Date.parse(record.lastSyncedAt)
+  if (Number.isNaN(updatedAt) || Number.isNaN(lastSyncedAt)) return false
+  return updatedAt > lastSyncedAt + 1000
 }
 
 function toLoadedProject(record: UserProjectRecord): LoadedProject<Record<string, unknown>> {
@@ -61,6 +78,8 @@ function toLoadedProject(record: UserProjectRecord): LoadedProject<Record<string
 export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
   const [status, setStatus] = useState<CloudSyncStatus>("signed_out")
   const [lastNotice, setLastNotice] = useState<UserFacingNotice | null>(null)
+  const lastSyncAttemptAtRef = useRef(0)
+  const syncAllProjectsPromiseRef = useRef<Promise<void> | null>(null)
 
   const syncProjectByLocalId = useCallback(async (localId: string): Promise<string | null> => {
     if (!supabase || !user) return null
@@ -202,7 +221,13 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
     }
   }, [supabase, user])
 
-  const syncAllProjects = useCallback(async () => {
+  const syncAllProjects = useCallback(async (reason: CloudSyncRequestReason = "manual") => {
+    if (syncAllProjectsPromiseRef.current) {
+      await syncAllProjectsPromiseRef.current
+      return
+    }
+
+    const syncPromise = (async () => {
     if (!supabase || !user) {
       setStatus("signed_out")
       return
@@ -218,9 +243,11 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
 
     setStatus("syncing")
     setLastNotice(null)
+    lastSyncAttemptAtRef.current = Date.now()
     void addCloudActivityLogEntry({
       level: "info",
       action: "Cloud sync started",
+      message: reason,
     })
 
     try {
@@ -242,6 +269,7 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         listUserProjectRecords(),
         listCloudProjectRows(supabase, user.id),
       ])
+      const remoteProjectIds = new Set(remoteRows.map((row) => row.id))
 
       const localByRemoteId = new Map(
         localRecords
@@ -316,6 +344,37 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         }
       }
 
+      for (const localRecord of localRecords) {
+        if (!localRecord.remoteProjectId) continue
+        if (localRecord.deletedAt || localRecord.syncState === "deleted") continue
+        if (localRecord.ownerUserId && localRecord.ownerUserId !== user.id) continue
+        if (remoteProjectIds.has(localRecord.remoteProjectId)) continue
+
+        if (hasLocalChangesAfterLastSync(localRecord)) {
+          await updateUserProjectSyncState({
+            id: localRecord.id,
+            syncState: "conflict",
+            syncError: CLOUD_SYNC_CONFLICT_NOTICE.message,
+          })
+          sawConflict = true
+          setLastNotice(CLOUD_SYNC_CONFLICT_NOTICE)
+          void addCloudActivityLogEntry({
+            level: "warning",
+            action: "Project deleted remotely conflict",
+            message: CLOUD_SYNC_CONFLICT_NOTICE.message,
+            projectTitle: localRecord.title,
+          })
+          continue
+        }
+
+        await purgeUserProjectFromLibrary(localRecord.id)
+        void addCloudActivityLogEntry({
+          level: "success",
+          action: "Remote delete applied locally",
+          projectTitle: localRecord.title,
+        })
+      }
+
       const refreshedLocalRecords = await listUserProjectRecords()
       for (const record of refreshedLocalRecords) {
         if (record.ownerUserId && record.ownerUserId !== user.id) continue
@@ -338,20 +397,55 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
         message: notice.message,
       })
     }
+    })()
+
+    syncAllProjectsPromiseRef.current = syncPromise
+    try {
+      await syncPromise
+    } finally {
+      if (syncAllProjectsPromiseRef.current === syncPromise) {
+        syncAllProjectsPromiseRef.current = null
+      }
+    }
   }, [supabase, syncProjectByLocalId, user])
+
+  const requestCloudSync = useCallback((
+    reason: CloudSyncRequestReason = "manual",
+    options: CloudSyncRequestOptions = {},
+  ): boolean => {
+    if (!supabase || !user) return false
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setStatus("offline")
+      void addCloudActivityLogEntry({
+        level: "warning",
+        action: "Cloud sync request skipped offline",
+        message: reason,
+      })
+      return false
+    }
+
+    const now = Date.now()
+    const throttleMs = options.throttleMs ?? DEFAULT_SYNC_THROTTLE_MS
+    if (!options.force && now - lastSyncAttemptAtRef.current < throttleMs) {
+      return false
+    }
+
+    void syncAllProjects(reason)
+    return true
+  }, [supabase, syncAllProjects, user])
 
   useEffect(() => {
     if (!supabase || !user) {
       setStatus("signed_out")
       return
     }
-    void syncAllProjects()
+    void syncAllProjects("session")
   }, [supabase, syncAllProjects, user])
 
   useEffect(() => {
     const handleOnline = () => {
       if (supabase && user) {
-        void syncAllProjects()
+        requestCloudSync("online", { force: true })
       }
     }
     const handleOffline = () => {
@@ -367,7 +461,7 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
     }
-  }, [supabase, syncAllProjects, user])
+  }, [requestCloudSync, supabase, user])
 
   useEffect(() => {
     if (!lastNotice || !onRequestNotice) return
@@ -390,6 +484,7 @@ export function useCloudProjectSync({ supabase, user, onRequestNotice }: Args) {
     statusLabel,
     lastError: lastNotice?.message ?? null,
     deleteProjectByLocalId,
+    requestCloudSync,
     syncAllProjects,
     syncProjectByLocalId,
   }

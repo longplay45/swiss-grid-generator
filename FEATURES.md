@@ -164,7 +164,7 @@ Current capability inventory for Swiss Grid Generator.
 - Rendered page-1 thumbnails for bundled presets.
 - Preset rollover tooltip with title, description, author, and creation date metadata when rollover info is enabled.
 - User-library thumbnails show the orange status dot while the local copy is not yet fully cloud-synced.
-- Deleting a user-library thumbnail removes it locally immediately and, when needed, queues or performs a Supabase soft-delete for the cloud copy.
+- Deleting a user-library thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click preset to load.
 - `Esc` closes the browser without loading.
 
@@ -224,7 +224,9 @@ Current capability inventory for Swiss Grid Generator.
 - Supabase browser auth with email one-time-code sign-in.
 - Cloud archives stored as gzip-compressed `.swissgridgenerator` files.
 - On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into Dexie.
+- Signed-in sessions request throttled background sync when the app regains focus, becomes visible, or opens the preset browser.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while editing.
 - Revision mismatches are marked as `conflict` instead of overwriting local work silently.
+- Remote deletions are applied locally on sync when the local copy has no newer unsynced changes; otherwise the project is marked as `conflict`.
 - Account and sync events are recorded locally as capped support diagnostics with `info`, `success`, `warning`, or `error` severity.
 - Remote-backed deletions are soft-deleted in Supabase via `deleted_at`, while local-only deletions purge the Dexie record immediately.

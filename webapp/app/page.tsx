@@ -65,6 +65,7 @@ import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { resetEditorPanelPersistence } from "@/lib/editor-panel-persistence"
 import type { LayoutPreset } from "@/lib/presets"
 import { saveProjectToUserLibrary } from "@/lib/user-layout-library"
+import { getCloudSyncStatusIndicatorClassName } from "@/lib/cloud-status-indicator"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -196,6 +197,7 @@ export default function Home() {
     status: cloudSyncStatus,
     statusLabel: cloudStatusLabel,
     deleteProjectByLocalId,
+    requestCloudSync,
     syncProjectByLocalId,
   } = useCloudProjectSync({
     supabase,
@@ -336,6 +338,29 @@ export default function Home() {
     showLayers,
     onShowLayersChange: setShowLayers,
   })
+
+  useEffect(() => {
+    const handleFocus = () => {
+      requestCloudSync("focus", { throttleMs: 60_000 })
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        requestCloudSync("visible", { throttleMs: 60_000 })
+      }
+    }
+
+    window.addEventListener("focus", handleFocus)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      window.removeEventListener("focus", handleFocus)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [requestCloudSync])
+
+  useEffect(() => {
+    if (!showPresetsBrowser) return
+    requestCloudSync("preset_browser", { throttleMs: 30_000 })
+  }, [requestCloudSync, showPresetsBrowser])
   const {
     previewLayout,
     loadedPreviewLayout,
@@ -832,7 +857,7 @@ export default function Home() {
     if (deleteResult === "deleted_cloud") {
       handleRequestNotice({
         title: "Deleted from Cloud",
-        message: "The selected user layout was removed from the local library and soft-deleted in Supabase.",
+        message: "The selected user layout was removed from the local library and soft-deleted in Supabase. Cloud status: deleted in cloud.",
       })
       return
     }
@@ -840,7 +865,7 @@ export default function Home() {
     if (deleteResult === "queued_cloud_delete") {
       handleRequestNotice({
         title: "Deleted Locally",
-        message: "The selected user layout was removed from the local library and will be deleted from Supabase the next time cloud sync is available.",
+        message: "The selected user layout was removed from the local library and will be deleted from Supabase the next time cloud sync is available. Cloud status: delete queued.",
       })
       return
     }
@@ -848,7 +873,7 @@ export default function Home() {
     if (deleteResult === "purged_local") {
       handleRequestNotice({
         title: "Deleted from Users",
-        message: "The selected user layout was removed from the local library.",
+        message: "The selected user layout was removed from the local library. Cloud status: no cloud copy.",
       })
     }
   }, [activeUserProjectId, deleteProjectByLocalId, handleRequestNotice])
@@ -976,6 +1001,15 @@ export default function Home() {
   const handleProjectAuthorChange = useCallback((nextAuthor: string) => {
     handleProjectMetadataFieldChange("author", nextAuthor)
   }, [handleProjectMetadataFieldChange])
+
+  const signedInAuthor = user?.email?.trim() ?? ""
+  const effectiveProjectMetadata = useMemo<ProjectMetadata>(() => {
+    if (projectMetadata.author.trim() || !signedInAuthor) return projectMetadata
+    return {
+      ...projectMetadata,
+      author: signedInAuthor,
+    }
+  }, [projectMetadata, signedInAuthor])
 
   const handleSelectPreviousProjectPage = useCallback(() => {
     const nextPageId = resolveAdjacentProjectPageId(
@@ -1146,7 +1180,7 @@ export default function Home() {
       defaultSvgFilename,
       defaultIdmlFilename,
       defaultJsonFilename,
-      projectMetadata,
+      projectMetadata: effectiveProjectMetadata,
       onProjectMetadataChange: applyProjectMetadata,
       getCurrentProjectSnapshot,
     }),
@@ -1161,7 +1195,7 @@ export default function Home() {
       defaultSvgFilename,
       defaultIdmlFilename,
       defaultJsonFilename,
-      projectMetadata,
+      effectiveProjectMetadata,
       applyProjectMetadata,
       getCurrentProjectSnapshot,
     ],
@@ -1173,11 +1207,11 @@ export default function Home() {
 
   const handleSaveToLibrary = useCallback(async () => {
     const fallbackStem = toProjectFilenameStem(defaultJsonFilename.replace(/\.json$/i, "")) || "Untitled Project"
-    const trimmedTitle = projectMetadata.title.trim()
-    const trimmedDescription = projectMetadata.description.trim()
-    const trimmedAuthor = projectMetadata.author.trim()
-    const nextCreatedAt = projectMetadata.createdAt && !Number.isNaN(Date.parse(projectMetadata.createdAt))
-      ? new Date(projectMetadata.createdAt).toISOString()
+    const trimmedTitle = effectiveProjectMetadata.title.trim()
+    const trimmedDescription = effectiveProjectMetadata.description.trim()
+    const trimmedAuthor = effectiveProjectMetadata.author.trim()
+    const nextCreatedAt = effectiveProjectMetadata.createdAt && !Number.isNaN(Date.parse(effectiveProjectMetadata.createdAt))
+      ? new Date(effectiveProjectMetadata.createdAt).toISOString()
       : new Date().toISOString()
     const normalizedMetadata = {
       title: trimmedTitle,
@@ -1237,13 +1271,13 @@ export default function Home() {
     activeUserProjectId,
     defaultJsonFilename,
     exportActions,
+    effectiveProjectMetadata.author,
+    effectiveProjectMetadata.createdAt,
+    effectiveProjectMetadata.description,
+    effectiveProjectMetadata.title,
     getCurrentProjectSnapshot,
     handleRequestNotice,
     markClean,
-    projectMetadata.author,
-    projectMetadata.createdAt,
-    projectMetadata.description,
-    projectMetadata.title,
     replaceProjectSnapshot,
     setProjectMetadata,
     syncProjectByLocalId,
@@ -1259,13 +1293,13 @@ export default function Home() {
 
     const persistPromise = (async () => {
       const currentProject = getCurrentProjectSnapshot()
-      const nextCreatedAt = projectMetadata.createdAt && !Number.isNaN(Date.parse(projectMetadata.createdAt))
-        ? new Date(projectMetadata.createdAt).toISOString()
+      const nextCreatedAt = effectiveProjectMetadata.createdAt && !Number.isNaN(Date.parse(effectiveProjectMetadata.createdAt))
+        ? new Date(effectiveProjectMetadata.createdAt).toISOString()
         : new Date().toISOString()
       const normalizedMetadata = {
-        title: projectMetadata.title.trim(),
-        description: projectMetadata.description.trim(),
-        author: projectMetadata.author.trim(),
+        title: effectiveProjectMetadata.title.trim(),
+        description: effectiveProjectMetadata.description.trim(),
+        author: effectiveProjectMetadata.author.trim(),
         createdAt: nextCreatedAt,
       }
 
@@ -1316,13 +1350,13 @@ export default function Home() {
     activeOriginPresetId,
     activeUserProjectId,
     defaultJsonFilename,
+    effectiveProjectMetadata.author,
+    effectiveProjectMetadata.createdAt,
+    effectiveProjectMetadata.description,
+    effectiveProjectMetadata.title,
     getCurrentProjectSnapshot,
     isDirty,
     markClean,
-    projectMetadata.author,
-    projectMetadata.createdAt,
-    projectMetadata.description,
-    projectMetadata.title,
     replaceProjectSnapshot,
     setProjectMetadata,
     syncProjectByLocalId,
@@ -1389,6 +1423,11 @@ export default function Home() {
     onSelectNextPage: handleSelectNextProjectPage,
   })
 
+  const cloudStatusIndicatorClassName = getCloudSyncStatusIndicatorClassName({
+    status: cloudSyncStatus,
+    isSignedIn: Boolean(user),
+  })
+
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
     showPresetsBrowser,
@@ -1402,7 +1441,9 @@ export default function Home() {
     showLayers,
     smartTextZoomEnabled,
     hasUnsavedChanges: isDirty,
-    accountStatusDotClassName: user && cloudSyncStatus === "synced" ? "bg-[#4CAF50]" : "bg-[#fe9f97]",
+    accountStatusDotClassName: cloudStatusIndicatorClassName,
+    accountUserEmail: user?.email ?? null,
+    accountCloudStatusLabel: cloudStatusLabel,
     canUndo,
     canRedo,
     onOpenPresets: () => setShowPresetsBrowser(true),
@@ -1449,11 +1490,12 @@ export default function Home() {
       selectedLayerKey={selectedLayerKey}
       projectTitle={projectMetadata.title}
       projectDescription={projectMetadata.description}
-      projectAuthor={projectMetadata.author}
+      projectAuthor={effectiveProjectMetadata.author}
       projectCreatedAt={projectMetadata.createdAt}
       userEmail={user?.email ?? null}
       isCloudSignedIn={Boolean(user)}
       cloudStatusLabel={cloudStatusLabel}
+      cloudStatusIndicatorClassName={cloudStatusIndicatorClassName}
       authError={authError}
       authMessage={authMessage}
       projectPages={projectPages}

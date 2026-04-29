@@ -165,7 +165,7 @@ Default: `swiss`
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
 - User thumbnails in `3. Users` show the same orange status dot while the stored local copy is not yet fully cloud-synced
-- Deleting a user thumbnail removes it locally immediately and, when needed, queues or performs a Supabase soft-delete for the cloud copy
+- Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary
 - `Save` (save icon): opens Save to Library dialog
 - `Import` (download icon): import project JSON or compressed `.swissgridgenerator` archive
 - `Export` (upload icon): opens the export dialog
@@ -305,6 +305,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Verify Code`
 - `Sign Out`
 - Auth and cloud-sync failures are mapped to user-facing guidance for rate limits, permissions, offline state, session expiry, and setup errors
+- Signed-in sessions request throttled background sync on app focus, visible-tab return, and preset browser open
 - Hidden-tab and page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects
 - All export formats stay vector-based
 - `JSON` exports the full editable project document with metadata, pages, and current layout state

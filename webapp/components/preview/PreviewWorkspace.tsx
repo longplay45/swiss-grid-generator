@@ -80,6 +80,7 @@ type Props = {
   userEmail: string | null
   isCloudSignedIn: boolean
   cloudStatusLabel: string
+  cloudStatusIndicatorClassName: string
   authError: string | null
   authMessage: string | null
   projectPages: PreviewProjectPage[]
@@ -224,6 +225,7 @@ export function PreviewWorkspace({
   userEmail,
   isCloudSignedIn,
   cloudStatusLabel,
+  cloudStatusIndicatorClassName,
   authError,
   authMessage,
   projectPages,
@@ -483,7 +485,7 @@ export function PreviewWorkspace({
                 onDeleteUserPreset={onDeleteUserPreset}
                 isCloudSignedIn={isCloudSignedIn}
                 onRequestNotice={onRequestNotice}
-                showRolloverInfo={false}
+                showRolloverInfo
                 showHelpHints={false}
                 compact
               />
@@ -696,6 +698,7 @@ export function PreviewWorkspace({
                 onClose={closeSidebarPanel}
                 userEmail={userEmail}
                 cloudStatusLabel={cloudStatusLabel}
+                cloudStatusIndicatorClassName={cloudStatusIndicatorClassName}
                 authError={authError}
                 authMessage={authMessage}
                 onClearFeedback={onClearAuthFeedback}

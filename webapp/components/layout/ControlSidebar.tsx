@@ -38,7 +38,9 @@ export const ControlSidebar = memo(function ControlSidebar({
       }`}
     >
       <div className={`shrink-0 space-y-2 border-b p-4 md:px-6 md:pt-6 ${uiTheme.subtleBorder}`}>
-        <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">Swiss Grid Generator</h1>
+        <h1 className="text-3xl leading-[1] xfont-bold tracking-tight">
+          Swiss <span className="font-bold">Grid</span> Generator
+        </h1>
         <p className={`text-sm ${uiTheme.bodyText}`}>
           Based on Müller-Brockmann&apos;s <em><a href="https://amzn.to/40kfiUL">Grid Systems in Graphic Design</a></em> (1981).
         </p>

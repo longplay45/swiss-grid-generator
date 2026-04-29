@@ -167,9 +167,9 @@ Global controls and panel behavior.
 ### Presets {#help-header-examples}
 - Opens the presets browser.
 - Bundled files are grouped into `1. Presets` and `2. Examples`. `3. Users` is reserved for user files.
-- With rollover info enabled, hovering a preset thumbnail shows title, description, author, and date metadata.
-- User thumbnails in `3. Users` show the orange status dot while the local copy is not yet fully cloud-synced.
-- Deleting a user thumbnail removes it locally immediately and, when required, queues or performs a Supabase soft-delete for the cloud copy.
+- Hovering a preset thumbnail shows title, description, author, date, format, grid, baseline, margin, and rhythm metadata.
+- User thumbnails in `3. Users` also show cloud status in the rollover; the thumbnail status dot is green when synced, orange while pending, and red on sync error.
+- Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click a thumbnail to load it.
 - `Esc` closes the browser without loading.
 - Shortcut: `Cmd/Ctrl+Shift+4`.
@@ -185,9 +185,11 @@ Opens the `Save to Library` dialog for project title, description, and author, t
 - The account icon shows a green status dot only when the user is signed in and cloud sync is fully up to date; otherwise it stays orange.
 - While signed out, the `STATUS` row reads `Not connected`.
 - Email-code sign-in uses Supabase browser auth.
-- The `STATUS` row expands to show recent local cloud/account events and a `Copy Log` support action.
+- The `STATUS` row expands to show recent local cloud/account events and a `Download` support action.
 - Signed-in projects continue to use Dexie as the offline cache while syncing to Supabase in the background.
+- Signed-in sessions request throttled background sync when the app regains focus, becomes visible, or opens the preset browser.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while you edit.
+- Remote deletions are applied locally on sync when the local copy has no newer unsynced changes; otherwise the project is marked as a conflict.
 - Auth and cloud-sync failures are translated into user-facing messages for rate limits, permissions, offline state, session expiry, and setup errors.
 - When the tab is hidden or closed, the app performs a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
 

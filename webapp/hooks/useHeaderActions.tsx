@@ -53,6 +53,8 @@ type Args = {
   smartTextZoomEnabled: boolean
   hasUnsavedChanges: boolean
   accountStatusDotClassName: string
+  accountUserEmail: string | null
+  accountCloudStatusLabel: string
   canUndo: boolean
   canRedo: boolean
   onOpenPresets: () => void
@@ -74,6 +76,10 @@ type Args = {
 }
 
 export function useHeaderActions(args: Args) {
+  const accountTooltip = args.accountUserEmail
+    ? `Cloud account\nSigned in as: ${args.accountUserEmail}\nCloud status: ${args.accountCloudStatusLabel}`
+    : `Cloud account\nSigned in as: Not signed in\nCloud status: ${args.accountCloudStatusLabel}`
+
   const fileGroup: HeaderItem[] = [
     {
       type: "action",
@@ -280,7 +286,7 @@ export function useHeaderActions(args: Args) {
     {
       key: "account",
       ariaLabel: args.activeSidebarPanel === "account" ? "Hide account panel" : "Show account panel",
-      tooltip: "Cloud account",
+      tooltip: accountTooltip,
       showStatusDot: true,
       statusDotClassName: args.accountStatusDotClassName,
       buttonClassName: args.activeSidebarPanel === "account"

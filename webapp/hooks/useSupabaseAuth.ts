@@ -168,7 +168,7 @@ export function useSupabaseAuth() {
   const signOut = useCallback(async () => {
     if (!supabase) return
     setAuthError(null)
-    setAuthMessage(null)
+    setAuthMessage("Signing out...")
     const { error } = await supabase.auth.signOut()
     if (error) {
       setAuthError(mapSupabaseAuthError(error, "sign_out"))

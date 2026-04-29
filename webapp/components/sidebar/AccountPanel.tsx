@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, Clipboard, X } from "lucide-react"
+import { ChevronUp, Download, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ type Props = {
   onClose: () => void
   userEmail: string | null
   cloudStatusLabel: string
+  cloudStatusIndicatorClassName: string
   authError: string | null
   authMessage: string | null
   onClearFeedback: () => void
@@ -51,11 +52,32 @@ function getActivityLevelClassName(level: CloudActivityLogEntry["level"], isDark
   return isDarkMode ? "text-[#F4F6F8]" : "text-gray-900"
 }
 
+function formatLogDownloadFilename(): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  return `swiss-grid-generator-cloud-log-${timestamp}.txt`
+}
+
+function downloadTextFile(text: string, filename: string): void {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement("a")
+  anchor.href = url
+  anchor.download = filename
+  anchor.rel = "noopener"
+  anchor.style.display = "none"
+
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 export function AccountPanel({
   isDarkMode = false,
   onClose,
   userEmail,
   cloudStatusLabel,
+  cloudStatusIndicatorClassName,
   authError,
   authMessage,
   onClearFeedback,
@@ -68,23 +90,25 @@ export function AccountPanel({
   const [codeDraft, setCodeDraft] = useState("")
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [activityEntries, setActivityEntries] = useState<CloudActivityLogEntry[]>([])
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle")
+  const [downloadState, setDownloadState] = useState<"idle" | "downloaded" | "error">("idle")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const tone = isDarkMode
     ? {
         body: "text-[#A8B1BF]",
         caption: "text-[#8D98AA]",
         action: "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:bg-[#1D232D] hover:text-[#F4F6F8]",
+        button: "border-[#313A47] bg-[#232A35] text-[#F4F6F8] hover:bg-[#1D232D] hover:text-[#F4F6F8]",
         field: "border-[#313A47] bg-[#1D232D] text-[#F4F6F8]",
       }
     : {
         body: "text-gray-600",
         caption: "text-gray-400",
         action: "border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900",
+        button: "border-gray-300 bg-gray-100 text-gray-900 hover:bg-gray-200 hover:text-gray-900",
         field: "border-gray-300 bg-white text-gray-900",
       }
   const fieldClassName = `rounded-md border px-3 py-2 text-xs ${tone.field}`
-  const authButtonClassName = "h-auto rounded-md px-3 py-2 text-xs"
+  const authButtonClassName = `h-auto rounded-md border px-3 py-2 text-xs ${tone.button}`
   const pairedHeaderLabelClassName = `${SECTION_HEADLINE_CLASSNAME} mb-0 leading-none`
   const pairedHeaderValueClassName = `min-w-0 truncate text-[11px] leading-none ${tone.caption}`
   const hasPendingCode = !userEmail && Boolean(pendingEmail)
@@ -107,10 +131,26 @@ export function AccountPanel({
   }, [])
 
   useEffect(() => {
-    if (copyState === "idle") return
-    const timeout = window.setTimeout(() => setCopyState("idle"), 1800)
+    if (downloadState === "idle") return
+    const timeout = window.setTimeout(() => setDownloadState("idle"), 1800)
     return () => window.clearTimeout(timeout)
-  }, [copyState])
+  }, [downloadState])
+
+  const feedbackSection = authError ? (
+    <section className="space-y-2">
+      <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
+      <div className="rounded-md border border-[#fe9f97] bg-[#fe9f97]/10 px-3 py-2 text-xs text-[#c55a52] dark:text-[#fe9f97]">
+        {authError}
+      </div>
+    </section>
+  ) : authMessage ? (
+    <section className="space-y-2">
+      <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
+      <div className={`rounded-md border px-3 py-2 text-xs ${tone.field}`}>
+        {authMessage}
+      </div>
+    </section>
+  ) : null
 
   return (
     <div className="space-y-4">
@@ -133,7 +173,7 @@ export function AccountPanel({
       <section className="space-y-2">
         <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Cloud</h4>
         <p className={`text-xs leading-relaxed ${tone.body}`}>
-          Supabase sync uses Dexie as the local offline cache and keeps the cloud project store in sync while signed in.
+          We use Supabase for cloud sync while the local offline cache keeps your project store available on this device.
         </p>
       </section>
 
@@ -146,8 +186,14 @@ export function AccountPanel({
         >
           <span className="flex min-w-0 items-baseline gap-2">
             <span className={pairedHeaderLabelClassName}>Status</span>
-            <span className={pairedHeaderValueClassName}>
-              {cloudStatusLabel}
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ring-1 ring-white dark:ring-[#1D232D] ${cloudStatusIndicatorClassName}`}
+              />
+              <span className={pairedHeaderValueClassName}>
+                {cloudStatusLabel}
+              </span>
             </span>
           </span>
           <span className={`relative top-[-3px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${tone.action}`}>
@@ -190,58 +236,63 @@ export function AccountPanel({
                 <div className={`py-2 text-[11px] ${tone.caption}`}>No local cloud activity yet.</div>
               )}
             </div>
-            <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2">
               <div className={`text-[11px] leading-tight ${tone.caption}`}>
                 {activityEntries.length} local {activityEntries.length === 1 ? "entry" : "entries"}
               </div>
-              <Button
-                size="sm"
-                className={`${authButtonClassName} inline-flex items-center gap-1.5`}
-                onClick={async () => {
-                  try {
-                    const entries = await listCloudActivityLogEntries()
-                    await navigator.clipboard.writeText(formatCloudActivityLogForSupport(entries))
-                    setCopyState("copied")
-                  } catch {
-                    setCopyState("error")
-                  }
-                }}
-              >
-                <Clipboard className="h-3 w-3" />
-                {copyState === "copied" ? "Copied" : copyState === "error" ? "Copy Failed" : "Copy Log"}
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  className={`${authButtonClassName} inline-flex items-center gap-1.5`}
+                  onClick={async () => {
+                    try {
+                      const entries = await listCloudActivityLogEntries()
+                      downloadTextFile(formatCloudActivityLogForSupport(entries), formatLogDownloadFilename())
+                      setDownloadState("downloaded")
+                    } catch {
+                      setDownloadState("error")
+                    }
+                  }}
+                >
+                  <Download className="h-3 w-3" />
+                  {downloadState === "downloaded" ? "Saved" : downloadState === "error" ? "Failed" : "Download"}
+                </Button>
+              </div>
             </div>
           </div>
         ) : null}
       </section>
 
       {userEmail ? (
-        <section className="space-y-2">
-          <div className="flex items-baseline justify-between gap-3">
-            <h4 className={pairedHeaderLabelClassName}>Signed In As</h4>
-            <div className={`text-right ${pairedHeaderValueClassName}`}>
-              {userEmail}
+        <>
+          <section className="space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <h4 className={pairedHeaderLabelClassName}>Signed In As</h4>
+              <div className={`text-right ${pairedHeaderValueClassName}`}>
+                {userEmail}
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end pt-1">
-            <Button
-              size="sm"
-              className={authButtonClassName}
-              disabled={isSubmitting}
-              onClick={async () => {
-                setIsSubmitting(true)
-                try {
-                  await onSignOut()
-                  onClearFeedback()
-                } finally {
-                  setIsSubmitting(false)
-                }
-              }}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </section>
+            <div className="flex justify-end pt-1">
+              <Button
+                size="sm"
+                className={authButtonClassName}
+                disabled={isSubmitting}
+                onClick={async () => {
+                  setIsSubmitting(true)
+                  try {
+                    await onSignOut()
+                    onClearFeedback()
+                  } finally {
+                    setIsSubmitting(false)
+                  }
+                }}
+              >
+                Sign Out
+              </Button>
+            </div>
+          </section>
+          {feedbackSection}
+        </>
       ) : (
         <section className="space-y-2">
           <div className="flex items-start justify-between gap-3">
@@ -290,14 +341,7 @@ export function AccountPanel({
               {hasPendingCode ? "Resend Code" : "Send Code"}
             </Button>
           </div>
-          {authMessage ? (
-            <section className="space-y-2 pt-2">
-              <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
-              <div className={`rounded-md border px-3 py-2 text-xs ${tone.field}`}>
-                {authMessage}
-              </div>
-            </section>
-          ) : null}
+          {feedbackSection}
           {hasPendingCode ? (
             <div className="space-y-2 pt-2">
               <div className="flex items-start justify-between gap-3">
@@ -341,15 +385,6 @@ export function AccountPanel({
           ) : null}
         </section>
       )}
-
-      {authError ? (
-        <section className="space-y-2">
-          <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
-          <div className="rounded-md border border-[#fe9f97] bg-[#fe9f97]/10 px-3 py-2 text-xs text-[#c55a52] dark:text-[#fe9f97]">
-            {authError}
-          </div>
-        </section>
-      ) : null}
     </div>
   )
 }
