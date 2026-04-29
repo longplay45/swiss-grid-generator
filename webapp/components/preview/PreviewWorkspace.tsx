@@ -488,7 +488,6 @@ export function PreviewWorkspace({
                 isCloudSignedIn={isCloudSignedIn}
                 onRequestNotice={onRequestNotice}
                 showRolloverInfo
-                showHelpHints={false}
                 compact
               />
             </div>

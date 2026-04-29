@@ -164,7 +164,7 @@ Default: `swiss`
 ### File Actions (icon buttons)
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
-- User thumbnails in `3. Users` show the same orange status dot while the stored local copy is not yet fully cloud-synced
+- User thumbnails in `3. Users` show a green status dot only while signed in and synced; signed-out, pending, and local-only states stay orange
 - Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary
 - `Save` (save icon): opens Save to Library dialog
 - `Import` (download icon): import project JSON or compressed `.swissgridgenerator` archive
@@ -240,10 +240,10 @@ Default: `swiss`
 
 ### Left Footer (always visible)
 
-- `Version` label: shows current app version string.
 - `Feedback` link: opens the right sidebar feedback panel.
-- `Imprint` link: opens the right sidebar imprint panel.
-- `Feedback` and `Imprint` remain active even while the presets browser is open.
+- `Legal Notice` link: opens the right sidebar legal notice panel.
+- `Feedback` and `Legal Notice` remain active even while the presets browser is open.
+- The current app version appears at the end of the Help page.
 
 When `i` is active, header icons show rollover tooltips with a second line for keyboard shortcuts (including Undo/Redo).
 
@@ -263,7 +263,7 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - `Cmd/Ctrl+Shift+P`: Toggle project sidebar
 - `Cmd/Ctrl+Shift+I`: Toggle information
 - `Cmd/Ctrl+Shift+H`: Toggle help sidebar
-- `Cmd/Ctrl+Shift+3`: Toggle imprint sidebar
+- `Cmd/Ctrl+Shift+3`: Toggle legal notice sidebar
 - `Cmd/Ctrl+Shift+4`: Toggle presets browser
 - `Page Up`: Select previous project page
 - `Page Down`: Select next project page
@@ -291,22 +291,6 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 - All export formats use each page's stored document size
   - no paper-size override controls
   - no custom width override controls
-
-### Cloud Account panel
-
-- Cloud sync status line
-- `STATUS` shows `Not connected` while signed out
-- `STATUS` expands/collapses the local cloud activity log
-- Expanded status shows the latest event timestamp, recent local events, and `Copy Log`
-- Email input for email-code sign-in while signed out
-- Six-digit code input after a sign-in code is sent
-- Signed-in email display while authenticated
-- `Send Code`
-- `Verify Code`
-- `Sign Out`
-- Auth and cloud-sync failures are mapped to user-facing guidance for rate limits, permissions, offline state, session expiry, and setup errors
-- Signed-in sessions request throttled background sync on app focus, visible-tab return, and preset browser open
-- Hidden-tab and page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects
 - All export formats stay vector-based
 - `JSON` exports the full editable project document with metadata, pages, and current layout state
 - `PDF`, `SVG`, and `IDML` preserve available project metadata where the format supports it
@@ -325,6 +309,30 @@ When `i` is active, header icons show rollover tooltips with a second line for k
   - converts typography to exact glyph outlines, so exported text is not live-editable
 - Confirm/Cancel
 - `Esc` closes the popup when idle and cancels a running export at the next safe checkpoint
+
+### Feedback panel
+
+- Required email field, prefilled from the signed-in account when available
+- Required comment field
+- Up to three small screenshot attachments
+- Optional checkbox to attach the recent local cloud activity log for support
+- Submits feedback messages and screenshots to Supabase
+
+### Cloud Account panel
+
+- Cloud sync status line
+- `STATUS` shows `Not connected` while signed out
+- `STATUS` expands/collapses the local cloud activity log
+- Expanded status shows the latest event timestamp, recent local events, and `Download`
+- Email input for email-code sign-in while signed out
+- Six-digit code input after a sign-in code is sent
+- Signed-in email display while authenticated
+- `Send Code`
+- `Verify Code`
+- `Sign Out`
+- Auth and cloud-sync failures are mapped to user-facing guidance for rate limits, permissions, offline state, session expiry, and setup errors
+- Signed-in sessions request throttled background sync on app focus, visible-tab return, and preset browser open
+- Hidden-tab and page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects
 
 ## Paper Size Sets
 

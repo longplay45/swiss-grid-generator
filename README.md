@@ -154,6 +154,10 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Undo / Redo
 - Dark mode
 - Presets browser with rendered page-1 thumbnails
+- Optional Supabase email-code sign-in for cloud-synced user projects
+- Local offline user library with cloud status indicators
+- Feedback panel with screenshot and optional support-log attachment
+- Legal Notice panel with provider, privacy, cloud storage, and terms information
 - Comprehensive keyboard shortcuts
 - Helpful warning system (no auto-repositioning on invalid grid reductions)
 
@@ -175,6 +179,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Tailwind CSS + Radix UI
 - Canvas rendering with custom rhythm engine
 - Zustand for state management
+- IndexedDB/Dexie for local offline project storage
+- Supabase for optional authentication, cloud sync, and feedback storage
 - jsPDF for print output
 
 ---

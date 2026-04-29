@@ -8,7 +8,6 @@ import {
   type LayoutPreset,
 } from "@/lib/presets"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
-import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
 import { PresetPageThumbnail } from "@/components/sidebar/PresetPageThumbnail"
 import { SectionHeaderRow } from "@/components/ui/section-header-row"
 import { getPresetSyncStatusIndicatorClassName } from "@/lib/cloud-status-indicator"
@@ -27,8 +26,6 @@ type Props = {
   isCloudSignedIn?: boolean
   isDarkMode?: boolean
   compact?: boolean
-  showHelpHints?: boolean
-  onHelpNavigate?: () => void
   showRolloverInfo?: boolean
   onRequestNotice?: (notice: { title: string; message: string }) => void
 }
@@ -45,13 +42,22 @@ function formatPresetNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2)
 }
 
+function formatPresetGroupHeaderLabel(label: string): string {
+  return label
+    .toUpperCase()
+    .split(/\s+/)
+    .map((word) => Array.from(word).join(" "))
+    .join("  ")
+}
+
 function getPresetCloudStatusLabel(syncState: LayoutPreset["syncState"], isCloudSignedIn: boolean): string {
+  if (!isCloudSignedIn) return "Not connected"
   if (syncState === "synced") return "Cloud synced"
   if (syncState === "syncing") return "Cloud syncing"
   if (syncState === "conflict") return "Cloud conflict"
   if (syncState === "error") return "Cloud error"
   if (syncState === "deleted") return "Cloud delete queued"
-  return isCloudSignedIn ? "Cloud pending" : "Local only"
+  return "Cloud pending"
 }
 
 function PresetTooltipRow({ label, value }: { label: string; value: string }) {
@@ -102,7 +108,9 @@ function PresetCard({
 }) {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const isUserPreset = preset.source === "user"
-  const syncIndicatorClassName = isUserPreset ? getPresetSyncStatusIndicatorClassName(preset.syncState) : null
+  const syncIndicatorClassName = isUserPreset
+    ? getPresetSyncStatusIndicatorClassName({ status: preset.syncState, isSignedIn: isCloudSignedIn })
+    : null
   const result = preset.browserPage.result
   const baselineGrid = result.typography.metadata.baselineGrid
   const cloudStatusLabel = getPresetCloudStatusLabel(preset.syncState, isCloudSignedIn)
@@ -257,8 +265,6 @@ export function PresetLayoutsPanel({
   isCloudSignedIn = false,
   isDarkMode = false,
   compact = false,
-  showHelpHints = false,
-  onHelpNavigate,
   showRolloverInfo = true,
   onRequestNotice,
 }: Props) {
@@ -381,43 +387,16 @@ export function PresetLayoutsPanel({
   return (
     <div
       data-tooltip-boundary="preset-browser"
-      className={showHelpHints ? "relative rounded-md p-2 -m-2" : undefined}
-      onMouseEnter={showHelpHints ? onHelpNavigate : undefined}
     >
-      {showHelpHints ? <HelpIndicatorLine /> : null}
       {!compact ? (
         <>
           <h3 className={`text-sm font-semibold mb-2 flex items-center gap-1.5 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>
             <span>Presets</span>
-            {showHelpHints ? (
-              <span
-                className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border text-[10px] leading-none ${
-                  isDarkMode
-                    ? "border-blue-400 bg-blue-500 text-white"
-                    : "border-blue-500 bg-blue-500 text-white"
-                }`}
-              >
-                ?
-              </span>
-            ) : null}
           </h3>
           <p className={`text-xs mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
             Double-click a thumbnail to load a preset layout, or press `Esc` to close the browser.
           </p>
         </>
-      ) : null}
-      {compact && showHelpHints ? (
-        <div className="mb-2 flex justify-end">
-          <span
-            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border text-[10px] leading-none ${
-              isDarkMode
-                ? "border-blue-400 bg-blue-500 text-white"
-                : "border-blue-500 bg-blue-500 text-white"
-            }`}
-          >
-            ?
-          </span>
-        </div>
       ) : null}
       <div className="space-y-6">
         {visibleGroups.map((group) => {
@@ -425,34 +404,36 @@ export function PresetLayoutsPanel({
 
           return (
             <section key={group.category} className="space-y-3">
-              <SectionHeaderRow
-                label={group.label}
-                aria-expanded={!isCollapsed}
-                actionIcon={(
-                  <ChevronUp
-                    className={`h-2 w-2 transition-transform ${isCollapsed ? "rotate-90" : "rotate-180"}`}
-                    aria-hidden="true"
-                  />
-                )}
-                actionClassName={groupToggleClassName}
-                onRowClick={() => {
-                  setCollapsedGroups((current) => ({
-                    ...current,
-                    [group.category]: !current[group.category],
-                  }))
-                }}
-                onRowDoubleClick={(event) => {
-                  event.preventDefault()
-                  setCollapsedGroups((current) => {
-                    const shouldCollapseAll = visibleGroups.some((visibleGroup) => current[visibleGroup.category] !== true)
-                    const next = { ...current }
-                    visibleGroups.forEach((visibleGroup) => {
-                      next[visibleGroup.category] = shouldCollapseAll
+              <div className="rounded-md py-2">
+                <SectionHeaderRow
+                  label={formatPresetGroupHeaderLabel(group.label)}
+                  aria-expanded={!isCollapsed}
+                  actionIcon={(
+                    <ChevronUp
+                      className={`h-2 w-2 transition-transform ${isCollapsed ? "rotate-90" : "rotate-180"}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                  actionClassName={groupToggleClassName}
+                  onRowClick={() => {
+                    setCollapsedGroups((current) => ({
+                      ...current,
+                      [group.category]: !current[group.category],
+                    }))
+                  }}
+                  onRowDoubleClick={(event) => {
+                    event.preventDefault()
+                    setCollapsedGroups((current) => {
+                      const shouldCollapseAll = visibleGroups.some((visibleGroup) => current[visibleGroup.category] !== true)
+                      const next = { ...current }
+                      visibleGroups.forEach((visibleGroup) => {
+                        next[visibleGroup.category] = shouldCollapseAll
+                      })
+                      return next
                     })
-                    return next
-                  })
-                }}
-              />
+                  }}
+                />
+              </div>
 
               {!isCollapsed && group.presets.length > 0 ? (
                 <div

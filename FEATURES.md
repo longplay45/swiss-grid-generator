@@ -13,9 +13,9 @@ Current capability inventory for Swiss Grid Generator.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project on load.
 - Optional guided project tours embedded in project JSON and rendered as an in-app step overlay.
 - Optional Supabase email-code authentication for cloud sync.
-- Authenticated projects keep Dexie as the offline-first cache and use Supabase as the remote source of truth.
+- Authenticated projects keep a local offline cache and use Supabase as the remote source of truth.
 - Saved user-library projects track `ownerUserId`, `remoteProjectId`, `remoteRevision`, `lastSyncedAt`, and sync state.
-- Local cloud/account activity is stored in a capped Dexie support log and is not uploaded automatically.
+- Local cloud/account activity is stored in a capped support log and is not uploaded automatically.
 
 ## Grid System
 
@@ -163,7 +163,7 @@ Current capability inventory for Swiss Grid Generator.
 - Preset browser in the preview area.
 - Rendered page-1 thumbnails for bundled presets.
 - Preset rollover tooltip with title, description, author, and creation date metadata when rollover info is enabled.
-- User-library thumbnails show the orange status dot while the local copy is not yet fully cloud-synced.
+- User-library thumbnails show a green status dot only while signed in and synced; signed-out, pending, or local-only states stay orange.
 - Deleting a user-library thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click preset to load.
 - `Esc` closes the browser without loading.
@@ -210,11 +210,11 @@ Current capability inventory for Swiss Grid Generator.
 - Undo/redo across settings, layout, and editor operations.
 - Help sidebar with hover-jump references.
 - Rollover-info toggle for tooltips and affordances.
-- Feedback sidebar with structured in-app survey submission.
-- Imprint sidebar with app, developer, license, and contact information.
+- Feedback sidebar with required email/comment fields, optional screenshots, and optional support-log attachment.
+- Legal Notice sidebar with provider, contact, privacy, cloud storage, terms, and dispute-resolution information.
 - Header account panel with email-code sign-in, cloud sync status, and a green/orange header status dot.
 - When signed out, the account panel status row reads `Not connected`.
-- The account panel `Status` row expands to show recent local cloud/account events and a `Copy Log` support action.
+- The account panel `Status` row expands to show recent local cloud/account events and a `Download` support action.
 - Auth and cloud-sync failures surface as actionable product messages instead of raw provider errors.
 - Hidden-tab / page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
 - Keyboard shortcuts for header controls and panel toggles.
@@ -223,10 +223,10 @@ Current capability inventory for Swiss Grid Generator.
 
 - Supabase browser auth with email one-time-code sign-in.
 - Cloud archives stored as gzip-compressed `.swissgridgenerator` files.
-- On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into Dexie.
+- On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into the local offline cache.
 - Signed-in sessions request throttled background sync when the app regains focus, becomes visible, or opens the preset browser.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while editing.
 - Revision mismatches are marked as `conflict` instead of overwriting local work silently.
 - Remote deletions are applied locally on sync when the local copy has no newer unsynced changes; otherwise the project is marked as `conflict`.
 - Account and sync events are recorded locally as capped support diagnostics with `info`, `success`, `warning`, or `error` severity.
-- Remote-backed deletions are soft-deleted in Supabase via `deleted_at`, while local-only deletions purge the Dexie record immediately.
+- Remote-backed deletions are soft-deleted in Supabase via `deleted_at`, while local-only deletions purge the local cache record immediately.

@@ -12,12 +12,20 @@ export function getCloudSyncStatusIndicatorClassName({
   status: CloudSyncIndicatorStatus
   isSignedIn: boolean
 }): string {
+  if (!isSignedIn) return CLOUD_STATUS_ORANGE_CLASSNAME
   if (status === "error") return CLOUD_STATUS_RED_CLASSNAME
-  if (isSignedIn && status === "synced") return CLOUD_STATUS_GREEN_CLASSNAME
+  if (status === "synced") return CLOUD_STATUS_GREEN_CLASSNAME
   return CLOUD_STATUS_ORANGE_CLASSNAME
 }
 
-export function getPresetSyncStatusIndicatorClassName(status: PresetSyncIndicatorStatus | undefined): string {
+export function getPresetSyncStatusIndicatorClassName({
+  status,
+  isSignedIn,
+}: {
+  status: PresetSyncIndicatorStatus | undefined
+  isSignedIn: boolean
+}): string {
+  if (!isSignedIn) return CLOUD_STATUS_ORANGE_CLASSNAME
   if (status === "error") return CLOUD_STATUS_RED_CLASSNAME
   if (status === "synced") return CLOUD_STATUS_GREEN_CLASSNAME
   return CLOUD_STATUS_ORANGE_CLASSNAME
