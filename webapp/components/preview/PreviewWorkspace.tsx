@@ -111,7 +111,8 @@ type Props = {
   onProjectDescriptionChange: (nextDescription: string) => void
   onProjectAuthorChange: (nextAuthor: string) => void
   onClearAuthFeedback: () => void
-  onSendMagicLink: (email: string) => Promise<void>
+  onSendSignInCode: (email: string) => Promise<void>
+  onVerifySignInCode: (email: string, code: string) => Promise<void>
   onSignOut: () => Promise<void>
   onPageSelect: (pageId: string) => void
   onPageAdd: () => void
@@ -254,7 +255,8 @@ export function PreviewWorkspace({
   onProjectDescriptionChange,
   onProjectAuthorChange,
   onClearAuthFeedback,
-  onSendMagicLink,
+  onSendSignInCode,
+  onVerifySignInCode,
   onSignOut,
   onPageSelect,
   onPageAdd,
@@ -697,7 +699,8 @@ export function PreviewWorkspace({
                 authError={authError}
                 authMessage={authMessage}
                 onClearFeedback={onClearAuthFeedback}
-                onSendMagicLink={onSendMagicLink}
+                onSendSignInCode={onSendSignInCode}
+                onVerifySignInCode={onVerifySignInCode}
                 onSignOut={onSignOut}
               />
             )}

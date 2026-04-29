@@ -52,21 +52,21 @@ export function useSupabaseAuth() {
 
   const user = session?.user ?? null
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
+  const sendSignInCode = useCallback(async (email: string) => {
     if (!supabase) {
       const error = new Error("Supabase client is unavailable.")
-      setAuthError(mapSupabaseAuthError(error, "send_magic_link"))
+      setAuthError(mapSupabaseAuthError(error, "send_sign_in_code"))
       throw error
     }
     const normalizedEmail = email.trim()
     if (!normalizedEmail) {
       const error = new Error("Email is required.")
-      setAuthError(mapSupabaseAuthError(error, "send_magic_link"))
+      setAuthError(mapSupabaseAuthError(error, "send_sign_in_code"))
       throw error
     }
 
     setAuthError(null)
-    setAuthMessage(`Sending magic link to ${normalizedEmail}...`)
+    setAuthMessage(`Sending sign-in code to ${normalizedEmail}...`)
 
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
@@ -76,11 +76,47 @@ export function useSupabaseAuth() {
     })
 
     if (error) {
-      setAuthError(mapSupabaseAuthError(error, "send_magic_link"))
+      setAuthError(mapSupabaseAuthError(error, "send_sign_in_code"))
       throw error
     }
 
-    setAuthMessage("Magic link sent. Open it from your email. If the link opens in another tab, you can close that tab and continue in the editor. The email link may open in another browser tab.")
+    setAuthMessage(`Code sent to ${normalizedEmail}. Enter the six-digit code from your email to continue.`)
+  }, [supabase])
+
+  const verifySignInCode = useCallback(async (email: string, code: string) => {
+    if (!supabase) {
+      const error = new Error("Supabase client is unavailable.")
+      setAuthError(mapSupabaseAuthError(error, "verify_sign_in_code"))
+      throw error
+    }
+    const normalizedEmail = email.trim()
+    const normalizedCode = code.replace(/\D/g, "").slice(0, 6)
+    if (!normalizedEmail) {
+      const error = new Error("Email is required.")
+      setAuthError(mapSupabaseAuthError(error, "verify_sign_in_code"))
+      throw error
+    }
+    if (normalizedCode.length !== 6) {
+      const error = new Error("Code is required.")
+      setAuthError(mapSupabaseAuthError(error, "verify_sign_in_code"))
+      throw error
+    }
+
+    setAuthError(null)
+    setAuthMessage("Verifying sign-in code...")
+
+    const { error } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: normalizedCode,
+      type: "email",
+    })
+
+    if (error) {
+      setAuthError(mapSupabaseAuthError(error, "verify_sign_in_code"))
+      throw error
+    }
+
+    setAuthMessage(null)
   }, [supabase])
 
   const signOut = useCallback(async () => {
@@ -105,7 +141,8 @@ export function useSupabaseAuth() {
       setAuthError(null)
       setAuthMessage(null)
     },
-    signInWithMagicLink,
+    sendSignInCode,
+    verifySignInCode,
     signOut,
   }
 }

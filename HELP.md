@@ -116,7 +116,7 @@ Core editing and layout workflows.
 - `Import` restores the full project and active page from either a saved project JSON or a compressed `.swissgridgenerator` archive.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project.
 - Positioned layers are stored with logical anchors so layouts stay stable across grid changes.
-- Supabase magic-link auth is optional and used only for cloud sync.
+- Supabase email-code auth is optional and used only for cloud sync.
 
 ### Export {#help-export}
 - Export supports JSON, vector PDF, SVG, and IDML.

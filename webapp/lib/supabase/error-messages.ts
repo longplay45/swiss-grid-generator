@@ -5,7 +5,7 @@ export type UserFacingNotice = {
   message: string
 }
 
-export type SupabaseAuthErrorContext = "send_magic_link" | "sign_out" | "session"
+export type SupabaseAuthErrorContext = "send_sign_in_code" | "verify_sign_in_code" | "sign_out" | "session"
 
 type ErrorLike = {
   message?: string
@@ -36,10 +36,11 @@ function isAuthRateLimitMessage(message: string): boolean {
 function getSupabaseAuthFallback(context: SupabaseAuthErrorContext): string {
   if (context === "sign_out") return "Could not sign out of the cloud account."
   if (context === "session") return "Could not restore the cloud session."
-  return "Could not send the sign-in link."
+  if (context === "verify_sign_in_code") return "Could not verify the sign-in code."
+  return "Could not send the sign-in code."
 }
 
-export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorContext = "send_magic_link"): string {
+export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorContext = "send_sign_in_code"): string {
   const rawMessage = getErrorMessage(error, getSupabaseAuthFallback(context))
   const { status } = toErrorLike(error)
 
@@ -48,11 +49,19 @@ export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorC
   }
 
   if (/email is required/i.test(rawMessage)) {
-    return "Enter an email address before requesting a sign-in link."
+    return "Enter an email address before requesting a sign-in code."
+  }
+
+  if (/code is required/i.test(rawMessage)) {
+    return "Enter the six-digit sign-in code from your email."
+  }
+
+  if (/token.*expired|expired.*token|invalid.*token|otp.*expired|otp.*invalid/i.test(rawMessage)) {
+    return "This sign-in code is invalid or expired. Request a new code and try again."
   }
 
   if (status === 429 || isAuthRateLimitMessage(rawMessage)) {
-    return "Too many sign-in emails were requested. Wait a moment and try again. If this keeps happening, check the Supabase Auth rate limits and SMTP setup."
+    return "Too many sign-in codes were requested. Wait a moment and try again. If this keeps happening, check the Supabase Auth rate limits and SMTP setup."
   }
 
   if (typeof status === "number" && status >= 500) {
@@ -62,7 +71,10 @@ export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorC
     if (context === "session") {
       return "Supabase is temporarily unavailable and the cloud session could not be restored right now. Wait a moment and try again."
     }
-    return "Supabase is temporarily unavailable and could not send the sign-in link. Wait a moment and try again."
+    if (context === "verify_sign_in_code") {
+      return "Supabase is temporarily unavailable and could not verify the sign-in code. Wait a moment and try again."
+    }
+    return "Supabase is temporarily unavailable and could not send the sign-in code. Wait a moment and try again."
   }
 
   if (/email address not authorized/i.test(rawMessage)) {
@@ -89,7 +101,10 @@ export function mapSupabaseAuthError(error: unknown, context: SupabaseAuthErrorC
   if (context === "session") {
     return `Could not restore the cloud session. Supabase said: ${rawMessage}`
   }
-  return `Could not send the sign-in link. Supabase said: ${rawMessage}`
+  if (context === "verify_sign_in_code") {
+    return `Could not verify the sign-in code. Supabase said: ${rawMessage}`
+  }
+  return `Could not send the sign-in code. Supabase said: ${rawMessage}`
 }
 
 export const CLOUD_SYNC_CONFLICT_NOTICE: UserFacingNotice = {

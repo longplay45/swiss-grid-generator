@@ -1,7 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -15,7 +15,8 @@ type Props = {
   authError: string | null
   authMessage: string | null
   onClearFeedback: () => void
-  onSendMagicLink: (email: string) => Promise<void>
+  onSendSignInCode: (email: string) => Promise<void>
+  onVerifySignInCode: (email: string, code: string) => Promise<void>
   onSignOut: () => Promise<void>
 }
 
@@ -27,10 +28,13 @@ export function AccountPanel({
   authError,
   authMessage,
   onClearFeedback,
-  onSendMagicLink,
+  onSendSignInCode,
+  onVerifySignInCode,
   onSignOut,
 }: Props) {
   const [emailDraft, setEmailDraft] = useState(userEmail ?? "")
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [codeDraft, setCodeDraft] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const tone = isDarkMode
     ? {
@@ -47,7 +51,14 @@ export function AccountPanel({
       }
   const fieldClassName = `rounded-md border px-3 py-2 text-xs ${tone.field}`
   const authButtonClassName = "h-auto rounded-md px-3 py-2 text-xs"
-  const shouldShowResend = !userEmail && Boolean(authMessage) && !authError
+  const hasPendingCode = !userEmail && Boolean(pendingEmail)
+
+  useEffect(() => {
+    if (!userEmail) return
+    setPendingEmail(null)
+    setCodeDraft("")
+    setEmailDraft(userEmail)
+  }, [userEmail])
 
   return (
     <div className="space-y-4">
@@ -126,7 +137,12 @@ export function AccountPanel({
             type="email"
             value={emailDraft}
             onChange={(event) => {
-              setEmailDraft(event.target.value)
+              const nextEmail = event.target.value
+              setEmailDraft(nextEmail)
+              if (pendingEmail && nextEmail.trim() !== pendingEmail) {
+                setPendingEmail(null)
+                setCodeDraft("")
+              }
               if (authError || authMessage) onClearFeedback()
             }}
             className={`w-full ${fieldClassName}`}
@@ -140,15 +156,60 @@ export function AccountPanel({
               onClick={async () => {
                 setIsSubmitting(true)
                 try {
-                  await onSendMagicLink(emailDraft)
+                  const normalizedEmail = emailDraft.trim()
+                  await onSendSignInCode(normalizedEmail)
+                  setPendingEmail(normalizedEmail)
+                  setEmailDraft(normalizedEmail)
+                  setCodeDraft("")
                 } finally {
                   setIsSubmitting(false)
                 }
               }}
             >
-              {shouldShowResend ? "Re-Send" : "Send Magic Link"}
+              {hasPendingCode ? "Resend Code" : "Send Code"}
             </Button>
           </div>
+          {hasPendingCode ? (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-start justify-between gap-3">
+                <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Code</h4>
+                <div className={`pt-[1px] text-right text-[11px] leading-tight ${tone.caption}`}>
+                  {pendingEmail}
+                </div>
+              </div>
+              <input
+                id="account-panel-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={codeDraft}
+                onChange={(event) => {
+                  setCodeDraft(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  if (authError || authMessage) onClearFeedback()
+                }}
+                className={`w-full text-center font-mono tabular-nums ${fieldClassName}`}
+                placeholder="000000"
+              />
+              <div className="flex justify-end pt-1">
+                <Button
+                  size="sm"
+                  className={authButtonClassName}
+                  disabled={isSubmitting || codeDraft.length !== 6}
+                  onClick={async () => {
+                    if (!pendingEmail) return
+                    setIsSubmitting(true)
+                    try {
+                      await onVerifySignInCode(pendingEmail, codeDraft)
+                    } finally {
+                      setIsSubmitting(false)
+                    }
+                  }}
+                >
+                  Verify Code
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </section>
       )}
 

@@ -188,7 +188,8 @@ export default function Home() {
     authError,
     authMessage,
     clearAuthFeedback,
-    signInWithMagicLink,
+    sendSignInCode,
+    verifySignInCode,
     signOut,
   } = useSupabaseAuth()
   const {
@@ -1494,7 +1495,8 @@ export default function Home() {
       onProjectDescriptionChange={handleProjectDescriptionChange}
       onProjectAuthorChange={handleProjectAuthorChange}
       onClearAuthFeedback={clearAuthFeedback}
-      onSendMagicLink={signInWithMagicLink}
+      onSendSignInCode={sendSignInCode}
+      onVerifySignInCode={verifySignInCode}
       onSignOut={signOut}
       onPageSelect={selectPage}
       onPageAdd={addPage}

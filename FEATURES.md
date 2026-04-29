@@ -12,7 +12,7 @@ Current capability inventory for Swiss Grid Generator.
 - Bundled presets use the same project JSON schema as saved documents.
 - Legacy single-page JSON is still accepted and wrapped into a one-page project on load.
 - Optional guided project tours embedded in project JSON and rendered as an in-app step overlay.
-- Optional Supabase magic-link authentication for cloud sync.
+- Optional Supabase email-code authentication for cloud sync.
 - Authenticated projects keep Dexie as the offline-first cache and use Supabase as the remote source of truth.
 - Saved user-library projects track `ownerUserId`, `remoteProjectId`, `remoteRevision`, `lastSyncedAt`, and sync state.
 
@@ -211,7 +211,7 @@ Current capability inventory for Swiss Grid Generator.
 - Rollover-info toggle for tooltips and affordances.
 - Feedback sidebar with structured in-app survey submission.
 - Imprint sidebar with app, developer, license, and contact information.
-- Header account panel with magic-link sign-in, cloud sync status, and a green/orange header status dot.
+- Header account panel with email-code sign-in, cloud sync status, and a green/orange header status dot.
 - When signed out, the account panel status row reads `Not connected`.
 - Auth and cloud-sync failures surface as actionable product messages instead of raw provider errors.
 - Hidden-tab / page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects.
@@ -219,7 +219,7 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Cloud Sync
 
-- Supabase browser auth with magic-link email sign-in.
+- Supabase browser auth with email one-time-code sign-in.
 - Cloud archives stored as gzip-compressed `.swissgridgenerator` files.
 - On sign-in, the app syncs local library entries with Supabase and pulls remote-only projects into Dexie.
 - Existing saved user-library projects auto-save locally and sync debounced to the cloud while editing.

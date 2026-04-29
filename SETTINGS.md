@@ -296,9 +296,11 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 
 - Cloud sync status line
 - `STATUS` shows `Not connected` while signed out
-- Email input for magic-link sign-in while signed out
+- Email input for email-code sign-in while signed out
+- Six-digit code input after a sign-in code is sent
 - Signed-in email display while authenticated
-- `Send Magic Link`
+- `Send Code`
+- `Verify Code`
 - `Sign Out`
 - Auth and cloud-sync failures are mapped to user-facing guidance for rate limits, permissions, offline state, session expiry, and setup errors
 - Hidden-tab and page-close transitions trigger a best-effort local autosave flush and a best-effort cloud sync for already-saved user-library projects
