@@ -1,4 +1,4 @@
-export type CloudSyncStatus = "signed_out" | "syncing" | "synced" | "offline" | "error" | "conflict"
+export type CloudSyncIndicatorStatus = "signed_out" | "syncing" | "synced" | "offline" | "error" | "conflict"
 export type PresetSyncIndicatorStatus = "local" | "syncing" | "synced" | "conflict" | "error" | "deleted"
 
 export const CLOUD_STATUS_GREEN_CLASSNAME = "bg-[#4CAF50]"
@@ -9,7 +9,7 @@ export function getCloudSyncStatusIndicatorClassName({
   status,
   isSignedIn,
 }: {
-  status: CloudSyncStatus
+  status: CloudSyncIndicatorStatus
   isSignedIn: boolean
 }): string {
   if (status === "error") return CLOUD_STATUS_RED_CLASSNAME

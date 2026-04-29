@@ -21,9 +21,9 @@ const PRESET_METADATA_OVERRIDES: Readonly<Record<string, PresetMetadataOverride>
 export const LAYOUT_PRESET_CATEGORY_ORDER = ["presets", "examples", "users"] as const satisfies readonly LayoutPresetCategory[]
 
 export const LAYOUT_PRESET_CATEGORY_LABELS: Readonly<Record<LayoutPresetCategory, string>> = {
-  presets: "Presets",
-  examples: "Examples",
-  users: "Users",
+  presets: "1. Presets",
+  examples: "2. Examples",
+  users: "3. Users",
 }
 
 export type LayoutPresetGroup = {

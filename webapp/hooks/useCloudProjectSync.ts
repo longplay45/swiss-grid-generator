@@ -27,8 +27,7 @@ import {
   updateUserProjectSyncState,
   type UserProjectRecord,
 } from "@/lib/user-layout-library"
-import type { CloudSyncStatus } from "@/lib/cloud-status-indicator"
-export type { CloudSyncStatus } from "@/lib/cloud-status-indicator"
+export type CloudSyncStatus = "signed_out" | "syncing" | "synced" | "offline" | "error" | "conflict"
 export type CloudSyncRequestReason = "session" | "online" | "focus" | "visible" | "preset_browser" | "manual"
 
 type CloudSyncRequestOptions = {
