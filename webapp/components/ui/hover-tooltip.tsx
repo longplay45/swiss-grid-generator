@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { useCallback, useLayoutEffect, useRef, useState } from "react"
-import type { ReactNode } from "react"
+import type { FocusEvent, ReactNode } from "react"
 
 type HoverTooltipProps = {
   label: ReactNode
@@ -13,6 +13,7 @@ type HoverTooltipProps = {
   horizontalAlign?: "center" | "start" | "end"
   viewportPaddingPx?: number
   disabled?: boolean
+  inline?: boolean
 }
 
 type TooltipPoint = {
@@ -33,8 +34,9 @@ export function HoverTooltip({
   horizontalAlign = "center",
   viewportPaddingPx = 12,
   disabled = false,
+  inline = false,
 }: HoverTooltipProps) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const wrapperRef = useRef<HTMLElement | null>(null)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const [isActive, setIsActive] = useState(false)
   const [tooltipPosition, setTooltipPosition] = useState<TooltipPoint | null>(null)
@@ -125,22 +127,22 @@ export function HoverTooltip({
     setIsActive(true)
   }, [])
 
-  return (
-    <div
-      ref={wrapperRef}
-      className={cn(!disabled && "relative", className)}
-      onMouseEnter={disabled ? undefined : activateFromElement}
-      onMouseLeave={disabled ? undefined : () => {
+  const wrapperProps = {
+    className: cn(!disabled && "relative", className),
+    onMouseEnter: disabled ? undefined : activateFromElement,
+    onMouseLeave: disabled ? undefined : () => {
+      setIsActive(false)
+    },
+    onFocusCapture: disabled ? undefined : activateFromElement,
+    onBlurCapture: disabled ? undefined : (event: FocusEvent<HTMLElement>) => {
+      const nextTarget = event.relatedTarget
+      if (!(nextTarget instanceof Node) || !wrapperRef.current?.contains(nextTarget)) {
         setIsActive(false)
-      }}
-      onFocusCapture={disabled ? undefined : activateFromElement}
-      onBlurCapture={disabled ? undefined : (event) => {
-        const nextTarget = event.relatedTarget
-        if (!(nextTarget instanceof Node) || !wrapperRef.current?.contains(nextTarget)) {
-          setIsActive(false)
-        }
-      }}
-    >
+      }
+    },
+  }
+  const content = (
+    <>
       {children}
       {!disabled ? (
         <div
@@ -162,6 +164,26 @@ export function HoverTooltip({
           {label}
         </div>
       ) : null}
+    </>
+  )
+
+  return inline ? (
+    <span
+      ref={(node) => {
+        wrapperRef.current = node
+      }}
+      {...wrapperProps}
+    >
+      {content}
+    </span>
+  ) : (
+    <div
+      ref={(node) => {
+        wrapperRef.current = node
+      }}
+      {...wrapperProps}
+    >
+      {content}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   LAYOUT_PRESET_GROUPS,
   type LayoutPreset,
+  type LayoutPresetGroup,
 } from "@/lib/presets"
 import { HoverTooltip } from "@/components/ui/hover-tooltip"
 import { PresetPageThumbnail } from "@/components/sidebar/PresetPageThumbnail"
@@ -58,6 +59,57 @@ function getPresetCloudStatusLabel(syncState: LayoutPreset["syncState"], isCloud
   if (syncState === "error") return "Cloud error"
   if (syncState === "deleted") return "Cloud delete queued"
   return "Cloud pending"
+}
+
+function PresetGroupHeaderLabel({
+  group,
+  isDarkMode,
+}: {
+  group: LayoutPresetGroup
+  isDarkMode: boolean
+}) {
+  const label = formatPresetGroupHeaderLabel(group.label)
+  if (group.category !== "users") return label
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span>{label}</span>
+      <HoverTooltip
+        inline
+        constrainToClosestSelector='[data-tooltip-boundary="preset-browser"]'
+        constrainAxes="horizontal"
+        horizontalAlign="start"
+        viewportPaddingPx={24}
+        tooltipClassName={`w-72 max-w-[80vw] whitespace-normal border px-2 py-2 text-left text-[11px] font-normal normal-case leading-snug tracking-normal ${
+          isDarkMode
+            ? "border-gray-600 bg-gray-900/95 text-gray-200"
+            : "border-gray-300 bg-white/95 text-gray-700"
+        }`}
+        label={(
+          <div className="space-y-1">
+            <div>
+              User layouts are stored in the local offline library of this browser.
+            </div>
+            <div>
+              Local layouts exist only on this machine/browser and can be lost if browser data is cleared.
+            </div>
+            <div>
+              When signed in, saved user layouts sync to Supabase so they can be restored on other sessions after cloud sync completes.
+            </div>
+          </div>
+        )}
+      >
+        <span
+          aria-label="User library storage info"
+          className="inline-flex h-3 w-3 items-center justify-center rounded-full border border-[#fe9f97]/70 text-[9px] font-semibold normal-case leading-none tracking-normal text-[#fe9f97]"
+          onClick={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          i
+        </span>
+      </HoverTooltip>
+    </span>
+  )
 }
 
 function PresetTooltipRow({ label, value }: { label: string; value: string }) {
@@ -297,13 +349,19 @@ export function PresetLayoutsPanel({
   }, [collapsedGroups])
 
   const visibleGroups = useMemo(() => (
-    LAYOUT_PRESET_GROUPS
+    [...LAYOUT_PRESET_GROUPS]
       .map((group) => (
         group.category === "users"
           ? { ...group, presets: userPresets }
           : group
       ))
       .filter((group) => group.presets.length > 0)
+      .sort((a, b) => {
+        if (userPresets.length === 0) return 0
+        if (a.category === "users") return -1
+        if (b.category === "users") return 1
+        return 0
+      })
   ), [userPresets])
 
   const handleCopyUserPreset = useCallback(async (preset: LayoutPreset) => {
@@ -406,7 +464,7 @@ export function PresetLayoutsPanel({
             <section key={group.category} className="space-y-3">
               <div className="rounded-md py-2">
                 <SectionHeaderRow
-                  label={formatPresetGroupHeaderLabel(group.label)}
+                  label={<PresetGroupHeaderLabel group={group} isDarkMode={isDarkMode} />}
                   aria-expanded={!isCollapsed}
                   actionIcon={(
                     <ChevronUp

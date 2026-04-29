@@ -164,9 +164,11 @@ Default: `swiss`
 ### File Actions (icon buttons)
 
 - `Presets` (layout-template icon): opens/closes the presets browser in the preview area
-- User thumbnails in `3. Users` show a green status dot only while signed in and synced; signed-out, pending, and local-only states stay orange
+- When user layouts exist locally or through cloud sync, the `Users` section appears before bundled preset sections
+- The `Users` section header includes an info rollover describing local browser storage, browser-data clearing risk, and signed-in cloud sync
+- User thumbnails in `Users` show a green status dot only while signed in and synced; signed-out, pending, and local-only states stay orange
 - Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary
-- `Save` (save icon): opens Save to Library dialog
+- `Save` (save icon): opens Save to Library dialog; its status dot is red when the current project is not saved locally, orange when saved to the local Users library, and green only when the active saved project is signed in and cloud-synced
 - `Import` (download icon): import project JSON or compressed `.swissgridgenerator` archive
 - `Export` (upload icon): opens the export dialog
 - `Save` and `Export` stay disabled until a preview layout is available.

@@ -517,3 +517,10 @@ export async function listUserLayoutPresets(): Promise<LayoutPreset[]> {
 
 export const userLayoutPresetQuery = liveQuery(async () => listUserLayoutPresets())
 export const cloudActivityLogQuery = liveQuery(async () => listCloudActivityLogEntries())
+
+export function createUserProjectRecordQuery(id: string | null | undefined) {
+  return liveQuery(async () => {
+    const normalizedId = id?.trim()
+    return normalizedId ? getUserProjectRecord(normalizedId) : null
+  })
+}

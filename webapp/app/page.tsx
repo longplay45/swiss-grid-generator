@@ -64,8 +64,17 @@ import { LAYOUT_OPEN_TOOLTIP_ITEMS, type LayoutOpenTooltipItem } from "@/lib/gen
 import { omitOptionalRecordKey } from "@/lib/record-helpers"
 import { resetEditorPanelPersistence } from "@/lib/editor-panel-persistence"
 import type { LayoutPreset } from "@/lib/presets"
-import { saveProjectToUserLibrary } from "@/lib/user-layout-library"
-import { getCloudSyncStatusIndicatorClassName } from "@/lib/cloud-status-indicator"
+import {
+  createUserProjectRecordQuery,
+  saveProjectToUserLibrary,
+  type UserProjectRecord,
+} from "@/lib/user-layout-library"
+import {
+  getCloudSyncStatusIndicatorClassName,
+  getSaveStatusIndicatorClassName,
+  getSaveStatusIndicatorLabel,
+  type SaveStatusIndicatorStatus,
+} from "@/lib/cloud-status-indicator"
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"
 const RELEASE_CHANNEL = (process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? "prod").toLowerCase()
@@ -162,6 +171,7 @@ export default function Home() {
   const [noticeState, setNoticeState] = useState<NoticeState>(null)
   const [gridReductionWarningToast, setGridReductionWarningToast] = useState<GridReductionWarningToastState>(null)
   const [activeUserProjectId, setActiveUserProjectId] = useState<string | null>(null)
+  const [activeUserProjectRecord, setActiveUserProjectRecord] = useState<UserProjectRecord | null>(null)
   const [activeOriginPresetId, setActiveOriginPresetId] = useState<string | null>(null)
   const [projectHistoryPast, setProjectHistoryPast] = useState<ProjectHistoryEntry[]>([])
   const [projectHistoryFuture, setProjectHistoryFuture] = useState<ProjectHistoryEntry[]>([])
@@ -361,6 +371,24 @@ export default function Home() {
     if (!showPresetsBrowser) return
     requestCloudSync("preset_browser", { throttleMs: 30_000 })
   }, [requestCloudSync, showPresetsBrowser])
+
+  useEffect(() => {
+    if (!activeUserProjectId) {
+      setActiveUserProjectRecord(null)
+      return
+    }
+
+    const subscription = createUserProjectRecordQuery(activeUserProjectId).subscribe({
+      next: setActiveUserProjectRecord,
+      error: (error) => {
+        console.error(error)
+        setActiveUserProjectRecord(null)
+      },
+    })
+
+    return () => subscription.unsubscribe()
+  }, [activeUserProjectId])
+
   const {
     previewLayout,
     loadedPreviewLayout,
@@ -1427,6 +1455,13 @@ export default function Home() {
     status: cloudSyncStatus,
     isSignedIn: Boolean(user),
   })
+  const saveStatus: SaveStatusIndicatorStatus = !hasPreviewLayout || isDirty || !activeUserProjectId
+    ? "unsaved"
+    : user && cloudSyncStatus === "synced" && activeUserProjectRecord?.syncState === "synced"
+      ? "synced"
+      : "local"
+  const saveStatusDotClassName = getSaveStatusIndicatorClassName(saveStatus)
+  const saveStatusLabel = getSaveStatusIndicatorLabel(saveStatus)
 
   const { fileGroup, displayGroup, sidebarGroup } = useHeaderActions({
     activeSidebarPanel,
@@ -1440,7 +1475,8 @@ export default function Home() {
     showTypography,
     showLayers,
     smartTextZoomEnabled,
-    hasUnsavedChanges: isDirty,
+    saveStatusDotClassName,
+    saveStatusLabel,
     accountStatusDotClassName: cloudStatusIndicatorClassName,
     accountUserEmail: user?.email ?? null,
     accountCloudStatusLabel: cloudStatusLabel,

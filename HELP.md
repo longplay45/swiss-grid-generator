@@ -167,6 +167,8 @@ Global controls and panel behavior.
 ### Presets {#help-header-examples}
 - Opens the presets browser.
 - Bundled files are grouped into `Presets` and `Examples`. `Users` is reserved for user files.
+- When user layouts exist locally or through cloud sync, the `Users` section is listed first.
+- The `Users` header info marker explains that local layouts are browser/device-local and can be lost when browser data is cleared; signed-in cloud sync stores saved layouts in Supabase.
 - Hovering a preset thumbnail shows title, description, author, date, format, grid, baseline, margin, and rhythm metadata.
 - User thumbnails in `Users` also show cloud status in the rollover; the thumbnail status dot is green only while signed in and synced, orange when signed out or pending, and red on signed-in sync error.
 - Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
@@ -178,7 +180,7 @@ Global controls and panel behavior.
 Imports a saved project JSON or compressed `.swissgridgenerator` archive. Shortcut: `Cmd/Ctrl+O`.
 
 ### Save {#help-header-save}
-Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library as a gzip-compressed archive. Shortcut: `Cmd/Ctrl+S`.
+Opens the `Save to Library` dialog for project title, description, and author, then stores the current project in the local `Users` library as a gzip-compressed archive. The Save icon status dot is red when the current project is not saved locally, orange when saved to the local Users library, and green only when the active saved project is signed in and cloud-synced. Shortcut: `Cmd/Ctrl+S`.
 
 ### Cloud Account {#help-cloud-account}
 - The header account icon opens the right sidebar cloud account panel.

@@ -5,7 +5,7 @@ Current capability inventory for Swiss Grid Generator.
 ## Document Model
 
 - Multi-page projects with project metadata (`title`, `description`, `author`, `createdAt`).
-- Save to Library dialog for project title plus optional description and author metadata.
+- Save to Library dialog for project title plus optional description and author metadata, with a header status dot for unsaved, locally saved, and cloud-synced state.
 - Independent page settings and layout state per page.
 - Mixed page layer stack with text paragraphs and image placeholders.
 - Save/load as plain project JSON or gzip-compressed `.swissgridgenerator` archives.
@@ -163,6 +163,8 @@ Current capability inventory for Swiss Grid Generator.
 - Preset browser in the preview area.
 - Rendered page-1 thumbnails for bundled presets.
 - Preset rollover tooltip with title, description, author, and creation date metadata when rollover info is enabled.
+- User-library layouts are listed first when any local or synced user layouts are available.
+- The Users section header includes an info rollover describing local browser storage, data-clearing risk, and signed-in cloud sync.
 - User-library thumbnails show a green status dot only while signed in and synced; signed-out, pending, or local-only states stay orange.
 - Deleting a user-library thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click preset to load.

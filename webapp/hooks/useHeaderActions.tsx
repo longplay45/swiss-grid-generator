@@ -51,7 +51,8 @@ type Args = {
   showTypography: boolean
   showLayers: boolean
   smartTextZoomEnabled: boolean
-  hasUnsavedChanges: boolean
+  saveStatusDotClassName: string
+  saveStatusLabel: string
   accountStatusDotClassName: string
   accountUserEmail: string | null
   accountCloudStatusLabel: string
@@ -99,9 +100,10 @@ export function useHeaderActions(args: Args) {
       action: {
         key: "save",
         ariaLabel: "Save",
-        tooltip: "Save to Library",
+        tooltip: `Save to Library\nSave status: ${args.saveStatusLabel}`,
         shortcutId: "save_to_library",
-        showStatusDot: args.hasUnsavedChanges,
+        showStatusDot: args.hasPreviewLayout,
+        statusDotClassName: args.saveStatusDotClassName,
         disabled: !args.hasPreviewLayout,
         onClick: args.onOpenSaveLibraryDialog,
         icon: <Save className="h-4 w-4" />,

@@ -1,5 +1,6 @@
 export type CloudSyncIndicatorStatus = "signed_out" | "syncing" | "synced" | "offline" | "error" | "conflict"
 export type PresetSyncIndicatorStatus = "local" | "syncing" | "synced" | "conflict" | "error" | "deleted"
+export type SaveStatusIndicatorStatus = "unsaved" | "local" | "synced"
 
 export const CLOUD_STATUS_GREEN_CLASSNAME = "bg-[#4CAF50]"
 export const CLOUD_STATUS_ORANGE_CLASSNAME = "bg-[#fbae17]"
@@ -29,4 +30,16 @@ export function getPresetSyncStatusIndicatorClassName({
   if (status === "error") return CLOUD_STATUS_RED_CLASSNAME
   if (status === "synced") return CLOUD_STATUS_GREEN_CLASSNAME
   return CLOUD_STATUS_ORANGE_CLASSNAME
+}
+
+export function getSaveStatusIndicatorClassName(status: SaveStatusIndicatorStatus): string {
+  if (status === "unsaved") return CLOUD_STATUS_RED_CLASSNAME
+  if (status === "synced") return CLOUD_STATUS_GREEN_CLASSNAME
+  return CLOUD_STATUS_ORANGE_CLASSNAME
+}
+
+export function getSaveStatusIndicatorLabel(status: SaveStatusIndicatorStatus): string {
+  if (status === "unsaved") return "Not saved locally"
+  if (status === "synced") return "Synced to cloud"
+  return "Saved to local store"
 }
