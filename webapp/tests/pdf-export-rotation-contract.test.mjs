@@ -35,6 +35,14 @@ test("typography layout plan reflows across the full stacked row height before a
   assert.match(source, /reflowRowLayouts\.map\(\(rowLayout\)\s*=>\s*\(\{\s*x:\s*origin\.x\s*\+\s*getColumnOffset\(startCol,\s*columnIndex\),[\s\S]*?y:\s*origin\.y\s*\+\s*baselineStep\s*\+\s*rowLayout\.yOffset,/)
 })
 
+test("typography layout only reports overflow for newspaper reflow", () => {
+  const source = readText("lib/typography-layout-plan.ts")
+  assert.match(source, /const\s+visibleLineCount\s*=\s*columnReflow\s*\?\s*Math\.min\(lines\.length,\s*maxLinesPerColumn\)\s*:\s*lines\.length/)
+  assert.match(source, /const\s+overflowLines\s*=\s*columnReflow\s*\?\s*Math\.max\(0,\s*lines\.length\s*-\s*commands\.length\)\s*:\s*0/)
+  assert.match(source, /const\s+visibleCaptionLineCount\s*=\s*captionReflowEnabled\s*\?\s*Math\.min\(captionLines\.length,\s*captionMaxLinesPerColumn\)\s*:\s*captionLines\.length/)
+  assert.match(source, /const\s+captionOverflowLines\s*=\s*captionReflowEnabled\s*\?\s*Math\.max\(0,\s*captionLines\.length\s*-\s*captionCommands\.length\)\s*:\s*0/)
+})
+
 test("page export plan only emits a page outline when guide layers are visible", () => {
   const source = readText("lib/page-export-plan.ts")
   assert.match(source, /const\s+showPageOutline\s*=\s*showMargins\s*\|\|\s*showModules\s*\|\|\s*showBaselines/)

@@ -379,7 +379,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     const maxLinesPerColumn = Math.max(1, columnReflow
       ? getReflowLineCapacityForHeight(reflowCapacityHeight, lineStep)
       : getLineCapacityForHeight(moduleHeightForBlock, lineStep, firstLineHeight))
-    const visibleLineCount = Math.min(lines.length, maxLinesPerColumn)
+    const visibleLineCount = columnReflow ? Math.min(lines.length, maxLinesPerColumn) : lines.length
     const verticalStartOffset = getVerticalStartOffset({
       lineCount: visibleLineCount,
       lineStep,
@@ -418,10 +418,6 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
         const line = lines[lineIndex]
         const lineTopY = origin.y + baselineStep + verticalStartOffset + lineIndex * lineStep
         const y = lineTopY + ascent
-        const lineBottomY = y + descent
-        const moduleBottomY = origin.y + baselineStep + moduleHeightForBlock + 0.0001
-        const bottomLineLimit = Math.min(pageBottomY + 0.0001, moduleBottomY)
-        if (lineBottomY > bottomLineLimit) continue
         maxUsedRows = Math.max(maxUsedRows, lineIndex + 1)
         const offsetX = opticalOffset({ context, key, styleKey, line: line.text, align: textAlign, fontSize })
         commands.push({
@@ -463,7 +459,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       }
     }
 
-    const overflowLines = Math.max(0, lines.length - commands.length)
+    const overflowLines = columnReflow ? Math.max(0, lines.length - commands.length) : 0
     overflowByBlock[key] = overflowLines
     if (overflowLines > 0 && hyphenate && commands.length > 0) {
       const last = commands[commands.length - 1]
@@ -583,7 +579,9 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
   const captionMaxLinesPerColumn = Math.max(1, captionReflowEnabled
     ? getReflowLineCapacityForHeight(captionReflowCapacityHeight, captionLineStep)
     : getLineCapacityForHeight(captionModuleHeight, captionLineStep, captionFirstLineHeight))
-  const visibleCaptionLineCount = Math.min(captionLines.length, captionMaxLinesPerColumn)
+  const visibleCaptionLineCount = captionReflowEnabled
+    ? Math.min(captionLines.length, captionMaxLinesPerColumn)
+    : captionLines.length
   const captionVerticalStartOffset = getVerticalStartOffset({
     lineCount: visibleCaptionLineCount,
     lineStep: captionLineStep,
@@ -599,10 +597,6 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
       const line = captionLines[lineIndex]
       const lineTopY = captionOrigin.y + baselineStep + captionVerticalStartOffset + lineIndex * captionLineStep
       const y = lineTopY + captionAscent
-      const lineBottomY = y + captionDescent
-      const captionModuleBottomY = captionOrigin.y + baselineStep + captionModuleHeight + 0.0001
-      const captionBottomLineLimit = Math.min(captionPageBottomY + 0.0001, captionModuleBottomY)
-      if (lineBottomY > captionBottomLineLimit) continue
       const offsetX = opticalOffset({
         context: captionContext,
         key: captionKey,
@@ -656,7 +650,7 @@ export function buildTypographyLayoutPlan<BlockId extends string, StyleKey exten
     }
   }
 
-  const captionOverflowLines = Math.max(0, captionLines.length - captionCommands.length)
+  const captionOverflowLines = captionReflowEnabled ? Math.max(0, captionLines.length - captionCommands.length) : 0
   overflowByBlock[captionKey] = captionOverflowLines
   if (captionOverflowLines > 0 && captionSyllableDivision && captionCommands.length > 0) {
     const last = captionCommands[captionCommands.length - 1]
