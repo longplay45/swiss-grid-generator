@@ -359,8 +359,9 @@ When `i` is active, header icons show rollover tooltips with a second line for k
 ## Text Editing + Placement
 
 - Double-click text block to open editor
-- Double-click empty module creates a paragraph in the clicked module.
-- Holding `1..6` while double-clicking empty module sets the new paragraph hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, `6 Display`.
+- Double-click empty module creates a paragraph in the clicked module with hyphenation off by default.
+- Holding `1..5` while double-clicking empty module sets the new paragraph hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Display`.
+- New hierarchy paragraphs start with fixed module geometry and clamp to the available columns from the clicked module: Caption `1 row / 1 col`, Body `1 row / 2 cols`, Subhead `1 row / 2 cols`, Headline `1 row / 3 cols`, Display `1 row / 3 cols`.
 - Drag to move; paragraphs and image placeholders respect `Snap to Columns (X)` and use module-top Y snapping by default when `Snap to Baseline (Y)` is enabled
 - With a selected unlocked layer and no active editor field, arrow keys nudge the layer through the same logic: snapped X moves by columns, snapped Y moves by module rows by default, `Shift` uses baseline rows, and unsnapped axes move in tenth-step logical increments with `Shift` as a 10x multiplier
 - With `Snap to Columns (X)` off, free horizontal placement may overhang one column into either side margin.

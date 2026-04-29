@@ -116,8 +116,8 @@ Whether you're creating posters, editorial spreads, books, or experimental layou
 - Smart text-edit zoom is enabled by default and can be toggled from the header; entering text edit mode focuses the active paragraph, stays stable through ordinary text/style edits, and refits only when the paragraph frame geometry changes (`Rows`, `Baselines`, `Cols`)
 - Supported layout and editor dropdowns preview hovered items live in the page; closing a menu without selecting restores the committed state
 - Toggle visibility of baselines, margins, modules, and typography
-- Double-click empty module → create text
-- Hold `1..6` while double-clicking empty module to create text in a chosen hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, `6 Display`
+- Double-click empty module → create text with hyphenation off by default
+- Hold `1..5` while double-clicking empty module to create text in a chosen hierarchy: `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Display`; initial frame width follows the hierarchy and clamps to the remaining columns from the clicked module
 - Shift + double-click → create image placeholder
 - Double-click text creation uses the actual module under the pointer, so lower-half and right-half clicks stay in the clicked module
 - Image placeholders use the same `Snap to Columns (X)` / `Snap to Baseline (Y)` placement model as paragraphs

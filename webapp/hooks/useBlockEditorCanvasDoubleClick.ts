@@ -16,15 +16,40 @@ const HIERARCHY_SHORTCUT_STYLE_BY_KEY: Readonly<Record<string, string>> = {
   "2": "body",
   "3": "subhead",
   "4": "headline",
-  "5": "fx",
-  "6": "display",
+  "5": "display",
+}
+
+const NEW_TEXT_LAYER_MODULE_GEOMETRY_BY_STYLE: Readonly<Record<string, { rows: number; columns: number }>> = {
+  caption: { rows: 1, columns: 1 },
+  body: { rows: 1, columns: 2 },
+  subhead: { rows: 1, columns: 2 },
+  headline: { rows: 1, columns: 3 },
+  display: { rows: 1, columns: 3 },
 }
 
 function resolveHeldHierarchyShortcut(keys: ReadonlySet<string>): string | null {
-  for (const key of ["6", "5", "4", "3", "2", "1"] as const) {
+  for (const key of ["5", "4", "3", "2", "1"] as const) {
     if (keys.has(key)) return HIERARCHY_SHORTCUT_STYLE_BY_KEY[key] ?? null
   }
   return null
+}
+
+function resolveNewTextLayerModuleGeometry({
+  style,
+  position,
+  gridCols,
+}: {
+  style: string
+  position: ModulePosition
+  gridCols: number
+}): { rows: number; columns: number } {
+  const defaults = NEW_TEXT_LAYER_MODULE_GEOMETRY_BY_STYLE[style] ?? NEW_TEXT_LAYER_MODULE_GEOMETRY_BY_STYLE.body
+  const startCol = Math.max(0, Math.min(Math.max(0, gridCols - 1), Math.floor(position.col)))
+  const availableCols = Math.max(1, gridCols - startCol)
+  return {
+    rows: defaults.rows,
+    columns: Math.max(1, Math.min(defaults.columns, availableCols)),
+  }
 }
 
 type Args = {
@@ -53,7 +78,6 @@ type Args = {
   getBlockTextColor: (key: string) => string
   isSnapToColumnsEnabled: (key: string) => boolean
   isSnapToBaselineEnabled: (key: string) => boolean
-  getDefaultColumnSpan: (key: string, gridCols: number) => number
   getGridMetrics: () => { rowStartBaselines: number[] }
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
@@ -101,7 +125,6 @@ export function useBlockEditorCanvasDoubleClick({
   getBlockTextColor,
   isSnapToColumnsEnabled,
   isSnapToBaselineEnabled,
-  getDefaultColumnSpan,
   getGridMetrics,
   toPagePoint,
   findTopmostBlockAtPoint,
@@ -226,8 +249,12 @@ export function useBlockEditorCanvasDoubleClick({
     const rawPosition = resolveModulePositionAtPagePoint(pagePoint.x, pagePoint.y)
     const snapped = rawPosition ?? snapToModule(pagePoint.x, pagePoint.y, newKey)
     const rowStartBaselines = getGridMetrics().rowStartBaselines
-    const defaultSpan = getDefaultColumnSpan(newKey, resultGridCols)
     const shortcutStyle = resolveHeldHierarchyShortcut(heldHierarchyShortcutKeysRef.current) ?? "body"
+    const moduleGeometry = resolveNewTextLayerModuleGeometry({
+      style: shortcutStyle,
+      position: snapped,
+      gridCols: resultGridCols,
+    })
     const defaultText = getDummyTextForStyle(shortcutStyle)
     setBlockCollections((prev) => insertTextLayerIntoCollections(prev, {
       newKey,
@@ -235,11 +262,12 @@ export function useBlockEditorCanvasDoubleClick({
       styleKey: shortcutStyle,
       gridCols: resultGridCols,
       gridRows: resultGridRows,
-      columns: defaultSpan,
-      rows: 1,
+      columns: moduleGeometry.columns,
+      rows: moduleGeometry.rows,
       heightBaselines: 0,
       position: snapped,
       rowStartBaselines,
+      syllableDivision: false,
     }))
     promoteLayerToTop(newKey)
     onParagraphCreated?.()
@@ -263,7 +291,6 @@ export function useBlockEditorCanvasDoubleClick({
     getBlockHeightBaselines,
     getBlockSpan,
     getBlockTextColor,
-    getDefaultColumnSpan,
     getDummyTextForStyle,
     getGridMetrics,
     getNextCustomBlockId,

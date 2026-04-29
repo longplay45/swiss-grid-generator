@@ -818,7 +818,6 @@ export const GridPreview = memo(function GridPreview({
       getStyleLeading,
       getBlockTextColor,
       defaultTextColor,
-      getDefaultColumnSpan,
       resultGridUnit: result.grid.gridUnit,
       toPagePoint,
       findTopmostBlockAtPoint,

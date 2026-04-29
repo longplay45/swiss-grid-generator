@@ -62,9 +62,9 @@ Refine tracking and leading only after the hierarchy is correct. Tracking change
 
 ### Define the frame before refining the content.
 
-Use the modular field deliberately. Double-click a module to create text. Hold `1` to `6` while double-clicking to create text directly in a chosen hierarchy. Use `Shift` + double-click to create an image placeholder. These actions are most effective when the page structure is already stable.
+Use the modular field deliberately. Double-click a module to create text with hyphenation off. Hold `1` to `5` while double-clicking to create text directly in a hierarchy; the initial frame follows that role and clamps to the remaining columns. Use `Shift` + double-click to create an image placeholder.
 
-Before refining the wording, define the frame with `Rows`, `Baselines`, and `Cols`. Then adjust alignment, snapping, and content. Snapped placement produces stronger editorial discipline. Free placement should be used deliberately, not casually. If a frame feels too loose, reduce the geometry before adjusting the text inside it.
+Before refining wording, define the frame with `Rows`, `Baselines`, and `Cols`. Then adjust alignment, snapping, and content. Snapped placement produces stronger editorial discipline. Free placement should be deliberate. If a frame feels too loose, reduce the geometry before adjusting the text inside it.
 
 ## 8. Export
 
@@ -78,7 +78,7 @@ Before exporting, confirm the selected page range, the page order, the page numb
 
 ### Use shortcuts to protect concentration.
 
-Only a few interactions materially improve the workflow: double-click to create text, `Shift` + double-click to create an image placeholder, hold `1` to `6` while double-clicking to choose hierarchy directly, drag to move, `Alt/Option` + drag to duplicate, use arrow keys to nudge selected layers, and press `Esc` to leave dialogs or cancel export at the next safe point.
+Only a few interactions materially improve the workflow: double-click to create text, `Shift` + double-click to create an image placeholder, hold `1` to `5` while double-clicking to choose hierarchy directly, drag to move, `Alt/Option` + drag to duplicate, use arrow keys to nudge selected layers, and press `Esc` to leave dialogs or cancel export at the next safe point.
 
 The purpose of shortcuts is not speed for its own sake. The purpose is to keep attention on the page. Keep the interaction set small, predictable, and compositional.
 

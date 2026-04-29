@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "exportedAt": "2026-04-24T19:08:51.456Z",
+  "exportedAt": "2026-04-29T16:08:54.991Z",
   "title": "Swiss Grid Generator Manual",
   "description": "Swiss Grid Generator Software Manual",
   "author": "Swiss Grid Generator",
@@ -617,7 +617,7 @@
           "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "Build the page in the simplest reliable order.",
           "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "",
           "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "",
-          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Choose Ratio, Orientation, and, if needed, Rotation. Then set the Baseline, choose the Margins method, and adjust the Baseline Multiple until the content field feels proportionate. After that, set Cols, Rows, Gutter, and Rhythm, then define the document type scale and base font in Typo.\n\nOnly after the page structure is established should you create content. Double-click a module to create a text paragraph. Use Shift + double-click to create an image placeholder. If the page feels wrong, return to baseline and margins before changing the content blocks."
+          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Choose Ratio, Orientation, and, if needed, Rotation. Then set the Baseline, choose the Margins method, and adjust the Baseline Multiple until the content field feels proportionate. After that, set Cols, Rows, Gutter, and Rhythm, then define the document type scale and base font in Typo & Rhythms.\n\nOnly after the page structure is established should you create content. Double-click a module to create a text paragraph. Use Shift + double-click to create an image placeholder. If the page feels wrong, return to baseline and margins before changing the content blocks."
         },
         "blockTextEdited": {
           "cover-title": true,
@@ -1977,7 +1977,7 @@
           "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "Define the frame before refining the content.",
           "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "",
           "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "",
-          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Use the modular field deliberately. Double-click a module to create text. Hold 1 to 6 while double-clicking to create text directly in a chosen hierarchy. Use Shift + double-click to create an image placeholder. These actions are most effective when the page structure is already stable.\n\nBefore refining the wording, define the frame with Rows, Baselines, and Cols. Then adjust alignment, snapping, and content. Snapped placement produces stronger editorial discipline. Free placement should be used deliberately, not casually. If a frame feels too loose, reduce the geometry before adjusting the text inside it."
+          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Use the modular field deliberately. Double-click a module to create text with hyphenation off. Hold 1 to 5 while double-clicking to create text directly in a hierarchy; the initial frame follows that role and clamps to the remaining columns. Use Shift + double-click to create an image placeholder.\n\nBefore refining wording, define the frame with Rows, Baselines, and Cols. Then adjust alignment, snapping, and content. Snapped placement produces stronger editorial discipline. Free placement should be deliberate. If a frame feels too loose, reduce the geometry before adjusting the text inside it."
         },
         "blockTextEdited": {
           "cover-title": true,
@@ -2521,7 +2521,7 @@
           "paragraph-94aa932b-41cb-4033-b800-0353c27e83fd": "Use shortcuts to protect concentration.",
           "paragraph-1094c876-1831-4124-a765-f078fb4a84f9": "",
           "paragraph-0c92763f-e2c5-4f48-8180-5a04744d774b": "",
-          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Only a few interactions materially improve the workflow: double-click to create text, Shift + double-click to create an image placeholder, hold 1 to 6 while double-clicking to choose hierarchy directly, drag to move, Alt/Option + drag to duplicate, use arrow keys to nudge selected layers, and press Esc to leave dialogs or cancel export at the next safe point.\n\nThe purpose of shortcuts is not speed for its own sake. The purpose is to keep attention on the page. Keep the interaction set small, predictable, and compositional."
+          "paragraph-590e9b2e-f0a9-427a-95a8-145fd270e1b1": "Only a few interactions materially improve the workflow: double-click to create text, Shift + double-click to create an image placeholder, hold 1 to 5 while double-clicking to choose hierarchy directly, drag to move, Alt/Option + drag to duplicate, use arrow keys to nudge selected layers, and press Esc to leave dialogs or cancel export at the next safe point.\n\nThe purpose of shortcuts is not speed for its own sake. The purpose is to keep attention on the page. Keep the interaction set small, predictable, and compositional."
         },
         "blockTextEdited": {
           "cover-title": true,

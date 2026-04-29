@@ -95,8 +95,8 @@ Current capability inventory for Swiss Grid Generator.
 
 ## Placement and Layers
 
-- Double-click empty module to create a text paragraph.
-- Hold `1..6` while double-clicking empty module to create a paragraph as `Caption`, `Body`, `Subhead`, `Headline`, `Custom`, or `Display`.
+- Double-click empty module to create a text paragraph with hyphenation off by default.
+- Hold `1..5` while double-clicking empty module to create a paragraph as `Caption`, `Body`, `Subhead`, `Headline`, or `Display`; new hierarchy blocks use disciplined starting frames: Caption `1x1`, Body/Subhead `1x2`, Headline/Display `1x3`, clamped to the remaining columns from the clicked module.
 - `Shift` + double-click empty module to create an image placeholder (`Ctrl` fallback).
 - Paragraph creation uses the actual clicked module rather than the nearest module center.
 - Drag paragraphs and placeholders to move them.

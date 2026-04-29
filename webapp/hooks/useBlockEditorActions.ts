@@ -99,7 +99,6 @@ type Args = {
   getStyleLeading: (style: string) => number
   getBlockTextColor: (key: string) => string
   defaultTextColor: string
-  getDefaultColumnSpan: (key: string, gridCols: number) => number
   resultGridUnit: number
   toPagePoint: (canvasX: number, canvasY: number) => PagePoint | null
   findTopmostBlockAtPoint: (pageX: number, pageY: number) => string | null
@@ -159,7 +158,6 @@ export function useBlockEditorActions({
   getStyleLeading,
   getBlockTextColor,
   defaultTextColor,
-  getDefaultColumnSpan,
   resultGridUnit,
   toPagePoint,
   findTopmostBlockAtPoint,
@@ -334,7 +332,6 @@ export function useBlockEditorActions({
     getDummyTextForStyle,
     getStyleLeading,
     getStyleSize,
-    getDefaultColumnSpan,
     getGridMetrics,
     toPagePoint,
     findTopmostBlockAtPoint,

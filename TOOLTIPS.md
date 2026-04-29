@@ -25,10 +25,10 @@ Start with `Repetitive` rhythm when judging a layout. It gives the clearest read
 ## Creating Content
 
 ### Create Text Directly On The Grid {#tooltip-create-text}
-Double-click inside a module to create a paragraph exactly where the page structure suggests it belongs. The created block uses the clicked module, so deliberate clicks matter. Place first, refine second.
+Double-click inside a module to create a paragraph exactly where the page structure suggests it belongs. The created block uses the clicked module, turns hyphenation off by default, and clamps its starting width to the available columns. Place first, refine second.
 
 ### Choose Hierarchy While Creating {#tooltip-create-hierarchy}
-Hold `1..6` while double-clicking to create a paragraph with the intended hierarchy immediately. Use `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, `5 Custom`, and `6 Display`.
+Hold `1..5` while double-clicking to create a paragraph with the intended hierarchy immediately. Use `1 Caption`, `2 Body`, `3 Subhead`, `4 Headline`, and `5 Display`. Caption starts at 1 column, Body and Subhead at 2 columns, and Headline and Display at 3 columns unless fewer columns remain from the clicked module.
 
 ### Add Image Placeholders In Place {#tooltip-create-image}
 Use `Shift` + double-click on an empty module to create an image placeholder. Image placeholders share the same snap, span, baseline-height, and rotation discipline as text blocks, so they should be placed with the same structural care.
