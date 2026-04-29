@@ -120,12 +120,17 @@ function getValidationErrors(
   return errors
 }
 
-function readFileAsDataUrl(file: File) {
+function readFileAsBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        resolve(reader.result)
+        const [, base64Data] = reader.result.split(",", 2)
+        if (base64Data) {
+          resolve(base64Data)
+          return
+        }
+        reject(new Error("Screenshot could not be encoded."))
         return
       }
       reject(new Error("Screenshot could not be read."))
@@ -141,7 +146,7 @@ async function buildScreenshotPayload(files: File[]): Promise<FeedbackScreenshot
       name: file.name,
       type: file.type as FeedbackScreenshot["type"],
       size: file.size,
-      data: await readFileAsDataUrl(file),
+      base64Data: await readFileAsBase64(file),
     })),
   )
 }
@@ -152,16 +157,31 @@ function getFeedbackSubmitErrorMessage(error: unknown): string {
     : typeof error === "object" && error && "message" in error && typeof error.message === "string"
       ? error.message
       : ""
+  const rawDetails = typeof error === "object" && error && "details" in error && typeof error.details === "string"
+    ? error.details
+    : ""
+  const rawHint = typeof error === "object" && error && "hint" in error && typeof error.hint === "string"
+    ? error.hint
+    : ""
+  const diagnosticText = [rawMessage, rawDetails, rawHint].filter(Boolean).join(" ")
 
-  if (/support_log|column .* does not exist|schema cache/i.test(rawMessage)) {
+  if (/support_log|column .* does not exist|schema cache/i.test(diagnosticText)) {
     return "Feedback log column is missing. Run the support_log SQL migration in Supabase, then try again."
   }
 
-  if (/row-level security|violates row-level security|permission denied/i.test(rawMessage)) {
+  if (/add_feedback_screenshot|feedback_screenshots|function .* does not exist/i.test(diagnosticText)) {
+    return "Feedback screenshot storage is missing. Run the feedback_screenshots SQL migration in Supabase, then try again."
+  }
+
+  if (/ambiguous|column reference .* ambiguous|variable_conflict/i.test(diagnosticText)) {
+    return "Feedback screenshot storage failed because the Supabase RPC has an ambiguous SQL parameter. Replace the add_feedback_screenshot function with the corrected version."
+  }
+
+  if (/row-level security|violates row-level security|permission denied/i.test(diagnosticText)) {
     return "Feedback could not be sent because the Supabase insert policy rejected it."
   }
 
-  if (/screenshots|check constraint|feedback_messages_screenshots/i.test(rawMessage)) {
+  if (/screenshots|check constraint|feedback_messages_screenshots/i.test(diagnosticText)) {
     return "Feedback could not be sent because an attachment exceeds the Supabase limits."
   }
 
@@ -327,11 +347,16 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, userId, userEmai
       scrollPanelToTop()
     } catch (error) {
       const message = getFeedbackSubmitErrorMessage(error)
+      const rawMessage = error instanceof Error
+        ? error.message
+        : typeof error === "object" && error && "message" in error && typeof error.message === "string"
+          ? error.message
+          : undefined
       setSubmitMessage(message)
       void addCloudActivityLogEntry({
         level: "error",
         action: "Feedback failed",
-        message,
+        message: rawMessage ? `${message} (${rawMessage})` : message,
       })
       scrollPanelToTop()
     } finally {
@@ -432,19 +457,6 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, userId, userEmai
           <div className={`rounded-md border px-3 py-2 text-xs ${tone.success}`}>
             Thank you. Your feedback has been sent.
           </div>
-          <div className="space-y-3">
-            <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
-              Version {appVersion}.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              onClick={onClose}
-              className={`${feedbackButtonClassName} w-full`}
-            >
-              Close
-            </Button>
-          </div>
         </div>
       ) : (
         <form className={`space-y-4 ${tone.body}`} onSubmit={handleSubmit} noValidate>
@@ -521,28 +533,15 @@ export function FeedbackPanel({ isDarkMode = false, appVersion, userId, userEmai
             {renderSupportLogCheckbox()}
           </Section>
 
-          <div className="space-y-3">
-            <p className={`text-[10px] uppercase tracking-[0.12em] ${tone.caption}`}>
-              Version {appVersion}.
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                onClick={onClose}
-                className={feedbackButtonClassName}
-              >
-                Close
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSubmitting}
-                className={`${feedbackButtonClassName} flex-1`}
-              >
-                {isSubmitting ? "Sending..." : "Send Feedback"}
-              </Button>
-            </div>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting}
+              className={`${feedbackButtonClassName} w-full`}
+            >
+              {isSubmitting ? "Sending..." : "Send Feedback"}
+            </Button>
           </div>
         </form>
       )}
