@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 
-import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
+import { SectionHeaderRow } from "@/components/ui/section-header-row"
 
 type Props = {
   projectDescription: string
@@ -71,7 +71,7 @@ export function ProjectMetadataSection({
   return (
     <div className="mt-3 space-y-3">
       <div className="space-y-1.5">
-        <div className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Description</div>
+        <SectionHeaderRow label="Description" />
         <textarea
           value={descriptionDraft}
           onChange={(event) => setDescriptionDraft(event.target.value)}
@@ -88,7 +88,7 @@ export function ProjectMetadataSection({
         />
       </div>
       <div className="space-y-1.5">
-        <div className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Author</div>
+        <SectionHeaderRow label="Author" />
         <input
           type="text"
           value={authorDraft}

@@ -12,7 +12,7 @@ import {
   isCardDragIgnoreTarget,
   lockDocumentUserSelect,
 } from "@/lib/sidebar-card-drag"
-import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
+import { SectionHeaderRow } from "@/components/ui/section-header-row"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 
 type PreviewLayoutState = SharedPreviewLayoutState<string, string, string>
@@ -492,9 +492,7 @@ export function PagesPanel({
                           {isFacingPage ? <Check className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
                         </button>
                       </div>
-                      <div className={`mt-3 ${SECTION_HEADLINE_CLASSNAME}`}>
-                        Layers
-                      </div>
+                      <SectionHeaderRow label="Layers" className="mt-3" />
                       <ProjectPageLayersList
                         pageId={page.id}
                         layout={page.previewLayout}

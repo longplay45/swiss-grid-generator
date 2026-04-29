@@ -8,6 +8,11 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
+  safelist: [
+    "bg-[#4CAF50]",
+    "bg-[#fbae17]",
+    "bg-[#fe9f97]",
+  ],
   theme: {
     container: {
       center: true,

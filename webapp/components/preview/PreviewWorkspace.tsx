@@ -12,6 +12,7 @@ import { PagesPanel } from "@/components/sidebar/PagesPanel"
 import { PresetLayoutsPanel } from "@/components/sidebar/PresetLayoutsPanel"
 import { ProjectTitleSection } from "@/components/sidebar/ProjectTitleSection"
 import { HeaderIconButton } from "@/components/ui/header-icon-button"
+import { SectionHeaderRow } from "@/components/ui/section-header-row"
 import { getStyleDefaultFontWeight, resolveFontVariant, type FontFamily } from "@/lib/config/fonts"
 import {
   type ImageColorSchemeId,
@@ -24,7 +25,6 @@ import type { GridResult } from "@/lib/grid-calculator"
 import type { PreviewLayoutState as SharedPreviewLayoutState } from "@/lib/types/preview-layout"
 import type { LayoutPreset } from "@/lib/presets"
 import { HelpIndicatorLine } from "@/components/ui/help-indicator-line"
-import { SECTION_HEADLINE_CLASSNAME } from "@/lib/ui-section-headline"
 import { ProjectTourOverlay } from "@/components/preview/ProjectTourOverlay"
 import { LayoutOpenTooltipOverlay } from "@/components/preview/LayoutOpenTooltipOverlay"
 import { buildGridResultFromUiSettings, resolveUiSettingsSnapshot } from "@/lib/ui-settings-resolver"
@@ -480,7 +480,7 @@ export function PreviewWorkspace({
               className={`relative h-full min-h-[360px] w-full ${isDarkUi ? "bg-[#1D232D]" : "bg-gray-100/60"}`}
               onMouseEnter={showSectionHelpIcons ? () => onHeaderHelpNavigate("presets") : undefined}
             >
-              {showSectionHelpIcons ? <HelpIndicatorLine /> : null}
+              {showSectionHelpIcons ? <HelpIndicatorLine className="-top-[10px]" /> : null}
               <PresetLayoutsPanel
                 isDarkMode={isDarkUi}
                 onLoadPreset={onLoadPreset}
@@ -570,42 +570,43 @@ export function PreviewWorkspace({
               <div className="flex h-full min-h-0 flex-col">
                 <div className="mb-3 shrink-0 px-4 pt-4 md:px-6 md:pt-6">
                   <div className="rounded-md py-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className={`${SECTION_HEADLINE_CLASSNAME} mb-0 ${uiTheme.sidebarHeading}`}>P R O J E C T</h3>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          aria-label={showProjectInfo ? "Hide document info" : "Show document info"}
-                          aria-pressed={showProjectInfo}
-                          onClick={() => setShowProjectInfo((current) => !current)}
-                          className={`mt-[2px] inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
-                            showProjectInfo
-                              ? isDarkUi
-                                ? "border-[#f54123] bg-[#f54123] text-[#F4F6F8]"
-                                : "border-[#f54123] bg-[#f54123] text-white"
-                              : isDarkUi
+                    <SectionHeaderRow
+                      label="P R O J E C T"
+                      labelClassName={uiTheme.sidebarHeading}
+                      actions={(
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            aria-label={showProjectInfo ? "Hide document info" : "Show document info"}
+                            aria-pressed={showProjectInfo}
+                            onClick={() => setShowProjectInfo((current) => !current)}
+                            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                              showProjectInfo
+                                ? isDarkUi
+                                  ? "border-[#f54123] bg-[#f54123] text-[#F4F6F8]"
+                                  : "border-[#f54123] bg-[#f54123] text-white"
+                                : isDarkUi
+                                  ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                                  : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
+                            }`}
+                          >
+                            <Info className="h-2 w-2" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Close project panel"
+                            onClick={closeSidebarPanel}
+                            className={`inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
+                              isDarkUi
                                 ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
                                 : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                          }`}
-                        >
-                          <Info className="h-2 w-2" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Close project panel"
-                          onClick={closeSidebarPanel}
-                          className={`mt-[2px] inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors ${
-                            isDarkUi
-                              ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
-                              : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                          }`}
-                        >
-                          <X className="h-2 w-2" />
-                        </button>
-                      </div>
-                    </div>
+                            }`}
+                          >
+                            <X className="h-2 w-2" />
+                          </button>
+                        </div>
+                      )}
+                    />
                   </div>
                   {showProjectInfo ? (
                     <div className="pb-4 pt-1">
@@ -624,23 +625,16 @@ export function PreviewWorkspace({
                     isDarkMode={isDarkUi}
                   />
                   <div className="mt-4 rounded-md py-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className={`${SECTION_HEADLINE_CLASSNAME} ${uiTheme.sidebarHeading}`}>Pages</div>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="Add page"
-                        onClick={onPageAdd}
-                        className={`mt-[2px] inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                          isDarkUi
-                            ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
-                            : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"
-                        }`}
-                      >
-                        <Plus className="h-2 w-2" />
-                      </button>
-                    </div>
+                    <SectionHeaderRow
+                      label="Pages"
+                      labelClassName={uiTheme.sidebarHeading}
+                      actionIcon={<Plus className="h-2 w-2" />}
+                      actionLabel="Add page"
+                      actionClassName={isDarkUi
+                        ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                        : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"}
+                      onActionClick={onPageAdd}
+                    />
                   </div>
                 </div>
                 <div
@@ -674,17 +668,16 @@ export function PreviewWorkspace({
                       />
                 </div>
                 <div className={`shrink-0 border-t px-4 py-3 text-[11px] md:px-6 ${isDarkUi ? "border-[#313A47]" : "border-gray-200"}`}>
-                  <div className="flex items-center justify-between gap-3 leading-none">
-                    <div className={`font-semibold uppercase tracking-[0.08em] ${uiTheme.sidebarHeading}`}>Add Page</div>
-                    <button
-                      type="button"
-                      aria-label="Add page"
-                      onClick={onPageAdd}
-                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${isDarkUi ? "text-[#A8B1BF] hover:text-[#F4F6F8]" : "text-gray-500 hover:text-gray-900"}`}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <SectionHeaderRow
+                    label="Add Page"
+                    labelClassName={uiTheme.sidebarHeading}
+                    actionIcon={<Plus className="h-2 w-2" />}
+                    actionLabel="Add page"
+                    actionClassName={isDarkUi
+                      ? "border-[#313A47] bg-[#232A35] text-[#A8B1BF] hover:text-[#F4F6F8]"
+                      : "border-gray-300 bg-gray-100 text-gray-700 hover:text-gray-900"}
+                    onActionClick={onPageAdd}
+                  />
                 </div>
               </div>
             )}
