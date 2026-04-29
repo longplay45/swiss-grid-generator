@@ -166,9 +166,9 @@ Global controls and panel behavior.
 
 ### Presets {#help-header-examples}
 - Opens the presets browser.
-- Bundled files are grouped into `1. Presets` and `2. Examples`. `3. Users` is reserved for user files.
+- Bundled files are grouped into `Presets` and `Examples`. `Users` is reserved for user files.
 - Hovering a preset thumbnail shows title, description, author, date, format, grid, baseline, margin, and rhythm metadata.
-- User thumbnails in `3. Users` also show cloud status in the rollover; the thumbnail status dot is green when synced, orange while pending, and red on sync error.
+- User thumbnails in `Users` also show cloud status in the rollover; the thumbnail status dot is green when synced, orange while pending, and red on sync error.
 - Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click a thumbnail to load it.
 - `Esc` closes the browser without loading.
@@ -242,9 +242,11 @@ Shows or hides image placeholders on the active page. `Shift` + click applies th
 - Locked layers stay visible and selectable, but preview hover, move, and editor access are disabled until unlocked.
 
 ### Feedback {#help-feedback-panel}
-- The footer `Feedback` action opens a structured survey sidebar.
-- It collects experience level, workflow feedback, bugs, missing features, improvement ideas, and optional email.
-- Submitting feedback posts the form to the configured feedback backend.
+- The footer `Feedback` action opens a compact feedback sidebar.
+- It collects a required email, a required comment, and up to three small screenshots.
+- The optional log checkbox attaches the recent local cloud activity log for support.
+- If you are signed in, the account email is used in the form.
+- Submitting feedback stores the message in Supabase.
 
 ### Imprint {#help-imprint-panel}
 - The footer `Imprint` action opens the app imprint sidebar.

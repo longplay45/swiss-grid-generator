@@ -1492,6 +1492,7 @@ export default function Home() {
       projectDescription={projectMetadata.description}
       projectAuthor={effectiveProjectMetadata.author}
       projectCreatedAt={projectMetadata.createdAt}
+      userId={user?.id ?? null}
       userEmail={user?.email ?? null}
       isCloudSignedIn={Boolean(user)}
       cloudStatusLabel={cloudStatusLabel}

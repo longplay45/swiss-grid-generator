@@ -652,9 +652,11 @@ export const HELP_CONTENT_GROUPS = [
           {
             "type": "list",
             "items": [
-              "The footer `Feedback` action opens a structured survey sidebar.",
-              "It collects experience level, workflow feedback, bugs, missing features, improvement ideas, and optional email.",
-              "Submitting feedback posts the form to the configured feedback backend."
+              "The footer `Feedback` action opens a compact feedback sidebar.",
+              "It collects a required email, a required comment, and up to three small screenshots.",
+              "The optional log checkbox attaches the recent local cloud activity log for support.",
+              "If you are signed in, the account email is used in the form.",
+              "Submitting feedback stores the message in Supabase."
             ]
           }
         ],

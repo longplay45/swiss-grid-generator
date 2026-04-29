@@ -77,6 +77,7 @@ type Props = {
   projectDescription: string
   projectAuthor: string
   projectCreatedAt?: string
+  userId: string | null
   userEmail: string | null
   isCloudSignedIn: boolean
   cloudStatusLabel: string
@@ -222,6 +223,7 @@ export function PreviewWorkspace({
   projectDescription,
   projectAuthor,
   projectCreatedAt,
+  userId,
   userEmail,
   isCloudSignedIn,
   cloudStatusLabel,
@@ -711,6 +713,8 @@ export function PreviewWorkspace({
               <FeedbackPanel
                 isDarkMode={isDarkUi}
                 appVersion={appVersion}
+                userId={userId}
+                userEmail={userEmail}
                 onClose={closeSidebarPanel}
               />
             )}
