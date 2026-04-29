@@ -97,7 +97,7 @@ export function AccountPanel({
       {userEmail ? (
         <section className="space-y-2">
           <div className="flex items-start justify-between gap-3">
-            <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Sign In</h4>
+            <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Signed In As</h4>
             <div className={`pt-[1px] text-right text-[11px] leading-tight ${tone.caption}`}>
               {userEmail}
             </div>
