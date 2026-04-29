@@ -290,6 +290,14 @@ export function AccountPanel({
               {hasPendingCode ? "Resend Code" : "Send Code"}
             </Button>
           </div>
+          {authMessage ? (
+            <section className="space-y-2 pt-2">
+              <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
+              <div className={`rounded-md border px-3 py-2 text-xs ${tone.field}`}>
+                {authMessage}
+              </div>
+            </section>
+          ) : null}
           {hasPendingCode ? (
             <div className="space-y-2 pt-2">
               <div className="flex items-start justify-between gap-3">
@@ -339,15 +347,6 @@ export function AccountPanel({
           <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
           <div className="rounded-md border border-[#fe9f97] bg-[#fe9f97]/10 px-3 py-2 text-xs text-[#c55a52] dark:text-[#fe9f97]">
             {authError}
-          </div>
-        </section>
-      ) : null}
-
-      {authMessage && !userEmail ? (
-        <section className="space-y-2">
-          <h4 className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>Message</h4>
-          <div className={`rounded-md border px-3 py-2 text-xs ${tone.field}`}>
-            {authMessage}
           </div>
         </section>
       ) : null}
