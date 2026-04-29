@@ -40,10 +40,6 @@ function formatPresetCreatedAt(value?: string): string {
   return date.toISOString().slice(0, 10)
 }
 
-function formatPresetGroupLabel(label: string): string {
-  return label.replace(/^\s*\d+\.\s*/, "")
-}
-
 function formatPresetNumber(value: number): string {
   if (!Number.isFinite(value)) return "—"
   return Number.isInteger(value) ? String(value) : value.toFixed(2)
@@ -269,7 +265,6 @@ export function PresetLayoutsPanel({
   const [userPresets, setUserPresets] = useState<LayoutPreset[]>([])
   const [openMenuPresetId, setOpenMenuPresetId] = useState<string | null>(null)
   const [collapsedGroups, setCollapsedGroups] = useState<Partial<Record<PresetGroupCategory, boolean>>>(readCollapsedPresetGroups)
-  const groupToggleTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     const subscription = userLayoutPresetQuery.subscribe({
@@ -294,14 +289,6 @@ export function PresetLayoutsPanel({
   useEffect(() => {
     window.localStorage.setItem(PRESET_GROUP_COLLAPSED_STORAGE_KEY, JSON.stringify(collapsedGroups))
   }, [collapsedGroups])
-
-  useEffect(() => (
-    () => {
-      if (groupToggleTimeoutRef.current !== null) {
-        window.clearTimeout(groupToggleTimeoutRef.current)
-      }
-    }
-  ), [])
 
   const visibleGroups = useMemo(() => (
     LAYOUT_PRESET_GROUPS
@@ -443,25 +430,15 @@ export function PresetLayoutsPanel({
                 className="flex w-full items-center justify-between gap-2 text-left"
                 aria-expanded={!isCollapsed}
                 onClick={() => {
-                  if (groupToggleTimeoutRef.current !== null) {
-                    window.clearTimeout(groupToggleTimeoutRef.current)
-                  }
-                  groupToggleTimeoutRef.current = window.setTimeout(() => {
-                    setCollapsedGroups((current) => ({
-                      ...current,
-                      [group.category]: !current[group.category],
-                    }))
-                    groupToggleTimeoutRef.current = null
-                  }, 180)
+                  setCollapsedGroups((current) => ({
+                    ...current,
+                    [group.category]: !current[group.category],
+                  }))
                 }}
                 onDoubleClick={(event) => {
                   event.preventDefault()
-                  if (groupToggleTimeoutRef.current !== null) {
-                    window.clearTimeout(groupToggleTimeoutRef.current)
-                    groupToggleTimeoutRef.current = null
-                  }
-                  const shouldCollapseAll = visibleGroups.some((visibleGroup) => collapsedGroups[visibleGroup.category] !== true)
                   setCollapsedGroups((current) => {
+                    const shouldCollapseAll = visibleGroups.some((visibleGroup) => current[visibleGroup.category] !== true)
                     const next = { ...current }
                     visibleGroups.forEach((visibleGroup) => {
                       next[visibleGroup.category] = shouldCollapseAll
@@ -471,7 +448,7 @@ export function PresetLayoutsPanel({
                 }}
               >
                 <span className={`${SECTION_HEADLINE_CLASSNAME} mb-0`}>
-                  {formatPresetGroupLabel(group.label)}
+                  {group.label}
                 </span>
                 <span className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${groupToggleClassName}`}>
                   <ChevronUp

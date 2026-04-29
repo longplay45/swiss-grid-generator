@@ -166,9 +166,9 @@ Global controls and panel behavior.
 
 ### Presets {#help-header-examples}
 - Opens the presets browser.
-- Bundled files are grouped into `1. Presets` and `2. Examples`. `3. Users` is reserved for user files.
+- Bundled files are grouped into `Presets` and `Examples`. `Users` is reserved for user files.
 - Hovering a preset thumbnail shows title, description, author, date, format, grid, baseline, margin, and rhythm metadata.
-- User thumbnails in `3. Users` also show cloud status in the rollover; the thumbnail status dot is green when synced, orange while pending, and red on sync error.
+- User thumbnails in `Users` also show cloud status in the rollover; the thumbnail status dot is green when synced, orange while pending, and red on sync error.
 - Deleting a user thumbnail asks for confirmation first, then removes it locally and displays whether the cloud delete was performed, queued, or unnecessary.
 - Double-click a thumbnail to load it.
 - `Esc` closes the browser without loading.
